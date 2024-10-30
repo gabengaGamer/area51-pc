@@ -26,9 +26,9 @@ The following prerequisites are required to build the source tree for PC:
 5. Put game assets to **'C:\GameData\A51\Release\PC\DVD'**
 
 ## List of valid win32 targets.
-Debug           | OptDebug      | QA            | Release      | EDITOR-Debug  
-----------------|---------------|---------------|--------------|-------------
-Yes             | Yes/Only for tools            | Yes/Only for tools           | Yes/Only for tools            | Yes/Only for Editor!
+Debug           | OptDebug           | QA                 | Release            | EDITOR-Debug  
+----------------|--------------------|--------------------|--------------------|---------------------
+Yes             | Yes/Only for tools | Yes/Only for tools | Yes/Only for tools | Yes/Only for Editor!
 
 ## List of compiled tools
 Name           | Compiled
