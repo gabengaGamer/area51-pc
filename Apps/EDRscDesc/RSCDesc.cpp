@@ -1637,9 +1637,7 @@ void BuildBlueprintList( xarray<xstring>& FileList )
 
 void GatherMATXDependencies( xarray<xstring>& FileList, const char* pMATX, xbool bCheckForMaxFile )
 {
-#if !defined( X_RETAIL )
     x_DebugMsg("MATX: %s\n", pMATX);
-#endif
 
     // Add textures to FileList
     {
