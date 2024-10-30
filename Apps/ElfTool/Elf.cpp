@@ -172,7 +172,7 @@ void elf::PrintMdebug( void )
 
             // Get the name of the source file
             const char* pString = (const char*)(m_pData + pHeader->cbSsOffset + pFile->issBase + pFile->rss);
-//            printf( "%s\n", pString );
+            printf( "%s\n", pString );
 
             // Loop through all the symbols for this file
             for( s32 i=0 ; i<pFile->csym ; i++ )
@@ -182,14 +182,14 @@ void elf::PrintMdebug( void )
 
                 // Print the symbol details in CSV form
                 if( pSym->st == MDB_SYMR::ST_NIL )
-//                if( pSym->index != 0 )
+                if( pSym->index != 0 )
                 {
                     const char* pString = (const char*)(m_pData + pHeader->cbSsOffset + pFile->issBase + pSym->iss);
 
-//                    ParseMdebugSymbolString( pString );
+                    ParseMdebugSymbolString( pString );
                     m_FileInfo[iFile].ParseSymbol( pString );
 
-//                    printf( "    \"%08x\",%d,%d,%d,\"%s\"\n", pSym->value, pSym->st, pSym->sc, pSym->index, pString );
+                    printf( "    \"%08x\",%d,%d,%d,\"%s\"\n", pSym->value, pSym->st, pSym->sc, pSym->index, pString );
 	            }
             }
         }
@@ -198,7 +198,7 @@ void elf::PrintMdebug( void )
 
 //==============================================================================
 
-/*
+
 
 static xbool ReadIdent( const char*& p, xstring& Ident )
 {
@@ -363,7 +363,7 @@ void elf::ParseMdebugSymbolString( const char* p )
     }
 }
 
-*/
+
 
 //==============================================================================
 

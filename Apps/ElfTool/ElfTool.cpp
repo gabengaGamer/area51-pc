@@ -12,13 +12,13 @@ int main( int argc, char* argv[] )
     elf Elf;
     
     // Load it
-    if( Elf.Load( "c:\\tmp\\Draw01.elf" ) )
+    if( Elf.Load( "c:\\tmp\\Draw01.elf" ) ) //make it drag and drop
     {
         // Print section headers
         Elf.PrintSections();
 
         // Print symbols
-//        Elf.PrintSymbols();
+        Elf.PrintSymbols();
 
         // Print Mdebug info
         Elf.PrintMdebug();
