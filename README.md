@@ -28,7 +28,7 @@ The following prerequisites are required to build the source tree for PC:
 ## List of valid win32 targets.
 Debug           | OptDebug      | QA            | Release      | EDITOR-Debug  
 ----------------|---------------|---------------|--------------|-------------
-Yes             | No            | No            | No           | Yes/Only for Editor!
+Yes             | Yes/Only for tools            | Yes/Only for tools           | Yes/Only for tools            | Yes/Only for Editor!
 
 ## List of compiled tools
 Name           | Compiled
