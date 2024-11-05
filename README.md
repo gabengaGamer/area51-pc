@@ -51,7 +51,7 @@ FontBuilder    |                                                                
 FontEditor     |                                                                                         | Working/Lib for: [Editor](https://github.com/gabengaGamer/area51-pc/releases/tag/Editor-1.0)
 FxEditor       |                                                                                         | Working/Lib for: [Editor](https://github.com/gabengaGamer/area51-pc/releases/tag/Editor-1.0)
 FXCompiler     |                                                                                         | Working
-GameApp        |                                                                                         | SemiWorking/Retail PC models doesn't loads
+GameApp        |                                                                                         | SemiWorking/PC models doesn't loads
 GeomCompiler   |                                                                                         | Working
 LocoEditor     |                                                                                         | Working/Lib for: [Editor](https://github.com/gabengaGamer/area51-pc/releases/tag/Editor-1.0)
 MeshViewer     |                                                                                         | Working/Lib for: [Editor](https://github.com/gabengaGamer/area51-pc/releases/tag/Editor-1.0)
