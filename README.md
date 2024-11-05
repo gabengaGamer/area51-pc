@@ -30,42 +30,42 @@ Debug           | OptDebug           | QA                 | Release            |
 ----------------|--------------------|--------------------|--------------------|---------------------
 Yes             | Yes/Only for tools | Yes/Only for tools | Yes/Only for tools | Yes/Only for Editor!
 
-## List of compiled tools
-Name           | Compiled
----------------| ----------------------
-AnimCompiler   | Yes
-Art2Code       | Yes
-ArtistViewer   | No
-AudioEditor    | Yes/Lib for: [Editor](https://github.com/gabengaGamer/area51-pc/releases/tag/Editor-1.0)
-BinaryString   | Yes/Lib for: [Editor](https://github.com/gabengaGamer/area51-pc/releases/tag/Editor-1.0)
-BitmapEditor   | Yes/Lib for: [Editor](https://github.com/gabengaGamer/area51-pc/releases/tag/Editor-1.0)
-DecalCompiler  | Yes
-DecalEditor    | Yes/Lib for: [Editor](https://github.com/gabengaGamer/area51-pc/releases/tag/Editor-1.0)
-DFSTool        | Yes
-EDRscDesc      | Yes/Lib for: [Editor](https://github.com/gabengaGamer/area51-pc/releases/tag/Editor-1.0)
-Editor         | Yes
-EffectsEditor  | Yes
-ELFTool        | Yes
-EventEditor    | Yes/Lib for: [Editor](https://github.com/gabengaGamer/area51-pc/releases/tag/Editor-1.0)
-FontBuilder    | Yes
-FontEditor     | Yes/Lib for: [Editor](https://github.com/gabengaGamer/area51-pc/releases/tag/Editor-1.0)
-FxEditor       | Yes/Lib for: [Editor](https://github.com/gabengaGamer/area51-pc/releases/tag/Editor-1.0)
-FXCompiler     | Yes
-GameApp        | Yes/Retail PC models doesn't loads
-GeomCompiler   | Yes
-LocoEditor     | Yes/Lib for: [Editor](https://github.com/gabengaGamer/area51-pc/releases/tag/Editor-1.0)
-MeshViewer     | Yes/Lib for: [Editor](https://github.com/gabengaGamer/area51-pc/releases/tag/Editor-1.0)
-PropertyEditor | Yes/Lib for: [Editor](https://github.com/gabengaGamer/area51-pc/releases/tag/Editor-1.0)
-SoundPackager  | Yes
-StringTool     | Yes
-Viewer         | No
-WinControls    | Yes/Lib for: [Editor](https://github.com/gabengaGamer/area51-pc/releases/tag/Editor-1.0)
-WorldEditor    | Yes/Lib for: [Editor](https://github.com/gabengaGamer/area51-pc/releases/tag/Editor-1.0)
-XBMPTool       | Yes
-XBMPViewer     | Yes
-xCL            | Yes
-XSCC           | Yes
-xTool          | Yes
+## List of compiled apps.
+Name           | Description                                                                             | Status
+---------------| ----------------------------------------------------------------------------------------|---------------
+AnimCompiler   |                                                                                         | Working
+Art2Code       |                                                                                         | Working
+ArtistViewer   |                                                                                         | Broken
+AudioEditor    |                                                                                         | Working/Lib for: [Editor](https://github.com/gabengaGamer/area51-pc/releases/tag/Editor-1.0)
+BinaryString   |                                                                                         | Working/Lib for: [Editor](https://github.com/gabengaGamer/area51-pc/releases/tag/Editor-1.0)
+BitmapEditor   |                                                                                         | Working/Lib for: [Editor](https://github.com/gabengaGamer/area51-pc/releases/tag/Editor-1.0)
+DecalCompiler  |                                                                                         | Working
+DecalEditor    |                                                                                         | Working/Lib for: [Editor](https://github.com/gabengaGamer/area51-pc/releases/tag/Editor-1.0)
+DFSTool        |                                                                                         | Working
+EDRscDesc      |                                                                                         | Working/Lib for: [Editor](https://github.com/gabengaGamer/area51-pc/releases/tag/Editor-1.0)
+Editor         |                                                                                         | Working
+EffectsEditor  |                                                                                         | Working
+ELFTool        |                                                                                         | Working
+EventEditor    |                                                                                         | Working/Lib for: [Editor](https://github.com/gabengaGamer/area51-pc/releases/tag/Editor-1.0)
+FontBuilder    |                                                                                         | Working
+FontEditor     |                                                                                         | Working/Lib for: [Editor](https://github.com/gabengaGamer/area51-pc/releases/tag/Editor-1.0)
+FxEditor       |                                                                                         | Working/Lib for: [Editor](https://github.com/gabengaGamer/area51-pc/releases/tag/Editor-1.0)
+FXCompiler     |                                                                                         | Working
+GameApp        |                                                                                         | SemiWorking/Retail PC models doesn't loads
+GeomCompiler   |                                                                                         | Working
+LocoEditor     |                                                                                         | Working/Lib for: [Editor](https://github.com/gabengaGamer/area51-pc/releases/tag/Editor-1.0)
+MeshViewer     |                                                                                         | Working/Lib for: [Editor](https://github.com/gabengaGamer/area51-pc/releases/tag/Editor-1.0)
+PropertyEditor |                                                                                         | Working/Lib for: [Editor](https://github.com/gabengaGamer/area51-pc/releases/tag/Editor-1.0)
+SoundPackager  |                                                                                         | Working
+StringTool     |                                                                                         | Working
+Viewer         |                                                                                         | Broken
+WinControls    |                                                                                         | Working/Lib for: [Editor](https://github.com/gabengaGamer/area51-pc/releases/tag/Editor-1.0)
+WorldEditor    |                                                                                         | Working/Lib for: [Editor](https://github.com/gabengaGamer/area51-pc/releases/tag/Editor-1.0)
+XBMPTool       |                                                                                         | Working
+XBMPViewer     |                                                                                         | Working
+xCL            |                                                                                         | Working
+XSCC           |                                                                                         | Working
+xTool          |                                                                                         | Working
 
 ## Building XBOX Code
 
