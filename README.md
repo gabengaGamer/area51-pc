@@ -33,23 +33,22 @@ Yes             | Yes/Only for tools | Yes/Only for tools | Yes/Only for tools |
 ## List of compiled tools
 Name           | Compiled
 ---------------| ----------------------
+AnimCompiler   | Yes
 Art2Code       | Yes
 ArtistViewer   | No
-AnimCompiler   | Yes
 AudioEditor    | Yes/Lib for: [Editor](https://github.com/gabengaGamer/area51-pc/releases/tag/Editor-1.0)
-A51SoundPKG    | Yes
 BinaryString   | Yes/Lib for: [Editor](https://github.com/gabengaGamer/area51-pc/releases/tag/Editor-1.0)
 BitmapEditor   | Yes/Lib for: [Editor](https://github.com/gabengaGamer/area51-pc/releases/tag/Editor-1.0)
-DecalEditor    | Yes/Lib for: [Editor](https://github.com/gabengaGamer/area51-pc/releases/tag/Editor-1.0)
 DecalCompiler  | Yes
+DecalEditor    | Yes/Lib for: [Editor](https://github.com/gabengaGamer/area51-pc/releases/tag/Editor-1.0)
 DFSTool        | Yes
-Editor         | Yes
 EDRscDesc      | Yes/Lib for: [Editor](https://github.com/gabengaGamer/area51-pc/releases/tag/Editor-1.0)
+Editor         | Yes
 EffectsEditor  | Yes
 ELFTool        | Yes
 EventEditor    | Yes/Lib for: [Editor](https://github.com/gabengaGamer/area51-pc/releases/tag/Editor-1.0)
-FontEditor     | Yes/Lib for: [Editor](https://github.com/gabengaGamer/area51-pc/releases/tag/Editor-1.0)
 FontBuilder    | Yes
+FontEditor     | Yes/Lib for: [Editor](https://github.com/gabengaGamer/area51-pc/releases/tag/Editor-1.0)
 FxEditor       | Yes/Lib for: [Editor](https://github.com/gabengaGamer/area51-pc/releases/tag/Editor-1.0)
 FXCompiler     | Yes
 GameApp        | Yes/Retail PC models doesn't loads
@@ -65,6 +64,7 @@ WorldEditor    | Yes/Lib for: [Editor](https://github.com/gabengaGamer/area51-pc
 XBMPTool       | Yes
 XBMPViewer     | Yes
 xCL            | Yes
+XSCC           | Yes
 xTool          | Yes
 
 ## Building XBOX Code
