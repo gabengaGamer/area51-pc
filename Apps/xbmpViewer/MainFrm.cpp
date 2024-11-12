@@ -15,7 +15,7 @@
 static char THIS_FILE[] = __FILE__;
 #endif
 
-//#define HappyDebuger
+#define HappyDebuger
 
 extern CString g_CmdLinePath;
 extern CString g_CmdLineFile;
@@ -358,6 +358,12 @@ void CMainFrame::OnConvertTga()
                             // Get the root path and list of files selected
                             xstring             Path  = m_wndFileList.GetPath();
                             xarray<file_rec*>   Array = m_wndFileList.GetSelected();
+                            
+                            if (Array.GetCount() == 0)
+                            {
+                                AfxMessageBox(_T("Warning: Image was not selected."));
+                                return;
+                            }
 
                             CProgress Progress;
 
@@ -442,7 +448,7 @@ void CMainFrame::OnConvertXbmp()
         //Get settings
         CString platform = dlg.m_SelectedPlatform;
         CString format = dlg.m_SelectedFormat;
-        int mipLevels = dlg.m_MipLevels;
+        int MipLevels = dlg.m_MipLevels;
 
         //Get the export folder
         IShellFolder* pShellFolder;
@@ -482,8 +488,15 @@ void CMainFrame::OnConvertXbmp()
                                 //Get the root path and list of files selected
                                 xstring Path = m_wndFileList.GetPath();
                                 xarray<file_rec*> Array = m_wndFileList.GetSelected();
+                                    
+                                if (Array.GetCount() == 0)
+                                {
+                                    AfxMessageBox(_T("Warning: Image was not selected."));
+                                    return;
+                                }    
 
                                 CProgress Progress;
+                                
                                 Progress.Create(IDD_PROGRESS, this);
                                 Progress.SetWindowText("Converting TGA to XBMP...");
                                 Progress.ShowWindow(SW_SHOW);
@@ -511,12 +524,11 @@ void CMainFrame::OnConvertXbmp()
                                         //IT IS VERY IMPORTANT TO FOLLOW CONSISTENCY!!!!
                                         //COMPRESSION TYPE
                                         //PLATFORM DEFINICATIONS
-                                        //MIPS
+                                        //MIPS    
                                         
 /////////////////////////////////////////////////////////////////////////////
-//// YANDERE DEV CODE
+//// YANDERE DEV CODE - START
 /////////////////////////////////////////////////////////////////////////////                                        
-
                                         if (format == _T("32_RGBA_8888"))
                                         {
                                             b.ConvertFormat(xbitmap::FMT_32_RGBA_8888);
@@ -608,17 +620,64 @@ void CMainFrame::OnConvertXbmp()
                                             AfxMessageBox(_T("Selected compression P4_RGB_565 !!!"));
                                             #endif
                                         }
-                                        else if (format == _T("NoComp"))
+/////////////////////////////////////////////////////////////////////////////
+//// GENERIC COMPRESSION - START
+/////////////////////////////////////////////////////////////////////////////                                        
+                                        else if (format == _T("DXT1"))
+                                        {
+                                            b.ConvertFormat(xbitmap::FMT_DXT1);
+                                            #ifdef HappyDebuger
+                                            AfxMessageBox(_T("Selected compression DXT1 !!!"));
+                                            #endif
+                                        }
+                                        else if (format == _T("DXT2"))
+                                        {
+                                            b.ConvertFormat(xbitmap::FMT_DXT2);
+                                            #ifdef HappyDebuger
+                                            AfxMessageBox(_T("Selected compression DXT2 !!!"));
+                                            #endif
+                                        }
+                                        else if (format == _T("DXT3"))
+                                        {
+                                            b.ConvertFormat(xbitmap::FMT_DXT3);
+                                            #ifdef HappyDebuger
+                                            AfxMessageBox(_T("Selected compression DXT3 !!!"));
+                                            #endif
+                                        }
+                                        else if (format == _T("DXT4"))
+                                        {
+                                            b.ConvertFormat(xbitmap::FMT_DXT4);
+                                            #ifdef HappyDebuger
+                                            AfxMessageBox(_T("Selected compression DXT4 !!!"));
+                                            #endif
+                                        }
+                                        else if (format == _T("DXT5"))
+                                        {
+                                            b.ConvertFormat(xbitmap::FMT_DXT5);
+                                            #ifdef HappyDebuger
+                                            AfxMessageBox(_T("Selected compression DXT5 !!!"));
+                                            #endif
+                                        }
+                                        else if (format == _T("A8"))
+                                        {
+                                            b.ConvertFormat(xbitmap::FMT_A8);
+                                            #ifdef HappyDebuger
+                                            AfxMessageBox(_T("Selected compression A8 !!!"));
+                                            #endif
+                                        }                                            
+/////////////////////////////////////////////////////////////////////////////
+//// GENERIC COMPRESSION - END
+/////////////////////////////////////////////////////////////////////////////                                
+                                        else if (format == _T("Platform compression"))
                                         {
                                             #ifdef HappyDebuger
                                             AfxMessageBox(_T("Selected NoComp !!!"));
                                             #endif
-                                        }
-                                        
+                                        } 
 /////////////////////////////////////////////////////////////////////////////
 //// YANDERE DEV CODE - END
-/////////////////////////////////////////////////////////////////////////////
-
+///////////////////////////////////////////////////////////////////////////// 
+                                      
                                         if (platform == _T("PC") || platform == _T("Xbox"))
                                         {
                                             auxbmp_ConvertToD3D(b); // PC oder Xducks conversion.
@@ -649,14 +708,14 @@ void CMainFrame::OnConvertXbmp()
                                         }                                                                                  
 
                                         //MIPS only support images with a power of two.
-                                        int width = b.GetWidth();
-                                        int height = b.GetHeight();
+                                        int Width = b.GetWidth();
+                                        int Height = b.GetHeight();
 
-                                        if (mipLevels > 0 && mipLevels <= 16)
+                                        if (MipLevels > 0 && MipLevels <= 16)
                                         {
-                                            if (IsPowerOfTwo(width) && IsPowerOfTwo(height))
+                                            if (IsPowerOfTwo(Width) && IsPowerOfTwo(Height))
                                             {
-                                                b.BuildMips(mipLevels);
+                                                b.BuildMips(MipLevels);
                                             }
                                             else
                                             {
