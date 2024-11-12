@@ -15,7 +15,7 @@
 static char THIS_FILE[] = __FILE__;
 #endif
 
-#define HappyDebuger
+//#define HappyDebuger
 
 extern CString g_CmdLinePath;
 extern CString g_CmdLineFile;
@@ -446,9 +446,19 @@ void CMainFrame::OnConvertXbmp()
     if (dlg.DoModal() == IDOK)
     {
         //Get settings
-        CString platform = dlg.m_SelectedPlatform;
-        CString format = dlg.m_SelectedFormat;
+        CString Platform = dlg.m_SelectedPlatform;
+        CString Format = dlg.m_SelectedFormat;
         int MipLevels = dlg.m_MipLevels;
+
+#ifdef 	HappyDebuger
+        CString message;
+        
+        message.Format(_T("Selected compression is %s !!!"), Format);
+        AfxMessageBox(message);
+        
+        //message.Format(_T("Selected platform is %s !!!"), Platform);
+        //AfxMessageBox(message);
+#endif
 
         //Get the export folder
         IShellFolder* pShellFolder;
@@ -529,184 +539,122 @@ void CMainFrame::OnConvertXbmp()
 /////////////////////////////////////////////////////////////////////////////
 //// YANDERE DEV CODE - START
 /////////////////////////////////////////////////////////////////////////////                                        
-                                        if (format == _T("32_RGBA_8888"))
+                                        if (Format == _T("32_RGBA_8888"))
                                         {
                                             b.ConvertFormat(xbitmap::FMT_32_RGBA_8888);
-                                            #ifdef HappyDebuger
-                                            AfxMessageBox(_T("Selected compression 32_RGBA_8888 !!!"));
-                                            #endif
                                         }
-                                        else if (format == _T("32_RGBU_8888"))
+                                        else if (Format == _T("32_RGBU_8888"))
                                         {
                                             b.ConvertFormat(xbitmap::FMT_32_RGBU_8888);
-                                            #ifdef HappyDebuger
-                                            AfxMessageBox(_T("Selected compression 32_RGBU_8888 !!!"));
-                                            #endif
                                         }
-                                        else if (format == _T("32_ARGB_8888"))
+                                        else if (Format == _T("32_ARGB_8888"))
                                         {
                                             b.ConvertFormat(xbitmap::FMT_32_ARGB_8888);
-                                            #ifdef HappyDebuger
-                                            AfxMessageBox(_T("Selected compression 32_ARGB_8888 !!!"));
-                                            #endif
                                         }
-                                        else if (format == _T("32_URGB_8888"))
+                                        else if (Format == _T("32_URGB_8888"))
                                         {
                                             b.ConvertFormat(xbitmap::FMT_32_URGB_8888);
-                                            #ifdef HappyDebuger
-                                            AfxMessageBox(_T("Selected compression 32_URGB_8888 !!!"));
-                                            #endif
                                         }
-                                        else if (format == _T("24_RGB_888"))
+                                        else if (Format == _T("24_RGB_888"))
                                         {
                                             b.ConvertFormat(xbitmap::FMT_24_RGB_888);
-                                            #ifdef HappyDebuger
-                                            AfxMessageBox(_T("Selected compression 24_RGB_888 !!!"));
-                                            #endif
                                         }
-                                        else if (format == _T("16_RGBA_4444"))
+                                        else if (Format == _T("16_RGBA_4444"))
                                         {
                                             b.ConvertFormat(xbitmap::FMT_16_RGBA_4444);
-                                            #ifdef HappyDebuger
-                                            AfxMessageBox(_T("Selected compression 16_RGBA_4444 !!!"));
-                                            #endif
                                         }
-                                        else if (format == __T("16_ARGB_4444"))
+                                        else if (Format == __T("16_ARGB_4444"))
                                         {
                                             b.ConvertFormat(xbitmap::FMT_16_ARGB_4444);
-                                            #ifdef HappyDebuger
-                                            AfxMessageBox(_T("Selected compression 16_ARGB_4444 !!!"));
-                                            #endif
                                         }
-                                        else if (format == _T("16_RGBA_5551"))
+                                        else if (Format == _T("16_RGBA_5551"))
                                         {
                                             b.ConvertFormat(xbitmap::FMT_16_RGBA_5551);
-                                            #ifdef HappyDebuger
-                                            AfxMessageBox(_T("Selected compression 16_RGBA_5551 !!!"));
-                                            #endif
                                         }
-                                        else if (format == _T("16_RGBU_5551"))
+                                        else if (Format == _T("16_RGBU_5551"))
                                         {
                                             b.ConvertFormat(xbitmap::FMT_16_RGBU_5551);
-                                            #ifdef HappyDebuger
-                                            AfxMessageBox(_T("Selected compression 16_RGBU_5551 !!!"));
-                                            #endif
                                         }
-                                        else if (format == _T("16_ARGB_1555"))
+                                        else if (Format == _T("16_ARGB_1555"))
                                         {
                                             b.ConvertFormat(xbitmap::FMT_16_ARGB_1555);
-                                            #ifdef HappyDebuger
-                                            AfxMessageBox(_T("Selected compression 16_ARGB_1555 !!!"));
-                                            #endif
                                         }
-                                        else if (format == _T("16_URGB_1555"))
+                                        else if (Format == _T("16_URGB_1555"))
                                         {
                                             b.ConvertFormat(xbitmap::FMT_16_URGB_1555);
-                                            #ifdef HappyDebuger
-                                            AfxMessageBox(_T("Selected compression 16_URGB_1555 !!!"));
-                                            #endif
                                         }
-                                        else if (format == _T("16_RGB_565"))
+                                        else if (Format == _T("16_RGB_565"))
                                         {
                                             b.ConvertFormat(xbitmap::FMT_16_RGB_565);
-                                            #ifdef HappyDebuger
-                                            AfxMessageBox(_T("Selected compression 16_RGB_565 !!!"));
-                                            #endif
                                         }
-                                        else if (format == _T("P4_RGB_565"))
+                                        else if (Format == _T("P4_RGB_565"))
                                         {
                                             b.ConvertFormat(xbitmap::FMT_P4_RGB_565);
-                                            #ifdef HappyDebuger
-                                            AfxMessageBox(_T("Selected compression P4_RGB_565 !!!"));
-                                            #endif
                                         }
 /////////////////////////////////////////////////////////////////////////////
 //// GENERIC COMPRESSION - START
 /////////////////////////////////////////////////////////////////////////////                                        
-                                        else if (format == _T("DXT1"))
+                                        else if (Format == _T("DXT1"))
                                         {
                                             b.ConvertFormat(xbitmap::FMT_DXT1);
-                                            #ifdef HappyDebuger
-                                            AfxMessageBox(_T("Selected compression DXT1 !!!"));
-                                            #endif
                                         }
-                                        else if (format == _T("DXT2"))
+                                        else if (Format == _T("DXT2"))
                                         {
                                             b.ConvertFormat(xbitmap::FMT_DXT2);
-                                            #ifdef HappyDebuger
-                                            AfxMessageBox(_T("Selected compression DXT2 !!!"));
-                                            #endif
                                         }
-                                        else if (format == _T("DXT3"))
+                                        else if (Format == _T("DXT3"))
                                         {
                                             b.ConvertFormat(xbitmap::FMT_DXT3);
-                                            #ifdef HappyDebuger
-                                            AfxMessageBox(_T("Selected compression DXT3 !!!"));
-                                            #endif
                                         }
-                                        else if (format == _T("DXT4"))
+                                        else if (Format == _T("DXT4"))
                                         {
                                             b.ConvertFormat(xbitmap::FMT_DXT4);
-                                            #ifdef HappyDebuger
-                                            AfxMessageBox(_T("Selected compression DXT4 !!!"));
-                                            #endif
                                         }
-                                        else if (format == _T("DXT5"))
+                                        else if (Format == _T("DXT5"))
                                         {
                                             b.ConvertFormat(xbitmap::FMT_DXT5);
-                                            #ifdef HappyDebuger
-                                            AfxMessageBox(_T("Selected compression DXT5 !!!"));
-                                            #endif
                                         }
-                                        else if (format == _T("A8"))
+                                        else if (Format == _T("A8"))
                                         {
                                             b.ConvertFormat(xbitmap::FMT_A8);
-                                            #ifdef HappyDebuger
-                                            AfxMessageBox(_T("Selected compression A8 !!!"));
-                                            #endif
                                         }                                            
 /////////////////////////////////////////////////////////////////////////////
 //// GENERIC COMPRESSION - END
 /////////////////////////////////////////////////////////////////////////////                                
-                                        else if (format == _T("Platform compression"))
+                                        else if (Format == _T("Platform compression"))
                                         {
-                                            #ifdef HappyDebuger
-                                            AfxMessageBox(_T("Selected NoComp !!!"));
-                                            #endif
                                         } 
+                                        else
+                                        {
+                                            AfxMessageBox(_T("Warning: Compression selection error"));
+                                            return;
+                                        }
 /////////////////////////////////////////////////////////////////////////////
 //// YANDERE DEV CODE - END
 ///////////////////////////////////////////////////////////////////////////// 
-                                      
-                                        if (platform == _T("PC") || platform == _T("Xbox"))
+                                    
+                                        if (Platform == _T("PC") || Platform == _T("Xbox"))
                                         {
-                                            auxbmp_ConvertToD3D(b); // PC oder Xducks conversion.
-                                            #ifdef HappyDebuger
-                                            AfxMessageBox(_T("Selected PC or XBOX VERSION !!!"));
-                                            #endif
+                                            auxbmp_ConvertToD3D(b); // D3D conversion.
                                         }
-                                        else if (platform == _T("PS2"))
+                                        else if (Platform == _T("PS2"))
                                         {
                                             auxbmp_ConvertToPS2(b);  // PS2 conversion.
-                                            #ifdef HappyDebuger
-                                            AfxMessageBox(_T("Selected PS2 VERSION !!!"));
-                                            #endif
                                         }
-                                        else if (platform == _T("GameCube"))
+                                        else if (Platform == _T("GameCube"))
                                         {
                                             auxbmp_ConvertToGCN(b);  // GameCube conversion.
-                                            #ifdef HappyDebuger
-                                            AfxMessageBox(_T("Selected GameCum VERSION !!!"));
-                                            #endif
                                         }
-                                        else if (platform == _T("Native"))
+                                        else if (Platform == _T("Native"))
                                         {
                                             auxbmp_ConvertToNative(b);  // Native conversion.
-                                            #ifdef HappyDebuger
-                                            AfxMessageBox(_T("Selected Native VERSION !!!"));
-                                            #endif
                                         }                                                                                  
-
+                                        else
+                                        {
+                                            AfxMessageBox(_T("Warning: Platform selection error"));
+                                            return;
+                                        }
+                                        
                                         //MIPS only support images with a power of two.
                                         int Width = b.GetWidth();
                                         int Height = b.GetHeight();

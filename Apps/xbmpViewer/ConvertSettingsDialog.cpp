@@ -28,7 +28,7 @@ void CConvertSettingsDialog::DoDataExchange(CDataExchange* pDX)
 }
 
 BEGIN_MESSAGE_MAP(CConvertSettingsDialog, CDialog)
-    //ON_BN_CLICKED(IDC_GENERIC_COMPRESSION, &CConvertSettingsDialog::OnUpdateDialog)
+    ON_BN_CLICKED(IDC_GENERIC_COMPRESSION, &CConvertSettingsDialog::OnUpdateDialog)
 END_MESSAGE_MAP()
 
 BOOL CConvertSettingsDialog::OnInitDialog()
