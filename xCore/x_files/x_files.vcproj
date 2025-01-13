@@ -2442,7 +2442,8 @@
 		<File
 			RelativePath="x_array.hpp">
 			<FileConfiguration
-				Name="Debug|Win32">
+				Name="Debug|Win32"
+				ExcludedFromBuild="TRUE">
 				<Tool
 					Name="VCCLCompilerTool"/>
 			</FileConfiguration>
@@ -2453,7 +2454,8 @@
 					Name="VCCLCompilerTool"/>
 			</FileConfiguration>
 			<FileConfiguration
-				Name="OptDebug|Win32">
+				Name="OptDebug|Win32"
+				ExcludedFromBuild="TRUE">
 				<Tool
 					Name="VCCLCompilerTool"/>
 			</FileConfiguration>
@@ -2464,7 +2466,8 @@
 					Name="VCCLCompilerTool"/>
 			</FileConfiguration>
 			<FileConfiguration
-				Name="QA|Win32">
+				Name="QA|Win32"
+				ExcludedFromBuild="TRUE">
 				<Tool
 					Name="VCCLCompilerTool"/>
 			</FileConfiguration>
@@ -2475,7 +2478,8 @@
 					Name="VCCLCompilerTool"/>
 			</FileConfiguration>
 			<FileConfiguration
-				Name="Release|Win32">
+				Name="Release|Win32"
+				ExcludedFromBuild="TRUE">
 				<Tool
 					Name="VCCLCompilerTool"/>
 			</FileConfiguration>
@@ -2486,7 +2490,8 @@
 					Name="VCCLCompilerTool"/>
 			</FileConfiguration>
 			<FileConfiguration
-				Name="EDITOR-Debug|Win32">
+				Name="EDITOR-Debug|Win32"
+				ExcludedFromBuild="TRUE">
 				<Tool
 					Name="VCCLCompilerTool"/>
 			</FileConfiguration>
@@ -2503,7 +2508,8 @@
 		<File
 			RelativePath="x_color.hpp">
 			<FileConfiguration
-				Name="Debug|Win32">
+				Name="Debug|Win32"
+				ExcludedFromBuild="TRUE">
 				<Tool
 					Name="VCCLCompilerTool"/>
 			</FileConfiguration>
@@ -2514,7 +2520,8 @@
 					Name="VCCLCompilerTool"/>
 			</FileConfiguration>
 			<FileConfiguration
-				Name="OptDebug|Win32">
+				Name="OptDebug|Win32"
+				ExcludedFromBuild="TRUE">
 				<Tool
 					Name="VCCLCompilerTool"/>
 			</FileConfiguration>
@@ -2525,7 +2532,8 @@
 					Name="VCCLCompilerTool"/>
 			</FileConfiguration>
 			<FileConfiguration
-				Name="QA|Win32">
+				Name="QA|Win32"
+				ExcludedFromBuild="TRUE">
 				<Tool
 					Name="VCCLCompilerTool"/>
 			</FileConfiguration>
@@ -2536,7 +2544,8 @@
 					Name="VCCLCompilerTool"/>
 			</FileConfiguration>
 			<FileConfiguration
-				Name="Release|Win32">
+				Name="Release|Win32"
+				ExcludedFromBuild="TRUE">
 				<Tool
 					Name="VCCLCompilerTool"/>
 			</FileConfiguration>
@@ -2547,7 +2556,8 @@
 					Name="VCCLCompilerTool"/>
 			</FileConfiguration>
 			<FileConfiguration
-				Name="EDITOR-Debug|Win32">
+				Name="EDITOR-Debug|Win32"
+				ExcludedFromBuild="TRUE">
 				<Tool
 					Name="VCCLCompilerTool"/>
 			</FileConfiguration>
@@ -2714,7 +2724,8 @@
 		<File
 			RelativePath="x_target.hpp">
 			<FileConfiguration
-				Name="Debug|Win32">
+				Name="Debug|Win32"
+				ExcludedFromBuild="TRUE">
 				<Tool
 					Name="VCCLCompilerTool"/>
 			</FileConfiguration>
@@ -2725,7 +2736,8 @@
 					Name="VCCLCompilerTool"/>
 			</FileConfiguration>
 			<FileConfiguration
-				Name="OptDebug|Win32">
+				Name="OptDebug|Win32"
+				ExcludedFromBuild="TRUE">
 				<Tool
 					Name="VCCLCompilerTool"/>
 			</FileConfiguration>
@@ -2736,7 +2748,8 @@
 					Name="VCCLCompilerTool"/>
 			</FileConfiguration>
 			<FileConfiguration
-				Name="QA|Win32">
+				Name="QA|Win32"
+				ExcludedFromBuild="TRUE">
 				<Tool
 					Name="VCCLCompilerTool"/>
 			</FileConfiguration>
@@ -2747,7 +2760,8 @@
 					Name="VCCLCompilerTool"/>
 			</FileConfiguration>
 			<FileConfiguration
-				Name="Release|Win32">
+				Name="Release|Win32"
+				ExcludedFromBuild="TRUE">
 				<Tool
 					Name="VCCLCompilerTool"/>
 			</FileConfiguration>
@@ -2758,7 +2772,8 @@
 					Name="VCCLCompilerTool"/>
 			</FileConfiguration>
 			<FileConfiguration
-				Name="EDITOR-Debug|Win32">
+				Name="EDITOR-Debug|Win32"
+				ExcludedFromBuild="TRUE">
 				<Tool
 					Name="VCCLCompilerTool"/>
 			</FileConfiguration>
@@ -2772,7 +2787,8 @@
 		<File
 			RelativePath="x_types.hpp">
 			<FileConfiguration
-				Name="Debug|Win32">
+				Name="Debug|Win32"
+				ExcludedFromBuild="TRUE">
 				<Tool
 					Name="VCCLCompilerTool"/>
 			</FileConfiguration>
@@ -2783,7 +2799,8 @@
 					Name="VCCLCompilerTool"/>
 			</FileConfiguration>
 			<FileConfiguration
-				Name="OptDebug|Win32">
+				Name="OptDebug|Win32"
+				ExcludedFromBuild="TRUE">
 				<Tool
 					Name="VCCLCompilerTool"/>
 			</FileConfiguration>
@@ -2794,7 +2811,8 @@
 					Name="VCCLCompilerTool"/>
 			</FileConfiguration>
 			<FileConfiguration
-				Name="QA|Win32">
+				Name="QA|Win32"
+				ExcludedFromBuild="TRUE">
 				<Tool
 					Name="VCCLCompilerTool"/>
 			</FileConfiguration>
@@ -2805,7 +2823,8 @@
 					Name="VCCLCompilerTool"/>
 			</FileConfiguration>
 			<FileConfiguration
-				Name="Release|Win32">
+				Name="Release|Win32"
+				ExcludedFromBuild="TRUE">
 				<Tool
 					Name="VCCLCompilerTool"/>
 			</FileConfiguration>
@@ -2816,7 +2835,8 @@
 					Name="VCCLCompilerTool"/>
 			</FileConfiguration>
 			<FileConfiguration
-				Name="EDITOR-Debug|Win32">
+				Name="EDITOR-Debug|Win32"
+				ExcludedFromBuild="TRUE">
 				<Tool
 					Name="VCCLCompilerTool"/>
 			</FileConfiguration>
