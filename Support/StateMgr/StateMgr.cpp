@@ -247,16 +247,16 @@ void state_mgr::Init( void )
 #ifdef TARGET_PS2
     dlg_online_eula_register        ( g_UiMgr );
 #endif
-    //dlg_online_connect_register     ( g_UiMgr );
+    dlg_online_connect_register     ( g_UiMgr );
     dlg_online_main_register        ( g_UiMgr );
     dlg_online_host_register        ( g_UiMgr );
     dlg_online_host_options_register( g_UiMgr );
-    //dlg_online_join_register        ( g_UiMgr );
+    dlg_online_join_register        ( g_UiMgr );
     dlg_join_filter_register        ( g_UiMgr );
     dlg_online_level_select_register( g_UiMgr );
-    //dlg_online_players_register     ( g_UiMgr );
-    //dlg_friends_register            ( g_UiMgr );
-    //dlg_players_register            ( g_UiMgr );
+    dlg_online_players_register     ( g_UiMgr );
+    dlg_friends_register            ( g_UiMgr );
+    dlg_players_register            ( g_UiMgr );
     dlg_start_game_register         ( g_UiMgr );
     dlg_load_game_register          ( g_UiMgr );
     dlg_level_desc_register         ( g_UiMgr );
@@ -288,11 +288,11 @@ void state_mgr::Init( void )
     dlg_change_map_register         ( g_UiMgr );
     dlg_kick_player_register        ( g_UiMgr );
     dlg_team_change_register        ( g_UiMgr );
-    //dlg_online_login_register       ( g_UiMgr );
+    dlg_online_login_register       ( g_UiMgr );
     dlg_submenu_register            ( g_UiMgr );
-    //dlg_feedback_register           ( g_UiMgr );
+    dlg_feedback_register           ( g_UiMgr );
     dlg_secrets_menu_register       ( g_UiMgr );
-    //dlg_stats_register              ( g_UiMgr );
+    dlg_stats_register              ( g_UiMgr );
     dlg_autosave_register           ( g_UiMgr );
     dlg_credits_register            ( g_UiMgr );
     dlg_extras_register             ( g_UiMgr );
@@ -6161,11 +6161,7 @@ void state_mgr::ExitServerPlayers( void )
 //=========================================================================
 
 void state_mgr::EnterOnlinePlayers( void )
-#if defined ( TARGET_PC )
-{
-}
-#endif
-#if defined ( TARGET_XBOX )
+
 {
     // Create players menu
     g_UiMgr->EndDialog( g_UiUserID, TRUE );
@@ -6177,7 +6173,6 @@ void state_mgr::EnterOnlinePlayers( void )
     g_UiMgr->SetUserBackground( g_UiUserID, "background1" );
 #endif
 }
-#endif
 
 //=========================================================================
 
@@ -6257,11 +6252,6 @@ void state_mgr::ExitOnlineFeedback( void )
 //=========================================================================
 
 void state_mgr::EnterOnlineFeedbackFriend( void )
-#if defined ( TARGET_PC )
-{
-}
-#endif
-#if defined ( TARGET_XBOX )
 {
     // Create feedback menu
     g_UiMgr->EndDialog( g_UiUserID, TRUE );
@@ -6281,7 +6271,7 @@ void state_mgr::EnterOnlineFeedbackFriend( void )
         }
     }
 }
-#endif
+
 //=========================================================================
 
 void state_mgr::UpdateOnlineFeedbackFriend( void )
@@ -8217,11 +8207,6 @@ void state_mgr::ExitPauseOnlineFriends( void )
 //=========================================================================
 
 void state_mgr::EnterPauseOnlinePlayers( void )
-#if defined ( TARGET_PC )
-{
-}
-#endif
-#if defined ( TARGET_XBOX )
 {
     // Create players menu
     g_UiMgr->EndDialog( g_UiUserID, TRUE );
@@ -8234,7 +8219,7 @@ void state_mgr::EnterPauseOnlinePlayers( void )
     ((dlg_players*)m_CurrentDialog)->EnableBlackout();
     ((dlg_players*)m_CurrentDialog)->Configure( PLAYER_MODE_INGAME );
 }
-#endif
+
 //=========================================================================
 
 void state_mgr::UpdatePauseOnlinePlayers( void )
@@ -8305,11 +8290,7 @@ void state_mgr::ExitPauseOnlineFeedback( void )
 //=========================================================================
 
 void state_mgr::EnterPauseOnlineFeedbackFriend( void )
-#if defined ( TARGET_PC )
-{
-}
-#endif
-#if defined ( TARGET_XBOX )
+
 {
     // Create feedback menu
     g_UiMgr->EndDialog( g_UiUserID, TRUE );
@@ -8330,7 +8311,7 @@ void state_mgr::EnterPauseOnlineFeedbackFriend( void )
     }
     ((dlg_feedback*)m_CurrentDialog)->EnableBlackout();
 }
-#endif
+
 //=========================================================================
 
 void state_mgr::UpdatePauseOnlineFeedbackFriend( void )

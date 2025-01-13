@@ -134,7 +134,7 @@
 			<Tool
 				Name="VCCustomBuildTool"/>
 			<Tool
-				Name="VCLinkerTool"/>
+				Name="VCLibrarianTool"/>
 			<Tool
 				Name="VCMIDLTool"/>
 			<Tool
@@ -149,8 +149,6 @@
 				Name="VCWebServiceProxyGeneratorTool"/>
 			<Tool
 				Name="VCXMLDataGeneratorTool"/>
-			<Tool
-				Name="VCWebDeploymentTool"/>
 			<Tool
 				Name="VCManagedWrapperGeneratorTool"/>
 			<Tool
@@ -192,7 +190,7 @@
 			<Tool
 				Name="VCCustomBuildTool"/>
 			<Tool
-				Name="VCLinkerTool"/>
+				Name="VCLibrarianTool"/>
 			<Tool
 				Name="VCMIDLTool"/>
 			<Tool
@@ -207,8 +205,6 @@
 				Name="VCWebServiceProxyGeneratorTool"/>
 			<Tool
 				Name="VCXMLDataGeneratorTool"/>
-			<Tool
-				Name="VCWebDeploymentTool"/>
 			<Tool
 				Name="VCManagedWrapperGeneratorTool"/>
 			<Tool
@@ -269,6 +265,26 @@
 				Name="VCManagedWrapperGeneratorTool"/>
 			<Tool
 				Name="VCAuxiliaryManagedWrapperGeneratorTool"/>
+		</Configuration>
+		<Configuration
+			Name="EDITOR-Debug|Xbox"
+			ConfigurationType="1">
+			<Tool
+				Name="VCCLCompilerTool"/>
+			<Tool
+				Name="VCCustomBuildTool"/>
+			<Tool
+				Name="VCLinkerTool"/>
+			<Tool
+				Name="VCPostBuildEventTool"/>
+			<Tool
+				Name="VCPreBuildEventTool"/>
+			<Tool
+				Name="VCPreLinkEventTool"/>
+			<Tool
+				Name="XboxDeploymentTool"/>
+			<Tool
+				Name="XboxImageTool"/>
 		</Configuration>
 	</Configurations>
 	<References>
@@ -9990,8 +10006,7 @@
 		<File
 			RelativePath="e_Network.hpp">
 			<FileConfiguration
-				Name="Release|Win32"
-				ExcludedFromBuild="TRUE">
+				Name="Release|Win32">
 				<Tool
 					Name="VCCLCompilerTool"/>
 			</FileConfiguration>
@@ -10002,8 +10017,7 @@
 					Name="VCCLCompilerTool"/>
 			</FileConfiguration>
 			<FileConfiguration
-				Name="Debug|Win32"
-				ExcludedFromBuild="TRUE">
+				Name="Debug|Win32">
 				<Tool
 					Name="VCCLCompilerTool"/>
 			</FileConfiguration>
@@ -10014,8 +10028,7 @@
 					Name="VCCLCompilerTool"/>
 			</FileConfiguration>
 			<FileConfiguration
-				Name="OptDebug|Win32"
-				ExcludedFromBuild="TRUE">
+				Name="OptDebug|Win32">
 				<Tool
 					Name="VCCLCompilerTool"/>
 			</FileConfiguration>
@@ -10026,8 +10039,7 @@
 					Name="VCCLCompilerTool"/>
 			</FileConfiguration>
 			<FileConfiguration
-				Name="QA|Win32"
-				ExcludedFromBuild="TRUE">
+				Name="QA|Win32">
 				<Tool
 					Name="VCCLCompilerTool"/>
 			</FileConfiguration>
@@ -10038,8 +10050,7 @@
 					Name="VCCLCompilerTool"/>
 			</FileConfiguration>
 			<FileConfiguration
-				Name="EDITOR-Debug|Win32"
-				ExcludedFromBuild="TRUE">
+				Name="EDITOR-Debug|Win32">
 				<Tool
 					Name="VCCLCompilerTool"/>
 			</FileConfiguration>

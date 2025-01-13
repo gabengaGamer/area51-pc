@@ -370,6 +370,11 @@ void memcard_hardware::InvalidateFileList( void )
     s_FileInfo.Clear();
 }
 
+memcard_error memcard_hardware::GetCardStatus(s32 CardId)
+{
+    return MEMCARD_FATAL_ERROR;
+}
+
 //------------------------------------------------------------------------------
 
 void memcard_hardware::Process( void )
