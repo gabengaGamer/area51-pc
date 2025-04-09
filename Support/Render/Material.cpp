@@ -234,7 +234,7 @@ void ps::path::compile( const char* pShaderText,shader& Result )
 
 //=============================================================================
 
-#define COMPILE_SHADERS 1
+#define COMPILE_SHADERS 0
 
 extern IDirect3DDevice9* g_pd3dDevice;
 
