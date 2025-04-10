@@ -50,7 +50,7 @@ The following prerequisites are required to build the source tree for PC:
 4. Put game assets to **'C:\GameData\A51\Release\PC\DVD'**
 5. **XtremeToolkit 4100** **(FOR UI TOOLS)** | Install it from "xCore\3rdParty\CodeJock"
 
-## List of valid win32 targets.
+## List of valid WIN32 targets.
 Debug           | OptDebug           | QA                 | Release            | EDITOR-Debug  
 ----------------|--------------------|--------------------|--------------------|---------------------
 Yes             | Yes                | Yes                | Yes                | Yes/Only for Editor!
@@ -91,6 +91,13 @@ XBMPViewer     |                                                                
 xCL            |                                                                                         | Working
 XSCC           |                                                                                         | Working
 xTool          |                                                                                         | Working
+
+## List of custom tools.
+Name                                                                                         | Description                                                                             
+---------------------------------------------------------------------------------------------| ----------------------------------------------------------------------------------------
+[Engine-51](https://github.com/bigianb/engine-51)                                            | Area-51 Asset Viewer.                                                                                         
+[MatxToolkit](https://github.com/gabengaGamer/Inevitable-MATX-Toolkit)                       | Blender plugin for exporting .matx models for GeomCompiler.                                                                                      
+[Playsurface Blender importer](https://github.com/gabengaGamer/json-playsurface-processer)   | Script for importing .playsurface maps into blender.                                                                                      
 
 ## Building XBOX Code
 
