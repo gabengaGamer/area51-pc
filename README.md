@@ -45,10 +45,10 @@ There is no functional rendering backend for the PC version — rendering code i
 The following prerequisites are required to build the source tree for PC:
 
 1. **Visual Studio .Net 2003**
-2. **XtremeToolkit 4100** | Install it from "xCore\3rdParty\CodeJock"
-3. **Xbox SDK - 5849**
-4. You'll need to create an environment variable called **X** and **S** that points to the important library directions of the source tree. For example, if the source tree is located at **'D:\area51-pc'** the **X** environment variable should point to **'D:\area51-pc\xCore'**. the **S** environment variable should point to **'D:\area51-pc\Support'**
-5. Put game assets to **'C:\GameData\A51\Release\PC\DVD'**
+2. **Xbox SDK - 5849**
+3. You'll need to create an environment variable called **X** and **S** that points to the important library directions of the source tree. For example, if the source tree is located at **'D:\area51-pc'** the **X** environment variable should point to **'D:\area51-pc\xCore'**. the **S** environment variable should point to **'D:\area51-pc\Support'**
+4. Put game assets to **'C:\GameData\A51\Release\PC\DVD'**
+5. **XtremeToolkit 4100** **(FOR UI TOOLS)** | Install it from "xCore\3rdParty\CodeJock"
 
 ## List of valid win32 targets.
 Debug           | OptDebug           | QA                 | Release            | EDITOR-Debug  
