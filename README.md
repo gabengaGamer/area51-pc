@@ -15,27 +15,52 @@ The main goal is to get the source code into a buildable state on modern systems
 
 [![Join our Discord](https://github.com/gabengaGamer/area51-pc/assets/54669564/bac6c8a8-2d95-4513-8943-c5c26bd09173)](https://discord.gg/7gGhFSjxsq)
 
+## PC Code issues
+
+1. **Model Format Compatibility (rigidgeom, skingeom):**
+The most critical issue at present is the incompatibility of the PC build with the new retail model formats. The engine does not currently support updated rigidgeom and skingeom model structures used in the latest retail version.
+
+2. **Audio System Malfunctions:**
+The Miles Sound System 6 implementation is broken — MP3 decoding fails, and both Bink audio playback and world ambient audio systems are non-functional.
+
+3. **Multiplayer & Network Stack Failure:**
+The network layer is completely broken. Multiplayer functionality is non-operational, and several systems tied to single-player logic are also affected.
+- Update: Single-player logic may be partially restored — further testing required to confirm stability.
+
+4. **Console UI (Incomplete Interface):**
+The PC version is currently using the console UI. This results in:
+
+  - Missing PC-specific settings (graphics, keybindings, etc.)
+
+  - Redundant console-only interface logic included in the build, which clutters the UI codebase.
+
+5. **Save System Not Implemented:**
+No saving or loading functionality is currently available. The save system has not been implemented for the PC version.
+
+6. **PC Renderer Not Implemented:**
+There is no functional rendering backend for the PC version — rendering code is almost not implemented. The game cannot post-process, lighting and etc. 
+
 ## Building PC Code
 
 The following prerequisites are required to build the source tree for PC:
 
 1. **Visual Studio .Net 2003**
-2. **XtremeToolkit 4100** | Install it from "xCore\3rdParty\CodeJock"
-3. **Xbox SDK - 5849**
-4. You'll need to create an environment variable called **X** and **S** that points to the important library directions of the source tree. For example, if the source tree is located at **'D:\area51-pc'** the **X** environment variable should point to **'D:\area51-pc\xCore'**. the **S** environment variable should point to **'D:\area51-pc\Support'**
-5. Put game assets to **'C:\GameData\A51\Release\PC\DVD'**
+2. **Xbox SDK - 5849**
+3. You'll need to create an environment variable called **X** and **S** that points to the important library directions of the source tree. For example, if the source tree is located at **'D:\area51-pc'** the **X** environment variable should point to **'D:\area51-pc\xCore'**. the **S** environment variable should point to **'D:\area51-pc\Support'**
+4. Put game assets to **'C:\GameData\A51\Release\PC\DVD'**
+5. **XtremeToolkit 4100** **(FOR UI TOOLS)** | Install it from "xCore\3rdParty\CodeJock"
 
-## List of valid win32 targets.
+## List of valid WIN32 targets.
 Debug           | OptDebug           | QA                 | Release            | EDITOR-Debug  
 ----------------|--------------------|--------------------|--------------------|---------------------
-Yes             | Yes/Only for tools | Yes/Only for tools | Yes/Only for tools | Yes/Only for Editor!
+Yes             | Yes                | Yes                | Yes                | Yes/Only for Editor!
 
 ## List of compiled apps.
 Name           | Description                                                                             | Status
 ---------------| ----------------------------------------------------------------------------------------|---------------
 AnimCompiler   |                                                                                         | Working
 Art2Code       |                                                                                         | Working
-ArtistViewer   |                                                                                         | Broken
+ArtistViewer   |                                                                                         | Broken [DEPRECATED]
 AudioEditor    |                                                                                         | Working/Lib for: [Editor](https://github.com/gabengaGamer/area51-pc/releases/tag/Editor-1.0)
 BinaryString   |                                                                                         | Working/Lib for: [Editor](https://github.com/gabengaGamer/area51-pc/releases/tag/Editor-1.0)
 BitmapEditor   |                                                                                         | Working/Lib for: [Editor](https://github.com/gabengaGamer/area51-pc/releases/tag/Editor-1.0)
@@ -51,14 +76,14 @@ FontBuilder    |                                                                
 FontEditor     |                                                                                         | Working/Lib for: [Editor](https://github.com/gabengaGamer/area51-pc/releases/tag/Editor-1.0)
 FxEditor       |                                                                                         | Working/Lib for: [Editor](https://github.com/gabengaGamer/area51-pc/releases/tag/Editor-1.0)
 FXCompiler     |                                                                                         | Working
-GameApp        |                                                                                         | SemiWorking/PC models doesn't loads
+GameApp        |                                                                                         | SemiWorking
 GeomCompiler   |                                                                                         | Working
 LocoEditor     |                                                                                         | Working/Lib for: [Editor](https://github.com/gabengaGamer/area51-pc/releases/tag/Editor-1.0)
 MeshViewer     |                                                                                         | Working/Lib for: [Editor](https://github.com/gabengaGamer/area51-pc/releases/tag/Editor-1.0)
 PropertyEditor |                                                                                         | Working/Lib for: [Editor](https://github.com/gabengaGamer/area51-pc/releases/tag/Editor-1.0)
 SoundPackager  |                                                                                         | Working
 StringTool     |                                                                                         | Working
-Viewer         |                                                                                         | Broken
+Viewer         |                                                                                         | Broken [DEPRECATED]
 WinControls    |                                                                                         | Working/Lib for: [Editor](https://github.com/gabengaGamer/area51-pc/releases/tag/Editor-1.0)
 WorldEditor    |                                                                                         | Working/Lib for: [Editor](https://github.com/gabengaGamer/area51-pc/releases/tag/Editor-1.0)
 XBMPTool       |                                                                                         | Working
@@ -66,6 +91,13 @@ XBMPViewer     |                                                                
 xCL            |                                                                                         | Working
 XSCC           |                                                                                         | Working
 xTool          |                                                                                         | Working
+
+## List of custom tools.
+Name                                                                                         | Description                                                                             
+---------------------------------------------------------------------------------------------| ----------------------------------------------------------------------------------------
+[Engine-51](https://github.com/bigianb/engine-51)                                            | Area-51 Asset Viewer.                                                                                         
+[MatxToolkit](https://github.com/gabengaGamer/Inevitable-MATX-Toolkit)                       | Blender plugin for exporting .matx models for GeomCompiler.                                                                                      
+[Playsurface Blender importer](https://github.com/gabengaGamer/json-playsurface-processer)   | Script for importing .playsurface maps into blender.                                                                                      
 
 ## Building XBOX Code
 
