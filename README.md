@@ -35,7 +35,7 @@ The PC version is currently using the console UI. This results in:
   - Redundant console-only interface logic included in the build, which clutters the UI codebase.
 
 5. **Save System Not Implemented:**
-No saving or loading functionality is currently available. The save system has not been implemented for the PC version.
+The save system has not been implemented for the PC version.
 
 6. **PC Renderer Not Implemented:**
 There is no functional rendering backend for the PC version — rendering code is almost not implemented. The game cannot post-process, lighting and etc. 
