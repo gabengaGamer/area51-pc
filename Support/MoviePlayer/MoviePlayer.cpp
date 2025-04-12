@@ -184,14 +184,12 @@ s32 PlaySimpleMovie(const char* movieName)
                 Movie.Render(Pos,Size);
                 eng_PageFlip();
 
-#ifdef TARGET_XBOX
-                //if( (g_ActiveConfig.GetExitReason()!=GAME_EXIT_CONTINUE) && (g_ActiveConfig.GetExitReason()!=GAME_EXIT_GAME_COMPLETE) )
-                //{
-                //  done = TRUE;
-                //}
+#if defined(TARGET_XBOX)
                 if( input_WasPressed( INPUT_XBOX_BTN_START, -1 ) || input_WasPressed( INPUT_XBOX_BTN_A, -1 ) ) 
-#else
+#elif defined(TARGET_PS2)
                 if( input_WasPressed( INPUT_PS2_BTN_CROSS, 0 ) || input_WasPressed( INPUT_PS2_BTN_CROSS, 1 ) ) 
+#elif defined(TARGET_PC)
+                if( input_WasPressed( INPUT_KBD_RETURN, 0 ) || input_WasPressed( INPUT_KBD_ESCAPE, 0 ) || input_WasPressed( INPUT_KBD_SPACE, 0 ) ) 
 #endif
                 done = TRUE;
             }

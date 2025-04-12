@@ -1303,7 +1303,7 @@ void state_mgr::DummyScreen( const char* message, xbool canSkip, s32 waitTime )
 #ifdef TARGET_PC
                 if( input_IsPressed( INPUT_MSG_EXIT ) )
                     bSkip = TRUE;
-                if ( input_WasPressed( INPUT_KBD_RETURN, 0) || input_WasPressed( INPUT_KBD_SPACE, 0) || input_IsPressed( INPUT_PS2_BTN_CROSS, 0 ) )
+                if( input_WasPressed( INPUT_KBD_RETURN, 0 ) || input_WasPressed( INPUT_KBD_ESCAPE, 0 ) || input_WasPressed( INPUT_KBD_SPACE, 0 ) ) 
                     bSkip = TRUE;
 #endif
 
