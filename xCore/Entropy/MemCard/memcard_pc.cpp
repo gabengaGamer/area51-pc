@@ -690,21 +690,132 @@ xbool memcard_hardware::IsCardConnected( s32 CardID )
 
 void memcard_hardware::ProcessCreateFile( void )
 {
-BREAK
+    HANDLE hFile = CreateFile(
+        xfs("C:\\GAMEDATA\\A51\\RELEASE\\PC\\MEMCARD\\%s\\%s",
+            m_pRequestedDirName,
+            m_pRequestedFileName
+        ),
+        GENERIC_WRITE,
+        0,
+        NULL,
+        CREATE_ALWAYS,
+        0,
+        NULL
+    );
+    if( hFile==INVALID_HANDLE_VALUE )
+    {
+        SendMessage( MSG_ERROR );
+        return;
+    }
+    
+    CloseHandle( hFile );
+    SendMessage( MSG_COMPLETE );
 }
 
 //------------------------------------------------------------------------------
 
 void memcard_hardware::ProcessWrite( void )
 {
-BREAK;
+    ASSERT( m_pRequestedBuffer );
+    ASSERT( m_nRequestedBytes > 0 );
+    ASSERT( m_RequestedOffset >= 0 );
+
+    HANDLE hFile = CreateFile(
+        xfs("C:\\GAMEDATA\\A51\\RELEASE\\PC\\MEMCARD\\%s\\%s",
+            m_pRequestedDirName,
+            m_pRequestedFileName
+        ),
+        GENERIC_WRITE,
+        0,
+        NULL,
+        OPEN_ALWAYS,
+        0,
+        NULL
+    );
+    if( hFile==INVALID_HANDLE_VALUE )
+    {
+        SendMessage( MSG_ERROR );
+        return;
+    }
+    
+    if( SetFilePointer( hFile, m_RequestedOffset, NULL, FILE_BEGIN ) == INVALID_SET_FILE_POINTER )
+    {
+        CloseHandle( hFile );
+        SendMessage( MSG_ERROR );
+        return;
+    }
+    
+    DWORD BytesWritten;
+    BOOL bWriteResult = WriteFile(
+        hFile,
+        m_pRequestedBuffer,
+        m_nRequestedBytes,
+        &BytesWritten,
+        NULL
+    );
+    
+    CloseHandle( hFile );
+    
+    if( !bWriteResult || (BytesWritten != (DWORD)m_nRequestedBytes) )
+    {
+        SendMessage( MSG_ERROR );
+        return;
+    }
+    
+    SendMessage( MSG_COMPLETE );
 }
 
 //------------------------------------------------------------------------------
 
 void memcard_hardware::ProcessRead( void )
 {
-    BREAK;
+    ASSERT( m_pRequestedBuffer );
+    ASSERT( m_nRequestedBytes > 0 );
+    ASSERT( m_RequestedOffset >= 0 );
+
+    HANDLE hFile = CreateFile(
+        xfs("C:\\GAMEDATA\\A51\\RELEASE\\PC\\MEMCARD\\%s\\%s",
+            m_pRequestedDirName,
+            m_pRequestedFileName
+        ),
+        GENERIC_READ,
+        FILE_SHARE_READ,
+        NULL,
+        OPEN_EXISTING,
+        0,
+        NULL
+    );
+    if( hFile==INVALID_HANDLE_VALUE )
+    {
+        SendMessage( MSG_ERROR );
+        return;
+    }
+    
+    if( SetFilePointer( hFile, m_RequestedOffset, NULL, FILE_BEGIN ) == INVALID_SET_FILE_POINTER )
+    {
+        CloseHandle( hFile );
+        SendMessage( MSG_ERROR );
+        return;
+    }
+    
+    DWORD BytesRead;
+    BOOL bReadResult = ReadFile(
+        hFile,
+        m_pRequestedBuffer,
+        m_nRequestedBytes,
+        &BytesRead,
+        NULL
+    );
+    
+    CloseHandle( hFile );
+    
+    if( !bReadResult || (BytesRead != (DWORD)m_nRequestedBytes) )
+    {
+        SendMessage( MSG_ERROR );
+        return;
+    }
+    
+    SendMessage( MSG_COMPLETE );
 }
 
 //------------------------------------------------------------------------------
