@@ -146,7 +146,6 @@ void audio_mp3_mgr::Open( audio_stream* pStream )
     ASSERT( VALID_STREAM(pStream) );
     pStream->CursorMP3 = 0;
     pStream->HandleMP3 = (void*)ASI_stream_open( (U32)pStream, mp3_fetch_data, pStream->Samples[0].Sample.WaveformLength );
-	pStream->HandleMP3 = NULL;
 }
 
 //------------------------------------------------------------------------------
