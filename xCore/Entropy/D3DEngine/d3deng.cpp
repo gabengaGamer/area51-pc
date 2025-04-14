@@ -635,7 +635,7 @@ HWND CreateWin( s32 Width, s32 Height )
 
 //=========================================================================
 
-#ifndef X_RETAIL
+#if !defined( X_RETAIL ) || defined( X_QA )
 
 void text_BeginRender( void )
 {
@@ -651,11 +651,11 @@ void text_BeginRender( void )
     }
 }
 
-#endif // X_RETAIL
+#endif // !defined( X_RETAIL ) || defined( X_QA )
 
 //=========================================================================
 
-#ifndef X_RETAIL
+#if !defined( X_RETAIL ) || defined( X_QA )
 
 void text_RenderStr( char* pStr, s32 NChars, xcolor Color, s32 PixelX, s32 PixelY )
 {
@@ -675,16 +675,16 @@ void text_RenderStr( char* pStr, s32 NChars, xcolor Color, s32 PixelX, s32 Pixel
 	if(Error != D3D_OK) rstct = Error;
 }
 
-#endif // X_RETAIL
+#endif // !defined( X_RETAIL ) || defined( X_QA )
 //=========================================================================
 
-#ifndef X_RETAIL
+#if !defined( X_RETAIL ) || defined( X_QA )
 
 void text_EndRender( void )
 {
 }
 
-#endif // X_RETAIL
+#endif // !defined( X_RETAIL ) || defined( X_QA )
 
 //=========================================================================
 
@@ -1285,12 +1285,12 @@ void eng_ScreenShot( const char* pFileName )
 
 //=============================================================================
 
-#ifndef X_RETAIL
+#if !defined(X_RETAIL) || defined(X_QA)
 xbool eng_ScreenShotActive( void )
 {
     return FALSE;
 }
-#endif
+#endif  // !defined( X_RETAIL ) || defined( X_QA )
 
 //=============================================================================
 
