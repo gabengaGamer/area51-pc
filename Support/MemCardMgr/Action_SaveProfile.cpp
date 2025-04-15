@@ -58,8 +58,11 @@ void MemCardMgr::MC_STATE_SAVE_PROFILE( void )
             pText,
             FALSE
         );
-
+#ifdef TARGET_XBOX
         g_MemcardMgr.AsyncSetDirectory( m_PreservedProfile[m_iPlayer].Dir );
+#elif defined(TARGET_PC)
+        g_MemcardMgr.AsyncSetDirectory( "" ); //We dont using settings folders on PC.
+#endif
         m_bForcePoll[m_iCard] = true;
 
         return;

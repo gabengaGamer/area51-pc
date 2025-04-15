@@ -137,8 +137,11 @@ void MemCardMgr::MC_STATE_CREATE_PROFILE( void )
         );
 
         // Create directory ...................................................
+#ifdef TARGET_XBOX
         g_MemcardMgr.AsyncCreateDirectory( m_PreservedProfile[m_iPlayer].Dir );
-
+#elif defined(TARGET_PC)
+        g_MemcardMgr.AsyncSetDirectory( "" ); //We dont using settings folders on PC.
+#endif
         return;
     }
     PopState();
@@ -158,7 +161,11 @@ void MemCardMgr::MC_STATE_CREATE_PROFILE_CREATE_DIR_WAIT( void )
         case kSUCCESS:
         {
             ChangeState( __id MC_STATE_CREATE_PROFILE_SET_DIR_WAIT );
-            g_MemcardMgr.AsyncSetDirectory( m_PreservedProfile[m_iPlayer].Dir );
+#ifdef TARGET_XBOX
+        g_MemcardMgr.AsyncSetDirectory( m_PreservedProfile[m_iPlayer].Dir );
+#elif defined(TARGET_PC)
+        g_MemcardMgr.AsyncSetDirectory( "" ); //We dont using settings folders on PC.
+#endif
             return;
         }
 

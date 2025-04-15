@@ -265,7 +265,11 @@ void MemCardMgr::MC_STATE_GET_PROFILE_NAMES( void )
     if( m_iDir < Pending.InfoList.GetCount())
     {
         ChangeState( __id MC_STATE_GET_PROFILE_NAMES_WAIT );
+#ifdef TARGET_XBOX
         g_MemcardMgr.AsyncSetDirectory( Pending.InfoList[m_iDir].Dir );
+#elif defined(TARGET_PC)
+        g_MemcardMgr.AsyncSetDirectory( "" ); //We dont using folders on PC.
+#endif
         return;
     }
 
@@ -395,7 +399,7 @@ void MemCardMgr::MC_STATE_FIND_SETTINGS( void )
 #ifdef TARGET_XBOX
         g_MemcardMgr.AsyncSetDirectory( "Game Settings" );
 #elif defined(TARGET_PC)
-        g_MemcardMgr.AsyncSetDirectory( xfs("%s%s",m_SavePrefix, m_OptionsPostfix) );
+        g_MemcardMgr.AsyncSetDirectory( "" ); //We dont using folders on PC.
 #endif
     ChangeState( __id MC_STATE_FIND_SETTINGS_WAIT );
 }

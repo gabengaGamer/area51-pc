@@ -51,7 +51,7 @@ void MemCardMgr::MC_STATE_LOAD_SETTINGS( void )
 #ifdef TARGET_XBOX
         g_MemcardMgr.AsyncSetDirectory( "Game Settings" );
 #elif defined(TARGET_PC)
-        g_MemcardMgr.AsyncSetDirectory( xfs("%s%s",m_SavePrefix, m_OptionsPostfix) );
+        g_MemcardMgr.AsyncSetDirectory( "" ); //We dont using settings folders on PC.
 #endif
         ChangeState( __id MC_STATE_LOAD_SETTINGS_SET_DIR_WAIT );
     }
