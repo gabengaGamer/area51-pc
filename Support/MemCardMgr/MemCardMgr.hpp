@@ -67,19 +67,9 @@ enum memcard_mode
 
 #define MAX_PROFILE_CAPACITY     32
 
-#ifdef TARGET_XBOX
+#if defined(TARGET_PC) || defined(TARGET_XBOX)
 #   define MAX_CARD_SLOTS   1 // hdd
 #   define MAX_PLAYER_SLOTS 5
-#endif
-
-#ifdef TARGET_PS2
-#   define MAX_CARD_SLOTS   2
-#   define MAX_PLAYER_SLOTS 3
-#endif
-
-#ifdef TARGET_PC
-#   define MAX_CARD_SLOTS   2 // increased the value from 1 to 2
-#   define MAX_PLAYER_SLOTS 5 // increased the value from 3 to 5
 #endif
 
 #ifndef __id
@@ -112,10 +102,6 @@ template< s32 Capacity >struct queue_machine
     {
         void run( void )
         {
-        #ifdef TARGET_PS2
-            MemCardMgr* pThis=( MemCardMgr* )Me;
-            ( pThis->*Fn )();
-        #else
             __asm // Curse you .NET! This code works 90%
             {     // of the time under Microsoft's .POO!
                   // #pragma( biscuit_lint:disable )
@@ -123,7 +109,6 @@ template< s32 Capacity >struct queue_machine
                 mov ecx,[ecx]   // Me
                 call eax
             }
-        #endif
         }
 
         void* Data[4];
@@ -528,9 +513,9 @@ struct MemCardMgr: public queue_machine< 64 >
 
     // ------------------------------------------------------------------------
 
-#   ifdef TARGET_XBOX
+#ifdef TARGET_XBOX
     void MC_ACTION_XBOX_CHECK_BLOCK_AVAIL        ( void );
-#   endif
+#endif
 
     // ------------------------------------------------------------------------
     //                                            Actionable memory card states
@@ -540,19 +525,15 @@ struct MemCardMgr: public queue_machine< 64 >
     void MC_STATE_IDLE                           ( void );
 
     // ------------------------------------------------------------------------
-    // PS2 PS2 PS2 PS2 PS2                        Actionable memory card states
-    // ------------------------------------------------------------------------
-
-    // ------------------------------------------------------------------------
     // XBOX XBOX XBOX XBOX                        Actionable memory card states
     // ------------------------------------------------------------------------
 
-#   if defined( TARGET_XBOX ) || defined( TARGET_PC )
+#if defined( TARGET_XBOX ) || defined( TARGET_PC )
 
     void MC_STATE_MESSAGE_OUT_OF_BLOCKS_ASK      ( void );
     void MC_STATE_MESSAGE_OUT_OF_BLOCKS          ( void );
 
-#   endif
+#endif
 
     // ------------------------------------------------------------------------
 
