@@ -18,7 +18,7 @@ static xbool s_DispatcherActive = FALSE; // FLAG: Is the dispatcher active? (pre
 #define PC_MEMCARD_ROOT_DIR "C:\\GameData\\A51\\Release\\PC\\MEMCARD\\"
 
 // Maximum number of memory cards the system supports.
-#define MAX_MEMCARDS (2) 
+#define MAX_MEMCARDS (1) 
 
 // Size of the message queue.
 #define MAX_MESSAGES (6) 
@@ -459,10 +459,10 @@ void memcard_hardware::Process( void )
 
 //------------------------------------------------------------------------------
 
-void memcard_hardware::ProcessCreateDir( void )
+void memcard_hardware::ProcessCreateDir( void ) //DO NOT USE m_pRequestedDirName FOR CREATING FOLDERS, IS DEPRECATED!!!
 {
     CreateDirectory(
-        xfs("C:\\GAMEDATA\\A51\\RELEASE\\PC\\MEMCARD\\%s",m_pRequestedDirName ),
+        xfs("%s%s", PC_MEMCARD_ROOT_DIR, m_pRequestedFileName),
         NULL
     );
     SendMessage( MSG_COMPLETE );
@@ -478,18 +478,45 @@ void memcard_hardware::ProcessSetDir( void )
 
 //------------------------------------------------------------------------------
 
-void memcard_hardware::ProcessDeleteDir( void )
+void memcard_hardware::ProcessDeleteDir( void ) //DO NOT USE m_pRequestedDirName FOR DELETEING FOLDERS, IS DEPRECATED!!!
 {
-    ProcessReadFileList();
-    s32 i,n = s_FileInfo.GetCount();
-    for( i=0;i<n;i++ )
-        DeleteFile(
-            xfs("C:\\GAMEDATA\\A51\\RELEASE\\PC\\MEMCARD\\%s\\%s",
-                m_pRequestedDirName,
-                s_FileInfo[i].FileName
-            )
-        );
-    SendMessage( MSG_COMPLETE );
+    WIN32_FIND_DATA findData;
+    HANDLE hFind = FindFirstFile(
+        xfs("%s%s\\*.*", PC_MEMCARD_ROOT_DIR, m_pRequestedFileName),
+        &findData
+    );
+    
+    if (hFind != INVALID_HANDLE_VALUE) 
+    {
+        do 
+        {
+            if (strcmp(findData.cFileName, ".") != 0 && strcmp(findData.cFileName, "..") != 0) 
+            {
+                DeleteFile(
+                    xfs("%s%s\\%s",
+                        PC_MEMCARD_ROOT_DIR,
+                        m_pRequestedFileName,
+                        findData.cFileName
+                    )
+                );
+            }
+        } while (FindNextFile(hFind, &findData));
+        
+        FindClose(hFind);
+    }
+    if (RemoveDirectory(
+            xfs("%s%s", PC_MEMCARD_ROOT_DIR, m_pRequestedFileName)
+        ) == 0) 
+    {
+        DWORD error = GetLastError();
+        if (error != ERROR_FILE_NOT_FOUND && error != ERROR_PATH_NOT_FOUND) 
+        {
+            SendMessage(MSG_ERROR);
+            return;
+        }
+    }
+    
+    SendMessage(MSG_COMPLETE);
 }
 
 //------------------------------------------------------------------------------
@@ -511,7 +538,8 @@ void memcard_hardware::ProcessUnmount( void )
 void memcard_hardware::ProcessReadFile( void )
 {
     HANDLE hFile = CreateFile(
-        xfs("C:\\GAMEDATA\\A51\\RELEASE\\PC\\MEMCARD\\%s\\%s",
+        xfs("%s%s\\%s",
+            PC_MEMCARD_ROOT_DIR,
             m_pRequestedDirName,
             m_pRequestedFileName
         ),
@@ -549,7 +577,8 @@ void memcard_hardware::ProcessReadFile( void )
 void memcard_hardware::ProcessWriteFile( void )
 {
     HANDLE hFile = CreateFile(
-        xfs("C:\\GAMEDATA\\A51\\RELEASE\\PC\\MEMCARD\\%s\\%s",
+        xfs("%s%s\\%s",
+            PC_MEMCARD_ROOT_DIR,
             m_pRequestedDirName,
             m_pRequestedFileName
         ),
@@ -586,43 +615,58 @@ void memcard_hardware::ProcessWriteFile( void )
 
 void memcard_hardware::ProcessDeleteFile( void )
 {
-    DeleteFile(
-        xfs("C:\\GAMEDATA\\A51\\RELEASE\\PC\\MEMCARD\\%s\\%s",
-            m_pRequestedDirName,
-            m_pRequestedFileName
-        )
-    );
-    SendMessage( MSG_COMPLETE );
+BREAK;
 }
 
 //------------------------------------------------------------------------------
 
 void memcard_hardware::ProcessFormat( void )
 {
-    SendMessage( MSG_COMPLETE );
+BREAK;
 }
 
 //------------------------------------------------------------------------------
 
-void memcard_hardware::ProcessReadFileList( void )
+void memcard_hardware::ProcessReadFileList(void)
 {
     WIN32_FIND_DATA Fd;
-    HANDLE hFind = FindFirstFile( m_pRequestedDirName,&Fd );
-    if( hFind==INVALID_HANDLE_VALUE )
-        SendMessage( MSG_ERROR );
+    xstring SearchPath = xfs("%s\\*", m_pRequestedDirName);
+    HANDLE hFind = FindFirstFile((const char*)SearchPath, &Fd);
+    
+    InvalidateFileList();
+    
+    if (hFind == INVALID_HANDLE_VALUE)
+    {
+        if (GetLastError() == ERROR_PATH_NOT_FOUND)
+        {
+            CreateDirectory(m_pRequestedDirName, NULL);
+        }
+        m_bIsFileListValid = FALSE;
+        m_nFileCount = 0;
+        SendMessage(MSG_ERROR);
+    }
     else
     {
-        s_FileInfo.Clear();
         s32 Index = 0;
         do
-        {   mc_file_info& Info = s_FileInfo.Append();
-            x_strcpy( Info.FileName, Fd.cFileName );
-            Info.Length = Fd.nFileSizeLow;
-            Info.Index  = Index++;
-        }
-        while( FindNextFile( hFind,&Fd ));
-        SendMessage( MSG_COMPLETE );
-        FindClose( hFind );
+        {
+            if (x_strcmp(Fd.cFileName, ".") != 0 && x_strcmp(Fd.cFileName, "..") != 0)
+            {
+                mc_file_info& Info = s_FileInfo.Append();
+                x_strcpy(Info.FileName, Fd.cFileName);
+                Info.Length = Fd.nFileSizeLow;
+                Info.Index = Index++;
+                
+                FileTimeToLocalFileTime(&Fd.ftCreationTime, (FILETIME*)&Info.CreationDate);
+                FileTimeToLocalFileTime(&Fd.ftLastWriteTime, (FILETIME*)&Info.ModifiedDate);
+            }
+        } 
+		while (FindNextFile(hFind, &Fd));
+        
+        FindClose(hFind);
+        m_nFileCount = Index;
+        m_bIsFileListValid = TRUE;
+        SendMessage(MSG_COMPLETE);
     }
 }
 
@@ -642,7 +686,8 @@ void memcard_hardware::ProcessPurgeFileList( void )
 void memcard_hardware::ProcessGetFileLength( void )
 {
     HANDLE hFile = CreateFile(
-        xfs("C:\\GAMEDATA\\A51\\RELEASE\\PC\\MEMCARD\\%s\\%s",
+        xfs("%s%s\\%s",
+            PC_MEMCARD_ROOT_DIR,
             m_pRequestedDirName,
             m_pRequestedFileName
         ),
@@ -691,7 +736,8 @@ xbool memcard_hardware::IsCardConnected( s32 CardID )
 void memcard_hardware::ProcessCreateFile( void )
 {
     HANDLE hFile = CreateFile(
-        xfs("C:\\GAMEDATA\\A51\\RELEASE\\PC\\MEMCARD\\%s\\%s",
+        xfs("%s%s\\%s",
+            PC_MEMCARD_ROOT_DIR,
             m_pRequestedDirName,
             m_pRequestedFileName
         ),
@@ -721,7 +767,8 @@ void memcard_hardware::ProcessWrite( void )
     ASSERT( m_RequestedOffset >= 0 );
 
     HANDLE hFile = CreateFile(
-        xfs("C:\\GAMEDATA\\A51\\RELEASE\\PC\\MEMCARD\\%s\\%s",
+        xfs("%s%s\\%s",
+            PC_MEMCARD_ROOT_DIR,
             m_pRequestedDirName,
             m_pRequestedFileName
         ),
@@ -774,7 +821,8 @@ void memcard_hardware::ProcessRead( void )
     ASSERT( m_RequestedOffset >= 0 );
 
     HANDLE hFile = CreateFile(
-        xfs("C:\\GAMEDATA\\A51\\RELEASE\\PC\\MEMCARD\\%s\\%s",
+        xfs("%s%s\\%s",
+            PC_MEMCARD_ROOT_DIR,
             m_pRequestedDirName,
             m_pRequestedFileName
         ),
