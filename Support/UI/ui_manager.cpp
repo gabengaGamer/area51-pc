@@ -1361,7 +1361,7 @@ void ui_manager::RenderElement( s32 iElement, const irect& Position, s32 State, 
         for( ix=0 ; ix<pElement->cx ; ix++ )
         {
             // Calculate UVs
-#ifdef TARGET_XBOX
+#if defined(TARGET_XBOX) || defined(TARGET_PC)
             uv0.X = ((f32)pElement->r[ie].l + 0.5f) / pBitmap->GetWidth();
             uv0.Y = ((f32)pElement->r[ie].t + 0.5f) / pBitmap->GetHeight();
             uv1.X = ((f32)pElement->r[ie].r - 0.5f) / pBitmap->GetWidth();
