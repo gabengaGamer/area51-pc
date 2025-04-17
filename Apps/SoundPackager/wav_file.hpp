@@ -1,11 +1,11 @@
 //==============================================================================
 //
-//  aiff_file.hpp
+//  wav_file.hpp
 //
 //==============================================================================
 
-#ifndef AIFF_FILE_HPP
-#define AIFF_FILE_HPP
+#ifndef WAV_FILE_HPP
+#define WAV_FILE_HPP
 
 //==============================================================================
 // INCLUDES
@@ -15,10 +15,10 @@
 #include "audio_file.hpp"
 
 //==============================================================================
-//  aiff_file
+//  wav_file
 //==============================================================================
 
-class aiff_file : public audio_file
+class wav_file : public audio_file
 {
 private:
     class marker
@@ -30,8 +30,8 @@ private:
     };
 
 public:
-                    aiff_file           ( void );
-    virtual        ~aiff_file           ( void );
+                    wav_file            ( void );
+    virtual        ~wav_file            ( void );
 
 public:
     virtual xbool   Open                ( const char* pFileName );
@@ -55,6 +55,7 @@ protected:
     s32             m_SampleSize;
     s32             m_SampleRate;
     s32             m_DataOffset;
+    s32             m_DataSize;
 
     xbool           m_IsLooped;
     s32             m_LoopStartPosition;
@@ -64,5 +65,5 @@ protected:
 };
 
 //==============================================================================
-#endif // AIFF_FILE_HPP
+#endif // WAV_FILE_HPP
 //==============================================================================
