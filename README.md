@@ -22,6 +22,7 @@ The most critical issue at present is the incompatibility of the PC build with t
 
 2. **Audio System Malfunctions:**
 The Miles Sound System 6 implementation is broken — MP3 decoding fails, and both Bink audio playback and world ambient audio systems are non-functional.
+- Update: Miles6 may be partially restored — further testing required to confirm stability.
 
 3. **Multiplayer & Network Stack Failure:**
 The network layer is completely broken. Multiplayer functionality is non-operational, and several systems tied to single-player logic are also affected.
@@ -36,6 +37,7 @@ The PC version is currently using the console UI. This results in:
 
 5. **Save System Not Implemented:**
 The save system has not been implemented for the PC version.
+- Update: Save system logic may be recreated — further testing required to confirm stability.
 
 6. **PC Renderer Not Implemented:**
 There is no functional rendering backend for the PC version — rendering code is almost not implemented. The game cannot post-process, lighting and etc. 
