@@ -3409,20 +3409,26 @@ void ui_manager::SetRes( void )
     s32 XRes, YRes;
     eng_GetRes( XRes, YRes );
 
-#if (defined( TARGET_PC ) && !defined( X_EDITOR )) || defined(TARGET_PS2)
+#if defined(TARGET_PC) && !defined(X_EDITOR)
     m_ScaleX = (f32)XRes / 512.0f;
     m_ScaleY = (f32)YRes / 448.0f;
-#else   // is editor or xbox
-    m_ScaleX = 1.0f;
-    m_ScaleY = 1.0f;
-#endif
-
-#ifdef TARGET_XBOX
+#elif defined(TARGET_PS2)
+    m_ScaleX = (f32)XRes / 512.0f;
+    m_ScaleY = (f32)YRes / 448.0f;
+#elif defined(TARGET_XBOX)
     if( XRes == 1280 )
     {
         m_ScaleX = (f32)XRes / 512.0f;
         m_ScaleY = (f32)YRes / 448.0f;
     }
+    else
+    {
+        m_ScaleX = 1.0f;
+        m_ScaleY = 1.0f;
+    }
+#else   // is editor
+    m_ScaleX = 1.0f;
+    m_ScaleY = 1.0f;
 #endif
 }
 
