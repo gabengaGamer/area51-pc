@@ -51,7 +51,7 @@ enum memcard_mode
 #   define MC_TEXT_BOX_POPUP_SIZE_W 640
 #   define MC_TEXT_BOX_POPUP_SIZE_H 480
 #else
-#	define MC_TEXT_BOX_POPUP_SIZE_W 400
+#   define MC_TEXT_BOX_POPUP_SIZE_W 400
 #   define MC_TEXT_BOX_POPUP_SIZE_H 280
 #endif
 
