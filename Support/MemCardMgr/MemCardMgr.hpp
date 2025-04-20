@@ -6,8 +6,6 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-
-
 #ifndef __MEMCARDMGR__ 
 #define __MEMCARDMGR__ 
 
@@ -21,8 +19,6 @@
 #include "MemCardMgr\MemCardMgr.hpp"
 #include "Dialogs\dlg_download.hpp"
 
-
-
 class dlg_mcmessage;
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -30,8 +26,6 @@ class dlg_mcmessage;
 //  Externals
 //
 ///////////////////////////////////////////////////////////////////////////////
-
-
 
 enum memcard_mode
 {
@@ -44,21 +38,21 @@ enum memcard_mode
     MEMCARD_IDLE_MODE
 } ;
 
-
 ///////////////////////////////////////////////////////////////////////////////
 //
 //  Defines
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-
-
-#ifdef TARGET_XBOX
+#if defined(TARGET_XBOX)
 #   define MC_TEXT_BOX_POPUP_SIZE_W 320
 #   define MC_TEXT_BOX_POPUP_SIZE_H 240
 #elif defined(TARGET_PC)
 #   define MC_TEXT_BOX_POPUP_SIZE_W 640
 #   define MC_TEXT_BOX_POPUP_SIZE_H 480
+#else
+#	define MC_TEXT_BOX_POPUP_SIZE_W 400
+#   define MC_TEXT_BOX_POPUP_SIZE_H 280
 #endif
 
 #define MC_STATE_STACK_SIZE      10
@@ -70,21 +64,20 @@ enum memcard_mode
 #if defined(TARGET_PC) || defined(TARGET_XBOX)
 #   define MAX_CARD_SLOTS   1 // hdd
 #   define MAX_PLAYER_SLOTS 5
-#endif
+#else
+#   define MAX_CARD_SLOTS   1
+#   define MAX_PLAYER_SLOTS 3
+#endif 
 
 #ifndef __id
 #define __id &MemCardMgr::
 #endif
-
-
 
 ///////////////////////////////////////////////////////////////////////////////
 //
 //  Prototypes
 //
 ///////////////////////////////////////////////////////////////////////////////
-
-
 
 struct MemCardMgr;
 
@@ -513,7 +506,7 @@ struct MemCardMgr: public queue_machine< 64 >
 
     // ------------------------------------------------------------------------
 
-#ifdef TARGET_XBOX
+#if defined(TARGET_XBOX)
     void MC_ACTION_XBOX_CHECK_BLOCK_AVAIL        ( void );
 #endif
 
