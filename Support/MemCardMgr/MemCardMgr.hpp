@@ -56,9 +56,9 @@ enum memcard_mode
 #ifdef TARGET_XBOX
 #   define MC_TEXT_BOX_POPUP_SIZE_W 320
 #   define MC_TEXT_BOX_POPUP_SIZE_H 240
-#else
-#   define MC_TEXT_BOX_POPUP_SIZE_W 400
-#   define MC_TEXT_BOX_POPUP_SIZE_H 280
+#elif defined(TARGET_PC)
+#   define MC_TEXT_BOX_POPUP_SIZE_W 640
+#   define MC_TEXT_BOX_POPUP_SIZE_H 480
 #endif
 
 #define MC_STATE_STACK_SIZE      10
