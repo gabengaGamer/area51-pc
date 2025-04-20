@@ -147,63 +147,24 @@ void MemCardMgr::MC_STATE_PROFILE_WRITE_WAIT( void )
 
 void MemCardMgr::MC_STATE_SAVE_PROFILE_FAILED(void)
 {
-    condition& Pending = GetPendingCondition(m_PreservedProfile[m_iPlayer].CardID);
-#ifdef TARGET_PS2
-    const xwchar* pText;
-    if( Pending.bNoCard )
-    {
-        if( m_MemcardMode == MEMCARD_CREATE_MODE )
-        {
-            if( !m_PreservedProfile[m_iPlayer].CardID )
-                pText = g_StringTableMgr( "ui", "MC_SAVE_FAILED_NO_CARD_SLOT1" );
-            else
-                pText = g_StringTableMgr( "ui", "MC_SAVE_FAILED_NO_CARD_SLOT2" );
-        }
-        else
-        {
-            if( !m_PreservedProfile[m_iPlayer].CardID )
-                pText = g_StringTableMgr( "ui", "MC_OVERWRITE_FAILED_NO_CARD_SLOT1" );
-            else
-                pText = g_StringTableMgr( "ui", "MC_OVERWRITE_FAILED_NO_CARD_SLOT2" );
-        }
-    }
-    else
-    {
-        if( m_MemcardMode == MEMCARD_CREATE_MODE )
-        {
-            if( !m_PreservedProfile[m_iPlayer].CardID )
-                pText = g_StringTableMgr( "ui", "MC_SAVE_FAILED_CARD_CHANGED_SLOT1" );
-            else
-                pText = g_StringTableMgr( "ui", "MC_SAVE_FAILED_CARD_CHANGED_SLOT2" );
-        }
-        else
-        {
-            if( !m_PreservedProfile[m_iPlayer].CardID )
-                pText = g_StringTableMgr( "ui", "MC_OVERWRITE_FAILED_CARD_CHANGED_SLOT1" );
-            else
-                pText = g_StringTableMgr( "ui", "MC_OVERWRITE_FAILED_CARD_CHANGED_SLOT2" );
-        }
-    }
-    // force a poll
-    m_bForcePoll[m_iCard] = true;
-    OptionBox(
-        g_StringTableMgr( "ui", "IDS_MEMCARD_HEADER"       ),
-        pText,
-        g_StringTableMgr( "ui", "IDS_MEMCARD_RETRY"        ),
-        g_StringTableMgr( "ui", "IDS_MEMCARD_CONT_NO_SAVE" )
-        );
-#else
     xwstring MessageText;
     xwstring NavText;
+    
+    condition& Pending = GetPendingCondition(m_PreservedProfile[m_iPlayer].CardID);
+    
+#if defined(TARGET_XBOX)
     m_BlocksRequired = ( (g_StateMgr.GetProfileSaveSize() - Pending.BytesFree) + 16383 ) / 16384;
+
     MessageText = xwstring( xfs( (const char*)xstring(g_StringTableMgr( "ui", "MC_NOT_ENOUGH_FREE_SPACE_SLOT1_PROFILE_XBOX" )), m_BlocksRequired ) );
     NavText     = g_StringTableMgr( "ui", "IDS_NAV_DONT_FREE_BLOCKS" );
+    
     xbool SecondOption = FALSE;
     if( GameMgr.GameInProgress() == FALSE )
     {
         NavText    += g_StringTableMgr( "ui", "IDS_NAV_FREE_MORE_BLOCKS" );
         SecondOption = TRUE;
     }
+    
     PopUpBox( 
         g_StringTableMgr( "ui", "IDS_MEMCARD_HEADER" ),
         MessageText, 
@@ -211,7 +172,21 @@ void MemCardMgr::MC_STATE_SAVE_PROFILE_FAILED(void)
         TRUE, 
         SecondOption, 
         FALSE );
+#elif defined(TARGET_PC)
+    m_BlocksRequired = ( (g_StateMgr.GetProfileSaveSize() - Pending.BytesFree) + 1023 ) / 1024;
+   
+    MessageText = xwstring(xfs((const char*)xstring(g_StringTableMgr("ui", "MC_NOT_ENOUGH_FREE_SPACE_SLOT1_PROFILE_XBOX")), m_BlocksRequired));
+    NavText = g_StringTableMgr("ui", "IDS_OK");
+    
+    PopUpBox( 
+        g_StringTableMgr("ui", "IDS_DISK_SPACE_HEADER"),
+        MessageText, 
+        NavText, 
+        TRUE, 
+        FALSE, 
+        FALSE);
 #endif
+
     FlushStateStack();
     PushState( __id MC_STATE_SAVE_PROFILE_FAILED_WAIT );
     PushState( __id MC_STATE_UNMOUNT                  );

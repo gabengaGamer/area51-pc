@@ -129,7 +129,7 @@ void MemCardMgr::MC_STATE_LOAD_SETTINGS_READ_WAIT( void )
                     xbox_SetBrightness( Brightness );
 #endif
                     g_StateMgr.SetSettingsCardSlot( 0 );
-					
+                    
                     // update the settings
                     Active = *pSettings;
                     Active.Commit();

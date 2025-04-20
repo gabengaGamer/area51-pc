@@ -234,14 +234,18 @@ void MemCardMgr::MC_STATE_CREATE_PROFILE_SET_DIR_WAIT( void )
 
 void MemCardMgr::MC_STATE_CREATE_PROFILE_FAILED( void )
 {
-#if defined(TARGET_XBOX)
     xwstring MessageText;
     xwstring NavText;
+    
     condition& Pending = GetPendingCondition(m_PreservedProfile[m_iPlayer].CardID);
+    
+#if defined(TARGET_XBOX)
     m_BlocksRequired = ( (g_StateMgr.GetProfileSaveSize() - Pending.BytesFree) + 16383 ) / 16384;
+        
     MessageText = xwstring( xfs( (const char*)xstring(g_StringTableMgr( "ui", "MC_NOT_ENOUGH_FREE_SPACE_SLOT1_XBOX" )), m_BlocksRequired ) );
     NavText     = g_StringTableMgr( "ui", "IDS_NAV_DONT_FREE_BLOCKS" );
     NavText    += g_StringTableMgr( "ui", "IDS_NAV_FREE_MORE_BLOCKS" );
+    
     PopUpBox( 
         g_StringTableMgr( "ui", "IDS_MEMCARD_HEADER" ),
         MessageText, 
@@ -249,38 +253,25 @@ void MemCardMgr::MC_STATE_CREATE_PROFILE_FAILED( void )
         TRUE, 
         TRUE, 
         FALSE );
-    FlushStateStack();
-    PushState( __id MC_STATE_CREATE_PROFILE_FAILED_WAIT );
-    PushState( __id MC_STATE_UNMOUNT                    );
-    PushState( __id MC_STATE_FINISH                     );
-#elif defined(TARGET_PC) //So we actually need it ?
-    xwstring MessageText;
-    xwstring NavText;
-    
-    float SpaceNeededMB = g_StateMgr.GetProfileSaveSize() / (1024.0f * 1024.0f);
-    float FreeSpaceMB = g_MemcardHardware.GetFreeSpace() / (1024.0f * 1024.0f);
-    float RequiredSpaceMB = SpaceNeededMB - FreeSpaceMB;
-    
-    if (RequiredSpaceMB < 0)
-        RequiredSpaceMB = 0.1f;
-    
-    MessageText = xwstring(xfs((const char*)xstring(g_StringTableMgr("ui", "MC_NOT_ENOUGH_FREE_SPACE_SLOT1_PS2")), RequiredSpaceMB));
-    NavText = g_StringTableMgr("ui", "IDS_NAV_CONTINUE_ANYWAY");
-    NavText += g_StringTableMgr("ui", "IDS_NAV_FREE_SPACE");
+#elif defined(TARGET_PC)  
+    m_BlocksRequired = ( (g_StateMgr.GetProfileSaveSize() - Pending.BytesFree) + 1023 ) / 1024;
+   
+    MessageText = xwstring(xfs((const char*)xstring(g_StringTableMgr("ui", "MC_NOT_ENOUGH_FREE_SPACE_SLOT1_XBOX")), m_BlocksRequired));
+    NavText = g_StringTableMgr("ui", "IDS_OK");
     
     PopUpBox( 
         g_StringTableMgr("ui", "IDS_DISK_SPACE_HEADER"),
         MessageText, 
         NavText, 
         TRUE, 
-        TRUE, 
+        FALSE, 
         FALSE);
-        
+#endif
+     
     FlushStateStack();
     PushState( __id MC_STATE_CREATE_PROFILE_FAILED_WAIT );
     PushState( __id MC_STATE_UNMOUNT                    );
     PushState( __id MC_STATE_FINISH                     );
-#endif
     return;
 }
 

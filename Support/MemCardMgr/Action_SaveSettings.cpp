@@ -132,7 +132,7 @@ void MemCardMgr::MC_STATE_CREATE_SETTINGS( void )
     }
 #elif defined(TARGET_PC)
     // make sure that we have enough space on the PC
-    if( g_MemcardHardware.GetFreeSpace() < g_StateMgr.GetSettingsSaveSize() )
+    if( Pending.BytesFree < g_StateMgr.GetSettingsSaveSize() )
     {
         ChangeState( __id MC_STATE_CREATE_PROFILE_FAILED );
         return;
@@ -148,7 +148,7 @@ void MemCardMgr::MC_STATE_CREATE_SETTINGS( void )
 #ifdef TARGET_XBOX
         pText = g_StringTableMgr( "ui", "MC_SAVING_SETTINGS_XBOX" );
 #elif defined(TARGET_PC)      
-        pText = g_StringTableMgr( "ui", "IDS_ONLINE_CONNECT_MATCHMAKER" ); //TEST
+        pText = g_StringTableMgr( "ui", "MC_SAVING_SETTINGS_XBOX" );
 #endif
         WarningBox(
             g_StringTableMgr( "ui", "IDS_MEMCARD_HEADER"   ),  
@@ -258,7 +258,8 @@ void MemCardMgr::MC_STATE_SAVE_SETTINGS_SET_DIR_WAIT( void )
             *pSettings = g_StateMgr.GetPendingSettings();
             pSettings->Checksum();
             g_MemcardMgr.SetIconDisplayName( "Settings" );
-            g_MemcardMgr.AsyncWriteFile( xfs("%s%s", m_SavePrefix, m_OptionsPostfix), m_pLoadBuffer, RoundedSize );	
+            
+            g_MemcardMgr.AsyncWriteFile( xfs("%s%s", m_SavePrefix, m_OptionsPostfix), m_pLoadBuffer, RoundedSize );    
             ChangeState( __id MC_STATE_SAVE_SETTINGS_WRITE_WAIT );
             return;
         }
@@ -309,12 +310,12 @@ void MemCardMgr::MC_STATE_SAVE_SETTINGS_WRITE_WAIT( void )
 
 void MemCardMgr::MC_STATE_SAVE_SETTINGS_FAILED(void)
 {
-    condition& Pending = GetPendingCondition(m_iCard);
-
-#if defined(TARGET_XBOX)
     xwstring MessageText;
     xwstring NavText;
 
+    condition& Pending = GetPendingCondition(m_iCard);
+
+#if defined(TARGET_XBOX)
     m_BlocksRequired = ( (g_StateMgr.GetSettingsSaveSize() - Pending.BytesFree) + 16383 ) / 16384;
     MessageText = xwstring( xfs( (const char*)xstring(g_StringTableMgr( "ui", "MC_NOT_ENOUGH_FREE_SPACE_SLOT1_SETTINGS_XBOX" )), m_BlocksRequired ) );
     NavText     = g_StringTableMgr( "ui", "IDS_NAV_DONT_FREE_BLOCKS" );
@@ -333,41 +334,42 @@ void MemCardMgr::MC_STATE_SAVE_SETTINGS_FAILED(void)
         TRUE, 
         SecondOption, 
         FALSE );
-        
+#elif defined(TARGET_PC)
+    m_BlocksRequired = ( (g_StateMgr.GetSettingsSaveSize() - Pending.BytesFree) + 1023 ) / 1024;
+    MessageText = xwstring( xfs( (const char*)xstring(g_StringTableMgr( "ui", "MC_NOT_ENOUGH_FREE_SPACE_SLOT1_SETTINGS_XBOX" )), m_BlocksRequired ) );
+
+    PopUpBox( 
+        g_StringTableMgr( "ui", "IDS_MEMCARD_HEADER" ),
+        MessageText, 
+        NavText, 
+        TRUE, 
+        FALSE, 
+        FALSE );
+#endif
+
+#if defined(TARGET_PC1)
+    u32 settingsSaveSize = g_StateMgr.GetSettingsSaveSize();
+    m_BlocksRequired = ((settingsSaveSize - Pending.BytesFree) + 1023) / 1024;
+
+    MessageText = xwstring(xfs((const char*)xstring(g_StringTableMgr("ui", "MC_NOT_ENOUGH_FREE_SPACE_SLOT1_SETTINGS_XBOX")), m_BlocksRequired));
+    MessageText += xwstring(xfs("\n\nDEBUG: BytesFree=%u, SaveSize=%u", Pending.BytesFree, settingsSaveSize));
+    NavText = g_StringTableMgr("ui", "IDS_OK");
+
+    PopUpBox(
+        g_StringTableMgr("ui", "IDS_DISK_SPACE_HEADER"),
+        MessageText,
+        NavText,
+        TRUE,
+        FALSE,
+        FALSE
+    );
+#endif
+
     FlushStateStack();
     PushState( __id MC_STATE_SAVE_SETTINGS_FAILED_WAIT );
     PushState( __id MC_STATE_UNMOUNT                   );
     PushState( __id MC_STATE_FINISH                    );
     return;
-#elif defined(TARGET_PC)
-    xwstring MessageText;
-
-    if( Pending.bNotEnoughSpace || Pending.bIsFull )
-    {
-        float SpaceNeededMB = g_StateMgr.GetSettingsSaveSize() / (1024.0f * 1024.0f);
-        float FreeSpaceMB   = g_MemcardHardware.GetFreeSpace() / (1024.0f * 1024.0f);
-        float RequiredSpaceMB = SpaceNeededMB - FreeSpaceMB;
-        if (RequiredSpaceMB < 0.1f) RequiredSpaceMB = 0.1f;
-
-        MessageText = xwstring(xfs((const char*)xstring(g_StringTableMgr("ui", "MC_NO_SPACE_ON_BOOT_SLOT1_ALL")), RequiredSpaceMB));
-    }
-    else
-    {
-        MessageText = g_StringTableMgr( "ui", "MC_LOAD_FAILED_RETRY_SLOT1" );
-    }
-
-    WarningBox(
-        g_StringTableMgr( "ui", "IDS_MEMCARD_HEADER" ),
-        MessageText,
-        TRUE
-    );
-
-    FlushStateStack();
-    PushState( __id MC_STATE_DONE    );
-    PushState( __id MC_STATE_UNMOUNT );
-    PushState( __id MC_STATE_FINISH  );
-    return;
-#endif
 }
 
 //==---------------------------------------------------------------------------
