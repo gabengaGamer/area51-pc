@@ -48,7 +48,7 @@ void MemCardMgr::MC_STATE_CREATE_PROFILE( void )
     }
 #elif defined(TARGET_PC)
     // make sure that we have enough space on the PC
-    if( g_MemcardHardware.GetFreeSpace() < g_StateMgr.GetProfileSaveSize() )
+    if( Pending.BytesFree < g_StateMgr.GetProfileSaveSize() )
     {
         ChangeState( __id MC_STATE_CREATE_PROFILE_FAILED );
         return;
