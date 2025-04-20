@@ -98,8 +98,8 @@ xTool          |                                                                
 Name                                                                                         | Description                                                                             
 ---------------------------------------------------------------------------------------------| ----------------------------------------------------------------------------------------
 [Engine-51](https://github.com/bigianb/engine-51)                                            | Area-51 Asset Viewer.                                                                                         
-[MatxToolkit](https://github.com/gabengaGamer/Inevitable-MATX-Toolkit)                       | Blender plugin for exporting .matx models for GeomCompiler.                                                                                      
-[Playsurface Blender importer](https://github.com/gabengaGamer/json-playsurface-processer)   | Script for importing .playsurface maps into blender.                                                                                      
+[Inevitable-MATX-Toolkit](https://github.com/gabengaGamer/Inevitable-MATX-Toolkit)           | Blender plugin for exporting .matx models for GeomCompiler.                                                                                      
+[Json-Playsurface-Processer](https://github.com/gabengaGamer/json-playsurface-processer)     | Script for importing .playsurface maps into blender.                                                                                      
 
 ## Building XBOX Code
 
