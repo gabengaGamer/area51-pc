@@ -54,9 +54,6 @@ xbool HandleInputPlatform( f32 DeltaTime )
 {
     static s32 s_DisplayStats = 0;
     static s32 s_DisplayMode  = 0;
-    
-    if( input_IsPressed( INPUT_KBD_ESCAPE ) )
-        return( FALSE );
 
     if( g_FreeCam == FALSE )
         return( TRUE );
