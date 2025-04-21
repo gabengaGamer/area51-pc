@@ -197,6 +197,10 @@ namespace render
     void ZPrimeRenderTarget( void );
     void RenderLightMap( void );
     #endif
+	
+	#ifdef TARGET_PC
+    void RenderLightMap( void );
+    #endif
 
     // basic instance-rendering routines
     // you should call them in this order:

@@ -8,7 +8,9 @@
 #include "Shaders\SkinShader.h"
 #include "Render\SoftVertexMgr.hpp"
 #include "Render\platform_Render.hpp"
+#include "Render\pc_Render.hpp"
 #include "Render\LightMgr.hpp"
+//#include "pc_shader.inl"
 
 //=============================================================================
 //=============================================================================
@@ -20,6 +22,16 @@
 
 static const s32 kEnvTextureW = 256;
 static const s32 kEnvTextureH = 256;
+
+//=============================================================================
+//=============================================================================
+// Static data specific to the gamespy pc-implementation
+//=============================================================================
+//=============================================================================
+
+static xbool                s_DetailMapPresent;
+static xbool                s_bMatCanReceiveShadow;
+static bbox                 s_CurrentBBox;
 
 //=============================================================================
 //=============================================================================
@@ -56,6 +68,14 @@ enum pc_blend_mode
     PC_BLEND_ADDITIVE,
     PC_BLEND_SUBTRACTIVE
 };
+
+//=============================================================================
+//=============================================================================
+// Public methods
+//=============================================================================
+//=============================================================================
+
+render_target g_RenderTarget;
 
 //=============================================================================
 //=============================================================================
@@ -1771,7 +1791,7 @@ void platform_CreateEnvTexture( void )
     // top
     g_pd3dDevice->SetTexture( 0, vram_GetSurface(s_pCurrCubeMap->m_Bitmap[cubemap::TOP]) );
     g_pd3dDevice->SetFVF( (D3DFVF_XYZ|D3DFVF_NORMAL|D3DFVF_TEX1) );
-    g_pd3dDevice->DrawPrimitiveUP( D3DPT_TRIANGLESTRIP, 2, &Vertex[0], sizeof(vertex) );
+	    g_pd3dDevice->DrawPrimitiveUP( D3DPT_TRIANGLESTRIP, 2, &Vertex[0], sizeof(vertex) );
 
     // bottom
     g_pd3dDevice->SetTexture( 0, vram_GetSurface(s_pCurrCubeMap->m_Bitmap[cubemap::BOTTOM]) );
@@ -2283,3 +2303,74 @@ void platform_EndNormalRender( void )
 {
 }
 
+///////////////////////////////////////////////////////////////////////////////
+///ЁПТА КОД || DONT TOUCH IT!!!
+///////////////////////////////////////////////////////////////////////////////
+void render_target::Reset( void )
+{
+    // it's safe: no __vfptr
+    x_memset( this,0,sizeof(render_target) );
+}
+/*
+f32 pc_CalcDistance( const matrix4& L2W, const bbox& B )
+{
+    vector3 Center( B.GetCenter() );
+    f32     Radius = B.GetRadius();
+
+    const view* pView = eng_GetView();
+    const matrix4& W2V = pView->GetW2V();
+
+    Center = W2V * (L2W * Center);
+    f32 MinZ = Center.GetZ() - Radius;
+    
+    // get the z range
+    if( MinZ < 0.01f ) MinZ = 0.01f;
+
+    return MinZ;
+}
+
+static
+void platform_BeginLightMap( void )
+{
+}
+
+static
+void platform_EndLightMap( void )
+{
+}
+
+static
+void platform_ActivateLitMaterial( const material& Material )
+{
+    s_DetailMapPresent = FALSE;
+    if ( IsAlphaMaterial( (material_type)Material.m_Type ) && !(Material.m_Flags & geom::material::FLAG_FORCE_ZFILL) )
+        s_bMatCanReceiveShadow = FALSE;
+    else    
+        s_bMatCanReceiveShadow = TRUE;
+    g_pPipeline->SetLitMaterial( Material );
+}
+
+static
+void platform_RenderLitRigidInstance( render_instance& Inst )
+{
+    static f32 fDist = 1200.0f;
+    if( s_DetailMapPresent && (pc_CalcDistance( *Inst.Data.Rigid.pL2W,s_CurrentBBox ) < fDist) )
+        Inst.Flags |= render::INSTFLAG_DETAIL;
+
+    if ( Inst.Flags & render::CLIPPED )
+        Inst.Flags |= render::INSTFLAG_CLIPPED;
+
+    if ( (Inst.Flags & render::SHADOW_PASS) && s_bMatCanReceiveShadow )
+        Inst.Flags |= render::INSTFLAG_SHADOW_PASS;
+
+    if ( Inst.Flags & render::GLOWING )
+        Inst.Flags |= render::INSTFLAG_GLOWING;
+
+    if ( Inst.Flags & render::FADING_ALPHA )
+    {
+        Inst.Flags |= render::INSTFLAG_FADING_ALPHA;
+        Inst.Flags &= ~(render::INSTFLAG_DETAIL | render::INSTFLAG_SPOTLIGHT | render::INSTFLAG_SHADOW_PASS);
+    }
+    g_pPipeline->RenderToLightMap( Inst );
+}
+*/

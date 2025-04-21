@@ -329,6 +329,9 @@ pipeline_mgr* g_pPipeline  = NULL;
 
 #ifdef TARGET_PC
 #include "Render\pc_Render.cpp"
+#include "Render\pc_render.hpp"
+shader_mgr  * g_pShaderMgr = NULL;
+pipeline_mgr* g_pPipeline  = NULL;
 #endif
 
 //=============================================================================
@@ -1647,6 +1650,7 @@ void render::ZPrimeRenderTarget( void )
     }
     platform_EndZPrime();
 }
+#elif defined(TARGET_PC)
 #endif
 
 //=============================================================================
@@ -1755,6 +1759,8 @@ void render::RenderLightMap( void )
         platform_EndLightMap();
     }
 }
+#elif defined(TARGET_PC)
+
 #endif
 
 //=============================================================================
