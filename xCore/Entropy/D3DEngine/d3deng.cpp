@@ -374,7 +374,12 @@ void InitializeD3D( HWND hWnd, s32 XRes, s32 YRes )
         g_d3dpp.SwapEffect                = D3DSWAPEFFECT_COPY;
     }
 
-    g_d3dpp.Flags = D3DPRESENTFLAG_LOCKABLE_BACKBUFFER;
+    s.Mode |= ENG_ACT_BACKBUFFER_LOCK; //So far so
+
+    if( s.Mode & ENG_ACT_BACKBUFFER_LOCK )
+    {
+        g_d3dpp.Flags = D3DPRESENTFLAG_LOCKABLE_BACKBUFFER;
+    }
 
     // Lookup device caps
     D3DCAPS9 Caps ;
