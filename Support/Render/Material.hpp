@@ -7,21 +7,15 @@
 //=============================================================================
 // Shader library file
 
-#if defined(TARGET_XBOX) || defined(TARGET_PC)
+#ifdef TARGET_XBOX
 
 struct shader
 {
-#ifdef TARGET_XBOX
     shader( u32,XGBuffer&,u32* );
-#else
-    shader( u32,const void*,u32* );
-#endif
-    shader( void ) : Handle(0), Size(0), Id(0) {}
+    shader( void ){}
 ~   shader( void );
 
-#ifdef TARGET_XBOX
     XGBuffer Microcode;
-#endif
     u32 Handle;
     u32 Size;
     u32 Id;
