@@ -29,7 +29,13 @@ public:
     {
         ACTION_NULL = -1,
         MOVE_STRAFE,                    
-        MOVE_FOWARD_BACKWARDS,          
+        MOVE_FOWARD_BACKWARDS,
+       
+        MOVE_FORWARD,                    
+        MOVE_BACKWARD,      
+        STRAFE_LEFT,                    
+        STRAFE_RIGHT,      
+     
         LOOK_HORIZONTAL,                
         LOOK_VERTICAL,                  
         ACTION_JUMP,                    
@@ -37,8 +43,8 @@ public:
         ACTION_PRIMARY,                 
         ACTION_SECONDARY,               
         ACTION_RELOAD,                  
-		ACTION_MUTATION,
-		ACTION_CYCLE_RIGHT,             
+        ACTION_MUTATION,
+        ACTION_CYCLE_RIGHT,             
         ACTION_USE,                     
         ACTION_FLASHLIGHT,              
 
