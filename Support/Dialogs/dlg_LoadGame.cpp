@@ -39,15 +39,21 @@
 #define TEXT_IMAGE_HEIGHT   64
 
 #ifdef TARGET_XBOX
-#   define TEXT_X_POSITION   50
-#   define TEXT_Y_POSITION  330
+    #define TEXT_X_POSITION   50
+    #define TEXT_Y_POSITION  330
 extern void RedirectTextureAllocator( void );
 extern void RestoreTextureAllocator ( void );
 extern u32 g_PhysW;
 extern u32 g_PhysH;
-#else
-#   define TEXT_X_POSITION  -50
-#   define TEXT_Y_POSITION  313
+#elif defined( TARGET_PS2 )
+    #define TEXT_X_POSITION  -50
+    #define TEXT_Y_POSITION  313
+#elif defined( TARGET_PC ) //TODO: Make it RES scalable!!!!!!!!!!!!
+    #define TEXT_X_POSITION  400
+    #define TEXT_Y_POSITION  525
+#else //For future.
+    #define TEXT_X_POSITION  -50
+    #define TEXT_Y_POSITION  313
 #endif
 
 #define HIGHLIGHT_SCALE             1.2f
@@ -1236,7 +1242,7 @@ void dlg_load_game::platform_Init( void )
     m_ColorWriteMask = D3DCOLORWRITEENABLE_RED | D3DCOLORWRITEENABLE_GREEN | D3DCOLORWRITEENABLE_BLUE;
     
     g_RenderTarget.Reset();
-#else
+#elif defined( TARGET_PC )
     // Set up the default write mask
     m_ColorWriteMask = D3DCOLORWRITEENABLE_RED | D3DCOLORWRITEENABLE_GREEN | D3DCOLORWRITEENABLE_BLUE;
     
@@ -1277,7 +1283,7 @@ void dlg_load_game::platform_Destroy( void )
         m_Slides[i].HasImage = FALSE;
         m_Slides[i].BMP.Kill();
     }
-#else
+#elif defined( TARGET_PC )
     // Make sure we destroy any slideshow images
     // There's no need to redirect the texture allocator here
     // because all redirected allocations are aliases of tiled RAM
@@ -1392,7 +1398,7 @@ void dlg_load_game::platform_LoadSlide( s32         Index,
     {
         m_Slides[Index].HasImage = FALSE;
     }
-#else
+#elif defined( TARGET_PC )
     (void)TextureIndex;
 
     // Other targets we don't really care about giving up the memory.
@@ -1427,7 +1433,7 @@ void dlg_load_game::platform_FillScreen( xcolor C )
     irect Rect;
     Rect.Set( 0, 0, g_PhysW, g_PhysH );
     draw_Rect( Rect, C, FALSE );
-#else
+#elif defined( TARGET_PC )
     irect Rect;
     s32 XRes, YRes;
     eng_GetRes( XRes, YRes );
@@ -1479,7 +1485,7 @@ void dlg_load_game::platform_RenderSlide( s32 SlideIndex, xcolor C )
 
     // Finished
     draw_End();
-#else
+#elif defined( TARGET_PC )
     // Start up the drawing mode
     draw_EnableBilinear();
     draw_Begin( DRAW_SPRITES, DRAW_USE_ALPHA | DRAW_TEXTURED | DRAW_2D | DRAW_NO_ZBUFFER | DRAW_NO_ZWRITE | DRAW_BLEND_ADD );
@@ -1566,7 +1572,7 @@ void dlg_load_game::platform_GetBufferInfo( vram_buffer       BufferID,
         BufferH   = TEXT_IMAGE_HEIGHT/2;
         break;
     }
-#else
+#elif defined( TARGET_PC )
     switch( BufferID )
     {
     default:
@@ -1645,7 +1651,7 @@ void dlg_load_game::platform_SetSrcBuffer( vram_buffer BufferID )
 
     ASSERT( Handle );
     g_Texture.Set( 0, Handle );
-#else
+#elif defined( TARGET_PC )
     ASSERT(BufferID != BUFFER_SCREEN);
 
     // Figure out the buffer info
@@ -1727,7 +1733,7 @@ void dlg_load_game::platform_SetDstBuffer( vram_buffer BufferID,
         m_ColorWriteMask |= D3DCOLORWRITEENABLE_RED | D3DCOLORWRITEENABLE_GREEN | D3DCOLORWRITEENABLE_BLUE;
     if( EnableAlphaChannel )
         m_ColorWriteMask |= D3DCOLORWRITEENABLE_ALPHA;
-#else
+#elif defined( TARGET_PC )
     if( BufferID == BUFFER_SCREEN )
     {
         if ( m_pBackBuffer != NULL )
@@ -1790,7 +1796,7 @@ void dlg_load_game::platform_ClearBuffer( vram_buffer BufferID, xbool EnableRGBC
     if( EnableAlphaChannel )
         Flags |= D3DCLEAR_TARGET_A;
     g_pd3dDevice->Clear( 0,0,Flags,0,0.0f,0 );
-#else
+#elif defined( TARGET_PC )
     platform_SetDstBuffer( BufferID, EnableRGBChannel, EnableAlphaChannel ); 
     u32 Flags = 0;
     if( EnableRGBChannel )
@@ -1858,7 +1864,7 @@ void dlg_load_game::platform_DrawSprite( const vector2& UpperLeft,
                    ClippedUV1,
                    C );
     draw_End();
-#else
+#elif defined( TARGET_PC )
     // PC doesn't seem to like sprites that go outside the view bounds.
     // We'll clip it manually.
 
@@ -1930,7 +1936,7 @@ void dlg_load_game::platform_BeginFogRender( void )
     g_RenderState.Set( D3DRS_COLORWRITEENABLE, m_ColorWriteMask );
     draw_Begin( DRAW_SPRITES, DRAW_KEEP_STATES );
     draw_SetTexture( m_FogBMP );
-#else
+#elif defined( TARGET_PC )
     // Make sure the screen is cleared to start
     platform_ClearBuffer( BUFFER_SCREEN, FALSE, TRUE );
 
@@ -1980,7 +1986,7 @@ void dlg_load_game::platform_EndFogRender( void )
 #elif defined( TARGET_XBOX )
     // end drawing
     draw_End();
-#else
+#elif defined( TARGET_PC )
     // end drawing
     draw_End();
 #endif
@@ -2051,7 +2057,7 @@ void dlg_load_game::platform_DrawFogSprite( const vector2&    SpriteCenter,
                    UV1,
                    C,
                    Rotation );
-#else
+#elif defined( TARGET_PC )
     draw_SpriteUV( vector3( SpriteCenter.X, SpriteCenter.Y, 0.0f ),
                    WH,
                    UV0,
@@ -2106,7 +2112,7 @@ void dlg_load_game::platform_BeginShaftRender( void )
     g_TextureStageState.Set( 0, D3DTSS_COLORARG2, D3DTA_TEXTURE );
 
     draw_Begin( DRAW_QUADS, DRAW_KEEP_STATES );
-#else
+#elif defined( TARGET_PC )
     // Set the level name as our texture, and the screen as our render
     // target, but mask out writing to the alpha channel
     platform_SetDstBuffer( BUFFER_SCREEN, TRUE, FALSE );
@@ -2144,7 +2150,7 @@ void dlg_load_game::platform_EndShaftRender( void )
     // Nothing to do...
 #elif defined( TARGET_XBOX )
     draw_End();
-#else
+#elif defined( TARGET_PC )
     // PC implementation
     draw_End();
     
@@ -2202,7 +2208,7 @@ void dlg_load_game::platform_DrawShaftQuad( const vector2* pCorners,
     draw_Color( pColors[1] );  draw_UV( pUVs[1] );  draw_Vertex( pCorners[1].X,  pCorners[1].Y, 0.0f );
     draw_Color( pColors[2] );  draw_UV( pUVs[2] );  draw_Vertex( pCorners[2].X,  pCorners[2].Y, 0.0f );
     draw_Color( pColors[3] );  draw_UV( pUVs[3] );  draw_Vertex( pCorners[3].X,  pCorners[3].Y, 0.0f );
-#else
+#elif defined( TARGET_PC )
     draw_Color( pColors[0] );  draw_UV( pUVs[0] );  draw_Vertex( pCorners[0].X,  pCorners[0].Y, 0.0f );
     draw_Color( pColors[1] );  draw_UV( pUVs[1] );  draw_Vertex( pCorners[1].X,  pCorners[1].Y, 0.0f );
     draw_Color( pColors[2] );  draw_UV( pUVs[2] );  draw_Vertex( pCorners[2].X,  pCorners[2].Y, 0.0f );
