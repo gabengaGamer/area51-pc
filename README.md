@@ -99,7 +99,8 @@ Name                                                                            
 ---------------------------------------------------------------------------------------------| ----------------------------------------------------------------------------------------
 [Engine-51](https://github.com/bigianb/engine-51)                                            | Area-51 Asset Viewer.                                                                                         
 [Inevitable-MATX-Toolkit](https://github.com/gabengaGamer/Inevitable-MATX-Toolkit)           | Blender plugin for exporting .matx models for GeomCompiler.                                                                                      
-[Json-Playsurface-Processer](https://github.com/gabengaGamer/json-playsurface-processer)     | Script for importing .playsurface maps into blender.                                                                                      
+[Json-Playsurface-Processer](https://github.com/gabengaGamer/json-playsurface-processer)     | Script for importing .playsurface maps into blender.                    
+[DAT-Tool](https://github.com/gabengaGamer/DAT-Tool)                                         | Command-line interface (CLI) utility for working with Tribes: Aerial Assault DAT archive format.
 
 ## Building XBOX Code
 
