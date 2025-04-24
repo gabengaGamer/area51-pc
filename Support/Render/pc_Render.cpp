@@ -4,11 +4,11 @@
 //
 //=============================================================================
 
+#include "Render\LightMgr.hpp"
+#include "Render\platform_Render.hpp"
 #include "Render\VertexMgr.hpp"
 #include "Shaders\SkinShader.h"
 #include "Render\SoftVertexMgr.hpp"
-#include "Render\platform_Render.hpp"
-#include "Render\LightMgr.hpp"
 
 //=============================================================================
 //=============================================================================
@@ -93,6 +93,9 @@ void pc_SetTexture( s32 Stage, const xbitmap* pBitmap )
     if( pBitmap != NULL )
     {
         g_pd3dDevice->SetTexture( Stage, vram_GetSurface( *pBitmap ) );
+        g_pd3dDevice->SetSamplerState( Stage, D3DSAMP_MINFILTER, D3DTEXF_LINEAR );
+        g_pd3dDevice->SetSamplerState( Stage, D3DSAMP_MAGFILTER, D3DTEXF_LINEAR );
+        g_pd3dDevice->SetSamplerState( Stage, D3DSAMP_MIPFILTER, D3DTEXF_LINEAR );
     }
     else
     {
@@ -1353,13 +1356,95 @@ void platform_RenderHeatHazeSprites( s32            nSprites,
                                      const vector2* pRotScales,
                                      const u32*     pColors )
 {
-    ASSERTS( FALSE, "Not implemented yet" );
-    (void)nSprites;
-    (void)UniScale;
-    (void)pL2W;
-    (void)pPositions;
-    (void)pRotScales;
-    (void)pColors;
+    // sanity check
+    ASSERTS( s_pDrawBitmap, "You must set a material first!" );
+    if( nSprites == 0 )
+        return;
+
+    // start up draw
+    const matrix4& V2W = eng_GetView()->GetV2W();
+    const matrix4& W2V = eng_GetView()->GetW2V();
+    matrix4 S2V;
+    if( pL2W )
+        S2V = W2V * (*pL2W);
+    else
+        S2V = W2V;
+    draw_ClearL2W();
+    draw_Begin( DRAW_TRIANGLES, s_DrawFlags | DRAW_BLEND_ADD );
+    draw_SetTexture( *s_pDrawBitmap );
+    draw_SetL2W( V2W );
+
+    // Set up distortion effect
+    if( !g_pd3dDevice )
+        return;
+
+    // Use screen texture as distortion source
+    IDirect3DSurface9* pBackBuffer = NULL;
+    g_pd3dDevice->GetRenderTarget( 0, &pBackBuffer );
+    
+    // Setup texture coordinates to sample from screen
+    g_pd3dDevice->SetSamplerState( 0, D3DSAMP_ADDRESSU, D3DTADDRESS_CLAMP );
+    g_pd3dDevice->SetSamplerState( 0, D3DSAMP_ADDRESSV, D3DTADDRESS_CLAMP );
+
+    // loop through the sprites and render them
+    s32 i, j;
+    for( i = 0; i < nSprites; i++ )
+    {
+        // 0x8000 is an active flag, meaning to skip this sprite, similar
+        // to the ADC bit on the ps2.
+        if( (pPositions[i].GetIW() & 0x8000) != 0x8000 )
+        {
+            vector3 Center( pPositions[i].GetX(), pPositions[i].GetY(), pPositions[i].GetZ() );
+            Center = S2V * Center;
+
+            // calc the four sprite corners
+            vector3 Corners[4];
+            f32 Sine, Cosine;
+            x_sincos( -pRotScales[i].X, Sine, Cosine );
+
+            vector3 v0( Cosine - Sine, Sine + Cosine, 0.0f );
+            vector3 v1( Cosine + Sine, Sine - Cosine, 0.0f );
+            Corners[0] = v0;
+            Corners[1] = v1;
+            Corners[2] = -v0;
+            Corners[3] = -v1;
+            for( j = 0; j < 4; j++ )
+            {
+                Corners[j].Scale( pRotScales[i].Y * UniScale );
+                Corners[j] += Center;
+            }
+
+            // now render it through draw
+            xcolor C( pColors[i]&0xff, (pColors[i]&0xff00)>>8, (pColors[i]&0xff0000)>>16, (pColors[i]&0xff000000)>>24 );
+            C.R = (C.R==0x80) ? 255 : (C.R<<1);
+            C.G = (C.G==0x80) ? 255 : (C.G<<1);
+            C.B = (C.B==0x80) ? 255 : (C.B<<1);
+            C.A = (C.A==0x80) ? 255 : (C.A<<1);
+            draw_Color( C );
+            
+            // First triangle
+            draw_UV( 0.0f, 0.0f );  draw_Vertex( Corners[0] );
+            draw_UV( 1.0f, 0.0f );  draw_Vertex( Corners[3] );
+            draw_UV( 0.0f, 1.0f );  draw_Vertex( Corners[1] );
+            
+            // Second triangle
+            draw_UV( 1.0f, 0.0f );  draw_Vertex( Corners[3] );
+            draw_UV( 0.0f, 1.0f );  draw_Vertex( Corners[1] );
+            draw_UV( 1.0f, 1.0f );  draw_Vertex( Corners[2] );
+        }
+    }
+
+    // restore states
+    g_pd3dDevice->SetSamplerState( 0, D3DSAMP_ADDRESSU, D3DTADDRESS_WRAP );
+    g_pd3dDevice->SetSamplerState( 0, D3DSAMP_ADDRESSV, D3DTADDRESS_WRAP );
+    
+    if( pBackBuffer )
+    {
+        pBackBuffer->Release();
+    }
+
+    // finished
+    draw_End();
 }
 
 //=============================================================================
@@ -1476,12 +1561,35 @@ void platform_SetDiffuseMaterial( const xbitmap&    Bitmap,
 //=============================================================================
 
 static
-void platform_SetGlowMaterial( const xbitmap& Bitmap,
-                               s32            BlendMode,
-                               xbool          ZTestEnabled )
+void platform_SetGlowMaterial( const xbitmap& Bitmap, s32 BlendMode, xbool ZTestEnabled )
 {
-    // TODO: The glow material hasn't been implemented on the PC yet.
-    platform_SetDiffuseMaterial( Bitmap, BlendMode, ZTestEnabled );
+    if( !g_pd3dDevice )
+        return;
+
+    pc_SetTexture( 0, &Bitmap );
+
+    pc_SetTextureColorStage( 0, D3DTA_TEXTURE, D3DTOP_SELECTARG1, D3DTA_CURRENT );
+    pc_SetTextureAlphaStage( 0, D3DTA_TEXTURE, D3DTOP_SELECTARG1, D3DTA_CURRENT );
+
+    switch( BlendMode )
+    {
+    case render::BLEND_MODE_NORMAL:
+        pc_SetAlphaBlending( PC_BLEND_NORMAL );
+        break;
+    case render::BLEND_MODE_ADDITIVE:
+        pc_SetAlphaBlending( PC_BLEND_ADDITIVE );
+        break;
+    default:
+        pc_SetAlphaBlending( PC_BLEND_NONE );
+        break;
+    }
+
+    pc_SetZBufferWrite( FALSE );
+    
+    if( ZTestEnabled )
+        g_pd3dDevice->SetRenderState( D3DRS_ZFUNC, D3DCMP_GREATEREQUAL );
+    else
+        g_pd3dDevice->SetRenderState( D3DRS_ZFUNC, D3DCMP_ALWAYS );
 }
 
 //=============================================================================
@@ -1516,6 +1624,63 @@ void* platform_CalculateRigidLighting( const matrix4&   L2W,
 
     return NULL;
 }
+
+/*
+
+static
+void* platform_CalculateRigidLighting( const matrix4&   L2W,
+                                       const bbox&      WorldBBox )
+{
+    CONTEXT("platform_CalculateRigidLighting");
+    
+    // Collect lights affecting this object
+    s32 NLights = g_LightMgr.CollectLights(WorldBBox, 3);
+    if (!NLights)
+        return NULL;
+    
+    // Allocate lighting data structure
+    d3d_rigid_lighting* pLighting = (d3d_rigid_lighting*)smem_BufferAlloc(sizeof(d3d_rigid_lighting));
+    if (!pLighting)
+        return NULL;
+    
+    // Allocate space for light data
+    pLighting->nLights = NLights;
+    pLighting->pLights = (d3d_rigid_light*)smem_BufferAlloc(NLights * sizeof(d3d_rigid_light));
+    if (!pLighting->pLights)
+    {
+        smem_BufferFree(pLighting);
+        return NULL;
+    }
+    
+    // Extract light information
+    for (s32 i = 0; i < NLights; i++)
+    {
+        vector3 Pos;
+        f32     Radius;
+        xcolor  Color;
+        
+        // Get light info
+        g_LightMgr.GetCollectedLight(i, Pos, Radius, Color);
+        
+        // Convert object space to light space
+        vector3 LightPos = L2W.InverseTransformPoint(Pos);
+        
+        // Store light data
+        pLighting->pLights[i].Position.Set(LightPos.GetX(), 
+                                          LightPos.GetY(), 
+                                          LightPos.GetZ(), 
+                                          Radius);
+        
+        pLighting->pLights[i].Color.Set((f32)Color.R / 255.0f,
+                                       (f32)Color.G / 255.0f,
+                                       (f32)Color.B / 255.0f,
+                                       1.0f);
+    }
+    
+    return pLighting;
+}
+
+*/
 
 //=============================================================================
 
@@ -1911,158 +2076,6 @@ void platform_SetShadowProjectionMatrix( s32 Index, const matrix4& Matrix )
 //=============================================================================
 
 static
-void platform_SetCustomFogPalette( const texture::handle& Texture, xbool ImmediateSwitch, s32 PaletteIndex )
-{
-    (void)Texture;
-    (void)ImmediateSwitch;
-    (void)PaletteIndex;
-}
-
-//=============================================================================
-
-static
-xcolor platform_GetFogValue( const vector3& WorldPos, s32 PaletteIndex )
-{
-    (void)WorldPos;
-    (void)PaletteIndex;
-    return xcolor(255,255,255,0);
-}
-
-//=============================================================================
-
-static
-void platform_BeginPostEffects( void )
-{
-}
-
-//=============================================================================
-
-static
-void platform_AddScreenWarp( const vector3& WorldPos, f32 Radius, f32 WarpAmount )
-{
-    (void)WorldPos;
-    (void)Radius;
-    (void)WarpAmount;
-}
-
-//=============================================================================
-
-static
-void platform_ApplySelfIllumGlows( f32 MotionBlurIntensity, s32 GlowCutoff )
-{
-    (void)MotionBlurIntensity;
-    (void)GlowCutoff;
-}
-
-//=============================================================================
-
-static
-void platform_MotionBlur( f32 Intensity )
-{
-    (void)Intensity;
-}
-
-//=============================================================================
-
-static
-void platform_ZFogFilter( render::post_falloff_fn Fn, xcolor Color, f32 Param1, f32 Param2 )
-{
-    (void)Fn;
-    (void)Color;
-    (void)Param1;
-    (void)Param2;
-}
-
-//=============================================================================
-
-static
-void platform_ZFogFilter( render::post_falloff_fn Fn, s32 PaletteIndex )
-{
-    (void)Fn;
-    (void)PaletteIndex;
-}
-
-//=============================================================================
-
-static
-void platform_MipFilter( s32                        nFilters,
-                         f32                        Offset,
-                         render::post_falloff_fn    Fn,
-                         xcolor                     Color,
-                         f32                        Param1,
-                         f32                        Param2,
-                         s32                        PaletteIndex )
-{
-    (void)nFilters;
-    (void)Offset;
-    (void)Fn;
-    (void)Color;
-    (void)Param1;
-    (void)Param2;
-    (void)PaletteIndex;
-}
-
-//=============================================================================
-
-static
-void platform_MipFilter( s32                        nFilters,
-                         f32                        Offset,
-                         render::post_falloff_fn    Fn,
-                         const texture::handle&     Texture,
-                         s32                        PaletteIndex )
-{
-    (void)nFilters;
-    (void)Offset;
-    (void)Fn;
-    (void)Texture;
-    (void)PaletteIndex;
-}
-
-//=============================================================================
-
-static
-void platform_NoiseFilter( xcolor Color )
-{
-    (void)Color;
-}
-
-//=============================================================================
-
-static
-void platform_ScreenFade( xcolor Color )
-{
-    (void)Color;
-}
-
-//=============================================================================
-
-static
-void platform_MultScreen( xcolor MultColor, render::post_screen_blend FinalBlend )
-{
-    (void)MultColor;
-    (void)FinalBlend;
-}
-
-//=============================================================================
-
-void platform_RadialBlur( f32 Zoom, radian Angle, f32 AlphaSub, f32 AlphaScale  )
-{
-    (void)Zoom;
-    (void)Angle;
-    (void)AlphaSub;
-    (void)AlphaScale;
-}
-
-//=============================================================================
-
-static
-void platform_EndPostEffects( void )
-{
-}
-
-//=============================================================================
-
-static
 void platform_BeginShadowShaders( void )
 {
     // TODO:
@@ -2252,21 +2265,6 @@ static
 void platform_EndShadowReceiveSkin( void )
 {
     // TODO:
-}
-
-//=============================================================================
-
-static
-void platform_BeginDistortion( void )
-{
-    // TODO:
-}
-
-//=============================================================================
-
-static
-void platform_EndDistortion( void )
-{
 }
 
 //=============================================================================
