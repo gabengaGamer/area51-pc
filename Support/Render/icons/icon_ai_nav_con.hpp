@@ -12,8 +12,8 @@
 
 // Data From: c:\gamedata\a51\source\art\editor_icons\ICON_AI Nav Connection.MATX 
 
-#define NUM_VERTICES_ICON_AI_NAV_CON	(256)
-#define NUM_FACETS_ICON_AI_NAV_CON	(512)
+#define NUM_VERTICES_ICON_AI_NAV_CON    (256)
+#define NUM_FACETS_ICON_AI_NAV_CON    (512)
 
 static vertex s_vicon_ai_nav_con[] = 
 {

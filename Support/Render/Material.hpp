@@ -7,25 +7,39 @@
 //=============================================================================
 // Shader library file
 
-#if defined(TARGET_XBOX) || defined(TARGET_PC)
+#ifdef TARGET_XBOX
 
 struct shader
 {
-#ifdef TARGET_XBOX
     shader( u32,XGBuffer&,u32* );
-#else
-    shader( u32,const void*,u32* );
-#endif
-    shader( void ) : Handle(0), Size(0), Id(0) {}
+    shader( void ){}
 ~   shader( void );
 
-#ifdef TARGET_XBOX
     XGBuffer Microcode;
-#endif
     u32 Handle;
     u32 Size;
     u32 Id;
 };
+
+#elif defined(TARGET_PC)
+
+#include "..\3rdParty\DirectX9\d3dx9.h"
+
+struct shader
+{
+    shader( u32 Type, IDirect3DVertexShader9* pVS, IDirect3DVertexDeclaration9* pVertexDecl );
+    shader( u32 Type, IDirect3DPixelShader9* pPS, IDirect3DVertexDeclaration9* pVertexDecl );
+    shader( u32 Type, LPD3DXBUFFER Microcode, const D3DVERTEXELEMENT9* pShaderDesc );
+    shader( void ){}
+    ~shader( void );
+
+    u32 Type;
+    IDirect3DVertexShader9* pVertexShader;
+    IDirect3DPixelShader9* pPixelShader;
+    IDirect3DVertexDeclaration9* pVertexDecl;
+};
+
+#endif
 
 namespace ps
 {
@@ -318,8 +332,6 @@ namespace vs
         s32  iLink[9];
     };
 }
-
-#endif
 
 //=============================================================================
 

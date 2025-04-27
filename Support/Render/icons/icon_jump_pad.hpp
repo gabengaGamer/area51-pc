@@ -12,8 +12,8 @@
 
 // Data From: c:\gamedata\a51\source\art\editor_icons\ICON_JumpPad.MATX 
 
-#define NUM_VERTICES_ICON_JUMP_PAD	(122)
-#define NUM_FACETS_ICON_JUMP_PAD	(224)
+#define NUM_VERTICES_ICON_JUMP_PAD    (122)
+#define NUM_FACETS_ICON_JUMP_PAD    (224)
 
 static vertex s_vicon_jump_pad[] = 
 {

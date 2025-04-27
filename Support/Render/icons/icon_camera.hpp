@@ -12,8 +12,8 @@
 
 // Data From: c:\gamedata\a51\source\art\editor_icons\ICON_Camera.MATX 
 
-#define NUM_VERTICES_ICON_CAMERA	(165)
-#define NUM_FACETS_ICON_CAMERA	(148)
+#define NUM_VERTICES_ICON_CAMERA    (165)
+#define NUM_FACETS_ICON_CAMERA    (148)
 
 static vertex s_vicon_camera[] = 
 {

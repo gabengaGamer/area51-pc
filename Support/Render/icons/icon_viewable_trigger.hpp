@@ -12,8 +12,8 @@
 
 // Data From: c:\gamedata\a51\source\art\editor_icons\ICON_Viewable Trigger.MATX 
 
-#define NUM_VERTICES_ICON_VIEWABLE_TRIGGER	(292)
-#define NUM_FACETS_ICON_VIEWABLE_TRIGGER	(328)
+#define NUM_VERTICES_ICON_VIEWABLE_TRIGGER    (292)
+#define NUM_FACETS_ICON_VIEWABLE_TRIGGER    (328)
 
 static vertex s_vicon_viewable_trigger[] = 
 {

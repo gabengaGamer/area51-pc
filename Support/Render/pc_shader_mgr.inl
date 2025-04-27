@@ -1,22 +1,16 @@
 //=============================================================================
 //
-//  XBOX Specific Shader Management Routines
+//  PC Specific Shader Management Routines
 //
 //=============================================================================
 
-
 #include "render/lightmgr.hpp"
 #include "render/platform_render.hpp"
-#include "entropy/xbox/xbox_private.hpp"
-//#include "UI\ui_text.hpp"
-//#include "UI\ui_manager.hpp"
-//#include "UI\ui_font.hpp"
-#include <xgraphics.h>
+#include "Entropy.hpp"
+#include "3rdParty/DirectX9/d3d9.h"
 
-#include "xbox_render.hpp"
+#include "pc_render.hpp"
 #include "LeastSquares\LeastSquares.hpp"
-
-
 
 //=============================================================================
 //=============================================================================
@@ -24,31 +18,26 @@
 //=============================================================================
 //=============================================================================
 
-
-
 //=============================================================================
 
-static DWORD s_dwRigidDesc[]=
+static const D3DVERTEXELEMENT9 s_dwRigidDesc[] =
 {
-    D3DVSD_STREAM( 0 ) ,
-    D3DVSD_REG   ( 0, D3DVSDT_FLOAT3      ) , // v0-position
-    D3DVSD_REG   ( 1, D3DVSDT_NORMPACKED3 ) , // v1-normal
-    D3DVSD_REG   ( 2, D3DVSDT_FLOAT2      ) , // v3-uv
-    D3DVSD_STREAM( 1 ),
-    D3DVSD_REG   ( 3, D3DVSDT_D3DCOLOR    ) , // colour
-    D3DVSD_END( )
+    {0, 0,  D3DDECLTYPE_FLOAT3,   D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0},
+    {0, 12, D3DDECLTYPE_FLOAT3,   D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_NORMAL,   0},
+    {0, 24, D3DDECLTYPE_FLOAT2,   D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD, 0},
+    {1, 0,  D3DDECLTYPE_D3DCOLOR, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_COLOR,    0},
+    D3DDECL_END()
 };
 
 //=============================================================================
 
-static DWORD s_dwSkinDesc[]=
+static const D3DVERTEXELEMENT9 s_dwSkinDesc[] =
 {
-    D3DVSD_STREAM( 0 ) ,
-    D3DVSD_REG   ( 0, D3DVSDT_FLOAT3      ) , // v0-position
-    D3DVSD_REG   ( 1, D3DVSDT_NORMPACKED3 ) , // v1-normal
-    D3DVSD_REG   ( 2, D3DVSDT_FLOAT4      ) , // v2-uv/weights
-    D3DVSD_REG   ( 3, D3DVSDT_FLOAT2      ) , // v3-bones
-    D3DVSD_END( )
+    {0, 0,  D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION,    0},
+    {0, 12, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_NORMAL,      0},
+    {0, 24, D3DDECLTYPE_FLOAT4, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD,    0},
+    {0, 40, D3DDECLTYPE_FLOAT2, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_BLENDWEIGHT, 0},
+    D3DDECL_END()
 };
 
 //=============================================================================
@@ -63,7 +52,7 @@ static f32     s_FogStart;
 //
 //////////////////////////////////////////////////////////////////////////////
 
-#define SHADER_ROOT "C:\\GameData\\A51\\Release\\Xbox"
+#define SHADER_ROOT "C:\\GameData\\A51\\Release\\PC"
 #define SIZEOF(label) (sizeof(label)/sizeof(label[0]))
 #define ENDL(label) }data[SIZEOF(::s_##label##_Name)];
 #define LEAF(label) struct label: public leaf{
@@ -178,8 +167,6 @@ namespace vs
 char s_Work[16384];
 #endif
 
-
-
 //////////////////////////////////////////////////////////////////////////////
 
 static const filedesc s_Mat_Name[]={ {    NULL , NULL                          , 0                             },
@@ -255,8 +242,6 @@ namespace ps
     u32 Size;
 }
 
-
-
 ///////////////////////////////////////////////////////////////////////////////
 //
 //  This routine loads up the 136 shader addresses on the GPU. It does so by
@@ -269,21 +254,13 @@ static void LoadShader( const char* pFilename )
 {
     char* pBuffer; if( pFilename )
     {
-    #if 1
-        HANDLE SectionHandle = XGetSectionHandle( pFilename );
-        ASSERT(SectionHandle != INVALID_HANDLE_VALUE );
-
-        DWORD SectionSize = XGetSectionSize( SectionHandle );
-        char* SectionData = (char*)XLoadSectionByHandle( SectionHandle );
-
-        s32 Length = x_strlen( s_Work );
-        x_memcpy( s_Work+Length,SectionData,SectionSize );
-        XFreeSectionByHandle( SectionHandle );
-        x_strcat( s_Work,"\n" );
-    #else
         // load shader fragment ***********************************************
 
         X_FILE* hFile= x_fopen( xfs( "%s\\%s",SHADER_ROOT,pFilename),"r" );
+        if (!hFile)
+        {
+            return;
+        }
         ASSERT( hFile );
         {
             s32 Size = x_flength( hFile );
@@ -299,7 +276,6 @@ static void LoadShader( const char* pFilename )
         x_strcat( s_Work,pBuffer );
         x_strcat( s_Work,"\n" );
         delete[]pBuffer;
-    #endif
     }
 }
 
@@ -371,7 +347,7 @@ static bool GetShader( ps::path& Path,shader*& pShader )
     shader& Shader = ps::Details[ps::Count].Shader;
     {
         x_memset( s_Work,0,sizeof(s_Work) );
-        x_strcpy( s_Work,"xps.1.1\n\n" );
+        x_strcpy( s_Work,"ps.1.1\n\n" );
 
         if( SWITCH_USE_TEXTURES )
         {
@@ -481,43 +457,84 @@ static bool GetShader( ps::path& Path,shader*& pShader )
             }
 
             // final combiners ................................................
+      
+            // NOTE: PC doesn't support XFC instructions!!!
 
-            if( Path.Flags.xfc_Sat )
-                x_strcat( s_Work,"mov_x2 r0.rgb,r0.rgb\n" );
-            if( Path.Flags.xfc_Half )
-                // Halve both rgb and a so post effect doesn't screw up glow
-                x_strcat( s_Work,"mov_d2 r0.rgb,r0.rgb\n" );
+            //if( Path.Flags.xfc_Sat )
+            //    x_strcat( s_Work,"mov_x2 r0.rgb,r0.rgb\n" );
+            //if( Path.Flags.xfc_Half )
+            //    // Halve both rgb and a so post effect doesn't screw up glow
+            //    x_strcat( s_Work,"mov_d2 r0.rgb,r0.rgb\n" );
             if( Path.Flags.bPerPixelLitPunchthru )
                 // Needs at least one blend instruction
                 x_strcat( s_Work,"mov r0.rgb,t3.rgb + mov r0.a,v1.a\n" );
             else
             {
-                if( Path.Flags.xfc_Fog )
-                    x_strcat( s_Work,"xfc v1.a,v1,r0,zero,zero,zero,r0.a\n" );
-                if( Path.Flags.xfc_Std )
-                    x_strcat( s_Work,"xfc zero,zero,r0,zero,zero,zero,r0.a\n" );
+                //if( Path.Flags.xfc_Fog )
+                //    x_strcat( s_Work,"xfc v1.a,v1,r0,zero,zero,zero,r0.a\n" );
+                //if( Path.Flags.xfc_Std )
+                //    x_strcat( s_Work,"xfc zero,zero,r0,zero,zero,zero,r0.a\n" );
             }
         }
         else
         {
-            x_strcat( s_Work,"mov r0,v0\n" );
-            x_strcat( s_Work,"xfc zero,zero,r0,zero,zero,zero,r0.a\n" );
+            //x_strcat( s_Work,"mov r0,v0\n" );
+            //x_strcat( s_Work,"xfc zero,zero,r0,zero,zero,zero,r0.a\n" );
         }
     }
-    Path.compile( s_Work,Shader );
 
-    // add new shader object **********************************************
-
-    ASSERT( ps::Count < MAX_SHADERS );
-    ps::Details[ps::Count++].Flags.Mask = Path.Flags.Mask;
-    ps::Size += Shader.Microcode.size;
-    x_qsort(
-        ps::Details,
-        ps::Count,
-        sizeof( ps::detail ),
-        PSCmp
+    LPD3DXBUFFER pShaderCode = NULL;
+    LPD3DXBUFFER pErrorMsgs = NULL;
+    
+    HRESULT hr = D3DXAssembleShader(
+        s_Work,
+        x_strlen(s_Work),
+        NULL,
+        NULL,
+        0,
+        &pShaderCode,
+        &pErrorMsgs
     );
-    return GetShader( Path,pShader );
+    
+    if (FAILED(hr))
+    {
+        if (pErrorMsgs)
+        {
+            OutputDebugString((LPCSTR)pErrorMsgs->GetBufferPointer());
+            pErrorMsgs->Release();
+        }
+        if (pShaderCode)
+            pShaderCode->Release();
+        return false;
+    }
+
+    IDirect3DPixelShader9* pPixelShader = NULL;
+    hr = g_pd3dDevice->CreatePixelShader(
+        (DWORD*)pShaderCode->GetBufferPointer(),
+        &pPixelShader
+    );
+    
+    if (FAILED(hr))
+    {
+        if (pShaderCode)
+            pShaderCode->Release();
+        if (pErrorMsgs)
+            pErrorMsgs->Release();
+        return false;
+    }
+    
+    ASSERT(ps::Count < MAX_SHADERS);
+    ps::Details[ps::Count].Flags.Mask = Path.Flags.Mask;
+    ps::Details[ps::Count].Shader = shader(0, pPixelShader, NULL);
+    ps::Count++;
+    
+    if (pShaderCode)
+        pShaderCode->Release();
+    if (pErrorMsgs)
+        pErrorMsgs->Release();
+    
+    x_qsort(ps::Details, ps::Count, sizeof(ps::detail), PSCmp);
+    return GetShader(Path, pShader);
 #else
     pShader = NULL;
     return false;
@@ -565,7 +582,7 @@ static bool GetShader( vs::path& Path,shader*& pShader )
     shader& Shader = vs::Details[vs::Count].Shader;
     {
         x_memset( s_Work,0,sizeof(s_Work) );
-        x_strcpy( s_Work,"xvs.1.1\n\n" );
+        x_strcpy( s_Work, "vs_1_1\n\n" );
 
         // main sequence fragments ............................................
 
@@ -586,20 +603,79 @@ static bool GetShader( vs::path& Path,shader*& pShader )
         if( Path.Flags.bPunchthru || Path.Flags.oT3_Mask )
             x_strcat( s_Work,"mov oT3.xy,v2.xy\n" );
     }
-    Path.compile( s_Work,Shader );
 
-    // add new shader object **************************************************
-
-    ASSERT( vs::Count < MAX_SHADERS );
-    vs::Details[vs::Count++].Flags.Mask = Path.Flags.Mask;
-    vs::Size += Shader.Microcode.size;
-    x_qsort(
-        vs::Details,
-        vs::Count,
-        sizeof( vs::detail ),
-        PSCmp
+    LPD3DXBUFFER pShaderCode = NULL;
+    LPD3DXBUFFER pErrorMsgs = NULL;
+    
+    HRESULT hr = D3DXAssembleShader(
+        s_Work,
+        x_strlen(s_Work),
+        NULL,
+        NULL,
+        0,
+        &pShaderCode,
+        &pErrorMsgs
     );
-    return GetShader( Path,pShader );
+    
+    if (FAILED(hr))
+    {
+        if (pErrorMsgs)
+        {
+            OutputDebugString((LPCSTR)pErrorMsgs->GetBufferPointer());
+            pErrorMsgs->Release();
+        }
+        if (pShaderCode)
+            pShaderCode->Release();
+        return false;
+    }
+    
+    IDirect3DVertexShader9* pVertexShader = NULL;
+    hr = g_pd3dDevice->CreateVertexShader(
+        (DWORD*)pShaderCode->GetBufferPointer(),
+        &pVertexShader
+    );
+    
+    if (FAILED(hr))
+    {
+        if (pShaderCode)
+            pShaderCode->Release();
+        if (pErrorMsgs)
+            pErrorMsgs->Release();
+        return false;
+    }
+    
+    IDirect3DVertexDeclaration9* pVertexDecl = NULL;
+    bool bSkin = (Path.Flags.oPos_Skin || Path.Flags.oSt_CastShadowSkin);
+    
+    hr = g_pd3dDevice->CreateVertexDeclaration(
+        bSkin ? s_dwSkinDesc : s_dwRigidDesc,
+        &pVertexDecl
+    );
+    
+    if (FAILED(hr))
+    {
+        if (pVertexShader)
+            pVertexShader->Release();
+        if (pShaderCode)
+            pShaderCode->Release();
+        if (pErrorMsgs)
+            pErrorMsgs->Release();
+        return false;
+    }
+    
+    ASSERT(vs::Count < MAX_SHADERS);
+    vs::Details[vs::Count].Flags.Mask = Path.Flags.Mask;
+    vs::Details[vs::Count].Shader = shader(0, pVertexShader, pVertexDecl);
+    vs::Count++;
+    
+    if (pShaderCode)
+        pShaderCode->Release();
+    if (pErrorMsgs)
+        pErrorMsgs->Release();
+
+    x_qsort(vs::Details, vs::Count, sizeof(vs::detail), CmpShader);
+    
+    return GetShader(Path, pShader);
 #else
     pShader = NULL;
     return false;
@@ -631,8 +707,6 @@ __declspec( naked )__forceinline s32 __fastcall BitScan( u32 Bits )
     }
 }
 
-
-
 //////////////////////////////////////////////////////////////////////////////
 
 vs::path::path( vs::desc& VSDesc )
@@ -649,8 +723,6 @@ vs::path::path( vs::desc& VSDesc )
 
     Flags.Mask = VSDesc.Mask;
 }
-
-
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -696,182 +768,226 @@ ps::path::path( ps::desc& PSDesc )
     Flags.Mask = PSDesc.Mask;
 }
 
-
-
 //////////////////////////////////////////////////////////////////////////////
 
-static void SetShader( vs::desc& VSFlags,XGBuffer& Microcode )
+static void SetShader(vs::desc& VSFlags, LPD3DXBUFFER Microcode)
 {
     s32 o = vs::Count++;
     s32 i = search( VSFlags,vs::Details,o );
     ASSERT( i==-1 );
     {
-        u32* pDesc=
-            VSFlags.oPos_Rigid
-        ?   (u32*)s_dwRigidDesc
-        :   (u32*)s_dwSkinDesc
-        ;
-        vs::detail& Detail = vs::Details[o];
-        Detail.Flags.Mask = VSFlags.Mask;
-        Detail.Shader.shader::shader(
-            SASMT_VERTEXSHADER,
-            Microcode,
-            pDesc
+        bool bSkin = VSFlags.oPos_Skin || VSFlags.oSt_CastShadowSkin;
+        
+        IDirect3DVertexShader9* pVertexShader = NULL;
+        IDirect3DVertexDeclaration9* pVertexDecl = NULL;
+
+        HRESULT hr = g_pd3dDevice->CreateVertexShader(
+            (CONST DWORD*)Microcode->GetBufferPointer(),
+            &pVertexShader
         );
-        x_qsort(
-            vs::Details,
-            vs::Count,
-            sizeof( vs::detail ),
-            CmpShader
-        );
+
+        if (SUCCEEDED(hr))
+        {
+            hr = g_pd3dDevice->CreateVertexDeclaration(
+                bSkin ? s_dwSkinDesc : s_dwRigidDesc, 
+                &pVertexDecl
+            );
+        }
+
+        if (SUCCEEDED(hr))
+        {
+            vs::detail& Detail = vs::Details[o];
+            Detail.Flags.Mask = VSFlags.Mask;
+            Detail.Shader = shader(0, pVertexShader, pVertexDecl);
+
+            x_qsort(
+                vs::Details,
+                vs::Count,
+                sizeof(vs::detail),
+                CmpShader
+            );
+        }
+        else
+        {
+            vs::Count--;
+            if (pVertexShader) pVertexShader->Release();
+            if (pVertexDecl) pVertexDecl->Release();
+        }
     }
 }
 
-
-
 //////////////////////////////////////////////////////////////////////////////
 
-static void SetShader( ps::desc& PSFlags,XGBuffer& Microcode )
+static void SetShader( ps::desc& PSFlags, LPD3DXBUFFER Microcode )
 {
     s32 o = ps::Count++;
     s32 i = search( PSFlags,ps::Details,o );
     ASSERT( i==-1 );
     {
-        ps::detail& Detail = ps::Details[o];
-        Detail.Flags.Mask = PSFlags.Mask;
-        Detail.Shader.shader::shader(
-            SASMT_PIXELSHADER,
-            Microcode,
-            NULL
+        IDirect3DPixelShader9* pPixelShader = NULL;
+
+        HRESULT hr = g_pd3dDevice->CreatePixelShader(
+            (CONST DWORD*)Microcode->GetBufferPointer(),
+            &pPixelShader
         );
-        x_qsort(
-            ps::Details,
-            ps::Count,
-            sizeof( ps::detail ),
-            CmpShader
-        );
+
+        if (SUCCEEDED(hr))
+        {
+            ps::detail& Detail = ps::Details[o];
+            Detail.Flags.Mask = PSFlags.Mask;
+            Detail.Shader = shader(0, pPixelShader, NULL);
+
+            x_qsort(
+                ps::Details,
+                ps::Count,
+                sizeof(ps::detail),
+                CmpShader
+            );
+        }
+        else
+        {
+            ps::Count--;
+        }
     }
 }
-
-
 
 ///////////////////////////////////////////////////////////////////////////////
 
 shader_mgr::shader_mgr( void )
 {
-    // clear flags ............................................................
+    // clear flags
+    x_memset( this, 0, sizeof( shader_mgr ));
 
-    x_memset( this,0,sizeof( shader_mgr ));
+    // Allocate PIP texture using DirectX
+    IDirect3DTexture9* pTexture = NULL;
+    
+    HRESULT hr = g_pd3dDevice->CreateTexture(
+        PropW(700),            
+        PropH(700),            
+        1,                     
+        D3DUSAGE_RENDERTARGET, 
+        D3DFMT_A8R8G8B8,       
+        D3DPOOL_DEFAULT,       
+        &pTexture,             
+        NULL                   
+    );
 
-    // Allocate PIP texture ...................................................
+    if (SUCCEEDED(hr))
+    {
+        m_PIP_Texture = pTexture;
+        m_VRAM_PipID = vram_Register(m_PIP_Texture);
 
-    m_PIP_Texture = g_TextureFactory.Create( "kPIP"               , // Resource name
-                                             0                    , // Pitch
-                                             PropW(700)           , // Width
-                                             PropH(700)           , // Height
-                                             m_PIP_Target         , // Surface
-                                             D3DFMT_LIN_A8R8G8B8 ); // Diffuse buffer format
+        // Create render target surface
+        IDirect3DSurface9* pSurface = NULL;
+        hr = pTexture->GetSurfaceLevel(0, &pSurface);
+        if (SUCCEEDED(hr))
+        {
+            m_PIP_Target = pSurface;
+            
+            D3DLOCKED_RECT lockedRect;
+            hr = pSurface->LockRect(&lockedRect, NULL, 0);
+            if (SUCCEEDED(hr))
+            {
+                m_pPipData = lockedRect.pBits;
+                pSurface->UnlockRect();
+            }
+        }
+    }
 
-    m_VRAM_PipID = vram_Register( m_PIP_Texture );
-    m_pPipData   = (void*)(m_PIP_Target->Data|0x80000000);
-
-    // load cached shaders ....................................................
-
+    // load cached shaders
     #if !PRELOAD_SHADERS
     {
         X_FILE* hFile;
 
-        // load pixel shader **************************************************
-
-        hFile = x_fopen( xfs( "%s\\shaders.psl",SHADER_ROOT),"r" );
+        // load pixel shader
+        hFile = x_fopen( xfs( "%s\\shaders.psl", SHADER_ROOT), "rb" );
         if( !hFile )
         {
             // blue screen of death: indicates shader not found
-            g_pd3dDevice->Clear( 0,0,D3DCLEAR_TARGET,D3DCOLOR_RGBA( 0,0,128,0),0.0f,0 );
-            g_pd3dDevice->Present( 0,0,0,0 );
-        __asm int 3
+            g_pd3dDevice->Clear( 0, 0, D3DCLEAR_TARGET, D3DCOLOR_RGBA( 0, 0, 128, 0), 1.0f, 0 );
+            g_pd3dDevice->Present( 0, 0, 0, 0 );
+            __debugbreak();
         }
         else
         {
-            // read inventory of details ......................................
+            // read inventory of details
+            x_fread( &ps::Count, sizeof(u32), 1, hFile );
+            x_fread( &ps::Size,  sizeof(u32), 1, hFile );
+            x_fread( ps::Details, sizeof(ps::detail), ps::Count, hFile );
 
-            x_fread( &ps::Count,sizeof(u32),1,hFile );
-            x_fread( &ps::Size ,sizeof(u32),1,hFile );
-            x_fread( ps::Details,sizeof(ps::detail),ps::Count,hFile );
-
-            u32* InfoTable = new u32 [ps::Count*2];
-            x_fread( InfoTable,sizeof(u32)*2,ps::Count,hFile );
+            std::vector<u32> InfoTable(ps::Count * 2);
+            x_fread( InfoTable.data(), sizeof(u32) * 2, ps::Count, hFile );
 
             ps::pSpace = (u8*)x_malloc(ps::Size);
-            x_fread( ps::pSpace,ps::Size,1,hFile );
+            x_fread( ps::pSpace, ps::Size, 1, hFile );
             x_fclose( hFile );
 
-            // hookup all the shaders .........................................
-
-            u32* pInfo = InfoTable;
-            for( u32 i=0;i<ps::Count;i++ )
+            // hookup all the shaders
+            for( u32 i = 0; i < ps::Count; i++ )
             {
-                XGBuffer Microcode;
-                Microcode.pData    = ps::pSpace+(pInfo++)[0];
-                Microcode.size     = (pInfo++)[0];
-                Microcode.refCount = 0;
+                LPD3DXBUFFER pShaderCode = NULL;
+                D3DXCreateBuffer(InfoTable[i * 2 + 1], &pShaderCode);
+                memcpy(pShaderCode->GetBufferPointer(), ps::pSpace + InfoTable[i * 2], InfoTable[i * 2 + 1]);
 
-                ps::Details[i].Shader.shader::shader(
-                    SASMT_PIXELSHADER,
-                    Microcode,
-                    NULL
+                IDirect3DPixelShader9* pPixelShader = NULL;
+                g_pd3dDevice->CreatePixelShader(
+                    (CONST DWORD*)pShaderCode->GetBufferPointer(),
+                    &pPixelShader
                 );
+
+                ps::Details[i].Shader = shader(0, pPixelShader, NULL);
+
+                if (pShaderCode) pShaderCode->Release();
             }
-            delete[]InfoTable;
         }
 
-        // load vertex shader *************************************************
-
-        hFile = x_fopen( xfs( "%s\\shaders.vsl",SHADER_ROOT),"r" );
+        // load vertex shader
+        hFile = x_fopen( xfs( "%s\\shaders.vsl", SHADER_ROOT), "rb" );
         if( !hFile )
         {
             // green screen of death: indicates shader not found
-            g_pd3dDevice->Clear( 0,0,D3DCLEAR_TARGET,D3DCOLOR_RGBA( 0,128,0,0),0.0f,0 );
-            g_pd3dDevice->Present( 0,0,0,0 );
-        __asm int 3
+            g_pd3dDevice->Clear( 0, 0, D3DCLEAR_TARGET, D3DCOLOR_RGBA( 0, 128, 0, 0), 1.0f, 0 );
+            g_pd3dDevice->Present( 0, 0, 0, 0 );
+            __debugbreak();
         }
         else
         {
-            // read inventory of details ......................................
+            // read inventory of details
+            x_fread( &vs::Count, sizeof(u32), 1, hFile );
+            x_fread( &vs::Size,  sizeof(u32), 1, hFile );
+            x_fread( vs::Details, sizeof(vs::detail), vs::Count, hFile );
 
-            x_fread( &vs::Count,sizeof(u32),1,hFile );
-            x_fread( &vs::Size ,sizeof(u32),1,hFile );
-            x_fread( vs::Details,sizeof(vs::detail),vs::Count,hFile );
-
-            u32* InfoTable = new u32 [vs::Count*2];
-            x_fread( InfoTable,sizeof(u32)*2,vs::Count,hFile );
+            std::vector<u32> InfoTable(vs::Count * 2);
+            x_fread( InfoTable.data(), sizeof(u32) * 2, vs::Count, hFile );
 
             vs::pSpace = (u8*)x_malloc(vs::Size);
-            x_fread( vs::pSpace,vs::Size,1,hFile );
+            x_fread( vs::pSpace, vs::Size, 1, hFile );
             x_fclose( hFile );
 
-            // hookup all the shaders .........................................
-
-            u32* pInfo = InfoTable;
-            for( u32 i=0;i<vs::Count;i++ )
+            // hookup all the shaders
+            for( u32 i = 0; i < vs::Count; i++ )
             {
-                XGBuffer Microcode;
-                Microcode.pData    = vs::pSpace+(pInfo++)[0];
-                Microcode.size     = (pInfo++)[0];
-                Microcode.refCount = 0;
+                LPD3DXBUFFER pShaderCode = NULL;
+                D3DXCreateBuffer(InfoTable[i * 2 + 1], &pShaderCode);
+                memcpy(pShaderCode->GetBufferPointer(), vs::pSpace + InfoTable[i * 2], InfoTable[i * 2 + 1]);
 
-                u32* pDesc =
-                    vs::Details[i].Flags.oPos_Rigid
-                ?   (u32*)s_dwRigidDesc
-                :   (u32*)s_dwSkinDesc
-                ;
-                vs::Details[i].Shader.shader::shader(
-                    SASMT_VERTEXSHADER,
-                    Microcode,
-                    pDesc
+                IDirect3DVertexShader9* pVertexShader = NULL;
+                IDirect3DVertexDeclaration9* pVertexDecl = NULL;
+
+                g_pd3dDevice->CreateVertexShader(
+                    (CONST DWORD*)pShaderCode->GetBufferPointer(),
+                    &pVertexShader
                 );
+
+                const D3DVERTEXELEMENT9* pDesc = 
+                    vs::Details[i].Flags.oPos_Rigid ? s_dwRigidDesc : s_dwSkinDesc;
+
+                g_pd3dDevice->CreateVertexDeclaration(pDesc, &pVertexDecl);
+
+                vs::Details[i].Shader = shader(0, pVertexShader, pVertexDecl);
+
+                if (pShaderCode) pShaderCode->Release();
             }
-            delete[]InfoTable;
         }
     }
     #endif
@@ -880,7 +996,7 @@ shader_mgr::shader_mgr( void )
 ///////////////////////////////////////////////////////////////////////////////
 
 shader_mgr::~shader_mgr( void )
-{
+{  
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -931,13 +1047,13 @@ s32 shader_mgr::SetPerPixelPointLights( const lights* pLights,const matrix4& L2W
             Color[0].GetW()=1.0f;
         }
 
-        g_pd3dDevice->SetVertexShaderConstant( 84,Const  ,6 );
-        g_pd3dDevice->SetVertexShaderConstant( -3,Enabled,1 );
+        g_pd3dDevice->SetVertexShaderConstantF( 84,(const float*)Const  ,6 );
+        g_pd3dDevice->SetVertexShaderConstantF( -3,(const float*)Enabled,1 );
 
         static f32 Scale=0.75f;
         Color[3].GetW()=Scale;
 
-        g_pd3dDevice->SetPixelShaderConstant( 0,Color,4 );
+        g_pd3dDevice->SetPixelShaderConstantF(0, (const float*)Color, 4);
     }
     return iResult;
 }
@@ -992,8 +1108,8 @@ s32 shader_mgr::SetPointLights( const lights* pLights,const matrix4& L2W )
                 Const[i*2+1].GetW() = 1.0f;
             }
 
-            g_pd3dDevice->SetVertexShaderConstant( 84,Const,6 );
-            g_pd3dDevice->SetVertexShaderConstant( -1,Extra,1 );
+            g_pd3dDevice->SetVertexShaderConstantF( 84,(const float*)Const,6 );
+            g_pd3dDevice->SetVertexShaderConstantF( -1,(const float*)Extra,1 );
         }
     }
     return iResult;
@@ -1030,7 +1146,7 @@ void shader_mgr::SetDirLights( const lights* pLights )
             Mtx[1](2,i)=B;
             Mtx[1](3,i)=0.0f;
         }
-        g_pd3dDevice->SetVertexShaderConstant( 84,Mtx,8 );
+        g_pd3dDevice->SetVertexShaderConstantF( 84,(const float*)Mtx,8 );
     }
 }
 
@@ -1038,207 +1154,188 @@ void shader_mgr::SetDirLights( const lights* pLights )
 
 void shader_mgr::Begin( void )
 {
-    // Set big constant mode **************************************************
-
-    g_pd3dDevice->SetShaderConstantMode( D3DSCM_192CONSTANTS  );
     m_bFullControl = TRUE;
-
     m_VSFlags.clear();
     m_PSFlags.clear();
 
     // Fog effects( x=0 full fog } ********************************************
 
-    g_RenderState.Set( D3DRS_FOGCOLOR    ,D3DCOLOR_RGBA( 0,0,0,0 ));
-    g_RenderState.Set( D3DRS_FOGTABLEMODE,D3DFOG_NONE );
-    g_RenderState.Set( D3DRS_FOGENABLE   ,FALSE );
+    g_pd3dDevice->SetRenderState( D3DRS_FOGCOLOR    ,D3DCOLOR_RGBA( 0,0,0,0 ));
+    g_pd3dDevice->SetRenderState( D3DRS_FOGTABLEMODE,D3DFOG_NONE );
+    g_pd3dDevice->SetRenderState( D3DRS_FOGENABLE   ,FALSE );
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-void shader_mgr::SetCustomFogPalette( const texture::handle& Texture,xbool bSwitchNow,s32 PaletteIndex )
+void shader_mgr::SetCustomFogPalette( const texture::handle& Texture, xbool bSwitchNow, s32 PaletteIndex )
 {
     (void)Texture;
     (void)bSwitchNow;
     (void)PaletteIndex;
 
-    if( SWITCH_USE_FOG )
+    if (!SWITCH_USE_FOG)
+        return;
+    
+    ASSERT(PaletteIndex < 4 && PaletteIndex >= 0);
+    m_FogIndex = PaletteIndex;
+    
+    static const u32 W = 8; 
+    static const u32 H = 8; 
+    u8 FogColour[W*H*4];
+    
+    texture* pTex = Texture.GetPointer();
+    if (pTex == NULL)
     {
-        s32 i;
-
-
-        ASSERT( PaletteIndex < 4 && PaletteIndex >= 0 );
-        m_FogIndex   = PaletteIndex;
-
-        static const u32 W = 8; 
-        static const u32 H = 8; 
-        u8 FogColour[W*H*4];
-
-        // If we don't have a valid texture, then fade to zero alpha
-        texture* pTex = Texture.GetPointer();
-        if( pTex == NULL )
-        {
-            x_memset( FogColour, 0, sizeof(FogColour) );
-        }
-        else
-        {
-            s32 VRAMID = pTex->m_Bitmap.GetVRAMID();
-            texture_factory::handle Handle = vram_GetSurface( VRAMID );
-            u8* pColor = (u8*)Handle->GetPtr();
-
-            // Otherwise unswizzle the image
-            ASSERT( pTex->m_Bitmap.GetWidth ()==W );
-            ASSERT( pTex->m_Bitmap.GetHeight()==H );
-            XGUnswizzleRect( pColor,W,H,NULL,FogColour,W*4,NULL,4 );
-        }
-
-        // now do the transitioning
-        u32 ColorTotal[4] = { 0, 0, 0, 0 };
-        u8* pSrc = FogColour;
-        u8* pDst = m_FogPalette[PaletteIndex];
-        if( bSwitchNow )
-        {
-            for( i = 0; i < W*H*4; i+= 4 )
-            {
-                s32 j;
-                for( j = 0; j < 4; j++ )
-                {
-                    pDst[j] = pSrc[j];
-                    ColorTotal[j] += pDst[j];
-                }
-
-                pSrc += 4;
-                pDst += 4;
-            }
-        }
-        else
-        {
-            for( i = 0; i < W*H*4; i+=4 )
-            {
-                s32 j;
-                for( j = 0; j < 4; j++ )
-                {
-                    if( pSrc[j] > pDst[j] )
-                        pDst[j]++;
-                    else if( pSrc[j] < pDst[j] )
-                        pDst[j]--;
-                    ColorTotal[j] += pDst[j];
-                }
-
-                pSrc += 4;
-                pDst += 4;
-            }
-        }
-
-        // Store out the average color. Ideally we'd use a polynomial for that, too, but
-        // the average color will be much more efficient.
-        ColorTotal[0] /= (W*H);
-        ColorTotal[1] /= (W*H);
-        ColorTotal[2] /= (W*H);
-        ColorTotal[3] /= (W*H);
-        s_FogColour[PaletteIndex].Set(
-            f32(ColorTotal[2])/255.0f,
-            f32(ColorTotal[1])/255.0f,
-            f32(ColorTotal[0])/255.0f,
-            f32(ColorTotal[3])/255.0f );
-
-        // store out the useful constants that will be used in the math below
-        static const f32 PS2ZConst = 0.5f * (f32)((s32)1<<19);
-        const view* pView = eng_GetView();
-        f32 ZNear, ZFar;
-        pView->GetZLimits( ZNear, ZFar );
-
-        f32 Numer       = (2.0f * PS2ZConst * ZNear * ZFar) / (ZFar - ZNear);
-        f32 DenomOffset = -PS2ZConst + (PS2ZConst * (ZFar + ZNear)) / (ZFar - ZNear);
-        f32 XboxQ       = ZFar / (ZFar - ZNear);
-
-        f32 PS2ScreenZ, XboxScreenZ;
-
-        static f32 Scale = 1/16.0f;
-
-        // figure out where fog starts on ps2 and map that into the xbox z range
-        f32 PS2ZValue   = (f32)(0xffff) * Scale;
-        f32 Denom       = PS2ZValue + DenomOffset;
-        ASSERT( x_abs(Denom) > 0.001f );
-        f32 ViewZValue = Numer / Denom;
-        f32 XBoxZValue = ViewZValue * XboxQ - ZNear * XboxQ;
-        ASSERT( ViewZValue > 0.001f );
-    //  XBoxZValue /= ViewZValue;
-        s_FogStart = XBoxZValue;
-
-        // So for each texel color, figure out where that maps to in the ps2 screen space.
-        // Work backwards to figure out the z value in view space, then put it into xbox
-        // clip space. This is what we will feed into the polynomial approximation for
-        // the fog. f(z) = a + b*z + c*(z^2) + d*(z^3)
-
-        least_squares AlphaApprox;
-
-        AlphaApprox.Setup(3);
-        static const f32 NSamples = 512.0f;
-        const f32 StepSize = (ZFar-ZNear)/NSamples;
-        for( f32 ViewZ = ZNear; ViewZ <= ZFar; ViewZ += StepSize )
-        {
-            // Calculate Z in PS2 space ***************************************
-
-            PS2ScreenZ = (ViewZ*(ZFar+ZNear)/(ZFar-ZNear));
-            PS2ScreenZ -= ((2.0f*ZFar*ZNear)/(ZFar-ZNear));
-
-            PS2ScreenZ /= ViewZ;
-            PS2ScreenZ *= -PS2ZConst;
-            PS2ScreenZ +=  PS2ZConst;
-
-            // Calculate Z in Xbox space **************************************
-
-            XboxScreenZ = (ViewZ*XboxQ)-(ZNear*XboxQ);
-        //  XboxScreenZ /= ViewZ;
-
-            // Get colour from bitmap *****************************************
-
-            f32 A;//,R,G,B;
-            u32 UPS2SZ = u32(PS2ScreenZ*16.0f+0.5f);
-            if( UPS2SZ <= 0xFFFF )
-            {
-                u32 ClutIX = (((UPS2SZ >> 8) & 0x000000FF)/4);
-                A = f32(m_FogPalette[PaletteIndex][ClutIX*4+3])/255.0f;
-            }
-            else
-            {
-                A = 0.0f;
-            }
-
-            // Approximations *************************************************
-            AlphaApprox.AddSample( XboxScreenZ,A );
-        }
-
-        // Solve the least-squares polynomial approximation and store the
-        // coefficients out for use in the shader.
-        if( !AlphaApprox.Solve() )
-        {
-            AlphaApprox.SetCoeff( 0, f32(FogColour[3]) / 255.0f );
-            AlphaApprox.SetCoeff( 1, 0.0f );
-            AlphaApprox.SetCoeff( 2, 0.0f );
-            AlphaApprox.SetCoeff( 3, 0.0f );
-        }
-
-        m_FogConst[PaletteIndex].Set( AlphaApprox.GetCoeff(0),
-                                      AlphaApprox.GetCoeff(1),
-                                      AlphaApprox.GetCoeff(2),
-                                      AlphaApprox.GetCoeff(3) );
+        x_memset(FogColour, 0, sizeof(FogColour));
     }
+    else
+    {
+        s32 VRAMID = pTex->m_Bitmap.GetVRAMID();
+        IDirect3DTexture9* Handle = vram_GetSurface(VRAMID);
+        
+        ASSERT(pTex->m_Bitmap.GetWidth() == W);
+        ASSERT(pTex->m_Bitmap.GetHeight() == H);
+    
+        D3DLOCKED_RECT lockedRect;
+        if (SUCCEEDED(Handle->LockRect(0, &lockedRect, NULL, 0)))
+        {
+            u8* pColor = (u8*)lockedRect.pBits;
+            for (u32 y = 0; y < H; y++)
+            {
+                memcpy(FogColour + y * W * 4, 
+                       pColor + y * lockedRect.Pitch, 
+                       W * 4);
+            }
+            Handle->UnlockRect(0);
+        }
+    }
+    
+    u32 ColorTotal[4] = { 0, 0, 0, 0 };
+    u8* pSrc = FogColour;
+    u8* pDst = m_FogPalette[PaletteIndex];
+    
+    if (bSwitchNow)
+    {
+        for (s32 i = 0; i < W*H*4; i += 4)
+        {
+            for (s32 j = 0; j < 4; j++)
+            {
+                pDst[j] = pSrc[j];
+                ColorTotal[j] += pDst[j];
+            }
+    
+            pSrc += 4;
+            pDst += 4;
+        }
+    }
+    else
+    {
+        for (s32 i = 0; i < W*H*4; i += 4)
+        {
+            for (s32 j = 0; j < 4; j++)
+            {
+                if (pSrc[j] > pDst[j])
+                    pDst[j]++;
+                else if (pSrc[j] < pDst[j])
+                    pDst[j]--;
+                ColorTotal[j] += pDst[j];
+            }
+    
+            pSrc += 4;
+            pDst += 4;
+        }
+    }
+    
+    ColorTotal[0] /= (W*H);
+    ColorTotal[1] /= (W*H);
+    ColorTotal[2] /= (W*H);
+    ColorTotal[3] /= (W*H);
+    
+    s_FogColour[PaletteIndex].Set(
+        f32(ColorTotal[2])/255.0f,
+        f32(ColorTotal[1])/255.0f,
+        f32(ColorTotal[0])/255.0f,
+        f32(ColorTotal[3])/255.0f 
+    );
+    
+    static const f32 PS2ZConst = 0.5f * (f32)((s32)1<<19);
+    const view* pView = eng_GetView();
+    f32 ZNear, ZFar;
+    pView->GetZLimits(ZNear, ZFar);
+    
+    f32 Numer       = (2.0f * PS2ZConst * ZNear * ZFar) / (ZFar - ZNear);
+    f32 DenomOffset = -PS2ZConst + (PS2ZConst * (ZFar + ZNear)) / (ZFar - ZNear);
+    f32 XboxQ       = ZFar / (ZFar - ZNear);
+    
+    f32 PS2ScreenZ, XboxScreenZ;
+    
+    static f32 Scale = 1/16.0f;
+    
+    f32 PS2ZValue   = (f32)(0xffff) * Scale;
+    f32 Denom       = PS2ZValue + DenomOffset;
+    ASSERT(x_abs(Denom) > 0.001f);
+    f32 ViewZValue = Numer / Denom;
+    f32 XBoxZValue = ViewZValue * XboxQ - ZNear * XboxQ;
+    ASSERT(ViewZValue > 0.001f);
+    
+    s_FogStart = XBoxZValue;
+    
+    least_squares AlphaApprox;
+    AlphaApprox.Setup(3);
+    
+    static const f32 NSamples = 512.0f;
+    const f32 StepSize = (ZFar-ZNear)/NSamples;
+    
+    for (f32 ViewZ = ZNear; ViewZ <= ZFar; ViewZ += StepSize)
+    {
+        PS2ScreenZ = (ViewZ*(ZFar+ZNear)/(ZFar-ZNear));
+        PS2ScreenZ -= ((2.0f*ZFar*ZNear)/(ZFar-ZNear));
+        PS2ScreenZ /= ViewZ;
+        PS2ScreenZ *= -PS2ZConst;
+        PS2ScreenZ +=  PS2ZConst;
+    
+        XboxScreenZ = (ViewZ*XboxQ)-(ZNear*XboxQ);
+    
+        f32 A = 0.0f;
+        u32 UPS2SZ = u32(PS2ScreenZ*16.0f+0.5f);
+        
+        if (UPS2SZ <= 0xFFFF)
+        {
+            u32 ClutIX = (((UPS2SZ >> 8) & 0x000000FF)/4);
+            A = f32(m_FogPalette[PaletteIndex][ClutIX*4+3])/255.0f;
+        }
+    
+        AlphaApprox.AddSample(XboxScreenZ, A);
+    }
+    
+    if (!AlphaApprox.Solve())
+    {
+        AlphaApprox.SetCoeff(0, f32(FogColour[3]) / 255.0f);
+        AlphaApprox.SetCoeff(1, 0.0f);
+        AlphaApprox.SetCoeff(2, 0.0f);
+        AlphaApprox.SetCoeff(3, 0.0f);
+    }
+    
+    m_FogConst[PaletteIndex].Set(
+        AlphaApprox.GetCoeff(0),
+        AlphaApprox.GetCoeff(1),
+        AlphaApprox.GetCoeff(2),
+        AlphaApprox.GetCoeff(3)
+    );
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 void shader_mgr::End( void )
 {
-    g_pd3dDevice->SetShaderConstantMode( D3DSCM_96CONSTANTS  );
-    g_RenderState.Set( D3DRS_SPECULARENABLE,FALSE );
-    g_RenderState.Set( D3DRS_FOGENABLE, FALSE );
+    g_pd3dDevice->SetRenderState( D3DRS_SPECULARENABLE,FALSE );
+    g_pd3dDevice->SetRenderState( D3DRS_FOGENABLE, FALSE );
     m_bFullControl = FALSE;
     m_PSFlags.clear();
     m_VSFlags.clear();
 
     for( s32 i=0;i<4;i++ )
-        g_Texture.Clear( i );
+        g_pd3dDevice->SetTexture( i, NULL );
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -1300,12 +1397,11 @@ static vector4 s_C0( 0.0f,0.0f,0.0f,1.0f );
 static vector4 s_C1( 0.5f,0.5f,0.5f,0.5f );
 static vector4 s_C2( 0.0f,0.0f,0.0f,0.0f );
 static vector4 s_C3( 0.0f,0.0f,0.0f,0.0f );
- const vector4 s_C5( 0.0f,0.0f,0.0f,1.0f );
+const  vector4 s_C5( 0.0f,0.0f,0.0f,1.0f );
 
-static void LoadConstants( ps::desc PSFlags,f32 FixedAlpha )
+static void LoadConstants( ps::desc PSFlags, f32 FixedAlpha )
 {
     // Diffuse consts /////////////////////////////////////////////////////////
-
     if( PSFlags.bPerPixelLitPunchthru )
     {
         s_C0.GetW()=0.0f;
@@ -1332,11 +1428,11 @@ static void LoadConstants( ps::desc PSFlags,f32 FixedAlpha )
     }
 
     // Alpha fading ///////////////////////////////////////////////////////////
-
-    g_pd3dDevice->SetPixelShaderConstant( 5,s_C5,1 );
+    
+    g_pd3dDevice->SetPixelShaderConstantF( 5, (const float*)&s_C5, 1 );
 
     // Env mapping ////////////////////////////////////////////////////////////
-
+    
     if( !(PSFlags.bDiffusePerPixelEnv || PSFlags.bDiffusePerPixelEnvAdd) && (PSFlags.bAlphaPerPolyEnv) )
     {
         s_C0.GetW()=FixedAlpha;
@@ -1346,7 +1442,7 @@ static void LoadConstants( ps::desc PSFlags,f32 FixedAlpha )
     if( PSFlags.bDiffusePerPolyEnvAdd )
     {
         f32 Const[4] = { 0.0f,0.0f,0.0f,FixedAlpha };
-        g_pd3dDevice->SetPixelShaderConstant( 2,Const,1 );
+        g_pd3dDevice->SetPixelShaderConstantF( 2,Const,1 );
     }
 
     // Shadow consts //////////////////////////////////////////////////////////
@@ -1356,18 +1452,19 @@ static void LoadConstants( ps::desc PSFlags,f32 FixedAlpha )
         s_C0.GetW()=0.5f;
     }
 
-    g_pd3dDevice->SetPixelShaderConstant( 0,&s_C0,1 );
-    g_pd3dDevice->SetPixelShaderConstant( 1,&s_C1,1 );
+    g_pd3dDevice->SetPixelShaderConstantF( 0, (const float*)&s_C0, 1 );
+    g_pd3dDevice->SetPixelShaderConstantF( 1, (const float*)&s_C1, 1 );
 
     // Forced glows ///////////////////////////////////////////////////////////
-
-    if( PSFlags.bForcedGlow )
+    
+    if (PSFlags.bForcedGlow)
     {
-        static f32 Ambient[4]={ 1.0f,1.0f,1.0f,1.0f };
-        g_pd3dDevice->SetPixelShaderConstant( 6,Ambient,1 );
-        g_RenderState.Set(
+        static f32 Ambient[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
+        g_pd3dDevice->SetPixelShaderConstantF( 6, Ambient, 1 );
+
+        g_pd3dDevice->SetRenderState(
             D3DRS_COLORWRITEENABLE,
-            D3DCOLORWRITEENABLE_ALL
+            D3DCOLORWRITEENABLE_RED | D3DCOLORWRITEENABLE_GREEN | D3DCOLORWRITEENABLE_BLUE | D3DCOLORWRITEENABLE_ALPHA
         );
     }
 
@@ -1377,15 +1474,12 @@ static void LoadConstants( ps::desc PSFlags,f32 FixedAlpha )
     {
         static const f32 Int = 4.0f;
         s_C2.GetW()=Int;
-
     }
 }
 
-
-
 ///////////////////////////////////////////////////////////////////////////////
 
-u32 shader_mgr::Link( vs::desc& VSFlags,ps::desc& PSFlags,bool bAllocTop )
+u32 shader_mgr::Link( vs::desc& VSFlags, ps::desc& PSFlags, bool bAllocTop )
 {
     m_CanContinue = true;
 
@@ -1393,39 +1487,47 @@ u32 shader_mgr::Link( vs::desc& VSFlags,ps::desc& PSFlags,bool bAllocTop )
 
     // SPEED UP Z-BUFFER WRITES ***********************************************
 
-    if( g_RenderState.Get(D3DRS_COLORWRITEENABLE)==0 )
+    DWORD colorWriteEnable;
+    g_pd3dDevice->GetRenderState(D3DRS_COLORWRITEENABLE, &colorWriteEnable);
+    if (colorWriteEnable == 0)
         m_PSFlags.clear();
 
     // COMPILE AND/OR LINK VERTEX SHADERS *************************************
 
-    if( VSFlags.Mask )
+    if (VSFlags.Mask)
     {
         // if flags change relink ---------------------------------------------
 
-        if( VSFlags.Mask != m_VSFlags.Mask )
+        if (VSFlags.Mask != m_VSFlags.Mask)
         {
-            shader* pShader; if( GetShader( vs::path( VSFlags ),pShader ))
+            shader* pShader = NULL; 
+            if (GetShader(vs::path(VSFlags), pShader))
             {
-                if( bAllocTop )
+                if (bAllocTop)
                 {
-                    u32 ShaderSize = *((u32*)pShader->Microcode.pData)>>16;
-                    Address = 136-ShaderSize;
+                    // For PC, we might handle shader size differently
+                    u32 ShaderSize = 0; // Adjust as needed
+                    Address = 136 - ShaderSize;
                 }
 
                 // double paranoid shader verification ........................
 
                 #ifdef X_DEBUG
                 {
-                s32 i=search( VSFlags,vs::Details,vs::Count );
-                ASSERT( vs::Details[i].Flags.Mask==VSFlags.Mask );
+                    s32 i = search(VSFlags, vs::Details, vs::Count);
+                    ASSERT(vs::Details[i].Flags.Mask == VSFlags.Mask);
                 }
                 #endif
 
-                // Load stitched shader .......................................
-
-                ASSERT( pShader->Handle );
-                g_pd3dDevice->LoadVertexShaderProgram(( const DWORD* )pShader->Microcode.pData,Address );
-                g_pd3dDevice->SelectVertexShader( pShader->Handle,Address );
+                // Load vertex shader
+                ASSERT(pShader->pVertexShader);
+                g_pd3dDevice->SetVertexShader(pShader->pVertexShader);
+                
+                // Set vertex declaration if available
+                if (pShader->pVertexDecl)
+                {
+                    g_pd3dDevice->SetVertexDeclaration(pShader->pVertexDecl);
+                }
             }
             else
             {
@@ -1436,9 +1538,10 @@ u32 shader_mgr::Link( vs::desc& VSFlags,ps::desc& PSFlags,bool bAllocTop )
         // upload important constants -----------------------------------------
 
         static f32 Lum = 0.05f;
-        g_pd3dDevice->SetVertexShaderConstant( -50,vector4( Lum,Lum,Lum,0.0f ),1 );
+        vector4 lumVector(Lum, Lum, Lum, 0.0f);
+        g_pd3dDevice->SetVertexShaderConstantF(-50, (const float*)&lumVector, 1);
 
-        if( VSFlags.oD0_WhiteLight )
+        if (VSFlags.oD0_WhiteLight)
         {
             vector4 Light(
                 m_WhiteConst,
@@ -1446,7 +1549,7 @@ u32 shader_mgr::Link( vs::desc& VSFlags,ps::desc& PSFlags,bool bAllocTop )
                 m_WhiteConst,
                 m_WhiteConst
             );
-            g_pd3dDevice->SetVertexShaderConstant( -7,Light,1 );
+            g_pd3dDevice->SetVertexShaderConstantF(-7, (const float*)&Light, 1);
         }
 
         // remember these flags -----------------------------------------------
@@ -1456,35 +1559,36 @@ u32 shader_mgr::Link( vs::desc& VSFlags,ps::desc& PSFlags,bool bAllocTop )
     else
     {
         m_VSFlags.clear();
-        g_pd3dDevice->SetVertexShader( NULL );
+        g_pd3dDevice->SetVertexShader(NULL);
     }
 
     // COMPILE AND/OR LINK PIXEL SHADERS **************************************
 
-    if( PSFlags.Mask )
+    if (PSFlags.Mask)
     {
-        if( PSFlags.Mask != m_PSFlags.Mask )
+        if (PSFlags.Mask != m_PSFlags.Mask)
         {
             // special force diffuse case -------------------------------------
 
-            if( (!PSFlags.MaterialID) && (PSFlags.bForcedGlow) )
+            if ((!PSFlags.MaterialID) && (PSFlags.bForcedGlow))
             {
                 PSFlags.bDiffuse = true;
             }
 
             // get pixel shader object ----------------------------------------
 
-            shader* pShader; if( GetShader( ps::path( PSFlags ),pShader ))
+            shader* pShader = NULL; 
+            if (GetShader(ps::path(PSFlags), pShader))
             {
-                ASSERT( pShader->Handle );
-                g_pd3dDevice->SetPixelShader( pShader->Handle );
+                ASSERT(pShader->pPixelShader);
+                g_pd3dDevice->SetPixelShader(pShader->pPixelShader);
 
                 // double paranoid shader verification ........................
 
                 #ifdef X_DEBUG
                 {
-                s32 i=search( PSFlags,ps::Details,ps::Count );
-                ASSERT( ps::Details[i].Flags.Mask==PSFlags.Mask );
+                    s32 i = search(PSFlags, ps::Details, ps::Count);
+                    ASSERT(ps::Details[i].Flags.Mask == PSFlags.Mask);
                 }
                 #endif
             }
@@ -1497,38 +1601,37 @@ u32 shader_mgr::Link( vs::desc& VSFlags,ps::desc& PSFlags,bool bAllocTop )
 
             m_PSFlags = PSFlags;
         }
-        LoadConstants( PSFlags,m_FixedAlpha );
+        LoadConstants(PSFlags, m_FixedAlpha);
     }
     else
     {
-        g_pd3dDevice->SetPixelShader( NULL );
+        g_pd3dDevice->SetPixelShader(NULL);
         m_PSFlags.clear();
     }
 
     // DEFAULT TO DIFFUSE (This is bad) ****************************************
 
-    if( !m_CanContinue )
+    if (!m_CanContinue)
     {
         // Construct diffuse only material ....................................
 
         ps::desc PS; PS.clear();
         vs::desc VS; VS.clear();
+        
+        g_pd3dDevice->SetRenderState(D3DRS_ALPHATESTENABLE, FALSE);
+        g_pd3dDevice->SetRenderState(D3DRS_ALPHABLENDENABLE, FALSE);
 
-        g_TextureStageState.Set( 0,D3DTSS_ALPHAKILL,D3DTALPHAKILL_DISABLE );
-        g_RenderState.Set( D3DRS_ALPHABLENDENABLE,FALSE );
-
-        VS.oPos       = m_VSFlags.oPos;
+        VS.oPos = m_VSFlags.oPos;
         VS.oT0_Normal = true;
-        PS.bDiffuse   = true;
-        PS.xfc_Std    = true;
+        PS.bDiffuse = true;
+        PS.xfc_Std = true;
         
         // Grab shader and link with it .......................................
 
-        Address = Link( VS,PS );
+        Address = Link(VS, PS);
     }
     return Address;
 }
-
 
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -1546,14 +1649,14 @@ u32 shader_mgr::Link( u32 MtxCount,const matrix4* pMtx,vs::desc& VSFlags,const v
             ASSERT( ConstAddr >= 83 );
             matrix4 Mtx( pMtx[i] );
 
-            g_pd3dDevice->SetVertexShaderConstant( ConstAddr,&Mtx,4 );
-        }
+            g_pd3dDevice->SetVertexShaderConstantF( ConstAddr, (const float*)&Mtx, 4 );
+        }       
         if( !pAmbient )
         {
             const vector4 Void( 1.0f,1.0f,1.0f,1.0f );
             pAmbient = &Void;
         }
-        g_pd3dDevice->SetVertexShaderConstant( 83,pAmbient,1 );
+        g_pd3dDevice->SetVertexShaderConstantF( 83, (const float*)pAmbient, 1 );
     }
     return Address;
 }
@@ -1564,14 +1667,14 @@ void shader_mgr::ConstSanityCheck( void )
 {
 //#ifdef X_DEBUG
 //    f32 CmpFogTable[4*MAX_FOG_SIZE];
-//    g_pd3dDevice->GetVertexShaderConstant( -94,CmpFogTable,MAX_FOG_SIZE );
+//    g_pd3dDevice->SetVertexShaderConstantF( -94,(const float*)CmpFogTable,MAX_FOG_SIZE );
 //    ASSERT( !x_memcmp( CmpFogTable,m_FogConst,4*MAX_FOG_SIZE ));
 //#endif
 }
 
 //=============================================================================
 
-s32 shader_mgr::InsertShadow( ps::desc& PSFlags,texture_factory::handle Handle )
+s32 shader_mgr::InsertShadow( ps::desc& PSFlags,IDirect3DTexture9* Handle )
 {
     s32 iShadow;
 
@@ -1586,17 +1689,15 @@ s32 shader_mgr::InsertShadow( ps::desc& PSFlags,texture_factory::handle Handle )
     }
 
     // add sampler statements .................................................
-
-    g_TextureStageState.Set( iShadow, D3DTSS_ALPHAKILL, D3DTALPHAKILL_DISABLE );
-    g_TextureStageState.Set( iShadow, D3DTSS_ADDRESSU , D3DTADDRESS_CLAMP );
-    g_TextureStageState.Set( iShadow, D3DTSS_ADDRESSV , D3DTADDRESS_CLAMP );
-    g_TextureStageState.Set( iShadow, D3DTSS_ADDRESSW , D3DTADDRESS_CLAMP );
-    g_Texture          .Set( iShadow, Handle );
+    
+    g_pd3dDevice->SetRenderState(D3DRS_ALPHATESTENABLE, FALSE);
+    g_pd3dDevice->SetSamplerState(iShadow, D3DSAMP_ADDRESSU, D3DTADDRESS_CLAMP);
+    g_pd3dDevice->SetSamplerState(iShadow, D3DSAMP_ADDRESSV, D3DTADDRESS_CLAMP);
+    g_pd3dDevice->SetSamplerState(iShadow, D3DSAMP_ADDRESSW, D3DTADDRESS_CLAMP);
+    g_pd3dDevice->SetTexture(iShadow, Handle);
 
     return iShadow;
 }
-
-
 
 //=============================================================================
 //=============================================================================
@@ -1604,37 +1705,42 @@ s32 shader_mgr::InsertShadow( ps::desc& PSFlags,texture_factory::handle Handle )
 //=============================================================================
 //=============================================================================
 
-
-
 //////////////////////////////////////////////////////////////////////////////
 
-shader::shader( u32 dwType,XGBuffer& MC,u32* pShaderDesc ): Microcode( MC )
-{
-    Id   = dwType;
-    Size = Microcode.GetBufferSize( );
+shader::shader( u32 Type, LPD3DXBUFFER Microcode, const D3DVERTEXELEMENT9* pShaderDesc )
+{ //SASMT_VERTEXSHADER, SASMT_PIXELSHADER is fucking bullshit.
+    this->Type = Type;
+    pVertexShader = NULL;
+    pPixelShader = NULL;
+    pVertexDecl = NULL;
 
-    switch( Id )
+    switch(Type)
     {
         case SASMT_VERTEXSHADER:
-            if( pShaderDesc )
+        {
+            if (pShaderDesc)
             {
-                LPDWORD pdwBuffer=(LPDWORD)Microcode.GetBufferPointer();
                 g_pd3dDevice->CreateVertexShader(
-                    (DWORD*)pShaderDesc,
-                    pdwBuffer,
-                    (DWORD*)&Handle,
-                    0
+                    (CONST DWORD*)Microcode->GetBufferPointer(),
+                    &pVertexShader
+                );
+                g_pd3dDevice->CreateVertexDeclaration(
+                    pShaderDesc,
+                    &pVertexDecl
                 );
             }
             break;
-
+        }
+        
         case SASMT_PIXELSHADER:
         {
-            const D3DPIXELSHADERDEF* pBuffer=( const D3DPIXELSHADERDEF* )Microcode.GetBufferPointer();
-            g_pd3dDevice->CreatePixelShader( pBuffer,(DWORD*)&Handle );
+            g_pd3dDevice->CreatePixelShader(
+                (CONST DWORD*)Microcode->GetBufferPointer(),
+                &pPixelShader
+            );
             break;
         }
-
+        
         default:
             ASSERT(0);
             break;

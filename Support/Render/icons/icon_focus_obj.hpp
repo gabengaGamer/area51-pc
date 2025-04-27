@@ -12,8 +12,8 @@
 
 // Data From: c:\gamedata\a51\source\art\editor_icons\ICON_FocusObject.MATX 
 
-#define NUM_VERTICES_ICON_FOCUS_OBJ	(490)
-#define NUM_FACETS_ICON_FOCUS_OBJ	(328)
+#define NUM_VERTICES_ICON_FOCUS_OBJ    (490)
+#define NUM_FACETS_ICON_FOCUS_OBJ    (328)
 
 static vertex s_vicon_focus_obj[] = 
 {

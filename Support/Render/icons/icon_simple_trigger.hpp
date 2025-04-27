@@ -12,8 +12,8 @@
 
 // Data From: c:\gamedata\a51\source\art\editor_icons\ICON_Simple Trigger.MATX 
 
-#define NUM_VERTICES_ICON_SIMPLE_TRIGGER	(144)
-#define NUM_FACETS_ICON_SIMPLE_TRIGGER	(160)
+#define NUM_VERTICES_ICON_SIMPLE_TRIGGER    (144)
+#define NUM_FACETS_ICON_SIMPLE_TRIGGER    (160)
 
 static vertex s_vicon_simple_trigger[] = 
 {

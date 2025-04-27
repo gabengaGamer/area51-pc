@@ -26,11 +26,11 @@ void soft_vertex_mgr::Init( void )
 /*
         const DWORD Declaration[] = 
         {
-	        D3DVSD_STREAM(0),
-	        D3DVSD_REG(0, D3DVSDT_FLOAT4),  // Position, W=B1
-	        D3DVSD_REG(1, D3DVSDT_FLOAT4),  // Normal,   W=B2
-	        D3DVSD_REG(2, D3DVSDT_FLOAT4),  // XY=UV, ZW=W1,W2
-	        D3DVSD_END(),
+            D3DVSD_STREAM(0),
+            D3DVSD_REG(0, D3DVSDT_FLOAT4),  // Position, W=B1
+            D3DVSD_REG(1, D3DVSDT_FLOAT4),  // Normal,   W=B2
+            D3DVSD_REG(2, D3DVSDT_FLOAT4),  // XY=UV, ZW=W1,W2
+            D3DVSD_END(),
         };
 */
         const D3DVERTEXELEMENT9 Declaration[] =

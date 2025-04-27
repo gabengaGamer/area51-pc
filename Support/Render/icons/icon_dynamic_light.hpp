@@ -12,8 +12,8 @@
 
 // Data From: c:\gamedata\a51\source\art\editor_icons\ICON_Dynamiclight.MATX 
 
-#define NUM_VERTICES_ICON_DYNAMIC_LIGHT	(130)
-#define NUM_FACETS_ICON_DYNAMIC_LIGHT	(130)
+#define NUM_VERTICES_ICON_DYNAMIC_LIGHT    (130)
+#define NUM_FACETS_ICON_DYNAMIC_LIGHT    (130)
 
 static vertex s_vicon_dynamic_light[] = 
 {

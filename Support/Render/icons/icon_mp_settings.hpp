@@ -12,8 +12,8 @@
 
 // Data From: c:\gamedata\a51\source\art\editor_icons\ICON_MPSettings.MATX 
 
-#define NUM_VERTICES_ICON_MP_SETTINGS	(66)
-#define NUM_FACETS_ICON_MP_SETTINGS	(40)
+#define NUM_VERTICES_ICON_MP_SETTINGS    (66)
+#define NUM_FACETS_ICON_MP_SETTINGS    (40)
 
 static vertex s_vicon_mp_settings[] = 
 {

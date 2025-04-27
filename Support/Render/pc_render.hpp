@@ -11,8 +11,15 @@
     #define PRELOAD_SHADERS 1
 
     struct render_instance;
-	
-	extern s32                 vram_Register    ( IDirect3DTexture9* pTexture );
+    
+    extern s32 XRes;
+    extern s32 YRes;
+    
+    // Evil code: we shall not speak of it again.
+    #define PropH(a) u32( (f32(PropW(a)) * f32(XRes) / f32(YRes)) + 0.5f )
+    #define PropW(a) u32( 0x##a /4 )
+    
+    extern s32                 vram_Register    ( IDirect3DTexture9* pTexture );
     extern void                vram_Activate    ( s32 Stage, s32 VRAM_ID );
     extern IDirect3DTexture9*  vram_GetSurface  ( s32 VRAM_ID ); //IDK
 
@@ -79,7 +86,7 @@
 
     ///////////////////////////////////////////////////////////////////////////
 
-    struct render_target
+    struct render_target //So, do we really need this ? Probably the better way is call DX9 API directly
     {
         bool SetFromTextures( IDirect3DTexture9* pTarget, IDirect3DTexture9* pDepth ) //SetTile !! will be here
         {
@@ -118,18 +125,18 @@
             return m_pDepth[m_Stack];
         }
     
-	    // Preserve current targets
-		
+        // Preserve current targets
+        
         void Push( IDirect3DSurface9* pTarget, IDirect3DSurface9* pDepth );
-		
-		// Restore to previous targets
-		
+        
+        // Restore to previous targets
+        
         void Pop( void );
-		
-		// If you page flip the render target may not always have
+        
+        // If you page flip the render target may not always have
         // it's memory settings correct. Call this to force
         // the next call to Set() to actually do something.
-		
+        
         void Reset( void );
     
     private:
@@ -287,12 +294,12 @@
 
         // --------------------------------------------------------------------
 
-        void SetCustomFogPalette    (const IDirect3DTexture9*,xbool,s32);
-        s32  InsertShadow           ( ps::desc&,IDirect3DTexture9* );
-        s32  SetPerPixelPointLights ( const lights*,const matrix4& );
-        s32  SetPointLights         ( const lights*,const matrix4& );
-        void SetDirLights           ( const lights* );
-        void SetPixelShader         ( shader_style );
+        void SetCustomFogPalette   ( const texture::handle&,xbool,s32 );
+        s32  InsertShadow          ( ps::desc&,IDirect3DTexture9* );
+        s32  SetPerPixelPointLights( const lights*,const matrix4& );
+        s32  SetPointLights        ( const lights*,const matrix4& );
+        void SetDirLights          ( const lights* );
+        void SetPixelShader        ( shader_style );
 
         // --------------------------------------------------------------------
 
@@ -577,7 +584,7 @@
         void  End                    (                                                             );
         void  ApplyFog               (                                                             );
         //void  InitialiseTiledMemory  (                                                             );
-		//void InitializeRenderTargets (                                                             );
+        //void InitializeRenderTargets (                                                             );
 
         // --------------------------------------------------------------------
 

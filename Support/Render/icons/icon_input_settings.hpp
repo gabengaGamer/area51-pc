@@ -12,8 +12,8 @@
 
 // Data From: c:\gamedata\a51\source\art\editor_icons\ICON_InputSettings.MATX 
 
-#define NUM_VERTICES_ICON_INPUT_SETTINGS	(88)
-#define NUM_FACETS_ICON_INPUT_SETTINGS	(62)
+#define NUM_VERTICES_ICON_INPUT_SETTINGS    (88)
+#define NUM_FACETS_ICON_INPUT_SETTINGS    (62)
 
 static vertex s_vicon_input_settings[] = 
 {

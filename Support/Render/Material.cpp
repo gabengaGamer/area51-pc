@@ -35,6 +35,8 @@ xbool material::operator== ( material& RHS ) const
 }
 
 //=============================================================================
+
+//=============================================================================
 // XBOX XBOX XBOX XBOX XBOX XBOX XBOX XBOX XBOX XBOX XBOX XBOX XBOX XBOX XBOX !
 //=============================================================================
 
@@ -227,37 +229,75 @@ void ps::path::compile( const char* pShaderText,shader& Result )
 // PC PC PC PC PC PC PC PC PC PC PC PC PC PC PC PC PC PC PC PC PC PC PC PC PC !
 //=============================================================================
 
-#if (defined TARGET_PC)  //&& !(defined CONFIG_RETAIL)
+#ifdef TARGET_PC
 
 #include "Entropy.hpp"
 #include "Render.hpp"
 
-//=============================================================================
-
-#define COMPILE_SHADERS 0
-
-extern IDirect3DDevice9* g_pd3dDevice;
+#include "pc_render.hpp"
 
 //=============================================================================
 
-static void DisplayBuffer(char* pTextIn)
+static const D3DVERTEXELEMENT9 s_dwRigidDesc[] =
+{
+    {0, 0,  D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0},
+    {0, 12, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_NORMAL,   0},
+    {0, 24, D3DDECLTYPE_FLOAT2, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD, 0},
+    {1, 0,  D3DDECLTYPE_D3DCOLOR, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_COLOR, 0},
+    D3DDECL_END()
+};
+
+//=============================================================================
+
+static const D3DVERTEXELEMENT9 s_dwSkinDesc[] =
+{
+    {0, 0,  D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION,  0},
+    {0, 12, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_NORMAL,    0},
+    {0, 24, D3DDECLTYPE_FLOAT4, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD,  0},
+    {0, 40, D3DDECLTYPE_FLOAT2, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_BLENDWEIGHT, 0},
+    D3DDECL_END()
+};
+
+//=============================================================================
+
+shader::shader(u32 Type, IDirect3DPixelShader9* pPS, IDirect3DVertexDeclaration9* pVertexDecl)
+{
+    this->Type = Type;
+    pPixelShader = pPS;
+    pVertexDecl = pVertexDecl;
+    pVertexShader = NULL;
+}
+
+//=============================================================================
+
+shader::shader(u32 Type, IDirect3DVertexShader9* pVS, IDirect3DVertexDeclaration9* pVertexDecl)
+{
+    this->Type = Type;
+    pVertexShader = pVS;
+    pVertexDecl = pVertexDecl;
+    pPixelShader = NULL;
+}
+
+//=============================================================================
+
+static void DisplayBuffer( char* pTextIn )
 {
 #ifndef CONFIG_RETAIL
 
     char* pDst = pTextIn;
     char* pSrc = pTextIn;
     {
-        u32 TotalBytes = x_strlen(pTextIn);
-        s32 nLines = 0;
+        u32 TotalBytes = x_strlen( pTextIn );
+        s32 nLines     = 0;
 
-        for (u32 j = 0; j < TotalBytes; j++)
+        for( u32 j=0;j<TotalBytes;j++ )
         {
-            if (pSrc[j] == 0x0D)
+            if( pSrc[j]==0x0D )
                 continue;
-            if (pSrc[j] == 0x0A)
+            if( pSrc[j]==0x0A )
             {
                 nLines++;
-                *pDst = 0;
+                *pDst=0;
                 pDst++;
             }
             else
@@ -268,15 +308,14 @@ static void DisplayBuffer(char* pTextIn)
         }
         *pDst = 0;
 
-        OutputDebugString("\n***********************************************************************************\n\n");
+        OutputDebugString("\n***********************************************************************************\n\n" );
 
-        for (s32 iLine = 0; iLine < nLines; iLine++)
+        for( s32 iLine=0;iLine<nLines;iLine++ )
         {
-            OutputDebugString(xfs("%3d: %s\n", iLine + 1, pSrc));
-            pSrc += x_strlen(pSrc) + 1;
+            OutputDebugString( xfs("%3d: %s\n",iLine+1,pSrc ));
+            pSrc += x_strlen( pSrc )+1;
         }
     }
-
 #endif
 }
 
@@ -284,185 +323,152 @@ static void DisplayBuffer(char* pTextIn)
 
 #pragma auto_inline(off)
 
-void vs::path::compile(const char* pShaderText, shader& Result)
+void vs::path::compile( const char* pShaderText, shader& Result )
 {
 #if COMPILE_SHADERS
-
+    bool bSkin = (Flags.oPos_Skin || Flags.oSt_CastShadowSkin);
     u32 TotalBytes = x_strlen(pShaderText);
+    u32 dwType = 0;
     
-    if (g_pd3dDevice)
+    if(g_pd3dDevice)
     {
-        // Compile shader /////////////////////////////////////////////////////
-        LPD3DXBUFFER pCode = NULL;
-        LPD3DXBUFFER pErrorsBuffer = NULL;
-
-        DWORD Flags = 0;
-#ifdef CONFIG_DEBUG
-        Flags |= D3DXSHADER_DEBUG;
-#else
-        Flags |= D3DXSHADER_OPTIMIZATION_LEVEL3;
-#endif
-
+        LPD3DXBUFFER pMicrocode = NULL;
+        LPD3DXBUFFER pErrorLog = NULL;
+        
+        DWORD dwFlags = 0;
+        #ifdef X_RETAIL
+            dwFlags = D3DXSHADER_SKIPVALIDATION;
+        #else
+            dwFlags = D3DXSHADER_DEBUG;
+        #endif
+        
         HRESULT hr = D3DXAssembleShader(
             pShaderText,
-            TotalBytes,
-            NULL,
-            NULL,
-            Flags,
-            &pCode,
-            &pErrorsBuffer);
-
-        if (FAILED(hr))
+            TotalBytes, 
+            NULL,       
+            NULL,       
+            dwFlags,    
+            &pMicrocode,
+            &pErrorLog  
+        );
+            
+        if(FAILED(hr))
         {
-            if (pErrorsBuffer)
+            if(pErrorLog)
             {
-                DisplayBuffer((char*)pErrorsBuffer->GetBufferPointer());
-                pErrorsBuffer->Release();
+                DisplayBuffer((char*)pErrorLog->GetBufferPointer());
+                pErrorLog->Release();
             }
             ASSERT(FALSE);
             return;
         }
-
-        // Create shader object ///////////////////////////////////////////////
+        
         IDirect3DVertexShader9* pVertexShader = NULL;
         hr = g_pd3dDevice->CreateVertexShader(
-            (DWORD*)pCode->GetBufferPointer(),
-            &pVertexShader);
-
-        if (FAILED(hr))
+            (CONST DWORD*)pMicrocode->GetBufferPointer(),
+            &pVertexShader
+        );
+            
+        if(FAILED(hr))
         {
+            if(pMicrocode)
+                pMicrocode->Release();
             ASSERT(FALSE);
-            if (pCode) pCode->Release();
-            if (pErrorsBuffer) pErrorsBuffer->Release();
             return;
         }
+        
+        IDirect3DVertexDeclaration9* pVertexDecl = NULL;
+        hr = g_pd3dDevice->CreateVertexDeclaration(
+            bSkin ? s_dwSkinDesc : s_dwRigidDesc, 
+            &pVertexDecl
+        );
 
-        // Set the shader object in the Result
-        Result.Handle = (u32)pVertexShader;
-        Result.Size = pCode->GetBufferSize();
-        Result.Id = 0; // PC doesn't need an ID
-
-        // Release DX resources
-        if (pCode) pCode->Release();
-        if (pErrorsBuffer) pErrorsBuffer->Release();
+        if(FAILED(hr))
+        {
+            if(pVertexShader)
+                pVertexShader->Release();
+            if(pMicrocode)
+                pMicrocode->Release();
+            ASSERT(FALSE);
+            return;
+        }
+        
+        Result.shader::shader(
+            dwType,
+            pVertexShader,
+            pVertexDecl
+        );
+        
+        if(pMicrocode)
+            pMicrocode->Release();
     }
-
 #endif
 }
 
 //=============================================================================
 
-void ps::path::compile(const char* pShaderText, shader& Result)
+void ps::path::compile( const char* pShaderText, shader& Result )
 {
 #if COMPILE_SHADERS
-
     u32 TotalBytes = x_strlen(pShaderText);
+    u32 dwType = 0;
     
-    if (g_pd3dDevice)
+    if(g_pd3dDevice)
     {
-        // Compile shader /////////////////////////////////////////////////////
-        LPD3DXBUFFER pCode = NULL;
-        LPD3DXBUFFER pErrorsBuffer = NULL;
-
-        DWORD Flags = 0;
-#ifdef CONFIG_DEBUG
-        Flags |= D3DXSHADER_DEBUG;
-#else
-        Flags |= D3DXSHADER_OPTIMIZATION_LEVEL3;
-#endif
-
+        LPD3DXBUFFER pMicrocode = NULL;
+        LPD3DXBUFFER pErrorLog = NULL;
+        
+        DWORD dwFlags = 0;
+        #ifdef X_RETAIL
+            dwFlags = D3DXSHADER_SKIPVALIDATION;
+        #else
+            dwFlags = D3DXSHADER_DEBUG;
+        #endif
+        
         HRESULT hr = D3DXAssembleShader(
-            pShaderText,
-            TotalBytes,
-            NULL,
-            NULL,
-            Flags,
-            &pCode,
-            &pErrorsBuffer);
-
-        if (FAILED(hr))
+            pShaderText,  
+            TotalBytes,   
+            NULL,         
+            NULL,         
+            dwFlags,      
+            &pMicrocode,  
+            &pErrorLog    
+        );
+            
+        if(FAILED(hr))
         {
-            if (pErrorsBuffer)
+            if(pErrorLog)
             {
-                DisplayBuffer((char*)pErrorsBuffer->GetBufferPointer());
-                pErrorsBuffer->Release();
+                DisplayBuffer((char*)pErrorLog->GetBufferPointer());
+                pErrorLog->Release();
             }
             ASSERT(FALSE);
             return;
         }
-
-        // Create shader object ///////////////////////////////////////////////
+        
         IDirect3DPixelShader9* pPixelShader = NULL;
         hr = g_pd3dDevice->CreatePixelShader(
-            (DWORD*)pCode->GetBufferPointer(),
-            &pPixelShader);
-
-        if (FAILED(hr))
+            (CONST DWORD*)pMicrocode->GetBufferPointer(),
+            &pPixelShader
+        );
+            
+        if(FAILED(hr))
         {
+            if(pMicrocode)
+                pMicrocode->Release();
             ASSERT(FALSE);
-            if (pCode) pCode->Release();
-            if (pErrorsBuffer) pErrorsBuffer->Release();
             return;
         }
-
-        // Set the shader object in the Result
-        Result.Handle = (u32)pPixelShader;
-        Result.Size = pCode->GetBufferSize();
-        Result.Id = 0; // PC doesn't need an ID
-
-        // Release DX resources
-        if (pCode) pCode->Release();
-        if (pErrorsBuffer) pErrorsBuffer->Release();
+        
+        Result.shader::shader(
+            dwType,
+            pPixelShader,
+            NULL
+        );
+        
+        if(pMicrocode)
+            pMicrocode->Release();
     }
-
 #endif
 }
-
-//=============================================================================
-
-shader::~shader(void)
-{
-    if (Handle)
-    {
-        // Cast to appropriate shader type and release it
-        IDirect3DResource9* pResource = (IDirect3DResource9*)Handle;
-        if (pResource)
-            pResource->Release();
-        Handle = 0;
-    }
-}
-
-//=============================================================================
-
-shader::shader(u32 Type, const void* pShaderBytecode, u32* pDesc)
-{
-    Handle = 0;
-    Size = 0;
-    Id = 0;
-
-    if (!g_pd3dDevice || !pShaderBytecode)
-        return;
-
-    HRESULT hr = S_OK;
-    if (Type == D3DVS_VERSION(1, 1)) // Vertex shader
-    {
-        IDirect3DVertexShader9* pVertexShader = NULL;
-        hr = g_pd3dDevice->CreateVertexShader((DWORD*)pShaderBytecode, &pVertexShader);
-        if (SUCCEEDED(hr))
-            Handle = (u32)pVertexShader;
-    }
-    else if (Type == D3DPS_VERSION(1, 1) || Type == D3DPS_VERSION(1, 4)) // Pixel shader
-    {
-        IDirect3DPixelShader9* pPixelShader = NULL;
-        hr = g_pd3dDevice->CreatePixelShader((DWORD*)pShaderBytecode, &pPixelShader);
-        if (SUCCEEDED(hr))
-            Handle = (u32)pPixelShader;
-    }
-
-    if (FAILED(hr))
-    {
-        ASSERT(FALSE);
-    }
-}
-
-#endif
+#endif // TARGET_PC

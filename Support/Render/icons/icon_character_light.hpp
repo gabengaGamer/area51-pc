@@ -12,8 +12,8 @@
 
 // Data From: c:\gamedata\a51\source\art\editor_icons\ICON_Characterlight.MATX 
 
-#define NUM_VERTICES_ICON_CHARACTER_LIGHT	(294)
-#define NUM_FACETS_ICON_CHARACTER_LIGHT	(160)
+#define NUM_VERTICES_ICON_CHARACTER_LIGHT    (294)
+#define NUM_FACETS_ICON_CHARACTER_LIGHT    (160)
 
 static vertex s_vicon_character_light[] = 
 {

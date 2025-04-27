@@ -12,8 +12,8 @@
 
 // Data From: c:\gamedata\a51\source\art\editor_icons\ICON_Sphere.MATX 
 
-#define NUM_VERTICES_ICON_SPHERE	(64)
-#define NUM_FACETS_ICON_SPHERE	(80)
+#define NUM_VERTICES_ICON_SPHERE    (64)
+#define NUM_FACETS_ICON_SPHERE    (80)
 
 static vertex s_vicon_sphere[] = 
 {

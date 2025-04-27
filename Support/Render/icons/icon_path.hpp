@@ -12,8 +12,8 @@
 
 // Data From: c:\gamedata\a51\source\art\editor_icons\ICON_Path.MATX 
 
-#define NUM_VERTICES_ICON_PATH	(57)
-#define NUM_FACETS_ICON_PATH	(78)
+#define NUM_VERTICES_ICON_PATH    (57)
+#define NUM_FACETS_ICON_PATH    (78)
 
 static vertex s_vicon_path[] = 
 {

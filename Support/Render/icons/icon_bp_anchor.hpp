@@ -12,8 +12,8 @@
 
 // Data From: c:\gamedata\a51\source\art\editor_icons\ICON_Blue Print Anchor.MATX 
 
-#define NUM_VERTICES_ICON_BP_ANCHOR	(308)
-#define NUM_FACETS_ICON_BP_ANCHOR	(232)
+#define NUM_VERTICES_ICON_BP_ANCHOR    (308)
+#define NUM_FACETS_ICON_BP_ANCHOR    (232)
 
 static vertex s_vicon_bp_anchor[] = 
 {

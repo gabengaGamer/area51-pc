@@ -12,8 +12,8 @@
 
 // Data From: c:\gamedata\a51\source\art\editor_icons\ICON_BotSpawnPoint.MATX 
 
-#define NUM_VERTICES_ICON_BOT_SPAWN_POINT	(112)
-#define NUM_FACETS_ICON_BOT_SPAWN_POINT	(144)
+#define NUM_VERTICES_ICON_BOT_SPAWN_POINT    (112)
+#define NUM_FACETS_ICON_BOT_SPAWN_POINT    (144)
 
 static vertex s_vicon_bot_spawn_point[] = 
 {

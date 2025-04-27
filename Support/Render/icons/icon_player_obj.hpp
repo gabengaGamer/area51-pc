@@ -12,8 +12,8 @@
 
 // Data From: c:\gamedata\a51\source\art\editor_icons\ICON_PlayerObject.MATX 
 
-#define NUM_VERTICES_ICON_PLAYER_OBJ	(290)
-#define NUM_FACETS_ICON_PLAYER_OBJ	(320)
+#define NUM_VERTICES_ICON_PLAYER_OBJ    (290)
+#define NUM_FACETS_ICON_PLAYER_OBJ    (320)
 
 static vertex s_vicon_player_obj[] = 
 {

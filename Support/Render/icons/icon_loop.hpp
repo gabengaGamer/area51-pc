@@ -12,8 +12,8 @@
 
 // Data From: c:\gamedata\a51\source\art\editor_icons\ICON_Loop.MATX 
 
-#define NUM_VERTICES_ICON_LOOP	(48)
-#define NUM_FACETS_ICON_LOOP	(96)
+#define NUM_VERTICES_ICON_LOOP    (48)
+#define NUM_FACETS_ICON_LOOP    (96)
 
 static vertex s_vicon_loop[] = 
 {

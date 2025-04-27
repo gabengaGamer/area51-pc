@@ -12,8 +12,8 @@
 
 // Data From: c:\gamedata\a51\source\art\editor_icons\ICON_BluePrintBag.MATX 
 
-#define NUM_VERTICES_ICON_BP_BAG	(96)
-#define NUM_FACETS_ICON_BP_BAG	(56)
+#define NUM_VERTICES_ICON_BP_BAG    (96)
+#define NUM_FACETS_ICON_BP_BAG    (56)
 
 static vertex s_vicon_bp_bag[] = 
 {

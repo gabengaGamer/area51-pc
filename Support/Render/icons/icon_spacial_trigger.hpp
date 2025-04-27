@@ -12,8 +12,8 @@
 
 // Data From: c:\gamedata\a51\source\art\editor_icons\ICON_Spacial Trigger.MATX 
 
-#define NUM_VERTICES_ICON_SPACIAL_TRIGGER	(146)
-#define NUM_FACETS_ICON_SPACIAL_TRIGGER	(132)
+#define NUM_VERTICES_ICON_SPACIAL_TRIGGER    (146)
+#define NUM_FACETS_ICON_SPACIAL_TRIGGER    (132)
 
 static vertex s_vicon_spacial_trigger[] = 
 {

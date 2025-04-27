@@ -12,8 +12,8 @@
 
 // Data From: c:\gamedata\a51\source\art\editor_icons\ICON_sound.MATX 
 
-#define NUM_VERTICES_ICON_SOUND	(125)
-#define NUM_FACETS_ICON_SOUND	(152)
+#define NUM_VERTICES_ICON_SOUND    (125)
+#define NUM_FACETS_ICON_SOUND    (152)
 
 static vertex s_vicon_sound[] = 
 {

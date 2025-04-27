@@ -12,8 +12,8 @@
 
 // Data From: c:\gamedata\a51\source\art\editor_icons\ICON_gear.MATX 
 
-#define NUM_VERTICES_ICON_GEAR	(180)
-#define NUM_FACETS_ICON_GEAR	(120)
+#define NUM_VERTICES_ICON_GEAR    (180)
+#define NUM_FACETS_ICON_GEAR    (120)
 
 static vertex s_vicon_gear[] = 
 {

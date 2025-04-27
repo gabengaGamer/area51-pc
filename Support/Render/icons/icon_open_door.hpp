@@ -12,8 +12,8 @@
 
 // Data From: c:\gamedata\a51\source\art\editor_icons\ICON_OpenDoor.MATX 
 
-#define NUM_VERTICES_ICON_OPEN_DOOR	(160)
-#define NUM_FACETS_ICON_OPEN_DOOR	(124)
+#define NUM_VERTICES_ICON_OPEN_DOOR    (160)
+#define NUM_FACETS_ICON_OPEN_DOOR    (124)
 
 static vertex s_vicon_open_door[] = 
 {

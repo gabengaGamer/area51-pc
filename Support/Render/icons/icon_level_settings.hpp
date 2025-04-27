@@ -12,8 +12,8 @@
 
 // Data From: c:\gamedata\a51\source\art\editor_icons\ICON_LevelSettings.MATX 
 
-#define NUM_VERTICES_ICON_LEVEL_SETTINGS	(95)
-#define NUM_FACETS_ICON_LEVEL_SETTINGS	(138)
+#define NUM_VERTICES_ICON_LEVEL_SETTINGS    (95)
+#define NUM_FACETS_ICON_LEVEL_SETTINGS    (138)
 
 static vertex s_vicon_level_settings[] = 
 {

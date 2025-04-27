@@ -12,8 +12,8 @@
 
 // Data From: c:\gamedata\a51\source\art\editor_icons\ICON_TaskObject.MATX 
 
-#define NUM_VERTICES_ICON_TASK_OBJ	(290)
-#define NUM_FACETS_ICON_TASK_OBJ	(320)
+#define NUM_VERTICES_ICON_TASK_OBJ    (290)
+#define NUM_FACETS_ICON_TASK_OBJ    (320)
 
 static vertex s_vicon_task_obj[] = 
 {

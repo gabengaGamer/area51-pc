@@ -12,8 +12,8 @@
 
 // Data From: c:\gamedata\a51\source\art\editor_icons\ICON_Particle emitter.MATX 
 
-#define NUM_VERTICES_ICON_PARTICLE_EMITTER	(338)
-#define NUM_FACETS_ICON_PARTICLE_EMITTER	(384)
+#define NUM_VERTICES_ICON_PARTICLE_EMITTER    (338)
+#define NUM_FACETS_ICON_PARTICLE_EMITTER    (384)
 
 static vertex s_vicon_particle_emitter[] = 
 {

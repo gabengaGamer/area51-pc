@@ -12,8 +12,8 @@
 
 // Data From: c:\gamedata\a51\source\art\editor_icons\ICON_ClosedDoor.MATX 
 
-#define NUM_VERTICES_ICON_CLOSED_DOOR	(160)
-#define NUM_FACETS_ICON_CLOSED_DOOR	(124)
+#define NUM_VERTICES_ICON_CLOSED_DOOR    (160)
+#define NUM_FACETS_ICON_CLOSED_DOOR    (124)
 
 static vertex s_vicon_closed_door[] = 
 {

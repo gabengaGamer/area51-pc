@@ -12,8 +12,8 @@
 
 // Data From: c:\gamedata\a51\source\art\editor_icons\ICON_Controller.MATX 
 
-#define NUM_VERTICES_ICON_CONTROLLER	(92)
-#define NUM_FACETS_ICON_CONTROLLER	(96)
+#define NUM_VERTICES_ICON_CONTROLLER    (92)
+#define NUM_FACETS_ICON_CONTROLLER    (96)
 
 static vertex s_vicon_controller[] = 
 {

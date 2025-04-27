@@ -12,8 +12,8 @@
 
 // Data From: c:\gamedata\a51\source\art\editor_icons\ICON_Cover.MATX 
 
-#define NUM_VERTICES_ICON_COVER	(121)
-#define NUM_FACETS_ICON_COVER	(142)
+#define NUM_VERTICES_ICON_COVER    (121)
+#define NUM_FACETS_ICON_COVER    (142)
 
 static vertex s_vicon_cover[] = 
 {

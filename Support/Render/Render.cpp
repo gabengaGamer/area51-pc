@@ -70,7 +70,7 @@ union shad_sortkey
 
 //=============================================================================
 
-#ifdef X_EDITOR
+#ifdef TARGET_PC
     xbool g_bZPriming;
 #endif
 
@@ -328,8 +328,12 @@ pipeline_mgr* g_pPipeline  = NULL;
 #endif
 
 #ifdef TARGET_PC
-#include "Render\pc_Render.cpp"
+#include "Render\LightMgr.hpp"
+#include "Render\platform_Render.hpp"
+#include "Entropy.hpp"
 #include "Render\pc_render.hpp"
+#include "Render\pc_post.inl"
+#include "Render\pc_render.inl"
 shader_mgr  * g_pShaderMgr = NULL;
 pipeline_mgr* g_pPipeline  = NULL;
 #endif
@@ -1349,7 +1353,7 @@ void render::BeginNormalRender( void )
 
 //=============================================================================
 
-#ifdef X_EDITOR
+#ifdef TARGET_PC
 namespace render
 {
     void PrimeZBuffer( void )
@@ -1650,7 +1654,6 @@ void render::ZPrimeRenderTarget( void )
     }
     platform_EndZPrime();
 }
-#elif defined(TARGET_PC)
 #endif
 
 //=============================================================================
@@ -1759,8 +1762,6 @@ void render::RenderLightMap( void )
         platform_EndLightMap();
     }
 }
-#elif defined(TARGET_PC)
-
 #endif
 
 //=============================================================================
@@ -1822,6 +1823,11 @@ void render::EndNormalRender( void )
 #ifdef X_DEBUG
     // sanity check
     SortSanityCheck();
+#endif
+
+#ifdef TARGET_PC
+    //BeginNormalRender();
+    //render::PrimeZBuffer();
 #endif
 
 #ifdef TARGET_XBOX
@@ -2906,7 +2912,7 @@ void render::AddSkinInstance( hgeom_inst     hInst,
             SortKey.RenderOrder = GetRenderOrder( (material_type)Material.Type );
             if ( (Flags & render::FADING_ALPHA) && (SortKey.RenderOrder < ORDER_FADING_ALPHA) )
                 SortKey.RenderOrder = ORDER_FADING_ALPHA;
-			if ( (Flags & render::GLOWING) && (SortKey.RenderOrder < ORDER_GLOWING) )
+            if ( (Flags & render::GLOWING) && (SortKey.RenderOrder < ORDER_GLOWING) )
                 SortKey.RenderOrder = ORDER_GLOWING;
             if ( (Flags & render::FORCE_LAST) && (SortKey.RenderOrder < ORDER_FORCED_LAST) )
                 SortKey.RenderOrder = ORDER_FORCED_LAST;

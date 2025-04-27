@@ -12,8 +12,8 @@
 
 // Data From: c:\gamedata\a51\source\art\editor_icons\ICON_Editor Notes.MATX 
 
-#define NUM_VERTICES_ICON_NOTE	(42)
-#define NUM_FACETS_ICON_NOTE	(28)
+#define NUM_VERTICES_ICON_NOTE    (42)
+#define NUM_FACETS_ICON_NOTE    (28)
 
 static vertex s_vicon_note[] = 
 {

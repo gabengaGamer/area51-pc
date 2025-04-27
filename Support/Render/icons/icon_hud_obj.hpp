@@ -12,8 +12,8 @@
 
 // Data From: c:\gamedata\a51\source\art\editor_icons\ICON_HUDObject.MATX 
 
-#define NUM_VERTICES_ICON_HUD_OBJ	(160)
-#define NUM_FACETS_ICON_HUD_OBJ	(112)
+#define NUM_VERTICES_ICON_HUD_OBJ    (160)
+#define NUM_FACETS_ICON_HUD_OBJ    (112)
 
 static vertex s_vicon_hud_obj[] = 
 {

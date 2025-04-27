@@ -12,8 +12,8 @@
 
 // Data From: c:\gamedata\a51\source\art\editor_icons\ICON_MusicLogic.MATX 
 
-#define NUM_VERTICES_ICON_MUSIC_LOGIC	(108)
-#define NUM_FACETS_ICON_MUSIC_LOGIC	(96)
+#define NUM_VERTICES_ICON_MUSIC_LOGIC    (108)
+#define NUM_FACETS_ICON_MUSIC_LOGIC    (96)
 
 static vertex s_vicon_music_logic[] = 
 {

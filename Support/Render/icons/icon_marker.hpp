@@ -12,8 +12,8 @@
 
 // Data From: c:\gamedata\a51\source\art\editor_icons\ICON_Marker.MATX 
 
-#define NUM_VERTICES_ICON_MARKER	(88)
-#define NUM_FACETS_ICON_MARKER	(124)
+#define NUM_VERTICES_ICON_MARKER    (88)
+#define NUM_FACETS_ICON_MARKER    (124)
 
 static vertex s_vicon_marker[] = 
 {

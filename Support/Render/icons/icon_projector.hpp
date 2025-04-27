@@ -12,8 +12,8 @@
 
 // Data From: c:\gamedata\a51\source\art\editor_icons\ICON_Projector.MATX 
 
-#define NUM_VERTICES_ICON_PROJECTOR	(134)
-#define NUM_FACETS_ICON_PROJECTOR	(80)
+#define NUM_VERTICES_ICON_PROJECTOR    (134)
+#define NUM_FACETS_ICON_PROJECTOR    (80)
 
 static vertex s_vicon_projector[] = 
 {

@@ -12,8 +12,8 @@
 
 // Data From: c:\gamedata\a51\source\art\editor_icons\ICON_Coupler.MATX 
 
-#define NUM_VERTICES_ICON_COUPLER	(92)
-#define NUM_FACETS_ICON_COUPLER	(96)
+#define NUM_VERTICES_ICON_COUPLER    (92)
+#define NUM_FACETS_ICON_COUPLER    (96)
 
 static vertex s_vicon_coupler[] = 
 {

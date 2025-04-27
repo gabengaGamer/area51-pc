@@ -12,8 +12,8 @@
 
 // Data From: c:\gamedata\a51\source\art\editor_icons\ICON_TwoWayArrow.MATX 
 
-#define NUM_VERTICES_ICON_ARROW	(60)
-#define NUM_FACETS_ICON_ARROW	(28)
+#define NUM_VERTICES_ICON_ARROW    (60)
+#define NUM_FACETS_ICON_ARROW    (28)
 
 static vertex s_vicon_arrow[] = 
 {

@@ -12,8 +12,8 @@
 
 // Data From: c:\gamedata\a51\source\art\editor_icons\ICON_Spawner.MATX 
 
-#define NUM_VERTICES_ICON_SPAWNER	(264)
-#define NUM_FACETS_ICON_SPAWNER	(372)
+#define NUM_VERTICES_ICON_SPAWNER    (264)
+#define NUM_FACETS_ICON_SPAWNER    (372)
 
 static vertex s_vicon_spawner[] = 
 {
