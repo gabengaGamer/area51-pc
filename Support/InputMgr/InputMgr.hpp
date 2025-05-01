@@ -20,17 +20,10 @@
 
 #define MAX_CONTEXT         5
 
-#ifdef TARGET_PC
-  #define INPUT_PLATFORM_PS2  0
-  #define INPUT_PLATFORM_XBOX 1
-  #define INPUT_PLATFORM_PC   2
-  #define MAX_INPUT_PLATFORMS 3
-#else
-  #define INPUT_PLATFORM_PS2  0
-  #define INPUT_PLATFORM_XBOX 0
-  #define INPUT_PLATFORM_PC   0
-  #define MAX_INPUT_PLATFORMS 1
-#endif
+#define INPUT_PLATFORM_PS2  0
+#define INPUT_PLATFORM_XBOX 0
+#define INPUT_PLATFORM_PC   0
+#define MAX_INPUT_PLATFORMS 1
 
 //=========================================================================
 // CLASSES 
