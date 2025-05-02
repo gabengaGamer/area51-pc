@@ -328,8 +328,13 @@ pipeline_mgr* g_pPipeline  = NULL;
 #endif
 
 #ifdef TARGET_PC
-#include "Render\pc_post.cpp"
-#include "Render\pc_Render.cpp"
+#include "Render\LightMgr.hpp"
+#include "Render\platform_Render.hpp"
+#include "Render\pc_render.hpp"
+#include "Render\pc_post.inl"
+#include "Render\pc_platform.inl"
+shader_mgr  * g_pShaderMgr = NULL;
+pipeline_mgr* g_pPipeline  = NULL;
 #endif
 
 //=============================================================================
