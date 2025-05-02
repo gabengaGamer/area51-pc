@@ -240,11 +240,6 @@ xbool dlg_load_game::Create( s32                        UserID,
     #ifdef TARGET_PS2
     m_OrigPermanentSize = -1;
     #endif
-    
-    // Initialize PC-specific buffers
-    #ifdef TARGET_PC
-    pc_CreateBuffers();
-    #endif
 
     // Return success code
     return Success;
@@ -261,11 +256,6 @@ void dlg_load_game::Destroy( void )
 
     // Do the platform-specific cleanup
     platform_Destroy();
-
-    // Destroy PC-specific buffers
-    #ifdef TARGET_PC
-    pc_DestroyBuffers();
-    #endif
 
     // Kill the light shaft effect
     if( m_FogLoaded )
@@ -1101,46 +1091,6 @@ void dlg_load_game::pc_ClipSprite(   vector3&          UL,
     Size.X = BR.GetX() - UL.GetX();
     Size.Y = BR.GetY() - UL.GetY();
 }
-
-//==============================================================================
-
-void dlg_load_game::pc_CreateBuffers( void )
-{
-    m_pBackBuffer = NULL;
-    
-    // Create render target textures for each buffer
-    D3DFORMAT format = D3DFMT_A8R8G8B8;
-    
-    // Level name buffer
-    g_pd3dDevice->CreateTexture( TEXT_IMAGE_WIDTH, TEXT_IMAGE_HEIGHT, 
-                              1, D3DUSAGE_RENDERTARGET, format, 
-                              D3DPOOL_DEFAULT, ( IDirect3DTexture9** )&m_Buffers[BUFFER_LEVEL_NAME], NULL);
-                              
-    // Drop shadow buffers (2)
-    g_pd3dDevice->CreateTexture( TEXT_IMAGE_WIDTH/2, TEXT_IMAGE_HEIGHT/2, 
-                              1, D3DUSAGE_RENDERTARGET, format, 
-                              D3DPOOL_DEFAULT, ( IDirect3DTexture9** )&m_Buffers[BUFFER_DROP_SHADOW_1], NULL);
-                              
-    g_pd3dDevice->CreateTexture( TEXT_IMAGE_WIDTH/2, TEXT_IMAGE_HEIGHT/2, 
-                              1, D3DUSAGE_RENDERTARGET, format, 
-                              D3DPOOL_DEFAULT, ( IDirect3DTexture9** )&m_Buffers[BUFFER_DROP_SHADOW_2], NULL);
-}
-
-//==============================================================================
-
-void dlg_load_game::pc_DestroyBuffers( void )
-{
-    // Release render target textures
-    if( m_pBackBuffer )
-    {
-        m_pBackBuffer->Release();
-        m_pBackBuffer = NULL;
-    }
-    
-    (( IDirect3DTexture9* )m_Buffers[BUFFER_LEVEL_NAME])->Release();
-    (( IDirect3DTexture9* )m_Buffers[BUFFER_DROP_SHADOW_1])->Release();
-    (( IDirect3DTexture9* )m_Buffers[BUFFER_DROP_SHADOW_2])->Release();
-}
 #endif // TARGET_PC
 
 //==============================================================================
@@ -1246,6 +1196,25 @@ void dlg_load_game::platform_Init( void )
     // Set up the default write mask
     m_ColorWriteMask = D3DCOLORWRITEENABLE_RED | D3DCOLORWRITEENABLE_GREEN | D3DCOLORWRITEENABLE_BLUE;
     
+    m_pBackBuffer = NULL;
+    
+    // Create render target textures for each buffer
+    D3DFORMAT format = D3DFMT_A8R8G8B8;
+    
+    // Level name buffer
+    g_pd3dDevice->CreateTexture( TEXT_IMAGE_WIDTH, TEXT_IMAGE_HEIGHT, 
+                              1, D3DUSAGE_RENDERTARGET, format, 
+                              D3DPOOL_DEFAULT, ( IDirect3DTexture9** )&m_Buffers[BUFFER_LEVEL_NAME], NULL);
+                              
+    // Drop shadow buffers (2)
+    g_pd3dDevice->CreateTexture( TEXT_IMAGE_WIDTH/2, TEXT_IMAGE_HEIGHT/2, 
+                              1, D3DUSAGE_RENDERTARGET, format, 
+                              D3DPOOL_DEFAULT, ( IDirect3DTexture9** )&m_Buffers[BUFFER_DROP_SHADOW_1], NULL);
+                              
+    g_pd3dDevice->CreateTexture( TEXT_IMAGE_WIDTH/2, TEXT_IMAGE_HEIGHT/2, 
+                              1, D3DUSAGE_RENDERTARGET, format, 
+                              D3DPOOL_DEFAULT, ( IDirect3DTexture9** )&m_Buffers[BUFFER_DROP_SHADOW_2], NULL);
+    
     // Init buffer dimensions
     m_BufferW = TEXT_IMAGE_WIDTH;
     m_BufferH = TEXT_IMAGE_HEIGHT;
@@ -1287,6 +1256,14 @@ void dlg_load_game::platform_Destroy( void )
     // Make sure we destroy any slideshow images
     // There's no need to redirect the texture allocator here
     // because all redirected allocations are aliases of tiled RAM
+    
+    // Release render target textures
+    if( m_pBackBuffer )
+    {
+        m_pBackBuffer->Release();
+        m_pBackBuffer = NULL;
+    }
+    
     for( s32 i=0;i<m_nSlides;i++ )
     {
         if( !m_Slides[i].HasImage )
@@ -1407,9 +1384,9 @@ void dlg_load_game::platform_LoadSlide( s32         Index,
     if( Success )
     {
         vram_Register( m_Slides[Index].BMP );
-    #ifdef X_DEBUG
-        vram_Activate( m_Slides[Index].BMP );
-    #endif
+    //#ifdef X_DEBUG
+    //    vram_Activate( m_Slides[Index].BMP );
+    //#endif
     }
     else
     {
@@ -1982,12 +1959,9 @@ void dlg_load_game::platform_EndFogRender( void )
 
    
     platform_ClearBuffer( BUFFER_SCREEN, TRUE, FALSE );
-
 #elif defined( TARGET_XBOX )
-    // end drawing
     draw_End();
 #elif defined( TARGET_PC )
-    // end drawing
     draw_End();
 #endif
 }
@@ -2151,7 +2125,6 @@ void dlg_load_game::platform_EndShaftRender( void )
 #elif defined( TARGET_XBOX )
     draw_End();
 #elif defined( TARGET_PC )
-    // PC implementation
     draw_End();
     
     // Restore default states

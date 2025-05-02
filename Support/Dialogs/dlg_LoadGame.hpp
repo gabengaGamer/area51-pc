@@ -104,9 +104,6 @@ protected:
                                                       vector2&          Size,
                                                       vector2&          UV0,
                                                       vector2&          UV1 );
-                                                      
-            void        pc_CreateBuffers            ( void );
-            void        pc_DestroyBuffers           ( void );
             #endif
 
             #ifdef TARGET_PS2
