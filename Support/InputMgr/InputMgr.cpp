@@ -360,7 +360,6 @@ void input_pad::OnEnumProp( prop_enum& List )
                 iHeader = List.PushPath( "PS2\\" );
                 break;
 #elif defined(TARGET_PC)
-/*
             case INPUT_PLATFORM_XBOX:
                 List.PropEnumHeader( "XBOX", "", 0 );
                 iHeader = List.PushPath( "XBOX\\" );
@@ -369,7 +368,6 @@ void input_pad::OnEnumProp( prop_enum& List )
                 List.PropEnumHeader( "PS2", "", 0 );
                 iHeader = List.PushPath( "PS2\\" );
                 break;    
-*/
             case INPUT_PLATFORM_PC:
                 List.PropEnumHeader( "", "", 0 );
                 iHeader = List.PushPath( "" );
@@ -455,14 +453,12 @@ xbool input_pad::OnProperty( prop_query& I )
                 iHeader = I.PushPath( "PS2\\" );
                 break;
 #elif defined(TARGET_PC)
-/*
             case INPUT_PLATFORM_XBOX:
                 iHeader = I.PushPath( "XBOX\\" );
                 break;
             case INPUT_PLATFORM_PS2:
                 iHeader = I.PushPath( "PS2\\" );
                 break;
-*/
             case INPUT_PLATFORM_PC:
                 iHeader = I.PushPath( "" );
                 break;
@@ -489,21 +485,22 @@ xbool input_pad::OnProperty( prop_query& I )
             }
             else
             {
-#ifdef TARGET_PC
+#if defined(TARGET_XBOX)
+                AddMapping( i, iIndex0, INPUT_XBOX_STICK_LEFT_X, FALSE );
+#elif defined(TARGET_PS2)
+                AddMapping( i, iIndex0, INPUT_PS2_STICK_LEFT_X, FALSE );
+#elif defined(TARGET_PC)
                 if( i == INPUT_PLATFORM_PS2 )
                 {
                     AddMapping( i, iIndex0, INPUT_PS2_STICK_LEFT_X, FALSE );
                 }
-                else
+                else if( i == INPUT_PLATFORM_XBOX ) 
                 {
                     AddMapping( i, iIndex0, INPUT_XBOX_STICK_LEFT_X, FALSE );
                 }
-#endif
-#ifdef TARGET_PS2
-                AddMapping( i, iIndex0, INPUT_PS2_STICK_LEFT_X, FALSE );
-#endif
-#ifdef TARGET_XBOX
-                AddMapping( i, iIndex0, INPUT_XBOX_STICK_LEFT_X, FALSE );
+                else
+                {
+                }
 #endif
             }        
 
@@ -541,26 +538,16 @@ xbool input_pad::OnProperty( prop_query& I )
         {
             if( I.IsRead() )
             {
-                //s32 Index = m_Map[iIndex1].GadgetID - INPUT_PS2_BTN_L2;
                 I.SetVarEnum( GetNameFromGadgetID( i, m_Map[i][iIndex1].GadgetID ) );
             }
             else
             {
-                //for( s32 i=0; pTable[i]; i++ )
                 {
-                    //if( x_stricmp( I.GetVarEnum(), pTable[i] ) == 0 )
                     {
-#if defined(TARGET_XBOX)
-                        m_Map[i][iIndex1].GadgetID = GetGadgetIDFromName( 1, I.GetVarEnum() );//(input_gadget)(i + INPUT_PS2_BTN_L2);
-#elif defined(TARGET_PS2)
-                        m_Map[i][iIndex1].GadgetID = GetGadgetIDFromName( i, I.GetVarEnum() );//(input_gadget)(i + INPUT_PS2_BTN_L2);
-#elif defined(TARGET_PC)
-                        m_Map[i][iIndex1].GadgetID = GetGadgetIDFromName( 1, I.GetVarEnum() );//(input_gadget)(i + INPUT_PS2_BTN_L2);
-#endif
+                        m_Map[i][iIndex1].GadgetID = GetGadgetIDFromName( i, I.GetVarEnum() );
                         return TRUE;
                     }
                 }
-                //return FALSE;
             }
 
             return TRUE;

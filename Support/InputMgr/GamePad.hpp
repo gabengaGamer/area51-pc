@@ -14,6 +14,18 @@
 #endif
 #endif
 
+/* Add it later.
+#ifndef MAX_LOCAL_PLAYERS
+    #if defined(TARGET_XBOX)
+        #define MAX_LOCAL_PLAYERS 4
+    #elif defined(TARGET_PS2)
+        #define MAX_LOCAL_PLAYERS 2
+    #elif defined(TARGET_PC)
+        #define MAX_LOCAL_PLAYERS 1
+    #endif
+#endif
+*/
+
 //=========================================================================
 // CLASSES
 //=========================================================================

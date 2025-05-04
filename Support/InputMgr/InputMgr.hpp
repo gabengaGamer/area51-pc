@@ -20,10 +20,17 @@
 
 #define MAX_CONTEXT         5
 
-#define INPUT_PLATFORM_PS2  0
-#define INPUT_PLATFORM_XBOX 0
-#define INPUT_PLATFORM_PC   0
-#define MAX_INPUT_PLATFORMS 1
+#ifdef TARGET_PC
+    #define INPUT_PLATFORM_PS2  0
+    #define INPUT_PLATFORM_XBOX 1
+    #define INPUT_PLATFORM_PC   2
+    #define MAX_INPUT_PLATFORMS 3
+#else
+    #define INPUT_PLATFORM_PS2  0
+    #define INPUT_PLATFORM_XBOX 0
+    #define INPUT_PLATFORM_PC   0
+    #define MAX_INPUT_PLATFORMS 1
+#endif
 
 //=========================================================================
 // CLASSES 
@@ -73,7 +80,7 @@ public:
                                           map*      Map,
                                           s32       nMaps );
 
-            logical&    GetLogical      ( s32 I ) { ASSERT( I>=0 && I<MAX_LOGICAL); return m_Logical[I]; }
+    logical&            GetLogical      ( s32 I ) { ASSERT( I>=0 && I<MAX_LOGICAL); return m_Logical[I]; }
 
     void                SetLogical      ( s32 ID, const char* pName );
     void                SetLogical      ( s32 iPlatform, input_gadget GadgetID );
