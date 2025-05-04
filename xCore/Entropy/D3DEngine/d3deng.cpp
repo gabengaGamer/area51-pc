@@ -406,7 +406,7 @@ void InitializeD3D( HWND hWnd, s32 XRes, s32 YRes )
     Error = s.pD3D->CreateDevice(   
         D3DADAPTER_DEFAULT,    
         //(s.Mode & ENG_ACT_SOFTWARE) ? D3DDEVTYPE_REF :
-		//D3DDEVTYPE_REF, 
+        //D3DDEVTYPE_REF, 
         D3DDEVTYPE_HAL, 
         hWnd,
         //((s.Mode & ENG_ACT_SHADERS_IN_SOFTWARE) || (s.Mode & ENG_ACT_SOFTWARE) ) ?
@@ -426,12 +426,14 @@ void InitializeD3D( HWND hWnd, s32 XRes, s32 YRes )
     //
 
     // If there was an error should we bail?
-	if(Error != 0)
-	{
-		MessageBox(d3deng_GetWindowHandle(), xfs("Error creating device: %d", Error), "Device Error", MB_OK);
+    if(Error != 0)
+    {
+        MessageBox(d3deng_GetWindowHandle(), xfs("Error creating device: %d", Error), "Device Error", MB_OK);
         g_pd3dDevice = NULL;
-	}
+    }
     //ASSERT( Error == 0 );
+
+    //TODO: DONT FORGET INITIALIZE SHADERS HERE!!!!!!!!!!!!
 
     if( g_pd3dDevice )
     {
@@ -462,7 +464,7 @@ void InitializeD3D( HWND hWnd, s32 XRes, s32 YRes )
             UpdateWindow    ( s.Wnd );
             SetActiveWindow ( s.Wnd );
         }
-    }
+    }    
 }
 
 //=========================================================================
@@ -523,24 +525,6 @@ LRESULT CALLBACK eng_D3DWndProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
             if( s.bActive && s.bReady )
             {
                 d3deng_UpdateDisplayWindow( hWnd );
-                /*
-                //
-                // Get the new size of the window
-                //
-                GetClientRect(  hWnd, &s.rcWindowRect );
-
-                //
-                // Resize the view port
-                //
-                DWORD dwRenderWidth  = s.rcWindowRect.right - s.rcWindowRect.left;
-                DWORD dwRenderHeight = s.rcWindowRect.bottom - s.rcWindowRect.top;
-
-                dwRenderWidth  = MIN( (DWORD)s.MaxXRes, dwRenderWidth );
-                dwRenderHeight = MIN( (DWORD)s.MaxYRes, dwRenderHeight );
-
-                D3DVIEWPORT8 vp = { 0, 0, dwRenderWidth, dwRenderHeight, 0.0f, 1.0f };
-                g_pd3dDevice->SetViewport( &vp );
-                */
                 s.bReady = TRUE;
             }
             break;
@@ -664,7 +648,7 @@ void text_BeginRender( void )
 
 void text_RenderStr( char* pStr, s32 NChars, xcolor Color, s32 PixelX, s32 PixelY )
 {
-	dxerr                   Error;
+    dxerr                   Error;
     RECT                    Rect;
 
     if( !g_pd3dDevice || !s.pFont )
@@ -675,9 +659,9 @@ void text_RenderStr( char* pStr, s32 NChars, xcolor Color, s32 PixelX, s32 Pixel
     Rect.bottom = PixelY + ENG_FONT_SIZEY;
     Rect.right  = Rect.left + (NChars*ENG_FONT_SIZEX);
                     
-	//rstct+=NChars;
-	Error = s.pFont->DrawText( NULL, pStr, NChars, &Rect, DT_NOCLIP, Color );//s.TextColor );
-	if(Error != D3D_OK) rstct = Error;
+    //rstct+=NChars;
+    Error = s.pFont->DrawText( NULL, pStr, NChars, &Rect, DT_NOCLIP, Color );//s.TextColor );
+    if(Error != D3D_OK) rstct = Error;
 }
 
 #endif // !defined( X_RETAIL ) || defined( X_QA )
@@ -697,97 +681,7 @@ void ENG_TextColor( const xcolor& Color )
 {
     s.TextColor = Color;
 }
-/*
-//=============================================================================
 
-void ENG_SetLight( s32 LightID, const vector3& Dir, const xcolor& Color )
-{
-    D3DLIGHT8 Light;
-
-    //
-    // Here we fill up the structure for D3D. The first thing we say 
-    // is the type of light that we want. In this case DIRECTIONAL. 
-    // Which basically means that it doesn't have an origin. The 
-    // second thing that we fill is the diffuse lighting. Basically 
-    // is the color of the light. Finally we fill up the Direction. 
-    // Note how we negate to compensate for the D3D way of thinking.
-    //
-
-    ZeroMemory( &Light, sizeof(Light) );   // Clear the hold structure
-    Light.Type          = D3DLIGHT_DIRECTIONAL;
-
-    Light.Diffuse.r   = (Color>>16)*(1/255.0f); 
-    Light.Diffuse.g   = (Color>> 8)*(1/255.0f);
-    Light.Diffuse.b   = (Color>> 0)*(1/255.0f);
-    Light.Diffuse.a   = (Color>>24)*(1/255.0f);
-
-    Light.Specular    = Light.Diffuse;
-
-    Light.Direction.x = -Dir.X;   // Set the direction of
-    Light.Direction.y = -Dir.Y;   // the light and compensate
-    Light.Direction.z = -Dir.Z;   // for DX way of thinking.
-
-    //
-    // Here we set the light number zero to be the light which we just
-    // describe. What is light 0? Light 0 is one of the register that 
-    // D3D have for lighting. You can overwrite registers at any time. 
-    // Only lights that are set in registers are use in the rendering 
-    // of the scene.
-    //
-    g_pd3dDevice->SetLight( LightID, &Light );
-
-    //
-    // Here we enable out register 0. That way what ever we render 
-    // from now on it will use register 0. The other registers are by 
-    // default turn off.
-    //
-    g_pd3dDevice->LightEnable( 0, TRUE );
-}
-
-//=============================================================================
-
-void ENG_SetAmbientLight( const xcolor& Color )
-{
-    D3DMATERIAL8 mtrl;
-
-    //
-    // What we do here is to create a material that will be use for 
-    // all the render objects. why we need to do this? We need to do 
-    // this to describe to D3D how we want the light to reflected 
-    // from our objects. Here you can fin more info about materials. 
-    // We set the color base of the material in this case just white. 
-    // Then we set the contribution for the ambient lighting, in this 
-    // case 0.3f. 
-    //
-    ZeroMemory( &mtrl, sizeof(mtrl) );
-
-    // Color of the material
-    mtrl.Diffuse.r  = mtrl.Diffuse.g = mtrl.Diffuse.b   = 1.0f; 
-    mtrl.Specular.r = mtrl.Specular.g = mtrl.Specular.b = 0.5f;
-    mtrl.Power      = 50;
-
-
-    // ambient light
-    mtrl.Ambient.r   = (Color>>16)*(1/255.0f); 
-    mtrl.Ambient.g   = (Color>> 8)*(1/255.0f);
-    mtrl.Ambient.b   = (Color>> 0)*(1/255.0f);
-    mtrl.Ambient.a   = (Color>>24)*(1/255.0f);
-
-    //
-    // Finally we activate the material
-    //
-    g_pd3dDevice->SetMaterial( &mtrl );
-
-    //
-    // This function will set the ambient color. In this case white.
-    // R=G=B=A=255. which is like saying 0xffffffff. Because the color
-    // is describe in 32bits. One each of the bytes in those 32bits
-    // describe a color component. You can also use a macro provided 
-    // by d3d to build the color.
-    //
-    g_pd3dDevice->SetRenderState( D3DRS_AMBIENT, Color );
-}
-*/
 //=========================================================================
 
 void d3deng_SetWindowHandle( HWND hWindow )
@@ -1123,8 +1017,8 @@ void eng_PageFlip()
     }
 
 
-	xtimer ARHTimer;
-	ARHTimer.Reset();
+    xtimer ARHTimer;
+    ARHTimer.Reset();
     s.CPUTIMER.Stop();
     s.CPUMS = s.CPUTIMER.ReadMs();
     xtimer InternalTime;
@@ -1146,13 +1040,13 @@ void eng_PageFlip()
     //
     // Handle all the buffered text
     //
-	rstct=0;
-	ARHTimer.Start();
+    rstct=0;
+    ARHTimer.Start();
     text_Render();
-	ARHTimer.Stop();
-	text_ClearBuffers();
-	//x_printfxy(0, 43, "A1: %7.3f", ARHTimer.ReadMs());
-	//x_printfxy(0, 44, "rst: %7.3f %d", rst.ReadMs(),rstct);
+    ARHTimer.Stop();
+    text_ClearBuffers();
+    //x_printfxy(0, 43, "A1: %7.3f", ARHTimer.ReadMs());
+    //x_printfxy(0, 44, "rst: %7.3f %d", rst.ReadMs(),rstct);
     //
     // Handle the FPS
     //
@@ -1211,6 +1105,13 @@ void eng_PageFlip()
     s.IMS = InternalTime.ReadMs();
     s.CPUTIMER.Reset();
     s.CPUTIMER.Start();
+}
+
+//=============================================================================
+
+xbool d3deng_ToggleWindowMode(void)
+{
+    return TRUE;
 }
 
 //=============================================================================
@@ -1320,7 +1221,7 @@ void DebugMessage( const char* FormatStr, ... )
 
 void eng_SetViewport( const view& View )
 {
-	if( !g_pd3dDevice || g_bDeviceLost )
+    if( !g_pd3dDevice || g_bDeviceLost )
         return;
 
     dxerr           Error;
@@ -1339,8 +1240,8 @@ void eng_SetViewport( const view& View )
     vp.Width  = MIN( (u32)s.MaxXRes, vp.Width );
     vp.Height = MIN( (u32)s.MaxYRes, vp.Height );
 
-	Error = g_pd3dDevice->SetViewport( &vp );
-	ASSERT( Error == 0 );
+    Error = g_pd3dDevice->SetViewport( &vp );
+    ASSERT( Error == 0 );
 }
 
 
@@ -1375,7 +1276,7 @@ void d3deng_ComputeMousePos( void )
             return;
     }
 
-	
+    
     WasActive = TRUE;
 
 
@@ -1387,23 +1288,23 @@ void d3deng_ComputeMousePos( void )
     s32 CenterX = (Rect.right + Rect.left) >> 1;
     s32 CenterY = (Rect.bottom + Rect.top) >> 1;
 
-	if(s.MouseMode != MOUSE_MODE_ABSOLUTE)
-	{
-		SetCursorPos( CenterX, CenterY );
-	}
+    if(s.MouseMode != MOUSE_MODE_ABSOLUTE)
+    {
+        SetCursorPos( CenterX, CenterY );
+    }
 
     if( LastTimeActive == FALSE )        
         return;
-	if(s.MouseMode != MOUSE_MODE_ABSOLUTE)
-	{
-		s.MouseX = (f32)(MousePos.x - CenterX);
-		s.MouseY = (f32)(MousePos.y - CenterY);
-	}
-	else
-	{
-		s.MouseX = (f32)(MousePos.x - Rect.left);
-		s.MouseY = (f32)(MousePos.y - Rect.top);
-	}
+    if(s.MouseMode != MOUSE_MODE_ABSOLUTE)
+    {
+        s.MouseX = (f32)(MousePos.x - CenterX);
+        s.MouseY = (f32)(MousePos.y - CenterY);
+    }
+    else
+    {
+        s.MouseX = (f32)(MousePos.x - Rect.left);
+        s.MouseY = (f32)(MousePos.y - Rect.top);
+    }
 }
 
 //=========================================================================
@@ -1627,4 +1528,3 @@ datestamp eng_JoinDate( const split_date& SplitDate )
     SystemTimeToFileTime( &Time, (FILETIME*)&DateStamp );
     return DateStamp;
 }
-
