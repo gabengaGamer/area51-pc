@@ -126,7 +126,11 @@
 #include "PS2/ps2_dlist.hpp"
 #endif
 
-#include "../../Apps/GameApp/Config.hpp"
+#ifdef CONFIG_VIEWER
+#include "../../Apps/ArtistViewer/Config.hpp"
+#else
+#include "../../Apps/GameApp/Config.hpp"	
+#endif
 
 #if defined(CONFIG_IS_DEMO)
 extern xtimer g_DemoIdleTimer;

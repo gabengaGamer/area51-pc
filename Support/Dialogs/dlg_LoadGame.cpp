@@ -2126,10 +2126,6 @@ void dlg_load_game::platform_EndShaftRender( void )
     draw_End();
 #elif defined( TARGET_PC )
     draw_End();
-    
-    // Restore default states
-    g_pd3dDevice->SetRenderState( D3DRS_ALPHABLENDENABLE, FALSE );
-    g_pd3dDevice->SetRenderState( D3DRS_ALPHATESTENABLE, FALSE );
 #endif
 }
 

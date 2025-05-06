@@ -214,7 +214,7 @@ color_info::usage color_info::m_Usage = color_info::kUse16;
 
 static const s32 kHashTableSize          = 769;  // 1543;   // keep this a prime number for best hashing results.
 static const s32 kMaxRegisteredGeoms     = 512;
-#ifdef X_EDITOR
+#if defined(X_EDITOR) || defined(CONFIG_VIEWER)
 static const s32 kMaxRegisteredInstances = 12800;
 #else
 static const s32 kMaxRegisteredInstances = 10000;
@@ -408,10 +408,10 @@ static
 render_instance& AddToHashHybrid( u32 SortKey )
 {
     ASSERT( s_LoHashMark < s_HiHashMark );
-    #ifdef X_EDITOR
+    #if defined(X_EDITOR) || defined(CONFIG_VIEWER)
     if ( s_LoHashMark >= s_HiHashMark )
         x_throw( "Too many submeshes rendered." );
-    #endif // X_EDITOR
+    #endif // X_EDITOR || VIEWER
 
     u32 HashIndex = HashFn( SortKey );
     if ( s_HashTable[HashIndex] == -1 )
@@ -3233,7 +3233,7 @@ void render::EndPostEffects( void )
 
 //=============================================================================
 
-#ifdef X_EDITOR
+#if defined(X_EDITOR) || defined(CONFIG_VIEWER)
 void* render::LockRigidDListVertex( render::hgeom_inst hInst, s32 iSubMesh )
 {
     return platform_LockRigidDListVertex( hInst, iSubMesh );

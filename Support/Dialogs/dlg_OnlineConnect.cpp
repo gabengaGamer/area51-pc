@@ -22,7 +22,11 @@
 #include "e_memcard.hpp"
 #include "e_Network.hpp"
 
+#if defined(CONFIG_VIEWER)
+#include "../../Apps/ArtistViewer/Config.hpp"
+#else
 #include "../../Apps/GameApp/Config.hpp"
+#endif
 
 extern void InitFrontEndMusic( void );
 extern void KillFrontEndMusic( void );

@@ -368,7 +368,7 @@ namespace render
     // lighting the level in the editor, and will only work on the PC. If you feel like
     // you need to lock display lists for general purpose vertex mucking around, then
     // the system needs to be rethought.
-#ifdef X_EDITOR
+#if defined(X_EDITOR) || defined(CONFIG_VIEWER)
     void*   LockRigidDListVertex    ( hgeom_inst hInst, s32 iSubMesh )                      X_SECTION( render_infrequent );
     void    UnlockRigidDListVertex  ( hgeom_inst hInst, s32 iSubMesh )                      X_SECTION( render_infrequent );
     void*   LockRigidDListIndex     ( hgeom_inst hInst, s32 iSubMesh,  s32& VertexOffset )  X_SECTION( render_infrequent );
