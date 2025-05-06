@@ -53,16 +53,16 @@ The following prerequisites are required to build the source tree for PC:
 5. **XtremeToolkit 4100** **(FOR UI TOOLS)** | Install it from "xCore\3rdParty\CodeJock"
 
 ## List of valid WIN32 targets.
-Debug           | OptDebug           | QA                 | Release            | EDITOR-Debug  
-----------------|--------------------|--------------------|--------------------|---------------------
-Yes             | Yes                | Yes                | Yes                | Yes/Only for Editor!
+Debug           | OptDebug           | QA                 | Release            | EDITOR-Debug        | VIEWER-Debug 
+----------------|--------------------|--------------------|--------------------|---------------------|---------------------
+Yes             | Yes                | Yes                | Yes                | Yes/Only for Editor!| Yes/Only for ArtistViewer!
 
 ## List of compiled apps.
 Name           | Description                                                                             | Status
 ---------------| ----------------------------------------------------------------------------------------|---------------
 AnimCompiler   |                                                                                         | Working
 Art2Code       |                                                                                         | Working
-ArtistViewer   |                                                                                         | Broken [DEPRECATED]
+ArtistViewer   |                                                                                         | Working
 AudioEditor    |                                                                                         | Working/Lib for: [Editor](https://github.com/gabengaGamer/area51-pc/releases/tag/Editor-1.0)
 BinaryString   |                                                                                         | Working/Lib for: [Editor](https://github.com/gabengaGamer/area51-pc/releases/tag/Editor-1.0)
 BitmapEditor   |                                                                                         | Working/Lib for: [Editor](https://github.com/gabengaGamer/area51-pc/releases/tag/Editor-1.0)
@@ -85,7 +85,7 @@ MeshViewer     |                                                                
 PropertyEditor |                                                                                         | Working/Lib for: [Editor](https://github.com/gabengaGamer/area51-pc/releases/tag/Editor-1.0)
 SoundPackager  |                                                                                         | Working
 StringTool     |                                                                                         | Working
-Viewer         |                                                                                         | Broken [DEPRECATED]
+Viewer         |                                                                                         | Broken [DEPRECATED] [See ArtistViewer]
 WinControls    |                                                                                         | Working/Lib for: [Editor](https://github.com/gabengaGamer/area51-pc/releases/tag/Editor-1.0)
 WorldEditor    |                                                                                         | Working/Lib for: [Editor](https://github.com/gabengaGamer/area51-pc/releases/tag/Editor-1.0)
 XBMPTool       |                                                                                         | Working
