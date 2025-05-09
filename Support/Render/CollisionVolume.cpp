@@ -55,13 +55,22 @@ collision_data::collision_data( void )
     BBox.Clear();
 
     nHighClusters       = 0;
+    
+    Unknown             = 0;
+    
     pHighCluster        = NULL;
     nHighIndices        = 0;
     pHighIndexToVert0   = NULL;
 
-    nLowClusters = 0;   pLowCluster = 0;
-    nLowVectors = 0;    pLowVector = 0;
-    nLowQuads = 0;      pLowQuad = 0;
+    nLowClusters        = 0;
+    nLowVectors         = 0; 
+    nLowQuads           = 0;   
+    
+    Unknown1            = 0;
+    
+    pLowCluster         = 0; 
+    pLowVector          = 0;
+    pLowQuad            = 0;
 }
 
 //=========================================================================
@@ -73,21 +82,27 @@ collision_data::collision_data( fileio& FileIO )
 
 //=========================================================================
 
-void collision_data::FileIO( fileio& FileIO )
+void collision_data::FileIO(fileio& FileIO)
 {
-    FileIO.Static( BBox );
+    FileIO.Static(BBox);
 
-    FileIO.Static( nHighClusters );
-    FileIO.Static( pHighCluster, nHighClusters );
-    FileIO.Static( nHighIndices );
-    FileIO.Static( pHighIndexToVert0, nHighIndices );
+    FileIO.Static(nHighClusters);
 
-    FileIO.Static( nLowClusters );
-    FileIO.Static( nLowVectors );
-    FileIO.Static( nLowQuads );
-    FileIO.Static( pLowCluster, nLowClusters );
-    FileIO.Static( pLowVector,  nLowVectors );
-    FileIO.Static( pLowQuad,    nLowQuads );
+    FileIO.Static(Unknown); //Unknown PC RETAIL field.
+    
+    FileIO.Static(pHighCluster, nHighClusters);
+    FileIO.Static(nHighIndices);
+    FileIO.Static(pHighIndexToVert0, nHighIndices);
+
+    FileIO.Static(nLowClusters);
+    FileIO.Static(nLowVectors);
+    FileIO.Static(nLowQuads);  
+    
+    FileIO.Static(Unknown1); //Unknown PC RETAIL field.  
+    
+    FileIO.Static(pLowCluster, nLowClusters);
+    FileIO.Static(pLowVector, nLowVectors);
+    FileIO.Static(pLowQuad, nLowQuads);
 }
 
 //=========================================================================
