@@ -43,7 +43,8 @@
 				SuppressStartupBanner="TRUE"
 				AdditionalLibraryDirectories="$(X)\3rdParty\DirectX9;$(X)\..\xCore\3rdParty\BinkSDK;$(X)\..\xCore\3rdParty\Miles6\lib\win;$(X)\..\xCore\3rdParty\Miles6\mathspy\win"
 				IgnoreDefaultLibraryNames="libcd.lib"
-				GenerateDebugInformation="TRUE"/>
+				GenerateDebugInformation="TRUE"
+				SubSystem="2"/>
 			<Tool
 				Name="VCMIDLTool"/>
 			<Tool

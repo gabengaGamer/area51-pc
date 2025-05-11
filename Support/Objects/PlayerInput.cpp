@@ -54,8 +54,6 @@
 #include "Menu\DebugMenu2.hpp"
 #endif
 
-extern xbool g_MirrorWeapon;
-
 f32 g_CrouchUpVelocity    = 80.0f;
 
 static f32 MIN_TIME_BETWEEN_MUTATION_CHANGES = 0.5f;
@@ -224,16 +222,10 @@ void player::ScaleYawAndPitchValues( void )
         m_fPitchValue   = m_fPitchValue + (m_fPitchValue * Scalar_V);
     }
 #endif
-
     //DrawLabelInFront( xfs( "YawValue: %f\nRawYaw%f\nPitchValue: %f\nRawPitch: %f\nSlopeYaw: %f\nSlopePitch: %f\n", m_fYawValue, m_fRawControllerYaw, m_fPitchValue, m_fRawControllerPitch, fCurrentSlopeYaw, fCurrentSlopePitch ) );
-
 }
 
 //==============================================================================
-
-#if defined(TARGET_PC)
-extern xbool g_right_stick_swap_xy;
-#endif
 
 void player::UpdateStickInput(void)
 {
@@ -242,25 +234,62 @@ void player::UpdateStickInput(void)
     m_fPreviousYawValue = m_fYawValue;
     m_fPreviousPitchValue = m_fPitchValue;
 
-#if defined(TARGET_PC) && !defined(X_EDITOR) //GS: Experimental PC mouse controls.
+#if defined(TARGET_PC) //GS: Experimental PC mouse controls.
     const float BaseMouseSensitivity = 64.0f;
     float Rot = R_10 * m_DeltaTime;
     
     m_fRawControllerYaw = -g_IngamePad[m_ActivePlayerPad].GetLogical(ingame_pad::LOOK_HORIZONTAL).IsValue * Rot;
     m_fRawControllerPitch = g_IngamePad[m_ActivePlayerPad].GetLogical(ingame_pad::LOOK_VERTICAL).IsValue * Rot;
     
+    #if !defined(X_EDITOR)    
     player_profile& p = g_StateMgr.GetActiveProfile(g_StateMgr.GetProfileListIndex(m_LocalSlot));
     //MAB: removed invert Y global var - only check profile now
     if( p.m_bInvertY )
     {
         m_fRawControllerPitch = -m_fRawControllerPitch;
     }
+    #else
+    // invert Y
+    extern xbool g_EditorInvertY;
+    if( g_EditorInvertY )
+    {
+        m_fRawControllerPitch   = -m_fRawControllerPitch;
+    }
+    
+    // Mirror weapon?
+    extern xbool g_MirrorWeapon;
+    if( g_MirrorWeapon )        
+    {
+        // Turn on mirror for hands
+        m_AnimPlayer.SetMirrorBone( 0 );
+
+        // Turn on mirror for weapon
+        new_weapon* pWeapon = GetCurrentWeaponPtr();
+        if( pWeapon )
+            pWeapon->GetCurrentAnimPlayer().SetMirrorBone( 0 );
+    }
+    else
+    {
+        // Turn off mirror for hands
+        m_AnimPlayer.SetMirrorBone( -1 );
+
+        // Turn off mirror for weapon
+        new_weapon* pWeapon = GetCurrentWeaponPtr();
+        if( pWeapon )
+            pWeapon->GetCurrentAnimPlayer().SetMirrorBone( -1 );
+    }
+    #endif
     
     m_fYawValue = m_fRawControllerYaw * BaseMouseSensitivity;
     m_fPitchValue = m_fRawControllerPitch * BaseMouseSensitivity;
     
+    #if !defined(X_EDITOR)    
     u32 sensitivity_H = p.GetSensitivity(SM_X_SENSITIVITY);
     u32 sensitivity_V = p.GetSensitivity(SM_Y_SENSITIVITY);
+    #else
+    u32 sensitivity_H = 32; //HACK HACK HACK!!!
+    u32 sensitivity_V = 32; //HACK HACK HACK!!!
+    #endif
     
     float scaleH = 0.5f + (sensitivity_H / 100.0f);
     float scaleV = 0.5f + (sensitivity_V / 100.0f);
@@ -277,8 +306,6 @@ void player::UpdateStickInput(void)
     {
         m_fRawControllerPitch = -m_fRawControllerPitch;
     }
-    
-    ScaleYawAndPitchValues();
 #endif
 
     if ( !m_bInTurret )
@@ -324,6 +351,9 @@ void player::UpdateStickInput(void)
         m_fMoveValue = 0.0f;
         m_fStrafeValue = 0.0f;
     }
+#ifndef TARGET_PC
+    ScaleYawAndPitchValues();    
+#endif    
     //DrawLabelInFront( xfs( "RawYaw: %f\nRawPitch: %f\nRawMove: %f\nRawStrafe: %f\n", m_fRawControllerYaw, m_fRawControllerPitch, m_fMoveValue, m_fStrafeValue ) );
 }
 
