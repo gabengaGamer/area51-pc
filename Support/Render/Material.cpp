@@ -234,7 +234,7 @@ void ps::path::compile( const char* pShaderText,shader& Result )
 #include "Entropy.hpp"
 #include "Render.hpp"
 
-#include "pc_render.hpp"
+#include "PC\pc_render.hpp"
 
 //=============================================================================
 

@@ -237,12 +237,12 @@ namespace render
                                       u32               Flags,
                                       s32               Alpha ) X_SECTION( render_add );
     void    AddRigidInstance        ( hgeom_inst        hInst,
-        							  const void*       pCol,
-        							  const matrix4*    pL2W,
-        							  u64               Mask,
-        							  u32               VTextureMask,
-        							  u32               Flags,
-        							  s32               Alpha ) X_SECTION( render_add );
+                                      const void*       pCol,
+                                      const matrix4*    pL2W,
+                                      u64               Mask,
+                                      u32               VTextureMask,
+                                      u32               Flags,
+                                      s32               Alpha ) X_SECTION( render_add );
     void    AddSkinInstance         ( hgeom_inst        hInst,
                                       const matrix4*    pBone,
                                       u64               Mask,

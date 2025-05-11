@@ -311,28 +311,28 @@ xbool IsAlphaMaterial( material_type Type )
 //=============================================================================
 
 #ifdef TARGET_XBOX
-#   include "Render\LightMgr.hpp"
-#   include "Render\platform_Render.hpp"
+#   include "LightMgr.hpp"
+#   include "platform_Render.hpp"
 #   include "Entropy/XBox/xbox_private.hpp"
 #   include <XGraphics.h>
-#   include "xbox_render.hpp"
-#   include "xbox_post.inl"
-#   include "xbox_platform.inl"
+#   include "XBOX/xbox_render.hpp"
+#   include "XBOX/xbox_post.inl"
+#   include "XBOX/xbox_platform.inl"
 shader_mgr  * g_pShaderMgr = NULL;
 pipeline_mgr* g_pPipeline  = NULL;
 #endif
 
 #ifdef TARGET_PS2
-#include "Render\ps2_post.cpp"
-#include "Render\ps2_Render.cpp"
+#include "PS2/ps2_post.cpp"
+#include "PS2/ps2_Render.cpp"
 #endif
 
 #ifdef TARGET_PC
-#include "Render\LightMgr.hpp"
-#include "Render\platform_Render.hpp"
-#include "Render\pc_render.hpp"
-#include "Render\pc_post.inl"
-#include "Render\pc_platform.inl"
+#include "LightMgr.hpp"
+#include "platform_Render.hpp"
+#include "PC/pc_render.hpp"
+#include "PC/pc_post.inl"
+#include "PC/pc_platform.inl"
 shader_mgr  * g_pShaderMgr = NULL;
 pipeline_mgr* g_pPipeline  = NULL;
 #endif

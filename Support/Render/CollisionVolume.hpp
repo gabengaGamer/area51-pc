@@ -67,14 +67,12 @@ struct collision_data
 
     bbox            BBox;           // Only valid for "zero pose".
     s32             nHighClusters;
-    s32             Unknown;
     high_cluster*   pHighCluster;
     s32             nHighIndices;
     u16*            pHighIndexToVert0;
     s16             nLowClusters;
     s16             nLowVectors;
     s16             nLowQuads;
-    u16             Unknown1;
     low_cluster*    pLowCluster;
     vector3*        pLowVector;
     low_quad*       pLowQuad;
