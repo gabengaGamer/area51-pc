@@ -235,14 +235,15 @@ void player::UpdateStickInput(void)
     m_fPreviousPitchValue = m_fPitchValue;
 
 #if defined(TARGET_PC) //GS: Experimental PC mouse controls.
-    const float BaseMouseSensitivity = 64.0f;
-    float Rot = R_10 * m_DeltaTime;
+    const f32 BaseMouseSensitivity = 64.0f;
+    f32 Rot = R_10 * m_DeltaTime;
     
     m_fRawControllerYaw = -g_IngamePad[m_ActivePlayerPad].GetLogical(ingame_pad::LOOK_HORIZONTAL).IsValue * Rot;
     m_fRawControllerPitch = g_IngamePad[m_ActivePlayerPad].GetLogical(ingame_pad::LOOK_VERTICAL).IsValue * Rot;
     
     #if !defined(X_EDITOR)    
     player_profile& p = g_StateMgr.GetActiveProfile(g_StateMgr.GetProfileListIndex(m_LocalSlot));
+	
     //MAB: removed invert Y global var - only check profile now
     if( p.m_bInvertY )
     {
@@ -291,16 +292,17 @@ void player::UpdateStickInput(void)
     u32 sensitivity_V = 32; //HACK HACK HACK!!!
     #endif
     
-    float scaleH = 0.5f + (sensitivity_H / 100.0f);
-    float scaleV = 0.5f + (sensitivity_V / 100.0f);
+    f32 scaleH = 0.5f + (sensitivity_H / 100.0f);
+    f32 scaleV = 0.5f + (sensitivity_V / 100.0f);
     
-    m_fYawValue *= scaleH; //R_0
+    m_fYawValue   *= scaleH; //R_0
     m_fPitchValue *= scaleV; //R_0
 #else
     m_fRawControllerYaw = -g_IngamePad[m_ActivePlayerPad].GetLogical(ingame_pad::LOOK_HORIZONTAL).IsValue;
     m_fRawControllerPitch = g_IngamePad[m_ActivePlayerPad].GetLogical(ingame_pad::LOOK_VERTICAL).IsValue;
 
     player_profile& p = g_StateMgr.GetActiveProfile(g_StateMgr.GetProfileListIndex(m_LocalSlot));
+	
     //MAB: removed invert Y global var - only check profile now
     if( p.m_bInvertY )
     {
@@ -320,8 +322,8 @@ void player::UpdateStickInput(void)
             xbool StrafeLeftKeyIsPressed   = (xbool)g_IngamePad[m_ActivePlayerPad].GetLogical(ingame_pad::STRAFE_LEFT).WasValue;
             xbool StrafeRightKeyIsPressed  = (xbool)g_IngamePad[m_ActivePlayerPad].GetLogical(ingame_pad::STRAFE_RIGHT).WasValue;
 
-            float MoveValue = 0.0f;
-            float StrafeValue = 0.0f;
+            static f32 MoveValue   = 0.0f;
+            static f32 StrafeValue = 0.0f;
 
             if (MoveForwardKeyIsPressed) 
             {
@@ -341,20 +343,20 @@ void player::UpdateStickInput(void)
                 StrafeValue = -1.0f;
             }
 
-            m_fMoveValue += MoveValue;
+            m_fMoveValue   += MoveValue;
             m_fStrafeValue += StrafeValue;
         }
 #endif
     }
     else
     {
-        m_fMoveValue = 0.0f;
+        m_fMoveValue   = 0.0f;
         m_fStrafeValue = 0.0f;
-    }
+    }   
+    //DrawLabelInFront( xfs( "RawYaw: %f\nRawPitch: %f\nRawMove: %f\nRawStrafe: %f\n", m_fRawControllerYaw, m_fRawControllerPitch, m_fMoveValue, m_fStrafeValue ) );
 #ifndef TARGET_PC
     ScaleYawAndPitchValues();    
-#endif    
-    //DrawLabelInFront( xfs( "RawYaw: %f\nRawPitch: %f\nRawMove: %f\nRawStrafe: %f\n", m_fRawControllerYaw, m_fRawControllerPitch, m_fMoveValue, m_fStrafeValue ) );
+#endif 
 }
 
 //===========================================================================
