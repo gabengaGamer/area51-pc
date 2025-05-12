@@ -638,7 +638,7 @@ void vertex_mgr::DrawDList( xhandle hDList, D3DPRIMITIVETYPE PrimType )
     // Sanity check
     //
 
-#ifdef X_DEBUG
+#ifdef INTERVELOP
     s32 IndexOffset;
 
     struct vertex 

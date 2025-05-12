@@ -3,7 +3,7 @@
 #define MESHVIEWER_HPP
 
 //=========================================================================
-#include "RawMesh.hpp"
+#include "RawMesh2.hpp"
 #include "RawAnim.hpp"
 
 //=========================================================================
@@ -39,7 +39,7 @@ protected:
 
     s32         m_nCurrentMeshCount;
 
-    rawmesh     m_Mesh[MAX_MESHES];
+    rawmesh2    m_Mesh[MAX_MESHES];
     rawanim     m_Anim[MAX_MESHES];
     matrix4     m_L2W[MAX_MESHES];
     xbitmap     m_Bitmap[MAX_MESHES][32];
