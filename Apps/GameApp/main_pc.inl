@@ -6,7 +6,7 @@
 
 #define PLATFORM_PATH   "PC"
 
-extern d3deng_ToggleWindowMode();
+//extern d3deng_ToggleWindowMode();
 
 //=============================================================================
 
@@ -59,7 +59,7 @@ xbool HandleInputPlatform( f32 DeltaTime )
 
     if( input_WasPressed( INPUT_KBD_F10 ) )
     {
-        d3deng_ToggleWindowMode();
+        //d3deng_ToggleWindowMode();
     }
 
     if( g_FreeCam == FALSE )
