@@ -991,7 +991,17 @@ void eng_PageFlip()
 
                 // Free the font
                 if( s.pFont )
-                    s.pFont->Release();
+                {
+                    try
+                    {
+                        s.pFont->Release();
+                    }
+                    catch(...)
+                    {
+                        // Ignore release errors - device is already lost
+                    }
+                    s.pFont = NULL;
+                }
 
                 // Reset the device
                 hr = g_pd3dDevice->Reset( &g_d3dpp );
@@ -1013,7 +1023,10 @@ void eng_PageFlip()
         pc_PostResetCubeMap();
 
         // Create the font again
-        d3deng_CreateFont();
+        if(s.pFont == NULL)
+        {
+            d3deng_CreateFont();
+        }
     }
 
 
@@ -1042,7 +1055,13 @@ void eng_PageFlip()
     //
     rstct=0;
     ARHTimer.Start();
-    text_Render();
+    
+    // Check if we have a valid font before rendering text
+    if(g_pd3dDevice && s.pFont)
+    {
+        text_Render();
+    }
+    
     ARHTimer.Stop();
     text_ClearBuffers();
     //x_printfxy(0, 43, "A1: %7.3f", ARHTimer.ReadMs());
