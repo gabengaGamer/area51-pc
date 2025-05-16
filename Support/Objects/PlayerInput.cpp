@@ -322,8 +322,8 @@ void player::UpdateStickInput(void)
             xbool StrafeLeftKeyIsPressed   = (xbool)g_IngamePad[m_ActivePlayerPad].GetLogical(ingame_pad::STRAFE_LEFT).WasValue;
             xbool StrafeRightKeyIsPressed  = (xbool)g_IngamePad[m_ActivePlayerPad].GetLogical(ingame_pad::STRAFE_RIGHT).WasValue;
 
-            static f32 MoveValue   = 0.0f;
-            static f32 StrafeValue = 0.0f;
+            f32 MoveValue   = 0.0f;
+            f32 StrafeValue = 0.0f;
 
             if (MoveForwardKeyIsPressed) 
             {
