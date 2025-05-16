@@ -646,7 +646,6 @@ void d3deng_SetResolution( s32 Width,  s32 Height )
     s.MaxYRes  = Height;
 }
 
-
 //=========================================================================
 
 void d3deng_SetDefaultStates( void )
@@ -1120,7 +1119,6 @@ xbool eng_ScreenShotActive( void )
 
 void eng_Sync ( void )
 {
-
 }
 
 //=============================================================================
@@ -1227,62 +1225,16 @@ void d3deng_ComputeMousePos( void )
 
 //=========================================================================
 
-f32 d3deng_GetMouseX( void )
-{
-    return s.MouseX;
-}
-
-//=========================================================================
-
-f32 d3deng_GetMouseY( void )
-{
-    return s.MouseY;
-}
-
-//=========================================================================
-
-f32 d3deng_GetABSMouseX( void )
+f32 d3deng_GetABSMouseX( void ) //Legacy code, used ONLY on ArtistViewer.
 {
     return s.ABSMouseX;
 }
 
 //=========================================================================
 
-f32 d3deng_GetABSMouseY( void )
+f32 d3deng_GetABSMouseY( void )  //Legacy code, used ONLY on ArtistViewer.
 {
     return s.ABSMouseY;
-}
-
-//=============================================================================
-
-f32 d3deng_GetMouseWheel( void )
-{
-    // TEMP FOR NOW...
-    f32 Value = s.MouseWheelRel ;
-    s.MouseWheelRel = 0 ;
-
-    return Value ;
-}
-
-//=============================================================================
-
-xbool d3deng_MouseGetLButton( void )
-{
-    return s.bMouseLeftButton;
-}
-
-//=============================================================================
-
-xbool d3deng_MouseGetRButton( void )
-{
-    return s.bMouseRightButton;
-}
-
-//=============================================================================
-
-xbool d3deng_MouseGetMButton( void )
-{
-    return s.bMouseMiddleButton;
 }
 
 //=============================================================================
@@ -1390,6 +1342,8 @@ void d3deng_SetAmbientLight( xcolor& Color )
         g_pd3dDevice->SetRenderState( D3DRS_AMBIENT, Color );
     }
 }
+
+//=============================================================================
 
 void eng_Reboot( reboot_reason Reason )
 {
