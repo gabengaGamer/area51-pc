@@ -67,8 +67,7 @@ void CConvertSettingsDialog::OnUpdateDialog()
     if (m_GenericCompression)
     {
         // Only PC and Xbox support DXT compression. Probably deprecated.
-        m_CtrlPlatformCombo.AddString(_T("PC"));
-        m_CtrlPlatformCombo.AddString(_T("Xbox"));
+        m_CtrlPlatformCombo.AddString(_T("Native"));
     }
     else
     {
