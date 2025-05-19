@@ -66,7 +66,6 @@ void CConvertSettingsDialog::OnUpdateDialog()
     
     if (m_GenericCompression)
     {
-        // Only PC and Xbox support DXT compression. Probably deprecated.
         m_CtrlPlatformCombo.AddString(_T("Native"));
     }
     else
@@ -123,18 +122,7 @@ void CConvertSettingsDialog::UpdateFormatsByPlatform(const CString& platform, BO
         m_CtrlFormatCombo.AddString(_T("24_RGB_888"));
         m_CtrlFormatCombo.AddString(_T("16_ARGB_1555"));
         m_CtrlFormatCombo.AddString(_T("16_URGB_1555"));
-        m_CtrlFormatCombo.AddString(_T("16_RGB_565"));
-        
-        // Add DXT formats if generic compression enabled
-        if (genericCompression)
-        {
-            m_CtrlFormatCombo.AddString(_T("DXT1"));
-            m_CtrlFormatCombo.AddString(_T("DXT2"));
-            m_CtrlFormatCombo.AddString(_T("DXT3"));
-            m_CtrlFormatCombo.AddString(_T("DXT4"));
-            m_CtrlFormatCombo.AddString(_T("DXT5"));
-            m_CtrlFormatCombo.AddString(_T("A8"));
-        }
+        m_CtrlFormatCombo.AddString(_T("16_RGB_565"));        
     }
     else if (platform == _T("PS2"))
     {
@@ -191,17 +179,6 @@ void CConvertSettingsDialog::UpdateFormatsByPlatform(const CString& platform, BO
         m_CtrlFormatCombo.AddString(_T("16_RGBA_4444"));
         m_CtrlFormatCombo.AddString(_T("16_RGBA_5551"));
         m_CtrlFormatCombo.AddString(_T("16_RGBU_5551"));
-        
-        // If generic compression enabled, add these too
-        if (genericCompression)
-        {
-            m_CtrlFormatCombo.AddString(_T("DXT1"));
-            m_CtrlFormatCombo.AddString(_T("DXT2"));
-            m_CtrlFormatCombo.AddString(_T("DXT3"));
-            m_CtrlFormatCombo.AddString(_T("DXT4"));
-            m_CtrlFormatCombo.AddString(_T("DXT5"));
-            m_CtrlFormatCombo.AddString(_T("A8"));
-        }
     }
     
     // Add all additional formats if generic compression is enabled.
@@ -233,6 +210,14 @@ void CConvertSettingsDialog::UpdateFormatsByPlatform(const CString& platform, BO
         m_CtrlFormatCombo.AddString(_T("P4_ARGB_1555"));
         m_CtrlFormatCombo.AddString(_T("P4_URGB_1555"));
         m_CtrlFormatCombo.AddString(_T("P4_RGB_565"));
+    
+        // Only PC and Xbox support DXT compression. Probably deprecated for A51.
+        m_CtrlFormatCombo.AddString(_T("DXT1"));
+        m_CtrlFormatCombo.AddString(_T("DXT2"));
+        m_CtrlFormatCombo.AddString(_T("DXT3"));
+        m_CtrlFormatCombo.AddString(_T("DXT4"));
+        m_CtrlFormatCombo.AddString(_T("DXT5"));
+        m_CtrlFormatCombo.AddString(_T("A8"));
     }
     
     // Set default selection
