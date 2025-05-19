@@ -35,4 +35,6 @@ protected:
 public:
     virtual BOOL OnInitDialog();
     virtual void OnUpdateDialog();
+    virtual void OnPlatformChanged();
+    void UpdateFormatsByPlatform(const CString& platform, BOOL genericCompression);
 };
