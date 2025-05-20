@@ -94,6 +94,7 @@ void CFileList::Thread( void )
             // Match our criteria
             if( !Finder.IsDirectory() && 
                 ( (NameUpper.Right(5) == ".XBMP") ||
+                  (NameUpper.Right(4) == ".XBM" ) ||
                   (NameUpper.Right(4) == ".BMP" ) ||
                   (NameUpper.Right(4) == ".PSD" ) ||
                   (NameUpper.Right(4) == ".TGA" ) ) )
