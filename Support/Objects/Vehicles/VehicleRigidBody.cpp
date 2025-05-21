@@ -1,13 +1,13 @@
 //==============================================================================
 //
-//  RigidBody.cpp
+//  VehicleRigidBody.cpp
 //
 //==============================================================================
 
 //==============================================================================
 // INCLUDES
 //==============================================================================
-#include "RigidBody.hpp"
+#include "VehicleRigidBody.hpp"
 #include "Entropy.hpp"
 #include "Obj_mgr\obj_mgr.hpp"
 f32 g_STAB = 1.0f;
@@ -17,7 +17,7 @@ f32 g_STAB = 1.0f;
 //==============================================================================
 
 // Constructor/Destructor
-rigid_body::rigid_body()
+vehicle_rigid_body::vehicle_rigid_body()
 {
     // Geometry vars
     m_ObjectGuid = 0;                      // Owner object
@@ -57,14 +57,14 @@ rigid_body::rigid_body()
 
 //==============================================================================
 
-rigid_body::~rigid_body()
+vehicle_rigid_body::~vehicle_rigid_body()
 {
 }
 
 //==============================================================================
 
 // Adds force to body
-void rigid_body::AddForce( const vector3& Position, const vector3& Force )
+void vehicle_rigid_body::AddForce( const vector3& Position, const vector3& Force )
 {
     // Linear force
     m_Force  += Force;
@@ -76,7 +76,7 @@ void rigid_body::AddForce( const vector3& Position, const vector3& Force )
 //==============================================================================
 
 // Adds impulse (immediate force) to body
-void rigid_body::AddImpulse( const vector3& Position, const vector3& Force )
+void vehicle_rigid_body::AddImpulse( const vector3& Position, const vector3& Force )
 {
     // Linear force
     m_LinearMomentum += Force;
@@ -87,7 +87,7 @@ void rigid_body::AddImpulse( const vector3& Position, const vector3& Force )
 
 //==============================================================================
 
-void rigid_body::ProcessCollision( const vector3& P, const plane& Plane )
+void vehicle_rigid_body::ProcessCollision( const vector3& P, const plane& Plane )
 {
     // Get distance to plane
     f32 Dist = Plane.Distance(P);
@@ -133,7 +133,7 @@ void rigid_body::ProcessCollision( const vector3& P, const plane& Plane )
 //==============================================================================
 
 // Checks collision and applies forces when needed
-void rigid_body::CheckCollision( void )
+void vehicle_rigid_body::CheckCollision( void )
 {
     plane Plane;
     f32   Dist;
@@ -177,7 +177,7 @@ void rigid_body::CheckCollision( void )
 //==============================================================================
 
 // Returns TRUE if there is a collision, along with the collision depth
-xbool rigid_body::CheckCollision( const vector3& P, plane& Plane, f32& Depth )
+xbool vehicle_rigid_body::CheckCollision( const vector3& P, plane& Plane, f32& Depth )
 {
     // Just check ground plane
     if (!m_ObjectGuid)
@@ -218,7 +218,7 @@ xbool rigid_body::CheckCollision( const vector3& P, plane& Plane, f32& Depth )
 //==============================================================================
 
 // Check ray collision
-xbool rigid_body::CheckCollision( const vector3& S, const vector3& E, plane& Plane, f32& T )
+xbool vehicle_rigid_body::CheckCollision( const vector3& S, const vector3& E, plane& Plane, f32& T )
 {
     // Just check ground plane
     if (!m_ObjectGuid)
@@ -254,7 +254,7 @@ xbool rigid_body::CheckCollision( const vector3& S, const vector3& E, plane& Pla
 //==============================================================================
 
 // Computes forces
-void rigid_body::ComputeForces( f32 DeltaTime )
+void vehicle_rigid_body::ComputeForces( f32 DeltaTime )
 {
     (void)DeltaTime;
 
@@ -269,7 +269,7 @@ void rigid_body::ComputeForces( f32 DeltaTime )
 //==============================================================================
 
 // Returns index of vertex if found, or -1 if not found
-s32 rigid_body::FindVertex( const vector3& V ) const
+s32 vehicle_rigid_body::FindVertex( const vector3& V ) const
 {
     // Check all verts
     for (s32 i = 0; i < m_nVertices; i++)
@@ -286,7 +286,7 @@ s32 rigid_body::FindVertex( const vector3& V ) const
 //==============================================================================
 
 // Initialization
-void rigid_body::Init( const rigid_geom& RigidGeom,
+void vehicle_rigid_body::Init( const rigid_geom& RigidGeom,
                        const matrix4& L2W,
                              f32      MassYScale /* =1.0f */,  
                             guid      ObjectGuid /*= 0 */)
@@ -321,24 +321,24 @@ void rigid_body::Init( const rigid_geom& RigidGeom,
     Size *= 0.5f;
 
     // Shrink vertically by 50%
-    Size.Y *= 0.5f;
+    Size.GetY() *= 0.5f;
 
     // Scale on Y so center of mass is near the base of the car
     //Size.Y   *= MassYScale;
     //Center.Y *= MassYScale;
 
-    m_LocalBBox.Min = -Size+Center;
-    m_LocalBBox.Max =  Size+Center;
-    m_RenderOffset  = -vector3(Center.X,m_LocalBBox.Min.Y,Center.Z);
-
-    m_Vertex[0] = vector3( m_LocalBBox.Min.X, m_LocalBBox.Min.Y, m_LocalBBox.Min.Z );
-    m_Vertex[1] = vector3( m_LocalBBox.Min.X, m_LocalBBox.Min.Y, m_LocalBBox.Max.Z );
-    m_Vertex[2] = vector3( m_LocalBBox.Min.X, m_LocalBBox.Max.Y, m_LocalBBox.Min.Z );
-    m_Vertex[3] = vector3( m_LocalBBox.Min.X, m_LocalBBox.Max.Y, m_LocalBBox.Max.Z );
-    m_Vertex[4] = vector3( m_LocalBBox.Max.X, m_LocalBBox.Min.Y, m_LocalBBox.Min.Z );
-    m_Vertex[5] = vector3( m_LocalBBox.Max.X, m_LocalBBox.Min.Y, m_LocalBBox.Max.Z );
-    m_Vertex[6] = vector3( m_LocalBBox.Max.X, m_LocalBBox.Max.Y, m_LocalBBox.Min.Z );
-    m_Vertex[7] = vector3( m_LocalBBox.Max.X, m_LocalBBox.Max.Y, m_LocalBBox.Max.Z );
+    m_LocalBBox.Min = -Size + Center;
+    m_LocalBBox.Max = Size + Center;
+    m_RenderOffset = -vector3(Center.GetX(), m_LocalBBox.Min.GetY(), Center.GetZ());
+    
+    m_Vertex[0] = vector3(m_LocalBBox.Min.GetX(), m_LocalBBox.Min.GetY(), m_LocalBBox.Min.GetZ());
+    m_Vertex[1] = vector3(m_LocalBBox.Min.GetX(), m_LocalBBox.Min.GetY(), m_LocalBBox.Max.GetZ());
+    m_Vertex[2] = vector3(m_LocalBBox.Min.GetX(), m_LocalBBox.Max.GetY(), m_LocalBBox.Min.GetZ());
+    m_Vertex[3] = vector3(m_LocalBBox.Min.GetX(), m_LocalBBox.Max.GetY(), m_LocalBBox.Max.GetZ());
+    m_Vertex[4] = vector3(m_LocalBBox.Max.GetX(), m_LocalBBox.Min.GetY(), m_LocalBBox.Min.GetZ());
+    m_Vertex[5] = vector3(m_LocalBBox.Max.GetX(), m_LocalBBox.Min.GetY(), m_LocalBBox.Max.GetZ());
+    m_Vertex[6] = vector3(m_LocalBBox.Max.GetX(), m_LocalBBox.Max.GetY(), m_LocalBBox.Min.GetZ());
+    m_Vertex[7] = vector3(m_LocalBBox.Max.GetX(), m_LocalBBox.Max.GetY(), m_LocalBBox.Max.GetZ());
     m_nVertices = 8;
 
     //for (i = 0; i < m_nVertices; i++)
@@ -351,20 +351,20 @@ void rigid_body::Init( const rigid_geom& RigidGeom,
 
 //==============================================================================
 
-void ComputeBoxInverseInertiaTensor( const vector3& Size, f32 Mass, matrix3& I )
+void ComputeBoxInverseInertiaTensor(const vector3& Size, f32 Mass, matrix3& I)
 {
-    f32     XX = Size.X * Size.X;
-    f32     YY = Size.Y * Size.Y;
-    f32     ZZ = Size.Z * Size.Z;
-    f32     M  = Mass / 12.0f;
-
+    f32 XX = Size.GetX() * Size.GetX();
+    f32 YY = Size.GetY() * Size.GetY();
+    f32 ZZ = Size.GetZ() * Size.GetZ();
+    f32 M = Mass / 12.0f;
+    
     I.Identity();
     I(0,0) = 1.0f / (M * (YY + ZZ));
     I(1,1) = 1.0f / (M * (XX + ZZ));
     I(2,2) = 1.0f / (M * (XX + YY));
 }
 
-void rigid_body::Reset( const matrix4& L2W )
+void vehicle_rigid_body::Reset( const matrix4& L2W )
 {
     // Dynamic physics                      
     SetL2W(L2W);
@@ -392,26 +392,28 @@ void rigid_body::Reset( const matrix4& L2W )
 //==============================================================================
 
 inline 
-void ApplyAngularVelocity( quaternion& O, const vector3& AngVel, f32 DeltaTime )
+void ApplyAngularVelocity(quaternion& O, const vector3& AngVel, f32 DeltaTime)
 {
     vector3 V = AngVel * DeltaTime * 0.5f;
     quaternion DeltaRot;
-    DeltaRot.X = + (O.W * V.X) + (V.Y * O.Z) - (V.Z * O.Y);
-    DeltaRot.Y = + (O.W * V.Y) + (V.Z * O.X) - (V.X * O.Z);
-    DeltaRot.Z = + (O.W * V.Z) + (V.X * O.Y) - (V.Y * O.X);
-    DeltaRot.W = - (O.X * V.X) - (V.Y * O.Y) - (V.Z * O.Z);
-
+    
+    // Используем методы доступа для vector3 и quaternion
+    DeltaRot.X = + (O.W * V.GetX()) + (V.GetY() * O.Z) - (V.GetZ() * O.Y);
+    DeltaRot.Y = + (O.W * V.GetY()) + (V.GetZ() * O.X) - (V.GetX() * O.Z);
+    DeltaRot.Z = + (O.W * V.GetZ()) + (V.GetX() * O.Y) - (V.GetY() * O.X);
+    DeltaRot.W = - (O.X * V.GetX()) - (V.GetY() * O.Y) - (V.GetZ() * O.Z);
+    
     O.X += DeltaRot.X;
     O.Y += DeltaRot.Y;
     O.Z += DeltaRot.Z;
     O.W += DeltaRot.W;
+    
     O.Normalize();
 }
 
-
 // Integrates movement
 // Currently using simple Euler integrator
-void rigid_body::Integrate( f32 DeltaTime )
+void vehicle_rigid_body::Integrate( f32 DeltaTime )
 {
     //======================================================================
     // Linear movement
@@ -463,7 +465,7 @@ vel+=acc*t;
 //==============================================================================
 
 // Advances logic
-void rigid_body::AdvanceSimulation( f32 DeltaTime )
+void vehicle_rigid_body::AdvanceSimulation( f32 DeltaTime )
 {
     // Anything to do?
     if (!m_bActive)
@@ -490,7 +492,7 @@ void rigid_body::AdvanceSimulation( f32 DeltaTime )
 
 //==============================================================================
 
-void rigid_body::Advance( f32 DeltaTime )
+void vehicle_rigid_body::Advance( f32 DeltaTime )
 {
     // Accululate time
     m_DeltaTime += DeltaTime;
@@ -507,7 +509,7 @@ void rigid_body::Advance( f32 DeltaTime )
 //==============================================================================
 
 // Renders geometry
-void rigid_body::Render( void )
+void vehicle_rigid_body::Render( void )
 {
     s32 i;
 
@@ -545,63 +547,63 @@ void rigid_body::Render( void )
 // Position functions
 //==============================================================================
 
-const vector3& rigid_body::GetPosition ( void ) const
+const vector3& vehicle_rigid_body::GetPosition ( void ) const
 {
     return m_Position;
 }
 
 //==============================================================================
 
-const quaternion& rigid_body::GetOrientation ( void ) const
+const quaternion& vehicle_rigid_body::GetOrientation ( void ) const
 {
     return m_Orientation;
 }
 
 //==============================================================================
 
-const matrix4& rigid_body::GetL2W( void ) const
+const matrix4& vehicle_rigid_body::GetL2W( void ) const
 {
     return m_L2W;
 }
 
 //==============================================================================
 
-f32 rigid_body::GetMass( void ) const
+f32 vehicle_rigid_body::GetMass( void ) const
 {
     return m_Mass;
 }
 
 //==============================================================================
 
-const bbox& rigid_body::GetLocalBBox( void ) const
+const bbox& vehicle_rigid_body::GetLocalBBox( void ) const
 {
     return m_LocalBBox;
 }
 
 //==============================================================================
 
-const vector3& rigid_body::GetLinearMomentum( void ) const
+const vector3& vehicle_rigid_body::GetLinearMomentum( void ) const
 {
     return m_LinearMomentum;
 }
 
 //==============================================================================
 
-const vector3& rigid_body::GetRenderOffset( void ) const
+const vector3& vehicle_rigid_body::GetRenderOffset( void ) const
 {
     return m_RenderOffset;
 }
 
 //==============================================================================
 
-const vector3& rigid_body::GetGravity( void ) const
+const vector3& vehicle_rigid_body::GetGravity( void ) const
 {
     return m_Gravity;
 }
 
 //==============================================================================
 
-void rigid_body::SetPosition( const vector3& Pos )
+void vehicle_rigid_body::SetPosition( const vector3& Pos )
 {
     m_Position = Pos;
     m_L2W.SetTranslation(Pos);
@@ -609,7 +611,7 @@ void rigid_body::SetPosition( const vector3& Pos )
 
 //==============================================================================
 
-void rigid_body::SetOrientation( const radian3& Rot )
+void vehicle_rigid_body::SetOrientation( const radian3& Rot )
 {
     m_Orientation.Setup(Rot);
     m_L2W.SetRotation(Rot);
@@ -617,7 +619,7 @@ void rigid_body::SetOrientation( const radian3& Rot )
 
 //==============================================================================
 
-void rigid_body::SetL2W( const matrix4& L2W )
+void vehicle_rigid_body::SetL2W( const matrix4& L2W )
 {
     m_Position    = L2W.GetTranslation();
     m_Orientation = L2W.GetQuaternion();
@@ -626,7 +628,7 @@ void rigid_body::SetL2W( const matrix4& L2W )
 
 //==============================================================================
 
-void rigid_body::ZeroVelocities( void )
+void vehicle_rigid_body::ZeroVelocities( void )
 {
     m_LinearMomentum.Zero();          // World space velocity * Mass
     m_AngularMomentum.Zero();         // World space angular velocity * mass
@@ -634,7 +636,7 @@ void rigid_body::ZeroVelocities( void )
 
 //==============================================================================
 
-vector3 rigid_body::GetVelocity( const vector3& P ) const
+vector3 vehicle_rigid_body::GetVelocity( const vector3& P ) const
 {
     // Linear
     vector3 Vel = m_LinearVelocity;
@@ -647,7 +649,7 @@ vector3 rigid_body::GetVelocity( const vector3& P ) const
 
 //==============================================================================
 
-vector3 rigid_body::GetAngularVelocity  ( const vector3& P ) const
+vector3 vehicle_rigid_body::GetAngularVelocity  ( const vector3& P ) const
 {
     // Angular
     return m_AngularVelocity.Cross(P - m_Position);
@@ -655,7 +657,7 @@ vector3 rigid_body::GetAngularVelocity  ( const vector3& P ) const
 
 //==============================================================================
 
-vector3 rigid_body::GetVelocity( void ) const
+vector3 vehicle_rigid_body::GetVelocity( void ) const
 {
     return m_LinearVelocity;
 }

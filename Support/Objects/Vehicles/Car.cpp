@@ -114,7 +114,7 @@ static car_def  g_Def =
 // WHEEL CLASS
 //==============================================================================
 
-wheel::wheel()
+car_wheel::car_wheel()
 {
     m_iBone         = -1 ;      // Bone index
     m_Side          = 0 ;       // 1=Left, -1=Right
@@ -131,7 +131,7 @@ wheel::wheel()
 
 //==============================================================================
 
-void wheel::Init( s32 iBone, f32 Side, const vector3& WheelOffset, f32 ShockLength, f32 Radius )
+void car_wheel::Init( s32 iBone, f32 Side, const vector3& WheelOffset, f32 ShockLength, f32 Radius )
 {
     m_iBone       = iBone ;                                     // Bone index
     m_Side        = Side ;                                      // 1=Left, -1=Right
@@ -147,7 +147,7 @@ void wheel::Init( s32 iBone, f32 Side, const vector3& WheelOffset, f32 ShockLeng
 
 //==============================================================================
 
-void wheel::Reset( void )
+void car_wheel::Reset( void )
 {
     m_Length      = m_ShockLength ;                             // Current length of shock
     m_Steer       = 0 ;                                         // Steer yaw
@@ -157,7 +157,7 @@ void wheel::Reset( void )
 
 //==============================================================================
 
-void wheel::ComputeForces( rigid_body& Car, f32 DeltaTime )
+void car_wheel::ComputeForces( vehicle_rigid_body& Car, f32 DeltaTime )
 {
     // If car is upside down, skip
     const matrix4& CarL2W = Car.GetL2W() ;
@@ -279,7 +279,7 @@ void wheel::ComputeForces( rigid_body& Car, f32 DeltaTime )
 
 //==============================================================================
 
-void wheel::Advance( rigid_body& Car, f32 DeltaTime, f32 Steer, f32 Accel )
+void car_wheel::Advance( vehicle_rigid_body& Car, f32 DeltaTime, f32 Steer, f32 Accel )
 {
     // Update spin speed
     if (Accel > 0)
@@ -332,14 +332,34 @@ void wheel::Advance( rigid_body& Car, f32 DeltaTime, f32 Steer, f32 Accel )
 }
 
 //==============================================================================
+// DOOR CLASS
+//==============================================================================
+
+car_door::car_door()
+{
+}
+
+void car_door::Init(car& Car, s32 iBone, f32 Side, vector3* HingeOffsets, vector3& DoorOffset)
+{
+}
+
+void car_door::Reset(car& Car)
+{
+}
+
+void car_door::Advance(car& Car, f32 DeltaTime)
+{
+}
+
+//==============================================================================
 // CAR CLASS
 //==============================================================================
 
 // Constructor/Destructor
 car::car()
 {
-    m_Accel = 0 ;   // Acceleration from -1 to 1
-    m_Steer = 0 ;   // Steer from -1 to 1
+    m_Input.m_Accel = 0;   // Acceleration from -1 to 1
+    m_Input.m_Steer = 0;  // Steer from -1 to 1
 }
 
 //==============================================================================
@@ -354,13 +374,13 @@ car::~car()
 void car::ComputeForces( f32 DeltaTime )
 {
     // Call base class
-    m_RigidBody.ComputeForces(DeltaTime) ;
+    m_VehicleRigidBody.ComputeForces(DeltaTime);
 
     // Add spring forces from wheels
-    m_Wheels[0].ComputeForces(*this, DeltaTime) ;
-    m_Wheels[1].ComputeForces(*this, DeltaTime) ;
-    m_Wheels[2].ComputeForces(*this, DeltaTime) ;
-    m_Wheels[3].ComputeForces(*this, DeltaTime) ;
+    m_Wheels[0].ComputeForces(m_VehicleRigidBody, DeltaTime);
+    m_Wheels[1].ComputeForces(m_VehicleRigidBody, DeltaTime);
+    m_Wheels[2].ComputeForces(m_VehicleRigidBody, DeltaTime);
+    m_Wheels[3].ComputeForces(m_VehicleRigidBody, DeltaTime);
 }
 
 //==============================================================================
@@ -374,16 +394,22 @@ void car::Init( const char* pGeometryName,
     s32 i ;
 
     // Setup properties
-    m_Gravity.Y         = g_Def.m_Gravity ;         // Gravity of body
-    m_Mass              = g_Def.m_Mass ;            // Mass of body in kilograms
-    m_InvMass           = 1.0f / m_Mass ;           // (1.0f / Mass) of body
-    m_LinearDamping     = g_Def.m_LinearDamping ;   // Linear velocity damping
-    m_AngularDamping    = g_Def.m_AngularDamping ;  // Angular velcity damping
-    m_Friction          = g_Def.m_Friction ;        // Friction (0 = none, 1 = full)
-    m_Elasticity        = g_Def.m_Elasticity ;      // Bouncyness (0 = none, 1 = 100%)
+    m_VehicleRigidBody.m_Gravity.GetY()    = g_Def.m_Gravity;           // Gravity of body
+    m_VehicleRigidBody.m_Mass              = g_Def.m_Mass;              // Mass of body in kilograms
+    m_VehicleRigidBody.m_InvMass           = 1.0f / m_VehicleRigidBody.m_Mass; // (1.0f / Mass) of body
+    m_VehicleRigidBody.m_LinearDamping     = g_Def.m_LinearDamping;     // Linear velocity damping
+    m_VehicleRigidBody.m_AngularDamping    = g_Def.m_AngularDamping;    // Angular velcity damping
+    m_VehicleRigidBody.m_Friction          = g_Def.m_Friction;          // Friction (0 = none, 1 = full)
+    m_VehicleRigidBody.m_Elasticity        = g_Def.m_Elasticity;        // Bouncyness (0 = none, 1 = 100%)
 
     // Call base class
-    rigid_body::Init(pGeometryName, pAnimName, L2W, g_Def.m_MassYScale, ObjectGuid) ;
+    //m_VehicleRigidBody.Init(pGeometryName, pAnimName, L2W, g_Def.m_MassYScale, ObjectGuid) ;
+	
+	rigid_geom* pGeom = m_RigidInst.GetRigidGeom();
+    if (!pGeom)
+        return;
+	
+	m_VehicleRigidBody.Init(*pGeom, L2W, g_Def.m_MassYScale, ObjectGuid);
 
     // Lookup animation pointer
     anim_group* pAnimGroup = m_hAnimGroup.GetPointer() ;
@@ -407,7 +433,7 @@ void car::Init( const char* pGeometryName,
             iBone = 0 ;
 
         // Lookup offset 
-        vector3 Offset = pAnimGroup->GetBone(iBone).BindTranslation + m_RenderOffset ;
+        vector3 Offset = pAnimGroup->GetBone(iBone).BindTranslation + m_VehicleRigidBody.m_RenderOffset ;
 
         // Initialize wheel
         m_Wheels[i].Init(iBone,                     // iBone
@@ -417,7 +443,7 @@ void car::Init( const char* pGeometryName,
                          g_Def.m_WheelRadius ) ;    // Radius of wheel
     }
 
-    // Initialize car_doors
+    // Initialize doors
     m_NDoors = 0 ;
     for (i = 0 ; i < 2 ; i++)
     {
@@ -437,25 +463,25 @@ void car::Init( const char* pGeometryName,
         bbox BBox = GetRigidGeomBoneBBox(m_RigidInst.GetRigidGeom(), iBone) ;
 
         // Take render offset into account
-        BBox.Min += m_RenderOffset ;
-        BBox.Max += m_RenderOffset ;
+        BBox.Min += m_VehicleRigidBody.m_RenderOffset ;
+        BBox.Max += m_VehicleRigidBody.m_RenderOffset ;
 
         // Compute hinge offset
         vector3 HingeOffsets[2], DoorOffset ; 
 
-        HingeOffsets[0].X = (BBox.Min.X + BBox.Max.X) * 0.5f ;
-        HingeOffsets[0].Y = BBox.Min.Y ;
-        HingeOffsets[0].Z = BBox.Min.Z ;
+        HingeOffsets[0].GetX() = (BBox.Min.GetX() + BBox.Max.GetX()) * 0.5f;
+        HingeOffsets[0].GetY() = BBox.Min.GetY();
+        HingeOffsets[0].GetZ() = BBox.Min.GetZ();
 
-        HingeOffsets[1].X = (BBox.Min.X + BBox.Max.X) * 0.5f ;
-        HingeOffsets[1].Y = BBox.Max.Y ;
-        HingeOffsets[1].Z = BBox.Min.Z ;
+        HingeOffsets[1].GetX() = (BBox.Min.GetX() + BBox.Max.GetX()) * 0.5f;
+        HingeOffsets[1].GetY() = BBox.Max.GetY() ;
+        HingeOffsets[1].GetZ() = BBox.Min.GetZ();
         
-        DoorOffset.X      = (BBox.Min.X + BBox.Max.X) * 0.5f ;
-        DoorOffset.Y      = (BBox.Min.Y + BBox.Max.Y) * 0.5f ; ;
-        DoorOffset.Z      = BBox.Max.Z ;
+        DoorOffset.GetX() = (BBox.Min.GetX() + BBox.Max.GetX()) * 0.5f;
+        DoorOffset.GetY() = (BBox.Min.GetY() + BBox.Max.GetY()) * 0.5f; ;
+        DoorOffset.GetZ()  = BBox.Max.GetZ();
 
-        // Initialize car_door
+        // Initialize door
         m_Doors[m_NDoors].Init(*this,                   // Car
                         iBone,                          // iBone
                         (m_NDoors & 1) ? 1.0f : -1.0f,  // Side
@@ -474,19 +500,19 @@ void car::Reset( const matrix4& L2W )
     s32 i ;
 
     // Call base class
-    rigid_body::Reset(L2W) ;
+    m_VehicleRigidBody.Reset(L2W) ;
 
     // Reset wheels
     for (i = 0 ; i < 2 ; i++)
         m_Wheels[i].Reset() ;
 
-    // Reset car_doors
+    // Reset door
     for (i = 0 ; i < m_NDoors ; i++)
         m_Doors[i].Reset(*this) ;
 
     // Clear movement
-    m_Accel = 0 ;   // Acceleration from -1 to 1
-    m_Steer = 0 ;   // Steer from -1 to 1
+    m_Input.m_Accel = 0;   // Acceleration from -1 to 1
+    m_Input.m_Steer = 0;  // Steer from -1 to 1
 }
 //==============================================================================
 
@@ -496,31 +522,31 @@ void car::AdvanceSimulation( f32 DeltaTime )
     s32 i ;
 
     // Anything to do?
-    if ((!m_bActive) || (DeltaTime == 0))
+    if ((!m_VehicleRigidBody.m_bActive) || (DeltaTime == 0))
         return ;
 
     // Call base class
-    rigid_body::AdvanceSimulation(DeltaTime) ;
+    m_VehicleRigidBody.AdvanceSimulation(DeltaTime) ;
 
     // Advance front wheels
-    if (m_Accel < 0)
+    if (m_Input.m_Accel < 0)
     {
-        m_Wheels[0].Advance(*this, DeltaTime, m_Steer, m_Accel) ;
-        m_Wheels[1].Advance(*this, DeltaTime, m_Steer, m_Accel) ;
+        m_Wheels[0].Advance(m_VehicleRigidBody, DeltaTime, m_Input.m_Steer, m_Input.m_Accel) ;
+        m_Wheels[1].Advance(m_VehicleRigidBody, DeltaTime, m_Input.m_Steer, m_Input.m_Accel) ;
     }
     else
     {
-        m_Wheels[0].Advance(*this, DeltaTime, m_Steer, 0) ;
-        m_Wheels[1].Advance(*this, DeltaTime, m_Steer, 0) ;
+        m_Wheels[0].Advance(m_VehicleRigidBody, DeltaTime, m_Input.m_Steer, 0) ;
+        m_Wheels[1].Advance(m_VehicleRigidBody, DeltaTime, m_Input.m_Steer, 0) ;
     }
 
     // Advance rear wheels
-    m_Wheels[2].Advance(*this, DeltaTime, 0, m_Accel) ;
-    m_Wheels[3].Advance(*this, DeltaTime, 0, m_Accel) ;
+    m_Wheels[2].Advance(m_VehicleRigidBody, DeltaTime, 0, m_Input.m_Accel) ;
+    m_Wheels[3].Advance(m_VehicleRigidBody, DeltaTime, 0, m_Input.m_Accel) ;
 
-    // Advance car_doors
+    // Advance doors
     for (i = 0 ; i < m_NDoors ; i++)
-        m_Doors[i].Advance(*this, DeltaTime) ;
+        m_Doors[i].Advance(*this, DeltaTime);
 }
 
 //==============================================================================
@@ -531,26 +557,28 @@ void car::Render( void )
     s32 i ;
    
     // Allocate matrices
-    s32      NBones    = m_NBones ;
+    //s32      NBones    = m_NBones;
+
+    // Lookup animation pointer
+    anim_group* pAnimGroup = m_hAnimGroup.GetPointer();
+    ASSERT(pAnimGroup);
+	
+	s32 NBones = pAnimGroup->GetNBones();
     matrix4* pMatrices = (matrix4*)smem_BufferAlloc(NBones * sizeof(matrix4)) ;
     if (!pMatrices)
         return ;
-
-    // Lookup animation pointer
-    anim_group* pAnimGroup = m_hAnimGroup.GetPointer() ;
-    ASSERT(pAnimGroup) ;
     
     // Setup matrices
     for (i = 0 ; i < NBones ; i++)
     {
         pMatrices[i] = GetL2W() ;
-        pMatrices[i].PreTranslate(m_RenderOffset) ;
+        pMatrices[i].PreTranslate(m_VehicleRigidBody.m_RenderOffset) ;
     }
 
     // Setup wheel matrices
     for (i = 0 ; i < 4 ; i++)
     {
-        wheel& Wheel = m_Wheels[i] ;
+        car_wheel& Wheel = m_Wheels[i] ;
         pMatrices[Wheel.m_iBone] = Wheel.m_L2W * pAnimGroup->GetBoneBindInvMatrix(Wheel.m_iBone) ;
     }
 
@@ -571,7 +599,7 @@ void car::Render( void )
     for (i = 0 ; i < 4 ; i++)
     {
         // Get wheel
-        wheel& Wheel = m_Wheels[i] ;
+        car_wheel& Wheel = m_Wheels[i] ;
 
         // Get pos
         vector3 Pos = Wheel.m_L2W.GetTranslation() ;
@@ -582,32 +610,32 @@ void car::Render( void )
 
     // Draw bbox
     draw_SetL2W(GetL2W()) ;
-    draw_BBox(m_LocalBBox, XCOLOR_WHITE) ;
+    draw_BBox(m_VehicleRigidBody.m_LocalBBox, XCOLOR_WHITE) ;
 
     // Draw collision verts
-    for (i = 0 ; i < m_NVertices ; i++)
-        draw_Point(GetL2W() * m_Vertices[i], XCOLOR_YELLOW) ;
+    for (i = 0 ; i < m_VehicleRigidBody.m_nVertices ; i++)
+        draw_Point(m_VehicleRigidBody.GetL2W() * m_VehicleRigidBody.m_Vertex[i], XCOLOR_YELLOW) ;
     
     draw_ClearL2W() ;
 
     // Draw car vel
     draw_Label(GetL2W().GetTranslation(), XCOLOR_RED, "Vel:%.2f %.2f %.2f",
-               GetVelocity().X/60.0f,
-               GetVelocity().Y/60.0f,
-               GetVelocity().Z/60.0f) ;
+               GetVelocity().GetX()/60.0f,
+               GetVelocity().GetY()/60.0f,
+               GetVelocity().GetZ()/60.0f);
 
-    // Draw car_doors
+    // Draw doors
     for (i = 0 ; i < m_NDoors ; i++)
     {
         car_door& Door = m_Doors[i] ;
 
         // Draw info
         draw_Label(Door.m_DoorPos, XCOLOR_RED, "Vel:%.2f %.2f %.2f",
-                   Door.m_DoorPos.X - Door.m_DoorLastPos.X,
-                   Door.m_DoorPos.Y - Door.m_DoorLastPos.Y,
-                   Door.m_DoorPos.Z - Door.m_DoorLastPos.Z) ;
+                   Door.m_DoorPos.GetX() - Door.m_DoorLastPos.GetX(),
+                   Door.m_DoorPos.GetY() - Door.m_DoorLastPos.GetY(),
+                   Door.m_DoorPos.GetZ() - Door.m_DoorLastPos.GetZ());
 
-        // Draw car_door particles
+        // Draw door particles
         xcolor C = XCOLOR_GREEN ;
         if (i == 1)
             C = XCOLOR_BLUE ;                
@@ -637,7 +665,7 @@ void car::SetSteer( f32 Steer )
         Steer = 1 ;
 
     // Keep
-    m_Steer = Steer ;
+    m_Input.m_Steer = Steer ;
 }
 
 //==============================================================================
@@ -652,7 +680,7 @@ void car::SetAccel( f32 Accel )
         Accel = 1 ;
 
     // Keep
-    m_Accel = Accel ;
+    m_Input.m_Accel = Accel ;
 }
 
 //==============================================================================

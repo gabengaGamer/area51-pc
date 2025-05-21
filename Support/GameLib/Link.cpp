@@ -76,6 +76,12 @@
 #include "Objects\CokeCan.hpp"
 #include "Objects\SuperDestructible.hpp"
 
+#define X_VEHICLE
+
+#ifdef X_VEHICLE
+#include "Objects\Vehicles\VehicleObject.hpp"
+#endif
+
 #include "Objects\Path.hpp"
 #include "Objects\Tracker.hpp"
 #include "Objects\Camera.hpp"
@@ -143,6 +149,10 @@ void ForceLink( void )
 		pDummy = new corpse;
         pDummy = new notepad_object;
         pDummy = new lens_filter;
+
+#ifdef X_VEHICLE
+        pDummy = new vehicle_object;
+#endif
 
         pDummy = new player;
 #ifndef X_EDITOR

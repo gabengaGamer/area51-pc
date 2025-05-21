@@ -10,19 +10,20 @@
 //==============================================================================
 // INCLUDES
 //==============================================================================
-#include "RigidBody.hpp"
+#include "VehicleRigidBody.hpp"
 #include "VehicleObject.hpp"
 
+#define MAX_DOORS 4 //ЗАЛУПА ПЕНИС ЕЛДА
 
 //==============================================================================
 // CLASSES
 //==============================================================================
 
 // Class that represents a wheel
-class wheel
+class car_wheel
 {
 // Friends
-friend class car ;
+friend class car;
 
 // Data
 protected:
@@ -41,14 +42,36 @@ protected:
 
 // Functions
 public:
-            wheel() ;
+            car_wheel();
             void Init           ( s32 iBone, f32 Side, const vector3& WheelOffset, f32 ShockLength, f32 Radius ) ;
             void Reset          ( void ) ;
-            void ComputeForces  ( rigid_body& Car, f32 DeltaTime ) ;
-            void Advance        ( rigid_body& Car, f32 DeltaTime, f32 Steer, f32 Accel ) ;
+            void ComputeForces  ( vehicle_rigid_body& Car, f32 DeltaTime ) ;
+            void Advance        ( vehicle_rigid_body& Car, f32 DeltaTime, f32 Steer, f32 Accel ) ;
 
-} ;
+};
 
+// Class that represents a doors
+class car_door
+{
+// Friends
+friend class car;	
+
+// Data	
+protected:
+    s32     m_iBone;           // Bone index
+    matrix4 m_L2W;             // Local -> world
+    matrix4 m_InvBindL2W;      // Local -> world
+    vector3 m_DoorPos;         // Door position
+    vector3 m_DoorLastPos;     // Last door position
+    vector3 m_HingeOffsets[2]; // Idk
+   
+// Functions
+public:
+            car_door();
+            void Init     ( car& Car, s32 iBone, f32 Side, vector3* HingeOffsets, vector3& DoorOffset );
+            void Reset    ( car& Car );
+            void Advance  ( car& Car, f32 DeltaTime );
+};
 
 //==============================================================================
 
@@ -63,8 +86,10 @@ private:
 protected:
 
             // Wheel vars
-            wheel       m_Wheels[4] ;   // FL, FR, RL, RR
-            rigid_body  m_RigidBody;
+            car_wheel           m_Wheels[4] ;        // FL, FR, RL, RR
+            s32                 m_NDoors;            // Door count
+            car_door            m_Doors[MAX_DOORS];  // Maximum doors, probably 4 ?
+            vehicle_rigid_body  m_VehicleRigidBody;  // Xyeta
 
 // Functions
 public:

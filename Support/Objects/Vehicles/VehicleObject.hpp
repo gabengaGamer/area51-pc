@@ -32,8 +32,8 @@ class vehicle_object : public object
 public:
     CREATE_RTTI( vehicle_object, object, object )
 
-    virtual const object_desc&  GetTypeDesc     ( void ) const ;
-    virtual const object_desc&  GetObjectType   ( void ) ;
+    virtual const object_desc&  GetTypeDesc     ( void ) const;
+    virtual const object_desc&  GetObjectType   ( void );
 
 //=========================================================================
 // Friends of the family
@@ -96,15 +96,15 @@ public:
     virtual       bbox          GetLocalBBox    ( void ) const;      
     virtual       s32           GetMaterial     ( void ) const;
 
-    virtual geom*        GetGeomPtr        ( void ) { return m_RigidInst.GetSkinGeom(); }
+    virtual geom*        GetGeomPtr        ( void ) { return m_RigidInst.GetRigidGeom(); }
     virtual render_inst* GetRenderInstPtr  ( void ) { return &m_RigidInst; }
 
 //=========================================================================
 // Functions
 //=========================================================================
 public:
-    rigid_inst              m_RigidInst ;           // Render instance
-    rhandle<anim_group>     m_hAnimGroup ;          // Animation group handle
+    rigid_inst              m_RigidInst;            // Render instance
+    rhandle<anim_group>     m_hAnimGroup;           // Animation group handle
     input                   m_Input;
     camera                  m_Camera;
     f32                     m_DeltaTime;
@@ -142,4 +142,4 @@ protected:
 
 //=========================================================================
 
-#endif//__COP_CAR_HPP__
+#endif//VEHICLE_OBJECT_HPP

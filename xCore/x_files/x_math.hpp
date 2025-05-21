@@ -845,6 +845,84 @@ friend  quaternion  Blend           ( const quaternion& Q0,
 friend  quaternion  BlendToIdentity ( const quaternion& Q1, f32 T );
 };
 
+//==============================================================================
+//  MATRIX3
+//==============================================================================
+
+PC_ALIGNMENT(16)
+class matrix3
+{
+	
+//------------------------------------------------------------------------------
+//  Functions
+//------------------------------------------------------------------------------
+
+public:
+                    matrix3             ( void );
+                    matrix3             ( const quaternion& Q );
+                    
+    f32             operator ()         ( s32 Column, s32 Row ) const;
+    f32&            operator ()         ( s32 Column, s32 Row );
+
+    void            Zero                ( void );
+    void            Identity            ( void );
+    xbool           IsIdentity          ( void ) const;
+    void            Transpose           ( void );
+    xbool           Invert              ( void );
+    f32             Difference          ( const matrix3& M ) const;
+    xbool           InRange             ( f32 Min, f32 Max ) const;
+    xbool           IsValid             ( void ) const;
+
+    #ifdef TARGET_PS2
+    u128            GetCol0_U128        ( void ) const;
+    u128            GetCol1_U128        ( void ) const;
+    u128            GetCol2_U128        ( void ) const;
+    #endif
+
+    vector3         operator *          ( const vector3& V ) const;
+    vector3         Transform           ( const vector3& V ) const;
+    void            Transform           (       vector3* pDest, 
+                                         const vector3* pSource, 
+                                               s32      NVerts ) const;
+    vector3         RotateVector        ( const vector3& V ) const;
+    vector3         InvRotateVector     ( const vector3& V ) const;
+
+    matrix3&        operator +=         ( const matrix3& M );
+    matrix3&        operator -=         ( const matrix3& M );
+    matrix3&        operator *=         ( const matrix3& M );
+                                    
+friend  matrix3     operator +          ( const matrix3& M1, const matrix3& M2 );
+friend  matrix3     operator -          ( const matrix3& M1, const matrix3& M2 );
+friend  matrix3     operator *          ( const matrix3& M1, const matrix3& M2 );
+friend  matrix3     m3_Transpose        ( const matrix3& M );
+
+//------------------------------------------------------------------------------
+//  Fields
+//------------------------------------------------------------------------------
+
+protected:
+
+    f32     m_Cell[3][3];
+
+    #ifdef TARGET_PS2
+    struct
+    {
+        u128    m_Col0;
+        u128    m_Col1;
+        u128    m_Col2;
+    };
+    #endif
+
+    #ifdef TARGET_XBOX
+    struct
+    {
+        f128    m_Col0;
+        f128    m_Col1;
+        f128    m_Col2;
+    };
+    #endif
+
+} PS2_ALIGNMENT(16);
 
 //==============================================================================
 //  MATRIX4
@@ -1308,6 +1386,7 @@ struct irect
 #include "Implementation/x_math_v4_inline.hpp"
 #include "Implementation/x_math_q_inline.hpp"
 #include "Implementation/x_math_m4_inline.hpp"
+#include "Implementation/x_math_m3_inline.hpp"
 #include "Implementation/x_math_p_inline.hpp"
 #include "Implementation/x_math_bb_inline.hpp"
 #include "Implementation/x_math_rect_inline.hpp"

@@ -15,6 +15,7 @@
 //==============================================================================
 // INCLUDES
 //==============================================================================
+
 #include "CarObject.hpp"
 #include "Entropy.hpp"
 #include "Obj_mgr\obj_mgr.hpp"
@@ -228,7 +229,7 @@ void wheel::ApplyTraction( f32 DeltaTime, const matrix4& VehicleL2W )
     WheelLeftDir    = WheelUpDir.Cross(WheelForwardDir);
 
     // If we are upside down then no traction
-    if( WheelUpDir.Y <= 0 )
+    if( WheelUpDir.GetY() <= 0 )
     {
         // Add gravity to the velocity
         m_Velocity += vector3(0,g_Def.m_Gravity*1.5f,0)*DeltaTime;
@@ -259,7 +260,7 @@ void wheel::ApplyTraction( f32 DeltaTime, const matrix4& VehicleL2W )
     f32 CollT = 500.0f;
     if( g_CollisionMgr.CheckCollisions( object::TYPE_ALL_TYPES, object::ATTR_COLLIDABLE, object::ATTR_COLLISION_PERMEABLE ) )
     {
-        if( g_CollisionMgr.m_Collisions[0].Plane.Normal.Y >= g_Def.m_WheelVerticalLimit )
+        if( g_CollisionMgr.m_Collisions[0].Plane.Normal.GetY() >= g_Def.m_WheelVerticalLimit )
             CollT = g_CollisionMgr.m_Collisions[0].T;
     }
 
@@ -392,7 +393,7 @@ void wheel::ApplyTraction( f32 DeltaTime, const matrix4& VehicleL2W )
         //
         f32 VerticalTractionT;
         {
-            VerticalTractionT = (GroundSlipPlane.Normal.Y-g_Def.m_WheelVerticalLimit)/(1.0f-g_Def.m_WheelVerticalLimit);
+            VerticalTractionT = (GroundSlipPlane.Normal.GetY()-g_Def.m_WheelVerticalLimit)/(1.0f-g_Def.m_WheelVerticalLimit);
             if( VerticalTractionT < 0 ) VerticalTractionT = 0;
             if( VerticalTractionT > 1 ) VerticalTractionT = 1;
             VerticalTractionT = x_sqrt(VerticalTractionT);
@@ -592,9 +593,9 @@ void wheel::EnforceCollision( void )
         {
             collision_mgr::collision& Coll = g_CollisionMgr.m_Collisions[0];
 
-            if( Coll.Point.Y > (m_Position.Y-g_Def.m_WheelRadius) ) 
+            if( Coll.Point.GetY() > (m_Position.GetY()-g_Def.m_WheelRadius) ) 
             {
-                m_Position.Y = Coll.Point.Y + g_Def.m_WheelRadius + 1.0f;
+                m_Position.GetY() = Coll.Point.GetY() + g_Def.m_WheelRadius + 1.0f;
             }
         }
     }
@@ -851,10 +852,13 @@ void wheel::Advance( f32 DeltaTime, const matrix4& VehicleL2W, f32 Accel, f32 Br
             if( x_irand(0,100) < DEBRIS_CHANCE )
             {
                 VelDir += vector3(x_frand(-1,+1),x_frand(-1,+1),x_frand(-1,+1));
-                debris_mgr::GetDebrisMgr()->CreateDebris(   WheelBottom,
-                                                            -VelDir*300.0f ,
-                                                            "DEB_CONC_Small.rigidgeom"    );
-            }
+				/*
+                debris_mgr::GetDebrisMgr()->CreateDebris(WheelBottom,
+                                                         -VelDir*300.0f ,
+                                                         "DEB_CONC_Small.rigidgeom"
+														 );
+		        */
+            }					
         }
     }
 
@@ -967,8 +971,20 @@ void car_object::VehicleInit( void )
 
 void car_object::VehicleKill( void )
 {
-    g_AudioManager.Release( m_AudioIdle, 0 );
-    g_AudioManager.Release( m_AudioRev, 0 );
+    if( m_AudioIdle )
+    {
+        g_AudioMgr.Release( m_AudioIdle, 0.0f );
+        m_AudioIdle = 0;
+    }
+    
+    if( m_AudioRev )
+    {
+        g_AudioMgr.Release( m_AudioRev, 0.0f );
+        m_AudioRev = 0;
+    }
+    
+    //g_AudioManager.Release( m_AudioIdle, 0 );
+    //g_AudioManager.Release( m_AudioRev, 0 );
 }
 
 //==============================================================================
@@ -1109,11 +1125,13 @@ void car_object::UpdateAudio( f32 DeltaTime )
     // Try to gather audio
     //
     if( !m_AudioIdle )
-        m_AudioIdle = g_AudioManager.Play("Jeep_Loop_01",GetPosition());
+        m_AudioIdle = g_AudioMgr.Play("Jeep_Loop_01", GetPosition(), GetZone1(), TRUE );
 
     if( !m_AudioRev )
-        m_AudioRev  = g_AudioManager.Play("Jeep_Loop_02",GetPosition());
+        m_AudioRev = g_AudioMgr.Play("Jeep_Loop_02", GetPosition(), GetZone1(), TRUE );
 
+    //m_AudioIdle = g_AudioManager.Play("Jeep_Loop_01",GetPosition());
+    //m_AudioRev  = g_AudioManager.Play("Jeep_Loop_02",GetPosition());
 
     //
     // Get average wheel speed
@@ -1176,12 +1194,12 @@ void car_object::UpdateAudio( f32 DeltaTime )
 
     RevP += m_RevTurbo;
 
-    g_AudioManager.SetVolume    ( m_AudioIdle,  IdleV );
-    g_AudioManager.SetVolume    ( m_AudioRev,   RevV );
-    g_AudioManager.SetPitch     ( m_AudioIdle,  IdleP );
-    g_AudioManager.SetPitch     ( m_AudioRev,   RevP );
-    g_AudioManager.SetPosition  ( m_AudioIdle,  GetPosition() );
-    g_AudioManager.SetPosition  ( m_AudioRev,   GetPosition() );
+    g_AudioMgr.SetVolume(m_AudioIdle, IdleV);
+    g_AudioMgr.SetVolume(m_AudioRev, RevV);
+    g_AudioMgr.SetPitch(m_AudioIdle, IdleP);
+    g_AudioMgr.SetPitch(m_AudioRev, RevP);
+    //g_AudioMgr.SetPosition(m_AudioIdle, GetPosition());
+    //g_AudioMgr.SetPosition(m_AudioRev, GetPosition());
 }
 
 //==============================================================================
@@ -1361,9 +1379,9 @@ xbool ComputeTriSphereMovement( const vector3& aP0,
     SphereSpacePt[0] = aP0 - SphereCenter;
     SphereSpacePt[1] = aP1 - SphereCenter;
     SphereSpacePt[2] = aP2 - SphereCenter;
-    SphereSpacePt[0].Y *= WorldToSphereScale;
-    SphereSpacePt[1].Y *= WorldToSphereScale;
-    SphereSpacePt[2].Y *= WorldToSphereScale;
+    SphereSpacePt[0].GetY() *= WorldToSphereScale;
+    SphereSpacePt[1].GetY() *= WorldToSphereScale;
+    SphereSpacePt[2].GetY() *= WorldToSphereScale;
     SphereSpacePt[3] = SphereSpacePt[0];
     plane SphereSpacePlane(SphereSpacePt[0],SphereSpacePt[1],SphereSpacePt[2]) ;
 
@@ -1453,7 +1471,7 @@ xbool ComputeTriSphereMovement( const vector3& aP0,
     // Normalize the push direction, move it into world space and extend it 1cm
     BestPushDir.Normalize();
     BestPushDir *= BestPushDist;
-    BestPushDir.Y /= WorldToSphereScale;
+    BestPushDir.GetY() /= WorldToSphereScale;
     f32 BPDLen = BestPushDir.Length();
     BestPushDir /= BPDLen;
     BestPushDir *= (BPDLen + 1.0f);
@@ -1477,7 +1495,7 @@ void SolveSphereCollisions( guid IgnoreGuid, s32 nSpheres, vector3* pSphereOffse
     // Build full bbox and gather clusters
     //
     {
-        fbbox FullBBox;
+        bbox FullBBox;
         FullBBox.Clear();
         for( i=0; i<nSpheres; i++ )
         {
@@ -1545,7 +1563,7 @@ void SolveSphereCollisions( guid IgnoreGuid, s32 nSpheres, vector3* pSphereOffse
             {
                 s32 MaxLoops = N_ITERATIONS_3;
                 s32 nLoops;
-                fbbox MoveBounds;
+                bbox MoveBounds;
                 MoveBounds.Min.Zero();
                 MoveBounds.Max.Zero();
 
@@ -1560,7 +1578,7 @@ void SolveSphereCollisions( guid IgnoreGuid, s32 nSpheres, vector3* pSphereOffse
                     //
                     f32 SphereRadius = pSphereRadius[i];
                     vector3 SphereCenter = pSpherePos[i];
-                    fbbox SphereBBox = bbox( SphereCenter, SphereRadius );
+                    bbox SphereBBox = bbox( SphereCenter, SphereRadius );
 
                     //
                     // Process clusters
@@ -1586,7 +1604,7 @@ void SolveSphereCollisions( guid IgnoreGuid, s32 nSpheres, vector3* pSphereOffse
                             {
                                 // Do tight loop on bbox checks
                                 {
-                                    fbbox* pBBox = (fbbox*)(CL.pBounds);
+                                    bbox* pBBox = (bbox*)(CL.pBounds);
                                     iQ++;
                                     while( iQ < CL.nQuads )
                                     {
@@ -1641,9 +1659,9 @@ void SolveSphereCollisions( guid IgnoreGuid, s32 nSpheres, vector3* pSphereOffse
                         break;
 
                     vector3 FinalMoveDelta;
-                    FinalMoveDelta.X = MoveBounds.Min.X + MoveBounds.Max.X;
-                    FinalMoveDelta.Y = MoveBounds.Min.Y + MoveBounds.Max.Y;
-                    FinalMoveDelta.Z = MoveBounds.Min.Z + MoveBounds.Max.Z;
+                    FinalMoveDelta.GetX() = MoveBounds.Min.GetX() + MoveBounds.Max.GetX();
+                    FinalMoveDelta.GetY() = MoveBounds.Min.GetY() + MoveBounds.Max.GetY();
+                    FinalMoveDelta.GetZ() = MoveBounds.Min.GetZ() + MoveBounds.Max.GetZ();
 
                     pSpherePos[i] += FinalMoveDelta;
                 }
@@ -1803,16 +1821,16 @@ void car_object::RenderShockHistory( void )
 
             vector3 ShockPt(0,0,0);
             f32 ShockT = H.ShockLength / g_Def.m_ShockLength;
-            ShockPt.X = X;
-            ShockPt.Y = SHOCK_HISTORY_FRAME_OFFSET[i].Y + (WindowHeight/2) - ShockT*(WindowHeight/2);
+            ShockPt.GetX() = X;
+            ShockPt.GetY() = SHOCK_HISTORY_FRAME_OFFSET[i].Y + (WindowHeight/2) - ShockT*(WindowHeight/2);
 
 
             vector3 ShockSpeedPt(0,0,0);
             f32 ShockSpeedT = H.ShockSpeed / SHOCK_SPEED_LIMIT;
             if( ShockSpeedT < -1) ShockSpeedT = -1;
             if( ShockSpeedT > +1) ShockSpeedT = +1;
-            ShockSpeedPt.X = X;
-            ShockSpeedPt.Y = SHOCK_HISTORY_FRAME_OFFSET[i].Y + (WindowHeight/2) - ShockSpeedT*(WindowHeight/2);
+            ShockPt.GetX() = X;
+            ShockSpeedPt.GetY() = SHOCK_HISTORY_FRAME_OFFSET[i].Y + (WindowHeight/2) - ShockSpeedT*(WindowHeight/2);	
 
             if( j>0 )
             {
@@ -1903,7 +1921,7 @@ void car_object::VehicleRender( void )
 
 
     // Draw geometry
-    m_RigidInst.Render(pMatrices, render::NORMAL | render::CLIPPED);
+    m_RigidInst.Render(pMatrices, render::CLIPPED);
 
 
     if( m_bDisplayShockInfo )

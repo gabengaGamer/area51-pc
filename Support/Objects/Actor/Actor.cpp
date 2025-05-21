@@ -32,6 +32,12 @@
 #include "StateMgr\MapList.hpp"
 
 
+#define X_VEHICLE
+
+#ifdef X_VEHICLE
+#include "Objects\Vehicles\VehicleObject.hpp"
+#endif
+
 #ifndef X_EDITOR
 #include "NetworkMgr\GameMgr.hpp"
 #include "NetworkMgr\NetworkMgr.hpp"

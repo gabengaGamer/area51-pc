@@ -1,11 +1,11 @@
 //==============================================================================
 //
-//  RigidBody.hpp
+//  VehicleRigidBody.hpp
 //
 //==============================================================================
 
-#ifndef __RIGID_BODY_HPP__
-#define __RIGID_BODY_HPP__
+#ifndef __VEHICLE_RIGID_BODY_HPP__
+#define __VEHICLE_RIGID_BODY_HPP__
 
 //==============================================================================
 // INCLUDES
@@ -21,7 +21,7 @@
 //==============================================================================
 
 // Class that represents a single rigid body
-class rigid_body
+class vehicle_rigid_body
 {
 // Structures
 protected:
@@ -35,8 +35,8 @@ public:
             s32                 m_nVertices ;               // # of vertices
             vector3             m_Vertex[MAX_RIGID_BODY_VERTICES] ;           // List of vertices
             bbox                m_LocalBBox ;               // BBox of all local verts                
-            //s32                 m_NBones ;                  // # of bones in heirarchy
-            //rhandle<anim_group> m_hAnimGroup ;              // Animation group handle
+            s32                 m_NBones ;                  // # of bones in heirarchy
+            rhandle<anim_group> m_hAnimGroup ;              // Animation group handle
 
             // Definition physics
             vector3             m_Gravity ;                 // World space gravity
@@ -70,8 +70,8 @@ public:
 // Functions
 public:
             // Constructor/Destructor
-            rigid_body() ;
-    virtual ~rigid_body() ;
+            vehicle_rigid_body() ;
+    virtual ~vehicle_rigid_body() ;
 
             // Returns index of vertex if found, or -1 if not found
             s32                 FindVertex          ( const vector3& V ) const ;
@@ -139,4 +139,4 @@ bbox GetRigidGeomBoneBBox( const rigid_geom* pRigidGeom, s32 iBone ) ;
 
 
 
-#endif  // #ifndef __RIGID_BODY_HPP__
+#endif  // #ifndef __VEHICLE_RIGID_BODY_HPP__

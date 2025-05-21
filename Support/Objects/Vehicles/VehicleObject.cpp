@@ -307,15 +307,13 @@ void vehicle_object::OnEnumProp ( prop_enum& List )
     object::OnEnumProp( List );
 
     // Header
-    List.AddHeader(     "Vehicle",  
-                        "Vehicle is the base class for all vehicles in the game" 
-                        ) ;
+    List.PropEnumHeader( "Vehicle", "Vehicle is the base class for all vehicles in the game", 0);
 
     // Geometry
-    m_RigidInst.OnEnumProp(List) ;
+    m_RigidInst.OnEnumProp(List);
 
     // Animation
-    List.AddExternal("RenderInst\\Anim", "Resource\0anim", "Resource File", PROP_TYPE_MUST_ENUM) ;
+    List.PropEnumExternal("RenderInst\\Anim", "Resource\0anim", "Resource File", PROP_TYPE_MUST_ENUM);
 }
 
 //=============================================================================
@@ -324,34 +322,34 @@ xbool vehicle_object::OnProperty ( prop_query& I )
 {
     // Call base class
     if (object::OnProperty(I))
-        return TRUE ;
+        return TRUE;
 
     // Geometry
     if (m_RigidInst.OnProperty(I))
-        return TRUE ;
+        return TRUE;
 
     // Animation
     if (I.IsVar( "RenderInst\\Anim"))
     {
         if (I.IsRead())
-            I.SetVarExternal(m_hAnimGroup.GetName(), RESOURCE_NAME_SIZE) ;
+            I.SetVarExternal(m_hAnimGroup.GetName(), RESOURCE_NAME_SIZE);
         else
         {
             // Anim changed?
             if( I.GetVarExternal()[0] )
             {
-                const char* pAnimFile = I.GetVarExternal() ;
-                m_hAnimGroup.SetName(pAnimFile) ;
+                const char* pAnimFile = I.GetVarExternal();
+                m_hAnimGroup.SetName(pAnimFile);
                 if (m_hAnimGroup.GetPointer())
                 {
                     // Initialize ai?
-                    const char* pGeomFile = m_RigidInst.GetRigidGeomName() ;
+                    const char* pGeomFile = m_RigidInst.GetRigidGeomName();
                     if ((pGeomFile) && (pAnimFile))
-                        OnInit() ;
+                        OnInit();
                 }
             }
         }
-        return TRUE ;
+        return TRUE;
     }
 
     return FALSE;
