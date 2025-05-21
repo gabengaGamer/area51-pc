@@ -1363,7 +1363,7 @@ void car_object::UpdateAirStabilization( f32 DeltaTime )
 
 //=========================================================================
 
-xbool ComputeTriSphereMovement( const vector3& aP0,
+xbool ComputeVehicleTriSphereMovement( const vector3& aP0, //ComputeTriSphereMovement, REPLACE IT!!!!!!!!!
                                const vector3& aP1,
                                const vector3& aP2,
                                const vector3& SphereCenter,
@@ -1630,7 +1630,7 @@ void SolveSphereCollisions( guid IgnoreGuid, s32 nSpheres, vector3* pSphereOffse
                                     PT[2] = (vector3*)(&CL.pPoint[ QD.iP[2] ]);
                                     PT[3] = (vector3*)(&CL.pPoint[ QD.iP[3] ]);
 
-                                    if( ComputeTriSphereMovement( *PT[0], *PT[1], *PT[2], SphereCenter, SphereRadius, SphereRadius, MoveDelta ) )
+                                    if( ComputeVehicleTriSphereMovement( *PT[0], *PT[1], *PT[2], SphereCenter, SphereRadius, SphereRadius, MoveDelta ) )
                                     {
                                         nPenetrations++;
                                         MoveBounds += MoveDelta;
@@ -1640,7 +1640,7 @@ void SolveSphereCollisions( guid IgnoreGuid, s32 nSpheres, vector3* pSphereOffse
 
                                     if( CL.pBounds[iQ].Flags & BOUNDS_IS_QUAD )
                                     {
-                                        if( ComputeTriSphereMovement( *PT[0], *PT[2], *PT[3], SphereCenter, SphereRadius, SphereRadius, MoveDelta ) )
+                                        if( ComputeVehicleTriSphereMovement( *PT[0], *PT[2], *PT[3], SphereCenter, SphereRadius, SphereRadius, MoveDelta ) )
                                         {
                                             nPenetrations++;
                                             MoveBounds += MoveDelta;

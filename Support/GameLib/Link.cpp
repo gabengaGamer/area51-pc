@@ -80,6 +80,7 @@
 
 #ifdef X_VEHICLE
 #include "Objects\Vehicles\VehicleObject.hpp"
+#include "Objects\Vehicles\CarObject.hpp"
 #endif
 
 #include "Objects\Path.hpp"
@@ -152,6 +153,7 @@ void ForceLink( void )
 
 #ifdef X_VEHICLE
         pDummy = new vehicle_object;
+		pDummy = new car_object;
 #endif
 
         pDummy = new player;
