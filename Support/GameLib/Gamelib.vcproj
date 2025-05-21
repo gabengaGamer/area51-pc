@@ -4189,8 +4189,7 @@
 				<File
 					RelativePath="..\Objects\Vehicles\Car.cpp">
 					<FileConfiguration
-						Name="Release|Win32"
-						ExcludedFromBuild="TRUE">
+						Name="Release|Win32">
 						<Tool
 							Name="VCCLCompilerTool"/>
 					</FileConfiguration>
@@ -4201,8 +4200,7 @@
 							Name="VCCLCompilerTool"/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Debug|Win32"
-						ExcludedFromBuild="TRUE">
+						Name="Debug|Win32">
 						<Tool
 							Name="VCCLCompilerTool"/>
 					</FileConfiguration>
@@ -4213,8 +4211,7 @@
 							Name="VCCLCompilerTool"/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="OptDebug|Win32"
-						ExcludedFromBuild="TRUE">
+						Name="OptDebug|Win32">
 						<Tool
 							Name="VCCLCompilerTool"/>
 					</FileConfiguration>
@@ -4225,8 +4222,7 @@
 							Name="VCCLCompilerTool"/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="QA|Win32"
-						ExcludedFromBuild="TRUE">
+						Name="QA|Win32">
 						<Tool
 							Name="VCCLCompilerTool"/>
 					</FileConfiguration>
@@ -4237,8 +4233,7 @@
 							Name="VCCLCompilerTool"/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="EDITOR-Debug|Win32"
-						ExcludedFromBuild="TRUE">
+						Name="EDITOR-Debug|Win32">
 						<Tool
 							Name="VCCLCompilerTool"/>
 					</FileConfiguration>
@@ -4249,8 +4244,7 @@
 							Name="VCCLCompilerTool"/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="VIEWER-Debug|Win32"
-						ExcludedFromBuild="TRUE">
+						Name="VIEWER-Debug|Win32">
 						<Tool
 							Name="VCCLCompilerTool"/>
 					</FileConfiguration>
@@ -4264,8 +4258,7 @@
 				<File
 					RelativePath="..\Objects\Vehicles\Car.hpp">
 					<FileConfiguration
-						Name="Release|Win32"
-						ExcludedFromBuild="TRUE">
+						Name="Release|Win32">
 						<Tool
 							Name="VCCustomBuildTool"/>
 					</FileConfiguration>
@@ -4276,8 +4269,7 @@
 							Name="VCCustomBuildTool"/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Debug|Win32"
-						ExcludedFromBuild="TRUE">
+						Name="Debug|Win32">
 						<Tool
 							Name="VCCustomBuildTool"/>
 					</FileConfiguration>
@@ -4288,8 +4280,7 @@
 							Name="VCCustomBuildTool"/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="OptDebug|Win32"
-						ExcludedFromBuild="TRUE">
+						Name="OptDebug|Win32">
 						<Tool
 							Name="VCCustomBuildTool"/>
 					</FileConfiguration>
@@ -4300,8 +4291,7 @@
 							Name="VCCustomBuildTool"/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="QA|Win32"
-						ExcludedFromBuild="TRUE">
+						Name="QA|Win32">
 						<Tool
 							Name="VCCustomBuildTool"/>
 					</FileConfiguration>
@@ -4312,8 +4302,7 @@
 							Name="VCCustomBuildTool"/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="EDITOR-Debug|Win32"
-						ExcludedFromBuild="TRUE">
+						Name="EDITOR-Debug|Win32">
 						<Tool
 							Name="VCCustomBuildTool"/>
 					</FileConfiguration>
@@ -4324,8 +4313,7 @@
 							Name="VCCustomBuildTool"/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="VIEWER-Debug|Win32"
-						ExcludedFromBuild="TRUE">
+						Name="VIEWER-Debug|Win32">
 						<Tool
 							Name="VCCustomBuildTool"/>
 					</FileConfiguration>
@@ -4339,8 +4327,7 @@
 				<File
 					RelativePath="..\Objects\Vehicles\CarObject.cpp">
 					<FileConfiguration
-						Name="Release|Win32"
-						ExcludedFromBuild="TRUE">
+						Name="Release|Win32">
 						<Tool
 							Name="VCCLCompilerTool"/>
 					</FileConfiguration>
@@ -4351,8 +4338,7 @@
 							Name="VCCLCompilerTool"/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Debug|Win32"
-						ExcludedFromBuild="TRUE">
+						Name="Debug|Win32">
 						<Tool
 							Name="VCCLCompilerTool"/>
 					</FileConfiguration>
@@ -4363,8 +4349,7 @@
 							Name="VCCLCompilerTool"/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="OptDebug|Win32"
-						ExcludedFromBuild="TRUE">
+						Name="OptDebug|Win32">
 						<Tool
 							Name="VCCLCompilerTool"/>
 					</FileConfiguration>
@@ -4375,8 +4360,7 @@
 							Name="VCCLCompilerTool"/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="QA|Win32"
-						ExcludedFromBuild="TRUE">
+						Name="QA|Win32">
 						<Tool
 							Name="VCCLCompilerTool"/>
 					</FileConfiguration>
@@ -4387,8 +4371,7 @@
 							Name="VCCLCompilerTool"/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="EDITOR-Debug|Win32"
-						ExcludedFromBuild="TRUE">
+						Name="EDITOR-Debug|Win32">
 						<Tool
 							Name="VCCLCompilerTool"/>
 					</FileConfiguration>
@@ -4399,8 +4382,7 @@
 							Name="VCCLCompilerTool"/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="VIEWER-Debug|Win32"
-						ExcludedFromBuild="TRUE">
+						Name="VIEWER-Debug|Win32">
 						<Tool
 							Name="VCCLCompilerTool"/>
 					</FileConfiguration>
@@ -4414,8 +4396,7 @@
 				<File
 					RelativePath="..\Objects\Vehicles\CarObject.hpp">
 					<FileConfiguration
-						Name="Release|Win32"
-						ExcludedFromBuild="TRUE">
+						Name="Release|Win32">
 						<Tool
 							Name="VCCustomBuildTool"/>
 					</FileConfiguration>
@@ -4426,8 +4407,7 @@
 							Name="VCCustomBuildTool"/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Debug|Win32"
-						ExcludedFromBuild="TRUE">
+						Name="Debug|Win32">
 						<Tool
 							Name="VCCustomBuildTool"/>
 					</FileConfiguration>
@@ -4438,8 +4418,7 @@
 							Name="VCCustomBuildTool"/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="OptDebug|Win32"
-						ExcludedFromBuild="TRUE">
+						Name="OptDebug|Win32">
 						<Tool
 							Name="VCCustomBuildTool"/>
 					</FileConfiguration>
@@ -4450,8 +4429,7 @@
 							Name="VCCustomBuildTool"/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="QA|Win32"
-						ExcludedFromBuild="TRUE">
+						Name="QA|Win32">
 						<Tool
 							Name="VCCustomBuildTool"/>
 					</FileConfiguration>
@@ -4462,8 +4440,7 @@
 							Name="VCCustomBuildTool"/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="EDITOR-Debug|Win32"
-						ExcludedFromBuild="TRUE">
+						Name="EDITOR-Debug|Win32">
 						<Tool
 							Name="VCCustomBuildTool"/>
 					</FileConfiguration>
@@ -4474,170 +4451,7 @@
 							Name="VCCustomBuildTool"/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="VIEWER-Debug|Win32"
-						ExcludedFromBuild="TRUE">
-						<Tool
-							Name="VCCustomBuildTool"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="VIEWER-Debug|Xbox"
-						ExcludedFromBuild="TRUE">
-						<Tool
-							Name="VCCustomBuildTool"/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\Objects\Vehicles\RigidBody.cpp">
-					<FileConfiguration
-						Name="Release|Win32"
-						ExcludedFromBuild="TRUE">
-						<Tool
-							Name="VCCLCompilerTool"
-							ObjectFile="$(IntDir)/$(InputName)1.obj"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release|Xbox"
-						ExcludedFromBuild="TRUE">
-						<Tool
-							Name="VCCLCompilerTool"
-							ObjectFile="$(IntDir)/$(InputName)1.obj"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug|Win32"
-						ExcludedFromBuild="TRUE">
-						<Tool
-							Name="VCCLCompilerTool"
-							ObjectFile="$(IntDir)/$(InputName)1.obj"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug|Xbox"
-						ExcludedFromBuild="TRUE">
-						<Tool
-							Name="VCCLCompilerTool"
-							ObjectFile="$(IntDir)/$(InputName)1.obj"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="OptDebug|Win32"
-						ExcludedFromBuild="TRUE">
-						<Tool
-							Name="VCCLCompilerTool"
-							ObjectFile="$(IntDir)/$(InputName)1.obj"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="OptDebug|Xbox"
-						ExcludedFromBuild="TRUE">
-						<Tool
-							Name="VCCLCompilerTool"
-							ObjectFile="$(IntDir)/$(InputName)1.obj"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="QA|Win32"
-						ExcludedFromBuild="TRUE">
-						<Tool
-							Name="VCCLCompilerTool"
-							ObjectFile="$(IntDir)/$(InputName)1.obj"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="QA|Xbox"
-						ExcludedFromBuild="TRUE">
-						<Tool
-							Name="VCCLCompilerTool"
-							ObjectFile="$(IntDir)/$(InputName)1.obj"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="EDITOR-Debug|Win32"
-						ExcludedFromBuild="TRUE">
-						<Tool
-							Name="VCCLCompilerTool"
-							ObjectFile="$(IntDir)/$(InputName)1.obj"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="EDITOR-Debug|Xbox"
-						ExcludedFromBuild="TRUE">
-						<Tool
-							Name="VCCLCompilerTool"
-							ObjectFile="$(IntDir)/$(InputName)1.obj"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="VIEWER-Debug|Win32"
-						ExcludedFromBuild="TRUE">
-						<Tool
-							Name="VCCLCompilerTool"
-							ObjectFile="$(IntDir)/$(InputName)1.obj"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="VIEWER-Debug|Xbox"
-						ExcludedFromBuild="TRUE">
-						<Tool
-							Name="VCCLCompilerTool"
-							ObjectFile="$(IntDir)/$(InputName)1.obj"/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\Objects\Vehicles\RigidBody.hpp">
-					<FileConfiguration
-						Name="Release|Win32"
-						ExcludedFromBuild="TRUE">
-						<Tool
-							Name="VCCustomBuildTool"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release|Xbox"
-						ExcludedFromBuild="TRUE">
-						<Tool
-							Name="VCCustomBuildTool"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug|Win32"
-						ExcludedFromBuild="TRUE">
-						<Tool
-							Name="VCCustomBuildTool"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug|Xbox"
-						ExcludedFromBuild="TRUE">
-						<Tool
-							Name="VCCustomBuildTool"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="OptDebug|Win32"
-						ExcludedFromBuild="TRUE">
-						<Tool
-							Name="VCCustomBuildTool"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="OptDebug|Xbox"
-						ExcludedFromBuild="TRUE">
-						<Tool
-							Name="VCCustomBuildTool"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="QA|Win32"
-						ExcludedFromBuild="TRUE">
-						<Tool
-							Name="VCCustomBuildTool"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="QA|Xbox"
-						ExcludedFromBuild="TRUE">
-						<Tool
-							Name="VCCustomBuildTool"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="EDITOR-Debug|Win32"
-						ExcludedFromBuild="TRUE">
-						<Tool
-							Name="VCCustomBuildTool"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="EDITOR-Debug|Xbox"
-						ExcludedFromBuild="TRUE">
-						<Tool
-							Name="VCCustomBuildTool"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="VIEWER-Debug|Win32"
-						ExcludedFromBuild="TRUE">
+						Name="VIEWER-Debug|Win32">
 						<Tool
 							Name="VCCustomBuildTool"/>
 					</FileConfiguration>
@@ -4651,8 +4465,7 @@
 				<File
 					RelativePath="..\Objects\Vehicles\VehicleObject.cpp">
 					<FileConfiguration
-						Name="Release|Win32"
-						ExcludedFromBuild="TRUE">
+						Name="Release|Win32">
 						<Tool
 							Name="VCCLCompilerTool"/>
 					</FileConfiguration>
@@ -4663,8 +4476,7 @@
 							Name="VCCLCompilerTool"/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Debug|Win32"
-						ExcludedFromBuild="TRUE">
+						Name="Debug|Win32">
 						<Tool
 							Name="VCCLCompilerTool"/>
 					</FileConfiguration>
@@ -4675,8 +4487,7 @@
 							Name="VCCLCompilerTool"/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="OptDebug|Win32"
-						ExcludedFromBuild="TRUE">
+						Name="OptDebug|Win32">
 						<Tool
 							Name="VCCLCompilerTool"/>
 					</FileConfiguration>
@@ -4687,8 +4498,7 @@
 							Name="VCCLCompilerTool"/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="QA|Win32"
-						ExcludedFromBuild="TRUE">
+						Name="QA|Win32">
 						<Tool
 							Name="VCCLCompilerTool"/>
 					</FileConfiguration>
@@ -4699,8 +4509,7 @@
 							Name="VCCLCompilerTool"/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="EDITOR-Debug|Win32"
-						ExcludedFromBuild="TRUE">
+						Name="EDITOR-Debug|Win32">
 						<Tool
 							Name="VCCLCompilerTool"/>
 					</FileConfiguration>
@@ -4711,8 +4520,7 @@
 							Name="VCCLCompilerTool"/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="VIEWER-Debug|Win32"
-						ExcludedFromBuild="TRUE">
+						Name="VIEWER-Debug|Win32">
 						<Tool
 							Name="VCCLCompilerTool"/>
 					</FileConfiguration>
@@ -4726,8 +4534,7 @@
 				<File
 					RelativePath="..\Objects\Vehicles\VehicleObject.hpp">
 					<FileConfiguration
-						Name="Release|Win32"
-						ExcludedFromBuild="TRUE">
+						Name="Release|Win32">
 						<Tool
 							Name="VCCustomBuildTool"/>
 					</FileConfiguration>
@@ -4738,8 +4545,7 @@
 							Name="VCCustomBuildTool"/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Debug|Win32"
-						ExcludedFromBuild="TRUE">
+						Name="Debug|Win32">
 						<Tool
 							Name="VCCustomBuildTool"/>
 					</FileConfiguration>
@@ -4750,8 +4556,7 @@
 							Name="VCCustomBuildTool"/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="OptDebug|Win32"
-						ExcludedFromBuild="TRUE">
+						Name="OptDebug|Win32">
 						<Tool
 							Name="VCCustomBuildTool"/>
 					</FileConfiguration>
@@ -4762,8 +4567,7 @@
 							Name="VCCustomBuildTool"/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="QA|Win32"
-						ExcludedFromBuild="TRUE">
+						Name="QA|Win32">
 						<Tool
 							Name="VCCustomBuildTool"/>
 					</FileConfiguration>
@@ -4774,8 +4578,7 @@
 							Name="VCCustomBuildTool"/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="EDITOR-Debug|Win32"
-						ExcludedFromBuild="TRUE">
+						Name="EDITOR-Debug|Win32">
 						<Tool
 							Name="VCCustomBuildTool"/>
 					</FileConfiguration>
@@ -4786,8 +4589,145 @@
 							Name="VCCustomBuildTool"/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="VIEWER-Debug|Win32"
+						Name="VIEWER-Debug|Win32">
+						<Tool
+							Name="VCCustomBuildTool"/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="VIEWER-Debug|Xbox"
 						ExcludedFromBuild="TRUE">
+						<Tool
+							Name="VCCustomBuildTool"/>
+					</FileConfiguration>
+				</File>
+				<File
+					RelativePath="..\Objects\Vehicles\VehicleRigidBody.cpp">
+					<FileConfiguration
+						Name="Release|Win32">
+						<Tool
+							Name="VCCLCompilerTool"/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release|Xbox"
+						ExcludedFromBuild="TRUE">
+						<Tool
+							Name="VCCLCompilerTool"/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Debug|Win32">
+						<Tool
+							Name="VCCLCompilerTool"/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Debug|Xbox"
+						ExcludedFromBuild="TRUE">
+						<Tool
+							Name="VCCLCompilerTool"/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="OptDebug|Win32">
+						<Tool
+							Name="VCCLCompilerTool"/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="OptDebug|Xbox"
+						ExcludedFromBuild="TRUE">
+						<Tool
+							Name="VCCLCompilerTool"/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="QA|Win32">
+						<Tool
+							Name="VCCLCompilerTool"/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="QA|Xbox"
+						ExcludedFromBuild="TRUE">
+						<Tool
+							Name="VCCLCompilerTool"/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="EDITOR-Debug|Win32">
+						<Tool
+							Name="VCCLCompilerTool"/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="EDITOR-Debug|Xbox"
+						ExcludedFromBuild="TRUE">
+						<Tool
+							Name="VCCLCompilerTool"/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="VIEWER-Debug|Win32">
+						<Tool
+							Name="VCCLCompilerTool"/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="VIEWER-Debug|Xbox"
+						ExcludedFromBuild="TRUE">
+						<Tool
+							Name="VCCLCompilerTool"/>
+					</FileConfiguration>
+				</File>
+				<File
+					RelativePath="..\Objects\Vehicles\VehicleRigidBody.hpp">
+					<FileConfiguration
+						Name="Release|Win32">
+						<Tool
+							Name="VCCustomBuildTool"/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release|Xbox"
+						ExcludedFromBuild="TRUE">
+						<Tool
+							Name="VCCustomBuildTool"/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Debug|Win32">
+						<Tool
+							Name="VCCustomBuildTool"/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Debug|Xbox"
+						ExcludedFromBuild="TRUE">
+						<Tool
+							Name="VCCustomBuildTool"/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="OptDebug|Win32">
+						<Tool
+							Name="VCCustomBuildTool"/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="OptDebug|Xbox"
+						ExcludedFromBuild="TRUE">
+						<Tool
+							Name="VCCustomBuildTool"/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="QA|Win32">
+						<Tool
+							Name="VCCustomBuildTool"/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="QA|Xbox"
+						ExcludedFromBuild="TRUE">
+						<Tool
+							Name="VCCustomBuildTool"/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="EDITOR-Debug|Win32">
+						<Tool
+							Name="VCCustomBuildTool"/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="EDITOR-Debug|Xbox"
+						ExcludedFromBuild="TRUE">
+						<Tool
+							Name="VCCustomBuildTool"/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="VIEWER-Debug|Win32">
 						<Tool
 							Name="VCCustomBuildTool"/>
 					</FileConfiguration>
