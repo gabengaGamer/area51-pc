@@ -100,7 +100,9 @@ void text_RenderStr( char* pStr, s32 NChars, xcolor Color, s32 PixelX, s32 Pixel
     Rect.right  = Rect.left + (NChars*ENG_FONT_SIZEX);
                     
     Error = s_Font.pFont->DrawText( NULL, pStr, NChars, &Rect, DT_NOCLIP, Color );
+	#ifndef X_EDITOR
     ASSERT( Error == D3D_OK );
+	#endif
 }
 
 //=========================================================================

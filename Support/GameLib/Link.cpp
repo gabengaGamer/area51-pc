@@ -79,7 +79,6 @@
 #define X_VEHICLE
 
 #ifdef X_VEHICLE
-#include "Objects\Vehicles\VehicleObject.hpp"
 #include "Objects\Vehicles\CarObject.hpp"
 #endif
 
@@ -152,7 +151,6 @@ void ForceLink( void )
         pDummy = new lens_filter;
 
 #ifdef X_VEHICLE
-        pDummy = new vehicle_object;
 		pDummy = new car_object;
 #endif
 

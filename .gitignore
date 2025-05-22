@@ -522,3 +522,4 @@ _XboxRetail/
 !xCore/Tools/stringTool.exe
 !xCore/Tools/xCL.exe
 !xCore/Tools/xbmpTool.exe
+*.lib

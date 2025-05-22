@@ -315,7 +315,7 @@ void player::UpdateStickInput(void)
         m_fMoveValue   = +g_IngamePad[m_ActivePlayerPad].GetLogical( ingame_pad::MOVE_FOWARD_BACKWARDS ).IsValue;
         m_fStrafeValue = -g_IngamePad[m_ActivePlayerPad].GetLogical( ingame_pad::MOVE_STRAFE ).IsValue;
 
-#if defined(TARGET_PC) && !defined(X_EDITOR)
+#if defined(TARGET_PC)
         {
             xbool MoveForwardKeyIsPressed  = (xbool)g_IngamePad[m_ActivePlayerPad].GetLogical(ingame_pad::MOVE_FORWARD).WasValue;
             xbool MoveBackwardKeyIsPressed = (xbool)g_IngamePad[m_ActivePlayerPad].GetLogical(ingame_pad::MOVE_BACKWARD).WasValue;
