@@ -24,8 +24,12 @@
 				AdditionalIncludeDirectories="$(X)\x_files"
 				PreprocessorDefinitions="TARGET_PC,CONFIG_DEBUG"
 				BasicRuntimeChecks="3"
-				RuntimeLibrary="1"
-				DebugInformationFormat="4"/>
+				RuntimeLibrary="0"
+				StructMemberAlignment="0"
+				BufferSecurityCheck="FALSE"
+				EnableEnhancedInstructionSet="0"
+				DebugInformationFormat="4"
+				CallingConvention="0"/>
 			<Tool
 				Name="VCCustomBuildTool"/>
 			<Tool

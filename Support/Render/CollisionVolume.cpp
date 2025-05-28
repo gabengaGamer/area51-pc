@@ -18,7 +18,7 @@ void collision_data::high_cluster::FileIO( fileio& FileIO )
     FileIO.Static( iMesh );     
     FileIO.Static( iBone );     
     FileIO.Static( iDList );     
-    FileIO.Static( iOffset );     
+    FileIO.Static( iOffset );
     FileIO.Static( MaterialInfo );     
 }
 

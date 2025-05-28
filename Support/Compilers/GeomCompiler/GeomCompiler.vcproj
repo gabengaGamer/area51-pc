@@ -25,9 +25,13 @@
 				AdditionalIncludeDirectories="$(X),$(X)\x_files,$(X)\Entropy,.\,$(X)\MeshUtil,$(X)\Auxiliary\CommandLine,$(X)\Parsing,$(X)\..\Support,$(X)\..\Apps\MeshViewer"
 				PreprocessorDefinitions="TARGET_PC,CONFIG_DEBUG"
 				BasicRuntimeChecks="3"
-				RuntimeLibrary="1"
+				RuntimeLibrary="0"
+				StructMemberAlignment="0"
+				BufferSecurityCheck="FALSE"
+				EnableEnhancedInstructionSet="0"
 				UsePrecompiledHeader="2"
-				DebugInformationFormat="4"/>
+				DebugInformationFormat="4"
+				CallingConvention="0"/>
 			<Tool
 				Name="VCCustomBuildTool"/>
 			<Tool
@@ -111,13 +115,20 @@
 			ConfigurationType="1">
 			<Tool
 				Name="VCCLCompilerTool"
-				Optimization="0"
+				Optimization="3"
+				InlineFunctionExpansion="2"
+				EnableIntrinsicFunctions="TRUE"
+				FavorSizeOrSpeed="1"
+				EnableFiberSafeOptimizations="TRUE"
+				OptimizeForProcessor="2"
+				OptimizeForWindowsApplication="TRUE"
 				AdditionalIncludeDirectories="$(X),$(X)\x_files,$(X)\Entropy,.\,$(X)\MeshUtil,$(X)\Auxiliary\CommandLine,$(X)\Parsing,$(X)\..\Support,$(X)\..\Apps\MeshViewer"
 				PreprocessorDefinitions="TARGET_PC,CONFIG_QA"
-				BasicRuntimeChecks="3"
+				StringPooling="TRUE"
+				BasicRuntimeChecks="0"
 				RuntimeLibrary="1"
 				UsePrecompiledHeader="2"
-				DebugInformationFormat="4"/>
+				DebugInformationFormat="0"/>
 			<Tool
 				Name="VCCustomBuildTool"/>
 			<Tool
