@@ -26,7 +26,7 @@
 				AdditionalIncludeDirectories="$(X);$(X)/x_files;$(X)/Entropy;$(X)/Auxiliary/fx_Core"
 				PreprocessorDefinitions="TARGET_PC,CONFIG_DEBUG"
 				BasicRuntimeChecks="3"
-				RuntimeLibrary="1"
+				RuntimeLibrary="0"
 				UsePrecompiledHeader="2"
 				DebugInformationFormat="4"/>
 			<Tool
@@ -76,7 +76,7 @@
 				PreprocessorDefinitions="TARGET_PC,CONFIG_RETAIL,CONSOLE"
 				StringPooling="TRUE"
 				BasicRuntimeChecks="0"
-				RuntimeLibrary="1"
+				RuntimeLibrary="0"
 				UsePrecompiledHeader="2"
 				DebugInformationFormat="0"/>
 			<Tool
@@ -118,7 +118,7 @@
 				AdditionalIncludeDirectories="$(X);$(X)/x_files;$(X)/Entropy;$(X)/Auxiliary/fx_Core"
 				PreprocessorDefinitions="TARGET_PC,CONFIG_OPTDEBUG,CONSOLE"
 				BasicRuntimeChecks="3"
-				RuntimeLibrary="1"
+				RuntimeLibrary="0"
 				UsePrecompiledHeader="2"
 				DebugInformationFormat="4"/>
 			<Tool
@@ -161,7 +161,7 @@
 				AdditionalIncludeDirectories="$(X);$(X)/x_files;$(X)/Entropy;$(X)/Auxiliary/fx_Core"
 				PreprocessorDefinitions="TARGET_PC,CONFIG_QA,CONSOLE"
 				BasicRuntimeChecks="3"
-				RuntimeLibrary="1"
+				RuntimeLibrary="0"
 				UsePrecompiledHeader="2"
 				DebugInformationFormat="4"/>
 			<Tool

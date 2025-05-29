@@ -649,6 +649,37 @@ void pc_PostResetCubeMap( void )
     pc_InitializeCubeMapSurface();
 }
 
+//==============================================================================
+
+static
+void pc_UpdateVertexColors( xhandle hDList, const u32* pColors, s32 nColors, s32 colorOffset = 0 )
+{
+    if( !pColors || !nColors )
+        return;
+
+    // Lock vertex buffer and update colors
+    rigid_geom::vertex_pc* pVerts = (rigid_geom::vertex_pc*)s_RigidVertMgr.LockDListVerts( hDList );
+    if( pVerts )
+    {
+        // Update vertex colors from lightmap data with proper offset
+        const u32* pColorData = pColors + colorOffset;
+        
+        for( s32 i = 0; i < nColors; i++ )
+        {
+            u32 color = pColorData[i];
+            pVerts[i].Color = xcolor( (color >> 16) & 0xFF,  // R
+                                      (color >> 8) & 0xFF,   // G
+                                       color & 0xFF,         // B
+                                      (color >> 24) & 0xFF); // A
+            
+            pVerts[i].Color.R = MIN( 255, (pVerts[i].Color.R * 1) ); //2
+            pVerts[i].Color.G = MIN( 255, (pVerts[i].Color.G * 1) ); //2
+            pVerts[i].Color.B = MIN( 255, (pVerts[i].Color.B * 1) ); //2
+        }        
+        s_RigidVertMgr.UnlockDListVerts( hDList );
+    }
+}
+
 //=============================================================================
 //=============================================================================
 // Implementation
@@ -883,6 +914,31 @@ void platform_RenderRigidInstance( render_instance& Inst )
 {
     if( !g_pd3dDevice )
         return;
+
+    // Update vertex colors with lightmap data if available
+    if( Inst.Data.Rigid.pColInfo )
+    {
+        // Get the geometry to determine vertex count and submesh info
+        rigid_geom* pGeom = Inst.Data.Rigid.pGeom;
+        if( pGeom )
+        {
+            // Get submesh info
+            geom::submesh& SubMesh = pGeom->m_pSubMesh[Inst.SortKey.GeomSubMesh];
+            rigid_geom::dlist_pc& DList = pGeom->m_System.pPC[SubMesh.iDList];
+            
+            // Calculate color offset for this specific submesh
+            s32 colorOffset = 0;
+            for( s32 i = 0; i < Inst.SortKey.GeomSubMesh; i++ )
+            {
+                geom::submesh& PrevSubMesh = pGeom->m_pSubMesh[i];
+                rigid_geom::dlist_pc& PrevDList = pGeom->m_System.pPC[PrevSubMesh.iDList];
+                colorOffset += PrevDList.nVerts;
+            }
+            
+            // Update colors in vertex buffer with correct offset
+            pc_UpdateVertexColors( Inst.hDList, (const u32*)Inst.Data.Rigid.pColInfo, DList.nVerts, colorOffset );
+        }
+    }
 
     // handle projected shadows
     s32 nStages = s_NStages;
@@ -1629,62 +1685,6 @@ void* platform_CalculateRigidLighting( const matrix4&   L2W,
     return NULL;
 }
 
-/*
-
-static
-void* platform_CalculateRigidLighting( const matrix4&   L2W,
-                                       const bbox&      WorldBBox )
-{
-    CONTEXT("platform_CalculateRigidLighting");
-    
-    // Collect lights affecting this object
-    s32 NLights = g_LightMgr.CollectLights(WorldBBox, 3);
-    if (!NLights)
-        return NULL;
-    
-    // Allocate lighting data structure
-    d3d_rigid_lighting* pLighting = (d3d_rigid_lighting*)smem_BufferAlloc(sizeof(d3d_rigid_lighting));
-    if (!pLighting)
-        return NULL;
-    
-    // Allocate space for light data
-    pLighting->nLights = NLights;
-    pLighting->pLights = (d3d_rigid_light*)smem_BufferAlloc(NLights * sizeof(d3d_rigid_light));
-    if (!pLighting->pLights)
-    {
-        smem_BufferFree(pLighting);
-        return NULL;
-    }
-    
-    // Extract light information
-    for (s32 i = 0; i < NLights; i++)
-    {
-        vector3 Pos;
-        f32     Radius;
-        xcolor  Color;
-        
-        // Get light info
-        g_LightMgr.GetCollectedLight(i, Pos, Radius, Color);
-        
-        // Convert object space to light space
-        vector3 LightPos = L2W.InverseTransformPoint(Pos);
-        
-        // Store light data
-        pLighting->pLights[i].Position.Set(LightPos.GetX(), 
-                                          LightPos.GetY(), 
-                                          LightPos.GetZ(), 
-                                          Radius);
-        
-        pLighting->pLights[i].Color.Set((f32)Color.R / 255.0f,
-                                       (f32)Color.G / 255.0f,
-                                       (f32)Color.B / 255.0f,
-                                       1.0f);
-    }
-    
-    return pLighting;
-}
-
-*/
 
 //=============================================================================
 
@@ -2284,4 +2284,3 @@ static
 void platform_EndNormalRender( void )
 {
 }
-

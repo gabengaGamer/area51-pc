@@ -109,7 +109,7 @@
 				PreprocessorDefinitions="TARGET_PC,CONFIG_RETAIL"
 				StringPooling="TRUE"
 				BasicRuntimeChecks="0"
-				RuntimeLibrary="1"
+				RuntimeLibrary="0"
 				UsePrecompiledHeader="2"
 				DebugInformationFormat="0"/>
 			<Tool
@@ -146,7 +146,7 @@
 				AdditionalIncludeDirectories="$(X),$(X)/x_Files,$(X)/Entropy,../Editor,$(X)/MeshUtil,$(X)\Auxiliary\Bitmap,$(X)\..\Support,$(X)\Auxiliary"
 				PreprocessorDefinitions="TARGET_PC,CONFIG_QA"
 				BasicRuntimeChecks="3"
-				RuntimeLibrary="1"
+				RuntimeLibrary="0"
 				UsePrecompiledHeader="2"
 				DebugInformationFormat="4"/>
 			<Tool
@@ -183,7 +183,7 @@
 				AdditionalIncludeDirectories="$(X),$(X)/x_Files,$(X)/Entropy,../Editor,$(X)/MeshUtil,$(X)\Auxiliary\Bitmap,$(X)\..\Support,$(X)\Auxiliary"
 				PreprocessorDefinitions="TARGET_PC,CONFIG_OPTDEBUG"
 				BasicRuntimeChecks="3"
-				RuntimeLibrary="1"
+				RuntimeLibrary="0"
 				UsePrecompiledHeader="2"
 				DebugInformationFormat="4"/>
 			<Tool

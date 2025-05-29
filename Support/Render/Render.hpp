@@ -368,7 +368,7 @@ namespace render
     // lighting the level in the editor, and will only work on the PC. If you feel like
     // you need to lock display lists for general purpose vertex mucking around, then
     // the system needs to be rethought.
-#if defined(X_EDITOR) || defined(CONFIG_VIEWER)
+#ifdef TARGET_PC
     void*   LockRigidDListVertex    ( hgeom_inst hInst, s32 iSubMesh )                      X_SECTION( render_infrequent );
     void    UnlockRigidDListVertex  ( hgeom_inst hInst, s32 iSubMesh )                      X_SECTION( render_infrequent );
     void*   LockRigidDListIndex     ( hgeom_inst hInst, s32 iSubMesh,  s32& VertexOffset )  X_SECTION( render_infrequent );
@@ -548,7 +548,11 @@ inline void color_info::FileIO( fileio& File )
     switch( m_Usage )
     {
         case kUse32:
-            File.Dynamic( m_pColor32,m_nColors );
+		    #if defined(TARGET_XBOX)
+                File.Dynamic( m_pColor32,m_nColors );
+            #elif defined(TARGET_PC)
+                File.Static( m_pColor32,m_nColors );
+            #endif
             break;
 
         case kUse16:
@@ -567,6 +571,8 @@ inline void color_info::Init( void )
 {
 #ifdef TARGET_XBOX
     m_hColors = 0;
+    m_Usage   = kUse32;
+#elif defined(TARGET_PC)
     m_Usage   = kUse32;
 #else
     m_Usage   = kUnknown;

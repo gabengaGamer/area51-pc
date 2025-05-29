@@ -732,5 +732,3 @@ void vertex_mgr::Kill( void )
     m_lIndexPool.Clear();
     m_lVertexPool.Clear();
 }
-
-//=========================================================================

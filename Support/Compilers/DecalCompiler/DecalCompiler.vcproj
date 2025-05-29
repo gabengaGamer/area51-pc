@@ -24,7 +24,7 @@
 				AdditionalIncludeDirectories="$(X),$(X)\x_files,$(X)\Entropy,.\,$(X)\MeshUtil,$(X)\Auxiliary\CommandLine,$(X)\Parsing,$(X)\..\Support"
 				PreprocessorDefinitions="TARGET_PC,CONFIG_DEBUG"
 				BasicRuntimeChecks="3"
-				RuntimeLibrary="1"
+				RuntimeLibrary="0"
 				UsePrecompiledHeader="2"
 				DebugInformationFormat="4"/>
 			<Tool
@@ -74,7 +74,7 @@
 				PreprocessorDefinitions="TARGET_PC,CONFIG_RETAIL"
 				StringPooling="TRUE"
 				BasicRuntimeChecks="0"
-				RuntimeLibrary="1"
+				RuntimeLibrary="0"
 				UsePrecompiledHeader="2"
 				DebugInformationFormat="0"/>
 			<Tool
@@ -116,7 +116,7 @@
 				AdditionalIncludeDirectories="$(X),$(X)\x_files,$(X)\Entropy,.\,$(X)\MeshUtil,$(X)\Auxiliary\CommandLine,$(X)\Parsing,$(X)\..\Support"
 				PreprocessorDefinitions="TARGET_PC,CONFIG_QA"
 				BasicRuntimeChecks="3"
-				RuntimeLibrary="1"
+				RuntimeLibrary="0"
 				UsePrecompiledHeader="2"
 				DebugInformationFormat="4"/>
 			<Tool
@@ -159,7 +159,7 @@
 				AdditionalIncludeDirectories="$(X),$(X)\x_files,$(X)\Entropy,.\,$(X)\MeshUtil,$(X)\Auxiliary\CommandLine,$(X)\Parsing,$(X)\..\Support"
 				PreprocessorDefinitions="TARGET_PC,CONFIG_OPTDEBUG"
 				BasicRuntimeChecks="3"
-				RuntimeLibrary="1"
+				RuntimeLibrary="0"
 				UsePrecompiledHeader="2"
 				DebugInformationFormat="4"/>
 			<Tool
