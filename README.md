@@ -19,6 +19,7 @@ The main goal is to get the source code into a buildable state on modern systems
 
 1. **Model Format Compatibility (rigidgeom, skingeom):**
 The most critical issue at present is the incompatibility of the PC build with the new retail model formats. The engine does not currently support updated rigidgeom and skingeom model structures used in the latest retail version.
+- Update: GEOM V41 may be partially restored — further testing required to confirm stability.
 
 2. **Audio System Malfunctions:**
 The Miles Sound System 6 implementation is broken — MP3 decoding fails, and both Bink audio playback and world ambient audio systems are non-functional.
