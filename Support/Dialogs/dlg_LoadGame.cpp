@@ -180,6 +180,47 @@ ui_win* dlg_load_game_factory( s32 UserID, ui_manager* pManager, ui_manager::dia
 
 dlg_load_game::dlg_load_game( void )
 {
+    // Initialize platform-specific data to safe defaults
+#ifdef TARGET_PS2
+    m_OrigPermanentSize = -1;
+#endif
+
+#ifdef TARGET_XBOX
+    m_ColorWriteMask = D3DCOLORWRITEENABLE_RED | D3DCOLORWRITEENABLE_GREEN | D3DCOLORWRITEENABLE_BLUE;
+    m_BufferW = 0;
+    m_BufferH = 0;
+#endif
+    
+#ifdef TARGET_PC
+    m_pBackBuffer = NULL;
+    x_memset( m_Buffers, 0, sizeof(m_Buffers) );
+    m_ColorWriteMask = D3DCOLORWRITEENABLE_RED | D3DCOLORWRITEENABLE_GREEN | D3DCOLORWRITEENABLE_BLUE;
+    m_BufferW = 0;
+    m_BufferH = 0;
+#endif
+
+    // Initialize other members to safe defaults
+    m_VoiceID = 0;
+    m_nSlides = 0;
+    m_nTextures = 0;
+    m_StartTextAnim = 0.0f;
+    m_NameText.Clear();
+    
+    m_SlideshowState = STATE_IDLE;
+    m_LoadingComplete = FALSE;
+    m_FinalFadeoutStarted = FALSE;
+    m_ElapsedTime = 0.0f;
+    m_FadeTimeElapsed = 0.0f;
+    
+    m_FogLoaded = FALSE;
+    m_Position = -0.5f;
+    m_HorizSpeed = 0.15f;
+    m_FogAngle = R_0;
+    m_FogZoom = 0.0f;
+    m_LightShaftArea.Clear();
+    
+    // Initialize slide array
+    x_memset( m_Slides, 0, sizeof(m_Slides) );
 }
 
 //=========================================================================
@@ -252,7 +293,8 @@ void dlg_load_game::Destroy( void )
     ui_dialog::Destroy();
 
     // Kill screen wipe
-    g_UiMgr->ResetScreenWipe();
+    if( g_UiMgr )
+        g_UiMgr->ResetScreenWipe();
 
     // Do the platform-specific cleanup
     platform_Destroy();
@@ -266,6 +308,14 @@ void dlg_load_game::Destroy( void )
         vram_Unregister( m_FogBMP );
         m_FogBMP.Kill();
     }
+    
+    // Reset state variables to safe defaults
+    m_SlideshowState = STATE_IDLE;
+    m_LoadingComplete = FALSE;
+    m_FinalFadeoutStarted = FALSE;
+    m_VoiceID = 0;
+    m_nSlides = 0;
+    m_nTextures = 0;
 }
 
 //=========================================================================
@@ -1193,27 +1243,46 @@ void dlg_load_game::platform_Init( void )
     
     g_RenderTarget.Reset();
 #elif defined( TARGET_PC )
+    // Make sure everything is initialized to NULL first
+    m_pBackBuffer = NULL;
+    x_memset( m_Buffers, 0, sizeof(m_Buffers) );
+    
     // Set up the default write mask
     m_ColorWriteMask = D3DCOLORWRITEENABLE_RED | D3DCOLORWRITEENABLE_GREEN | D3DCOLORWRITEENABLE_BLUE;
     
-    m_pBackBuffer = NULL;
+    // Only proceed if we have a valid device
+    if( !g_pd3dDevice )
+        return;
     
     // Create render target textures for each buffer
     D3DFORMAT format = D3DFMT_A8R8G8B8;
+    HRESULT hr;
     
     // Level name buffer
-    g_pd3dDevice->CreateTexture( TEXT_IMAGE_WIDTH, TEXT_IMAGE_HEIGHT, 
-                              1, D3DUSAGE_RENDERTARGET, format, 
-                              D3DPOOL_DEFAULT, ( IDirect3DTexture9** )&m_Buffers[BUFFER_LEVEL_NAME], NULL);
+    hr = g_pd3dDevice->CreateTexture( TEXT_IMAGE_WIDTH, TEXT_IMAGE_HEIGHT, 
+                                     1, D3DUSAGE_RENDERTARGET, format, 
+                                     D3DPOOL_DEFAULT, &m_Buffers[BUFFER_LEVEL_NAME], NULL);
+    if( FAILED(hr) )
+    {
+        m_Buffers[BUFFER_LEVEL_NAME] = NULL;
+    }
                               
     // Drop shadow buffers (2)
-    g_pd3dDevice->CreateTexture( TEXT_IMAGE_WIDTH/2, TEXT_IMAGE_HEIGHT/2, 
-                              1, D3DUSAGE_RENDERTARGET, format, 
-                              D3DPOOL_DEFAULT, ( IDirect3DTexture9** )&m_Buffers[BUFFER_DROP_SHADOW_1], NULL);
+    hr = g_pd3dDevice->CreateTexture( TEXT_IMAGE_WIDTH/2, TEXT_IMAGE_HEIGHT/2, 
+                                     1, D3DUSAGE_RENDERTARGET, format, 
+                                     D3DPOOL_DEFAULT, &m_Buffers[BUFFER_DROP_SHADOW_1], NULL);
+    if( FAILED(hr) )
+    {
+        m_Buffers[BUFFER_DROP_SHADOW_1] = NULL;
+    }
                               
-    g_pd3dDevice->CreateTexture( TEXT_IMAGE_WIDTH/2, TEXT_IMAGE_HEIGHT/2, 
-                              1, D3DUSAGE_RENDERTARGET, format, 
-                              D3DPOOL_DEFAULT, ( IDirect3DTexture9** )&m_Buffers[BUFFER_DROP_SHADOW_2], NULL);
+    hr = g_pd3dDevice->CreateTexture( TEXT_IMAGE_WIDTH/2, TEXT_IMAGE_HEIGHT/2, 
+                                     1, D3DUSAGE_RENDERTARGET, format, 
+                                     D3DPOOL_DEFAULT, &m_Buffers[BUFFER_DROP_SHADOW_2], NULL);
+    if( FAILED(hr) )
+    {
+        m_Buffers[BUFFER_DROP_SHADOW_2] = NULL;
+    }
     
     // Init buffer dimensions
     m_BufferW = TEXT_IMAGE_WIDTH;
@@ -1253,10 +1322,6 @@ void dlg_load_game::platform_Destroy( void )
         m_Slides[i].BMP.Kill();
     }
 #elif defined( TARGET_PC )
-    // Make sure we destroy any slideshow images
-    // There's no need to redirect the texture allocator here
-    // because all redirected allocations are aliases of tiled RAM
-    
     // Release render target textures
     if( m_pBackBuffer )
     {
@@ -1264,7 +1329,18 @@ void dlg_load_game::platform_Destroy( void )
         m_pBackBuffer = NULL;
     }
     
-    for( s32 i=0;i<m_nSlides;i++ )
+    // Release all render target buffers
+    for( s32 i = 0; i < BUFFER_COUNT; i++ )
+    {
+        if( m_Buffers[i] )
+        {
+            m_Buffers[i]->Release();
+            m_Buffers[i] = NULL;
+        }
+    }
+    
+    // Make sure we destroy any slideshow images
+    for( s32 i = 0; i < m_nSlides; i++ )
     {
         if( !m_Slides[i].HasImage )
             continue;
@@ -1272,6 +1348,11 @@ void dlg_load_game::platform_Destroy( void )
         m_Slides[i].HasImage = FALSE;
         m_Slides[i].BMP.Kill();
     }
+    
+    // Reset platform-specific variables
+    m_ColorWriteMask = D3DCOLORWRITEENABLE_RED | D3DCOLORWRITEENABLE_GREEN | D3DCOLORWRITEENABLE_BLUE;
+    m_BufferW = 0;
+    m_BufferH = 0;
 #endif
 }
 

@@ -651,30 +651,57 @@ void pc_PostResetCubeMap( void )
 
 //==============================================================================
 
+// GS: For now, this piece looks like absolute crap. 
+// This is a temporary solution, because I don't know yet why vertex lightmaps crash in some locations.
+// TODO: FIX THIS!!!
+
 static
-void pc_UpdateVertexColors( xhandle hDList, const u32* pColors, s32 nColors, s32 colorOffset = 0 )
+void pc_UpdateVertexColors( xhandle hDList, const u32* pColors, s32 nColors, s32 colorOffset = 0, s32 totalColorsInArray = 0 )
 {
-    if( !pColors || !nColors )
+    // Basic validation
+    if( !pColors || !nColors || colorOffset < 0 )
         return;
+        
+    // Check if we have enough colors in the source array
+    if( totalColorsInArray > 0 && (colorOffset + nColors) > totalColorsInArray )
+    {
+        // Clamp to available colors
+        nColors = totalColorsInArray - colorOffset;
+        if( nColors <= 0 )
+            return;
+    }
 
     // Lock vertex buffer and update colors
     rigid_geom::vertex_pc* pVerts = (rigid_geom::vertex_pc*)s_RigidVertMgr.LockDListVerts( hDList );
     if( pVerts )
     {
-        // Update vertex colors from lightmap data with proper offset
+        // Get vertex buffer info to validate bounds
+        // We need to add a method to get vertex count from DList
+        // For now, add basic pointer validation
+        
         const u32* pColorData = pColors + colorOffset;
+        
+        // Add memory validation (basic check)
+        if( IsBadReadPtr( pColorData, nColors * sizeof(u32) ) )
+        {
+            s_RigidVertMgr.UnlockDListVerts( hDList );
+            return;
+        }
         
         for( s32 i = 0; i < nColors; i++ )
         {
+            // Additional safety check during iteration
+            if( IsBadReadPtr( &pColorData[i], sizeof(u32) ) ||
+                IsBadWritePtr( &pVerts[i], sizeof(rigid_geom::vertex_pc) ) )
+            {
+                break; // Stop processing on bad memory access
+            }
+            
             u32 color = pColorData[i];
             pVerts[i].Color = xcolor( (color >> 16) & 0xFF,  // R
                                       (color >> 8) & 0xFF,   // G
                                        color & 0xFF,         // B
                                       (color >> 24) & 0xFF); // A
-            
-            pVerts[i].Color.R = MIN( 255, (pVerts[i].Color.R * 1) ); //2
-            pVerts[i].Color.G = MIN( 255, (pVerts[i].Color.G * 1) ); //2
-            pVerts[i].Color.B = MIN( 255, (pVerts[i].Color.B * 1) ); //2
         }        
         s_RigidVertMgr.UnlockDListVerts( hDList );
     }
@@ -918,15 +945,12 @@ void platform_RenderRigidInstance( render_instance& Inst )
     // Update vertex colors with lightmap data if available
     if( Inst.Data.Rigid.pColInfo )
     {
-        // Get the geometry to determine vertex count and submesh info
         rigid_geom* pGeom = Inst.Data.Rigid.pGeom;
         if( pGeom )
         {
-            // Get submesh info
             geom::submesh& SubMesh = pGeom->m_pSubMesh[Inst.SortKey.GeomSubMesh];
             rigid_geom::dlist_pc& DList = pGeom->m_System.pPC[SubMesh.iDList];
             
-            // Calculate color offset for this specific submesh
             s32 colorOffset = 0;
             for( s32 i = 0; i < Inst.SortKey.GeomSubMesh; i++ )
             {
@@ -935,8 +959,18 @@ void platform_RenderRigidInstance( render_instance& Inst )
                 colorOffset += PrevDList.nVerts;
             }
             
-            // Update colors in vertex buffer with correct offset
-            pc_UpdateVertexColors( Inst.hDList, (const u32*)Inst.Data.Rigid.pColInfo, DList.nVerts, colorOffset );
+            // Calculate total colors available
+            s32 totalColors = 0;
+            for( s32 i = 0; i < pGeom->m_nSubMeshes; i++ )
+            {
+                geom::submesh& TempSubMesh = pGeom->m_pSubMesh[i];
+                rigid_geom::dlist_pc& TempDList = pGeom->m_System.pPC[TempSubMesh.iDList];
+                totalColors += TempDList.nVerts;
+            }
+            
+            // Safe update with bounds checking
+            pc_UpdateVertexColors( Inst.hDList, (const u32*)Inst.Data.Rigid.pColInfo, 
+                                  DList.nVerts, colorOffset, totalColors );
         }
     }
 
