@@ -6,7 +6,6 @@
 #include <stdio.h>
 #include "e_Engine.hpp"
 #include "x_threads.hpp"
-#include "d3deng_font.hpp"
 
 //#define TEST_KILL_D3D
 
@@ -105,6 +104,8 @@ static struct eng_locals
     HWND            WndParent;     
     HWND            WndDisplay;  
     IDirect3D9*     pD3D;
+    LPD3DXFONT      pFont;
+    xcolor          TextColor;
     u32             Mode;
     xcolor          BackColor;
     xbool           bBeginScene;
@@ -241,7 +242,6 @@ void eng_Kill( void )
     vram_Kill();
     smem_Kill();
     text_Kill();
-    font_Kill();
 
     //
     // Stop the d3d engine
@@ -251,6 +251,9 @@ void eng_Kill( void )
 
     if( s.pD3D != NULL)
         s.pD3D->Release();
+    
+    if( s.pFont )
+        s.pFont->Release();
 
     UnregisterClass( "Render Window", s.hInst );
 }
@@ -621,6 +624,66 @@ HWND CreateWin( s32 Width, s32 Height )
 
 //=========================================================================
 
+#ifndef X_RETAIL
+
+void text_BeginRender( void )
+{
+    //
+    // Make sure that the direct 3d has started
+    //
+    if( s.bD3DBeginScene == FALSE )
+    {
+        if( eng_Begin() )
+        {
+            eng_End();
+        }
+    }
+}
+
+#endif // X_RETAIL
+
+//=========================================================================
+
+#ifndef X_RETAIL
+
+void text_RenderStr( char* pStr, s32 NChars, xcolor Color, s32 PixelX, s32 PixelY )
+{
+    dxerr                   Error;
+    RECT                    Rect;
+
+    if( !g_pd3dDevice || !s.pFont )
+        return;
+
+    Rect.left   = PixelX;
+    Rect.top    = PixelY;
+    Rect.bottom = PixelY + ENG_FONT_SIZEY;
+    Rect.right  = Rect.left + (NChars*ENG_FONT_SIZEX);
+                    
+    //rstct+=NChars;
+    Error = s.pFont->DrawText( NULL, pStr, NChars, &Rect, DT_NOCLIP, Color );//s.TextColor );
+    if(Error != D3D_OK) rstct = Error;
+}
+
+#endif // X_RETAIL
+//=========================================================================
+
+#ifndef X_RETAIL
+
+void text_EndRender( void )
+{
+}
+
+#endif // X_RETAIL
+
+//=========================================================================
+
+void ENG_TextColor( const xcolor& Color )
+{
+    s.TextColor = Color;
+}
+
+//=========================================================================
+
 void d3deng_SetWindowHandle( HWND hWindow )
 {
     s.Wnd = hWindow;
@@ -703,6 +766,23 @@ void d3deng_SetDefaultStates( void )
 
 //=========================================================================
 
+void d3deng_CreateFont( void )
+{
+    // Get height in appropriate units
+    HDC hDC = GetDC( NULL );
+    int nHeight = -( MulDiv( ENG_FONT_SIZEY, GetDeviceCaps(hDC, LOGPIXELSY), 72 ) );
+    ReleaseDC( NULL, hDC );
+
+    HRESULT Error = D3DXCreateFont( g_pd3dDevice, nHeight * 3 / 4, 0, FW_NORMAL, 0, FALSE, 
+                                DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, DEFAULT_QUALITY, 
+                                DEFAULT_PITCH | FF_DONTCARE, TEXT("Lucida Console"), 
+                                &s.pFont );
+
+    ASSERT( Error == 0 );
+}
+
+//=========================================================================
+
 void eng_Init( void )
 {
     if( s.MaxXRes == 0 )
@@ -743,9 +823,9 @@ void eng_Init( void )
     //
     if( g_pd3dDevice )
     {
-        font_Init();
+        d3deng_CreateFont();
 
-        font_SetColor( 0xffffffff ); // xcolor(255,255,125,255)
+        ENG_TextColor( 0xffffffff ); // xcolor(255,255,125,255)
     }
 
     //
@@ -909,7 +989,8 @@ void eng_PageFlip()
                 pc_PreResetCubeMap();
 
                 // Free the font
-                font_OnDeviceLost();
+                if( s.pFont )
+                    s.pFont->Release();
 
                 // Reset the device
                 hr = g_pd3dDevice->Reset( &g_d3dpp );
@@ -931,7 +1012,10 @@ void eng_PageFlip()
         pc_PostResetCubeMap();
 
         // Create the font again
-        font_OnDeviceReset();
+        if(s.pFont == NULL)
+        {
+            d3deng_CreateFont();
+        }
     }
 
 
@@ -962,7 +1046,7 @@ void eng_PageFlip()
     ARHTimer.Start();
     
     // Check if we have a valid font before rendering text
-    if(g_pd3dDevice)
+    if(g_pd3dDevice && s.pFont)
     {
         text_Render();
     }
