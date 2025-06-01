@@ -990,7 +990,17 @@ void eng_PageFlip()
 
                 // Free the font
                 if( s.pFont )
-                    s.pFont->Release();
+                {
+                    try
+                    {
+                        s.pFont->Release();
+                    }
+                    catch(...)
+                    {
+                        // Ignore release errors - device is already lost
+                    }
+                    s.pFont = NULL;
+                }
 
                 // Reset the device
                 hr = g_pd3dDevice->Reset( &g_d3dpp );
