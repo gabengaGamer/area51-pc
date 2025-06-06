@@ -56,7 +56,7 @@ The following prerequisites are required to build the source tree for PC:
 ## List of valid WIN32 targets.
 Debug           | OptDebug           | QA                 | Release            | EDITOR-Debug        | VIEWER-Debug 
 ----------------|--------------------|--------------------|--------------------|---------------------|---------------------
-Yes             | Yes                | Yes                | Yes                | Yes/Only for Editor!| Yes/Only for ArtistViewer!
+Yes             | Yes                | Yes                | Yes                | No/Only for Editor! | No/Only for ArtistViewer!
 
 ## Attention: During the migration from VS 2004 to VS 2022, many tools are not functioning. Please use LEGACY branch.
 
