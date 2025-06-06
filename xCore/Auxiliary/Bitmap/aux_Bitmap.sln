@@ -1,39 +1,27 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
-VisualStudioVersion = 17.14.36202.13 d17.14
+VisualStudioVersion = 17.14.36202.13
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "aux_Bitmap", "aux_Bitmap.vcxproj", "{9CA26E69-C9C6-433E-80D7-D28AC74C5D85}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
-		Debug Xbox|Win32 = Debug Xbox|Win32
 		Debug|Win32 = Debug|Win32
 		EDITOR-Debug|Win32 = EDITOR-Debug|Win32
-		OptDebug Xbox|Win32 = OptDebug Xbox|Win32
 		OptDebug|Win32 = OptDebug|Win32
-		QA Xbox|Win32 = QA Xbox|Win32
 		QA|Win32 = QA|Win32
-		Release Xbox|Win32 = Release Xbox|Win32
 		Release|Win32 = Release|Win32
 		VIEWER-Debug|Win32 = VIEWER-Debug|Win32
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{9CA26E69-C9C6-433E-80D7-D28AC74C5D85}.Debug Xbox|Win32.ActiveCfg = Debug|Xbox
-		{9CA26E69-C9C6-433E-80D7-D28AC74C5D85}.Debug Xbox|Win32.Build.0 = Debug|Xbox
 		{9CA26E69-C9C6-433E-80D7-D28AC74C5D85}.Debug|Win32.ActiveCfg = Debug|Win32
 		{9CA26E69-C9C6-433E-80D7-D28AC74C5D85}.Debug|Win32.Build.0 = Debug|Win32
 		{9CA26E69-C9C6-433E-80D7-D28AC74C5D85}.EDITOR-Debug|Win32.ActiveCfg = EDITOR-Debug|Win32
 		{9CA26E69-C9C6-433E-80D7-D28AC74C5D85}.EDITOR-Debug|Win32.Build.0 = EDITOR-Debug|Win32
-		{9CA26E69-C9C6-433E-80D7-D28AC74C5D85}.OptDebug Xbox|Win32.ActiveCfg = OptDebug|Xbox
-		{9CA26E69-C9C6-433E-80D7-D28AC74C5D85}.OptDebug Xbox|Win32.Build.0 = OptDebug|Xbox
 		{9CA26E69-C9C6-433E-80D7-D28AC74C5D85}.OptDebug|Win32.ActiveCfg = OptDebug|Win32
 		{9CA26E69-C9C6-433E-80D7-D28AC74C5D85}.OptDebug|Win32.Build.0 = OptDebug|Win32
-		{9CA26E69-C9C6-433E-80D7-D28AC74C5D85}.QA Xbox|Win32.ActiveCfg = QA|Xbox
-		{9CA26E69-C9C6-433E-80D7-D28AC74C5D85}.QA Xbox|Win32.Build.0 = QA|Xbox
 		{9CA26E69-C9C6-433E-80D7-D28AC74C5D85}.QA|Win32.ActiveCfg = QA|Win32
 		{9CA26E69-C9C6-433E-80D7-D28AC74C5D85}.QA|Win32.Build.0 = QA|Win32
-		{9CA26E69-C9C6-433E-80D7-D28AC74C5D85}.Release Xbox|Win32.ActiveCfg = Release|Xbox
-		{9CA26E69-C9C6-433E-80D7-D28AC74C5D85}.Release Xbox|Win32.Build.0 = Release|Xbox
 		{9CA26E69-C9C6-433E-80D7-D28AC74C5D85}.Release|Win32.ActiveCfg = Release|Win32
 		{9CA26E69-C9C6-433E-80D7-D28AC74C5D85}.Release|Win32.Build.0 = Release|Win32
 		{9CA26E69-C9C6-433E-80D7-D28AC74C5D85}.VIEWER-Debug|Win32.ActiveCfg = VIEWER-Debug|Win32

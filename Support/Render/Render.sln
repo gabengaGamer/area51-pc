@@ -6,34 +6,22 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Render", "Render.vcxproj", 
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
-		Debug Xbox|Win32 = Debug Xbox|Win32
 		Debug|Win32 = Debug|Win32
 		EDITOR-Debug|Win32 = EDITOR-Debug|Win32
-		OptDebug Xbox|Win32 = OptDebug Xbox|Win32
 		OptDebug|Win32 = OptDebug|Win32
-		QA Xbox|Win32 = QA Xbox|Win32
 		QA|Win32 = QA|Win32
-		Release Xbox|Win32 = Release Xbox|Win32
 		Release|Win32 = Release|Win32
 		VIEWER-Debug|Win32 = VIEWER-Debug|Win32
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{15DB23D2-38F7-489C-A130-BFF6C1BBCC00}.Debug Xbox|Win32.ActiveCfg = Debug|Xbox
-		{15DB23D2-38F7-489C-A130-BFF6C1BBCC00}.Debug Xbox|Win32.Build.0 = Debug|Xbox
 		{15DB23D2-38F7-489C-A130-BFF6C1BBCC00}.Debug|Win32.ActiveCfg = Debug|Win32
 		{15DB23D2-38F7-489C-A130-BFF6C1BBCC00}.Debug|Win32.Build.0 = Debug|Win32
 		{15DB23D2-38F7-489C-A130-BFF6C1BBCC00}.EDITOR-Debug|Win32.ActiveCfg = EDITOR-Debug|Win32
 		{15DB23D2-38F7-489C-A130-BFF6C1BBCC00}.EDITOR-Debug|Win32.Build.0 = EDITOR-Debug|Win32
-		{15DB23D2-38F7-489C-A130-BFF6C1BBCC00}.OptDebug Xbox|Win32.ActiveCfg = OptDebug|Xbox
-		{15DB23D2-38F7-489C-A130-BFF6C1BBCC00}.OptDebug Xbox|Win32.Build.0 = OptDebug|Xbox
 		{15DB23D2-38F7-489C-A130-BFF6C1BBCC00}.OptDebug|Win32.ActiveCfg = OptDebug|Win32
 		{15DB23D2-38F7-489C-A130-BFF6C1BBCC00}.OptDebug|Win32.Build.0 = OptDebug|Win32
-		{15DB23D2-38F7-489C-A130-BFF6C1BBCC00}.QA Xbox|Win32.ActiveCfg = QA|Xbox
-		{15DB23D2-38F7-489C-A130-BFF6C1BBCC00}.QA Xbox|Win32.Build.0 = QA|Xbox
 		{15DB23D2-38F7-489C-A130-BFF6C1BBCC00}.QA|Win32.ActiveCfg = QA|Win32
 		{15DB23D2-38F7-489C-A130-BFF6C1BBCC00}.QA|Win32.Build.0 = QA|Win32
-		{15DB23D2-38F7-489C-A130-BFF6C1BBCC00}.Release Xbox|Win32.ActiveCfg = Release|Xbox
-		{15DB23D2-38F7-489C-A130-BFF6C1BBCC00}.Release Xbox|Win32.Build.0 = Release|Xbox
 		{15DB23D2-38F7-489C-A130-BFF6C1BBCC00}.Release|Win32.ActiveCfg = Release|Win32
 		{15DB23D2-38F7-489C-A130-BFF6C1BBCC00}.Release|Win32.Build.0 = Release|Win32
 		{15DB23D2-38F7-489C-A130-BFF6C1BBCC00}.VIEWER-Debug|Win32.ActiveCfg = VIEWER-Debug|Win32
