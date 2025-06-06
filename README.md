@@ -58,6 +58,8 @@ Debug           | OptDebug           | QA                 | Release            |
 ----------------|--------------------|--------------------|--------------------|---------------------|---------------------
 Yes             | Yes                | Yes                | Yes                | Yes/Only for Editor!| Yes/Only for ArtistViewer!
 
+## Attention: During the migration from VS 2004 to VS 2022, many tools are not functioning. Please use LEGACY branch.
+
 ## List of compiled apps.
 Name           | Description                                                                             | Status
 ---------------| ----------------------------------------------------------------------------------------|---------------
@@ -71,7 +73,7 @@ DecalCompiler  |                                                                
 DecalEditor    |                                                                                         | DEAD **UNDER CONSTRUCTION**/Lib for: [Editor](https://github.com/gabengaGamer/area51-pc/releases/tag/Editor-1.0)
 DFSTool        |                                                                                         | Working
 EDRscDesc      |                                                                                         | DEAD **UNDER CONSTRUCTION**/Lib for: [Editor](https://github.com/gabengaGamer/area51-pc/releases/tag/Editor-1.0)
-Editor         |                                                                                         | Working
+Editor         |                                                                                         | DEAD **UNDER CONSTRUCTION**
 EffectsEditor  |                                                                                         | DEAD **UNDER CONSTRUCTION**
 ELFTool        |                                                                                         | **DELETED**
 EventEditor    |                                                                                         | DEAD **UNDER CONSTRUCTION**/Lib for: [Editor](https://github.com/gabengaGamer/area51-pc/releases/tag/Editor-1.0)
