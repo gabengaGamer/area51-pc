@@ -1,0 +1,659 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="Current" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="OptDebug|Win32">
+      <Configuration>OptDebug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="QA|Win32">
+      <Configuration>QA</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="VIEWER-Debug|Win32">
+      <Configuration>VIEWER-Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>17.0</VCProjectVersion>
+    <ProjectName>NetworkMgr</ProjectName>
+    <ProjectGuid>{8946D9DC-520E-4B19-BD73-1B0ED91C66BA}</ProjectGuid>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='VIEWER-Debug|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <PlatformToolset>v143</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='QA|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <PlatformToolset>v143</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='OptDebug|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <PlatformToolset>v143</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <PlatformToolset>v143</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <PlatformToolset>v143</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='VIEWER-Debug|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='QA|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='OptDebug|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_ProjectFileVersion>17.0.36202.10</_ProjectFileVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <OutDir>$(ProjectDir)_$(Platform)$(Configuration)\</OutDir>
+    <IntDir>$(ProjectDir)_$(Platform)$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <OutDir>$(ProjectDir)_$(Platform)$(Configuration)\</OutDir>
+    <IntDir>$(ProjectDir)_$(Platform)$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='OptDebug|Win32'">
+    <OutDir>$(ProjectDir)_$(Platform)$(Configuration)\</OutDir>
+    <IntDir>$(ProjectDir)_$(Platform)$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='QA|Win32'">
+    <OutDir>$(ProjectDir)_$(Platform)$(Configuration)\</OutDir>
+    <IntDir>$(ProjectDir)_$(Platform)$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='VIEWER-Debug|Win32'">
+    <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
+    <IntDir>$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <Optimization>MaxSpeed</Optimization>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <AdditionalIncludeDirectories>$(X);$(X)\..\Support;$(X)\Entropy;$(X)\x_files;$(X)\Auxiliary;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>TARGET_PC;CONFIG_RETAIL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <StringPooling>true</StringPooling>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <CallingConvention>FastCall</CallingConvention>
+    </ClCompile>
+    <Lib>
+      <OutputFile>$(OutDir)$(ProjectName).lib</OutputFile>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <AdditionalIncludeDirectories>$(X);$(X)\..\Support;$(X)\Entropy;$(X)\x_files;$(X)\Auxiliary;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>TARGET_PC;CONFIG_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <MinimalRebuild>true</MinimalRebuild>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <StructMemberAlignment>Default</StructMemberAlignment>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+    </ClCompile>
+    <Lib>
+      <OutputFile>$(OutDir)$(ProjectName).lib</OutputFile>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='OptDebug|Win32'">
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <AdditionalIncludeDirectories>$(X);$(X)\..\Support;$(X)\Entropy;$(X)\x_files;$(X)\Auxiliary;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>TARGET_PC;CONFIG_OPTDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <MinimalRebuild>true</MinimalRebuild>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+    </ClCompile>
+    <Lib>
+      <OutputFile>$(OutDir)$(ProjectName).lib</OutputFile>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='QA|Win32'">
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <AdditionalIncludeDirectories>$(X);$(X)\..\Support;$(X)\Entropy;$(X)\x_files;$(X)\Auxiliary;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>TARGET_PC;CONFIG_QA;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <MinimalRebuild>true</MinimalRebuild>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+    </ClCompile>
+    <Lib>
+      <OutputFile>$(OutDir)$(ProjectName).lib</OutputFile>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='VIEWER-Debug|Win32'">
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <AdditionalIncludeDirectories>$(X);$(X)\..\Support;$(X)\Entropy;$(X)\x_files;$(X)\Auxiliary;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>TARGET_PC;CONFIG_DEBUG;CONFIG_VIEWER;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <MinimalRebuild>true</MinimalRebuild>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+    </ClCompile>
+    <Lib>
+      <OutputFile>$(OutDir)$(ProjectName).lib</OutputFile>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="..\Objects\Actor\ActorNet.cpp" />
+    <ClCompile Include="..\Objects\GhostNet.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='OptDebug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='QA|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='VIEWER-Debug|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\Objects\NetGhost.cpp" />
+    <ClCompile Include="..\Objects\PlayerNet.cpp" />
+    <ClCompile Include="Blowfish.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='OptDebug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='QA|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='VIEWER-Debug|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="ClientProxy.cpp" />
+    <ClCompile Include="ClientProxyStates.cpp" />
+    <ClCompile Include="ConnMgr.cpp" />
+    <ClCompile Include="DebugTicker.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='OptDebug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='QA|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='VIEWER-Debug|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="Dh.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='OptDebug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='QA|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='VIEWER-Debug|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="Downloader\archive.cpp" />
+    <ClCompile Include="Downloader\Downloader.cpp" />
+    <ClCompile Include="Downloader\zlib\adler32.c" />
+    <ClCompile Include="Downloader\zlib\compress.c" />
+    <ClCompile Include="Downloader\zlib\crc32.c" />
+    <ClCompile Include="Downloader\zlib\deflate.c" />
+    <ClCompile Include="Downloader\zlib\infback.c" />
+    <ClCompile Include="Downloader\zlib\inffast.c" />
+    <ClCompile Include="Downloader\zlib\inflate.c" />
+    <ClCompile Include="Downloader\zlib\inftrees.c" />
+    <ClCompile Include="Downloader\zlib\trees.c" />
+    <ClCompile Include="Downloader\zlib\uncompr.c" />
+    <ClCompile Include="Downloader\zlib\zutil.c" />
+    <ClCompile Include="GameClient.cpp" />
+    <ClCompile Include="GameClientStates.cpp" />
+    <ClCompile Include="GameMgr.cpp" />
+    <ClCompile Include="GameServer.cpp" />
+    <ClCompile Include="GameServerStates.cpp" />
+    <ClCompile Include="GameSpy\available.c" />
+    <ClCompile Include="GameSpy\callbacks.cpp" />
+    <ClCompile Include="GameSpy\darray.c" />
+    <ClCompile Include="GameSpy\EntropyAbstraction.cpp" />
+    <ClCompile Include="GameSpy\ghttp\ghttpBuffer.c" />
+    <ClCompile Include="GameSpy\ghttp\ghttpCallbacks.c" />
+    <ClCompile Include="GameSpy\ghttp\ghttpCommon.c" />
+    <ClCompile Include="GameSpy\ghttp\ghttpConnection.c" />
+    <ClCompile Include="GameSpy\ghttp\ghttpMain.c" />
+    <ClCompile Include="GameSpy\ghttp\ghttpPost.c" />
+    <ClCompile Include="GameSpy\ghttp\ghttpProcess.c" />
+    <ClCompile Include="GameSpy\gp\gp.c" />
+    <ClCompile Include="GameSpy\gp\gpi.c" />
+    <ClCompile Include="GameSpy\gp\gpiBuddy.c" />
+    <ClCompile Include="GameSpy\gp\gpiBuffer.c" />
+    <ClCompile Include="GameSpy\gp\gpiCallback.c" />
+    <ClCompile Include="GameSpy\gp\gpiConnect.c" />
+    <ClCompile Include="GameSpy\gp\gpiInfo.c" />
+    <ClCompile Include="GameSpy\gp\gpiOperation.c" />
+    <ClCompile Include="GameSpy\gp\gpiPeer.c" />
+    <ClCompile Include="GameSpy\gp\gpiProfile.c" />
+    <ClCompile Include="GameSpy\gp\gpiSearch.c" />
+    <ClCompile Include="GameSpy\gp\gpiTransfer.c" />
+    <ClCompile Include="GameSpy\gp\gpiUnique.c" />
+    <ClCompile Include="GameSpy\gp\gpiUtility.c" />
+    <ClCompile Include="GameSpy\gstats\gbucket.c" />
+    <ClCompile Include="GameSpy\gstats\gstats.c" />
+    <ClCompile Include="GameSpy\hashtable.c" />
+    <ClCompile Include="GameSpy\md5c.c" />
+    <ClCompile Include="GameSpy\natneg\natneg.c" />
+    <ClCompile Include="GameSpy\nonport.c" />
+    <ClCompile Include="GameSpy\qr2\qr2.c" />
+    <ClCompile Include="GameSpy\qr2\qr2regkeys.c" />
+    <ClCompile Include="GameSpy\serverbrowsing\sb_crypt.c" />
+    <ClCompile Include="GameSpy\serverbrowsing\sb_queryengine.c" />
+    <ClCompile Include="GameSpy\serverbrowsing\sb_server.c" />
+    <ClCompile Include="GameSpy\serverbrowsing\sb_serverbrowsing.c" />
+    <ClCompile Include="GameSpy\serverbrowsing\sb_serverlist.c" />
+    <ClCompile Include="GameSpy\stringutil.c" />
+    <ClCompile Include="GameState.cpp" />
+    <ClCompile Include="GMMgr.cpp" />
+    <ClCompile Include="integer.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='OptDebug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='QA|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='VIEWER-Debug|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="logic_Base.cpp" />
+    <ClCompile Include="logic_Campaign.cpp" />
+    <ClCompile Include="logic_CNH.cpp" />
+    <ClCompile Include="logic_CTF.cpp" />
+    <ClCompile Include="logic_DM.cpp" />
+    <ClCompile Include="logic_Infect.cpp" />
+    <ClCompile Include="logic_Tag.cpp" />
+    <ClCompile Include="logic_TDM.cpp" />
+    <ClCompile Include="MatchMgr_Common.cpp" />
+    <ClCompile Include="MatchMgr_WIN32.cpp" />
+    <ClCompile Include="MatchMgr_XBOX.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='OptDebug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='QA|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='VIEWER-Debug|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="Messages.cpp" />
+    <ClCompile Include="Move.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='OptDebug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='QA|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='VIEWER-Debug|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="MoveMgr.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='OptDebug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='QA|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='VIEWER-Debug|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="Msg.cpp" />
+    <ClCompile Include="MsgClient.cpp" />
+    <ClCompile Include="MsgMgr.cpp" />
+    <ClCompile Include="MsqQueue.cpp" />
+    <ClCompile Include="NetObj.cpp" />
+    <ClCompile Include="NetObjMgr.cpp" />
+    <ClCompile Include="NetPickup.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='OptDebug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='QA|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='VIEWER-Debug|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="NetPlayer.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='OptDebug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='QA|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='VIEWER-Debug|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="NetRocket.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='OptDebug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='QA|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='VIEWER-Debug|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="NetworkMgr.cpp" />
+    <ClCompile Include="PainQueue.cpp" />
+    <ClCompile Include="UpdateMgr.cpp" />
+    <ClCompile Include="Voice\headset_common.cpp" />
+    <ClCompile Include="Voice\Headset_PS2.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='OptDebug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='QA|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='VIEWER-Debug|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="Voice\Headset_Stub.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='OptDebug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='QA|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='VIEWER-Debug|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="Voice\Headset_XBOX.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='OptDebug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='QA|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='VIEWER-Debug|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="Voice\lpc10.cpp" />
+    <ClCompile Include="Voice\speex.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='OptDebug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='QA|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='VIEWER-Debug|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="Voice\Speex\bits.c" />
+    <ClCompile Include="Voice\Speex\cb_search.c" />
+    <ClCompile Include="Voice\Speex\exc_10_16_table.c" />
+    <ClCompile Include="Voice\Speex\exc_10_32_table.c" />
+    <ClCompile Include="Voice\Speex\exc_20_32_table.c" />
+    <ClCompile Include="Voice\Speex\exc_5_256_table.c" />
+    <ClCompile Include="Voice\Speex\exc_5_64_table.c" />
+    <ClCompile Include="Voice\Speex\exc_8_128_table.c" />
+    <ClCompile Include="Voice\Speex\filters.c" />
+    <ClCompile Include="Voice\Speex\gain_table.c" />
+    <ClCompile Include="Voice\Speex\gain_table_lbr.c" />
+    <ClCompile Include="Voice\Speex\hexc_10_32_table.c" />
+    <ClCompile Include="Voice\Speex\hexc_table.c" />
+    <ClCompile Include="Voice\Speex\high_lsp_tables.c" />
+    <ClCompile Include="Voice\Speex\jitter.c" />
+    <ClCompile Include="Voice\Speex\lbr_48k_tables.c" />
+    <ClCompile Include="Voice\Speex\lpc.c" />
+    <ClCompile Include="Voice\Speex\lsp.c" />
+    <ClCompile Include="Voice\Speex\lsp_tables_nb.c" />
+    <ClCompile Include="Voice\Speex\ltp.c" />
+    <ClCompile Include="Voice\Speex\math_approx.c" />
+    <ClCompile Include="Voice\Speex\mdf.c" />
+    <ClCompile Include="Voice\Speex\misc.c" />
+    <ClCompile Include="Voice\Speex\modes.c" />
+    <ClCompile Include="Voice\Speex\nb_celp.c" />
+    <ClCompile Include="Voice\Speex\preprocess.c" />
+    <ClCompile Include="Voice\Speex\quant_lsp.c" />
+    <ClCompile Include="Voice\Speex\sb_celp.c" />
+    <ClCompile Include="Voice\Speex\smallft.c" />
+    <ClCompile Include="Voice\Speex\speex_callbacks.c" />
+    <ClCompile Include="Voice\Speex\speex_header.c" />
+    <ClCompile Include="Voice\Speex\stereo.c" />
+    <ClCompile Include="Voice\Speex\vbr.c" />
+    <ClCompile Include="Voice\Speex\vq.c" />
+    <ClCompile Include="Voice\VoiceMgr.cpp" />
+    <ClCompile Include="Voice\VoiceProxy.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\Objects\NetGhost.hpp" />
+    <ClInclude Include="Blender.hpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='OptDebug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='QA|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='VIEWER-Debug|Win32'">true</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="Blowfish.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='OptDebug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='QA|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='VIEWER-Debug|Win32'">true</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="ClientProxy.hpp" />
+    <ClInclude Include="ConnMgr.hpp" />
+    <ClInclude Include="DebugTicker.hpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='OptDebug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='QA|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='VIEWER-Debug|Win32'">true</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="Dh.hpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='OptDebug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='QA|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='VIEWER-Debug|Win32'">true</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="Downloader\archive.hpp" />
+    <ClInclude Include="Downloader\Downloader.hpp" />
+    <ClInclude Include="Downloader\zlib\crc32.h" />
+    <ClInclude Include="Downloader\zlib\deflate.h" />
+    <ClInclude Include="Downloader\zlib\inffast.h" />
+    <ClInclude Include="Downloader\zlib\inffixed.h" />
+    <ClInclude Include="Downloader\zlib\inflate.h" />
+    <ClInclude Include="Downloader\zlib\inftrees.h" />
+    <ClInclude Include="Downloader\zlib\trees.h" />
+    <ClInclude Include="Downloader\zlib\zconf.h" />
+    <ClInclude Include="Downloader\zlib\zlib.h" />
+    <ClInclude Include="Downloader\zlib\zutil.h" />
+    <ClInclude Include="GameClient.hpp" />
+    <ClInclude Include="GameMgr.hpp" />
+    <ClInclude Include="GameServer.hpp" />
+    <ClInclude Include="GameSpy\available.h" />
+    <ClInclude Include="GameSpy\callbackprototypes.hpp" />
+    <ClInclude Include="GameSpy\callbacks.hpp" />
+    <ClInclude Include="GameSpy\darray.h" />
+    <ClInclude Include="GameSpy\EntropyAbstraction.h" />
+    <ClInclude Include="GameSpy\ghttp\ghttp.h" />
+    <ClInclude Include="GameSpy\ghttp\ghttpASCII.h" />
+    <ClInclude Include="GameSpy\ghttp\ghttpBuffer.h" />
+    <ClInclude Include="GameSpy\ghttp\ghttpCallbacks.h" />
+    <ClInclude Include="GameSpy\ghttp\ghttpCommon.h" />
+    <ClInclude Include="GameSpy\ghttp\ghttpConnection.h" />
+    <ClInclude Include="GameSpy\ghttp\ghttpMain.h" />
+    <ClInclude Include="GameSpy\ghttp\ghttpPost.h" />
+    <ClInclude Include="GameSpy\ghttp\ghttpProcess.h" />
+    <ClInclude Include="GameSpy\gp\gp.h" />
+    <ClInclude Include="GameSpy\gp\gpi.h" />
+    <ClInclude Include="GameSpy\gp\gpiBuddy.h" />
+    <ClInclude Include="GameSpy\gp\gpiBuffer.h" />
+    <ClInclude Include="GameSpy\gp\gpiCallback.h" />
+    <ClInclude Include="GameSpy\gp\gpiConnect.h" />
+    <ClInclude Include="GameSpy\gp\gpiInfo.h" />
+    <ClInclude Include="GameSpy\gp\gpiOperation.h" />
+    <ClInclude Include="GameSpy\gp\gpiPeer.h" />
+    <ClInclude Include="GameSpy\gp\gpiProfile.h" />
+    <ClInclude Include="GameSpy\gp\gpiSearch.h" />
+    <ClInclude Include="GameSpy\gp\gpiTransfer.h" />
+    <ClInclude Include="GameSpy\gp\gpiUnique.h" />
+    <ClInclude Include="GameSpy\gp\gpiUtility.h" />
+    <ClInclude Include="GameSpy\gstats\gbucket.h" />
+    <ClInclude Include="GameSpy\gstats\gpersist.h" />
+    <ClInclude Include="GameSpy\gstats\gstats.h" />
+    <ClInclude Include="GameSpy\hashtable.h" />
+    <ClInclude Include="GameSpy\md5.h" />
+    <ClInclude Include="GameSpy\natneg\natneg.h" />
+    <ClInclude Include="GameSpy\natneg\nninternal.h" />
+    <ClInclude Include="GameSpy\nonport.h" />
+    <ClInclude Include="GameSpy\qr2\qr2.h" />
+    <ClInclude Include="GameSpy\qr2\qr2regkeys.h" />
+    <ClInclude Include="GameSpy\serverbrowsing\sb_ascii.h" />
+    <ClInclude Include="GameSpy\serverbrowsing\sb_crypt.h" />
+    <ClInclude Include="GameSpy\serverbrowsing\sb_internal.h" />
+    <ClInclude Include="GameSpy\serverbrowsing\sb_serverbrowsing.h" />
+    <ClInclude Include="GameSpy\stringutil.h" />
+    <ClInclude Include="GameState.hpp" />
+    <ClInclude Include="GMMgr.hpp" />
+    <ClInclude Include="int.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='OptDebug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='QA|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='VIEWER-Debug|Win32'">true</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="integer.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='OptDebug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='QA|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='VIEWER-Debug|Win32'">true</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="logic_Base.hpp" />
+    <ClInclude Include="logic_Campaign.hpp" />
+    <ClInclude Include="logic_CNH.hpp" />
+    <ClInclude Include="logic_CTF.hpp" />
+    <ClInclude Include="logic_DM.hpp" />
+    <ClInclude Include="logic_Infect.hpp" />
+    <ClInclude Include="logic_Tag.hpp" />
+    <ClInclude Include="logic_TDM.hpp" />
+    <ClInclude Include="MatchMgr.hpp" />
+    <ClInclude Include="Messages.hpp" />
+    <ClInclude Include="Move.hpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='OptDebug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='QA|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='VIEWER-Debug|Win32'">true</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="MoveMgr.hpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='OptDebug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='QA|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='VIEWER-Debug|Win32'">true</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="Msg.hpp" />
+    <ClInclude Include="MsgClient.hpp" />
+    <ClInclude Include="MsgMgr.hpp" />
+    <ClInclude Include="MsgQueue.hpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='OptDebug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='QA|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='VIEWER-Debug|Win32'">true</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="NetObj.hpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='OptDebug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='QA|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='VIEWER-Debug|Win32'">true</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="NetObjMgr.hpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='OptDebug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='QA|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='VIEWER-Debug|Win32'">true</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="NetPickup.hpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='OptDebug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='QA|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='VIEWER-Debug|Win32'">true</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="NetPlayer.hpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='OptDebug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='QA|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='VIEWER-Debug|Win32'">true</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="NetRocket.hpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='OptDebug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='QA|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='VIEWER-Debug|Win32'">true</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="NetworkMgr.hpp" />
+    <ClInclude Include="PainQueue.hpp" />
+    <ClInclude Include="ServerVersion.hpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='OptDebug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='QA|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='VIEWER-Debug|Win32'">true</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="UpdateMgr.hpp" />
+    <ClInclude Include="Voice\Headset.hpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='OptDebug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='QA|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='VIEWER-Debug|Win32'">true</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="Voice\Logitech\Include\liblgaud.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='OptDebug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='QA|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='VIEWER-Debug|Win32'">true</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="Voice\Logitech\Include\liblgcodec.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='OptDebug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='QA|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='VIEWER-Debug|Win32'">true</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="Voice\lpc10.hpp" />
+    <ClInclude Include="Voice\speex.hpp" />
+    <ClInclude Include="Voice\Speex\arch.h" />
+    <ClInclude Include="Voice\Speex\cb_search.h" />
+    <ClInclude Include="Voice\Speex\cb_search_sse.h" />
+    <ClInclude Include="Voice\Speex\filters.h" />
+    <ClInclude Include="Voice\Speex\filters_sse.h" />
+    <ClInclude Include="Voice\Speex\fixed_arm.h" />
+    <ClInclude Include="Voice\Speex\fixed_debug.h" />
+    <ClInclude Include="Voice\Speex\fixed_generic.h" />
+    <ClInclude Include="Voice\Speex\lpc.h" />
+    <ClInclude Include="Voice\Speex\lsp.h" />
+    <ClInclude Include="Voice\Speex\ltp.h" />
+    <ClInclude Include="Voice\Speex\ltp_sse.h" />
+    <ClInclude Include="Voice\Speex\math_approx.h" />
+    <ClInclude Include="Voice\Speex\misc.h" />
+    <ClInclude Include="Voice\Speex\modes.h" />
+    <ClInclude Include="Voice\Speex\nb_celp.h" />
+    <ClInclude Include="Voice\Speex\quant_lsp.h" />
+    <ClInclude Include="Voice\Speex\sb_celp.h" />
+    <ClInclude Include="Voice\Speex\smallft.h" />
+    <ClInclude Include="Voice\Speex\speex.h" />
+    <ClInclude Include="Voice\Speex\speex_bits.h" />
+    <ClInclude Include="Voice\Speex\speex_callbacks.h" />
+    <ClInclude Include="Voice\Speex\speex_echo.h" />
+    <ClInclude Include="Voice\Speex\speex_header.h" />
+    <ClInclude Include="Voice\Speex\speex_jitter.h" />
+    <ClInclude Include="Voice\Speex\speex_preprocess.h" />
+    <ClInclude Include="Voice\Speex\speex_stereo.h" />
+    <ClInclude Include="Voice\Speex\stack_alloc.h" />
+    <ClInclude Include="Voice\Speex\vbr.h" />
+    <ClInclude Include="Voice\Speex\vq.h" />
+    <ClInclude Include="Voice\VoiceMgr.hpp" />
+    <ClInclude Include="Voice\VoiceProxy.hpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Voice\Logitech\Lib\liblgaud.lib">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='OptDebug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='QA|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='VIEWER-Debug|Win32'">true</ExcludedFromBuild>
+    </None>
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

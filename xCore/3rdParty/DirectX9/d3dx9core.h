@@ -20,11 +20,12 @@
 // application was built against the correct header files and lib files. 
 // This number is incremented whenever a header (or other) change would 
 // require applications to be rebuilt. If the version doesn't match, 
-// D3DXCreateVersion will return FALSE. (The number itself has no meaning.)
+// D3DXCheckVersion will return FALSE. (The number itself has no meaning.)
 ///////////////////////////////////////////////////////////////////////////
 
-#define D3DX_VERSION 0x0901
-#define D3DX_SDK_VERSION 21
+#define D3DX_VERSION 0x0902
+
+#define D3DX_SDK_VERSION 43
 
 #ifdef __cplusplus
 extern "C" {
@@ -37,6 +38,26 @@ BOOL WINAPI
 }
 #endif //__cplusplus
 
+
+
+///////////////////////////////////////////////////////////////////////////
+// D3DXDebugMute
+//    Mutes D3DX and D3D debug spew (TRUE - mute, FALSE - not mute)
+//
+//  returns previous mute value
+//
+///////////////////////////////////////////////////////////////////////////
+
+#ifdef __cplusplus
+extern "C" {
+#endif //__cplusplus
+
+BOOL WINAPI
+    D3DXDebugMute(BOOL Mute);  
+
+#ifdef __cplusplus
+}
+#endif //__cplusplus
 
 
 ///////////////////////////////////////////////////////////////////////////
@@ -75,9 +96,9 @@ UINT WINAPI
 typedef interface ID3DXBuffer ID3DXBuffer;
 typedef interface ID3DXBuffer *LPD3DXBUFFER;
 
-// {932E6A7E-C68E-45dd-A7BF-53D19C86DB1F}
+// {8BA5FB08-5195-40e2-AC58-0D989C3A0102}
 DEFINE_GUID(IID_ID3DXBuffer, 
-0x932e6a7e, 0xc68e, 0x45dd, 0xa7, 0xbf, 0x53, 0xd1, 0x9c, 0x86, 0xdb, 0x1f);
+0x8ba5fb08, 0x5195, 0x40e2, 0xac, 0x58, 0xd, 0x98, 0x9c, 0x3a, 0x1, 0x2);
 
 #undef INTERFACE
 #define INTERFACE ID3DXBuffer
@@ -126,6 +147,9 @@ DECLARE_INTERFACE_(ID3DXBuffer, IUnknown)
 // D3DXSPRITE_SORT_DEPTH_BACKTOFRONT
 //   Sprites are sorted by depth back-to-front prior to drawing.  This is 
 //   recommended when drawing transparent sprites of varying depths.
+// D3DXSPRITE_DO_NOT_ADDREF_TEXTURE
+//   Disables calling AddRef() on every draw, and Release() on Flush() for
+//   better performance.
 //////////////////////////////////////////////////////////////////////////////
 
 #define D3DXSPRITE_DONOTSAVESTATE               (1 << 0)
@@ -136,8 +160,7 @@ DECLARE_INTERFACE_(ID3DXBuffer, IUnknown)
 #define D3DXSPRITE_SORT_TEXTURE                 (1 << 5)
 #define D3DXSPRITE_SORT_DEPTH_FRONTTOBACK       (1 << 6)
 #define D3DXSPRITE_SORT_DEPTH_BACKTOFRONT       (1 << 7)
-
-#define D3DXSPRITE_TEXT (
+#define D3DXSPRITE_DO_NOT_ADDREF_TEXTURE        (1 << 8)
 
 
 //////////////////////////////////////////////////////////////////////////////
@@ -169,9 +192,9 @@ typedef interface ID3DXSprite ID3DXSprite;
 typedef interface ID3DXSprite *LPD3DXSPRITE;
 
 
-// {D4715B38-6C44-472a-9024-6E2B0321CAC6}
-DEFINE_GUID( IID_ID3DXSprite, 
-0xd4715b38, 0x6c44, 0x472a, 0x90, 0x24, 0x6e, 0x2b, 0x3, 0x21, 0xca, 0xc6);
+// {BA0B762D-7D28-43ec-B9DC-2F84443B0614}
+DEFINE_GUID(IID_ID3DXSprite, 
+0xba0b762d, 0x7d28, 0x43ec, 0xb9, 0xdc, 0x2f, 0x84, 0x44, 0x3b, 0x6, 0x14);
 
 
 #undef INTERFACE
@@ -244,7 +267,7 @@ HRESULT WINAPI
 
 typedef struct _D3DXFONT_DESCA
 {
-    UINT Height;
+    INT Height;
     UINT Width;
     UINT Weight;
     UINT MipLevels;
@@ -259,7 +282,7 @@ typedef struct _D3DXFONT_DESCA
 
 typedef struct _D3DXFONT_DESCW
 {
-    UINT Height;
+    INT Height;
     UINT Width;
     UINT Weight;
     UINT MipLevels;
@@ -285,9 +308,9 @@ typedef interface ID3DXFont ID3DXFont;
 typedef interface ID3DXFont *LPD3DXFONT;
 
 
-// {0B8D1536-9EEC-49b0-A5AD-93CF63AFB7C6}
-DEFINE_GUID( IID_ID3DXFont, 
-0xb8d1536, 0x9eec, 0x49b0, 0xa5, 0xad, 0x93, 0xcf, 0x63, 0xaf, 0xb7, 0xc6);
+// {D79DBB70-5F21-4d36-BBC2-FF525C213CDC}
+DEFINE_GUID(IID_ID3DXFont, 
+0xd79dbb70, 0x5f21, 0x4d36, 0xbb, 0xc2, 0xff, 0x52, 0x5c, 0x21, 0x3c, 0xdc);
 
 
 #undef INTERFACE
@@ -304,6 +327,8 @@ DECLARE_INTERFACE_(ID3DXFont, IUnknown)
     STDMETHOD(GetDevice)(THIS_ LPDIRECT3DDEVICE9 *ppDevice) PURE;
     STDMETHOD(GetDescA)(THIS_ D3DXFONT_DESCA *pDesc) PURE;
     STDMETHOD(GetDescW)(THIS_ D3DXFONT_DESCW *pDesc) PURE;
+    STDMETHOD_(BOOL, GetTextMetricsA)(THIS_ TEXTMETRICA *pTextMetrics) PURE;
+    STDMETHOD_(BOOL, GetTextMetricsW)(THIS_ TEXTMETRICW *pTextMetrics) PURE;
 
     STDMETHOD_(HDC, GetDC)(THIS) PURE;
     STDMETHOD(GetGlyphData)(THIS_ UINT Glyph, LPDIRECT3DTEXTURE9 *ppTexture, RECT *pBlackBox, POINT *pCellInc) PURE;
@@ -330,6 +355,14 @@ DECLARE_INTERFACE_(ID3DXFont, IUnknown)
 #endif //__cplusplus
 };
 
+#ifndef GetTextMetrics
+#ifdef UNICODE
+#define GetTextMetrics GetTextMetricsW
+#else
+#define GetTextMetrics GetTextMetricsA
+#endif
+#endif
+
 #ifndef DrawText
 #ifdef UNICODE
 #define DrawText DrawTextW
@@ -347,7 +380,7 @@ extern "C" {
 HRESULT WINAPI 
     D3DXCreateFontA(
         LPDIRECT3DDEVICE9       pDevice,  
-        UINT                    Height,
+        INT                     Height,
         UINT                    Width,
         UINT                    Weight,
         UINT                    MipLevels,
@@ -362,7 +395,7 @@ HRESULT WINAPI
 HRESULT WINAPI 
     D3DXCreateFontW(
         LPDIRECT3DDEVICE9       pDevice,  
-        UINT                    Height,
+        INT                     Height,
         UINT                    Width,
         UINT                    Weight,
         UINT                    MipLevels,
@@ -439,9 +472,9 @@ typedef interface ID3DXRenderToSurface ID3DXRenderToSurface;
 typedef interface ID3DXRenderToSurface *LPD3DXRENDERTOSURFACE;
 
 
-// {0D014791-8863-4c2c-A1C0-02F3E0C0B653}
-DEFINE_GUID( IID_ID3DXRenderToSurface, 
-0xd014791, 0x8863, 0x4c2c, 0xa1, 0xc0, 0x2, 0xf3, 0xe0, 0xc0, 0xb6, 0x53);
+// {6985F346-2C3D-43b3-BE8B-DAAE8A03D894}
+DEFINE_GUID(IID_ID3DXRenderToSurface, 
+0x6985f346, 0x2c3d, 0x43b3, 0xbe, 0x8b, 0xda, 0xae, 0x8a, 0x3, 0xd8, 0x94);
 
 
 #undef INTERFACE
@@ -529,9 +562,9 @@ typedef interface ID3DXRenderToEnvMap ID3DXRenderToEnvMap;
 typedef interface ID3DXRenderToEnvMap *LPD3DXRenderToEnvMap;
 
 
-// {1561135E-BC78-495b-8586-94EA537BD557}
-DEFINE_GUID( IID_ID3DXRenderToEnvMap, 
-0x1561135e, 0xbc78, 0x495b, 0x85, 0x86, 0x94, 0xea, 0x53, 0x7b, 0xd5, 0x57);
+// {313F1B4B-C7B0-4fa2-9D9D-8D380B64385E}
+DEFINE_GUID(IID_ID3DXRenderToEnvMap, 
+0x313f1b4b, 0xc7b0, 0x4fa2, 0x9d, 0x9d, 0x8d, 0x38, 0xb, 0x64, 0x38, 0x5e);
 
 
 #undef INTERFACE
@@ -654,9 +687,9 @@ typedef interface ID3DXLine ID3DXLine;
 typedef interface ID3DXLine *LPD3DXLINE;
 
 
-// {72CE4D70-CC40-4143-A896-32E50AD2EF35}
-DEFINE_GUID( IID_ID3DXLine, 
-0x72ce4d70, 0xcc40, 0x4143, 0xa8, 0x96, 0x32, 0xe5, 0xa, 0xd2, 0xef, 0x35);
+// {D379BA7F-9042-4ac4-9F5E-58192A4C6BD8}
+DEFINE_GUID(IID_ID3DXLine, 
+0xd379ba7f, 0x9042, 0x4ac4, 0x9f, 0x5e, 0x58, 0x19, 0x2a, 0x4c, 0x6b, 0xd8);
 
 #undef INTERFACE
 #define INTERFACE ID3DXLine

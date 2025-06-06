@@ -81,6 +81,17 @@
 #define D3DX_FILTER_SRGB             (3 << 21)
 
 
+//-----------------------------------------------------------------------------
+// D3DX_SKIP_DDS_MIP_LEVELS is used to skip mip levels when loading a DDS file:
+//-----------------------------------------------------------------------------
+
+#define D3DX_SKIP_DDS_MIP_LEVELS_MASK   0x1F
+#define D3DX_SKIP_DDS_MIP_LEVELS_SHIFT  26
+#define D3DX_SKIP_DDS_MIP_LEVELS(levels, filter) ((((levels) & D3DX_SKIP_DDS_MIP_LEVELS_MASK) << D3DX_SKIP_DDS_MIP_LEVELS_SHIFT) | ((filter) == D3DX_DEFAULT ? D3DX_FILTER_BOX : (filter)))
+
+
+
+
 //----------------------------------------------------------------------------
 // D3DX_NORMALMAP flags:
 // ---------------------
@@ -1013,15 +1024,21 @@ HRESULT WINAPI
 //  Width, Height, Depth, Size
 //      Size in pixels.  If zero or D3DX_DEFAULT, the size will be taken from 
 //      the file and rounded up to a power of two.  If D3DX_DEFAULT_NONPOW2, 
-//      the size will be not be rounded, if the device supports NONPOW2 textures.
+//      and the device supports NONPOW2 textures, the size will not be rounded.
+//      If D3DX_FROM_FILE, the size will be taken exactly as it is in the file, 
+//      and the call will fail if this violates device capabilities.
 //  MipLevels
 //      Number of mip levels.  If zero or D3DX_DEFAULT, a complete mipmap
-//      chain will be created.
+//      chain will be created.  If D3DX_FROM_FILE, the size will be taken 
+//      exactly as it is in the file, and the call will fail if this violates 
+//      device capabilities.
 //  Usage
 //      Texture usage flags
 //  Format
 //      Desired pixel format.  If D3DFMT_UNKNOWN, the format will be
-//      taken from the file.
+//      taken from the file.  If D3DFMT_FROM_FILE, the format will be taken
+//      exactly as it is in the file, and the call will fail if the device does
+//      not support the given format.
 //  Pool
 //      Memory pool to be used to create texture
 //  Filter
@@ -1029,7 +1046,9 @@ HRESULT WINAPI
 //      Or D3DX_DEFAULT for D3DX_FILTER_TRIANGLE.
 //  MipFilter
 //      D3DX_FILTER flags controlling how each miplevel is filtered.
-//      Or D3DX_DEFAULT for D3DX_FILTER_BOX,
+//      Or D3DX_DEFAULT for D3DX_FILTER_BOX.
+//      Use the D3DX_SKIP_DDS_MIP_LEVELS macro to specify both a filter and the
+//      number of mip levels to skip when loading DDS files.
 //  ColorKey
 //      Color to replace with transparent black, or 0 to disable colorkey.
 //      This is always a 32-bit ARGB color, independent of the source image
@@ -1044,7 +1063,6 @@ HRESULT WINAPI
 //      The texture object that will be created
 //
 //----------------------------------------------------------------------------
-
 
 // FromFile
 
@@ -1643,47 +1661,37 @@ HRESULT WINAPI
         LPD3DXFILL3D              pFunction,
         LPVOID                    pData);
 
-//----------------------------------------------------------------------------
+//---------------------------------------------------------------------------
 // D3DXFillTextureTX:
-// ----------------
-// Uses a TX Shader target to function to fill each texel of each mip level of a
-// given texture. The TX Shader target should be a compiled function taking 2
-// 2 paramters and returning a float4 color.
+// ------------------
+// Uses a TX Shader target to function to fill each texel of each mip level
+// of a given texture. The TX Shader target should be a compiled function 
+// taking 2 paramters and returning a float4 color.
 //
 // Paramters:
 //  pTexture, pCubeTexture, pVolumeTexture
 //      Pointer to the texture to be filled.
-//  pFunction:
-//      Pointer to the compiled function returned by D3DX
-//  pConstants
-//      Constants used by program. Should be filled by user by parsing constant
-//      Table information
-//  Constants
-//      Number of Constants   
-//-----------------------------------------------------------------------------
+//  pTextureShader
+//      Pointer to the texture shader to be used to fill in the texture
+//----------------------------------------------------------------------------
 
 HRESULT WINAPI 
     D3DXFillTextureTX(
         LPDIRECT3DTEXTURE9        pTexture,
-        CONST DWORD*              pFunction,
-        CONST D3DXVECTOR4*        pConstants,
-        UINT                      Constants);
+        LPD3DXTEXTURESHADER       pTextureShader);
 
 
 HRESULT WINAPI
     D3DXFillCubeTextureTX(
         LPDIRECT3DCUBETEXTURE9    pCubeTexture,
-        CONST DWORD*              pFunction,
-        CONST D3DXVECTOR4*        pConstants,
-        UINT                      Constants);
+        LPD3DXTEXTURESHADER       pTextureShader);
                                                 
                                                         
 HRESULT WINAPI 
     D3DXFillVolumeTextureTX(
         LPDIRECT3DVOLUMETEXTURE9  pVolumeTexture,
-        CONST DWORD*              pFunction,
-        CONST D3DXVECTOR4*        pConstants,
-        UINT                      Constants);
+        LPD3DXTEXTURESHADER       pTextureShader);
+
 
 
 //----------------------------------------------------------------------------

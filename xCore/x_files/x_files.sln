@@ -1,45 +1,48 @@
-Microsoft Visual Studio Solution File, Format Version 8.00
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "x_files", "x_files.vcproj", "{F166FD39-1334-41BC-A4BF-298DC7A74139}"
-	ProjectSection(ProjectDependencies) = postProject
-	EndProjectSection
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.14.36202.13 d17.14
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "x_files", "x_files.vcxproj", "{A4275571-0365-47B6-8D23-910F33690D4B}"
 EndProject
 Global
-	GlobalSection(SolutionConfiguration) = preSolution
-		Debug Win32 = Debug Win32
-		Debug Xbox = Debug Xbox
-		EDITOR-Debug Win32 = EDITOR-Debug Win32
-		OptDebug Win32 = OptDebug Win32
-		OptDebug Xbox = OptDebug Xbox
-		QA Win32 = QA Win32
-		QA Xbox = QA Xbox
-		Release Win32 = Release Win32
-		Release Xbox = Release Xbox
-		VIEWER-Debug Win32 = VIEWER-Debug Win32
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug Xbox|Win32 = Debug Xbox|Win32
+		Debug|Win32 = Debug|Win32
+		EDITOR-Debug|Win32 = EDITOR-Debug|Win32
+		OptDebug Xbox|Win32 = OptDebug Xbox|Win32
+		OptDebug|Win32 = OptDebug|Win32
+		QA Xbox|Win32 = QA Xbox|Win32
+		QA|Win32 = QA|Win32
+		Release Xbox|Win32 = Release Xbox|Win32
+		Release|Win32 = Release|Win32
+		VIEWER-Debug|Win32 = VIEWER-Debug|Win32
 	EndGlobalSection
-	GlobalSection(ProjectConfiguration) = postSolution
-		{F166FD39-1334-41BC-A4BF-298DC7A74139}.Debug Win32.ActiveCfg = Debug|Win32
-		{F166FD39-1334-41BC-A4BF-298DC7A74139}.Debug Win32.Build.0 = Debug|Win32
-		{F166FD39-1334-41BC-A4BF-298DC7A74139}.Debug Xbox.ActiveCfg = Debug|Xbox
-		{F166FD39-1334-41BC-A4BF-298DC7A74139}.Debug Xbox.Build.0 = Debug|Xbox
-		{F166FD39-1334-41BC-A4BF-298DC7A74139}.EDITOR-Debug Win32.ActiveCfg = EDITOR-Debug|Win32
-		{F166FD39-1334-41BC-A4BF-298DC7A74139}.EDITOR-Debug Win32.Build.0 = EDITOR-Debug|Win32
-		{F166FD39-1334-41BC-A4BF-298DC7A74139}.OptDebug Win32.ActiveCfg = OptDebug|Win32
-		{F166FD39-1334-41BC-A4BF-298DC7A74139}.OptDebug Win32.Build.0 = OptDebug|Win32
-		{F166FD39-1334-41BC-A4BF-298DC7A74139}.OptDebug Xbox.ActiveCfg = OptDebug|Xbox
-		{F166FD39-1334-41BC-A4BF-298DC7A74139}.OptDebug Xbox.Build.0 = OptDebug|Xbox
-		{F166FD39-1334-41BC-A4BF-298DC7A74139}.QA Win32.ActiveCfg = QA|Win32
-		{F166FD39-1334-41BC-A4BF-298DC7A74139}.QA Win32.Build.0 = QA|Win32
-		{F166FD39-1334-41BC-A4BF-298DC7A74139}.QA Xbox.ActiveCfg = QA|Xbox
-		{F166FD39-1334-41BC-A4BF-298DC7A74139}.QA Xbox.Build.0 = QA|Xbox
-		{F166FD39-1334-41BC-A4BF-298DC7A74139}.Release Win32.ActiveCfg = Release|Win32
-		{F166FD39-1334-41BC-A4BF-298DC7A74139}.Release Win32.Build.0 = Release|Win32
-		{F166FD39-1334-41BC-A4BF-298DC7A74139}.Release Xbox.ActiveCfg = Release|Xbox
-		{F166FD39-1334-41BC-A4BF-298DC7A74139}.Release Xbox.Build.0 = Release|Xbox
-		{F166FD39-1334-41BC-A4BF-298DC7A74139}.VIEWER-Debug Win32.ActiveCfg = VIEWER-Debug|Win32
-		{F166FD39-1334-41BC-A4BF-298DC7A74139}.VIEWER-Debug Win32.Build.0 = VIEWER-Debug|Win32
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{A4275571-0365-47B6-8D23-910F33690D4B}.Debug Xbox|Win32.ActiveCfg = VIEWER-Debug|Win32
+		{A4275571-0365-47B6-8D23-910F33690D4B}.Debug Xbox|Win32.Build.0 = VIEWER-Debug|Win32
+		{A4275571-0365-47B6-8D23-910F33690D4B}.Debug|Win32.ActiveCfg = Debug|Win32
+		{A4275571-0365-47B6-8D23-910F33690D4B}.Debug|Win32.Build.0 = Debug|Win32
+		{A4275571-0365-47B6-8D23-910F33690D4B}.EDITOR-Debug|Win32.ActiveCfg = EDITOR-Debug|Win32
+		{A4275571-0365-47B6-8D23-910F33690D4B}.EDITOR-Debug|Win32.Build.0 = EDITOR-Debug|Win32
+		{A4275571-0365-47B6-8D23-910F33690D4B}.OptDebug Xbox|Win32.ActiveCfg = EDITOR-Debug|Win32
+		{A4275571-0365-47B6-8D23-910F33690D4B}.OptDebug Xbox|Win32.Build.0 = EDITOR-Debug|Win32
+		{A4275571-0365-47B6-8D23-910F33690D4B}.OptDebug|Win32.ActiveCfg = OptDebug|Win32
+		{A4275571-0365-47B6-8D23-910F33690D4B}.OptDebug|Win32.Build.0 = OptDebug|Win32
+		{A4275571-0365-47B6-8D23-910F33690D4B}.QA Xbox|Win32.ActiveCfg = OptDebug|Win32
+		{A4275571-0365-47B6-8D23-910F33690D4B}.QA Xbox|Win32.Build.0 = OptDebug|Win32
+		{A4275571-0365-47B6-8D23-910F33690D4B}.QA|Win32.ActiveCfg = QA|Win32
+		{A4275571-0365-47B6-8D23-910F33690D4B}.QA|Win32.Build.0 = QA|Win32
+		{A4275571-0365-47B6-8D23-910F33690D4B}.Release Xbox|Win32.ActiveCfg = VIEWER-Debug|Win32
+		{A4275571-0365-47B6-8D23-910F33690D4B}.Release Xbox|Win32.Build.0 = VIEWER-Debug|Win32
+		{A4275571-0365-47B6-8D23-910F33690D4B}.Release|Win32.ActiveCfg = Release|Win32
+		{A4275571-0365-47B6-8D23-910F33690D4B}.Release|Win32.Build.0 = Release|Win32
+		{A4275571-0365-47B6-8D23-910F33690D4B}.VIEWER-Debug|Win32.ActiveCfg = VIEWER-Debug|Win32
+		{A4275571-0365-47B6-8D23-910F33690D4B}.VIEWER-Debug|Win32.Build.0 = VIEWER-Debug|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
-	EndGlobalSection
-	GlobalSection(ExtensibilityAddIns) = postSolution
+		SolutionGuid = {21813E7D-8C8D-4C76-BD05-5DC7D7AF403E}
 	EndGlobalSection
 EndGlobal

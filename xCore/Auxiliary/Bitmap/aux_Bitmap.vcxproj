@@ -1,0 +1,285 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="Current" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="EDITOR-Debug|Win32">
+      <Configuration>EDITOR-Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="OptDebug|Win32">
+      <Configuration>OptDebug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="QA|Win32">
+      <Configuration>QA</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="VIEWER-Debug|Win32">
+      <Configuration>VIEWER-Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>17.0</VCProjectVersion>
+    <ProjectGuid>{9CA26E69-C9C6-433E-80D7-D28AC74C5D85}</ProjectGuid>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='VIEWER-Debug|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <PlatformToolset>v143</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='EDITOR-Debug|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <PlatformToolset>v143</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='QA|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <PlatformToolset>v143</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='OptDebug|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <PlatformToolset>v143</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <PlatformToolset>v143</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <PlatformToolset>v143</PlatformToolset>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='VIEWER-Debug|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='EDITOR-Debug|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='QA|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='OptDebug|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_ProjectFileVersion>17.0.36202.10</_ProjectFileVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <OutDir>$(ProjectDir)_$(Platform)$(Configuration)\</OutDir>
+    <IntDir>$(ProjectDir)_$(Platform)$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <OutDir>$(ProjectDir)_$(Platform)$(Configuration)\</OutDir>
+    <IntDir>$(ProjectDir)_$(Platform)$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='OptDebug|Win32'">
+    <OutDir>$(ProjectDir)_$(Platform)$(Configuration)\</OutDir>
+    <IntDir>$(ProjectDir)_$(Platform)$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='QA|Win32'">
+    <OutDir>$(ProjectDir)_$(Platform)$(Configuration)\</OutDir>
+    <IntDir>$(ProjectDir)_$(Platform)$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='EDITOR-Debug|Win32'">
+    <OutDir>$(ProjectDir)_$(Platform)$(Configuration)\</OutDir>
+    <IntDir>$(ProjectDir)_$(Platform)$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='VIEWER-Debug|Win32'">
+    <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
+    <IntDir>$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <Optimization>MaxSpeed</Optimization>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <AdditionalIncludeDirectories>$(X)\x_files;PNG;PNG\ZLib;$(X)\x_files\3rdParty\DXTLibrary;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>TARGET_PC;CONFIG_RETAIL;NDEBUG;_ITERATOR_DEBUG_LEVEL=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <StringPooling>true</StringPooling>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <AdditionalIncludeDirectories>$(X)\x_files;PNG;PNG\ZLib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>TARGET_PC;CONFIG_DEBUG;NDEBUG;_ITERATOR_DEBUG_LEVEL=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <BasicRuntimeChecks>Default</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='OptDebug|Win32'">
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <AdditionalIncludeDirectories>$(X)\x_files;PNG;PNG\ZLib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>TARGET_PC;CONFIG_OPTDEBUG;NDEBUG;_ITERATOR_DEBUG_LEVEL=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <BasicRuntimeChecks>Default</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='QA|Win32'">
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <AdditionalIncludeDirectories>$(X)\x_files;PNG;PNG\ZLib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>TARGET_PC;CONFIG_QA;NDEBUG;_ITERATOR_DEBUG_LEVEL=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <BasicRuntimeChecks>Default</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='EDITOR-Debug|Win32'">
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <AdditionalIncludeDirectories>$(X)\x_files;PNG;PNG\ZLib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>TARGET_PC;CONFIG_DEBUG;X_EDITOR;NDEBUG;_ITERATOR_DEBUG_LEVEL=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <BasicRuntimeChecks>Default</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='VIEWER-Debug|Win32'">
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <AdditionalIncludeDirectories>$(X)\x_files;PNG;PNG\ZLib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>TARGET_PC;CONFIG_DEBUG;CONFIG_VIEWER;NDEBUG;_ITERATOR_DEBUG_LEVEL=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <BasicRuntimeChecks>Default</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  
+  <!-- Source files (.cpp) -->
+  <ItemGroup>
+    <!-- Main implementation files -->
+    <ClCompile Include="aux_Bitmap.cpp" />
+    <ClCompile Include="DefaultBMP.cpp" />
+    <ClCompile Include="Load_BMP.cpp" />
+    <ClCompile Include="Load_PSD.cpp" />
+    <ClCompile Include="Load_TGA.cpp" />
+    
+    <!-- DXT Library files -->
+    <ClCompile Include="..\..\3rdParty\DXTLibrary\ccDoubleHeap.cpp" />
+    <ClCompile Include="..\..\3rdParty\DXTLibrary\ccHeap.cpp" />
+    <ClCompile Include="..\..\3rdParty\DXTLibrary\Cclist.cpp" />
+    <ClCompile Include="..\..\3rdParty\DXTLibrary\cfVector.cpp" />
+    <ClCompile Include="..\..\3rdParty\DXTLibrary\CodeBook4MMX.cpp" />
+    <ClCompile Include="..\..\3rdParty\DXTLibrary\DXTCGen.cpp" />
+    <ClCompile Include="..\..\3rdParty\DXTLibrary\fCodeBook.cpp" />
+    <ClCompile Include="..\..\3rdParty\DXTLibrary\Image.cpp" />
+    <ClCompile Include="..\..\3rdParty\DXTLibrary\ImageDXTC.cpp" />
+    <ClCompile Include="..\..\3rdParty\DXTLibrary\Lloyd.cpp" />
+    <ClCompile Include="..\..\3rdParty\DXTLibrary\MedianCut.cpp" />
+    <ClCompile Include="..\..\3rdParty\DXTLibrary\Table.cpp" />
+    
+    <!-- DXT Boneyard files (excluded from build) -->
+    <ClCompile Include="..\..\3rdParty\DXTLibrary\CodeBook.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='EDITOR-Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='OptDebug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='QA|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='VIEWER-Debug|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\..\3rdParty\DXTLibrary\LoadFromBMP.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='EDITOR-Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='OptDebug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='QA|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='VIEWER-Debug|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\..\3rdParty\DXTLibrary\LoadFromTGA.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='EDITOR-Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='OptDebug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='QA|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='VIEWER-Debug|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\..\3rdParty\DXTLibrary\LoadImageFrom.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='EDITOR-Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='OptDebug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='QA|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='VIEWER-Debug|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\..\3rdParty\DXTLibrary\Usage.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='EDITOR-Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='OptDebug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='QA|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='VIEWER-Debug|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
+  </ItemGroup>
+  
+  <!-- Header files (.h/.hpp) -->
+  <ItemGroup>
+    <ClInclude Include="aux_Bitmap.hpp" />
+    
+    <!-- DXT Library headers -->
+    <ClInclude Include="..\..\3rdParty\DXTLibrary\ccDoubleHeap.h" />
+    <ClInclude Include="..\..\3rdParty\DXTLibrary\ccHeap.h" />
+    <ClInclude Include="..\..\3rdParty\DXTLibrary\Cclist.h" />
+    <ClInclude Include="..\..\3rdParty\DXTLibrary\cfVector.h" />
+    <ClInclude Include="..\..\3rdParty\DXTLibrary\CodeBook4MMX.h" />
+    <ClInclude Include="..\..\3rdParty\DXTLibrary\DXTCGen.h" />
+    <ClInclude Include="..\..\3rdParty\DXTLibrary\fCodeBook.h" />
+    <ClInclude Include="..\..\3rdParty\DXTLibrary\Image.h" />
+    <ClInclude Include="..\..\3rdParty\DXTLibrary\ImageDXTC.h" />
+    <ClInclude Include="..\..\3rdParty\DXTLibrary\Lloyd.h" />
+    <ClInclude Include="..\..\3rdParty\DXTLibrary\MedianCut.h" />
+    <ClInclude Include="..\..\3rdParty\DXTLibrary\Table.h" />
+    
+    <!-- DXT Boneyard headers -->
+    <ClInclude Include="..\..\3rdParty\DXTLibrary\CodeBook.h" />
+    <ClInclude Include="..\..\3rdParty\DXTLibrary\LoadImageFrom.h" />
+    
+    <!-- X_Files headers -->
+    <ClInclude Include="..\..\x_files\x_bitmap.hpp" />
+    <ClInclude Include="..\..\x_files\Implementation\x_bitmap_inline.hpp" />
+    <ClInclude Include="..\..\x_files\x_color.hpp" />
+    <ClInclude Include="..\..\x_files\Implementation\x_color_inline.hpp" />
+    <ClInclude Include="..\..\x_files\x_debug.hpp" />
+    <ClInclude Include="..\..\x_files\x_math.hpp" />
+    <ClInclude Include="..\..\x_files\Implementation\x_math_bb_inline.hpp" />
+    <ClInclude Include="..\..\x_files\Implementation\x_math_inline.hpp" />
+    <ClInclude Include="..\..\x_files\Implementation\x_math_m4_inline.hpp" />
+    <ClInclude Include="..\..\x_files\Implementation\x_math_p_inline.hpp" />
+    <ClInclude Include="..\..\x_files\Implementation\x_math_q_inline.hpp" />
+    <ClInclude Include="..\..\x_files\Implementation\x_math_r3_inline.hpp" />
+    <ClInclude Include="..\..\x_files\Implementation\x_math_v2_inline.hpp" />
+    <ClInclude Include="..\..\x_files\Implementation\x_math_v3_inline.hpp" />
+    <ClInclude Include="..\..\x_files\Implementation\x_math_v4_inline.hpp" />
+    <ClInclude Include="..\..\x_files\x_memory.hpp" />
+    <ClInclude Include="..\..\x_files\Implementation\x_memory_private.hpp" />
+    <ClInclude Include="..\..\x_files\x_plus.hpp" />
+    <ClInclude Include="..\..\x_files\x_stdio.hpp" />
+    <ClInclude Include="..\..\x_files\x_target.hpp" />
+    <ClInclude Include="..\..\x_files\x_types.hpp" />
+  </ItemGroup>
+  
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

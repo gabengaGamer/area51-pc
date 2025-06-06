@@ -14,6 +14,7 @@
 #include "..\3rdParty\DirectX9\d3dx9.h"
 #include "..\3rdParty\DirectX9\d3dx9core.h"
 #include "..\3rdParty\DirectX9\dplay8.h"
+#include "..\3rdParty\DirectX9\dxfile.h"
 #include <windows.h>
 #include <mmsystem.h>
 #include "x_files.hpp"

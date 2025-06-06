@@ -7,6 +7,8 @@
 #ifndef MEDIANCUT_H_
 #define MEDIANCUT_H_
 
+
+
 #include "CodeBook4MMX.h"
 #include "ccDoubleHeap.h"
 

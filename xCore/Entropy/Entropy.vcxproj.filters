@@ -1,0 +1,741 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Common">
+      <UniqueIdentifier>{84cba3a4-a895-406c-961c-944c4ba12ac6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="PC">
+      <UniqueIdentifier>{fde31e27-7eae-47de-96d4-cdccc6c0dcb9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="PC\Libs">
+      <UniqueIdentifier>{9c1f4444-925b-4fc2-bf54-ab33c3fb015f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="PS2">
+      <UniqueIdentifier>{9f11b4a5-2a1d-4c30-bd32-541f4fb86ea7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="PS2\IOP">
+      <UniqueIdentifier>{7008d079-5fb3-4996-8ea7-043f3d549f04}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="External">
+      <UniqueIdentifier>{1227554f-a32a-4a1f-9e64-e6d68f734608}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Audio">
+      <UniqueIdentifier>{de2b6ffd-e14d-485a-962c-1a32a52583a0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Audio\Codecs">
+      <UniqueIdentifier>{a3a7e9c4-eb2b-4c9b-86c1-152599df2aa1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Audio\Debug">
+      <UniqueIdentifier>{43f9318c-118d-4dd2-8b0a-032b05cf2d82}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Audio\Hardware">
+      <UniqueIdentifier>{c8a3d48c-ef4c-462f-8b8d-a26dc2be56b3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Audio\IAL">
+      <UniqueIdentifier>{1362aa4d-7c13-4214-9e23-05be4f003691}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="IOManager">
+      <UniqueIdentifier>{f2ea50f4-8080-4b64-a540-69763c20e5da}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="IOManager\Device_DVD">
+      <UniqueIdentifier>{810e74a7-120f-4a49-bdc9-c12d7e954968}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Network">
+      <UniqueIdentifier>{228dc53a-9cb3-4646-83ca-59e43d16ad36}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Network\PS2">
+      <UniqueIdentifier>{5a430344-f457-4302-8d42-e3047982fc75}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Network\PC">
+      <UniqueIdentifier>{81cc25d5-1979-4b76-abc4-88e30c6a67df}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Network\XBOX">
+      <UniqueIdentifier>{19f46d01-eaea-40f5-8024-42279607d03a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="XBOX">
+      <UniqueIdentifier>{79d833eb-f94c-41a3-a9b4-262a62a8cd20}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="MemCard">
+      <UniqueIdentifier>{a0b2c32e-1855-4d32-b441-3a7055b9351f}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Common\e_Draw.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="Common\e_Input.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="Common\e_ScratchMem.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="Common\e_SimpleAllocator.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="Common\e_Text.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="Common\e_View.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="D3DEngine\d3deng.cpp">
+      <Filter>PC</Filter>
+    </ClCompile>
+    <ClCompile Include="D3DEngine\d3deng_draw.cpp">
+      <Filter>PC</Filter>
+    </ClCompile>
+    <ClCompile Include="D3DEngine\d3deng_input.cpp">
+      <Filter>PC</Filter>
+    </ClCompile>
+    <ClCompile Include="D3DEngine\d3deng_vram.cpp">
+      <Filter>PC</Filter>
+    </ClCompile>
+    <ClCompile Include="PS2\ps2_dlist.cpp">
+      <Filter>PS2</Filter>
+    </ClCompile>
+    <ClCompile Include="PS2\ps2_dma.cpp">
+      <Filter>PS2</Filter>
+    </ClCompile>
+    <ClCompile Include="PS2\ps2_dmaman.cpp">
+      <Filter>PS2</Filter>
+    </ClCompile>
+    <ClCompile Include="PS2\ps2_draw.cpp">
+      <Filter>PS2</Filter>
+    </ClCompile>
+    <ClCompile Include="PS2\ps2_engine.cpp">
+      <Filter>PS2</Filter>
+    </ClCompile>
+    <ClCompile Include="PS2\ps2_except.cpp">
+      <Filter>PS2</Filter>
+    </ClCompile>
+    <ClCompile Include="PS2\ps2_font.cpp">
+      <Filter>PS2</Filter>
+    </ClCompile>
+    <ClCompile Include="PS2\ps2_framebuf.cpp">
+      <Filter>PS2</Filter>
+    </ClCompile>
+    <ClCompile Include="PS2\ps2_gsreg.cpp">
+      <Filter>PS2</Filter>
+    </ClCompile>
+    <ClCompile Include="PS2\ps2_pad.cpp">
+      <Filter>PS2</Filter>
+    </ClCompile>
+    <ClCompile Include="PS2\ps2_vifgif.cpp">
+      <Filter>PS2</Filter>
+    </ClCompile>
+    <ClCompile Include="PS2\ps2_vram.cpp">
+      <Filter>PS2</Filter>
+    </ClCompile>
+    <ClCompile Include="PS2\iopmanager.cpp">
+      <Filter>PS2\IOP</Filter>
+    </ClCompile>
+    <ClCompile Include="Audio\audio_channel_mgr.cpp">
+      <Filter>Audio</Filter>
+    </ClCompile>
+    <ClCompile Include="Audio\audio_debug.cpp">
+      <Filter>Audio</Filter>
+    </ClCompile>
+    <ClCompile Include="Audio\audio_io_request.cpp">
+      <Filter>Audio</Filter>
+    </ClCompile>
+    <ClCompile Include="Audio\audio_mgr.cpp">
+      <Filter>Audio</Filter>
+    </ClCompile>
+    <ClCompile Include="Audio\audio_mp3_mgr.cpp">
+      <Filter>Audio</Filter>
+    </ClCompile>
+    <ClCompile Include="Audio\audio_package.cpp">
+      <Filter>Audio</Filter>
+    </ClCompile>
+    <ClCompile Include="Audio\audio_ram_mgr.cpp">
+      <Filter>Audio</Filter>
+    </ClCompile>
+    <ClCompile Include="Audio\audio_stream_controller.cpp">
+      <Filter>Audio</Filter>
+    </ClCompile>
+    <ClCompile Include="Audio\audio_stream_mgr.cpp">
+      <Filter>Audio</Filter>
+    </ClCompile>
+    <ClCompile Include="Audio\audio_voice_mgr.cpp">
+      <Filter>Audio</Filter>
+    </ClCompile>
+    <ClCompile Include="Audio\Codecs\mp3api.cpp">
+      <Filter>Audio\Codecs</Filter>
+    </ClCompile>
+    <ClCompile Include="Audio\Codecs\MP3DEC.CPP">
+      <Filter>Audio\Codecs</Filter>
+    </ClCompile>
+    <ClCompile Include="Audio\Hardware\audio_hardware_gcn.cpp">
+      <Filter>Audio\Hardware</Filter>
+    </ClCompile>
+    <ClCompile Include="Audio\Hardware\audio_hardware_pc.cpp">
+      <Filter>Audio\Hardware</Filter>
+    </ClCompile>
+    <ClCompile Include="Audio\Hardware\audio_hardware_ps2.cpp">
+      <Filter>Audio\Hardware</Filter>
+    </ClCompile>
+    <ClCompile Include="Audio\Hardware\audio_hardware_xbox.cpp">
+      <Filter>Audio\Hardware</Filter>
+    </ClCompile>
+    <ClCompile Include="Audio\Hardware\audio_stream_gcn.cpp">
+      <Filter>Audio\Hardware</Filter>
+    </ClCompile>
+    <ClCompile Include="Audio\Hardware\audio_stream_pc.cpp">
+      <Filter>Audio\Hardware</Filter>
+    </ClCompile>
+    <ClCompile Include="Audio\Hardware\audio_stream_ps2.cpp">
+      <Filter>Audio\Hardware</Filter>
+    </ClCompile>
+    <ClCompile Include="Audio\Hardware\audio_stream_xbox.cpp">
+      <Filter>Audio\Hardware</Filter>
+    </ClCompile>
+    <ClCompile Include="Audio\IAL\IAL.cpp">
+      <Filter>Audio\IAL</Filter>
+    </ClCompile>
+    <ClCompile Include="IOManager\io_cache.cpp">
+      <Filter>IOManager</Filter>
+    </ClCompile>
+    <ClCompile Include="IOManager\io_device.cpp">
+      <Filter>IOManager</Filter>
+    </ClCompile>
+    <ClCompile Include="IOManager\device_net\io_device_net.cpp">
+      <Filter>IOManager</Filter>
+    </ClCompile>
+    <ClCompile Include="IOManager\io_device_netfs.cpp">
+      <Filter>IOManager</Filter>
+    </ClCompile>
+    <ClCompile Include="IOManager\io_dfs.cpp">
+      <Filter>IOManager</Filter>
+    </ClCompile>
+    <ClCompile Include="IOManager\io_filesystem.cpp">
+      <Filter>IOManager</Filter>
+    </ClCompile>
+    <ClCompile Include="IOManager\io_mgr.cpp">
+      <Filter>IOManager</Filter>
+    </ClCompile>
+    <ClCompile Include="IOManager\io_request.cpp">
+      <Filter>IOManager</Filter>
+    </ClCompile>
+    <ClCompile Include="IOManager\Device_DVD\io_device_dvd.cpp">
+      <Filter>IOManager\Device_DVD</Filter>
+    </ClCompile>
+    <ClCompile Include="IOManager\Device_DVD\io_device_dvd_gcn.cpp">
+      <Filter>IOManager\Device_DVD</Filter>
+    </ClCompile>
+    <ClCompile Include="IOManager\Device_DVD\io_device_dvd_pc.cpp">
+      <Filter>IOManager\Device_DVD</Filter>
+    </ClCompile>
+    <ClCompile Include="IOManager\Device_DVD\io_device_dvd_ps2.cpp">
+      <Filter>IOManager\Device_DVD</Filter>
+    </ClCompile>
+    <ClCompile Include="IOManager\Device_DVD\io_device_dvd_xbox.cpp">
+      <Filter>IOManager\Device_DVD</Filter>
+    </ClCompile>
+    <ClCompile Include="Network\fifo.cpp">
+      <Filter>Network</Filter>
+    </ClCompile>
+    <ClCompile Include="Network\netaddress.cpp">
+      <Filter>Network</Filter>
+    </ClCompile>
+    <ClCompile Include="Network\NetCommon.cpp">
+      <Filter>Network</Filter>
+    </ClCompile>
+    <ClCompile Include="Network\netsocket.cpp">
+      <Filter>Network</Filter>
+    </ClCompile>
+    <ClCompile Include="Network\netstream.cpp">
+      <Filter>Network</Filter>
+    </ClCompile>
+    <ClCompile Include="Network\PC\NetLib.cpp">
+      <Filter>Network\PC</Filter>
+    </ClCompile>
+    <ClCompile Include="Network\XBOX\NetLib.cpp">
+      <Filter>Network\XBOX</Filter>
+    </ClCompile>
+    <ClCompile Include="Xbox\PushMgr.cpp">
+      <Filter>XBOX</Filter>
+    </ClCompile>
+    <ClCompile Include="Xbox\QuikHeap.cpp">
+      <Filter>XBOX</Filter>
+    </ClCompile>
+    <ClCompile Include="Xbox\TextureMgr.cpp">
+      <Filter>XBOX</Filter>
+    </ClCompile>
+    <ClCompile Include="Xbox\VertexMgr.cpp">
+      <Filter>XBOX</Filter>
+    </ClCompile>
+    <ClCompile Include="Xbox\Xbox.cpp">
+      <Filter>XBOX</Filter>
+    </ClCompile>
+    <ClCompile Include="Xbox\Xbox_draw.cpp">
+      <Filter>XBOX</Filter>
+    </ClCompile>
+    <ClCompile Include="Xbox\xbox_font.cpp">
+      <Filter>XBOX</Filter>
+    </ClCompile>
+    <ClCompile Include="Xbox\Xbox_input.cpp">
+      <Filter>XBOX</Filter>
+    </ClCompile>
+    <ClCompile Include="Xbox\Xbox_vram.cpp">
+      <Filter>XBOX</Filter>
+    </ClCompile>
+    <ClCompile Include="MemCard\memcard.cpp">
+      <Filter>MemCard</Filter>
+    </ClCompile>
+    <ClCompile Include="MemCard\memcard_gcn.cpp">
+      <Filter>MemCard</Filter>
+    </ClCompile>
+    <ClCompile Include="MemCard\memcard_pc.cpp">
+      <Filter>MemCard</Filter>
+    </ClCompile>
+    <ClCompile Include="MemCard\memcard_ps2.cpp">
+      <Filter>MemCard</Filter>
+    </ClCompile>
+    <ClCompile Include="MemCard\memcard_xbox.cpp">
+      <Filter>MemCard</Filter>
+    </ClCompile>
+    <ClCompile Include="e_Profile.cpp" />
+    <ClCompile Include="Common\e_Virtual.cpp" />
+    <ClCompile Include="Common\e_View_inline.hpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="D3DEngine\d3deng_private.hpp">
+      <Filter>PC</Filter>
+    </ClCompile>
+    <ClCompile Include="..\3rdParty\DirectX8\d3d8.lib">
+      <Filter>PC\Libs</Filter>
+    </ClCompile>
+    <ClCompile Include="..\3rdParty\DirectX8\d3dx8.lib">
+      <Filter>PC\Libs</Filter>
+    </ClCompile>
+    <ClCompile Include="..\3rdParty\DirectX8\dinput8.lib">
+      <Filter>PC\Libs</Filter>
+    </ClCompile>
+    <ClCompile Include="..\3rdParty\DirectX8\dsound.lib">
+      <Filter>PC\Libs</Filter>
+    </ClCompile>
+    <ClCompile Include="..\3rdParty\DirectX8\dxguid.lib">
+      <Filter>PC\Libs</Filter>
+    </ClCompile>
+    <ClCompile Include="..\3rdParty\Miles6\lib\win\Mss32.lib">
+      <Filter>PC\Libs</Filter>
+    </ClCompile>
+    <ClCompile Include="PS2\ps2_crt0.s">
+      <Filter>PS2</Filter>
+    </ClCompile>
+    <ClCompile Include="PS2\ps2_dlist.hpp">
+      <Filter>PS2</Filter>
+    </ClCompile>
+    <ClCompile Include="PS2\ps2_dma.hpp">
+      <Filter>PS2</Filter>
+    </ClCompile>
+    <ClCompile Include="PS2\ps2_dmaman.hpp">
+      <Filter>PS2</Filter>
+    </ClCompile>
+    <ClCompile Include="PS2\ps2_except.hpp">
+      <Filter>PS2</Filter>
+    </ClCompile>
+    <ClCompile Include="PS2\ps2_exceptiondefs.hpp">
+      <Filter>PS2</Filter>
+    </ClCompile>
+    <ClCompile Include="PS2\ps2_font.hpp">
+      <Filter>PS2</Filter>
+    </ClCompile>
+    <ClCompile Include="PS2\ps2_framebuf.hpp">
+      <Filter>PS2</Filter>
+    </ClCompile>
+    <ClCompile Include="PS2\ps2_gsreg.hpp">
+      <Filter>PS2</Filter>
+    </ClCompile>
+    <ClCompile Include="PS2\ps2_misc.hpp">
+      <Filter>PS2</Filter>
+    </ClCompile>
+    <ClCompile Include="PS2\ps2_pad.hpp">
+      <Filter>PS2</Filter>
+    </ClCompile>
+    <ClCompile Include="PS2\ps2_vifgif.hpp">
+      <Filter>PS2</Filter>
+    </ClCompile>
+    <ClCompile Include="PS2\ps2_vifgif_inline.hpp">
+      <Filter>PS2</Filter>
+    </ClCompile>
+    <ClCompile Include="PS2\ps2_vram.hpp">
+      <Filter>PS2</Filter>
+    </ClCompile>
+    <ClCompile Include="PS2\channelio.hpp">
+      <Filter>PS2\IOP</Filter>
+    </ClCompile>
+    <ClCompile Include="PS2\fileio.hpp">
+      <Filter>PS2\IOP</Filter>
+    </ClCompile>
+    <ClCompile Include="PS2\iopmanager.hpp">
+      <Filter>PS2\IOP</Filter>
+    </ClCompile>
+    <ClCompile Include="..\3rdParty\PS2\Sony\sce\ee\gcc\ee\include\_ansi.h">
+      <Filter>External</Filter>
+    </ClCompile>
+    <ClCompile Include="..\x_files\PS2-DevKit-Debug\_SN_in_VC.h">
+      <Filter>External</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\Program Files\Microsoft Visual Studio\VC98\Include\BASETSD.H">
+      <Filter>External</Filter>
+    </ClCompile>
+    <ClCompile Include="..\3rdParty\PS2\Sony\sce\ee\gcc\ee\include\sys\config.h">
+      <Filter>External</Filter>
+    </ClCompile>
+    <ClCompile Include="..\3rdParty\DirectX8\d3d8.h">
+      <Filter>External</Filter>
+    </ClCompile>
+    <ClCompile Include="..\3rdParty\DirectX8\d3d8caps.h">
+      <Filter>External</Filter>
+    </ClCompile>
+    <ClCompile Include="..\3rdParty\DirectX8\d3d8types.h">
+      <Filter>External</Filter>
+    </ClCompile>
+    <ClCompile Include="..\3rdParty\DirectX8\d3dx8.h">
+      <Filter>External</Filter>
+    </ClCompile>
+    <ClCompile Include="..\3rdParty\DirectX8\d3dx8core.h">
+      <Filter>External</Filter>
+    </ClCompile>
+    <ClCompile Include="..\3rdParty\DirectX8\d3dx8effect.h">
+      <Filter>External</Filter>
+    </ClCompile>
+    <ClCompile Include="..\3rdParty\DirectX8\d3dx8math.h">
+      <Filter>External</Filter>
+    </ClCompile>
+    <ClCompile Include="..\3rdParty\DirectX8\d3dx8math.inl">
+      <Filter>External</Filter>
+    </ClCompile>
+    <ClCompile Include="..\3rdParty\DirectX8\d3dx8mesh.h">
+      <Filter>External</Filter>
+    </ClCompile>
+    <ClCompile Include="..\3rdParty\DirectX8\d3dx8shape.h">
+      <Filter>External</Filter>
+    </ClCompile>
+    <ClCompile Include="..\3rdParty\DirectX8\d3dx8tex.h">
+      <Filter>External</Filter>
+    </ClCompile>
+    <ClCompile Include="..\3rdParty\PS2\Sony\sce\ee\include\devfont.h">
+      <Filter>External</Filter>
+    </ClCompile>
+    <ClCompile Include="..\3rdParty\PS2\Sony\sce\ee\include\devgif.h">
+      <Filter>External</Filter>
+    </ClCompile>
+    <ClCompile Include="..\3rdParty\PS2\Sony\sce\ee\include\devvif0.h">
+      <Filter>External</Filter>
+    </ClCompile>
+    <ClCompile Include="..\3rdParty\PS2\Sony\sce\ee\include\devvif1.h">
+      <Filter>External</Filter>
+    </ClCompile>
+    <ClCompile Include="..\3rdParty\PS2\Sony\sce\ee\include\devvu0.h">
+      <Filter>External</Filter>
+    </ClCompile>
+    <ClCompile Include="..\3rdParty\PS2\Sony\sce\ee\include\devvu1.h">
+      <Filter>External</Filter>
+    </ClCompile>
+    <ClCompile Include="..\3rdParty\DirectX8\dpaddr.h">
+      <Filter>External</Filter>
+    </ClCompile>
+    <ClCompile Include="..\3rdParty\DirectX8\dplay8.h">
+      <Filter>External</Filter>
+    </ClCompile>
+    <ClCompile Include="..\3rdParty\DirectX8\dxfile.h">
+      <Filter>External</Filter>
+    </ClCompile>
+    <ClCompile Include="e_Engine.hpp">
+      <Filter>External</Filter>
+    </ClCompile>
+    <ClCompile Include="..\3rdParty\PS2\Sony\sce\ee\include\eekernel.h">
+      <Filter>External</Filter>
+    </ClCompile>
+    <ClCompile Include="..\3rdParty\PS2\Sony\sce\ee\include\eeregs.h">
+      <Filter>External</Filter>
+    </ClCompile>
+    <ClCompile Include="..\3rdParty\PS2\Sony\sce\ee\include\eestruct.h">
+      <Filter>External</Filter>
+    </ClCompile>
+    <ClCompile Include="..\3rdParty\PS2\Sony\sce\ee\include\eetypes.h">
+      <Filter>External</Filter>
+    </ClCompile>
+    <ClCompile Include="..\3rdParty\PS2\Sony\sce\common\include\libcdvd.h">
+      <Filter>External</Filter>
+    </ClCompile>
+    <ClCompile Include="..\3rdParty\PS2\Sony\sce\ee\include\libdev.h">
+      <Filter>External</Filter>
+    </ClCompile>
+    <ClCompile Include="..\3rdParty\PS2\Sony\sce\ee\include\libdma.h">
+      <Filter>External</Filter>
+    </ClCompile>
+    <ClCompile Include="..\3rdParty\PS2\Sony\sce\ee\include\libdmapk.h">
+      <Filter>External</Filter>
+    </ClCompile>
+    <ClCompile Include="..\3rdParty\PS2\Sony\sce\ee\include\libgifpk.h">
+      <Filter>External</Filter>
+    </ClCompile>
+    <ClCompile Include="..\3rdParty\PS2\Sony\sce\ee\include\libgraph.h">
+      <Filter>External</Filter>
+    </ClCompile>
+    <ClCompile Include="..\3rdParty\PS2\Sony\sce\ee\include\libpad.h">
+      <Filter>External</Filter>
+    </ClCompile>
+    <ClCompile Include="..\3rdParty\PS2\Sony\sce\ee\include\libpkt.h">
+      <Filter>External</Filter>
+    </ClCompile>
+    <ClCompile Include="..\3rdParty\PS2\Sony\sce\ee\include\libvifpk.h">
+      <Filter>External</Filter>
+    </ClCompile>
+    <ClCompile Include="..\3rdParty\PS2\Sony\sce\ee\gcc\ee\include\sys\reent.h">
+      <Filter>External</Filter>
+    </ClCompile>
+    <ClCompile Include="..\3rdParty\PS2\Sony\sce\ee\include\sifdev.h">
+      <Filter>External</Filter>
+    </ClCompile>
+    <ClCompile Include="..\3rdParty\PS2\Sony\sce\ee\include\sifrpc.h">
+      <Filter>External</Filter>
+    </ClCompile>
+    <ClCompile Include="..\x_files\x_array.hpp">
+      <Filter>External</Filter>
+    </ClCompile>
+    <ClCompile Include="..\x_files\Implementation\x_array_private.hpp">
+      <Filter>External</Filter>
+    </ClCompile>
+    <ClCompile Include="..\x_files\x_bitmap.hpp">
+      <Filter>External</Filter>
+    </ClCompile>
+    <ClCompile Include="..\x_files\Implementation\x_bitmap_inline.hpp">
+      <Filter>External</Filter>
+    </ClCompile>
+    <ClCompile Include="..\x_files\x_color.hpp">
+      <Filter>External</Filter>
+    </ClCompile>
+    <ClCompile Include="..\x_files\Implementation\x_color_inline.hpp">
+      <Filter>External</Filter>
+    </ClCompile>
+    <ClCompile Include="..\x_files\x_debug.hpp">
+      <Filter>External</Filter>
+    </ClCompile>
+    <ClCompile Include="..\x_files\x_files.hpp">
+      <Filter>External</Filter>
+    </ClCompile>
+    <ClCompile Include="..\x_files\x_math.hpp">
+      <Filter>External</Filter>
+    </ClCompile>
+    <ClCompile Include="..\x_files\Implementation\x_math_bb_inline.hpp">
+      <Filter>External</Filter>
+    </ClCompile>
+    <ClCompile Include="..\x_files\Implementation\x_math_inline.hpp">
+      <Filter>External</Filter>
+    </ClCompile>
+    <ClCompile Include="..\x_files\Implementation\x_math_m4_inline.hpp">
+      <Filter>External</Filter>
+    </ClCompile>
+    <ClCompile Include="..\x_files\Implementation\x_math_p_inline.hpp">
+      <Filter>External</Filter>
+    </ClCompile>
+    <ClCompile Include="..\x_files\Implementation\x_math_q_inline.hpp">
+      <Filter>External</Filter>
+    </ClCompile>
+    <ClCompile Include="..\x_files\Implementation\x_math_r3_inline.hpp">
+      <Filter>External</Filter>
+    </ClCompile>
+    <ClCompile Include="..\x_files\Implementation\x_math_v2_inline.hpp">
+      <Filter>External</Filter>
+    </ClCompile>
+    <ClCompile Include="..\x_files\Implementation\x_math_v3_inline.hpp">
+      <Filter>External</Filter>
+    </ClCompile>
+    <ClCompile Include="..\x_files\Implementation\x_math_v4_inline.hpp">
+      <Filter>External</Filter>
+    </ClCompile>
+    <ClCompile Include="..\x_files\x_memory.hpp">
+      <Filter>External</Filter>
+    </ClCompile>
+    <ClCompile Include="..\x_files\Implementation\x_memory_private.hpp">
+      <Filter>External</Filter>
+    </ClCompile>
+    <ClCompile Include="..\x_files\x_plus.hpp">
+      <Filter>External</Filter>
+    </ClCompile>
+    <ClCompile Include="..\x_files\x_stdio.hpp">
+      <Filter>External</Filter>
+    </ClCompile>
+    <ClCompile Include="..\x_files\x_string.hpp">
+      <Filter>External</Filter>
+    </ClCompile>
+    <ClCompile Include="..\x_files\Implementation\x_string_inline.hpp">
+      <Filter>External</Filter>
+    </ClCompile>
+    <ClCompile Include="..\x_files\x_target.hpp">
+      <Filter>External</Filter>
+    </ClCompile>
+    <ClCompile Include="..\x_files\x_time.hpp">
+      <Filter>External</Filter>
+    </ClCompile>
+    <ClCompile Include="..\x_files\x_types.hpp">
+      <Filter>External</Filter>
+    </ClCompile>
+    <ClCompile Include="Audio\audio_debug.hpp">
+      <Filter>Audio</Filter>
+    </ClCompile>
+    <ClCompile Include="Audio\audio_hardware.hpp">
+      <Filter>Audio</Filter>
+    </ClCompile>
+    <ClCompile Include="Audio\audio_inline.hpp">
+      <Filter>Audio</Filter>
+    </ClCompile>
+    <ClCompile Include="Audio\audio_io_request.hpp">
+      <Filter>Audio</Filter>
+    </ClCompile>
+    <ClCompile Include="Audio\audio_mp3_mgr.hpp">
+      <Filter>Audio</Filter>
+    </ClCompile>
+    <ClCompile Include="Audio\audio_private.hpp">
+      <Filter>Audio</Filter>
+    </ClCompile>
+    <ClCompile Include="Audio\audio_private_pkg.hpp">
+      <Filter>Audio</Filter>
+    </ClCompile>
+    <ClCompile Include="Audio\audio_ram_mgr.hpp">
+      <Filter>Audio</Filter>
+    </ClCompile>
+    <ClCompile Include="Audio\Codecs\DATATBL.H">
+      <Filter>Audio\Codecs</Filter>
+    </ClCompile>
+    <ClCompile Include="Audio\Codecs\IMSSAPI.H">
+      <Filter>Audio\Codecs</Filter>
+    </ClCompile>
+    <ClCompile Include="Audio\Codecs\mp3api.hpp">
+      <Filter>Audio\Codecs</Filter>
+    </ClCompile>
+    <ClCompile Include="Audio\Codecs\MP3DEC.H">
+      <Filter>Audio\Codecs</Filter>
+    </ClCompile>
+    <ClCompile Include="Audio\Codecs\MSS.H">
+      <Filter>Audio\Codecs</Filter>
+    </ClCompile>
+    <ClCompile Include="Audio\Codecs\mssasi.h">
+      <Filter>Audio\Codecs</Filter>
+    </ClCompile>
+    <ClCompile Include="Audio\Codecs\Rib.h">
+      <Filter>Audio\Codecs</Filter>
+    </ClCompile>
+    <ClCompile Include="Audio\Debug\NotFound_gcn.hpp">
+      <Filter>Audio\Debug</Filter>
+    </ClCompile>
+    <ClCompile Include="Audio\Debug\NotLoaded_gcn.hpp">
+      <Filter>Audio\Debug</Filter>
+    </ClCompile>
+    <ClCompile Include="Audio\Hardware\audio_hardware_ps2_private.hpp">
+      <Filter>Audio\Hardware</Filter>
+    </ClCompile>
+    <ClCompile Include="Audio\IAL\IAL.h">
+      <Filter>Audio\IAL</Filter>
+    </ClCompile>
+    <ClCompile Include="IOManager\io_device_netfs.hpp">
+      <Filter>IOManager</Filter>
+    </ClCompile>
+    <ClCompile Include="IOManager\io_header.hpp">
+      <Filter>IOManager</Filter>
+    </ClCompile>
+    <ClCompile Include="Network\netdefines.hpp">
+      <Filter>Network</Filter>
+    </ClCompile>
+    <ClCompile Include="Network\PC\WS2_32.LIB">
+      <Filter>Network\PC</Filter>
+    </ClCompile>
+    <ClCompile Include="Xbox\PushMgr.hpp">
+      <Filter>XBOX</Filter>
+    </ClCompile>
+    <ClCompile Include="Xbox\QuikHeap.h">
+      <Filter>XBOX</Filter>
+    </ClCompile>
+    <ClCompile Include="Xbox\TextureMgr.hpp">
+      <Filter>XBOX</Filter>
+    </ClCompile>
+    <ClCompile Include="Xbox\VertexMgr.hpp">
+      <Filter>XBOX</Filter>
+    </ClCompile>
+    <ClCompile Include="e_Audio.hpp" />
+    <ClCompile Include="e_Input.hpp" />
+    <ClCompile Include="e_Input_Gadget_Defines.hpp" />
+    <ClCompile Include="e_Input_Gadgets.hpp" />
+    <ClCompile Include="e_Network.hpp" />
+    <ClCompile Include="e_Profile.hpp" />
+    <ClCompile Include="e_VRAM.hpp" />
+    <ClCompile Include="Entropy.hpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Audio\audio_channel_mgr.hpp">
+      <Filter>Audio</Filter>
+    </ClInclude>
+    <ClInclude Include="Audio\audio_package.hpp">
+      <Filter>Audio</Filter>
+    </ClInclude>
+    <ClInclude Include="Audio\audio_stream_controller.hpp">
+      <Filter>Audio</Filter>
+    </ClInclude>
+    <ClInclude Include="Audio\audio_stream_mgr.hpp">
+      <Filter>Audio</Filter>
+    </ClInclude>
+    <ClInclude Include="Audio\audio_voice_mgr.hpp">
+      <Filter>Audio</Filter>
+    </ClInclude>
+    <ClInclude Include="IOManager\io_cache.hpp">
+      <Filter>IOManager</Filter>
+    </ClInclude>
+    <ClInclude Include="IOManager\io_device.hpp">
+      <Filter>IOManager</Filter>
+    </ClInclude>
+    <ClInclude Include="IOManager\device_net\io_device_net.hpp">
+      <Filter>IOManager</Filter>
+    </ClInclude>
+    <ClInclude Include="IOManager\io_dfs.hpp">
+      <Filter>IOManager</Filter>
+    </ClInclude>
+    <ClInclude Include="IOManager\io_filesystem.hpp">
+      <Filter>IOManager</Filter>
+    </ClInclude>
+    <ClInclude Include="IOManager\io_mgr.hpp">
+      <Filter>IOManager</Filter>
+    </ClInclude>
+    <ClInclude Include="IOManager\io_request.hpp">
+      <Filter>IOManager</Filter>
+    </ClInclude>
+    <ClInclude Include="IOManager\Device_DVD\io_device_dvd.hpp">
+      <Filter>IOManager\Device_DVD</Filter>
+    </ClInclude>
+    <ClInclude Include="Network\fifo.hpp">
+      <Filter>Network</Filter>
+    </ClInclude>
+    <ClInclude Include="Network\netaddress.hpp">
+      <Filter>Network</Filter>
+    </ClInclude>
+    <ClInclude Include="Network\netsocket.hpp">
+      <Filter>Network</Filter>
+    </ClInclude>
+    <ClInclude Include="Network\netstream.hpp">
+      <Filter>Network</Filter>
+    </ClInclude>
+    <ClInclude Include="e_Draw.hpp" />
+    <ClInclude Include="e_ScratchMem.hpp" />
+    <ClInclude Include="e_SimpleAllocator.hpp" />
+    <ClInclude Include="e_Text.hpp" />
+    <ClInclude Include="e_View.hpp" />
+    <ClInclude Include="e_Virtual.hpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="Network\PS2\net.cpp">
+      <Filter>Network\PS2</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Network\PS2\netdefs.hpp">
+      <Filter>Network\PS2</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Network\PS2\netiop.cpp">
+      <Filter>Network\PS2</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Network\PS2\netiop.hpp">
+      <Filter>Network\PS2</Filter>
+    </CustomBuild>
+  </ItemGroup>
+</Project>

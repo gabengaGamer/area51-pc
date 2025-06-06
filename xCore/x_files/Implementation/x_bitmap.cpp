@@ -24,27 +24,6 @@
 #include "..\x_math.hpp"
 #endif
 
-#ifdef TARGET_XBOX
-#   ifdef CONFIG_RETAIL
-#       define D3DCOMPILE_PUREDEVICE 1
-#   endif
-#   include<xtl.h>
-#   include<xgraphics.h>
-#endif
-
-#ifdef TARGET_PC
-#   if _MSC_VER >= 1300
-#       include <windows.h>
-#       include <D3d8.h>
-#       include <XGraphics.h>
-#       pragma comment( lib, "xgraphics.lib" )
-#   endif
-#endif
-
-#ifdef TARGET_GCN
-#include <dolphin.h>
-#endif
-
 //==============================================================================
 //  VARIABLES
 //==============================================================================
@@ -117,11 +96,7 @@
 
 //==============================================================================
 
-#if defined( TARGET_PS2 ) && defined( TARGET_RETAIL )
-    #define FMT_STR(_a_) ""
-#else
-    #define FMT_STR(_a_) _a_
-#endif
+#define FMT_STR(_a_) _a_
 
 const xbitmap::format_info xbitmap::m_FormatInfo[ xbitmap::FMT_END_OF_LIST ] =
 {                       
@@ -311,16 +286,6 @@ void xbitmap::Init( void )
 
 void xbitmap::Kill( void )
 {
-#ifdef TARGET_XBOX
-    if( m_Flags & FLAG_XBOX_PRE_REGISTERED )
-    {
-        m_Flags &= ~FLAG_XBOX_PRE_REGISTERED;
-        xbox_FreeTexels( *this );
-        x_free( m_Data.pMip );
-        m_Data.pMip = NULL;
-    }
-    else
-#endif
     {
         if( m_Flags & FLAG_DATA_OWNED ) x_free( m_Data.pPixel );
         if( m_Flags & FLAG_CLUT_OWNED ) x_free( m_pClut       );
@@ -341,19 +306,13 @@ const xbitmap& xbitmap::operator = ( const xbitmap& Bitmap )
 
 void xbitmap::SetPreSwizzled(void)
 {
-#ifdef TARGET_GCN
-    m_Flags |= FLAG_GCN_DATA_SWIZZLED;
-#endif
-
-#ifdef TARGET_XBOX
-    m_Flags |= FLAG_XBOX_DATA_SWIZZLED;
-#endif
 }
 
 //==============================================================================
 
 void xbitmap::XboxSwizzleData( void )
 {
+/*
     #if _MSC_VER >= 1300
     switch( GetFormat( ))
     {
@@ -388,16 +347,13 @@ void xbitmap::XboxSwizzleData( void )
         }
     }
     #endif
+*/
 }
 
 //==============================================================================
 
 xcolor xbitmap::ReadColor( byte* pRead ) const
 {
-    #ifndef TARGET_XBOX
-    ASSERT( !( m_Flags & FLAG_XBOX_DATA_SWIZZLED ));
-    #endif
-
     u32 Pixel = 0;
     u32 R, G, B, A;
     s32 Bits;
@@ -494,10 +450,6 @@ xcolor xbitmap::ReadColor( byte* pRead ) const
 
 void xbitmap::WriteColor( byte* pWrite, xcolor Color )
 {
-    #ifndef TARGET_XBOX
-    ASSERT( !( m_Flags & FLAG_XBOX_DATA_SWIZZLED ));
-    #endif
-
     u32 R, G, B, A, U;
 
     // SB - Validate writing address!
@@ -689,7 +641,6 @@ static s32 GetPS2SwizzledIndex( s32 I )
 
 //==============================================================================
 
-#ifndef TARGET_PS2
 static xcolor ReadDXTCPixel( const xbitmap* pBmp,s32 X,s32 Y,s32 Mip )
 {
     extern xcolor ReadPixelColorDXT1( const xbitmap* pBMP,s32 X,s32 Y,s32 Mip );
@@ -713,16 +664,13 @@ static xcolor ReadDXTCPixel( const xbitmap* pBmp,s32 X,s32 Y,s32 Mip )
     }
     return Result;
 }
-#endif
 
 //==============================================================================
 
 xcolor xbitmap::GetPixelColor( s32 X, s32 Y, s32 Mip ) const
 {
     byte* pPixel;
-
-#ifndef TARGET_PS2
-
+	
     // Handle DXT formats
     switch( m_Format )
     {
@@ -731,15 +679,6 @@ xcolor xbitmap::GetPixelColor( s32 X, s32 Y, s32 Mip ) const
         case FMT_DXT5:
             return ReadDXTCPixel( this,X,Y,Mip );
     }
-
-#ifdef TARGET_XBOX
-    if( m_Flags & FLAG_XBOX_DATA_SWIZZLED )
-    {
-        extern xcolor xbox_UnswizzlePoint( const xbitmap*,s32,s32,s32 );
-        return xbox_UnswizzlePoint( this,X,Y,Mip );
-    }
-#endif
-#endif // !defined( TARGET_PS2 )
 
     const xbitmap::format_info& Format = m_FormatInfo[m_Format];
 
@@ -1415,11 +1354,8 @@ void xbitmap::Unflip4BitNibbles( void )
 }
 
 //==============================================================================
-
-
-//==============================================================================
 //
-//          GCN              GCN                 GCN                 GCN
+//   LEGACY              LEGACY                 LEGACY                 LEGACY
 //
 //==============================================================================
  
@@ -1769,10 +1705,6 @@ void xbitmap::GCNSwizzleData  ( void )
     ASSERTS((!(m_Width  & (m_Width - 1))),"xbitmap::GCNSwizzleData :  Width not power of 2");
     ASSERTS((!(m_Height & (m_Height- 1))),"xbitmap::GCNSwizzleData : Height not power of 2");
 
-#ifdef TARGET_GCN
-    DCFlushRange( m_Data.pPixel, GetDataSize());
-#endif
-
     if (GetFormat() == xbitmap::FMT_DXT1)
     {
         GCNSwizzleDXT1();
@@ -1870,9 +1802,6 @@ void xbitmap::GCNSwizzleData  ( void )
 
     // Set the OWNED flag so this data will be released later
     m_Flags |= FLAG_DATA_OWNED | FLAG_GCN_DATA_SWIZZLED;
-#ifdef TARGET_GCN   
-    DCFlushRange( m_Data.pPixel, SwizzledSize);
-#endif
 }
        
 //==============================================================================
@@ -1898,11 +1827,7 @@ void xbitmap::GCNUnswizzleData( void )
 
 xbool xbitmap::ReplaceAlphaWithRed ( void )
 {
-#ifdef TARGET_GCN
-    ASSERT(FALSE);
-#endif
-
-#if defined TARGET_PC || defined TARGET_XBOX
+#if defined TARGET_PC
     if(!( m_Format == FMT_32_ARGB_8888 || m_Format == FMT_32_URGB_8888))
     {
         ASSERTS(0,"Blend textures must be 24 or 32-bit tgas.\n");
@@ -1995,11 +1920,7 @@ void xbitmap::GCNSwizzleDXT1  ( void )
     m_Data.pPixel = pOrigDest;
 
     // Set the OWNED flag so this data will be released later
-    m_Flags |= FLAG_DATA_OWNED | FLAG_GCN_DATA_SWIZZLED;
-#ifdef TARGET_GCN   
-    DCFlushRange( m_Data.pPixel, GetDataSize());
-#endif
-    
+    m_Flags |= FLAG_DATA_OWNED | FLAG_GCN_DATA_SWIZZLED;   
 }
 
 #endif

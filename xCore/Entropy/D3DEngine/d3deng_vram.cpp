@@ -45,8 +45,8 @@ void vram_Init( void )
     {
         s_List[i].iNext = i+1;
     }
-    s_List[i].iNext = 0;    // Zero is the universal NULL
-    s_iEmpty        = 1;    // Leave empty the node 0
+    s_List[MAX_TEXTURES-1].iNext = 0;    // Zero is the universal NULL
+    s_iEmpty        = 1;                 // Leave empty the node 0
 }
 
 //=============================================================================

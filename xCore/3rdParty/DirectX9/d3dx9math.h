@@ -47,7 +47,7 @@
 #define D3DX_16F_MAX_EXP      15               // max binary exponent
 #define D3DX_16F_MIN          6.1035156e-5f    // min positive value
 #define D3DX_16F_MIN_10_EXP   (-4)             // min decimal exponent
-#define D3DX_16F_MIN_EXP      (-12)            // min binary exponent
+#define D3DX_16F_MIN_EXP      (-14)            // min binary exponent
 #define D3DX_16F_RADIX        2                // exponent radix
 #define D3DX_16F_ROUNDS       1                // addition rounding: near
 
@@ -239,7 +239,8 @@ typedef struct D3DXVECTOR4
 public:
     D3DXVECTOR4() {};
     D3DXVECTOR4( CONST FLOAT* );
-    D3DXVECTOR4( CONST D3DXFLOAT16 * );
+    D3DXVECTOR4( CONST D3DXFLOAT16* );
+    D3DXVECTOR4( CONST D3DVECTOR& xyz, FLOAT w );
     D3DXVECTOR4( FLOAT x, FLOAT y, FLOAT z, FLOAT w );
 
     // casting
@@ -282,7 +283,8 @@ typedef struct D3DXVECTOR4_16F
 public:
     D3DXVECTOR4_16F() {};
     D3DXVECTOR4_16F( CONST FLOAT * );
-    D3DXVECTOR4_16F( CONST D3DXFLOAT16 * );
+    D3DXVECTOR4_16F( CONST D3DXFLOAT16* );
+    D3DXVECTOR4_16F( CONST D3DXVECTOR3_16F& xyz, CONST D3DXFLOAT16& w );
     D3DXVECTOR4_16F( CONST D3DXFLOAT16& x, CONST D3DXFLOAT16& y, CONST D3DXFLOAT16& z, CONST D3DXFLOAT16& w );
 
     // casting
@@ -907,6 +909,10 @@ extern "C" {
 FLOAT WINAPI D3DXMatrixDeterminant
     ( CONST D3DXMATRIX *pM );
 
+HRESULT WINAPI D3DXMatrixDecompose
+    ( D3DXVECTOR3 *pOutScale, D3DXQUATERNION *pOutRotation, 
+	  D3DXVECTOR3 *pOutTranslation, CONST D3DXMATRIX *pM );
+
 D3DXMATRIX* WINAPI D3DXMatrixTranspose
     ( D3DXMATRIX *pOut, CONST D3DXMATRIX *pM );
 
@@ -1297,9 +1303,9 @@ FLOAT WINAPI D3DXFresnelTerm
 typedef interface ID3DXMatrixStack ID3DXMatrixStack;
 typedef interface ID3DXMatrixStack *LPD3DXMATRIXSTACK;
 
-// {E3357330-CC5E-11d2-A434-00A0C90629A8}
-DEFINE_GUID( IID_ID3DXMatrixStack,
-0xe3357330, 0xcc5e, 0x11d2, 0xa4, 0x34, 0x0, 0xa0, 0xc9, 0x6, 0x29, 0xa8);
+// {C7885BA7-F990-4fe7-922D-8515E477DD85}
+DEFINE_GUID(IID_ID3DXMatrixStack, 
+0xc7885ba7, 0xf990, 0x4fe7, 0x92, 0x2d, 0x85, 0x15, 0xe4, 0x77, 0xdd, 0x85);
 
 
 #undef INTERFACE
@@ -1494,7 +1500,7 @@ FLOAT* WINAPI D3DXSHRotate
 
 
 FLOAT* WINAPI D3DXSHRotateZ
-    ( FLOAT *pOut, UINT Order, CONST FLOAT Angle, CONST FLOAT *pIn );
+    ( FLOAT *pOut, UINT Order, FLOAT Angle, CONST FLOAT *pIn );
     
 //============================================================================
 //
@@ -1558,6 +1564,37 @@ FLOAT* WINAPI D3DXSHScale
 
 FLOAT WINAPI D3DXSHDot
     ( UINT Order, CONST FLOAT *pA, CONST FLOAT *pB );
+
+//============================================================================
+//
+//  D3DXSHMultiply[O]:
+//  --------------------
+//  Computes the product of two functions represented using SH (f and g), where:
+//  pOut[i] = int(y_i(s) * f(s) * g(s)), where y_i(s) is the ith SH basis
+//  function, f(s) and g(s) are SH functions (sum_i(y_i(s)*c_i)).  The order O
+//  determines the lengths of the arrays, where there should always be O^2 
+//  coefficients.  In general the product of two SH functions of order O generates
+//  and SH function of order 2*O - 1, but we truncate the result.  This means
+//  that the product commutes (f*g == g*f) but doesn't associate 
+//  (f*(g*h) != (f*g)*h.
+//
+//  Parameters:
+//   pOut
+//      Output SH coefficients - basis function Ylm is stored at l*l + m+l
+//      This is the pointer that is returned.
+//   pF
+//      Input SH coeffs for first function.
+//   pG
+//      Second set of input SH coeffs.
+//
+//============================================================================
+
+FLOAT* WINAPI D3DXSHMultiply2( FLOAT *pOut, CONST FLOAT *pF, CONST FLOAT *pG);
+FLOAT* WINAPI D3DXSHMultiply3( FLOAT *pOut, CONST FLOAT *pF, CONST FLOAT *pG);
+FLOAT* WINAPI D3DXSHMultiply4( FLOAT *pOut, CONST FLOAT *pF, CONST FLOAT *pG);
+FLOAT* WINAPI D3DXSHMultiply5( FLOAT *pOut, CONST FLOAT *pF, CONST FLOAT *pG);
+FLOAT* WINAPI D3DXSHMultiply6( FLOAT *pOut, CONST FLOAT *pF, CONST FLOAT *pG);
+
 
 //============================================================================
 //

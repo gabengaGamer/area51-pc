@@ -19,8 +19,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				AdditionalIncludeDirectories="$(X)\x_files,PNG,PNG\ZLib,$(X)\x_files\3rdParty\DXTLibrary"
-				PreprocessorDefinitions="TARGET_PC,CONFIG_RETAIL"
-				RuntimeLibrary="0"/>
+				PreprocessorDefinitions="TARGET_PC,CONFIG_RETAIL"/>
 			<Tool
 				Name="VCCustomBuildTool"/>
 			<Tool
@@ -75,12 +74,8 @@
 				AdditionalIncludeDirectories="$(X)\x_files,PNG,PNG\ZLib"
 				PreprocessorDefinitions="TARGET_PC,CONFIG_DEBUG"
 				BasicRuntimeChecks="3"
-				RuntimeLibrary="0"
-				StructMemberAlignment="0"
-				BufferSecurityCheck="FALSE"
-				EnableEnhancedInstructionSet="0"
-				DebugInformationFormat="4"
-				CallingConvention="0"/>
+				RuntimeLibrary="1"
+				DebugInformationFormat="4"/>
 			<Tool
 				Name="VCCustomBuildTool"/>
 			<Tool
@@ -135,7 +130,7 @@
 				AdditionalIncludeDirectories="$(X)\x_files,PNG,PNG\ZLib"
 				PreprocessorDefinitions="TARGET_PC,CONFIG_OPTDEBUG"
 				BasicRuntimeChecks="3"
-				RuntimeLibrary="0"
+				RuntimeLibrary="1"
 				DebugInformationFormat="4"/>
 			<Tool
 				Name="VCCustomBuildTool"/>
@@ -191,7 +186,7 @@
 				AdditionalIncludeDirectories="$(X)\x_files,PNG,PNG\ZLib"
 				PreprocessorDefinitions="TARGET_PC,CONFIG_QA"
 				BasicRuntimeChecks="3"
-				RuntimeLibrary="0"
+				RuntimeLibrary="1"
 				DebugInformationFormat="4"/>
 			<Tool
 				Name="VCCustomBuildTool"/>

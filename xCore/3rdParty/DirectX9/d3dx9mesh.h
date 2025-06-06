@@ -12,31 +12,29 @@
 #ifndef __D3DX9MESH_H__
 #define __D3DX9MESH_H__
 
-#include "dxfile.h"     // defines LPDIRECTXFILEDATA
-
-// {4F5621A3-7F25-46dc-8239-820B823795CB}
+// {7ED943DD-52E8-40b5-A8D8-76685C406330}
 DEFINE_GUID(IID_ID3DXBaseMesh, 
-0x4f5621a3, 0x7f25, 0x46dc, 0x82, 0x39, 0x82, 0xb, 0x82, 0x37, 0x95, 0xcb);
+0x7ed943dd, 0x52e8, 0x40b5, 0xa8, 0xd8, 0x76, 0x68, 0x5c, 0x40, 0x63, 0x30);
 
-// {29E3EB8D-4DD6-4524-B1A2-1EF0581E778D}
+// {4020E5C2-1403-4929-883F-E2E849FAC195}
 DEFINE_GUID(IID_ID3DXMesh, 
-0x29e3eb8d, 0x4dd6, 0x4524, 0xb1, 0xa2, 0x1e, 0xf0, 0x58, 0x1e, 0x77, 0x8d);
+0x4020e5c2, 0x1403, 0x4929, 0x88, 0x3f, 0xe2, 0xe8, 0x49, 0xfa, 0xc1, 0x95);
 
-// {1da4801f-a26e-4623-bd5471ff57f4bd02}
+// {8875769A-D579-4088-AAEB-534D1AD84E96}
 DEFINE_GUID(IID_ID3DXPMesh, 
-0x1da4801f, 0xa26e, 0x4623, 0xbd, 0x54, 0x71, 0xff, 0x57, 0xf4, 0xbd, 0x2);
+0x8875769a, 0xd579, 0x4088, 0xaa, 0xeb, 0x53, 0x4d, 0x1a, 0xd8, 0x4e, 0x96);
 
-// {1C4E77C5-8391-4951-A019-D4C5A9539EEC}
+// {667EA4C7-F1CD-4386-B523-7C0290B83CC5}
 DEFINE_GUID(IID_ID3DXSPMesh, 
-0x1c4e77c5, 0x8391, 0x4951, 0xa0, 0x19, 0xd4, 0xc5, 0xa9, 0x53, 0x9e, 0xec);
+0x667ea4c7, 0xf1cd, 0x4386, 0xb5, 0x23, 0x7c, 0x2, 0x90, 0xb8, 0x3c, 0xc5);
 
-// {0E7DBBF3-421A-4dd8-B738-A5DAC3A48767}
+// {11EAA540-F9A6-4d49-AE6A-E19221F70CC4}
 DEFINE_GUID(IID_ID3DXSkinInfo, 
-0xe7dbbf3, 0x421a, 0x4dd8, 0xb7, 0x38, 0xa5, 0xda, 0xc3, 0xa4, 0x87, 0x67);
+0x11eaa540, 0xf9a6, 0x4d49, 0xae, 0x6a, 0xe1, 0x92, 0x21, 0xf7, 0xc, 0xc4);
 
-// {0AD3E8BC-290D-4dc7-91AB-73A82755B13E}
+// {3CE6CC22-DBF2-44f4-894D-F9C34A337139}
 DEFINE_GUID(IID_ID3DXPatchMesh, 
-0xad3e8bc, 0x290d, 0x4dc7, 0x91, 0xab, 0x73, 0xa8, 0x27, 0x55, 0xb1, 0x3e);
+0x3ce6cc22, 0xdbf2, 0x44f4, 0x89, 0x4d, 0xf9, 0xc3, 0x4a, 0x33, 0x71, 0x39);
 
 //patch mesh can be quads or tris
 typedef enum _D3DXPATCHMESHTYPE {
@@ -90,10 +88,57 @@ enum _D3DXMESHSIMP
 
 };
 
+typedef enum _D3DXCLEANTYPE {
+	D3DXCLEAN_BACKFACING	= 0x00000001,
+	D3DXCLEAN_BOWTIES		= 0x00000002,
+	
+	// Helper options
+	D3DXCLEAN_SKINNING		= D3DXCLEAN_BACKFACING,	// Bowtie cleaning modifies geometry and breaks skinning
+	D3DXCLEAN_OPTIMIZATION	= D3DXCLEAN_BACKFACING,
+	D3DXCLEAN_SIMPLIFICATION= D3DXCLEAN_BACKFACING | D3DXCLEAN_BOWTIES,	
+} D3DXCLEANTYPE;
+
 enum _MAX_FVF_DECL_SIZE
 {
     MAX_FVF_DECL_SIZE = MAXD3DDECLLENGTH + 1 // +1 for END
 };
+
+typedef enum _D3DXTANGENT
+{
+    D3DXTANGENT_WRAP_U =                    0x01,
+    D3DXTANGENT_WRAP_V =                    0x02,
+    D3DXTANGENT_WRAP_UV =                   0x03,
+    D3DXTANGENT_DONT_NORMALIZE_PARTIALS =   0x04,
+    D3DXTANGENT_DONT_ORTHOGONALIZE =        0x08,
+    D3DXTANGENT_ORTHOGONALIZE_FROM_V =      0x010,
+    D3DXTANGENT_ORTHOGONALIZE_FROM_U =      0x020,
+    D3DXTANGENT_WEIGHT_BY_AREA =            0x040,
+    D3DXTANGENT_WEIGHT_EQUAL =              0x080,
+    D3DXTANGENT_WIND_CW =                   0x0100,
+    D3DXTANGENT_CALCULATE_NORMALS =         0x0200,
+    D3DXTANGENT_GENERATE_IN_PLACE =         0x0400,
+} D3DXTANGENT;
+
+// D3DXIMT_WRAP_U means the texture wraps in the U direction
+// D3DXIMT_WRAP_V means the texture wraps in the V direction
+// D3DXIMT_WRAP_UV means the texture wraps in both directions
+typedef enum _D3DXIMT
+{
+    D3DXIMT_WRAP_U =                    0x01,
+    D3DXIMT_WRAP_V =                    0x02,
+    D3DXIMT_WRAP_UV =                   0x03,
+} D3DXIMT;
+
+// These options are only valid for UVAtlasCreate and UVAtlasPartition, we may add more for UVAtlasPack if necessary
+// D3DXUVATLAS_DEFAULT - Meshes with more than 25k faces go through fast, meshes with fewer than 25k faces go through quality
+// D3DXUVATLAS_GEODESIC_FAST - Uses approximations to improve charting speed at the cost of added stretch or more charts.
+// D3DXUVATLAS_GEODESIC_QUALITY - Provides better quality charts, but requires more time and memory than fast.
+typedef enum _D3DXUVATLAS
+{
+    D3DXUVATLAS_DEFAULT               = 0x00,
+    D3DXUVATLAS_GEODESIC_FAST         = 0x01,
+    D3DXUVATLAS_GEODESIC_QUALITY      = 0x02,
+} D3DXUVATLAS;
 
 typedef struct ID3DXBaseMesh *LPD3DXBASEMESH;
 typedef struct ID3DXMesh *LPD3DXMESH;
@@ -101,6 +146,9 @@ typedef struct ID3DXPMesh *LPD3DXPMESH;
 typedef struct ID3DXSPMesh *LPD3DXSPMESH;
 typedef struct ID3DXSkinInfo *LPD3DXSKININFO;
 typedef struct ID3DXPatchMesh *LPD3DXPATCHMESH;
+typedef interface ID3DXTextureGutterHelper *LPD3DXTEXTUREGUTTERHELPER;
+typedef interface ID3DXPRTBuffer *LPD3DXPRTBUFFER;
+
 
 typedef struct _D3DXATTRIBUTERANGE
 {
@@ -321,9 +369,9 @@ DECLARE_INTERFACE_(ID3DXPMesh, ID3DXBaseMesh)
 
     // ID3DXPMesh
     STDMETHOD(ClonePMeshFVF)(THIS_ DWORD Options, 
-                DWORD FVF, LPDIRECT3DDEVICE9 pD3D, LPD3DXPMESH* ppCloneMesh) PURE;
+                DWORD FVF, LPDIRECT3DDEVICE9 pD3DDevice, LPD3DXPMESH* ppCloneMesh) PURE;
     STDMETHOD(ClonePMesh)(THIS_ DWORD Options, 
-                CONST D3DVERTEXELEMENT9 *pDeclaration, LPDIRECT3DDEVICE9 pD3D, LPD3DXPMESH* ppCloneMesh) PURE;
+                CONST D3DVERTEXELEMENT9 *pDeclaration, LPDIRECT3DDEVICE9 pD3DDevice, LPD3DXPMESH* ppCloneMesh) PURE;
     STDMETHOD(SetNumFaces)(THIS_ DWORD Faces) PURE;
     STDMETHOD(SetNumVertices)(THIS_ DWORD Vertices) PURE;
     STDMETHOD_(DWORD, GetMaxFaces)(THIS) PURE;
@@ -366,13 +414,13 @@ DECLARE_INTERFACE_(ID3DXSPMesh, IUnknown)
     STDMETHOD_(DWORD, GetOptions)(THIS) PURE;
     STDMETHOD(GetDevice)(THIS_ LPDIRECT3DDEVICE9* ppDevice) PURE;
     STDMETHOD(CloneMeshFVF)(THIS_ DWORD Options, 
-                DWORD FVF, LPDIRECT3DDEVICE9 pD3D, DWORD *pAdjacencyOut, DWORD *pVertexRemapOut, LPD3DXMESH* ppCloneMesh) PURE;
+                DWORD FVF, LPDIRECT3DDEVICE9 pD3DDevice, DWORD *pAdjacencyOut, DWORD *pVertexRemapOut, LPD3DXMESH* ppCloneMesh) PURE;
     STDMETHOD(CloneMesh)(THIS_ DWORD Options, 
                 CONST D3DVERTEXELEMENT9 *pDeclaration, LPDIRECT3DDEVICE9 pD3DDevice, DWORD *pAdjacencyOut, DWORD *pVertexRemapOut, LPD3DXMESH* ppCloneMesh) PURE;
     STDMETHOD(ClonePMeshFVF)(THIS_ DWORD Options, 
-                DWORD FVF, LPDIRECT3DDEVICE9 pD3D, DWORD *pVertexRemapOut, FLOAT *pErrorsByFace, LPD3DXPMESH* ppCloneMesh) PURE;
+                DWORD FVF, LPDIRECT3DDEVICE9 pD3DDevice, DWORD *pVertexRemapOut, FLOAT *pErrorsByFace, LPD3DXPMESH* ppCloneMesh) PURE;
     STDMETHOD(ClonePMesh)(THIS_ DWORD Options, 
-                CONST D3DVERTEXELEMENT9 *pDeclaration, LPDIRECT3DDEVICE9 pD3D, DWORD *pVertexRemapOut, FLOAT *pErrorsbyFace, LPD3DXPMESH* ppCloneMesh) PURE;
+                CONST D3DVERTEXELEMENT9 *pDeclaration, LPDIRECT3DDEVICE9 pD3DDevice, DWORD *pVertexRemapOut, FLOAT *pErrorsbyFace, LPD3DXPMESH* ppCloneMesh) PURE;
     STDMETHOD(ReduceFaces)(THIS_ DWORD Faces) PURE;
     STDMETHOD(ReduceVertices)(THIS_ DWORD Vertices) PURE;
     STDMETHOD_(DWORD, GetMaxFaces)(THIS) PURE;
@@ -440,7 +488,7 @@ DECLARE_INTERFACE_(ID3DXPatchMesh, IUnknown)
     // Return creation parameters
     STDMETHOD_(DWORD, GetNumPatches)(THIS) PURE;
     STDMETHOD_(DWORD, GetNumVertices)(THIS) PURE;
-    STDMETHOD(GetDeclaration)(THIS_ LPD3DVERTEXELEMENT9) PURE;
+    STDMETHOD(GetDeclaration)(THIS_ D3DVERTEXELEMENT9 Declaration[MAX_FVF_DECL_SIZE]) PURE;
     STDMETHOD_(DWORD, GetControlVerticesPerPatch)(THIS) PURE;
     STDMETHOD_(DWORD, GetOptions)(THIS) PURE;
     STDMETHOD(GetDevice)(THIS_ LPDIRECT3DDEVICE9 *ppDevice) PURE;
@@ -460,7 +508,7 @@ DECLARE_INTERFACE_(ID3DXPatchMesh, IUnknown)
     // This assumes uniform tessellation. For adaptive tessellation the Adaptive parameter must
     // be set to TRUE and TessellationLevel should be the max tessellation.
     // This will result in the max mesh size necessary for adaptive tessellation.    
-    STDMETHOD(GetTessSize)(THIS_ FLOAT fTessLevel,DWORD Adapative, DWORD *NumTriangles,DWORD *NumVertices) PURE;
+    STDMETHOD(GetTessSize)(THIS_ FLOAT fTessLevel,DWORD Adaptive, DWORD *NumTriangles,DWORD *NumVertices) PURE;
     
     //GenerateAdjacency determines which patches are adjacent with provided tolerance
     //this information is used internally to optimize tessellation
@@ -525,10 +573,13 @@ DECLARE_INTERFACE_(ID3DXSkinInfo, IUnknown)
 
     // Specify the which vertices do each bones influence and by how much
     STDMETHOD(SetBoneInfluence)(THIS_ DWORD bone, DWORD numInfluences, CONST DWORD* vertices, CONST FLOAT* weights) PURE;
+	STDMETHOD(SetBoneVertexInfluence)(THIS_ DWORD boneNum, DWORD influenceNum, float weight) PURE;
     STDMETHOD_(DWORD, GetNumBoneInfluences)(THIS_ DWORD bone) PURE;
-    STDMETHOD(GetBoneInfluence)(THIS_ DWORD bone, DWORD* vertices, FLOAT* weights) PURE;
+	STDMETHOD(GetBoneInfluence)(THIS_ DWORD bone, DWORD* vertices, FLOAT* weights) PURE;
+	STDMETHOD(GetBoneVertexInfluence)(THIS_ DWORD boneNum, DWORD influenceNum, float *pWeight, DWORD *pVertexNum) PURE;
     STDMETHOD(GetMaxVertexInfluences)(THIS_ DWORD* maxVertexInfluences) PURE;
     STDMETHOD_(DWORD, GetNumBones)(THIS) PURE;
+	STDMETHOD(FindBoneVertexInfluenceIndex)(THIS_ DWORD boneNum, DWORD vertexNum, DWORD *pInfluenceIndex) PURE;
 
     // This gets the max face influences based on a triangle mesh with the specified index buffer
     STDMETHOD(GetMaxFaceInfluences)(THIS_ LPDIRECT3DINDEXBUFFER9 pIB, DWORD NumFaces, DWORD* maxFaceInfluences) PURE;
@@ -607,7 +658,7 @@ HRESULT WINAPI
         DWORD NumVertices, 
         DWORD Options, 
         CONST D3DVERTEXELEMENT9 *pDeclaration, 
-        LPDIRECT3DDEVICE9 pD3D, 
+        LPDIRECT3DDEVICE9 pD3DDevice, 
         LPD3DXMESH* ppMesh);
 
 HRESULT WINAPI 
@@ -616,7 +667,7 @@ HRESULT WINAPI
         DWORD NumVertices, 
         DWORD Options, 
         DWORD FVF, 
-        LPDIRECT3DDEVICE9 pD3D, 
+        LPDIRECT3DDEVICE9 pD3DDevice, 
         LPD3DXMESH* ppMesh);
 
 HRESULT WINAPI 
@@ -630,6 +681,7 @@ HRESULT WINAPI
 // clean a mesh up for simplification, try to make manifold
 HRESULT WINAPI
     D3DXCleanMesh(
+    D3DXCLEANTYPE CleanType,
     LPD3DXMESH pMeshIn,
     CONST DWORD* pAdjacencyIn,
     LPD3DXMESH* ppMeshOut,
@@ -693,7 +745,7 @@ HRESULT WINAPI
     D3DXLoadMeshFromXA(
         LPCSTR pFilename, 
         DWORD Options, 
-        LPDIRECT3DDEVICE9 pD3D, 
+        LPDIRECT3DDEVICE9 pD3DDevice, 
         LPD3DXBUFFER *ppAdjacency,
         LPD3DXBUFFER *ppMaterials, 
         LPD3DXBUFFER *ppEffectInstances, 
@@ -704,7 +756,7 @@ HRESULT WINAPI
     D3DXLoadMeshFromXW(
         LPCWSTR pFilename, 
         DWORD Options, 
-        LPDIRECT3DDEVICE9 pD3D, 
+        LPDIRECT3DDEVICE9 pD3DDevice, 
         LPD3DXBUFFER *ppAdjacency,
         LPD3DXBUFFER *ppMaterials, 
         LPD3DXBUFFER *ppEffectInstances, 
@@ -722,7 +774,7 @@ HRESULT WINAPI
         LPCVOID Memory,
         DWORD SizeOfMemory,
         DWORD Options, 
-        LPDIRECT3DDEVICE9 pD3D, 
+        LPDIRECT3DDEVICE9 pD3DDevice, 
         LPD3DXBUFFER *ppAdjacency,
         LPD3DXBUFFER *ppMaterials, 
         LPD3DXBUFFER *ppEffectInstances, 
@@ -735,7 +787,7 @@ HRESULT WINAPI
         LPCSTR Name,
         LPCSTR Type,
         DWORD Options, 
-        LPDIRECT3DDEVICE9 pD3D, 
+        LPDIRECT3DDEVICE9 pD3DDevice, 
         LPD3DXBUFFER *ppAdjacency,
         LPD3DXBUFFER *ppMaterials, 
         LPD3DXBUFFER *ppEffectInstances, 
@@ -807,7 +859,7 @@ extern "C" {
 
 HRESULT WINAPI 
     D3DXLoadMeshFromXof(
-        LPDIRECTXFILEDATA pXofObjMesh, 
+        LPD3DXFILEDATA pxofMesh, 
         DWORD Options, 
         LPDIRECT3DDEVICE9 pD3DDevice, 
         LPD3DXBUFFER *ppAdjacency,
@@ -820,15 +872,16 @@ HRESULT WINAPI
 // If skinning info is not present, ppSkinInfo will be NULL     
 HRESULT WINAPI
     D3DXLoadSkinMeshFromXof(
-        LPDIRECTXFILEDATA pxofobjMesh, 
+        LPD3DXFILEDATA pxofMesh, 
         DWORD Options,
-        LPDIRECT3DDEVICE9 pD3D,
+        LPDIRECT3DDEVICE9 pD3DDevice,
         LPD3DXBUFFER* ppAdjacency,
         LPD3DXBUFFER* ppMaterials,
         LPD3DXBUFFER *ppEffectInstances, 
         DWORD *pMatOut,
         LPD3DXSKININFO* ppSkinInfo,
         LPD3DXMESH* ppMesh);
+
 
 // The inverse of D3DXConvertTo{Indexed}BlendedMesh() functions. It figures out the skinning info from
 // the mesh and the bone combination table and populates a skin info object with that data. The bone
@@ -838,7 +891,7 @@ HRESULT WINAPI
 HRESULT WINAPI
     D3DXCreateSkinInfoFromBlendedMesh(
         LPD3DXBASEMESH pMesh,
-        DWORD NumBoneCombinations,
+        DWORD NumBones,
         CONST D3DXBONECOMBINATION *pBoneCombinationTable,
         LPD3DXSKININFO* ppSkinInfo);
         
@@ -867,9 +920,9 @@ HRESULT WINAPI
 //meshes in the actual file. 
 HRESULT WINAPI
     D3DXLoadPatchMeshFromXof(
-        LPDIRECTXFILEDATA pXofObjMesh,
+        LPD3DXFILEDATA pXofObjMesh,
         DWORD Options,
-        LPDIRECT3DDEVICE9 pDevice,
+        LPDIRECT3DDEVICE9 pD3DDevice,
         LPD3DXBUFFER *ppMaterials,
         LPD3DXBUFFER *ppEffectInstances, 
         PDWORD pNumMaterials,
@@ -926,7 +979,7 @@ HRESULT WINAPI
         DWORD dwNumVertices,            //number of control vertices
         DWORD dwOptions,                //options 
         CONST D3DVERTEXELEMENT9 *pDecl, //format of control vertices
-        LPDIRECT3DDEVICE9 pDevice, 
+        LPDIRECT3DDEVICE9 pD3DDevice, 
         LPD3DXPATCHMESH *pPatchMesh);
 
         
@@ -1043,6 +1096,26 @@ BOOL WINAPI
         CONST D3DXVECTOR3 *pRayDirection);
 
 
+HRESULT WINAPI D3DXComputeTangentFrame(ID3DXMesh *pMesh,
+                                       DWORD dwOptions);
+
+HRESULT WINAPI D3DXComputeTangentFrameEx(ID3DXMesh *pMesh,
+                                         DWORD dwTextureInSemantic,
+                                         DWORD dwTextureInIndex,
+                                         DWORD dwUPartialOutSemantic,
+                                         DWORD dwUPartialOutIndex,
+                                         DWORD dwVPartialOutSemantic,
+                                         DWORD dwVPartialOutIndex,
+                                         DWORD dwNormalOutSemantic,
+                                         DWORD dwNormalOutIndex,
+                                         DWORD dwOptions,
+                                         CONST DWORD *pdwAdjacency,
+                                         FLOAT fPartialEdgeThreshold,
+                                         FLOAT fSingularPointThreshold,
+                                         FLOAT fNormalEdgeThreshold,
+                                         ID3DXMesh **ppMeshOut,
+                                         ID3DXBuffer **ppVertexMapping);
+
 
 //D3DXComputeTangent
 //
@@ -1066,6 +1139,307 @@ HRESULT WINAPI D3DXComputeTangent(LPD3DXMESH Mesh,
                                  DWORD BinormIndex,
                                  DWORD Wrap,
                                  CONST DWORD *pAdjacency);
+
+//============================================================================
+//
+// UVAtlas apis
+//
+//============================================================================
+typedef HRESULT (WINAPI *LPD3DXUVATLASCB)(FLOAT fPercentDone,  LPVOID lpUserContext);
+
+// This function creates atlases for meshes. There are two modes of operation,
+// either based on the number of charts, or the maximum allowed stretch. If the
+// maximum allowed stretch is 0, then each triangle will likely be in its own
+// chart.
+
+//
+// The parameters are as follows:
+//  pMesh - Input mesh to calculate an atlas for. This must have a position
+//          channel and at least a 2-d texture channel.
+//  uMaxChartNumber - The maximum number of charts required for the atlas.
+//                    If this is 0, it will be parameterized based solely on
+//                    stretch.
+//  fMaxStretch - The maximum amount of stretch, if 0, no stretching is allowed,
+//                if 1, then any amount of stretching is allowed.
+//  uWidth - The width of the texture the atlas will be used on.
+//  uHeight - The height of the texture the atlas will be used on.
+//  fGutter - The minimum distance, in texels between two charts on the atlas.
+//            this gets scaled by the width, so if fGutter is 2.5, and it is
+//            used on a 512x512 texture, then the minimum distance will be
+//            2.5 / 512 in u-v space.
+//  dwTextureIndex - Specifies which texture coordinate to write to in the
+//                   output mesh (which is cloned from the input mesh). Useful
+//                   if your vertex has multiple texture coordinates.
+//  pdwAdjacency - a pointer to an array with 3 DWORDs per face, indicating
+//                 which triangles are adjacent to each other.
+//  pdwFalseEdgeAdjacency - a pointer to an array with 3 DWORDS per face, indicating
+//                          at each face, whether an edge is a false edge or not (using
+//                          the same ordering as the adjacency data structure). If this
+//                          is NULL, then it is assumed that there are no false edges. If
+//                          not NULL, then a non-false edge is indicated by -1 and a false
+//                          edge is indicated by any other value (it is not required, but
+//                          it may be useful for the caller to use the original adjacency
+//                          value). This allows you to parameterize a mesh of quads, and
+//                          the edges down the middle of each quad will not be cut when
+//                          parameterizing the mesh.
+//  pfIMTArray - a pointer to an array with 3 FLOATs per face, describing the
+//               integrated metric tensor for that face. This lets you control
+//               the way this triangle may be stretched in the atlas. The IMT
+//               passed in will be 3 floats (a,b,c) and specify a symmetric
+//               matrix (a b) that, given a vector (s,t), specifies the 
+//                      (b c)
+//               distance between a vector v1 and a vector v2 = v1 + (s,t) as
+//               sqrt((s, t) * M * (s, t)^T).
+//               In other words, this lets one specify the magnitude of the
+//               stretch in an arbitrary direction in u-v space. For example
+//               if a = b = c = 1, then this scales the vector (1,1) by 2, and
+//               the vector (1,-1) by 0. Note that this is multiplying the edge
+//               length by the square of the matrix, so if you want the face to
+//               stretch to twice its
+//               size with no shearing, the IMT value should be (2, 0, 2), which
+//               is just the identity matrix times 2.
+//               Note that this assumes you have an orientation for the triangle
+//               in some 2-D space. For D3DXUVAtlas, this space is created by
+//               letting S be the direction from the first to the second
+//               vertex, and T be the cross product between the normal and S.
+//               
+//  pStatusCallback - Since the atlas creation process can be very CPU intensive,
+//                    this allows the programmer to specify a function to be called
+//                    periodically, similarly to how it is done in the PRT simulation
+//                    engine.
+//  fCallbackFrequency - This lets you specify how often the callback will be
+//                       called. A decent default should be 0.0001f.
+//  pUserContext - a void pointer to be passed back to the callback function
+//  dwOptions - A combination of flags in the D3DXUVATLAS enum
+//  ppMeshOut - A pointer to a location to store a pointer for the newly created
+//              mesh.
+//  ppFacePartitioning - A pointer to a location to store a pointer for an array,
+//                       one DWORD per face, giving the final partitioning
+//                       created by the atlasing algorithm.
+//  ppVertexRemapArray - A pointer to a location to store a pointer for an array,
+//                       one DWORD per vertex, giving the vertex it was copied
+//                       from, if any vertices needed to be split.
+//  pfMaxStretchOut - A location to store the maximum stretch resulting from the
+//                    atlasing algorithm.
+//  puNumChartsOut - A location to store the number of charts created, or if the
+//                   maximum number of charts was too low, this gives the minimum
+//                    number of charts needed to create an atlas.
+
+HRESULT WINAPI D3DXUVAtlasCreate(LPD3DXMESH pMesh,
+                                 UINT uMaxChartNumber,
+                                 FLOAT fMaxStretch,
+                                 UINT uWidth,
+                                 UINT uHeight,
+                                 FLOAT fGutter,
+                                 DWORD dwTextureIndex,
+                                 CONST DWORD *pdwAdjacency,
+                                 CONST DWORD *pdwFalseEdgeAdjacency,
+                                 CONST FLOAT *pfIMTArray,
+                                 LPD3DXUVATLASCB pStatusCallback,
+                                 FLOAT fCallbackFrequency,
+                                 LPVOID pUserContext,
+                                 DWORD dwOptions,
+                                 LPD3DXMESH *ppMeshOut,
+                                 LPD3DXBUFFER *ppFacePartitioning,
+                                 LPD3DXBUFFER *ppVertexRemapArray,
+                                 FLOAT *pfMaxStretchOut,
+                                 UINT *puNumChartsOut);
+
+// This has the same exact arguments as Create, except that it does not perform the
+// final packing step. This method allows one to get a partitioning out, and possibly
+// modify it before sending it to be repacked. Note that if you change the
+// partitioning, you'll also need to calculate new texture coordinates for any faces
+// that have switched charts.
+//
+// The partition result adjacency output parameter is meant to be passed to the
+// UVAtlasPack function, this adjacency cuts edges that are between adjacent
+// charts, and also can include cuts inside of a chart in order to make it
+// equivalent to a disc. For example:
+//
+// _______
+// | ___ |
+// | |_| |
+// |_____|
+//
+// In order to make this equivalent to a disc, we would need to add a cut, and it
+// Would end up looking like:
+// _______
+// | ___ |
+// | |_|_|
+// |_____|
+//
+// The resulting partition adjacency parameter cannot be NULL, because it is
+// required for the packing step.
+
+
+
+HRESULT WINAPI D3DXUVAtlasPartition(LPD3DXMESH pMesh,
+                                    UINT uMaxChartNumber,
+                                    FLOAT fMaxStretch,
+                                    DWORD dwTextureIndex,
+                                    CONST DWORD *pdwAdjacency,
+                                    CONST DWORD *pdwFalseEdgeAdjacency,
+                                    CONST FLOAT *pfIMTArray,
+                                    LPD3DXUVATLASCB pStatusCallback,
+                                    FLOAT fCallbackFrequency,
+                                    LPVOID pUserContext,
+                                    DWORD dwOptions,
+                                    LPD3DXMESH *ppMeshOut,
+                                    LPD3DXBUFFER *ppFacePartitioning,
+                                    LPD3DXBUFFER *ppVertexRemapArray,
+                                    LPD3DXBUFFER *ppPartitionResultAdjacency,
+                                    FLOAT *pfMaxStretchOut,
+                                    UINT *puNumChartsOut);
+
+// This takes the face partitioning result from Partition and packs it into an
+// atlas of the given size. pdwPartitionResultAdjacency should be derived from
+// the adjacency returned from the partition step. This value cannot be NULL
+// because Pack needs to know where charts were cut in the partition step in
+// order to find the edges of each chart.
+// The options parameter is currently reserved.
+HRESULT WINAPI D3DXUVAtlasPack(ID3DXMesh *pMesh,
+                               UINT uWidth,
+                               UINT uHeight,
+                               FLOAT fGutter,
+                               DWORD dwTextureIndex,
+                               CONST DWORD *pdwPartitionResultAdjacency,
+                               LPD3DXUVATLASCB pStatusCallback,
+                               FLOAT fCallbackFrequency,
+                               LPVOID pUserContext,
+                               DWORD dwOptions,
+                               LPD3DXBUFFER pFacePartitioning);
+
+
+//============================================================================
+//
+// IMT Calculation apis
+//
+// These functions all compute the Integrated Metric Tensor for use in the
+// UVAtlas API. They all calculate the IMT with respect to the canonical
+// triangle, where the coordinate system is set up so that the u axis goes
+// from vertex 0 to 1 and the v axis is N x u. So, for example, the second
+// vertex's canonical uv coordinates are (d,0) where d is the distance between
+// vertices 0 and 1. This way the IMT does not depend on the parameterization
+// of the mesh, and if the signal over the surface doesn't change, then
+// the IMT doesn't need to be recalculated.
+//============================================================================
+
+// This callback is used by D3DXComputeIMTFromSignal.
+//
+// uv               - The texture coordinate for the vertex.
+// uPrimitiveID     - Face ID of the triangle on which to compute the signal.
+// uSignalDimension - The number of floats to store in pfSignalOut.
+// pUserData        - The pUserData pointer passed in to ComputeIMTFromSignal.
+// pfSignalOut      - A pointer to where to store the signal data.
+typedef HRESULT (WINAPI* LPD3DXIMTSIGNALCALLBACK)
+    (CONST D3DXVECTOR2 *uv,
+     UINT uPrimitiveID,
+     UINT uSignalDimension,
+     VOID *pUserData,
+     FLOAT *pfSignalOut);
+
+// This function is used to calculate the IMT from per vertex data. It sets
+// up a linear system over the triangle, solves for the jacobian J, then
+// constructs the IMT from that (J^TJ).
+// This function allows you to calculate the IMT based off of any value in a
+// mesh (color, normal, etc) by specifying the correct stride of the array.
+// The IMT computed will cause areas of the mesh that have similar values to
+// take up less space in the texture.
+//
+// pMesh            - The mesh to calculate the IMT for.
+// pVertexSignal    - A float array of size uSignalStride * v, where v is the
+//                    number of vertices in the mesh.
+// uSignalDimension - How many floats per vertex to use in calculating the IMT.
+// uSignalStride    - The number of bytes per vertex in the array. This must be
+//                    a multiple of sizeof(float)
+// ppIMTData        - Where to store the buffer holding the IMT data
+
+HRESULT WINAPI D3DXComputeIMTFromPerVertexSignal (
+    LPD3DXMESH pMesh,
+    CONST FLOAT *pfVertexSignal, // uSignalDimension floats per vertex
+    UINT uSignalDimension,
+    UINT uSignalStride,         // stride of signal in bytes
+    DWORD dwOptions,            // reserved for future use
+    LPD3DXUVATLASCB pStatusCallback,
+    LPVOID pUserContext,
+    LPD3DXBUFFER *ppIMTData);
+
+// This function is used to calculate the IMT from data that varies over the
+// surface of the mesh (generally at a higher frequency than vertex data).
+// This function requires the mesh to already be parameterized (so it already
+// has texture coordinates). It allows the user to define a signal arbitrarily
+// over the surface of the mesh.
+//
+// pMesh            - The mesh to calculate the IMT for.
+// dwTextureIndex   - This describes which set of texture coordinates in the
+//                    mesh to use.
+// uSignalDimension - How many components there are in the signal.
+// fMaxUVDistance   - The subdivision will continue until the distance between
+//                    all vertices is at most fMaxUVDistance.
+// dwOptions        - reserved for future use
+// pSignalCallback  - The callback to use to get the signal.
+// pUserData        - A pointer that will be passed in to the callback.
+// ppIMTData        - Where to store the buffer holding the IMT data
+HRESULT WINAPI D3DXComputeIMTFromSignal(
+    LPD3DXMESH pMesh,
+    DWORD dwTextureIndex,
+    UINT uSignalDimension,
+    FLOAT fMaxUVDistance,
+    DWORD dwOptions, // reserved for future use
+    LPD3DXIMTSIGNALCALLBACK pSignalCallback,
+    VOID *pUserData,
+    LPD3DXUVATLASCB pStatusCallback,
+    LPVOID pUserContext,
+    LPD3DXBUFFER *ppIMTData);
+
+// This function is used to calculate the IMT from texture data. Given a texture
+// that maps over the surface of the mesh, the algorithm computes the IMT for
+// each face. This will cause large areas that are very similar to take up less
+// room when parameterized with UVAtlas. The texture is assumed to be
+// interpolated over the mesh bilinearly.
+//
+// pMesh            - The mesh to calculate the IMT for.
+// pTexture         - The texture to load data from.
+// dwTextureIndex   - This describes which set of texture coordinates in the
+//                    mesh to use.
+// dwOptions        - Combination of one or more D3DXIMT flags.
+// ppIMTData        - Where to store the buffer holding the IMT data
+HRESULT WINAPI D3DXComputeIMTFromTexture (
+    LPD3DXMESH pMesh,
+    LPDIRECT3DTEXTURE9 pTexture,
+    DWORD dwTextureIndex,
+    DWORD dwOptions,
+    LPD3DXUVATLASCB pStatusCallback,
+    LPVOID pUserContext,
+    LPD3DXBUFFER *ppIMTData);
+
+// This function is very similar to ComputeIMTFromTexture, but it uses a
+// float array to pass in the data, and it can calculate higher dimensional
+// values than 4.
+//
+// pMesh            - The mesh to calculate the IMT for.
+// dwTextureIndex   - This describes which set of texture coordinates in the
+//                    mesh to use.
+// pfFloatArray     - a pointer to a float array of size
+//                    uWidth*uHeight*uComponents
+// uWidth           - The width of the texture
+// uHeight          - The height of the texture
+// uSignalDimension - The number of floats per texel in the signal
+// uComponents      - The number of floats in each texel
+// dwOptions        - Combination of one or more D3DXIMT flags
+// ppIMTData        - Where to store the buffer holding the IMT data
+HRESULT WINAPI D3DXComputeIMTFromPerTexelSignal(
+    LPD3DXMESH pMesh,
+    DWORD dwTextureIndex,
+    FLOAT *pfTexelSignal,
+    UINT uWidth,
+    UINT uHeight,
+    UINT uSignalDimension,
+    UINT uComponents,
+    DWORD dwOptions,
+    LPD3DXUVATLASCB pStatusCallback,
+    LPVOID pUserContext,
+    LPD3DXBUFFER *ppIMTData);
 
 HRESULT WINAPI
     D3DXConvertMeshSubsetToSingleStrip(
@@ -1152,6 +1526,7 @@ HRESULT WINAPI
 }
 #endif //__cplusplus
 
+
 //===========================================================================
 //
 //  Data structures for Spherical Harmonic Precomputation
@@ -1159,15 +1534,26 @@ HRESULT WINAPI
 //
 //============================================================================
 
-
 typedef enum _D3DXSHCOMPRESSQUALITYTYPE {
     D3DXSHCQUAL_FASTLOWQUALITY  = 1,
     D3DXSHCQUAL_SLOWHIGHQUALITY = 2,
     D3DXSHCQUAL_FORCE_DWORD     = 0x7fffffff
 } D3DXSHCOMPRESSQUALITYTYPE;
 
-// for all properties that are colors the red channel is used
-// if the simulator is run with bSpectral FALSE
+typedef enum _D3DXSHGPUSIMOPT {
+    D3DXSHGPUSIMOPT_SHADOWRES256  = 1,
+    D3DXSHGPUSIMOPT_SHADOWRES512  = 0,
+    D3DXSHGPUSIMOPT_SHADOWRES1024 = 2,
+    D3DXSHGPUSIMOPT_SHADOWRES2048 = 3,
+
+    D3DXSHGPUSIMOPT_HIGHQUALITY = 4,    
+    
+    D3DXSHGPUSIMOPT_FORCE_DWORD = 0x7fffffff
+} D3DXSHGPUSIMOPT;
+
+// for all properties that are colors the luminance is computed
+// if the simulator is run with a single channel using the following
+// formula:  R * 0.2125 + G * 0.7154 + B * 0.0721
 
 typedef struct _D3DXSHMATERIAL {
     D3DCOLORVALUE Diffuse;  // Diffuse albedo of the surface.  (Ignored if object is a Mirror)
@@ -1180,23 +1566,6 @@ typedef struct _D3DXSHMATERIAL {
     D3DCOLORVALUE ReducedScattering;
 
 } D3DXSHMATERIAL;
-
-typedef struct _D3DXSHPRTBUFFER_DESC {
-    UINT NumSamples;    // number of texels or vertices sampled
-    UINT Order;         // order of spherical harmonics used 
-    UINT NumChannels;
-    UINT Width;
-    UINT Height;
-} D3DXSHPRTBUFFER_DESC;
-
-typedef struct _D3DXSHPRTCOMPBUFFER_DESC {
-    UINT SampleSize;
-    UINT NumSamples;    // number of texels or vertices sampled
-    UINT NumClusters;
-    UINT NumPCA;                    
-    UINT Order;         // order of spherical harmonics used 
-    UINT NumChannels;
-} D3DXSHPRTCOMPBUFFER_DESC;
 
 // allocated in D3DXSHPRTCompSplitMeshSC
 // vertices are duplicated into multiple super clusters but
@@ -1226,499 +1595,1023 @@ typedef struct _D3DXSHPRTSPLITMESHCLUSTERDATA {
 // return S_OK to keep running the simulator - anything else represents
 // failure and the simulator will abort.
 
-typedef HRESULT (WINAPI *LPD3DXSHPRTSIMCB)(float fPercentDone);
+typedef HRESULT (WINAPI *LPD3DXSHPRTSIMCB)(float fPercentDone,  LPVOID lpUserContext);
+
+// interfaces for PRT buffers/simulator
+
+// GUIDs
+// {F1827E47-00A8-49cd-908C-9D11955F8728}
+DEFINE_GUID(IID_ID3DXPRTBuffer, 
+0xf1827e47, 0xa8, 0x49cd, 0x90, 0x8c, 0x9d, 0x11, 0x95, 0x5f, 0x87, 0x28);
+
+// {A758D465-FE8D-45ad-9CF0-D01E56266A07}
+DEFINE_GUID(IID_ID3DXPRTCompBuffer, 
+0xa758d465, 0xfe8d, 0x45ad, 0x9c, 0xf0, 0xd0, 0x1e, 0x56, 0x26, 0x6a, 0x7);
+
+// {838F01EC-9729-4527-AADB-DF70ADE7FEA9}
+DEFINE_GUID(IID_ID3DXTextureGutterHelper, 
+0x838f01ec, 0x9729, 0x4527, 0xaa, 0xdb, 0xdf, 0x70, 0xad, 0xe7, 0xfe, 0xa9);
+
+// {683A4278-CD5F-4d24-90AD-C4E1B6855D53}
+DEFINE_GUID(IID_ID3DXPRTEngine, 
+0x683a4278, 0xcd5f, 0x4d24, 0x90, 0xad, 0xc4, 0xe1, 0xb6, 0x85, 0x5d, 0x53);
+
+// interface defenitions
+
+typedef interface ID3DXTextureGutterHelper ID3DXTextureGutterHelper;
+typedef interface ID3DXPRTBuffer ID3DXPRTBuffer;
+
+#undef INTERFACE
+#define INTERFACE ID3DXPRTBuffer
+
+// Buffer interface - contains "NumSamples" samples
+// each sample in memory is stored as NumCoeffs scalars per channel (1 or 3)
+// Same interface is used for both Vertex and Pixel PRT buffers
+
+DECLARE_INTERFACE_(ID3DXPRTBuffer, IUnknown)
+{
+    // IUnknown
+    STDMETHOD(QueryInterface)(THIS_ REFIID iid, LPVOID *ppv) PURE;
+    STDMETHOD_(ULONG, AddRef)(THIS) PURE;
+    STDMETHOD_(ULONG, Release)(THIS) PURE;
+
+    // ID3DXPRTBuffer
+    STDMETHOD_(UINT, GetNumSamples)(THIS) PURE;
+    STDMETHOD_(UINT, GetNumCoeffs)(THIS) PURE;
+    STDMETHOD_(UINT, GetNumChannels)(THIS) PURE;
+
+    STDMETHOD_(BOOL, IsTexture)(THIS) PURE;
+    STDMETHOD_(UINT, GetWidth)(THIS) PURE;
+    STDMETHOD_(UINT, GetHeight)(THIS) PURE;
+
+    // changes the number of samples allocated in the buffer
+    STDMETHOD(Resize)(THIS_ UINT NewSize) PURE;
+
+    // ppData will point to the memory location where sample Start begins
+    // pointer is valid for at least NumSamples samples
+    STDMETHOD(LockBuffer)(THIS_ UINT Start, UINT NumSamples, FLOAT **ppData) PURE;
+    STDMETHOD(UnlockBuffer)(THIS) PURE;
+
+    // every scalar in buffer is multiplied by Scale
+    STDMETHOD(ScaleBuffer)(THIS_ FLOAT Scale) PURE;
+    
+    // every scalar contains the sum of this and pBuffers values
+    // pBuffer must have the same storage class/dimensions 
+    STDMETHOD(AddBuffer)(THIS_ LPD3DXPRTBUFFER pBuffer) PURE;
+
+    // GutterHelper (described below) will fill in the gutter
+    // regions of a texture by interpolating "internal" values
+    STDMETHOD(AttachGH)(THIS_ LPD3DXTEXTUREGUTTERHELPER) PURE;
+    STDMETHOD(ReleaseGH)(THIS) PURE;
+    
+    // Evaluates attached gutter helper on the contents of this buffer
+    STDMETHOD(EvalGH)(THIS) PURE;
+
+    // extracts a given channel into texture pTexture
+    // NumCoefficients starting from StartCoefficient are copied
+    STDMETHOD(ExtractTexture)(THIS_ UINT Channel, UINT StartCoefficient, 
+                              UINT NumCoefficients, LPDIRECT3DTEXTURE9 pTexture) PURE;
+
+    // extracts NumCoefficients coefficients into mesh - only applicable on single channel
+    // buffers, otherwise just lockbuffer and copy data.  With SHPRT data NumCoefficients 
+    // should be Order^2
+    STDMETHOD(ExtractToMesh)(THIS_ UINT NumCoefficients, D3DDECLUSAGE Usage, UINT UsageIndexStart,
+                             LPD3DXMESH pScene) PURE;
+
+};
+
+typedef interface ID3DXPRTCompBuffer ID3DXPRTCompBuffer;
+typedef interface ID3DXPRTCompBuffer *LPD3DXPRTCOMPBUFFER;
+
+#undef INTERFACE
+#define INTERFACE ID3DXPRTCompBuffer
+
+// compressed buffers stored a compressed version of a PRTBuffer
+
+DECLARE_INTERFACE_(ID3DXPRTCompBuffer, IUnknown)
+{
+    // IUnknown
+    STDMETHOD(QueryInterface)(THIS_ REFIID iid, LPVOID *ppv) PURE;
+    STDMETHOD_(ULONG, AddRef)(THIS) PURE;
+    STDMETHOD_(ULONG, Release)(THIS) PURE;
+
+    // ID3DPRTCompBuffer
+
+    // NumCoeffs and NumChannels are properties of input buffer
+    STDMETHOD_(UINT, GetNumSamples)(THIS) PURE;
+    STDMETHOD_(UINT, GetNumCoeffs)(THIS) PURE;
+    STDMETHOD_(UINT, GetNumChannels)(THIS) PURE;
+
+    STDMETHOD_(BOOL, IsTexture)(THIS) PURE;
+    STDMETHOD_(UINT, GetWidth)(THIS) PURE;
+    STDMETHOD_(UINT, GetHeight)(THIS) PURE;
+
+    // number of clusters, and PCA vectors per-cluster
+    STDMETHOD_(UINT, GetNumClusters)(THIS) PURE;
+    STDMETHOD_(UINT, GetNumPCA)(THIS) PURE;
+
+    // normalizes PCA weights so that they are between [-1,1]
+    // basis vectors are modified to reflect this
+    STDMETHOD(NormalizeData)(THIS) PURE;
+
+    // copies basis vectors for cluster "Cluster" into pClusterBasis
+    // (NumPCA+1)*NumCoeffs*NumChannels floats
+    STDMETHOD(ExtractBasis)(THIS_ UINT Cluster, FLOAT *pClusterBasis) PURE;
+    
+    // UINT per sample - which cluster it belongs to
+    STDMETHOD(ExtractClusterIDs)(THIS_ UINT *pClusterIDs) PURE;
+    
+    // copies NumExtract PCA projection coefficients starting at StartPCA
+    // into pPCACoefficients - NumSamples*NumExtract floats copied
+    STDMETHOD(ExtractPCA)(THIS_ UINT StartPCA, UINT NumExtract, FLOAT *pPCACoefficients) PURE;
+
+    // copies NumPCA projection coefficients starting at StartPCA
+    // into pTexture - should be able to cope with signed formats
+    STDMETHOD(ExtractTexture)(THIS_ UINT StartPCA, UINT NumpPCA, 
+                              LPDIRECT3DTEXTURE9 pTexture) PURE;
+                              
+    // copies NumPCA projection coefficients into mesh pScene
+    // Usage is D3DDECLUSAGE where coefficients are to be stored
+    // UsageIndexStart is starting index
+    STDMETHOD(ExtractToMesh)(THIS_ UINT NumPCA, D3DDECLUSAGE Usage, UINT UsageIndexStart,
+                             LPD3DXMESH pScene) PURE;
+};
+
+
+#undef INTERFACE
+#define INTERFACE ID3DXTextureGutterHelper
+
+// ID3DXTextureGutterHelper will build and manage
+// "gutter" regions in a texture - this will allow for
+// bi-linear interpolation to not have artifacts when rendering
+// It generates a map (in texture space) where each texel
+// is in one of 3 states:
+//   0  Invalid - not used at all
+//   1  Inside triangle
+//   2  Gutter texel
+//   4  represents a gutter texel that will be computed during PRT
+// For each Inside/Gutter texel it stores the face it
+// belongs to and barycentric coordinates for the 1st two
+// vertices of that face.  Gutter vertices are assigned to
+// the closest edge in texture space.
+//
+// When used with PRT this requires a unique parameterization
+// of the model - every texel must correspond to a single point
+// on the surface of the model and vice versa
+
+DECLARE_INTERFACE_(ID3DXTextureGutterHelper, IUnknown)
+{
+    // IUnknown
+    STDMETHOD(QueryInterface)(THIS_ REFIID iid, LPVOID *ppv) PURE;
+    STDMETHOD_(ULONG, AddRef)(THIS) PURE;
+    STDMETHOD_(ULONG, Release)(THIS) PURE;
+
+    // ID3DXTextureGutterHelper
+    
+    // dimensions of texture this is bound too
+    STDMETHOD_(UINT, GetWidth)(THIS) PURE;
+    STDMETHOD_(UINT, GetHeight)(THIS) PURE;
+
+
+    // Applying gutters recomputes all of the gutter texels of class "2"
+    // based on texels of class "1" or "4"
+    
+    // Applies gutters to a raw float buffer - each texel is NumCoeffs floats
+    // Width and Height must match GutterHelper
+    STDMETHOD(ApplyGuttersFloat)(THIS_ FLOAT *pDataIn, UINT NumCoeffs, UINT Width, UINT Height);
+    
+    // Applies gutters to pTexture
+    // Dimensions must match GutterHelper
+    STDMETHOD(ApplyGuttersTex)(THIS_ LPDIRECT3DTEXTURE9 pTexture);
+    
+    // Applies gutters to a D3DXPRTBuffer
+    // Dimensions must match GutterHelper
+    STDMETHOD(ApplyGuttersPRT)(THIS_ LPD3DXPRTBUFFER pBuffer);
+       
+    // Resamples a texture from a mesh onto this gutterhelpers
+    // parameterization.  It is assumed that the UV coordinates
+    // for this gutter helper are in TEXTURE 0 (usage/usage index)
+    // and the texture coordinates should all be within [0,1] for
+    // both sets.
+    //
+    // pTextureIn - texture represented using parameterization in pMeshIn
+    // pMeshIn    - Mesh with texture coordinates that represent pTextureIn
+    //              pTextureOut texture coordinates are assumed to be in
+    //              TEXTURE 0
+    // Usage      - field in DECL for pMeshIn that stores texture coordinates
+    //              for pTextureIn
+    // UsageIndex - which index for Usage above for pTextureIn
+    // pTextureOut- Resampled texture
+    // 
+    // Usage would generally be D3DDECLUSAGE_TEXCOORD  and UsageIndex other than zero
+    STDMETHOD(ResampleTex)(THIS_ LPDIRECT3DTEXTURE9 pTextureIn,
+                                 LPD3DXMESH pMeshIn,
+                                 D3DDECLUSAGE Usage, UINT UsageIndex,
+                                 LPDIRECT3DTEXTURE9 pTextureOut);    
+    
+    // the routines below provide access to the data structures
+    // used by the Apply functions
+
+    // face map is a UINT per texel that represents the
+    // face of the mesh that texel belongs too - 
+    // only valid if same texel is valid in pGutterData
+    // pFaceData must be allocated by the user
+    STDMETHOD(GetFaceMap)(THIS_ UINT *pFaceData) PURE;
+    
+    // BaryMap is a D3DXVECTOR2 per texel
+    // the 1st two barycentric coordinates for the corresponding
+    // face (3rd weight is always 1-sum of first two)
+    // only valid if same texel is valid in pGutterData
+    // pBaryData must be allocated by the user
+    STDMETHOD(GetBaryMap)(THIS_ D3DXVECTOR2 *pBaryData) PURE;
+    
+    // TexelMap is a D3DXVECTOR2 per texel that
+    // stores the location in pixel coordinates where the
+    // corresponding texel is mapped
+    // pTexelData must be allocated by the user
+    STDMETHOD(GetTexelMap)(THIS_ D3DXVECTOR2 *pTexelData) PURE;
+    
+    // GutterMap is a BYTE per texel
+    // 0/1/2 for Invalid/Internal/Gutter texels
+    // 4 represents a gutter texel that will be computed
+    // during PRT
+    // pGutterData must be allocated by the user
+    STDMETHOD(GetGutterMap)(THIS_ BYTE *pGutterData) PURE;
+    
+    // face map is a UINT per texel that represents the
+    // face of the mesh that texel belongs too - 
+    // only valid if same texel is valid in pGutterData
+    STDMETHOD(SetFaceMap)(THIS_ UINT *pFaceData) PURE;
+    
+    // BaryMap is a D3DXVECTOR2 per texel
+    // the 1st two barycentric coordinates for the corresponding
+    // face (3rd weight is always 1-sum of first two)
+    // only valid if same texel is valid in pGutterData
+    STDMETHOD(SetBaryMap)(THIS_ D3DXVECTOR2 *pBaryData) PURE;
+    
+    // TexelMap is a D3DXVECTOR2 per texel that
+    // stores the location in pixel coordinates where the
+    // corresponding texel is mapped
+    STDMETHOD(SetTexelMap)(THIS_ D3DXVECTOR2 *pTexelData) PURE;
+    
+    // GutterMap is a BYTE per texel
+    // 0/1/2 for Invalid/Internal/Gutter texels
+    // 4 represents a gutter texel that will be computed
+    // during PRT
+    STDMETHOD(SetGutterMap)(THIS_ BYTE *pGutterData) PURE;    
+};
+
+
+typedef interface ID3DXPRTEngine ID3DXPRTEngine;
+typedef interface ID3DXPRTEngine *LPD3DXPRTENGINE;
+
+#undef INTERFACE
+#define INTERFACE ID3DXPRTEngine
+
+// ID3DXPRTEngine is used to compute a PRT simulation
+// Use the following steps to compute PRT for SH
+// (1) create an interface (which includes a scene)
+// (2) call SetSamplingInfo
+// (3) [optional] Set MeshMaterials/albedo's (required if doing bounces)
+// (4) call ComputeDirectLightingSH
+// (5) [optional] call ComputeBounce
+// repeat step 5 for as many bounces as wanted.
+// if you want to model subsurface scattering you
+// need to call ComputeSS after direct lighting and
+// each bounce.
+// If you want to bake the albedo into the PRT signal, you
+// must call MutliplyAlbedo, otherwise the user has to multiply
+// the albedo themselves.  Not multiplying the albedo allows you
+// to model albedo variation at a finer scale then illumination, and
+// can result in better compression results.
+// Luminance values are computed from RGB values using the following
+// formula:  R * 0.2125 + G * 0.7154 + B * 0.0721
+
+DECLARE_INTERFACE_(ID3DXPRTEngine, IUnknown)
+{
+    // IUnknown
+    STDMETHOD(QueryInterface)(THIS_ REFIID iid, LPVOID *ppv) PURE;
+    STDMETHOD_(ULONG, AddRef)(THIS) PURE;
+    STDMETHOD_(ULONG, Release)(THIS) PURE;
+
+    // ID3DXPRTEngine
+    
+    // This sets a material per attribute in the scene mesh and it is
+    // the only way to specify subsurface scattering parameters.  if
+    // bSetAlbedo is FALSE, NumChannels must match the current
+    // configuration of the PRTEngine.  If you intend to change
+    // NumChannels (through some other SetAlbedo function) it must
+    // happen before SetMeshMaterials is called.
+    //
+    // NumChannels 1 implies "grayscale" materials, set this to 3 to enable
+    //  color bleeding effects
+    // bSetAlbedo sets albedo from material if TRUE - which clobbers per texel/vertex
+    //  albedo that might have been set before.  FALSE won't clobber.
+    // fLengthScale is used for subsurface scattering - scene is mapped into a 1mm unit cube
+    //  and scaled by this amount
+    STDMETHOD(SetMeshMaterials)(THIS_ CONST D3DXSHMATERIAL **ppMaterials, UINT NumMeshes, 
+                                UINT NumChannels, BOOL bSetAlbedo, FLOAT fLengthScale) PURE;
+    
+    // setting albedo per-vertex or per-texel over rides the albedos stored per mesh
+    // but it does not over ride any other settings
+    
+    // sets an albedo to be used per vertex - the albedo is represented as a float
+    // pDataIn input pointer (pointint to albedo of 1st sample)
+    // NumChannels 1 implies "grayscale" materials, set this to 3 to enable
+    //  color bleeding effects
+    // Stride - stride in bytes to get to next samples albedo
+    STDMETHOD(SetPerVertexAlbedo)(THIS_ CONST VOID *pDataIn, UINT NumChannels, UINT Stride) PURE;
+    
+    // represents the albedo per-texel instead of per-vertex (even if per-vertex PRT is used)
+    // pAlbedoTexture - texture that stores the albedo (dimension arbitrary)
+    // NumChannels 1 implies "grayscale" materials, set this to 3 to enable
+    //  color bleeding effects
+    // pGH - optional gutter helper, otherwise one is constructed in computation routines and
+    //  destroyed (if not attached to buffers)
+    STDMETHOD(SetPerTexelAlbedo)(THIS_ LPDIRECT3DTEXTURE9 pAlbedoTexture, 
+                                 UINT NumChannels, 
+                                 LPD3DXTEXTUREGUTTERHELPER pGH) PURE;
+                                 
+    // gets the per-vertex albedo
+    STDMETHOD(GetVertexAlbedo)(THIS_ D3DXCOLOR *pVertColors, UINT NumVerts) PURE;                                 
+                                 
+    // If pixel PRT is being computed normals default to ones that are interpolated
+    // from the vertex normals.  This specifies a texture that stores an object
+    // space normal map instead (must use a texture format that can represent signed values)
+    // pNormalTexture - normal map, must be same dimensions as PRTBuffers, signed                                
+    STDMETHOD(SetPerTexelNormal)(THIS_ LPDIRECT3DTEXTURE9 pNormalTexture) PURE;
+                                 
+    // Copies per-vertex albedo from mesh
+    // pMesh - mesh that represents the scene.  It must have the same
+    //  properties as the mesh used to create the PRTEngine
+    // Usage - D3DDECLUSAGE to extract albedos from
+    // NumChannels 1 implies "grayscale" materials, set this to 3 to enable
+    //  color bleeding effects
+    STDMETHOD(ExtractPerVertexAlbedo)(THIS_ LPD3DXMESH pMesh, 
+                                      D3DDECLUSAGE Usage, 
+                                      UINT NumChannels) PURE;
+
+    // Resamples the input buffer into the output buffer
+    // can be used to move between per-vertex and per-texel buffers.  This can also be used
+    // to convert single channel buffers to 3-channel buffers and vice-versa.
+    STDMETHOD(ResampleBuffer)(THIS_ LPD3DXPRTBUFFER pBufferIn, LPD3DXPRTBUFFER pBufferOut) PURE;
+    
+    // Returns the scene mesh - including modifications from adaptive spatial sampling
+    // The returned mesh only has positions, normals and texture coordinates (if defined)
+    // pD3DDevice - d3d device that will be used to allocate the mesh
+    // pFaceRemap - each face has a pointer back to the face on the original mesh that it comes from
+    //  if the face hasn't been subdivided this will be an identity mapping
+    // pVertRemap - each vertex contains 3 vertices that this is a linear combination of
+    // pVertWeights - weights for each of above indices (sum to 1.0f)
+    // ppMesh - mesh that will be allocated and filled
+    STDMETHOD(GetAdaptedMesh)(THIS_ LPDIRECT3DDEVICE9 pD3DDevice,UINT *pFaceRemap, UINT *pVertRemap, FLOAT *pfVertWeights, LPD3DXMESH *ppMesh) PURE;
+
+    // Number of vertices currently allocated (includes new vertices from adaptive sampling)
+    STDMETHOD_(UINT, GetNumVerts)(THIS) PURE;
+    // Number of faces currently allocated (includes new faces)
+    STDMETHOD_(UINT, GetNumFaces)(THIS) PURE;
+
+    // Sets the Minimum/Maximum intersection distances, this can be used to control
+    // maximum distance that objects can shadow/reflect light, and help with "bad"
+    // art that might have near features that you don't want to shadow.  This does not
+    // apply for GPU simulations.
+    //  fMin - minimum intersection distance, must be positive and less than fMax
+    //  fMax - maximum intersection distance, if 0.0f use the previous value, otherwise
+    //      must be strictly greater than fMin
+    STDMETHOD(SetMinMaxIntersection)(THIS_ FLOAT fMin, FLOAT fMax) PURE;
+
+    // This will subdivide faces on a mesh so that adaptively simulations can
+    // use a more conservative threshold (it won't miss features.)
+    // MinEdgeLength - minimum edge length that will be generated, if 0.0f a
+    //  reasonable default will be used
+    // MaxSubdiv - maximum level of subdivision, if 0 is specified a default
+    //  value will be used (5)
+    STDMETHOD(RobustMeshRefine)(THIS_ FLOAT MinEdgeLength, UINT MaxSubdiv) PURE;
+
+    // This sets to sampling information used by the simulator.  Adaptive sampling
+    // parameters are currently ignored.
+    // NumRays - number of rays to shoot per sample
+    // UseSphere - if TRUE uses spherical samples, otherwise samples over
+    //  the hemisphere.  Should only be used with GPU and Vol computations
+    // UseCosine - if TRUE uses a cosine weighting - not used for Vol computations
+    //  or if only the visiblity function is desired
+    // Adaptive - if TRUE adaptive sampling (angular) is used
+    // AdaptiveThresh - threshold used to terminate adaptive angular sampling
+    //  ignored if adaptive sampling is not set
+    STDMETHOD(SetSamplingInfo)(THIS_ UINT NumRays, 
+                               BOOL UseSphere, 
+                               BOOL UseCosine, 
+                               BOOL Adaptive, 
+                               FLOAT AdaptiveThresh) PURE;
+
+    // Methods that compute the direct lighting contribution for objects
+    // always represente light using spherical harmonics (SH)
+    // the albedo is not multiplied by the signal - it just integrates
+    // incoming light.  If NumChannels is not 1 the vector is replicated
+    //
+    // SHOrder - order of SH to use
+    // pDataOut - PRT buffer that is generated.  Can be single channel
+    STDMETHOD(ComputeDirectLightingSH)(THIS_ UINT SHOrder, 
+                                       LPD3DXPRTBUFFER pDataOut) PURE;
+                                       
+    // Adaptive variant of above function.  This will refine the mesh
+    // generating new vertices/faces to approximate the PRT signal
+    // more faithfully.
+    // SHOrder - order of SH to use
+    // AdaptiveThresh - threshold for adaptive subdivision (in PRT vector error)
+    //  if value is less then 1e-6f, 1e-6f is specified
+    // MinEdgeLength - minimum edge length that will be generated
+    //  if value is too small a fairly conservative model dependent value
+    //  is used
+    // MaxSubdiv - maximum subdivision level, if 0 is specified it 
+    //  will default to 4
+    // pDataOut - PRT buffer that is generated.  Can be single channel.
+    STDMETHOD(ComputeDirectLightingSHAdaptive)(THIS_ UINT SHOrder, 
+                                               FLOAT AdaptiveThresh,
+                                               FLOAT MinEdgeLength,
+                                               UINT MaxSubdiv,
+                                               LPD3DXPRTBUFFER pDataOut) PURE;
+                                       
+    // Function that computes the direct lighting contribution for objects
+    // light is always represented using spherical harmonics (SH)
+    // This is done on the GPU and is much faster then using the CPU.
+    // The albedo is not multiplied by the signal - it just integrates
+    // incoming light.  If NumChannels is not 1 the vector is replicated.
+    // ZBias/ZAngleBias are akin to parameters used with shadow zbuffers.
+    // A reasonable default for both values is 0.005, but the user should
+    // experiment (ZAngleBias can be zero, ZBias should not be.)
+    // Callbacks should not use the Direct3D9Device the simulator is using.
+    // SetSamplingInfo must be called with TRUE for UseSphere and
+    // FALSE for UseCosine before this method is called.
+    //
+    // pD3DDevice - device used to run GPU simulator - must support PS2.0
+    //  and FP render targets
+    // Flags - parameters for the GPU simulator, combination of one or more
+    //  D3DXSHGPUSIMOPT flags.  Only one SHADOWRES setting should be set and
+    //  the defaults is 512
+    // SHOrder - order of SH to use
+    // ZBias - bias in normal direction (for depth test)
+    // ZAngleBias - scaled by one minus cosine of angle with light (offset in depth)
+    // pDataOut - PRT buffer that is filled in.  Can be single channel
+    STDMETHOD(ComputeDirectLightingSHGPU)(THIS_ LPDIRECT3DDEVICE9 pD3DDevice,
+                                          UINT Flags,
+                                          UINT SHOrder,
+                                          FLOAT ZBias,
+                                          FLOAT ZAngleBias,
+                                          LPD3DXPRTBUFFER pDataOut) PURE;
+
+
+    // Functions that computes subsurface scattering (using material properties)
+    // Albedo is not multiplied by result.  This only works for per-vertex data
+    // use ResampleBuffer to move per-vertex data into a texture and back.
+    //
+    // pDataIn - input data (previous bounce)
+    // pDataOut - result of subsurface scattering simulation
+    // pDataTotal - [optional] results can be summed into this buffer
+    STDMETHOD(ComputeSS)(THIS_ LPD3DXPRTBUFFER pDataIn, 
+                         LPD3DXPRTBUFFER pDataOut, LPD3DXPRTBUFFER pDataTotal) PURE;
+
+    // Adaptive version of ComputeSS.
+    //
+    // pDataIn - input data (previous bounce)
+    // AdaptiveThresh - threshold for adaptive subdivision (in PRT vector error)
+    //  if value is less then 1e-6f, 1e-6f is specified
+    // MinEdgeLength - minimum edge length that will be generated
+    //  if value is too small a fairly conservative model dependent value
+    //  is used
+    // MaxSubdiv - maximum subdivision level, if 0 is specified it 
+    //  will default to 4    
+    // pDataOut - result of subsurface scattering simulation
+    // pDataTotal - [optional] results can be summed into this buffer
+    STDMETHOD(ComputeSSAdaptive)(THIS_ LPD3DXPRTBUFFER pDataIn, 
+                                 FLOAT AdaptiveThresh,
+                                 FLOAT MinEdgeLength,
+                                 UINT MaxSubdiv,
+                                 LPD3DXPRTBUFFER pDataOut, LPD3DXPRTBUFFER pDataTotal) PURE;
+
+    // computes a single bounce of inter-reflected light
+    // works for SH based PRT or generic lighting
+    // Albedo is not multiplied by result
+    //
+    // pDataIn - previous bounces data 
+    // pDataOut - PRT buffer that is generated
+    // pDataTotal - [optional] can be used to keep a running sum
+    STDMETHOD(ComputeBounce)(THIS_ LPD3DXPRTBUFFER pDataIn,
+                             LPD3DXPRTBUFFER pDataOut,
+                             LPD3DXPRTBUFFER pDataTotal) PURE;
+
+    // Adaptive version of above function.
+    //
+    // pDataIn - previous bounces data, can be single channel 
+    // AdaptiveThresh - threshold for adaptive subdivision (in PRT vector error)
+    //  if value is less then 1e-6f, 1e-6f is specified
+    // MinEdgeLength - minimum edge length that will be generated
+    //  if value is too small a fairly conservative model dependent value
+    //  is used
+    // MaxSubdiv - maximum subdivision level, if 0 is specified it 
+    //  will default to 4
+    // pDataOut - PRT buffer that is generated
+    // pDataTotal - [optional] can be used to keep a running sum    
+    STDMETHOD(ComputeBounceAdaptive)(THIS_ LPD3DXPRTBUFFER pDataIn,
+                                     FLOAT AdaptiveThresh,
+                                     FLOAT MinEdgeLength,
+                                     UINT MaxSubdiv,
+                                     LPD3DXPRTBUFFER pDataOut,
+                                     LPD3DXPRTBUFFER pDataTotal) PURE;
+
+    // Computes projection of distant SH radiance into a local SH radiance
+    // function.  This models how direct lighting is attenuated by the 
+    // scene and is a form of "neighborhood transfer."  The result is
+    // a linear operator (matrix) at every sample point, if you multiply
+    // this matrix by the distant SH lighting coefficients you get an
+    // approximation of the local incident radiance function from
+    // direct lighting.  These resulting lighting coefficients can
+    // than be projected into another basis or used with any rendering
+    // technique that uses spherical harmonics as input.
+    // SetSamplingInfo must be called with TRUE for UseSphere and
+    // FALSE for UseCosine before this method is called.  
+    // Generates SHOrderIn*SHOrderIn*SHOrderOut*SHOrderOut scalars 
+    // per channel at each sample location.
+    //
+    // SHOrderIn  - Order of the SH representation of distant lighting
+    // SHOrderOut - Order of the SH representation of local lighting
+    // NumVolSamples  - Number of sample locations
+    // pSampleLocs    - position of sample locations
+    // pDataOut       - PRT Buffer that will store output results    
+    STDMETHOD(ComputeVolumeSamplesDirectSH)(THIS_ UINT SHOrderIn, 
+                                            UINT SHOrderOut, 
+                                            UINT NumVolSamples,
+                                            CONST D3DXVECTOR3 *pSampleLocs,
+                                            LPD3DXPRTBUFFER pDataOut) PURE;
+                                    
+    // At each sample location computes a linear operator (matrix) that maps
+    // the representation of source radiance (NumCoeffs in pSurfDataIn)
+    // into a local incident radiance function approximated with spherical 
+    // harmonics.  For example if a light map data is specified in pSurfDataIn
+    // the result is an SH representation of the flow of light at each sample
+    // point.  If PRT data for an outdoor scene is used, each sample point
+    // contains a matrix that models how distant lighting bounces of the objects
+    // in the scene and arrives at the given sample point.  Combined with
+    // ComputeVolumeSamplesDirectSH this gives the complete representation for
+    // how light arrives at each sample point parameterized by distant lighting.
+    // SetSamplingInfo must be called with TRUE for UseSphere and
+    // FALSE for UseCosine before this method is called.    
+    // Generates pSurfDataIn->NumCoeffs()*SHOrder*SHOrder scalars
+    // per channel at each sample location.
+    //
+    // pSurfDataIn    - previous bounce data
+    // SHOrder        - order of SH to generate projection with
+    // NumVolSamples  - Number of sample locations
+    // pSampleLocs    - position of sample locations
+    // pDataOut       - PRT Buffer that will store output results
+    STDMETHOD(ComputeVolumeSamples)(THIS_ LPD3DXPRTBUFFER pSurfDataIn, 
+                                    UINT SHOrder, 
+                                    UINT NumVolSamples,
+                                    CONST D3DXVECTOR3 *pSampleLocs,
+                                    LPD3DXPRTBUFFER pDataOut) PURE;
+
+    // Computes direct lighting (SH) for a point not on the mesh
+    // with a given normal - cannot use texture buffers.
+    //
+    // SHOrder      - order of SH to use
+    // NumSamples   - number of sample locations
+    // pSampleLocs  - position for each sample
+    // pSampleNorms - normal for each sample
+    // pDataOut     - PRT Buffer that will store output results
+    STDMETHOD(ComputeSurfSamplesDirectSH)(THIS_ UINT SHOrder,
+                                          UINT NumSamples,
+                                          CONST D3DXVECTOR3 *pSampleLocs,
+                                          CONST D3DXVECTOR3 *pSampleNorms,
+                                          LPD3DXPRTBUFFER pDataOut) PURE;
+
+
+    // given the solution for PRT or light maps, computes transfer vector at arbitrary 
+    // position/normal pairs in space
+    //
+    // pSurfDataIn  - input data
+    // NumSamples   - number of sample locations
+    // pSampleLocs  - position for each sample
+    // pSampleNorms - normal for each sample
+    // pDataOut     - PRT Buffer that will store output results
+    // pDataTotal   - optional buffer to sum results into - can be NULL
+    STDMETHOD(ComputeSurfSamplesBounce)(THIS_ LPD3DXPRTBUFFER pSurfDataIn,
+                                        UINT NumSamples,
+                                        CONST D3DXVECTOR3 *pSampleLocs,
+                                        CONST D3DXVECTOR3 *pSampleNorms,
+                                        LPD3DXPRTBUFFER pDataOut,
+                                        LPD3DXPRTBUFFER pDataTotal) PURE;
+
+    // Frees temporary data structures that can be created for subsurface scattering
+    // this data is freed when the PRTComputeEngine is freed and is lazily created
+    STDMETHOD(FreeSSData)(THIS) PURE;
+    
+    // Frees temporary data structures that can be created for bounce simulations
+    // this data is freed when the PRTComputeEngine is freed and is lazily created
+    STDMETHOD(FreeBounceData)(THIS) PURE;
+
+    // This computes the Local Deformable PRT (LDPRT) coefficients relative to the 
+    // per sample normals that minimize error in a least squares sense with respect 
+    // to the input PRT data set.  These coefficients can be used with skinned/transformed 
+    // normals to model global effects with dynamic objects.  Shading normals can 
+    // optionally be solved for - these normals (along with the LDPRT coefficients) can
+    // more accurately represent the PRT signal.  The coefficients are for zonal
+    // harmonics oriented in the normal/shading normal direction.
+    //
+    // pDataIn  - SH PRT dataset that is input
+    // SHOrder  - Order of SH to compute conv coefficients for 
+    // pNormOut - Optional array of vectors (passed in) that will be filled with
+    //             "shading normals", LDPRT coefficients are optimized for
+    //             these normals.  This array must be the same size as the number of
+    //             samples in pDataIn
+    // pDataOut - Output buffer (SHOrder zonal harmonic coefficients per channel per sample)
+    STDMETHOD(ComputeLDPRTCoeffs)(THIS_ LPD3DXPRTBUFFER pDataIn,
+                                  UINT SHOrder,
+                                  D3DXVECTOR3 *pNormOut,
+                                  LPD3DXPRTBUFFER pDataOut) PURE;
+
+    // scales all the samples associated with a given sub mesh
+    // can be useful when using subsurface scattering
+    // fScale - value to scale each vector in submesh by
+    STDMETHOD(ScaleMeshChunk)(THIS_ UINT uMeshChunk, FLOAT fScale, LPD3DXPRTBUFFER pDataOut) PURE;
+    
+    // mutliplies each PRT vector by the albedo - can be used if you want to have the albedo
+    // burned into the dataset, often better not to do this.  If this is not done the user
+    // must mutliply the albedo themselves when rendering - just multiply the albedo times
+    // the result of the PRT dot product.
+    // If pDataOut is a texture simulation result and there is an albedo texture it
+    // must be represented at the same resolution as the simulation buffer.  You can use
+    // LoadSurfaceFromSurface and set a new albedo texture if this is an issue - but must
+    // be careful about how the gutters are handled.
+    //
+    // pDataOut - dataset that will get albedo pushed into it
+    STDMETHOD(MultiplyAlbedo)(THIS_ LPD3DXPRTBUFFER pDataOut) PURE;
+    
+    // Sets a pointer to an optional call back function that reports back to the
+    // user percentage done and gives them the option of quitting
+    // pCB - pointer to call back function, return S_OK for the simulation
+    //  to continue
+    // Frequency - 1/Frequency is roughly the number of times the call back
+    //  will be invoked
+    // lpUserContext - will be passed back to the users call back
+    STDMETHOD(SetCallBack)(THIS_ LPD3DXSHPRTSIMCB pCB, FLOAT Frequency,  LPVOID lpUserContext) PURE;
+    
+    // Returns TRUE if the ray intersects the mesh, FALSE if it does not.  This function
+    // takes into account settings from SetMinMaxIntersection.  If the closest intersection
+    // is not needed this function is more efficient compared to the ClosestRayIntersection
+    // method.
+    // pRayPos - origin of ray
+    // pRayDir - normalized ray direction (normalization required for SetMinMax to be meaningful)
+    
+    STDMETHOD_(BOOL, ShadowRayIntersects)(THIS_ CONST D3DXVECTOR3 *pRayPos, CONST D3DXVECTOR3 *pRayDir) PURE;
+    
+    // Returns TRUE if the ray intersects the mesh, FALSE if it does not.  If there is an
+    // intersection the closest face that was intersected and its first two barycentric coordinates
+    // are returned.  This function takes into account settings from SetMinMaxIntersection.
+    // This is a slower function compared to ShadowRayIntersects and should only be used where
+    // needed.  The third vertices barycentric coordinates will be 1 - pU - pV.
+    // pRayPos     - origin of ray
+    // pRayDir     - normalized ray direction (normalization required for SetMinMax to be meaningful)
+    // pFaceIndex  - Closest face that intersects.  This index is based on stacking the pBlockerMesh
+    //  faces before the faces from pMesh
+    // pU          - Barycentric coordinate for vertex 0
+    // pV          - Barycentric coordinate for vertex 1
+    // pDist       - Distance along ray where the intersection occured
+    
+    STDMETHOD_(BOOL, ClosestRayIntersects)(THIS_ CONST D3DXVECTOR3 *pRayPos, CONST D3DXVECTOR3 *pRayDir,
+                                           DWORD *pFaceIndex, FLOAT *pU, FLOAT *pV, FLOAT *pDist) PURE;
+};
+
+
+// API functions for creating interfaces
 
 #ifdef __cplusplus
 extern "C" {
 #endif //__cplusplus
 
-//===========================================================================
-//
-//  Spherical Harmonic Precomputation Routines
-//
-// NOTE:
-//  * These functions are intended for offline use, extraction routines can
-//    be used at load time, but the simulators and compressor should only be
-//    used when authoring content. 
-//
-//============================================================================
-
 //============================================================================
 //
-//  D3DXSHPRTSimulation:
+//  D3DXCreatePRTBuffer:
 //  --------------------
-//  Runs the PRT simulation on a set of input meshes using a corresponding 
-//  set of materials.  This function can take a long time to run and should 
-//  only done offline.
+//  Generates a PRT Buffer that can be compressed or filled by a simulator
+//  This function should be used to create per-vertex or volume buffers.
+//  When buffers are created all values are initialized to zero.
 //
 //  Parameters:
-//   Order
-//      Order of SH to use, generates Order^2 coeffs (Degree is Order - 1)
-//   NumMeshes
-//      Number of meshes in the scene, where each mesh has a unique material
-//   ppScene
-//      Meshes that represent the scene
-//   ppMaterials
-//      Materials for each corresponding mesh
-//   NumRays
-//      Number of rays to shoot at each vertex
-//   NumBounces
-//      Number of bounces simulated - if this is not zero inter-reflections 
-//      are computed
-//   EnableSubSurf
-//      Indicates whether or not Subsurface Scattering is to be used
-//   LengthScale
-//      Scale used for subsurface scattering (1 would be a 1mm cube)
-//   EnableSpectral
-//      TRUE enables color bleeding by computing RGB transfer vectors
-//      FALSE just uses the red channel for material properties
-//   ppSimulationResults
-//      Buffer that is allocated and filled in by the simulator
-//   pProgressCallback
-//      Optional function pointer that is called periodically
-//      Must return S_OK or simulator exits
+//    NumSamples
+//      Number of sample locations represented
+//    NumCoeffs
+//      Number of coefficients per sample location (order^2 for SH)
+//    NumChannels
+//      Number of color channels to represent (1 or 3)
+//    ppBuffer
+//      Buffer that will be allocated
 //
 //============================================================================
 
 HRESULT WINAPI 
-    D3DXSHPRTSimulation
-        (
-        UINT Order, 
-        UINT NumMeshes, 
-        LPD3DXMESH *ppScene,
-        D3DXSHMATERIAL **ppMaterials,
-        UINT NumRays, 
-        UINT NumBounces,
-        BOOL EnableSubSurf, 
-        FLOAT LengthScale,
-        BOOL EnableSpectral,
-        LPD3DXBUFFER *ppSimulationResults,
-        LPD3DXSHPRTSIMCB pProgressCallback
-        );
-
+    D3DXCreatePRTBuffer( 
+        UINT NumSamples,
+        UINT NumCoeffs,
+        UINT NumChannels,
+        LPD3DXPRTBUFFER* ppBuffer);
 
 //============================================================================
 //
-//  D3DXSHPRTExtractChannel:
-//  ------------------------
-//  Pulls the data for a given channel out of pSimulationResults
+//  D3DXCreatePRTBufferTex:
+//  --------------------
+//  Generates a PRT Buffer that can be compressed or filled by a simulator
+//  This function should be used to create per-pixel buffers.
+//  When buffers are created all values are initialized to zero.
 //
 //  Parameters:
-//   Order
-//      Order of spherical harmonic coefficients to extract
-//   pTransferCoefficients
-//      Array of Order^2 floats into which transfer coefficients for the 
-//      specified channel are written
-//   Channel
-//      Specifies the channel to extract (0/1/2 for R/G/B)
-//   pSimulationResults
-//      Buffer obtained from D3DXSHPRTSimulation
+//    Width
+//      Width of texture
+//    Height
+//      Height of texture
+//    NumCoeffs
+//      Number of coefficients per sample location (order^2 for SH)
+//    NumChannels
+//      Number of color channels to represent (1 or 3)
+//    ppBuffer
+//      Buffer that will be allocated
 //
 //============================================================================
-
-HRESULT WINAPI 
-    D3DXSHPRTExtractChannel
-        (
-        UINT Order, 
-        FLOAT *pTransferCoefficients, 
-        UINT Channel, 
-        LPD3DXBUFFER pSimulationResults
-        );
-
-
-//============================================================================
-//
-//  D3DXSHPRTGetRawDataPointer:
-//  ---------------------------
-//  Given a buffer that has been simulated, makes ppData reference the
-//  raw data in the buffer.  This pointer is invalid after the buffer
-//  has been released.  The data is formatted as follows:
-//      FLOAT fRawData[NumSamples][NumChannels][Order*Order]
-//  where NumSamples is the number of texels/vertices in the scene.
-//
-//  Parameters:
-//   pSimulationResults
-//      Buffer obtained from the simulator that contains transfer vectors
-//   ppRawData
-//      Returns a pointer to the raw data inside the buffer
-//
-//============================================================================
-                        
-HRESULT WINAPI
-    D3DXSHPRTGetRawDataPointer
-        (
-        LPD3DXBUFFER pSimulationResults, 
-        FLOAT **ppRawData
-        );
-
-
-//============================================================================
-//
-//  D3DXSHPRTExtractDesc:
-//  ---------------------
-//  Given the result of a PRT simulation, this function extracts its
-//  description.
-//
-//  Parameters:
-//   pSimulationResults
-//      Buffer obtained from the simulator
-//   pDesc
-//      Structure to be filled in with information from the buffer
-//      Width/Height non-zero only if the textured simulator was used
-//
-//============================================================================
-
 
 HRESULT WINAPI
-    D3DXSHPRTExtractDesc
-        (
-        LPD3DXBUFFER pSimulationResults, 
-        D3DXSHPRTBUFFER_DESC *pDesc
-        );
-
-//============================================================================
-//
-//  D3DXSHPRTSimulationTex:
-//  -----------------------
-//  Runs the PRT simulation on an input mesh in texture space.  
-//  Returns a buffer that contains PRT results for every texel.
-//  This function can take a long time to run and should only done offline.
-//
-//  Parameters:
-//   Order
-//      Order of SH to use, generates Order^2 coeffs per channel per texel
-//   pScene
-//      Mesh that represents the scene
-//   pMaterial
-//      Material which specifies the albedo for the scene (if no albedo 
-//      texture was specified), and the subsurface scattering properties
-//   NumRays
-//      Number of rays to shoot at each texel
-//   NumBounces
-//      Number of bounces simulated - if this is not zero inter-reflections 
-//      are computed
-//   EnableSubSurf
-//      Indicates whether or not subsurface scattering is to be used
-//   LengthScale
-//      Scale used for subsurface scattering (1 would be a 1mm cube)
-//   EnableSpectral
-//      TRUE enables color bleeding by computing RGB transfer vectors
-//      FALSE just uses the red channel for material properties
-//   ppSimulationResults
-//      Buffer that is allocated and filled in by the simulator
-//   Width
-//      Number of texels to sample across horizontally
-//   Height
-//      Number of texels to sample across vertically
-//   pAlbedoTexture
-//      Albedo (diffuse reflectance) of surface (can be NULL)
-//   pProgressCallback
-//      Optional function pointer that is called periodically  
-//      (must return S_OK or simulator exits)
-//
-//============================================================================
-
-HRESULT WINAPI 
-    D3DXSHPRTSimulationTex
-        (
-        UINT Order, 
-        LPD3DXMESH pScene, 
-        D3DXSHMATERIAL *pMaterial,
-        UINT NumRays, 
-        UINT NumBounces, 
-        BOOL EnableSubSurf, 
-        FLOAT LengthScale, 
-        BOOL EnableSpectral,
-        LPD3DXBUFFER *ppSimulationResults, 
-        UINT Width, 
+    D3DXCreatePRTBufferTex( 
+        UINT Width,
         UINT Height,
-        LPDIRECT3DTEXTURE9 pAlbedoTexture,
-        LPD3DXSHPRTSIMCB pProgressCallback
-        );
+        UINT NumCoeffs,
+        UINT NumChannels,
+        LPD3DXPRTBUFFER* ppBuffer);
 
 //============================================================================
 //
-//  D3DXSHPRTExtractTexture:
-//  ------------------------
-//  Pulls the data for a given channel out of pSimulationResults.  
-//  
-//  Parameters:
-//   Channel
-//      Channel to be extracted.
-//   StartCoefficient
-//      Initial coefficient to extract 
-//   NumCoefficients
-//      Number of coefficients to extract
-//   pSimulationResults
-//      Buffer obtained from D3DXSHPRTSimulationTex
-//   pTexture
-//      Texture where data will be stored - must match dimensions specified
-//      when simulator was run and be a signed or float format
-//
-//  Example:
-//      For an order 4 simulation, there are 16 coefficients, which can be 
-//      stored into four 4-channel textures by calling D3DXSPHRTExtractTexture 
-//      4 times with NumCoefficients set to 4, and StartCoefficient set to 
-//      0, 4, 8, and 12 in succession.
-//
-//============================================================================
-
-HRESULT WINAPI 
-    D3DXSHPRTExtractTexture
-        (
-        UINT Channel, 
-        UINT StartCoefficent, 
-        UINT NumCoefficients,
-        LPD3DXBUFFER pSimulationResults, 
-        LPDIRECT3DTEXTURE9 pTexture
-        );
-
-//============================================================================
-//
-//  D3DXSHPRTExtractToMesh:
-//  -----------------------
-//  Pulls transfer coefficients from the buffer containing the simulation 
-//  results and attaches them to the input mesh.
-//  Can only be called on single channel buffers (use D3DXSHPRTExtractChannel 
-//  otherwise).
+//  D3DXLoadPRTBufferFromFile:
+//  --------------------
+//  Loads a PRT buffer that has been saved to disk.
 //
 //  Parameters:
-//   Order
-//      Order of SH to use, generates Order^2 coeffs, degree is Order-1
-//   pScene
-//      Single mesh that data is going to be packed into
-//   pSimulationResults
-//      Buffer obtained from D3DXSHPRTSimulation
-//   Usage
-//      D3DDECLUSAGE where coefficients are to be stored
-//   UsageIndexStart
-//      Starting index for coefficients to be stored
+//    pFilename
+//      Name of the file to load
+//    ppBuffer
+//      Buffer that will be allocated
 //
 //============================================================================
 
-HRESULT WINAPI 
-    D3DXSHPRTExtractToMesh
-        (
-        UINT Order, 
-        LPD3DXMESH pScene, 
-        LPD3DXBUFFER pSimulationResults,
-        D3DDECLUSAGE Usage, 
-        UINT UsageIndexStart
-        );
+HRESULT WINAPI
+    D3DXLoadPRTBufferFromFileA(
+        LPCSTR pFilename, 
+        LPD3DXPRTBUFFER*       ppBuffer);
+        
+HRESULT WINAPI
+    D3DXLoadPRTBufferFromFileW(
+        LPCWSTR pFilename, 
+        LPD3DXPRTBUFFER*       ppBuffer);
+
+#ifdef UNICODE
+#define D3DXLoadPRTBufferFromFile D3DXLoadPRTBufferFromFileW
+#else
+#define D3DXLoadPRTBufferFromFile D3DXLoadPRTBufferFromFileA
+#endif
 
 
 //============================================================================
 //
-//  D3DXSHPRTCompress:
-//  ------------------
-//  This function compresses a PRT buffer, generating a new compressed
-//  buffer.
+//  D3DXSavePRTBufferToFile:
+//  --------------------
+//  Saves a PRTBuffer to disk.
 //
 //  Parameters:
-//   Order
-//      Order of SH to compress, generates Order^2 coeffs, degree is Order-1
-//   pSimulationResults
-//      Buffer obtained from the simulator that contains transfer vectors.
-//   Quality
-//      Type of compression to use 
-//   NumClusters
-//      Number of clusters to use for compression
-//   NumPCA
-//      Number of PCA vectors to use in each cluster
-//   ppCompressedResults
-//      Returns the compressed data
+//    pFilename
+//      Name of the file to save
+//    pBuffer
+//      Buffer that will be saved
 //
 //============================================================================
 
-HRESULT WINAPI 
-    D3DXSHPRTCompress
-        (
-        UINT Order, 
-        LPD3DXBUFFER pSimulationResults,
+HRESULT WINAPI
+    D3DXSavePRTBufferToFileA(
+        LPCSTR pFileName,
+        LPD3DXPRTBUFFER pBuffer);
+        
+HRESULT WINAPI
+    D3DXSavePRTBufferToFileW(
+        LPCWSTR pFileName,
+        LPD3DXPRTBUFFER pBuffer);
+
+#ifdef UNICODE
+#define D3DXSavePRTBufferToFile D3DXSavePRTBufferToFileW
+#else
+#define D3DXSavePRTBufferToFile D3DXSavePRTBufferToFileA
+#endif                
+
+
+//============================================================================
+//
+//  D3DXLoadPRTCompBufferFromFile:
+//  --------------------
+//  Loads a PRTComp buffer that has been saved to disk.
+//
+//  Parameters:
+//    pFilename
+//      Name of the file to load
+//    ppBuffer
+//      Buffer that will be allocated
+//
+//============================================================================
+
+HRESULT WINAPI
+    D3DXLoadPRTCompBufferFromFileA(
+        LPCSTR pFilename, 
+        LPD3DXPRTCOMPBUFFER*       ppBuffer);
+        
+HRESULT WINAPI
+    D3DXLoadPRTCompBufferFromFileW(
+        LPCWSTR pFilename, 
+        LPD3DXPRTCOMPBUFFER*       ppBuffer);
+
+#ifdef UNICODE
+#define D3DXLoadPRTCompBufferFromFile D3DXLoadPRTCompBufferFromFileW
+#else
+#define D3DXLoadPRTCompBufferFromFile D3DXLoadPRTCompBufferFromFileA
+#endif
+
+//============================================================================
+//
+//  D3DXSavePRTCompBufferToFile:
+//  --------------------
+//  Saves a PRTCompBuffer to disk.
+//
+//  Parameters:
+//    pFilename
+//      Name of the file to save
+//    pBuffer
+//      Buffer that will be saved
+//
+//============================================================================
+
+HRESULT WINAPI
+    D3DXSavePRTCompBufferToFileA(
+        LPCSTR pFileName,
+        LPD3DXPRTCOMPBUFFER pBuffer);
+        
+HRESULT WINAPI
+    D3DXSavePRTCompBufferToFileW(
+        LPCWSTR pFileName,
+        LPD3DXPRTCOMPBUFFER pBuffer);
+
+#ifdef UNICODE
+#define D3DXSavePRTCompBufferToFile D3DXSavePRTCompBufferToFileW
+#else
+#define D3DXSavePRTCompBufferToFile D3DXSavePRTCompBufferToFileA
+#endif 
+
+//============================================================================
+//
+//  D3DXCreatePRTCompBuffer:
+//  --------------------
+//  Compresses a PRT buffer (vertex or texel)
+//
+//  Parameters:
+//    D3DXSHCOMPRESSQUALITYTYPE
+//      Quality of compression - low is faster (computes PCA per voronoi cluster)
+//      high is slower but better quality (clusters based on distance to affine subspace)
+//    NumClusters
+//      Number of clusters to compute
+//    NumPCA
+//      Number of basis vectors to compute
+//    pCB
+//      Optional Callback function
+//    lpUserContext
+//      Optional user context
+//    pBufferIn
+//      Buffer that will be compressed
+//    ppBufferOut
+//      Compressed buffer that will be created
+//
+//============================================================================
+
+
+HRESULT WINAPI
+    D3DXCreatePRTCompBuffer(
         D3DXSHCOMPRESSQUALITYTYPE Quality,
         UINT NumClusters, 
         UINT NumPCA,
-        LPD3DXBUFFER *ppCompressedResults
-        );
+        LPD3DXSHPRTSIMCB pCB,
+        LPVOID lpUserContext,        
+        LPD3DXPRTBUFFER  pBufferIn,
+        LPD3DXPRTCOMPBUFFER *ppBufferOut
+    );
 
 //============================================================================
 //
-//  D3DXSHPRTCompExtractToMesh:
-//  ---------------------------
-//  Pulls PCA coefficients from compressed buffer and attaches them to the 
-//  mesh.
+//  D3DXCreateTextureGutterHelper:
+//  --------------------
+//  Generates a "GutterHelper" for a given set of meshes and texture
+//  resolution
 //
 //  Parameters:
-//   NumPCA
-//      Number of PCA coefficients to extract
-//   pScene
-//      Single mesh that data is going to be packed into
-//   pCompressedResults
-//      Buffer obtained from D3DXSHPRTCompress
-//   Usage
-//      D3DDECLUSAGE where coefficients are to be stored
-//   UsageIndexStart
-//      Starting index for coefficients to be stored
+//    Width
+//      Width of texture
+//    Height
+//      Height of texture
+//    pMesh
+//      Mesh that represents the scene
+//    GutterSize
+//      Number of texels to over rasterize in texture space
+//      this should be at least 1.0
+//    ppBuffer
+//      GutterHelper that will be created
 //
 //============================================================================
 
 
 HRESULT WINAPI 
-    D3DXSHPRTCompExtractToMesh
-        (
-        UINT NumPCA, 
-        LPD3DXMESH pScene, 
-        LPD3DXBUFFER pCompressedResults,
-        D3DDECLUSAGE Usage, 
-        UINT UsageIndexStart
-        );
+    D3DXCreateTextureGutterHelper( 
+        UINT Width,
+        UINT Height,
+        LPD3DXMESH pMesh, 
+        FLOAT GutterSize,
+        LPD3DXTEXTUREGUTTERHELPER* ppBuffer);
+
 
 //============================================================================
 //
-//  D3DXSHPRTCompExtractDesc:
-//  -------------------------
-//  Given a compressed buffer, extracts a description of the data.
+//  D3DXCreatePRTEngine:
+//  --------------------
+//  Computes a PRTEngine which can efficiently generate PRT simulations
+//  of a scene
 //
 //  Parameters:
-//   pCompressedResults
-//      Buffer obtained D3DXSHPRTCompress
-//   pDesc
-//      Structure to be filled in with information from the buffer
+//    pMesh
+//      Mesh that represents the scene - must have an AttributeTable
+//      where vertices are in a unique attribute.
+//    pAdjacency
+//      Optional adjacency information
+//    ExtractUVs
+//      Set this to true if textures are going to be used for albedos
+//      or to store PRT vectors
+//    pBlockerMesh
+//      Optional mesh that just blocks the scene
+//    ppEngine
+//      PRTEngine that will be created
 //
 //============================================================================
 
-HRESULT WINAPI
-    D3DXSHPRTCompExtractDesc
-        (
-        LPD3DXBUFFER pCompressedResults, 
-        D3DXSHPRTCOMPBUFFER_DESC *pDesc
-        );
-
-//============================================================================
-//
-//  D3DXSHPRTCompNormalizeData:
-//  ---------------------------
-//  Given a compressed buffer, rescales all of the PCA projection coefficients
-//  so that they are within [-1, 1].  The PCA vectors are scaled so that 
-//  reconstruction is still correct.  This maximizes precision when packing
-//  into textures.
-//
-//  Parameters:
-//   pCompressedResults
-//      Buffer obtained from D3DXSHPRTCompress
-//
-//============================================================================
 
 HRESULT WINAPI 
-    D3DXSHPRTCompNormalizeData
-        (
-        LPD3DXBUFFER pCompressedResults
-        );
+    D3DXCreatePRTEngine( 
+        LPD3DXMESH pMesh,
+        DWORD *pAdjacency,
+        BOOL ExtractUVs,
+        LPD3DXMESH pBlockerMesh, 
+        LPD3DXPRTENGINE* ppEngine);
 
 //============================================================================
 //
-//  D3DXSHPRTCompExtractBasis:
-//  --------------------------
-//  Extracts the mean + PCA basis vectors for a given cluster from a
-//  compressed buffer.  The data is laid out in memory:
-//      FLOAT fData[NumSamples][NumChannels][Order*Order]
-//  Where NumSamples/NumChannels/Order are from the D3DXSHPRTCOMPBUFFER_DESC
-//  that can be extracted from pBuffer.
+//  D3DXConcatenateMeshes:
+//  --------------------
+//  Concatenates a group of meshes into one common mesh.  This can optionaly transform
+//  each sub mesh or its texture coordinates.  If no DECL is given it will
+//  generate a union of all of the DECL's of the sub meshes, promoting channels
+//  and types if neccesary.  It will create an AttributeTable if possible, one can
+//  call OptimizeMesh with attribute sort and compacting enabled to ensure this.
 //
 //  Parameters:
-//   Cluster
-//      Cluster whose basis is going to be extracted
-//   pCompressedResults
-//      Buffer obtained from D3DXSHPRTCompress
-//   pClusterBasis
-//      Array of floats into which cluster basis is written
+//    ppMeshes
+//      Array of pointers to meshes that can store PRT vectors
+//    NumMeshes
+//      Number of meshes
+//    Options
+//      Passed through to D3DXCreateMesh
+//    pGeomXForms
+//      [optional] Each sub mesh is transformed by the corresponding
+//      matrix if this array is supplied
+//    pTextureXForms
+//      [optional] UV coordinates for each sub mesh are transformed
+//      by corresponding matrix if supplied
+//    pDecl
+//      [optional] Only information in this DECL is used when merging
+//      data
+//    pD3DDevice
+//      D3D device that is used to create the new mesh
+//    ppMeshOut
+//      Mesh that will be created
 //
 //============================================================================
+
 
 HRESULT WINAPI 
-    D3DXSHPRTCompExtractBasis
-        (
-        UINT Cluster, 
-        LPD3DXBUFFER pCompressedResults, 
-        FLOAT *pClusterBasis
-        );
-
-//============================================================================
-//
-//  D3DXSHPRTCompExtractClusterIDs:
-//  -------------------------------
-//  Extracts the per sample cluster ID from a compressed data set.
-//
-//  Parameters:
-//   pCompressedResults
-//      Buffer obtained from D3DXSHPRTCompress
-//   pClusterIDs
-//      Pointer where D3DXSHPRTCOMPBUFFER_DESC::NumSamples IDs are written 
-//
-//============================================================================
-
-HRESULT WINAPI 
-    D3DXSHPRTCompExtractClusterIDs
-        (
-        LPD3DXBUFFER pCompressedResults, 
-        UINT *pClusterIDs
-        );
-
-//============================================================================
-//
-//  D3DXSHPRTCompExtractPCA:
-//  ------------------------
-//  Extracts the per-sample PCA coefficients from a compressed buffer.
-//
-//  Parameters:
-//   StartPCA
-//      Starting PCA projection coefficient to extract
-//   NumExtract
-//      Number of PCA projection coefficients to extract
-//   pCompressedResults
-//      Buffer obtained from D3DXSHPRTCompress
-//   pPCACoefficients
-//      Pointer where NumSamples * NumPCA PCA coefficients are written 
-//
-//============================================================================
-
-HRESULT WINAPI 
-    D3DXSHPRTCompExtractPCA
-        (
-        UINT StartPCA, 
-        UINT NumExtract, 
-        LPD3DXBUFFER pCompressedResults, 
-        FLOAT *pPCACoefficients
-        );
-
-//============================================================================
-//
-//  D3DXSHPRTCompExtractTexture:
-//  ----------------------------
-//  Extracts the per sample PCA coefficients from a compressed data set.  They
-//  are extracted into a texture that has already been allocated.
-//
-//  Parameters:
-//   StartPCA
-//      Starting PCA projection coefficient to extract
-//   NumExtract
-//      Number of PCA projection coefficients to extract
-//   pCompressedResults
-//      Buffer obtained from D3DXSHPRTCompress
-//   pTexture
-//      Texture where data is stored - must match dimensions of simulator
-//      and be a signed or floating point format
-//
-//============================================================================
-
-HRESULT WINAPI 
-    D3DXSHPRTCompExtractTexture
-        (
-        UINT StartPCA, 
-        UINT NumExtract, 
-        LPD3DXBUFFER pCompressedResults, 
-        LPDIRECT3DTEXTURE9 pTexture
-        );
+    D3DXConcatenateMeshes(
+        LPD3DXMESH *ppMeshes, 
+        UINT NumMeshes, 
+        DWORD Options, 
+        CONST D3DXMATRIX *pGeomXForms, 
+        CONST D3DXMATRIX *pTextureXForms, 
+        CONST D3DVERTEXELEMENT9 *pDecl,
+        LPDIRECT3DDEVICE9 pD3DDevice, 
+        LPD3DXMESH *ppMeshOut);
 
 //============================================================================
 //
@@ -1747,15 +2640,13 @@ HRESULT WINAPI
 //============================================================================
 
 HRESULT WINAPI 
-    D3DXSHPRTCompSuperCluster
-        (
+    D3DXSHPRTCompSuperCluster(
         UINT *pClusterIDs, 
         LPD3DXMESH pScene, 
         UINT MaxNumClusters, 
         UINT NumClusters,
         UINT *pSuperClusterIDs, 
-        UINT *pNumSuperClusters
-        );
+        UINT *pNumSuperClusters);
 
 //============================================================================
 //
@@ -1789,18 +2680,18 @@ HRESULT WINAPI
 //   NumFaces
 //      Number of faces in the original mesh (pInputIB is 3 times this length)
 //   ppIBData
-//      Raw index buffer that will contain the resulting split faces.  Format
-//      determined by bIBIs32Bit.  Allocated by function
+//      LPD3DXBUFFER holds raw index buffer that will contain the resulting split faces.  
+//      Format determined by bIBIs32Bit.  Allocated by function
 //   pIBDataLength
 //      Length of ppIBData, assigned in function
 //   OutputIBIs32Bit
 //      Indicates whether the output index buffer is to be 32-bit (otherwise 
 //      16-bit is assumed)
 //   ppFaceRemap
-//      Mapping of each face in ppIBData to original faces.  Length is
-//      *pIBDataLength/3.  Allocated in function
+//      LPD3DXBUFFER mapping of each face in ppIBData to original faces.  Length is
+//      *pIBDataLength/3.  Optional paramter, allocated in function
 //   ppVertData
-//      New vertex data structure.  Size of pVertDataLength
+//      LPD3DXBUFFER contains new vertex data structure.  Size of pVertDataLength
 //   pVertDataLength
 //      Number of new vertices in split mesh.  Assigned in function
 //   pSCClusterList
@@ -1813,8 +2704,7 @@ HRESULT WINAPI
 //============================================================================
 
 HRESULT WINAPI 
-    D3DXSHPRTCompSplitMeshSC
-        (
+    D3DXSHPRTCompSplitMeshSC(
         UINT *pClusterIDs, 
         UINT NumVertices, 
         UINT NumClusters, 
@@ -1823,20 +2713,19 @@ HRESULT WINAPI
         LPVOID pInputIB, 
         BOOL InputIBIs32Bit, 
         UINT NumFaces,
-        LPVOID *ppIBData, 
+        LPD3DXBUFFER *ppIBData, 
         UINT *pIBDataLength, 
         BOOL OutputIBIs32Bit, 
-        UINT **ppFaceRemap, 
-        D3DXSHPRTSPLITMESHVERTDATA **ppVertData, 
+        LPD3DXBUFFER *ppFaceRemap, 
+        LPD3DXBUFFER *ppVertData, 
         UINT *pVertDataLength, 
         UINT *pSCClusterList,
-        D3DXSHPRTSPLITMESHCLUSTERDATA *pSCData
-        );
-
+        D3DXSHPRTSPLITMESHCLUSTERDATA *pSCData);
+        
+        
 #ifdef __cplusplus
 }
 #endif //__cplusplus
-
 
 //////////////////////////////////////////////////////////////////////////////
 //
@@ -1928,6 +2817,20 @@ DEFINE_GUID(DXFILEOBJ_EffectInstance,
 // {9E415A43-7BA6-4a73-8743-B73D47E88476}
 DEFINE_GUID(DXFILEOBJ_AnimTicksPerSecond, 
 0x9e415a43, 0x7ba6, 0x4a73, 0x87, 0x43, 0xb7, 0x3d, 0x47, 0xe8, 0x84, 0x76);
+
+// {7F9B00B3-F125-4890-876E-1CFFBF697C4D}
+DEFINE_GUID(DXFILEOBJ_CompressedAnimationSet, 
+0x7f9b00b3, 0xf125, 0x4890, 0x87, 0x6e, 0x1c, 0x42, 0xbf, 0x69, 0x7c, 0x4d);
+
+#pragma pack(push, 1)
+typedef struct _XFILECOMPRESSEDANIMATIONSET
+{
+    DWORD CompressedBlockSize;
+    FLOAT TicksPerSec;
+    DWORD PlaybackType;
+    DWORD BufferLength;
+} XFILECOMPRESSEDANIMATIONSET;
+#pragma pack(pop)
 
 #define XSKINEXP_TEMPLATES \
         "xof 0303txt 0032\
@@ -2032,6 +2935,15 @@ DEFINE_GUID(DXFILEOBJ_AnimTicksPerSecond,
         { \
             <9E415A43-7BA6-4a73-8743-B73D47E88476> \
             DWORD AnimTicksPerSecond; \
+        } \
+        template CompressedAnimationSet \
+        { \
+            <7F9B00B3-F125-4890-876E-1C42BF697C4D> \
+            DWORD CompressedBlockSize; \
+            FLOAT TicksPerSec; \
+            DWORD PlaybackType; \
+            DWORD BufferLength; \
+            array DWORD CompressedData[BufferLength]; \
         } "
 
 #define XEXTENSIONS_TEMPLATES \

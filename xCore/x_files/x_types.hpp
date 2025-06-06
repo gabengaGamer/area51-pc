@@ -15,19 +15,14 @@
 #include "x_target.hpp"
 #endif
 
+#ifdef __cplusplus
+#include <new>
+#endif
+
 //
 // For each platform, certain include files are essentially ubiquitous.  
 // Include them here.
 //
-
-#ifdef TARGET_PS2
-#endif
-
-#ifdef TARGET_GCN
-#endif
-
-#ifdef TARGET_XBOX
-#endif
 
 //==============================================================================
 //  DEFINES
@@ -45,11 +40,29 @@
 #define TRUE        (1)
 
 #ifndef NULL
-  #ifdef __cplusplus
-    #define NULL        0
-  #else
-    #define NULL        ((void*)0)
-  #endif
+    #ifdef __cplusplus
+        #define NULL        0
+    #else
+        #define NULL        ((void*)0)
+    #endif
+#endif
+
+//
+// 
+//
+
+#ifdef TARGET_PC
+    #ifndef WIN32_LEAN_AND_MEAN
+    #define WIN32_LEAN_AND_MEAN
+    #endif
+    
+    #ifndef _WIN64
+    #define POINTER_64
+    #else
+    #define POINTER_64 __ptr64
+    #endif
+    
+    #include <windows.h>
 #endif
 
 //
@@ -109,11 +122,7 @@
 #define U32_MAX               4294967295U
 #define U32_MIN                        0
 
-#ifdef TARGET_PS2
-#define U64_MAX     18446744073709551615LL
-#else
 #define U64_MAX     18446744073709551615
-#endif
 #define U64_MIN                        0
 
 #define S8_MAX                       127
@@ -161,108 +170,6 @@
 #define X_SECTION(x)
   
 #endif
-
-//------------------------------------------------------------------------------
-
-#ifdef TARGET_PS2
-
-  // Types for PS2 targets under SN Systems' compiler.
-  #ifdef __GNUC__
-    typedef unsigned char       u8;
-    typedef unsigned short      u16;
-    typedef unsigned int        u32;
-    typedef unsigned long       u64;
-    typedef unsigned int		u128 __attribute__ (( mode(TI) )) __attribute__ ((aligned(16)));
-    typedef   signed char       s8;
-    typedef   signed short      s16;
-    typedef   signed int        s32;
-    typedef   signed long       s64;
-    typedef          float      f32;
-    typedef          double     f64;
-    typedef u8                  byte;
-    typedef s32                 xbool;
-    typedef u16                 xwchar;
-  #endif
-
-#if defined(__GNUC__)
-#define X_SECTION(x) __attribute__((section("."#x)))
-#else
-#define X_SECTION(x)
-#endif
-#endif      
-
-//------------------------------------------------------------------------------
-
-#ifdef TARGET_GCN
-  #ifdef __SN__               // for SN
-    typedef   signed char       s8;
-    typedef   signed short      s16;
-    typedef   signed long       s32;
-    typedef   signed long long  s64;
-    typedef unsigned char       u8;
-    typedef unsigned short      u16;
-    typedef unsigned long       u32;
-    typedef unsigned long long  u64;
-    typedef          float      f32;
-    typedef          double     f64;
-    typedef u8                  byte;
-    typedef s32                 xbool;
-    typedef u16                 xwchar;
-  #else
-    typedef   signed char       s8;
-    typedef   signed short      s16;
-    typedef   signed long       s32;
-    typedef   signed long long  s64;
-    typedef unsigned char       u8;
-    typedef unsigned short      u16;
-    typedef unsigned long       u32;
-    typedef unsigned long long  u64;
-    typedef          float      f32;
-    typedef          double     f64;
-    typedef u8                  byte;
-    typedef s32                 xbool;
-    typedef u16                 xwchar;
-  #endif
-
-#if defined(__GNUC__)
-#define X_SECTION(x) __attribute__((section("."#x)))
-#else
-#define X_SECTION(x)
-#endif
-
-#endif
-
-//------------------------------------------------------------------------------
-
-#ifdef TARGET_XBOX
-
-    typedef unsigned char       u8;
-    typedef unsigned short      u16;
-    typedef unsigned int        u32;
-    typedef unsigned __int64    u64;
-    typedef   signed char       s8;
-    typedef   signed short      s16;
-    typedef   signed int        s32;
-    typedef   signed __int64    s64;
-    typedef          float      f32;
-    typedef          double     f64;
-    typedef u8                  byte;
-    typedef s32                 xbool;
-    typedef u16                 xwchar;
-
-    union __declspec(intrin_type)__declspec( align( 16 )) f128
-    {
-        struct
-        {
-            f32 x;
-            f32 y;
-            f32 z;
-            f32 w;
-        };
-    };
-
-#define X_SECTION(x)
-#endif 
 
 //------------------------------------------------------------------------------
 // For C++ Only
@@ -339,16 +246,13 @@ struct xhandle
 //  
 //==============================================================================
 
-#ifdef TARGET_GCN
-#define xalloctype unsigned int
-#else
 #define xalloctype u32
-#endif
 
 //------------------------------------------------------------------------------
 
-inline void* operator new       ( xalloctype Size, void* pData ) { (void)Size; return pData; }
-inline void  operator delete    ( void* pMemory,   void* pData ) { (void)pMemory; (void)pData; }
+// Placement new is provided by <new> header in modern compilers
+//inline void* operator new       ( xalloctype Size, void* pData ) { (void)Size; return pData; }
+//inline void  operator delete    ( void* pMemory,   void* pData ) { (void)pMemory; (void)pData; }
 
 template< class T >          inline void xConstruct( T* Ptr )         { (void) new(Ptr) T; }
 template< class T, class S > inline T*   xConstruct( T* Ptr, S& Ref ) { return new(Ptr) T(Ref); }
