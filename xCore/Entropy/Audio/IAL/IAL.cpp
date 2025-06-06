@@ -1,19 +1,7 @@
 // IAL.cpp : Defines the entry point for the console application.
 //
 
-#ifndef WIN32_LEAN_AND_MEAN
-#define WIN32_LEAN_AND_MEAN
-#endif
-
-// For PVOID64 compatibility
-#ifndef _WIN64
-#define POINTER_64
-#else
-#define POINTER_64 __ptr64
-#endif
-
 #include <windows.h>
-
 #include <mmreg.h>
 #include "dsound.h"
 

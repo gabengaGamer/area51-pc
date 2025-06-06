@@ -1178,15 +1178,7 @@ void dlg_profile_select::RefreshProfileList( void )
             ModStamp += Month;
             ModStamp += (const char*)xfs(" %02i, %d", TimeStamp.Day, TimeStamp.Year);
             m_pInfoModifiedDate->SetLabel(ModStamp);
-        }		
-		else
-        {
-             m_pProfileDetails->SetLabel( g_StringTableMgr( "ui", "IDS_ERROR" ) );
-             m_pCardSlot         ->SetLabel( xwstring("") );
-             m_pInfoCreationDate ->SetLabel( xwstring("") );
-             m_pInfoModifiedDate ->SetLabel( xwstring("") );
         }
-		/* IDK
         else
         {
              m_pProfileDetails->SetLabel( g_StringTableMgr( "ui", "IDS_ERROR" ) );
@@ -1194,7 +1186,6 @@ void dlg_profile_select::RefreshProfileList( void )
              m_pInfoCreationDate ->SetLabel( L"" );
              m_pInfoModifiedDate ->SetLabel( L"" );
         }
-		*/
     }
 }
 

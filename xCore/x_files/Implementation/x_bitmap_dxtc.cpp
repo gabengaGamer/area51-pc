@@ -7,7 +7,6 @@
 //==============================================================================
 //  INCLUDES
 //==============================================================================
-
 #ifndef X_BITMAP_HPP
 #include "..\x_bitmap.hpp"
 #endif
@@ -19,6 +18,10 @@
 #ifndef X_MATH_HPP
 #include "..\x_math.hpp"
 #endif
+
+//==============================================================================
+
+#if !( defined( TARGET_PS2 ) && defined( CONFIG_RETAIL ) )
 
 //==============================================================================
 
@@ -41,7 +44,6 @@
 #       endif
 #   endif
 #else
-	
 enum DXTCMethod
 {
 	DC_None,
@@ -59,6 +61,7 @@ const f32 ERROR_TOLERANCE = 100.0f;
 
 //=============================================================================
 
+#ifndef TARGET_PS2
 static AlphaType GetAlphaUsage( xbitmap& Source )
 {
     if( !Source.HasAlphaBits( ))
@@ -123,6 +126,7 @@ static AlphaType GetAlphaUsage( xbitmap& Source )
 		    return AT_Modulated;
 	}
 }
+#endif
 
 //=============================================================================
 //
@@ -130,11 +134,131 @@ static AlphaType GetAlphaUsage( xbitmap& Source )
 //  the Nvidia library if you're compiling with Visual Studio 6.x or the Xbox
 //  XGraphics library if .NET 2003.
 //
-
-//TODO: REMOVE LEGACY XGRAPHICS!!!!
-
+#if ( defined TARGET_XBOX ) || ( defined TARGET_PC )
 static void PackImage( xbitmap& Dest,const xbitmap& Source,xbool bForceMips,DXTCMethod Method )
 {
+#if _MSC_VER < 1300 // USE NVidia compressor (known issues with DXT1)
+
+    u32 W = Source.GetWidth ( );
+    u32 H = Source.GetHeight( );
+
+    // ========================================================================
+
+    Dest.Kill( );
+    xbitmap Temp( Source );
+    if( Temp.GetFormat() != xbitmap::FMT_32_BGRA_8888 )
+        Temp.ConvertFormat( xbitmap::FMT_32_BGRA_8888 );
+    ASSERT( Temp.GetBPP()==32 );
+    if( bForceMips && !Temp.GetNMips( ))
+        Temp.BuildMips( );
+
+    // ========================================================================
+
+    ImageDXTC Dxtc;
+
+    // ========================================================================
+
+    s32 NMips = Temp.GetNMips( );
+    if(!NMips )
+    {   //
+        //  Create bitmap
+        //
+        xbitmap::format Format;
+        Image32 DxtImage( W,H,( Color* )Temp.GetPixelData( ));
+        DxtImage.DiffuseError( 8,5,6,5 );
+        switch( Method )
+        {
+            case DC_None:
+                switch( GetAlphaUsage( Temp ))
+                {
+		            case AT_ConstantBinary:
+		            case AT_Binary:
+		            case AT_None:
+                        Dxtc.CompressDXT1( &DxtImage );
+                        Format = xbitmap::FMT_DXT1;
+                        break;
+		            case AT_DualConstant:
+		            case AT_Modulated:
+		            case AT_Constant:
+                        Dxtc.CompressDXT3( &DxtImage );
+                        Format = xbitmap::FMT_DXT3;
+                        break;
+                }
+                break;
+            case DC_DXT3:
+                Dxtc.CompressDXT3( &DxtImage );
+                Format = xbitmap::FMT_DXT3;
+                break;
+            case DC_DXT1:
+                Dxtc.CompressDXT1( &DxtImage );
+                Format = xbitmap::FMT_DXT1;
+                break;
+        }
+        //
+        //  Create texture
+        //
+        Dest.Setup( Format,W,H,TRUE,NULL,FALSE,NULL,W,NMips );
+        u32 Size = Dest.GetDataSize();
+        x_memcpy(
+            (void*)Dest.GetPixelData(),
+            Dxtc.GetBlocks( ),
+            Size );
+        x_memset(
+            &DxtImage,
+            0,
+            sizeof( Image32 ));
+        return;
+    }
+
+    // ========================================================================
+
+    for( s32 i=0;i<=NMips;i++ )
+    {   //
+        //  Compress image
+        //
+        Image32 DxtImage;
+        u32 W = Temp.GetWidth (i);
+        u32 H = Temp.GetHeight(i);
+        DxtImage.SetSize( W,H );
+        x_memcpy(
+            DxtImage.GetPixels     ( ),
+            Temp    .GetPixelData  (i),
+            Temp    .GetMipDataSize(i));
+        //
+        //  Duplicate pixels( assumes RGBA not ARGB)
+        //
+        DxtImage.DiffuseError( 8,5,6,5 );
+    	Dxtc.FromImage32( &DxtImage,Method );
+        if( !i )
+        {
+            Method = Dxtc.GetMethod( );
+            xbitmap::format Format;
+            switch( Method )
+            {
+                case DC_DXT1: Format = xbitmap::FMT_DXT1; break;
+                case DC_DXT3: Format = xbitmap::FMT_DXT3; break;
+
+                default:
+                    ASSERT(0);
+                    break;
+            }
+            Dest.Setup( Format,W,H,TRUE,NULL,FALSE,NULL,W,NMips );
+        }
+        else
+        {
+            ASSERT( Method==Dxtc.GetMethod( ));
+        }
+        //
+        //  Load dest
+        //
+        u32 Size = Dest.GetMipDataSize(i);
+        x_memcpy(
+            (void*)Dest.GetPixelData(i),
+            Dxtc.GetBlocks( ),
+            Size );
+    }
+
+#else // Use XGraphics
 
     u32 W = Source.GetWidth ( );
     u32 H = Source.GetHeight( );
@@ -304,12 +428,19 @@ static void PackImage( xbitmap& Dest,const xbitmap& Source,xbool bForceMips,DXTC
         W      >>= 1;
         H      >>= 1;
     }
+
+#endif
 }
+#endif
 
 //=============================================================================
 
 xbitmap UnpackImage( const xbitmap& Source )
 {
+#ifdef TARGET_PS2
+    ASSERT(0);
+    return Source;
+#else
     xbitmap Result;
     {
         s32  H     = Source.GetHeight( );
@@ -385,12 +516,20 @@ xbitmap UnpackImage( const xbitmap& Source )
         }
     }
     return Result;
+#endif
 }
 
 //=============================================================================
 
 xcolor ReadPixelColorDXT1( const xbitmap* pBmp,s32 X,s32 Y,s32 Mip )
 {
+#ifdef TARGET_PS2
+    (void)Mip;
+    (void)X;
+    (void)Y;
+    (void)pBmp;
+    return XCOLOR_BLACK;
+#else
     xcolor Result;
     {
         s32 y = Y/4;
@@ -417,12 +556,20 @@ xcolor ReadPixelColorDXT1( const xbitmap* pBmp,s32 X,s32 Y,s32 Mip )
             Cache[I].a );
     }
     return Result;
+#endif
 }
 
 //=============================================================================
 
 xcolor ReadPixelColorDXT3( const xbitmap* pBmp,s32 X,s32 Y,s32 Mip )
 {
+#ifdef TARGET_PS2
+    (void)Mip;
+    (void)X;
+    (void)Y;
+    (void)pBmp;
+    return XCOLOR_BLACK;
+#else
     xcolor Result;
     {
         s32 y = Y/4;
@@ -451,6 +598,7 @@ xcolor ReadPixelColorDXT3( const xbitmap* pBmp,s32 X,s32 Y,s32 Mip )
             Cache[I].a );
     }
     return Result;
+#endif
 }
 
 //=============================================================================
@@ -464,3 +612,7 @@ xcolor ReadPixelColorDXT5( const xbitmap* pBmp,s32 X,s32 Y,s32 Mip )
 
     return XCOLOR_BLACK;
 }
+
+//==============================================================================
+
+#endif // !( defined( TARGET_PS2 ) && defined( CONFIG_RETAIL ) )

@@ -1,33 +1,30 @@
-Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 17
-VisualStudioVersion = 17.14.36202.13 d17.14
-MinimumVisualStudioVersion = 10.0.40219.1
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "fx_Core", "fx_Core.vcxproj", "{E0CDD70E-23F8-432A-B3D3-5DF7E1CE15B4}"
+Microsoft Visual Studio Solution File, Format Version 8.00
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "fx_Core", "fx_Core.vcproj", "{E0CDD70E-23F8-432A-B3D3-5DF7E1CE15B4}"
+	ProjectSection(ProjectDependencies) = postProject
+	EndProjectSection
 EndProject
 Global
-	GlobalSection(SolutionConfigurationPlatforms) = preSolution
-		Debug|Win32 = Debug|Win32
-		EDITOR-Debug|Win32 = EDITOR-Debug|Win32
-		OptDebug|Win32 = OptDebug|Win32
-		QA|Win32 = QA|Win32
-		Release|Win32 = Release|Win32
+	GlobalSection(SolutionConfiguration) = preSolution
+		Debug Win32 = Debug Win32
+		EDITOR-Debug Win32 = EDITOR-Debug Win32
+		OptDebug Win32 = OptDebug Win32
+		QA Win32 = QA Win32
+		Release Win32 = Release Win32
 	EndGlobalSection
-	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{E0CDD70E-23F8-432A-B3D3-5DF7E1CE15B4}.Debug|Win32.ActiveCfg = Debug|Win32
-		{E0CDD70E-23F8-432A-B3D3-5DF7E1CE15B4}.Debug|Win32.Build.0 = Debug|Win32
-		{E0CDD70E-23F8-432A-B3D3-5DF7E1CE15B4}.EDITOR-Debug|Win32.ActiveCfg = EDITOR-Debug|Win32
-		{E0CDD70E-23F8-432A-B3D3-5DF7E1CE15B4}.EDITOR-Debug|Win32.Build.0 = EDITOR-Debug|Win32
-		{E0CDD70E-23F8-432A-B3D3-5DF7E1CE15B4}.OptDebug|Win32.ActiveCfg = OptDebug|Win32
-		{E0CDD70E-23F8-432A-B3D3-5DF7E1CE15B4}.OptDebug|Win32.Build.0 = OptDebug|Win32
-		{E0CDD70E-23F8-432A-B3D3-5DF7E1CE15B4}.QA|Win32.ActiveCfg = QA|Win32
-		{E0CDD70E-23F8-432A-B3D3-5DF7E1CE15B4}.QA|Win32.Build.0 = QA|Win32
-		{E0CDD70E-23F8-432A-B3D3-5DF7E1CE15B4}.Release|Win32.ActiveCfg = Release|Win32
-		{E0CDD70E-23F8-432A-B3D3-5DF7E1CE15B4}.Release|Win32.Build.0 = Release|Win32
-	EndGlobalSection
-	GlobalSection(SolutionProperties) = preSolution
-		HideSolutionNode = FALSE
+	GlobalSection(ProjectConfiguration) = postSolution
+		{E0CDD70E-23F8-432A-B3D3-5DF7E1CE15B4}.Debug Win32.ActiveCfg = Debug|Win32
+		{E0CDD70E-23F8-432A-B3D3-5DF7E1CE15B4}.Debug Win32.Build.0 = Debug|Win32
+		{E0CDD70E-23F8-432A-B3D3-5DF7E1CE15B4}.EDITOR-Debug Win32.ActiveCfg = EDITOR-Debug|Win32
+		{E0CDD70E-23F8-432A-B3D3-5DF7E1CE15B4}.EDITOR-Debug Win32.Build.0 = EDITOR-Debug|Win32
+		{E0CDD70E-23F8-432A-B3D3-5DF7E1CE15B4}.OptDebug Win32.ActiveCfg = OptDebug|Win32
+		{E0CDD70E-23F8-432A-B3D3-5DF7E1CE15B4}.OptDebug Win32.Build.0 = OptDebug|Win32
+		{E0CDD70E-23F8-432A-B3D3-5DF7E1CE15B4}.QA Win32.ActiveCfg = QA|Win32
+		{E0CDD70E-23F8-432A-B3D3-5DF7E1CE15B4}.QA Win32.Build.0 = QA|Win32
+		{E0CDD70E-23F8-432A-B3D3-5DF7E1CE15B4}.Release Win32.ActiveCfg = Release|Win32
+		{E0CDD70E-23F8-432A-B3D3-5DF7E1CE15B4}.Release Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
-		SolutionGuid = {BDA2A8B6-2816-42D1-99CA-33DD0FE75FBD}
+	EndGlobalSection
+	GlobalSection(ExtensibilityAddIns) = postSolution
 	EndGlobalSection
 EndGlobal

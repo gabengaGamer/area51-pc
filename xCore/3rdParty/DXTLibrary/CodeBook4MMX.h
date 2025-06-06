@@ -7,10 +7,6 @@
 #ifndef CODEBOOK_H
 #define CODEBOOK_H
 
-#ifndef X_TYPES_HPP
-#include "../../x_files/x_types.hpp"  // Adjust path as needed
-#endif
-
 #include "Table.h"
 
 const long CodeSize = 4;

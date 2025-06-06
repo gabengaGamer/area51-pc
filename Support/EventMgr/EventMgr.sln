@@ -1,36 +1,45 @@
-Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 17
-VisualStudioVersion = 17.14.36202.13
-MinimumVisualStudioVersion = 10.0.40219.1
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "EventMgr", "EventMgr.vcxproj", "{363B0366-F4A2-4622-8ED8-225D1B5166B7}"
+Microsoft Visual Studio Solution File, Format Version 8.00
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "EventMgr", "EventMgr.vcproj", "{363B0366-F4A2-4622-8ED8-225D1B5166B7}"
+	ProjectSection(ProjectDependencies) = postProject
+	EndProjectSection
 EndProject
 Global
-	GlobalSection(SolutionConfigurationPlatforms) = preSolution
-		Debug|Win32 = Debug|Win32
-		EDITOR-Debug|Win32 = EDITOR-Debug|Win32
-		OptDebug|Win32 = OptDebug|Win32
-		QA|Win32 = QA|Win32
-		Release|Win32 = Release|Win32
-		VIEWER-Debug|Win32 = VIEWER-Debug|Win32
+	GlobalSection(SolutionConfiguration) = preSolution
+		Debug Win32 = Debug Win32
+		Debug Xbox = Debug Xbox
+		EDITOR-Debug Win32 = EDITOR-Debug Win32
+		OptDebug Win32 = OptDebug Win32
+		OptDebug Xbox = OptDebug Xbox
+		QA Win32 = QA Win32
+		QA Xbox = QA Xbox
+		Release Win32 = Release Win32
+		Release Xbox = Release Xbox
+		VIEWER-Debug Win32 = VIEWER-Debug Win32
 	EndGlobalSection
-	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{363B0366-F4A2-4622-8ED8-225D1B5166B7}.Debug|Win32.ActiveCfg = Debug|Win32
-		{363B0366-F4A2-4622-8ED8-225D1B5166B7}.Debug|Win32.Build.0 = Debug|Win32
-		{363B0366-F4A2-4622-8ED8-225D1B5166B7}.EDITOR-Debug|Win32.ActiveCfg = EDITOR-Debug|Win32
-		{363B0366-F4A2-4622-8ED8-225D1B5166B7}.EDITOR-Debug|Win32.Build.0 = EDITOR-Debug|Win32
-		{363B0366-F4A2-4622-8ED8-225D1B5166B7}.OptDebug|Win32.ActiveCfg = OptDebug|Win32
-		{363B0366-F4A2-4622-8ED8-225D1B5166B7}.OptDebug|Win32.Build.0 = OptDebug|Win32
-		{363B0366-F4A2-4622-8ED8-225D1B5166B7}.QA|Win32.ActiveCfg = QA|Win32
-		{363B0366-F4A2-4622-8ED8-225D1B5166B7}.QA|Win32.Build.0 = QA|Win32
-		{363B0366-F4A2-4622-8ED8-225D1B5166B7}.Release|Win32.ActiveCfg = Release|Win32
-		{363B0366-F4A2-4622-8ED8-225D1B5166B7}.Release|Win32.Build.0 = Release|Win32
-		{363B0366-F4A2-4622-8ED8-225D1B5166B7}.VIEWER-Debug|Win32.ActiveCfg = VIEWER-Debug|Win32
-		{363B0366-F4A2-4622-8ED8-225D1B5166B7}.VIEWER-Debug|Win32.Build.0 = VIEWER-Debug|Win32
-	EndGlobalSection
-	GlobalSection(SolutionProperties) = preSolution
-		HideSolutionNode = FALSE
+	GlobalSection(ProjectConfiguration) = postSolution
+		{363B0366-F4A2-4622-8ED8-225D1B5166B7}.Debug Win32.ActiveCfg = Debug|Win32
+		{363B0366-F4A2-4622-8ED8-225D1B5166B7}.Debug Win32.Build.0 = Debug|Win32
+		{363B0366-F4A2-4622-8ED8-225D1B5166B7}.Debug Xbox.ActiveCfg = Debug|Xbox
+		{363B0366-F4A2-4622-8ED8-225D1B5166B7}.Debug Xbox.Build.0 = Debug|Xbox
+		{363B0366-F4A2-4622-8ED8-225D1B5166B7}.EDITOR-Debug Win32.ActiveCfg = EDITOR-Debug|Win32
+		{363B0366-F4A2-4622-8ED8-225D1B5166B7}.EDITOR-Debug Win32.Build.0 = EDITOR-Debug|Win32
+		{363B0366-F4A2-4622-8ED8-225D1B5166B7}.OptDebug Win32.ActiveCfg = OptDebug|Win32
+		{363B0366-F4A2-4622-8ED8-225D1B5166B7}.OptDebug Win32.Build.0 = OptDebug|Win32
+		{363B0366-F4A2-4622-8ED8-225D1B5166B7}.OptDebug Xbox.ActiveCfg = OptDebug|Xbox
+		{363B0366-F4A2-4622-8ED8-225D1B5166B7}.OptDebug Xbox.Build.0 = OptDebug|Xbox
+		{363B0366-F4A2-4622-8ED8-225D1B5166B7}.QA Win32.ActiveCfg = QA|Win32
+		{363B0366-F4A2-4622-8ED8-225D1B5166B7}.QA Win32.Build.0 = QA|Win32
+		{363B0366-F4A2-4622-8ED8-225D1B5166B7}.QA Xbox.ActiveCfg = QA|Xbox
+		{363B0366-F4A2-4622-8ED8-225D1B5166B7}.QA Xbox.Build.0 = QA|Xbox
+		{363B0366-F4A2-4622-8ED8-225D1B5166B7}.Release Win32.ActiveCfg = Release|Win32
+		{363B0366-F4A2-4622-8ED8-225D1B5166B7}.Release Win32.Build.0 = Release|Win32
+		{363B0366-F4A2-4622-8ED8-225D1B5166B7}.Release Xbox.ActiveCfg = Release|Xbox
+		{363B0366-F4A2-4622-8ED8-225D1B5166B7}.Release Xbox.Build.0 = Release|Xbox
+		{363B0366-F4A2-4622-8ED8-225D1B5166B7}.VIEWER-Debug Win32.ActiveCfg = VIEWER-Debug|Win32
+		{363B0366-F4A2-4622-8ED8-225D1B5166B7}.VIEWER-Debug Win32.Build.0 = VIEWER-Debug|Win32
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
-		SolutionGuid = {A6FBF2C9-E0AC-49F7-8E3A-E89F49A4CE70}
+	EndGlobalSection
+	GlobalSection(ExtensibilityAddIns) = postSolution
 	EndGlobalSection
 EndGlobal

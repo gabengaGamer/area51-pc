@@ -28,11 +28,6 @@ extern IDirect3DTexture9*  vram_GetSurface  ( s32 VRAM_ID ); //IDK
 //=============================================================================
 //=============================================================================
 
-#define SWITCH_USE_TEXTURES 1
-#define SWITCH_USE_FOG 1
-
-
-/* DEPRECATED
 #ifdef CONFIG_RETAIL
     #define SWITCH_PER_PIXEL_LIGHTING     1 // enables per pixel lighting
     #define SWITCH_DUMP_SHADER_LIBRARIES  0
@@ -70,7 +65,7 @@ extern IDirect3DTexture9*  vram_GetSurface  ( s32 VRAM_ID ); //IDK
     static SWITCH_USE_SHADOWS            =1;
     static SWITCH_USE_FOG                =1; // integral to all: cannot be zero here
 #endif
-*/
+
 #define MAX_VS_WHITE_BUFF     262144
 #define MAX_RESOURCES         16384
 #define MAX_VS_LIGHTS         4

@@ -613,7 +613,7 @@ int main( int argc, char** argv )
 			u16*	temp16;
 
 			//-- Swap the Strings
-   			for( Index = 0 ; Index < Binary.GetLength()/2 ; Index ++ )
+   			for( index = 0 ; index < Binary.GetLength()/2 ; index ++ )
 			{
 				temp16 = (u16*)pdata;
 				ndata16 = *temp16;

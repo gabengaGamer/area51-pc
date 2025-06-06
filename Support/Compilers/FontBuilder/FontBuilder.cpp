@@ -1167,7 +1167,7 @@ int main( int argc, char** argv )
             s32 x = 0;
             s32 y = 0;
 
-            for( s32 c=0 ; c < s_NumChars ; c++ ) 
+            for( c=0 ; c < s_NumChars ; c++ ) 
             {
                 // if we don't fit, go to the next line.
                 if( (x + Bitmaps[c].GetWidth()) > fbw )

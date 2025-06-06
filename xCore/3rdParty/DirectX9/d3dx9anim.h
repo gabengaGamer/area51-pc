@@ -10,21 +10,21 @@
 #ifndef __D3DX9ANIM_H__
 #define __D3DX9ANIM_H__
 
-// {698CFB3F-9289-4d95-9A57-33A94B5A65F9}
+// {A632D591-B584-4d03-BCCD-CBB5331F21AA}
 DEFINE_GUID(IID_ID3DXAnimationSet, 
-0x698cfb3f, 0x9289, 0x4d95, 0x9a, 0x57, 0x33, 0xa9, 0x4b, 0x5a, 0x65, 0xf9);
+0xa632d591, 0xb584, 0x4d03, 0xbc, 0xcd, 0xcb, 0xb5, 0x33, 0x1f, 0x21, 0xaa);
 
-// {FA4E8E3A-9786-407d-8B4C-5995893764AF}
+// {73B6DDE3-7E45-4cc8-834F-B7DCBC04D10A}
 DEFINE_GUID(IID_ID3DXKeyframedAnimationSet, 
-0xfa4e8e3a, 0x9786, 0x407d, 0x8b, 0x4c, 0x59, 0x95, 0x89, 0x37, 0x64, 0xaf);
+0x73b6dde3, 0x7e45, 0x4cc8, 0x83, 0x4f, 0xb7, 0xdc, 0xbc, 0x4, 0xd1, 0xa);
 
-// {6CC2480D-3808-4739-9F88-DE49FACD8D4C}
+// {7B7228FD-EA36-4c06-9DA6-E053D688E164}
 DEFINE_GUID(IID_ID3DXCompressedAnimationSet, 
-0x6cc2480d, 0x3808, 0x4739, 0x9f, 0x88, 0xde, 0x49, 0xfa, 0xcd, 0x8d, 0x4c);
+0x7b7228fd, 0xea36, 0x4c06, 0x9d, 0xa6, 0xe0, 0x53, 0xd6, 0x88, 0xe1, 0x64);
 
-// {AC8948EC-F86D-43e2-96DE-31FC35F96D9E}
+// {39F628C0-CD5B-41d6-8E9C-3BBBB66FDA57}
 DEFINE_GUID(IID_ID3DXAnimationController, 
-0xac8948ec, 0xf86d, 0x43e2, 0x96, 0xde, 0x31, 0xfc, 0x35, 0xf9, 0x6d, 0x9e);
+0x39f628c0, 0xcd5b, 0x41d6, 0x8e, 0x9c, 0x3b, 0xbb, 0xb6, 0x6f, 0xda, 0x57);
 
 
 //----------------------------------------------------------------------------
@@ -215,13 +215,13 @@ typedef interface ID3DXLoadUserData *LPD3DXLOADUSERDATA;
 
 DECLARE_INTERFACE(ID3DXLoadUserData)
 {
-    STDMETHOD(LoadTopLevelData)(LPD3DXFILEDATA pXofChildData) PURE;
+    STDMETHOD(LoadTopLevelData)(LPDIRECTXFILEDATA pXofChildData) PURE;
                             
     STDMETHOD(LoadFrameChildData)(LPD3DXFRAME pFrame, 
-                            LPD3DXFILEDATA pXofChildData) PURE;
+                            LPDIRECTXFILEDATA pXofChildData) PURE;
                             
     STDMETHOD(LoadMeshChildData)(LPD3DXMESHCONTAINER pMeshContainer, 
-                            LPD3DXFILEDATA pXofChildData) PURE;                            
+                            LPDIRECTXFILEDATA pXofChildData) PURE;                            
 };
 
 //----------------------------------------------------------------------------
@@ -240,21 +240,21 @@ typedef interface ID3DXSaveUserData *LPD3DXSAVEUSERDATA;
 DECLARE_INTERFACE(ID3DXSaveUserData)
 {
     STDMETHOD(AddFrameChildData)(CONST D3DXFRAME *pFrame, 
-                            LPD3DXFILESAVEOBJECT pXofSave, 
-                            LPD3DXFILESAVEDATA pXofFrameData) PURE;
+                            LPDIRECTXFILESAVEOBJECT pXofSave, 
+                            LPDIRECTXFILEDATA pXofFrameData) PURE;
                             
     STDMETHOD(AddMeshChildData)(CONST D3DXMESHCONTAINER *pMeshContainer, 
-                            LPD3DXFILESAVEOBJECT pXofSave, 
-                            LPD3DXFILESAVEDATA pXofMeshData) PURE;
+                            LPDIRECTXFILESAVEOBJECT pXofSave, 
+                            LPDIRECTXFILEDATA pXofMeshData) PURE;
                             
     // NOTE: this is called once per Save.  All top level objects should be added using the 
     //    provided interface.  One call adds objects before the frame hierarchy, the other after
-    STDMETHOD(AddTopLevelDataObjectsPre)(LPD3DXFILESAVEOBJECT pXofSave) PURE; 
-    STDMETHOD(AddTopLevelDataObjectsPost)(LPD3DXFILESAVEOBJECT pXofSave) PURE;                             
+    STDMETHOD(AddTopLevelDataObjectsPre)(LPDIRECTXFILESAVEOBJECT pXofSave) PURE; 
+    STDMETHOD(AddTopLevelDataObjectsPost)(LPDIRECTXFILESAVEOBJECT pXofSave) PURE;                             
 
     // callbacks for the user to register and then save templates to the XFile
-    STDMETHOD(RegisterTemplates)(LPD3DXFILE pXFileApi) PURE;                             
-    STDMETHOD(SaveTemplates)(LPD3DXFILESAVEOBJECT pXofSave) PURE;                             
+    STDMETHOD(RegisterTemplates)(LPDIRECTXFILE pXFileApi) PURE;                             
+    STDMETHOD(SaveTemplates)(LPDIRECTXFILESAVEOBJECT pXofSave) PURE;                             
 };
 
 
@@ -438,32 +438,19 @@ DECLARE_INTERFACE_(ID3DXKeyframedAnimationSet, ID3DXAnimationSet)
 
     // Scale keys
     STDMETHOD_(UINT, GetNumScaleKeys)(THIS_ UINT Animation) PURE;
-	STDMETHOD(GetScaleKeys)(THIS_ UINT Animation, LPD3DXKEY_VECTOR3 pScaleKeys) PURE;
-	STDMETHOD(GetScaleKey)(THIS_ UINT Animation, UINT Key, LPD3DXKEY_VECTOR3 pScaleKey) PURE;
-	STDMETHOD(SetScaleKey)(THIS_ UINT Animation, UINT Key, LPD3DXKEY_VECTOR3 pScaleKey) PURE;
+    STDMETHOD(GetScaleKeys)(THIS_ UINT Animation, LPD3DXKEY_VECTOR3 pScaleKeys) PURE;
 
     // Rotation keys
     STDMETHOD_(UINT, GetNumRotationKeys)(THIS_ UINT Animation) PURE;
-	STDMETHOD(GetRotationKeys)(THIS_ UINT Animation, LPD3DXKEY_QUATERNION pRotationKeys) PURE;
-	STDMETHOD(GetRotationKey)(THIS_ UINT Animation, UINT Key, LPD3DXKEY_QUATERNION pRotationKey) PURE;
-	STDMETHOD(SetRotationKey)(THIS_ UINT Animation, UINT Key, LPD3DXKEY_QUATERNION pRotationKey) PURE;
+    STDMETHOD(GetRotationKeys)(THIS_ UINT Animation, LPD3DXKEY_QUATERNION pRotationKeys) PURE;
 
     // Translation keys
     STDMETHOD_(UINT, GetNumTranslationKeys)(THIS_ UINT Animation) PURE;
-	STDMETHOD(GetTranslationKeys)(THIS_ UINT Animation, LPD3DXKEY_VECTOR3 pTranslationKeys) PURE;
-	STDMETHOD(GetTranslationKey)(THIS_ UINT Animation, UINT Key, LPD3DXKEY_VECTOR3 pTranslationKey) PURE;
-	STDMETHOD(SetTranslationKey)(THIS_ UINT Animation, UINT Key, LPD3DXKEY_VECTOR3 pTranslationKey) PURE;
+    STDMETHOD(GetTranslationKeys)(THIS_ UINT Animation, LPD3DXKEY_VECTOR3 pTranslationKeys) PURE;
 
     // Callback keys
     STDMETHOD_(UINT, GetNumCallbackKeys)(THIS) PURE;
-	STDMETHOD(GetCallbackKeys)(THIS_ LPD3DXKEY_CALLBACK pCallbackKeys) PURE;
-	STDMETHOD(GetCallbackKey)(THIS_ UINT Key, LPD3DXKEY_CALLBACK pCallbackKey) PURE;
-	STDMETHOD(SetCallbackKey)(THIS_ UINT Key, LPD3DXKEY_CALLBACK pCallbackKey) PURE;
-
-	// Key removal methods. These are slow, and should not be used once the animation starts playing
-	STDMETHOD(UnregisterScaleKey)(THIS_ UINT Animation, UINT Key) PURE;
-	STDMETHOD(UnregisterRotationKey)(THIS_ UINT Animation, UINT Key) PURE;
-	STDMETHOD(UnregisterTranslationKey)(THIS_ UINT Animation, UINT Key) PURE;
+    STDMETHOD(GetCallbackKeys)(THIS_ LPD3DXKEY_CALLBACK pCallbackKeys) PURE;
 
     // One-time animaton SRT keyframe registration
     STDMETHOD(RegisterAnimationSRTKeys)(THIS_ 
@@ -473,8 +460,7 @@ DECLARE_INTERFACE_(ID3DXKeyframedAnimationSet, ID3DXAnimationSet)
         UINT NumTranslationKeys,                        // Number of translation keys
         CONST D3DXKEY_VECTOR3 *pScaleKeys,              // Array of scale keys
         CONST D3DXKEY_QUATERNION *pRotationKeys,        // Array of rotation keys
-        CONST D3DXKEY_VECTOR3 *pTranslationKeys,		// Array of translation keys
-		DWORD *pAnimationIndex) PURE;					// Returns the animation index 
+        CONST D3DXKEY_VECTOR3 *pTranslationKeys) PURE;  // Array of translation keys
 
     // Compression
     STDMETHOD(Compress)(THIS_ 
@@ -482,8 +468,6 @@ DECLARE_INTERFACE_(ID3DXKeyframedAnimationSet, ID3DXAnimationSet)
         FLOAT Lossiness,                        // Compression loss ratio in the [0, 1] range
         LPD3DXFRAME pHierarchy,                 // Frame hierarchy (optional)
         LPD3DXBUFFER *ppCompressedData) PURE;   // Returns the compressed animation set
-
-    STDMETHOD(UnregisterAnimation)(THIS_ UINT Index) PURE;
 };
 
 
@@ -711,7 +695,6 @@ DECLARE_INTERFACE_(ID3DXAnimationController, IUnknown)
 
     STDMETHOD_(UINT, GetNumAnimationSets)(THIS) PURE;
     STDMETHOD(GetAnimationSet)(THIS_ UINT Index, LPD3DXANIMATIONSET *ppAnimationSet) PURE;
-    STDMETHOD(GetAnimationSetByName)(THIS_ LPCSTR szName, LPD3DXANIMATIONSET *ppAnimationSet) PURE;
 
     // Global time
     STDMETHOD(AdvanceTime)(THIS_ DOUBLE TimeDelta, LPD3DXANIMATIONCALLBACKHANDLER pCallbackHandler) PURE;
