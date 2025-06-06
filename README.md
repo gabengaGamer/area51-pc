@@ -63,37 +63,37 @@ Name           | Description                                                    
 ---------------| ----------------------------------------------------------------------------------------|---------------
 AnimCompiler   |                                                                                         | Working
 Art2Code       |                                                                                         | Working
-ArtistViewer   |                                                                                         | Working
-AudioEditor    |                                                                                         | Working/Lib for: [Editor](https://github.com/gabengaGamer/area51-pc/releases/tag/Editor-1.0)
-BinaryString   |                                                                                         | Working/Lib for: [Editor](https://github.com/gabengaGamer/area51-pc/releases/tag/Editor-1.0)
-BitmapEditor   |                                                                                         | Working/Lib for: [Editor](https://github.com/gabengaGamer/area51-pc/releases/tag/Editor-1.0)
+ArtistViewer   |                                                                                         | DEAD **UNDER CONSTRUCTION**
+AudioEditor    |                                                                                         | DEAD **UNDER CONSTRUCTION**/Lib for: [Editor](https://github.com/gabengaGamer/area51-pc/releases/tag/Editor-1.0)
+BinaryString   |                                                                                         | DEAD **UNDER CONSTRUCTION**/Lib for: [Editor](https://github.com/gabengaGamer/area51-pc/releases/tag/Editor-1.0)
+BitmapEditor   |                                                                                         | DEAD **UNDER CONSTRUCTION**/Lib for: [Editor](https://github.com/gabengaGamer/area51-pc/releases/tag/Editor-1.0)
 DecalCompiler  |                                                                                         | Working
-DecalEditor    |                                                                                         | Working/Lib for: [Editor](https://github.com/gabengaGamer/area51-pc/releases/tag/Editor-1.0)
+DecalEditor    |                                                                                         | DEAD **UNDER CONSTRUCTION**/Lib for: [Editor](https://github.com/gabengaGamer/area51-pc/releases/tag/Editor-1.0)
 DFSTool        |                                                                                         | Working
-EDRscDesc      |                                                                                         | Working/Lib for: [Editor](https://github.com/gabengaGamer/area51-pc/releases/tag/Editor-1.0)
+EDRscDesc      |                                                                                         | DEAD **UNDER CONSTRUCTION**/Lib for: [Editor](https://github.com/gabengaGamer/area51-pc/releases/tag/Editor-1.0)
 Editor         |                                                                                         | Working
-EffectsEditor  |                                                                                         | Working
-ELFTool        |                                                                                         | Working
-EventEditor    |                                                                                         | Working/Lib for: [Editor](https://github.com/gabengaGamer/area51-pc/releases/tag/Editor-1.0)
+EffectsEditor  |                                                                                         | DEAD **UNDER CONSTRUCTION**
+ELFTool        |                                                                                         | **DELETED**
+EventEditor    |                                                                                         | DEAD **UNDER CONSTRUCTION**/Lib for: [Editor](https://github.com/gabengaGamer/area51-pc/releases/tag/Editor-1.0)
 FontBuilder    |                                                                                         | Working
-FontEditor     |                                                                                         | Working/Lib for: [Editor](https://github.com/gabengaGamer/area51-pc/releases/tag/Editor-1.0)
-FxEditor       |                                                                                         | Working/Lib for: [Editor](https://github.com/gabengaGamer/area51-pc/releases/tag/Editor-1.0)
+FontEditor     |                                                                                         | DEAD **UNDER CONSTRUCTION**/Lib for: [Editor](https://github.com/gabengaGamer/area51-pc/releases/tag/Editor-1.0)
+FxEditor       |                                                                                         | DEAD **UNDER CONSTRUCTION**/Lib for: [Editor](https://github.com/gabengaGamer/area51-pc/releases/tag/Editor-1.0)
 FXCompiler     |                                                                                         | Working
-GameApp        |                                                                                         | SemiWorking
+GameApp        |                                                                                         | Working
 GeomCompiler   |                                                                                         | Working
-LocoEditor     |                                                                                         | Working/Lib for: [Editor](https://github.com/gabengaGamer/area51-pc/releases/tag/Editor-1.0)
-MeshViewer     |                                                                                         | Working/Lib for: [Editor](https://github.com/gabengaGamer/area51-pc/releases/tag/Editor-1.0)
-PropertyEditor |                                                                                         | Working/Lib for: [Editor](https://github.com/gabengaGamer/area51-pc/releases/tag/Editor-1.0)
+LocoEditor     |                                                                                         | DEAD **UNDER CONSTRUCTION**/Lib for: [Editor](https://github.com/gabengaGamer/area51-pc/releases/tag/Editor-1.0)
+MeshViewer     |                                                                                         | DEAD **UNDER CONSTRUCTION**/Lib for: [Editor](https://github.com/gabengaGamer/area51-pc/releases/tag/Editor-1.0)
+PropertyEditor |                                                                                         | DEAD **UNDER CONSTRUCTION**/Lib for: [Editor](https://github.com/gabengaGamer/area51-pc/releases/tag/Editor-1.0)
 SoundPackager  |                                                                                         | Working
 StringTool     |                                                                                         | Working
-Viewer         |                                                                                         | Broken [DEPRECATED] [See ArtistViewer]
-WinControls    |                                                                                         | Working/Lib for: [Editor](https://github.com/gabengaGamer/area51-pc/releases/tag/Editor-1.0)
-WorldEditor    |                                                                                         | Working/Lib for: [Editor](https://github.com/gabengaGamer/area51-pc/releases/tag/Editor-1.0)
+Viewer         |                                                                                         | **DELETED**
+WinControls    |                                                                                         | DEAD **UNDER CONSTRUCTION**/Lib for: [Editor](https://github.com/gabengaGamer/area51-pc/releases/tag/Editor-1.0)
+WorldEditor    |                                                                                         | DEAD **UNDER CONSTRUCTION**/Lib for: [Editor](https://github.com/gabengaGamer/area51-pc/releases/tag/Editor-1.0)
 XBMPTool       |                                                                                         | Working
-XBMPViewer     |                                                                                         | Working
-xCL            |                                                                                         | Working
-XSCC           |                                                                                         | Working
-xTool          |                                                                                         | Working
+XBMPViewer     |                                                                                         | DEAD **UNDER CONSTRUCTION**
+xCL            |                                                                                         | **DELETED**
+XSCC           |                                                                                         | **DELETED**
+xTool          |                                                                                         | **DELETED**
 
 ## List of custom tools.
 Name                                                                                         | Description                                                                             
