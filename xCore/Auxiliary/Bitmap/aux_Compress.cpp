@@ -1,6 +1,6 @@
 //==============================================================================
 //  
-//  x_bitmap_s3tc.cpp
+//  aux_Compress.cpp
 //  
 //==============================================================================
 
@@ -10,32 +10,16 @@
 #include "aux_bitmap.hpp"
 #include "x_math.hpp"
 
-#ifndef TARGET_PS2
-#   ifdef TARGET_XBOX
-#       ifdef CONFIG_RETAIL
-#           define D3DCOMPILE_PUREDEVICE 1
-#       endif
-#       include<xtl.h>
-#       include<XGraphics.h>
-#   endif
-#   include<..\3rdParty\DXTLibrary\ImageDXTC.h>
-#   if _MSC_VER >= 1300
-#       define WIN32_LEAN_AND_MEAN
-#       ifdef TARGET_PC
-#           include <windows.h>
-#           include <D3d8.h>
-#           include <XGraphics.h>
-#       endif
-#   endif
-#else
-enum DXTCMethod
-{
-	DC_None,
-	DC_DXT1,
-	DC_DXT3,
-	DC_DXT5,
-};
-#endif
+//==============================================================================
+//  EXTERNAL FUNCTIONS FROM x_bitmap_dxtc.cpp
+//==============================================================================
+
+extern xcolor ReadPixelColorDXT1( const xbitmap* pBMP, s32 X, s32 Y, s32 Mip );
+extern xcolor ReadPixelColorDXT2( const xbitmap* pBMP, s32 X, s32 Y, s32 Mip );
+extern xcolor ReadPixelColorDXT3( const xbitmap* pBMP, s32 X, s32 Y, s32 Mip );
+extern xcolor ReadPixelColorDXT4( const xbitmap* pBMP, s32 X, s32 Y, s32 Mip );
+extern xcolor ReadPixelColorDXT5( const xbitmap* pBMP, s32 X, s32 Y, s32 Mip );
+extern xbitmap UnpackImage( const xbitmap& Source );
 
 //==============================================================================
 //  DEFINES
@@ -47,7 +31,6 @@ static auxcompress_fn*     s_pCallback = NULL;      // Progress callback func
 
 //=============================================================================
 
-#ifndef TARGET_PS2
 static AlphaType GetAlphaUsage( xbitmap& Source )
 {
     if( !Source.HasAlphaBits( ))
@@ -55,11 +38,11 @@ static AlphaType GetAlphaUsage( xbitmap& Source )
     if( Source.GetBPP( )<16 )
         return AT_None;
 
-    s32	x,y,i;
-    s32	Unique;
-    u32	Usage[256];
-	x_memset( Usage,0,sizeof( Usage ));
-	//
+    s32    x,y,i;
+    s32    Unique;
+    u32    Usage[256];
+    x_memset( Usage,0,sizeof( Usage ));
+    //
     //  Count all the different values used
     //
     for( i=0;i<=Source.GetNMips ( );i++ )
@@ -76,19 +59,19 @@ static AlphaType GetAlphaUsage( xbitmap& Source )
         }
     }
     //
-	//  Count the number of unique alpha values
+    //  Count the number of unique alpha values
     //
-	Unique = 0;
-	for( x=0;x<256;x++ )
-		Unique += ( Usage[x]!=0 );
+    Unique = 0;
+    for( x=0;x<256;x++ )
+        Unique += ( Usage[x]!=0 );
     //
-	//  Based on the unique alphas, classify the image
+    //  Based on the unique alphas, classify the image
     //
-	switch(Unique)
-	{
-	    case 0:
+    switch(Unique)
+    {
+        case 0:
             return AT_None;
-    	case 1:
+        case 1:
             if( Usage[0xFF] ) return AT_None;
             if( Usage[0x00] )
             {
@@ -101,151 +84,22 @@ static AlphaType GetAlphaUsage( xbitmap& Source )
                 }
             }
             return AT_Constant;
-    	case 2:
-    		if(Usage[0] && Usage[0xff])
-	    		return AT_Binary;
-		    if(Usage[0])
-    			return AT_ConstantBinary;
-			return AT_DualConstant;
+        case 2:
+            if(Usage[0] && Usage[0xff])
+                return AT_Binary;
+            if(Usage[0])
+                return AT_ConstantBinary;
+            return AT_DualConstant;
 
-	    default:
-		    return AT_Modulated;
-	}
+        default:
+            return AT_Modulated;
+    }
 }
-#endif
 
 //=============================================================================
 
 static void PackImage( xbitmap& Dest,const xbitmap& Source,xbool bForceMips,DXTCMethod Method )
 {
-#ifndef TARGET_PC
-    (void)bForceMips;
-    (void)Method;
-    (void)Source;
-    (void)Dest;
-
-#elif _MSC_VER < 1300 // USE NVidia compressor (known issues with DXT1)
-
-    u32 W = Source.GetWidth ( );
-    u32 H = Source.GetHeight( );
-
-    // ========================================================================
-
-    xbitmap Temp( Source );
-    if( Temp.GetFormat() != xbitmap::FMT_32_BGRA_8888 )
-        Temp.ConvertFormat( xbitmap::FMT_32_BGRA_8888 );
-    ASSERT( Temp.GetBPP()==32 );
-    if( bForceMips && !Temp.GetNMips( ))
-        Temp.BuildMips( );
-
-    // ========================================================================
-
-    ImageDXTC Dxtc;
-
-    // ========================================================================
-
-    s32 NMips = Temp.GetNMips( );
-    if(!NMips )
-    {   //
-        //  Create bitmap
-        //
-        xbitmap::format Format;
-        Image32 DxtImage( W,H,( Color* )Temp.GetPixelData( ));
-        DxtImage.DiffuseError( 8,5,6,5 );
-        switch( Method )
-        {
-            case DC_None:
-                switch( GetAlphaUsage( Temp ))
-                {
-		            case AT_ConstantBinary:
-		            case AT_Constant:
-		            case AT_Binary:
-		            case AT_None:
-                        Dxtc.CompressDXT1( &DxtImage );
-                        Format = xbitmap::FMT_DXT1;
-                        break;
-		            case AT_DualConstant:
-		            case AT_Modulated:
-                        Dxtc.CompressDXT3( &DxtImage );
-                        Format = xbitmap::FMT_DXT3;
-                        break;
-                }
-                break;
-            case DC_DXT3:
-                Dxtc.CompressDXT3( &DxtImage );
-                Format = xbitmap::FMT_DXT3;
-                break;
-            case DC_DXT1:
-                Dxtc.CompressDXT1( &DxtImage );
-                Format = xbitmap::FMT_DXT1;
-                break;
-        }
-        //
-        //  Create texture
-        //
-        Dest.Setup( Format,W,H,TRUE,NULL,FALSE,NULL,W,NMips );
-        u32 Size = Dest.GetDataSize();
-        x_memmove(
-            (void*)Dest.GetPixelData(),
-            Dxtc.GetBlocks( ),
-            Size );
-        x_memset(
-            &DxtImage,
-            0,
-            sizeof( Image32 ));
-        return;
-    }
-
-    // ========================================================================
-
-    for( s32 i=0;i<=NMips;i++ )
-    {   //
-        //  Compress image
-        //
-        Image32 DxtImage;
-        u32 W = Temp.GetWidth (i);
-        u32 H = Temp.GetHeight(i);
-        DxtImage.SetSize( W,H );
-        x_memmove(
-            DxtImage.GetPixels     ( ),
-            Temp    .GetPixelData  (i),
-            Temp    .GetMipDataSize(i));
-        //
-        //  Duplicate pixels( assumes RGBA not ARGB)
-        //
-        DxtImage.DiffuseError( 8,5,6,5 );
-    	Dxtc.FromImage32( &DxtImage,Method );
-        if( !i )
-        {
-            Method = Dxtc.GetMethod( );
-            xbitmap::format Format;
-            switch( Method )
-            {
-                case DC_DXT1: Format = xbitmap::FMT_DXT1; break;
-                case DC_DXT3: Format = xbitmap::FMT_DXT3; break;
-
-                default:
-                    ASSERT(0);
-                    break;
-            }
-            Dest.Setup( Format,W,H,TRUE,NULL,FALSE,NULL,W,NMips );
-        }
-        else
-        {
-            ASSERT( Method==Dxtc.GetMethod( ));
-        }
-        //
-        //  Load dest
-        //
-        u32 Size = Dest.GetMipDataSize(i);
-        x_memmove(
-            (void*)Dest.GetPixelData(i),
-            Dxtc.GetBlocks( ),
-            Size );
-    }
-
-#else // Use Xbox specific compilers
-
     u32 W = Source.GetWidth ( );
     u32 H = Source.GetHeight( );
 
@@ -295,17 +149,20 @@ static void PackImage( xbitmap& Dest,const xbitmap& Source,xbool bForceMips,DXTC
         switch( Method )
         {
             case DC_DXT1: goto Dxt1;
+            case DC_DXT2: goto Dxt2;
             case DC_DXT3: goto Dxt3;
+            case DC_DXT4: goto Dxt4;
+            case DC_DXT5: goto Dxt5;
             case DC_None:
                 switch( GetAlphaUsage( Temp ))
                 {
-		            case AT_ConstantBinary:
-		            case AT_Constant:
-		            case AT_Binary:
-		            case AT_None:
+                    case AT_ConstantBinary:
+                    case AT_Constant:
+                    case AT_Binary:
+                    case AT_None:
                         goto Dxt1;
-		            case AT_DualConstant:
-		            case AT_Modulated:
+                    case AT_DualConstant:
+                    case AT_Modulated:
                         goto Dxt3;
                 }
 
@@ -314,8 +171,24 @@ static void PackImage( xbitmap& Dest,const xbitmap& Source,xbool bForceMips,DXTC
                 Stride = (W/4)*8;
                 break;
 
+          Dxt2: Format = xbitmap::FMT_DXT2;
+                DstD3DFormat = D3DFMT_DXT2;
+                Stride = (W/4)*16;
+                break;
+
           Dxt3: Format = xbitmap::FMT_DXT3;
                 DstD3DFormat = D3DFMT_DXT3;
+                Stride = (W/4)*16;
+                break;
+
+          Dxt4: Format = xbitmap::FMT_DXT4;
+                DstD3DFormat = D3DFMT_DXT4;
+                Stride = (W/4)*16;
+                break;
+
+          Dxt5: Format = xbitmap::FMT_DXT5;
+                DstD3DFormat = D3DFMT_DXT5;
+                Stride = (W/4)*16;
                 break;
 
             default:
@@ -351,17 +224,20 @@ static void PackImage( xbitmap& Dest,const xbitmap& Source,xbool bForceMips,DXTC
     switch( Method )
     {
         case DC_DXT1: goto dxt1;
+        case DC_DXT2: goto dxt2;
         case DC_DXT3: goto dxt3;
+        case DC_DXT4: goto dxt4;
+        case DC_DXT5: goto dxt5;
         case DC_None:
             switch( GetAlphaUsage( Temp ))
             {
-	            case AT_ConstantBinary:
-	            case AT_Constant:
-	            case AT_Binary:
-	            case AT_None:
+                case AT_ConstantBinary:
+                case AT_Constant:
+                case AT_Binary:
+                case AT_None:
                     goto dxt1;
-	            case AT_DualConstant:
-	            case AT_Modulated:
+                case AT_DualConstant:
+                case AT_Modulated:
                     goto dxt3;
             }
 
@@ -370,8 +246,24 @@ static void PackImage( xbitmap& Dest,const xbitmap& Source,xbool bForceMips,DXTC
             Stride = (W/4)*8;
             break;
 
+      dxt2: Format = xbitmap::FMT_DXT2;
+            DstD3DFormat = D3DFMT_DXT2;
+            Stride = (W/4)*16;
+            break;
+
       dxt3: Format = xbitmap::FMT_DXT3;
             DstD3DFormat = D3DFMT_DXT3;
+            Stride = (W/4)*16;
+            break;
+
+      dxt4: Format = xbitmap::FMT_DXT4;
+            DstD3DFormat = D3DFMT_DXT4;
+            Stride = (W/4)*16;
+            break;
+
+      dxt5: Format = xbitmap::FMT_DXT5;
+            DstD3DFormat = D3DFMT_DXT5;
+            Stride = (W/4)*16;
             break;
 
         default:
@@ -414,8 +306,6 @@ static void PackImage( xbitmap& Dest,const xbitmap& Source,xbool bForceMips,DXTC
         W      >>= 1;
         H      >>= 1;
     }
-
-#endif
 }
 
 //=============================================================================
@@ -423,7 +313,10 @@ static void PackImage( xbitmap& Dest,const xbitmap& Source,xbool bForceMips,DXTC
 void auxbmp_CompressDXTC( xbitmap& Dest, const xbitmap& Bitmap, xbool bForceMips )
 {
     if( Bitmap.GetFormat()==xbitmap::FMT_DXT1 ||
-        Bitmap.GetFormat()==xbitmap::FMT_DXT3 )
+        Bitmap.GetFormat()==xbitmap::FMT_DXT2 ||
+        Bitmap.GetFormat()==xbitmap::FMT_DXT3 ||
+        Bitmap.GetFormat()==xbitmap::FMT_DXT4 ||
+        Bitmap.GetFormat()==xbitmap::FMT_DXT5 )
         return;
     PackImage( Dest,Bitmap,bForceMips,DC_None );
 }
@@ -433,7 +326,10 @@ void auxbmp_CompressDXTC( xbitmap& Dest, const xbitmap& Bitmap, xbool bForceMips
 void auxbmp_CompressDXTC( xbitmap& Bitmap, xbool bForceMips )
 {
     if( Bitmap.GetFormat()==xbitmap::FMT_DXT1 ||
-        Bitmap.GetFormat()==xbitmap::FMT_DXT3 )
+        Bitmap.GetFormat()==xbitmap::FMT_DXT2 ||
+        Bitmap.GetFormat()==xbitmap::FMT_DXT3 ||
+        Bitmap.GetFormat()==xbitmap::FMT_DXT4 ||
+        Bitmap.GetFormat()==xbitmap::FMT_DXT5 )
         return;
     xbitmap Temp;
     auxbmp_CompressDXTC( Temp, Bitmap, bForceMips );
@@ -442,32 +338,13 @@ void auxbmp_CompressDXTC( xbitmap& Bitmap, xbool bForceMips )
 
 //=============================================================================
 
-void auxbmp_CompressDXT3( xbitmap& Dest, const xbitmap& Bitmap, xbool bForceMips )
-{
-    if( Bitmap.GetFormat()==xbitmap::FMT_DXT1 ||
-        Bitmap.GetFormat()==xbitmap::FMT_DXT3 )
-        return;
-    PackImage( Dest,Bitmap,bForceMips,DC_DXT3 );
-}
-
-//=============================================================================
-
-void auxbmp_CompressDXT3( xbitmap& Bitmap, xbool bForceMips )
-{
-    if( Bitmap.GetFormat()==xbitmap::FMT_DXT1 ||
-        Bitmap.GetFormat()==xbitmap::FMT_DXT3 )
-        return;
-    xbitmap Temp;
-    auxbmp_CompressDXT3( Temp, Bitmap, bForceMips );
-    Bitmap = Temp;
-}
-
-//=============================================================================
-
 void auxbmp_CompressDXT1( xbitmap& Dest, const xbitmap& Bitmap, xbool bForceMips )
 {
     if( Bitmap.GetFormat()==xbitmap::FMT_DXT1 ||
-        Bitmap.GetFormat()==xbitmap::FMT_DXT3 )
+        Bitmap.GetFormat()==xbitmap::FMT_DXT2 ||
+        Bitmap.GetFormat()==xbitmap::FMT_DXT3 ||
+        Bitmap.GetFormat()==xbitmap::FMT_DXT4 ||
+        Bitmap.GetFormat()==xbitmap::FMT_DXT5 )
         return;
     PackImage( Dest,Bitmap,bForceMips,DC_DXT1 );
 }
@@ -477,7 +354,10 @@ void auxbmp_CompressDXT1( xbitmap& Dest, const xbitmap& Bitmap, xbool bForceMips
 void auxbmp_CompressDXT1( xbitmap& Bitmap,xbool bForceMips )
 {
     if( Bitmap.GetFormat()==xbitmap::FMT_DXT1 ||
-        Bitmap.GetFormat()==xbitmap::FMT_DXT3 )
+        Bitmap.GetFormat()==xbitmap::FMT_DXT2 ||
+        Bitmap.GetFormat()==xbitmap::FMT_DXT3 ||
+        Bitmap.GetFormat()==xbitmap::FMT_DXT4 ||
+        Bitmap.GetFormat()==xbitmap::FMT_DXT5 )
         return;
     xbitmap Temp;
     auxbmp_CompressDXT1( Temp, Bitmap, bForceMips );
@@ -486,75 +366,149 @@ void auxbmp_CompressDXT1( xbitmap& Bitmap,xbool bForceMips )
 
 //=============================================================================
 
-static void DecompressDXTC( xbitmap& Dest, const xbitmap& Source, DXTCMethod Method )
+void auxbmp_CompressDXT2( xbitmap& Dest, const xbitmap& Bitmap, xbool bForceMips )
 {
-#ifdef TARGET_PS2
-    (void)Method;
-    (void)Source;
-    (void)Dest;
-#else
-    s32  H     = Source.GetHeight( );
-    s32  W     = Source.GetWidth ( );
-    s32  NMips = Source.GetNMips ( );
+    if( Bitmap.GetFormat()==xbitmap::FMT_DXT1 ||
+        Bitmap.GetFormat()==xbitmap::FMT_DXT2 ||
+        Bitmap.GetFormat()==xbitmap::FMT_DXT3 ||
+        Bitmap.GetFormat()==xbitmap::FMT_DXT4 ||
+        Bitmap.GetFormat()==xbitmap::FMT_DXT5 )
+        return;
+    PackImage( Dest,Bitmap,bForceMips,DC_DXT2 );
+}
 
-    ImageDXTC dxtc;
-    Image32 Temp;
+//=============================================================================
 
-    if( !NMips )
-    {
-        dxtc.SetMethod( Method );
-        dxtc.SetSize( W,H );
-        x_memmove(
-            dxtc  .GetBlocks   ( ),
-            Source.GetPixelData( ),
-            Source.GetDataSize ( ));
-        dxtc.ToImage32( &Temp );
-        Dest.Setup(
-            xbitmap::FMT_32_BGRA_8888,
-            W,
-            H,
-            TRUE,
-            NULL );
-        x_memmove(
-            (void*)Dest.GetPixelData( ),
-            Temp.GetPixels( ),
-            W*H*4 );
-    }
-    else
-    {
-        Dest.Setup( xbitmap::FMT_32_BGRA_8888,W,H,TRUE,NULL,FALSE,NULL,W,NMips );
-        for( s32 i=0;i<=NMips;i++ )
-        {
-            dxtc.SetMethod( Method );
-            dxtc.SetSize( W,H );
-            x_memmove(
-                dxtc  .GetBlocks     ( ),
-                Source.GetPixelData  (i),
-                Source.GetMipDataSize(i));
-            dxtc.ToImage32( &Temp );
-            x_memmove(
-                (void*)Dest.GetPixelData(i),
-                Temp.GetPixels( ),
-                W*H*4 );
-            W >>= 1;
-            H >>= 1;
-        }
-    }
-#endif
+void auxbmp_CompressDXT2( xbitmap& Bitmap,xbool bForceMips )
+{
+    if( Bitmap.GetFormat()==xbitmap::FMT_DXT1 ||
+        Bitmap.GetFormat()==xbitmap::FMT_DXT2 ||
+        Bitmap.GetFormat()==xbitmap::FMT_DXT3 ||
+        Bitmap.GetFormat()==xbitmap::FMT_DXT4 ||
+        Bitmap.GetFormat()==xbitmap::FMT_DXT5 )
+        return;
+    xbitmap Temp;
+    auxbmp_CompressDXT2( Temp, Bitmap, bForceMips );
+    Bitmap = Temp;
+}
+
+//=============================================================================
+
+void auxbmp_CompressDXT3( xbitmap& Dest, const xbitmap& Bitmap, xbool bForceMips )
+{
+    if( Bitmap.GetFormat()==xbitmap::FMT_DXT1 ||
+        Bitmap.GetFormat()==xbitmap::FMT_DXT2 ||
+        Bitmap.GetFormat()==xbitmap::FMT_DXT3 ||
+        Bitmap.GetFormat()==xbitmap::FMT_DXT4 ||
+        Bitmap.GetFormat()==xbitmap::FMT_DXT5 )
+        return;
+    PackImage( Dest,Bitmap,bForceMips,DC_DXT3 );
+}
+
+//=============================================================================
+
+void auxbmp_CompressDXT3( xbitmap& Bitmap, xbool bForceMips )
+{
+    if( Bitmap.GetFormat()==xbitmap::FMT_DXT1 ||
+        Bitmap.GetFormat()==xbitmap::FMT_DXT2 ||
+        Bitmap.GetFormat()==xbitmap::FMT_DXT3 ||
+        Bitmap.GetFormat()==xbitmap::FMT_DXT4 ||
+        Bitmap.GetFormat()==xbitmap::FMT_DXT5 )
+        return;
+    xbitmap Temp;
+    auxbmp_CompressDXT3( Temp, Bitmap, bForceMips );
+    Bitmap = Temp;
+}
+
+//=============================================================================
+
+void auxbmp_CompressDXT4( xbitmap& Dest, const xbitmap& Bitmap, xbool bForceMips )
+{
+    if( Bitmap.GetFormat()==xbitmap::FMT_DXT1 ||
+        Bitmap.GetFormat()==xbitmap::FMT_DXT2 ||
+        Bitmap.GetFormat()==xbitmap::FMT_DXT3 ||
+        Bitmap.GetFormat()==xbitmap::FMT_DXT4 ||
+        Bitmap.GetFormat()==xbitmap::FMT_DXT5 )
+        return;
+    PackImage( Dest,Bitmap,bForceMips,DC_DXT4 );
+}
+
+//=============================================================================
+
+void auxbmp_CompressDXT4( xbitmap& Bitmap,xbool bForceMips )
+{
+    if( Bitmap.GetFormat()==xbitmap::FMT_DXT1 ||
+        Bitmap.GetFormat()==xbitmap::FMT_DXT2 ||
+        Bitmap.GetFormat()==xbitmap::FMT_DXT3 ||
+        Bitmap.GetFormat()==xbitmap::FMT_DXT4 ||
+        Bitmap.GetFormat()==xbitmap::FMT_DXT5 )
+        return;
+    xbitmap Temp;
+    auxbmp_CompressDXT4( Temp, Bitmap, bForceMips );
+    Bitmap = Temp;
+}
+
+//=============================================================================
+
+void auxbmp_CompressDXT5( xbitmap& Dest, const xbitmap& Bitmap, xbool bForceMips )
+{
+    if( Bitmap.GetFormat()==xbitmap::FMT_DXT1 ||
+        Bitmap.GetFormat()==xbitmap::FMT_DXT2 ||
+        Bitmap.GetFormat()==xbitmap::FMT_DXT3 ||
+        Bitmap.GetFormat()==xbitmap::FMT_DXT4 ||
+        Bitmap.GetFormat()==xbitmap::FMT_DXT5 )
+        return;
+    PackImage( Dest,Bitmap,bForceMips,DC_DXT5 );
+}
+
+//=============================================================================
+
+void auxbmp_CompressDXT5( xbitmap& Bitmap,xbool bForceMips )
+{
+    if( Bitmap.GetFormat()==xbitmap::FMT_DXT1 ||
+        Bitmap.GetFormat()==xbitmap::FMT_DXT2 ||
+        Bitmap.GetFormat()==xbitmap::FMT_DXT3 ||
+        Bitmap.GetFormat()==xbitmap::FMT_DXT4 ||
+        Bitmap.GetFormat()==xbitmap::FMT_DXT5 )
+        return;
+    xbitmap Temp;
+    auxbmp_CompressDXT5( Temp, Bitmap, bForceMips );
+    Bitmap = Temp;
 }
 
 //=============================================================================
 
 void auxbmp_DecompressDXT1( xbitmap& Dest, const xbitmap& Source )
 {
-    DecompressDXTC( Dest,Source,DC_DXT1 );
+    Dest = UnpackImage( Source );
+}
+
+//=============================================================================
+
+void auxbmp_DecompressDXT2( xbitmap& Dest, const xbitmap& Source )
+{
+    Dest = UnpackImage( Source );
 }
 
 //=============================================================================
 
 void auxbmp_DecompressDXT3( xbitmap& Dest, const xbitmap& Source )
 {
-    DecompressDXTC( Dest,Source,DC_DXT3 );
+    Dest = UnpackImage( Source );
+}
+
+//=============================================================================
+
+void auxbmp_DecompressDXT4( xbitmap& Dest, const xbitmap& Source )
+{
+    Dest = UnpackImage( Source );
+}
+
+//=============================================================================
+
+void auxbmp_DecompressDXT5( xbitmap& Dest, const xbitmap& Source )
+{
+    Dest = UnpackImage( Source );
 }
 
 //=============================================================================
@@ -563,6 +517,15 @@ void auxbmp_DecompressDXT1( xbitmap& Bitmap )
 {
     xbitmap Temp;
     auxbmp_DecompressDXT1( Temp,Bitmap );
+    Bitmap = Temp;
+}
+
+//=============================================================================
+
+void auxbmp_DecompressDXT2( xbitmap& Bitmap )
+{
+    xbitmap Temp;
+    auxbmp_DecompressDXT2( Temp,Bitmap );
     Bitmap = Temp;
 }
 
@@ -577,6 +540,24 @@ void auxbmp_DecompressDXT3( xbitmap& Bitmap )
 
 //=============================================================================
 
+void auxbmp_DecompressDXT4( xbitmap& Bitmap )
+{
+    xbitmap Temp;
+    auxbmp_DecompressDXT4( Temp,Bitmap );
+    Bitmap = Temp;
+}
+
+//=============================================================================
+
+void auxbmp_DecompressDXT5( xbitmap& Bitmap )
+{
+    xbitmap Temp;
+    auxbmp_DecompressDXT5( Temp,Bitmap );
+    Bitmap = Temp;
+}
+
+//=============================================================================
+
 void auxbmp_SetCompressCallback( auxcompress_fn* pFn )
 {
     s_pCallback = pFn;
@@ -586,80 +567,33 @@ void auxbmp_SetCompressCallback( auxcompress_fn* pFn )
 
 xcolor auxbmp_ReadPixelColorDXT1( const xbitmap& Bitmap,s32 X,s32 Y,s32 Mip )
 {
-#ifdef TARGET_PS2
-    (void)Bitmap;
-    (void)Mip;
-    (void)X;
-    (void)Y;
-    return xcolor(0,0,0,0);
-#else
-    xcolor Result;
-    {
-        s32 y = Y/4;
-        s32 x = X/4;
-        s32 w = Bitmap.GetWidth(Mip);
+    return ReadPixelColorDXT1( &Bitmap, X, Y, Mip );
+}
 
-        u16* pSrc = (u16*)(Bitmap.GetPixelData(Mip)+(y*(w/4)+x)*8);
+//=============================================================================
 
-        // Optimise linear searches
-        static u16* pOld = NULL;
-        static Color Cache[16];
-        if( pOld!=pSrc )
-        {
-            PlotDXT1( pSrc,Cache,4 );
-            pOld = pSrc;
-        }
-
-        // Return color
-        s32 I = ((Y%4)*4)+(X%4);
-        Result = xcolor(
-            Cache[I].r,
-            Cache[I].g,
-            Cache[I].b,
-            Cache[I].a );
-    }
-    return Result;
-#endif
+xcolor auxbmp_ReadPixelColorDXT2( const xbitmap& Bitmap,s32 X,s32 Y,s32 Mip )
+{
+    return ReadPixelColorDXT2( &Bitmap, X, Y, Mip );
 }
 
 //=============================================================================
 
 xcolor auxbmp_ReadPixelColorDXT3( const xbitmap& Bitmap,s32 X,s32 Y,s32 Mip )
 {
-#ifdef TARGET_PS2
-    (void)Bitmap;
-    (void)Mip;
-    (void)X;
-    (void)Y;
-    return xcolor(0,0,0,0);
-#else
-    xcolor Result;
-    {
-        s32 y = Y/4;
-        s32 x = X/4;
-        s32 w = Bitmap.GetWidth(Mip);
+    return ReadPixelColorDXT3( &Bitmap, X, Y, Mip );
+}
 
-        // Calculate tile address
-        u16* pSrc = (u16*)(Bitmap.GetPixelData(Mip)+(y*(w/4)+x)*16);
+//=============================================================================
 
-        // Optimise linear searches
-        static u16* pOld = NULL;
-        static Color Cache[16];
-        if( pOld!=pSrc )
-        {
-            PlotDXT1     ( pSrc+4,Cache,4 );
-		    PlotDXT3Alpha( pSrc  ,Cache,4 );
-            pOld = pSrc;
-        }
+xcolor auxbmp_ReadPixelColorDXT4( const xbitmap& Bitmap,s32 X,s32 Y,s32 Mip )
+{
+    return ReadPixelColorDXT4( &Bitmap, X, Y, Mip );
+}
 
-        // Return color
-        s32 I = ((Y%4)*4)+(X%4);
-        Result = xcolor(
-            Cache[I].r,
-            Cache[I].g,
-            Cache[I].b,
-            Cache[I].a );
-    }
-    return Result;
-#endif
+//=============================================================================
+
+xcolor auxbmp_ReadPixelColorDXT5( const xbitmap& Bitmap,s32 X,s32 Y,s32 Mip )
+{
+    return ReadPixelColorDXT5( &Bitmap, X, Y, Mip );
 }

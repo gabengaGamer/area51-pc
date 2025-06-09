@@ -51,7 +51,7 @@ struct save_entry
 
        info_fn     tga_Info;
        info_fn     bmp_Info;
-	   info_fn     psd_Info;
+       info_fn     psd_Info;
 static info_fn    xbmp_Info;
 
        load_fn     tga_Load;
@@ -69,15 +69,15 @@ static info_entry InfoTable[] =
 {
     { ".TGA",       tga_Info    },
     { ".BMP",       bmp_Info    },
-	{ ".PSD",       psd_Info    },
-    { ".XBMP",     xbmp_Info	},
+    { ".PSD",       psd_Info    },
+    { ".XBMP",     xbmp_Info    },
 };
 
 static load_entry LoadTable[] = 
 {
     { ".TGA",       tga_Load    },
     { ".BMP",       bmp_Load    },
-	{ ".PSD",       psd_Load    },
+    { ".PSD",       psd_Load    },
     { ".XBMP",     xbmp_Load    },
 };
 
@@ -115,8 +115,8 @@ xbool auxbmp_Info( const char* pFileName, xbitmap::info& Info )
         }
     }
 
-	// Return the result
-	return Result;
+    // Return the result
+    return Result;
 }
 
 //==============================================================================
@@ -352,7 +352,7 @@ void auxbmp_ConvertToPS2( xbitmap& Bitmap )
     // Shift alphas down
     // (even when not present since when drawing with alpha blending eg. fading player, it will get used!!)
 
-	// Clut based?
+    // Clut based?
     if (Bitmap.GetFormatInfo().ClutBased)
     {
         s32    NColors = 0;
@@ -453,7 +453,10 @@ void auxbmp_ConvertToGCN( xbitmap& Bitmap, xbool Swizzle )
         (OldFormat != xbitmap::FMT_32_RGBA_8888 ) &&
         (OldFormat != xbitmap::FMT_32_RGBU_8888 ) &&
         (OldFormat != xbitmap::FMT_DXT1         ) &&
-        (OldFormat != xbitmap::FMT_DXT3         ))
+        (OldFormat != xbitmap::FMT_DXT2         ) &&
+        (OldFormat != xbitmap::FMT_DXT3         ) &&
+        (OldFormat != xbitmap::FMT_DXT4         ) &&
+        (OldFormat != xbitmap::FMT_DXT5         ))
     {
         //
         // Oh well, we need to convert.
@@ -497,25 +500,8 @@ void auxbmp_ConvertToGCN( xbitmap& Bitmap, xbool Swizzle )
 
 void auxbmp_ConvertToNative( xbitmap& Bitmap )
 {
-    #ifdef TARGET_PC
     auxbmp_ConvertToD3D( Bitmap );
     return;
-    #endif
-
-    #ifdef TARGET_XBOX
-    auxbmp_ConvertToD3D( Bitmap );
-    return;
-    #endif
-
-    #ifdef TARGET_PS2
-    auxbmp_ConvertToPS2( Bitmap );
-    return;
-    #endif  
-
-    #ifdef TARGET_GCN
-    auxbmp_ConvertToGCN( Bitmap );
-    return;
-    #endif
 
     ASSERT( FALSE );
 }
@@ -866,24 +852,24 @@ void auxbmp_CreateAFromR( xbitmap& Dest, const xbitmap& Source )
 void auxbmp_MergeDiffuseAndOpacity( xbitmap& dest, const xbitmap& diffuse, const xbitmap& opacity, xbool red )
 {
     ASSERT(( &dest != &diffuse ) && ( &dest != &opacity ));
-	ASSERT(( diffuse.GetHeight() == opacity.GetHeight() ) && ( diffuse.GetWidth() == opacity.GetWidth() ));
+    ASSERT(( diffuse.GetHeight() == opacity.GetHeight() ) && ( diffuse.GetWidth() == opacity.GetWidth() ));
 
     s32 W = diffuse.GetWidth();
     s32 H = diffuse.GetHeight();
 
     dest.Setup( xbitmap::FMT_32_RGBA_8888,
-		W,H,                
-		TRUE,
-		new byte[W*H*4] );
-	
+        W,H,                
+        TRUE,
+        new byte[W*H*4] );
+    
     xcolor  src;
-	xcolor  alpha;
+    xcolor  alpha;
     for ( s32 y = 0; y < H; ++y )
     {
         for ( s32 x = 0; x < W; ++x )
         {
             src = diffuse.GetPixelColor( x, y );
-			alpha = opacity.GetPixelColor( x, y );
+            alpha = opacity.GetPixelColor( x, y );
             dest.SetPixelColor( xcolor( src.R, src.G, src.B, red ? alpha.R : alpha.A ), x, y );
         }
     }
@@ -1673,15 +1659,17 @@ void auxbmp_Compress( xbitmap& BMP,const char* pName,s32 nMips )
     {
         if( !auxbmp_IsPunchthruAlpha( BMP ))
         {
-            BMP = auxbmp_CompressRect( BMP,D3DFMT_DXT5 );
+            auxbmp_CompressDXTC( BMP, nMips > 0 );
             return;
         }
     }
 
     // OPAQUE TEXTURES ********************************************************
 
-    xbitmap DXT1 = auxbmp_CompressRect( BMP,D3DFMT_DXT1 );
-    f32 DXT1_Distance = auxbmp_CompareRGB( BMP,DXT1 );
+    xbitmap DXT1 = BMP;
+    auxbmp_CompressDXTC( DXT1, nMips > 0 );
+    
+    f32 DXT1_Distance = auxbmp_CompareRGB( BMP, DXT1 );
     if( DXT1_Distance < 0.5f )
     {
         BMP = DXT1;

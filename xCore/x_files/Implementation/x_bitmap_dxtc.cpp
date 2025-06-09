@@ -1,6 +1,6 @@
 //==============================================================================
 //  
-//  x_bitmap_s3tc.cpp
+//  x_bitmap_dxtc.cpp - Native DXT decoder implementation
 //  
 //==============================================================================
 
@@ -21,446 +21,432 @@
 #endif
 
 //==============================================================================
+//  DXT BLOCK STRUCTURES
+//==============================================================================
 
-#ifndef TARGET_PS2
-#   ifdef TARGET_XBOX
-#       ifdef CONFIG_RETAIL
-#           define D3DCOMPILE_PUREDEVICE 1
-#       endif
-#       include"xtl.h"
-#       include"XGraphics.h"
-#   endif
-#   include"..\..\3rdParty\DXTLibrary\ImageDXTC.h"
-#   if _MSC_VER >= 1300
-#       define WIN32_LEAN_AND_MEAN
-#       ifdef TARGET_PC
-#           include <windows.h>
-#           include "..\..\3rdParty\Xbox\Include\D3d8.h"
-#           include "..\..\3rdParty\Xbox\Include\XGraphics.h"
-#           pragma comment( lib, "xgraphics.lib" )
-#       endif
-#   endif
-#else
-    
-enum DXTCMethod
+struct dxt1_block
 {
-    DC_None,
-    DC_DXT1,
-    DC_DXT3,
-    DC_DXT5,
+    u16 color0;     // First RGB565 color
+    u16 color1;     // Second RGB565 color  
+    u32 indices;    // 2 bits per pixel, 16 pixels
 };
-#endif
 
-//==============================================================================
-//  DEFINES
-//==============================================================================
-
-const f32 ERROR_TOLERANCE = 100.0f;
-
-//=============================================================================
-
-static AlphaType GetAlphaUsage( xbitmap& Source )
+struct dxt3_block
 {
-    if( !Source.HasAlphaBits( ))
-        return AT_None;
-    if( Source.GetBPP( )<16 )
-        return AT_None;
+    u64 alpha;      // 4 bits per pixel alpha (16 pixels)
+    u16 color0;     // First RGB565 color
+    u16 color1;     // Second RGB565 color
+    u32 indices;    // 2 bits per pixel, 16 pixels
+};
 
-    s32    x,y,i;
-    s32    Unique;
-    u32    Usage[256];
-    x_memset( Usage,0,sizeof( Usage ));
-    //
-    //  Count all the different values used
-    //
-    for( i=0;i<=Source.GetNMips ( );i++ )
-    for( y=0;y< Source.GetHeight(i);y++ )
-    for( x=0;x< Source.GetWidth (i);x++ )
+struct dxt5_block
+{
+    u8  alpha0;           // First alpha value
+    u8  alpha1;           // Second alpha value
+    u8  alpha_indices[6]; // 3 bits per pixel alpha indices
+    u16 color0;           // First RGB565 color
+    u16 color1;           // Second RGB565 color
+    u32 indices;          // 2 bits per pixel, 16 pixels
+};
+
+// DXT2 uses same structure as DXT3
+typedef dxt3_block dxt2_block;
+
+// DXT4 uses same structure as DXT5  
+typedef dxt5_block dxt4_block;
+
+//==============================================================================
+//  FUNCTIONS
+//==============================================================================
+
+static inline xcolor RGB565ToColor( u16 rgb565 )
+{
+    u8 r = (u8)((rgb565 >> 11) & 0x1F);
+    u8 g = (u8)((rgb565 >>  5) & 0x3F);
+    u8 b = (u8)((rgb565 >>  0) & 0x1F);
+    
+    // Expand to full 8-bit range
+    r = (r << 3) | (r >> 2);
+    g = (g << 2) | (g >> 4);  
+    b = (b << 3) | (b >> 2);
+    
+    return xcolor( r, g, b, 255 );
+}
+
+//==============================================================================
+
+static inline xcolor UnpremultiplyAlpha( const xcolor& c )
+{
+    if( c.A == 0 )
+        return xcolor( 0, 0, 0, 0 );
+    
+    if( c.A == 255 )
+        return c;
+    
+    // Convert premultiplied back to straight alpha
+    f32 alpha = (f32)c.A / 255.0f;
+    f32 invAlpha = 1.0f / alpha;
+    
+    u8 r = (u8)MAX( 0, MIN( 255, (s32)((f32)c.R * invAlpha + 0.5f) ) );
+    u8 g = (u8)MAX( 0, MIN( 255, (s32)((f32)c.G * invAlpha + 0.5f) ) );
+    u8 b = (u8)MAX( 0, MIN( 255, (s32)((f32)c.B * invAlpha + 0.5f) ) );
+    
+    return xcolor( r, g, b, c.A );
+}
+
+//==============================================================================
+
+static void DecodeDXT1Block( const dxt1_block* pBlock, xcolor* pOutput )
+{
+    xcolor colors[4];
+    
+    // Decode base colors
+    colors[0] = RGB565ToColor( pBlock->color0 );
+    colors[1] = RGB565ToColor( pBlock->color1 );
+    
+    // Generate interpolated colors
+    if( pBlock->color0 > pBlock->color1 )
     {
-        xcolor Color = Source.GetPixelColor( x,y,i );
-        if( 0 )
-            Usage[Color.A]++;
-        else
-        {
-            u32 Ave = (Color.A+Color.R+Color.G+Color.B)/4;
-            Usage[Ave]++;
-        }
+        // 4-color block: color0 > color1
+        colors[2].R = (u8)((2 * colors[0].R + colors[1].R + 1) / 3);
+        colors[2].G = (u8)((2 * colors[0].G + colors[1].G + 1) / 3);
+        colors[2].B = (u8)((2 * colors[0].B + colors[1].B + 1) / 3);
+        colors[2].A = 255;
+        
+        colors[3].R = (u8)((colors[0].R + 2 * colors[1].R + 1) / 3);
+        colors[3].G = (u8)((colors[0].G + 2 * colors[1].G + 1) / 3);
+        colors[3].B = (u8)((colors[0].B + 2 * colors[1].B + 1) / 3);
+        colors[3].A = 255;
     }
-    //
-    //  Count the number of unique alpha values
-    //
-    Unique = 0;
-    for( x=0;x<256;x++ )
-        Unique += ( Usage[x]!=0 );
-    //
-    //  Based on the unique alphas, classify the image
-    //
-    switch(Unique)
+    else
     {
-        case 0:
-            return AT_None;
-        case 1:
-            if( Usage[0xFF] ) return AT_None;
-            if( Usage[0x00] )
-            {
-                for( i=0;i<=Source.GetNMips ( );i++ )
-                for( y=0;y< Source.GetHeight(i);y++ )
-                for( x=0;x< Source.GetWidth (i);x++ )
-                {
-                    xcolor Color = Source.GetPixelColor( x,y,i ); Color.A = 0xFF;
-                    Source.SetPixelColor( Color,x,y,i );
-                }
-            }
-            return AT_Constant;
-        case 2:
-            if(Usage[0] && Usage[0xff])
-                return AT_Binary;
-            if(Usage[0])
-                return AT_ConstantBinary;
-            return AT_DualConstant;
-
-        default:
-            return AT_Modulated;
+        // 3-color block with transparency: color0 <= color1
+        colors[2].R = (u8)((colors[0].R + colors[1].R + 1) / 2);
+        colors[2].G = (u8)((colors[0].G + colors[1].G + 1) / 2);
+        colors[2].B = (u8)((colors[0].B + colors[1].B + 1) / 2);
+        colors[2].A = 255;
+        
+        colors[3] = xcolor( 0, 0, 0, 0 ); // Transparent black
+    }
+    
+    // Decode pixel indices and output colors
+    u32 indices = pBlock->indices;
+    for( s32 i = 0; i < 16; i++ )
+    {
+        s32 index = indices & 0x3;
+        pOutput[i] = colors[index];
+        indices >>= 2;
     }
 }
 
-//=============================================================================
-//
-//  This routine relies on two library packages to be linked in. The first is
-//  the Nvidia library if you're compiling with Visual Studio 6.x or the Xbox
-//  XGraphics library if .NET 2003.
-//
+//==============================================================================
 
-//TODO: REMOVE LEGACY XGRAPHICS!!!!
-
-static void PackImage( xbitmap& Dest,const xbitmap& Source,xbool bForceMips,DXTCMethod Method )
+static void DecodeDXT3Block( const dxt3_block* pBlock, xcolor* pOutput )
 {
-
-    u32 W = Source.GetWidth ( );
-    u32 H = Source.GetHeight( );
-
-    // ========================================================================
-
-    xbitmap Temp( Source );
-    D3DFORMAT SrcD3DFormat;
-
-    switch( Source.GetFormat( ))
+    xcolor colors[4];
+    
+    // Decode base colors (always 4-color mode for DXT3)
+    colors[0] = RGB565ToColor( pBlock->color0 );
+    colors[1] = RGB565ToColor( pBlock->color1 );
+    
+    colors[2].R = (u8)((2 * colors[0].R + colors[1].R + 1) / 3);
+    colors[2].G = (u8)((2 * colors[0].G + colors[1].G + 1) / 3);
+    colors[2].B = (u8)((2 * colors[0].B + colors[1].B + 1) / 3);
+    
+    colors[3].R = (u8)((colors[0].R + 2 * colors[1].R + 1) / 3);
+    colors[3].G = (u8)((colors[0].G + 2 * colors[1].G + 1) / 3);
+    colors[3].B = (u8)((colors[0].B + 2 * colors[1].B + 1) / 3);
+    
+    // Decode color indices
+    u32 indices = pBlock->indices;
+    for( s32 i = 0; i < 16; i++ )
     {
-        case xbitmap::FMT_32_ARGB_8888 : SrcD3DFormat=D3DFMT_LIN_A8R8G8B8; break;
-        case xbitmap::FMT_32_URGB_8888 : SrcD3DFormat=D3DFMT_LIN_X8R8G8B8; break;
-        case xbitmap::FMT_16_RGB_565   : SrcD3DFormat=D3DFMT_LIN_R5G6B5  ; break;
-        case xbitmap::FMT_16_ARGB_1555 : SrcD3DFormat=D3DFMT_LIN_A1R5G5B5; break;
-        case xbitmap::FMT_16_URGB_1555 : SrcD3DFormat=D3DFMT_LIN_X1R5G5B5; break;
-        case xbitmap::FMT_16_ARGB_4444 : SrcD3DFormat=D3DFMT_LIN_A4R4G4B4; break;
-        case xbitmap::FMT_32_ABGR_8888 : SrcD3DFormat=D3DFMT_LIN_A8B8G8R8; break;
-        case xbitmap::FMT_32_UBGR_8888 : SrcD3DFormat=D3DFMT_LIN_B8G8R8A8; break;
-        case xbitmap::FMT_16_RGBA_4444 : SrcD3DFormat=D3DFMT_LIN_R4G4B4A4; break;
-        case xbitmap::FMT_16_RGBA_5551 : SrcD3DFormat=D3DFMT_LIN_R5G5B5A1; break;
-        case xbitmap::FMT_32_RGBA_8888 : SrcD3DFormat=D3DFMT_LIN_R8G8B8A8; break;
-
-        default:
-            Temp.ConvertFormat( xbitmap::FMT_32_BGRA_8888 );
-            SrcD3DFormat=D3DFMT_LIN_B8G8R8A8;
-            break;
+        s32 index = indices & 0x3;
+        pOutput[i] = colors[index];
+        indices >>= 2;
     }
-
-    // ========================================================================
-
-    if( bForceMips && !Temp.GetNMips( ))
-        Temp.BuildMips( );
-
-    // ========================================================================
-
-    D3DFORMAT DstD3DFormat;
-    u32 Stride = 0;
-    u32 Flags  = 0;
-    f32 fMed = 0.0f;
-
-    s32 NMips = Temp.GetNMips( );
-    if(!NMips )
-    {   //
-        //  Determine compression style
-        //
-        xbitmap::format Format;
-        switch( Method )
-        {
-            case DC_DXT1: goto Dxt1;
-            case DC_DXT3: goto Dxt3;
-            case DC_None:
-                switch( GetAlphaUsage( Temp ))
-                {
-                    case AT_ConstantBinary:
-                    case AT_Constant:
-                    case AT_Binary:
-                    case AT_None:
-                        goto Dxt1;
-                    case AT_DualConstant:
-                    case AT_Modulated:
-                        goto Dxt3;
-                }
-
-          Dxt1: Format = xbitmap::FMT_DXT1;
-                DstD3DFormat = D3DFMT_DXT1;
-                Stride = (W/4)*8;
-                break;
-
-          Dxt3: Format = xbitmap::FMT_DXT3;
-                DstD3DFormat = D3DFMT_DXT3;
-                break;
-
-            default:
-                ASSERT(0);
-                break;
-        }
-        Dest.Setup( Format,W,H,TRUE,NULL,FALSE,NULL,W,NMips );
-        //
-        //  Compress non-swizzled formats
-        //
-        ASSERT( !XGIsSwizzledFormat( DstD3DFormat ));
-        HRESULT hr = XGCompressRect(
-            (LPVOID)Dest.GetPixelData(),
-            DstD3DFormat,
-            Stride,
-            W,
-            H,
-            (LPVOID)Temp.GetPixelData(),
-            SrcD3DFormat,
-            (Temp.GetBPP()*W)>>3,
-            fMed,
-            0 );
-        ASSERT( !hr );
-        return;
-    }
-
-    // ========================================================================
-
-    //
-    //  Determine compression style
-    //
-    xbitmap::format Format;
-    switch( Method )
+    
+    // Decode explicit alpha (4 bits per pixel)
+    u64 alpha = pBlock->alpha;
+    for( s32 i = 0; i < 16; i++ )
     {
-        case DC_DXT1: goto dxt1;
-        case DC_DXT3: goto dxt3;
-        case DC_None:
-            switch( GetAlphaUsage( Temp ))
-            {
-                case AT_ConstantBinary:
-                case AT_Constant:
-                case AT_Binary:
-                case AT_None:
-                    goto dxt1;
-                case AT_DualConstant:
-                case AT_Modulated:
-                    goto dxt3;
-            }
-
-      dxt1: Format = xbitmap::FMT_DXT1;
-            DstD3DFormat = D3DFMT_DXT1;
-            Stride = (W/4)*8;
-            break;
-
-      dxt3: Format = xbitmap::FMT_DXT3;
-            DstD3DFormat = D3DFMT_DXT3;
-            break;
-
-        default:
-            ASSERT(0);
-            break;
-    }
-    Dest.Setup( Format,
-                W,
-                H,
-                TRUE,
-                NULL,
-                FALSE,
-                NULL,
-                W,
-                NMips );
-
-    // ========================================================================
-
-    for( s32 iMip=0;iMip<=NMips;iMip++ )
-    {   //
-        //  Compress non-swizzled formats
-        //
-        ASSERT( !XGIsSwizzledFormat( DstD3DFormat ));
-        HRESULT hr = XGCompressRect(
-            (LPVOID)Dest.GetPixelData(iMip),
-            DstD3DFormat,
-            Stride,
-            W,
-            H,
-            (LPVOID)Temp.GetPixelData(iMip),
-            SrcD3DFormat,
-            (Temp.GetBPP()*W)>>3,
-            fMed,
-            0 );
-        ASSERT( !hr );
-        //
-        //  Next mip
-        //
-        Stride >>= 1;
-        W      >>= 1;
-        H      >>= 1;
+        u8 a = (u8)(alpha & 0xF);
+        a = (a << 4) | a; // Expand 4-bit to 8-bit
+        pOutput[i].A = a;
+        alpha >>= 4;
     }
 }
 
-//=============================================================================
+//==============================================================================
+
+static void DecodeDXT2Block( const dxt2_block* pBlock, xcolor* pOutput )
+{
+    // DXT2 is DXT3 with premultiplied alpha
+    DecodeDXT3Block( pBlock, pOutput );
+    
+    // Convert from premultiplied to straight alpha
+    for( s32 i = 0; i < 16; i++ )
+    {
+        pOutput[i] = UnpremultiplyAlpha( pOutput[i] );
+    }
+}
+
+//==============================================================================
+
+static void DecodeDXT5Block( const dxt5_block* pBlock, xcolor* pOutput )
+{
+    xcolor colors[4];
+    
+    // Decode base colors (always 4-color mode for DXT5)
+    colors[0] = RGB565ToColor( pBlock->color0 );
+    colors[1] = RGB565ToColor( pBlock->color1 );
+    
+    colors[2].R = (u8)((2 * colors[0].R + colors[1].R + 1) / 3);
+    colors[2].G = (u8)((2 * colors[0].G + colors[1].G + 1) / 3);
+    colors[2].B = (u8)((2 * colors[0].B + colors[1].B + 1) / 3);
+    
+    colors[3].R = (u8)((colors[0].R + 2 * colors[1].R + 1) / 3);
+    colors[3].G = (u8)((colors[0].G + 2 * colors[1].G + 1) / 3);
+    colors[3].B = (u8)((colors[0].B + 2 * colors[1].B + 1) / 3);
+    
+    // Decode color indices
+    u32 indices = pBlock->indices;
+    for( s32 i = 0; i < 16; i++ )
+    {
+        s32 index = indices & 0x3;
+        pOutput[i] = colors[index];
+        indices >>= 2;
+    }
+    
+    // Build alpha palette
+    u8 alphas[8];
+    alphas[0] = pBlock->alpha0;
+    alphas[1] = pBlock->alpha1;
+    
+    if( alphas[0] > alphas[1] )
+    {
+        // 8-alpha block
+        for( s32 i = 1; i < 7; i++ )
+        {
+            alphas[i+1] = (u8)(((7-i) * alphas[0] + i * alphas[1] + 3) / 7);
+        }
+    }
+    else
+    {
+        // 6-alpha block
+        for( s32 i = 1; i < 5; i++ )
+        {
+            alphas[i+1] = (u8)(((5-i) * alphas[0] + i * alphas[1] + 2) / 5);
+        }
+        alphas[6] = 0;
+        alphas[7] = 255;
+    }
+    
+    // Decode alpha indices (3 bits per pixel)
+    u64 alpha_bits = 0;
+    for( s32 i = 0; i < 6; i++ )
+    {
+        alpha_bits |= ((u64)pBlock->alpha_indices[i]) << (i * 8);
+    }
+    
+    for( s32 i = 0; i < 16; i++ )
+    {
+        s32 alpha_index = (s32)(alpha_bits & 0x7);
+        pOutput[i].A = alphas[alpha_index];
+        alpha_bits >>= 3;
+    }
+}
+
+//==============================================================================
+
+static void DecodeDXT4Block( const dxt4_block* pBlock, xcolor* pOutput )
+{
+    // DXT4 is DXT5 with premultiplied alpha
+    DecodeDXT5Block( pBlock, pOutput );
+    
+    // Convert from premultiplied to straight alpha
+    for( s32 i = 0; i < 16; i++ )
+    {
+        pOutput[i] = UnpremultiplyAlpha( pOutput[i] );
+    }
+}
+
+//==============================================================================
+
+xcolor ReadPixelColorDXT1( const xbitmap* pBmp, s32 X, s32 Y, s32 Mip )
+{
+    ASSERT( pBmp );
+    ASSERT( pBmp->GetFormat() == xbitmap::FMT_DXT1 );
+    
+    s32 blockX = X / 4;
+    s32 blockY = Y / 4;
+    s32 pixelX = X % 4;
+    s32 pixelY = Y % 4;
+    
+    s32 blocksPerRow = (pBmp->GetWidth(Mip) + 3) / 4;
+    const dxt1_block* pBlocks = (const dxt1_block*)pBmp->GetPixelData(Mip);
+    const dxt1_block* pBlock = &pBlocks[blockY * blocksPerRow + blockX];
+    
+    xcolor pixels[16];
+    DecodeDXT1Block( pBlock, pixels );
+    
+    return pixels[pixelY * 4 + pixelX];
+}
+
+//==============================================================================
+
+xcolor ReadPixelColorDXT2( const xbitmap* pBmp, s32 X, s32 Y, s32 Mip )
+{
+    ASSERT( pBmp );
+    ASSERT( pBmp->GetFormat() == xbitmap::FMT_DXT2 );
+    
+    s32 blockX = X / 4;
+    s32 blockY = Y / 4;
+    s32 pixelX = X % 4;
+    s32 pixelY = Y % 4;
+    
+    s32 blocksPerRow = (pBmp->GetWidth(Mip) + 3) / 4;
+    const dxt2_block* pBlocks = (const dxt2_block*)pBmp->GetPixelData(Mip);
+    const dxt2_block* pBlock = &pBlocks[blockY * blocksPerRow + blockX];
+    
+    xcolor pixels[16];
+    DecodeDXT2Block( pBlock, pixels );
+    
+    return pixels[pixelY * 4 + pixelX];
+}
+
+//==============================================================================
+
+xcolor ReadPixelColorDXT3( const xbitmap* pBmp, s32 X, s32 Y, s32 Mip )
+{
+    ASSERT( pBmp );
+    ASSERT( pBmp->GetFormat() == xbitmap::FMT_DXT3 );
+    
+    s32 blockX = X / 4;
+    s32 blockY = Y / 4;
+    s32 pixelX = X % 4;
+    s32 pixelY = Y % 4;
+    
+    s32 blocksPerRow = (pBmp->GetWidth(Mip) + 3) / 4;
+    const dxt3_block* pBlocks = (const dxt3_block*)pBmp->GetPixelData(Mip);
+    const dxt3_block* pBlock = &pBlocks[blockY * blocksPerRow + blockX];
+    
+    xcolor pixels[16];
+    DecodeDXT3Block( pBlock, pixels );
+    
+    return pixels[pixelY * 4 + pixelX];
+}
+
+//==============================================================================
+
+xcolor ReadPixelColorDXT4( const xbitmap* pBmp, s32 X, s32 Y, s32 Mip )
+{
+    ASSERT( pBmp );
+    ASSERT( pBmp->GetFormat() == xbitmap::FMT_DXT4 );
+    
+    s32 blockX = X / 4;
+    s32 blockY = Y / 4;
+    s32 pixelX = X % 4;
+    s32 pixelY = Y % 4;
+    
+    s32 blocksPerRow = (pBmp->GetWidth(Mip) + 3) / 4;
+    const dxt4_block* pBlocks = (const dxt4_block*)pBmp->GetPixelData(Mip);
+    const dxt4_block* pBlock = &pBlocks[blockY * blocksPerRow + blockX];
+    
+    xcolor pixels[16];
+    DecodeDXT4Block( pBlock, pixels );
+    
+    return pixels[pixelY * 4 + pixelX];
+}
+
+//==============================================================================
+
+xcolor ReadPixelColorDXT5( const xbitmap* pBmp, s32 X, s32 Y, s32 Mip )
+{
+    ASSERT( pBmp );
+    ASSERT( pBmp->GetFormat() == xbitmap::FMT_DXT5 );
+    
+    s32 blockX = X / 4;
+    s32 blockY = Y / 4;
+    s32 pixelX = X % 4;
+    s32 pixelY = Y % 4;
+    
+    s32 blocksPerRow = (pBmp->GetWidth(Mip) + 3) / 4;
+    const dxt5_block* pBlocks = (const dxt5_block*)pBmp->GetPixelData(Mip);
+    const dxt5_block* pBlock = &pBlocks[blockY * blocksPerRow + blockX];
+    
+    xcolor pixels[16];
+    DecodeDXT5Block( pBlock, pixels );
+    
+    return pixels[pixelY * 4 + pixelX];
+}
+
+//==============================================================================
 
 xbitmap UnpackImage( const xbitmap& Source )
 {
-    xbitmap Result;
+    s32 W = Source.GetWidth();
+    s32 H = Source.GetHeight();
+    s32 NMips = Source.GetNMips();
+    
+    // Check if it's a DXT format
+    xbitmap::format srcFormat = Source.GetFormat();
+    if( srcFormat != xbitmap::FMT_DXT1 && 
+        srcFormat != xbitmap::FMT_DXT2 && 
+        srcFormat != xbitmap::FMT_DXT3 && 
+        srcFormat != xbitmap::FMT_DXT4 && 
+        srcFormat != xbitmap::FMT_DXT5 )
     {
-        s32  H     = Source.GetHeight( );
-        s32  W     = Source.GetWidth ( );
-        s32  NMips = Source.GetNMips ( );
-
-        ImageDXTC dxtc;
-        Image32 Temp;
-
-        DXTCMethod Method;
-        switch( Source.GetFormat() )    
+        return Source; // Not a DXT format, return as-is
+    }
+    
+    // Create result bitmap
+    xbitmap Result;
+    Result.Setup( xbitmap::FMT_32_RGBA_8888, W, H, TRUE, NULL, FALSE, NULL, W, NMips );
+    
+    // Process each mip level
+    for( s32 mip = 0; mip <= NMips; mip++ )
+    {
+        s32 mipW = Source.GetWidth(mip);
+        s32 mipH = Source.GetHeight(mip);
+        
+        for( s32 y = 0; y < mipH; y++ )
         {
-            case xbitmap::FMT_DXT1: Method = DC_DXT1; break;
-            case xbitmap::FMT_DXT3: Method = DC_DXT3; break;
-            case xbitmap::FMT_DXT5:
-            default:
-                return Source;
-        }
-
-        if( !NMips )
-        {
-            dxtc.SetMethod( Method );
-            dxtc.SetSize( W,H );
-            x_memcpy(
-                dxtc  .GetBlocks   ( ),
-                Source.GetPixelData( ),
-                Source.GetDataSize ( ));
-            dxtc.ToImage32( &Temp );
-            Result.Setup(
-                xbitmap::FMT_32_BGRA_8888,
-                W,
-                H,
-                TRUE,
-                NULL
-            );
-            x_memcpy(
-                (void*)Result.GetPixelData( ),
-                Temp.GetPixels( ),
-                W*H*4
-            );
-        }
-        else
-        {
-            Result.Setup
-            (
-                xbitmap::FMT_32_BGRA_8888,
-                W,
-                H,
-                TRUE,
-                NULL,
-                FALSE,
-                NULL,
-                W,
-                NMips
-            );
-            for( s32 i=0;i<=NMips;i++ )
+            for( s32 x = 0; x < mipW; x++ )
             {
-                dxtc.SetMethod( Method );
-                dxtc.SetSize( W,H );
-                x_memcpy(
-                    dxtc  .GetBlocks     ( ),
-                    Source.GetPixelData  (i),
-                    Source.GetMipDataSize(i));
-                dxtc.ToImage32( &Temp );
-                x_memcpy(
-                    (void*)Result.GetPixelData(i),
-                    Temp.GetPixels( ),
-                    W*H*4
-                );
-                W >>= 1;
-                H >>= 1;
+                xcolor pixel;
+                
+                switch( srcFormat )
+                {
+                    case xbitmap::FMT_DXT1:
+                        pixel = ReadPixelColorDXT1( &Source, x, y, mip );
+                        break;
+                        
+                    case xbitmap::FMT_DXT2:
+                        pixel = ReadPixelColorDXT2( &Source, x, y, mip );
+                        break;
+                        
+                    case xbitmap::FMT_DXT3:
+                        pixel = ReadPixelColorDXT3( &Source, x, y, mip );
+                        break;
+                        
+                    case xbitmap::FMT_DXT4:
+                        pixel = ReadPixelColorDXT4( &Source, x, y, mip );
+                        break;
+                        
+                    case xbitmap::FMT_DXT5:
+                        pixel = ReadPixelColorDXT5( &Source, x, y, mip );
+                        break;
+                        
+                    default:
+                        pixel = XCOLOR_BLACK;
+                        break;
+                }
+                
+                Result.SetPixelColor( pixel, x, y, mip );
             }
         }
     }
+    
     return Result;
-}
-
-//=============================================================================
-
-xcolor ReadPixelColorDXT1( const xbitmap* pBmp,s32 X,s32 Y,s32 Mip )
-{
-    xcolor Result;
-    {
-        s32 y = Y/4;
-        s32 x = X/4;
-        s32 w = pBmp->GetWidth(Mip);
-
-        u16* pSrc = (u16*)(pBmp->GetPixelData(Mip)+(y*(w/4)+x)*8);
-
-        // Optimise linear searches
-        static u16* pOld = NULL;
-        static Color Cache[16];
-        if( pOld!=pSrc )
-        {
-            PlotDXT1( pSrc,Cache,4 );
-            pOld = pSrc;
-        }
-
-        // Return color
-        s32 I = ((Y%4)*4)+(X%4);
-        Result = xcolor(
-            Cache[I].r,
-            Cache[I].g,
-            Cache[I].b,
-            Cache[I].a );
-    }
-    return Result;
-}
-
-//=============================================================================
-
-xcolor ReadPixelColorDXT3( const xbitmap* pBmp,s32 X,s32 Y,s32 Mip )
-{
-    xcolor Result;
-    {
-        s32 y = Y/4;
-        s32 x = X/4;
-        s32 w = pBmp->GetWidth(Mip);
-
-        // Calculate tile address
-        u16* pSrc = (u16*)(pBmp->GetPixelData(Mip)+(y*(w/4)+x)*16);
-
-        // Optimise linear searches
-        static u16* pOld = NULL;
-        static Color Cache[16];
-        if( pOld!=pSrc )
-        {
-            PlotDXT1     ( pSrc+4,Cache,4 );
-            PlotDXT3Alpha( pSrc  ,Cache,4 );
-            pOld = pSrc;
-        }
-
-        // Return color
-        s32 I = ((Y%4)*4)+(X%4);
-        Result = xcolor(
-            Cache[I].r,
-            Cache[I].g,
-            Cache[I].b,
-            Cache[I].a );
-    }
-    return Result;
-}
-
-//=============================================================================
-
-xcolor ReadPixelColorDXT5( const xbitmap* pBmp,s32 X,s32 Y,s32 Mip )
-{
-    (void)Mip;
-    (void)X;
-    (void)Y;
-    (void)pBmp;
-
-    return XCOLOR_BLACK;
 }

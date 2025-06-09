@@ -644,16 +644,25 @@ static s32 GetPS2SwizzledIndex( s32 I )
 static xcolor ReadDXTCPixel( const xbitmap* pBmp,s32 X,s32 Y,s32 Mip )
 {
     extern xcolor ReadPixelColorDXT1( const xbitmap* pBMP,s32 X,s32 Y,s32 Mip );
+    extern xcolor ReadPixelColorDXT2( const xbitmap* pBMP,s32 X,s32 Y,s32 Mip );
     extern xcolor ReadPixelColorDXT3( const xbitmap* pBMP,s32 X,s32 Y,s32 Mip );
+    extern xcolor ReadPixelColorDXT4( const xbitmap* pBMP,s32 X,s32 Y,s32 Mip );
     extern xcolor ReadPixelColorDXT5( const xbitmap* pBMP,s32 X,s32 Y,s32 Mip );
 
-    xcolor Result; switch( pBmp->GetFormat() )
+    xcolor Result; 
+    switch( pBmp->GetFormat() )
     {
         case xbitmap::FMT_DXT1:
             Result = ReadPixelColorDXT1( pBmp,X,Y,Mip );
             break;
+        case xbitmap::FMT_DXT2:
+            Result = ReadPixelColorDXT2( pBmp,X,Y,Mip );
+            break;
         case xbitmap::FMT_DXT3:
             Result = ReadPixelColorDXT3( pBmp,X,Y,Mip );
+            break;
+        case xbitmap::FMT_DXT4:
+            Result = ReadPixelColorDXT4( pBmp,X,Y,Mip );
             break;
         case xbitmap::FMT_DXT5:
             Result = ReadPixelColorDXT5( pBmp,X,Y,Mip );

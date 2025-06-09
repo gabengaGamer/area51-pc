@@ -172,34 +172,10 @@
     <ClCompile Include="Load_BMP.cpp" />
     <ClCompile Include="Load_PSD.cpp" />
     <ClCompile Include="Load_TGA.cpp" />
-    <ClCompile Include="..\..\3rdParty\DXTLibrary\ccDoubleHeap.cpp" />
-    <ClCompile Include="..\..\3rdParty\DXTLibrary\ccHeap.cpp" />
-    <ClCompile Include="..\..\3rdParty\DXTLibrary\Cclist.cpp" />
-    <ClCompile Include="..\..\3rdParty\DXTLibrary\cfVector.cpp" />
-    <ClCompile Include="..\..\3rdParty\DXTLibrary\CodeBook4MMX.cpp" />
-    <ClCompile Include="..\..\3rdParty\DXTLibrary\DXTCGen.cpp" />
-    <ClCompile Include="..\..\3rdParty\DXTLibrary\fCodeBook.cpp" />
-    <ClCompile Include="..\..\3rdParty\DXTLibrary\Image.cpp" />
-    <ClCompile Include="..\..\3rdParty\DXTLibrary\ImageDXTC.cpp" />
-    <ClCompile Include="..\..\3rdParty\DXTLibrary\Lloyd.cpp" />
-    <ClCompile Include="..\..\3rdParty\DXTLibrary\MedianCut.cpp" />
-    <ClCompile Include="..\..\3rdParty\DXTLibrary\Table.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="aux_Bitmap.hpp" />
-    <ClInclude Include="..\..\3rdParty\DXTLibrary\ccDoubleHeap.h" />
-    <ClInclude Include="..\..\3rdParty\DXTLibrary\ccHeap.h" />
-    <ClInclude Include="..\..\3rdParty\DXTLibrary\Cclist.h" />
-    <ClInclude Include="..\..\3rdParty\DXTLibrary\cfVector.h" />
-    <ClInclude Include="..\..\3rdParty\DXTLibrary\CodeBook4MMX.h" />
-    <ClInclude Include="..\..\3rdParty\DXTLibrary\DXTCGen.h" />
-    <ClInclude Include="..\..\3rdParty\DXTLibrary\fCodeBook.h" />
-    <ClInclude Include="..\..\3rdParty\DXTLibrary\Image.h" />
-    <ClInclude Include="..\..\3rdParty\DXTLibrary\ImageDXTC.h" />
-    <ClInclude Include="..\..\3rdParty\DXTLibrary\Lloyd.h" />
-    <ClInclude Include="..\..\3rdParty\DXTLibrary\MedianCut.h" />
-    <ClInclude Include="..\..\3rdParty\DXTLibrary\Table.h" />
-  </ItemGroup> 
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
