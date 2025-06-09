@@ -228,8 +228,6 @@
       <SuppressStartupBanner>true</SuppressStartupBanner>
     </Link>
   </ItemDefinitionGroup>
-  
-  <!-- .CPP Files -->
   <ItemGroup>
     <ClCompile Include="Config.cpp" />
     <ClCompile Include="IniFile.cpp" />
@@ -237,37 +235,16 @@
     <ClCompile Include="rtf_handler.cpp" />
     <ClCompile Include="Version.cpp" />
   </ItemGroup>
-  
-  <!-- .HPP/.H Files -->
   <ItemGroup>
     <ClInclude Include="Config.hpp" />
     <ClInclude Include="IniFile.hpp" />
     <ClInclude Include="main.hpp" />
   </ItemGroup>
-  
-  <!-- Other Files -->
   <ItemGroup>
-    <None Include="..\..\..\..\GameData\A51\Release\Pc\Config.ini" />
-    <None Include="..\..\..\..\GameData\A51\Release\Ps2\Config.ini" />
-    <None Include="..\..\..\..\GameData\A51\Release\Xbox\Config.ini" />
     <None Include="main_pc.inl" />
-    <None Include="main_ps2.inl" />
-    <None Include="main_xbox.inl" />
     <None Include="media\saves.rdf" />
     <None Include="media\title.rdf" />
   </ItemGroup>
-  
-  <!-- Text Files -->
-  <ItemGroup>
-    <Text Include="..\..\..\..\GameData\A51\Release\Pc\eng_DiskMaps.txt" />
-    <Text Include="..\..\..\..\GameData\A51\Release\Pc\FRE_DiskMaps.txt" />
-    <Text Include="..\..\..\..\GameData\A51\Release\Ps2\eng_DiskMaps.txt" />
-    <Text Include="..\..\..\..\GameData\A51\Release\Ps2\FRE_DiskMaps.txt" />
-    <Text Include="..\..\..\..\GameData\A51\Release\Xbox\eng_DiskMaps.txt" />
-    <Text Include="..\..\..\..\GameData\A51\Release\Xbox\FRE_DiskMaps.txt" />
-  </ItemGroup>
-  
-  <!-- Project References -->
   <ItemGroup>
     <ProjectReference Include="..\..\Support\AudioMgr\AudioMgr.vcxproj">
       <Project>{55221814-70e0-430b-8947-881f19d9ee9f}</Project>
@@ -326,7 +303,6 @@
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
     </ProjectReference>
   </ItemGroup>
-  
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

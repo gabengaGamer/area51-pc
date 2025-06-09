@@ -214,7 +214,7 @@
       <PreprocessorDefinitions>TARGET_PC;CONFIG_DEBUG;X_EDITOR;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>false</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
-      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <WarningLevel>Level3</WarningLevel>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
@@ -233,7 +233,7 @@
       <PreprocessorDefinitions>TARGET_PC;CONFIG_DEBUG;CONFIG_VIEWER;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>false</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
-      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <WarningLevel>Level3</WarningLevel>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
@@ -245,8 +245,6 @@
       <SuppressStartupBanner>true</SuppressStartupBanner>
     </Lib>
   </ItemDefinitionGroup>
-  
-  <!-- .CPP Files -->
   <ItemGroup>
     <ClCompile Include="fx_Ctrl.cpp" />
     <ClCompile Include="fx_Cylinder.cpp" />
@@ -262,8 +260,6 @@
     <ClCompile Include="fx_Sphere.cpp" />
     <ClCompile Include="fx_Sprite.cpp" />
   </ItemGroup>
-  
-  <!-- .HPP/.H Files -->
   <ItemGroup>
     <ClInclude Include="fx_Cylinder.hpp" />
     <ClInclude Include="fx_Mgr.hpp" />
@@ -275,7 +271,6 @@
     <ClInclude Include="fx_Sphere.hpp" />
     <ClInclude Include="fx_Sprite.hpp" />
   </ItemGroup>
-  
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

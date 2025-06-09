@@ -145,6 +145,7 @@ static dxerr CreateJoystick( device& Device, const DIDEVICEINSTANCE* pInstance, 
 static xbool s_DoNotProcessWindowsMessages = FALSE;
 
 //=========================================================================
+
 static 
 void ClearDebounce( state& State )
 {
@@ -221,6 +222,7 @@ void ClearDebounce( state& State )
 }
 
 //=========================================================================
+
 static 
 void PageFlipQueue( void )
 {
@@ -268,6 +270,7 @@ void PageFlipQueue( void )
 }
 
 //=========================================================================
+
 static 
 state& GetState( s64 TimeStamp )
 {
@@ -305,6 +308,7 @@ state& GetState( s64 TimeStamp )
 }
 
 //=========================================================================
+
 static 
 BOOL CALLBACK EnumKeyboardCallback( const DIDEVICEINSTANCE* pdidInstance,
                                     VOID* pContext )
@@ -328,6 +332,7 @@ BOOL CALLBACK EnumKeyboardCallback( const DIDEVICEINSTANCE* pdidInstance,
 }
 
 //=========================================================================
+
 static 
 BOOL CALLBACK EnumMouseCallback( const DIDEVICEINSTANCE* pdidInstance,
                                  VOID* pContext )
@@ -352,6 +357,7 @@ BOOL CALLBACK EnumMouseCallback( const DIDEVICEINSTANCE* pdidInstance,
 }
 
 //=========================================================================
+
 static 
 BOOL CALLBACK EnumJoysticksCallback( const DIDEVICEINSTANCE* pdidInstance,
                                      VOID* pContext )
@@ -375,6 +381,7 @@ BOOL CALLBACK EnumJoysticksCallback( const DIDEVICEINSTANCE* pdidInstance,
 
 
 //=========================================================================
+
 static 
 dxerr CreateMouse( device& Device, const DIDEVICEINSTANCE* pInstance, s32 SampleBufferSize )
 {
@@ -458,6 +465,7 @@ dxerr CreateMouse( device& Device, const DIDEVICEINSTANCE* pInstance, s32 Sample
 }
 
 //=========================================================================
+
 static 
 dxerr CreateKeyboard( device& Device, const DIDEVICEINSTANCE* pInstance, s32 SampleBufferSize )
 {
@@ -544,6 +552,7 @@ dxerr CreateKeyboard( device& Device, const DIDEVICEINSTANCE* pInstance, s32 Sam
 }
 
 //=========================================================================
+
 static 
 BOOL CALLBACK EnumAxesCallback( const DIDEVICEOBJECTINSTANCE* pdidoi,
                                 VOID* pContext )
@@ -586,6 +595,7 @@ BOOL CALLBACK EnumAxesCallback( const DIDEVICEOBJECTINSTANCE* pdidoi,
 }    
 
 //=========================================================================
+
 static 
 dxerr CreateJoystick( device& Device, const DIDEVICEINSTANCE* pInstance, s32 SampleBufferSize )
 {
@@ -743,6 +753,7 @@ dxerr CreateJoystick( device& Device, const DIDEVICEINSTANCE* pInstance, s32 Sam
 }
 
 //=========================================================================
+
 static 
 dxerr ReadKeyboadBufferedData( device& Device, s32 ID )
 {
@@ -824,6 +835,7 @@ dxerr ReadKeyboadBufferedData( device& Device, s32 ID )
 }
 
 //=========================================================================
+
 static 
 dxerr ReadMouseBufferedData( device& Device, s32 ID )
 {
@@ -915,6 +927,7 @@ dxerr ReadMouseBufferedData( device& Device, s32 ID )
 }
 
 //=========================================================================
+
 static 
 dxerr ReadMouseImmediateData( device& Device, s32 ID )
 {
@@ -967,6 +980,7 @@ dxerr ReadMouseImmediateData( device& Device, s32 ID )
 }
 
 //=========================================================================
+
 static 
 dxerr ReadKeyboardImmediateData( device& Device, s32 ID )
 {
@@ -1033,6 +1047,7 @@ dxerr ReadKeyboardImmediateData( device& Device, s32 ID )
 
 
 //=========================================================================
+
 static 
 dxerr ReadJoystickImmediateData( device& Device, s32 ID )
 {
@@ -1095,6 +1110,7 @@ dxerr ReadJoystickImmediateData( device& Device, s32 ID )
 }
 
 //=========================================================================
+
 static 
 dxerr ReadJoystickBufferedData( device& Device, s32 ID )
 {
@@ -1398,8 +1414,8 @@ dxerr ReadJoystickBufferedData( device& Device, s32 ID )
     return Error;
 }
 
-
 //=========================================================================
+
 static
 xbool ProcessEvents( void )
 { 
@@ -1425,6 +1441,7 @@ xbool ProcessEvents( void )
 }
 
 //========================================================================
+
 static
 s64 TIME_GetClock( void )
 {
@@ -1433,6 +1450,7 @@ s64 TIME_GetClock( void )
 }
 
 //========================================================================
+
 static
 s64 TIME_GetTicksPerSecond( void )
 {
@@ -1723,6 +1741,8 @@ void d3deng_DoNotProcessWindowsMessages()
     s_DoNotProcessWindowsMessages = TRUE;
 }
 
+//=========================================================================
+
 xbool d3deng_InitInput( HWND Window )
 {
     dxerr   Error;
@@ -1819,6 +1839,7 @@ xbool d3deng_InitInput( HWND Window )
 }
 
 //=========================================================================
+
 static
 f32 GetValue( s32 ControllerID, input_gadget GadgetID, digital_type DigitalType )
 {

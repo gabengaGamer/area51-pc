@@ -1,18 +1,18 @@
-///////////////////////////////////////////////////////////////////////////
+//=========================================================================
 // INCLUDES
-///////////////////////////////////////////////////////////////////////////
+//=========================================================================
 
 #include "e_Engine.hpp"
 
-///////////////////////////////////////////////////////////////////////////
+//=========================================================================
 // DEFINES
-///////////////////////////////////////////////////////////////////////////
+//=========================================================================
 
 #define MAX_TEXTURES 5000
 
-///////////////////////////////////////////////////////////////////////////
+//=========================================================================
 // TYPES
-///////////////////////////////////////////////////////////////////////////
+//=========================================================================
 
 union d3d_tex_node
 {
@@ -20,21 +20,18 @@ union d3d_tex_node
     s32                 iNext;    
 };
 
-///////////////////////////////////////////////////////////////////////////
+//=========================================================================
 // LOCALS
-///////////////////////////////////////////////////////////////////////////
+//=========================================================================
 
 static s32          s_LastActiveID = 0;
 static d3d_tex_node s_List[ MAX_TEXTURES ];
 static s32          s_iEmpty;
 
 
-///////////////////////////////////////////////////////////////////////////
+//=========================================================================
 // FUNCTIONS
-///////////////////////////////////////////////////////////////////////////
-
-
-//=============================================================================
+//=========================================================================
 
 void vram_Init( void )
 {
@@ -60,6 +57,23 @@ void vram_Kill( void )
             s_List[i].pTexture->Release();
         }
     }
+}
+
+//=============================================================================
+
+void vram_OnDeviceLost( void )
+{
+    // MANAGED pool textures are automatically handled by DirectX
+    // We just need to clear our active state
+    s_LastActiveID = 0;
+}
+
+//=============================================================================
+void vram_OnDeviceReset( void )
+{
+    // MANAGED pool textures are automatically restored by DirectX
+    // We just need to clear our active state
+    s_LastActiveID = 0;
 }
 
 //=============================================================================
@@ -91,10 +105,26 @@ s32 vram_LoadTexture( const char* pFileName )
     dxerr               Error;
     IDirect3DTexture9*  pTexture = NULL;
 
-    Error = D3DXCreateTextureFromFile( g_pd3dDevice, pFileName, &pTexture );
-    ASSERT( Error == 0 );
-    ASSERT( pTexture );
+    // Check if device is available
+    if( !g_pd3dDevice )
+        return 0;
+        
+    // Check device cooperative level before proceeding
+    HRESULT hr = g_pd3dDevice->TestCooperativeLevel();
+    if( FAILED( hr ) )
+    {
+        // Device is lost, return invalid ID
+        return 0;
+    }
 
+    Error = D3DXCreateTextureFromFile( g_pd3dDevice, pFileName, &pTexture );
+    if( FAILED( Error ) )
+    {
+        // File load failed, could be due to device loss or missing file
+        return 0;
+    }
+
+    ASSERT( pTexture );
     return AddNode( pTexture );
 }
 
@@ -123,8 +153,13 @@ void vram_Activate( s32 VRAM_ID )
     
     if( g_pd3dDevice )
     {
-        ASSERT( s_List[ VRAM_ID ].iNext > MAX_TEXTURES );
-        g_pd3dDevice->SetTexture( 0, s_List[ VRAM_ID ].pTexture );
+        // Check device state before setting texture
+        HRESULT hr = g_pd3dDevice->TestCooperativeLevel();
+        if( SUCCEEDED( hr ) )
+        {
+            ASSERT( s_List[ VRAM_ID ].iNext > MAX_TEXTURES );
+            g_pd3dDevice->SetTexture( 0, s_List[ VRAM_ID ].pTexture );
+        }
     }
 }
 
@@ -149,6 +184,18 @@ s32 vram_Register( const xbitmap& Bitmap )
 
     ASSERT( Bitmap.GetClutData() == NULL && "Not clut is suported" );
 
+    // Check if device is available
+    if( !g_pd3dDevice )
+        return 0;
+        
+    // Check device cooperative level before proceeding
+    HRESULT hr = g_pd3dDevice->TestCooperativeLevel();
+    if( FAILED( hr ) )
+    {
+        // Device is lost, return invalid ID but don't assert
+        return 0;
+    }
+
     //
     // Get the DX format
     //
@@ -168,61 +215,77 @@ s32 vram_Register( const xbitmap& Bitmap )
             }
     }
 
-    if( g_pd3dDevice )
+    //
+    // Create the texture
+    //
+    Error = g_pd3dDevice->CreateTexture( Bitmap.GetWidth(), 
+                                         Bitmap.GetHeight(), 
+                                         0, 0, 
+                                         Format,
+                                         D3DPOOL_MANAGED,
+                                         &pSurface,
+                                         NULL );
+    if( FAILED( Error ) )
     {
-        //
-        // Create the texture
-        //
-        Error = g_pd3dDevice->CreateTexture( Bitmap.GetWidth(), 
-                                             Bitmap.GetHeight(), 
-                                             0, 0, 
-                                             Format,
-                                             D3DPOOL_MANAGED,
-                                             &pSurface,
-                                             NULL );
-        ASSERT( Error == 0 );
+        // Creation failed, probably due to device loss
+        return 0;
+    }
 
-        //
-        // Copy texture
-        //
+    //
+    // Copy texture data safely
+    //
+    {
+        D3DLOCKED_RECT  Locked;
+        char*           pSrcData;   
+        char*           pDestData;
+        s32             BitmapPitch;
+
+        x_memset( &Locked, 0, sizeof(Locked) );
+        Error = pSurface->LockRect( 0, &Locked, NULL, 0 );
+        
+        // Check for lock failure (could be due to device loss)
+        if( FAILED( Error ) )
         {
-            D3DLOCKED_RECT  Locked;
-            char*           pSrcData;   
-            char*           pDestData;
-            s32             BitmapPitch;
-
-            x_memset( &Locked, 0, sizeof(Locked) );
-            Error = pSurface->LockRect( 0, &Locked, NULL, 0 );
-            ASSERT( Error == 0 );
-
-            pSrcData    = (char*)Bitmap.GetPixelData();
-            pDestData   = (char*)Locked.pBits;
-
-            if( (Bitmap.GetFormat() == xbitmap::FMT_DXT1) || (Bitmap.GetFormat() == xbitmap::FMT_DXT3) )
-            {
-                x_memcpy( pDestData, pSrcData, Bitmap.GetMipDataSize(0) );
-            }
-            else
-            {
-                BitmapPitch = (Bitmap.GetPWidth() * Bitmap.GetFormatInfo().BPP)/8 ;
-
-                for( s32 y=0; y<Bitmap.GetHeight(); y++ )
-                {
-                    x_memcpy( pDestData, pSrcData, BitmapPitch );
-                    pDestData += Locked.Pitch;
-                    pSrcData  += BitmapPitch;
-
-                }
-            }
-
-            pSurface->UnlockRect( 0 );
+            // Lock failed, clean up and return
+            pSurface->Release();
+            return 0;
         }
 
-        //
-        // Create the mipmaps
-        //
-        Error = D3DXFilterTexture( pSurface, NULL, D3DX_DEFAULT, D3DX_DEFAULT  );
-        ASSERT( Error == 0 );
+        pSrcData    = (char*)Bitmap.GetPixelData();
+        pDestData   = (char*)Locked.pBits;
+
+        if( (Bitmap.GetFormat() == xbitmap::FMT_DXT1) || (Bitmap.GetFormat() == xbitmap::FMT_DXT3) )
+        {
+            x_memcpy( pDestData, pSrcData, Bitmap.GetMipDataSize(0) );
+        }
+        else
+        {
+            BitmapPitch = (Bitmap.GetPWidth() * Bitmap.GetFormatInfo().BPP)/8 ;
+
+            for( s32 y=0; y<Bitmap.GetHeight(); y++ )
+            {
+                x_memcpy( pDestData, pSrcData, BitmapPitch );
+                pDestData += Locked.Pitch;
+                pSrcData  += BitmapPitch;
+            }
+        }
+
+        Error = pSurface->UnlockRect( 0 );
+        // Don't assert on unlock failure, just log it
+        if( FAILED( Error ) )
+        {
+            DebugMessage( "Warning: UnlockRect failed during texture registration\n" );
+        }
+    }
+
+    //
+    // Create the mipmaps
+    //
+    Error = D3DXFilterTexture( pSurface, NULL, D3DX_DEFAULT, D3DX_DEFAULT );
+    if( FAILED( Error ) )
+    {
+        // Mipmap generation failed, but we can still use the texture
+        DebugMessage( "Warning: Mipmap generation failed for texture\n" );
     }
 
     //
@@ -243,17 +306,27 @@ s32 GetHeight(const xbitmap& BMP, s32 x, s32 y)
     return H ;
 }
 
+//=============================================================================
+
 s32 vram_RegisterDuDv( const xbitmap& Bitmap )
 {
     IDirect3DTexture9*  pSurface = NULL;
     dxerr               Error;
-    D3DFORMAT           Format = D3DFMT_X8L8V8U8 ;
-    //enum _D3DFORMAT Format = D3DFMT_V8U8 ;
-    //enum _D3DFORMAT Format = D3DFMT_L6V5U5 ;
+    D3DFORMAT           Format = D3DFMT_X8L8V8U8;
 
-    //
+    // Check if device is available
+    if( !g_pd3dDevice )
+        return 0;
+        
+    // Check device cooperative level before proceeding
+    HRESULT hr = g_pd3dDevice->TestCooperativeLevel();
+    if( FAILED( hr ) )
+    {
+        // Device is lost, return invalid ID
+        return 0;
+    }
+
     // Create the bump map texture
-    //
     Error = g_pd3dDevice->CreateTexture( Bitmap.GetWidth(), 
                                          Bitmap.GetHeight(), 
                                          0, 0, 
@@ -261,11 +334,21 @@ s32 vram_RegisterDuDv( const xbitmap& Bitmap )
                                          D3DPOOL_MANAGED,
                                          &pSurface,
                                          NULL );
-    ASSERT( Error == 0 );
+    if( FAILED( Error ) )
+    {
+        return 0;
+    }
 
     // Create the texture from the bitmap
     D3DLOCKED_RECT  d3dlr;
-    pSurface->LockRect( 0, &d3dlr, 0, 0 );
+    Error = pSurface->LockRect( 0, &d3dlr, 0, 0 );
+    if( FAILED( Error ) )
+    {
+        // Lock failed, clean up and return
+        pSurface->Release();
+        return 0;
+    }
+	
     DWORD dwDstPitch = (DWORD)d3dlr.Pitch;
     BYTE* pDst       = (BYTE*)d3dlr.pBits;
     for( s32 y=0; y< Bitmap.GetHeight(); y++ )
@@ -321,18 +404,20 @@ s32 vram_RegisterDuDv( const xbitmap& Bitmap )
         pDst += dwDstPitch;
     }
 
-    pSurface->UnlockRect(0);
+    Error = pSurface->UnlockRect(0);
+    if( FAILED( Error ) )
+    {
+        DebugMessage( "Warning: UnlockRect failed during DuDv texture registration\n" );
+    }
 
-
-    //
     // Create the mipmaps
-    //
-    Error = D3DXFilterTexture( pSurface, NULL, D3DX_DEFAULT, D3DX_DEFAULT  );
-    ASSERT( Error == 0 );
+    Error = D3DXFilterTexture( pSurface, NULL, D3DX_DEFAULT, D3DX_DEFAULT );
+    if( FAILED( Error ) )
+    {
+        DebugMessage( "Warning: Mipmap generation failed for DuDv texture\n" );
+    }
 
-    //
     // Add texture in the list
-    //
     s32 Index = AddNode( pSurface );
     Bitmap.SetVRAMID( Index );
     return Index;

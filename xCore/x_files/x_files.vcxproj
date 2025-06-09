@@ -107,7 +107,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>TARGET_PC;CONFIG_DEBUG;NDEBUG;_ITERATOR_DEBUG_LEVEL=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>TARGET_PC;CONFIG_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <StructMemberAlignment>Default</StructMemberAlignment>
@@ -120,7 +120,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='OptDebug|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>TARGET_PC;CONFIG_OPTDEBUG;NDEBUG;_ITERATOR_DEBUG_LEVEL=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>TARGET_PC;CONFIG_OPTDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
@@ -129,7 +129,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='QA|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>TARGET_PC;CONFIG_QA;NDEBUG;_ITERATOR_DEBUG_LEVEL=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>TARGET_PC;CONFIG_QA;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
@@ -139,7 +139,7 @@
     <ClCompile>
       <Optimization>MaxSpeed</Optimization>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
-      <PreprocessorDefinitions>TARGET_PC;CONFIG_RETAIL;NDEBUG;_ITERATOR_DEBUG_LEVEL=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>TARGET_PC;CONFIG_RETAIL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <FunctionLevelLinking>true</FunctionLevelLinking>
@@ -149,7 +149,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='EDITOR-Debug|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>TARGET_PC;CONFIG_DEBUG;X_EDITOR;NDEBUG;_ITERATOR_DEBUG_LEVEL=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>TARGET_PC;CONFIG_DEBUG;X_EDITOR;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
@@ -158,14 +158,12 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='VIEWER-Debug|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>TARGET_PC;CONFIG_DEBUG;CONFIG_VIEWER;NDEBUG;_ITERATOR_DEBUG_LEVEL=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>TARGET_PC;CONFIG_DEBUG;CONFIG_VIEWER;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
     </ClCompile>
   </ItemDefinitionGroup>
-  
-  <!-- Source files (.cpp) -->
   <ItemGroup>
     <ClCompile Include="Implementation\x_bitmap.cpp" />
     <ClCompile Include="Implementation\x_bitmap_cmap.cpp" />
@@ -195,38 +193,10 @@
     <ClCompile Include="Implementation\x_string.cpp" />
     <ClCompile Include="Implementation\x_threads.cpp" />
     <ClCompile Include="Implementation\x_threads_pc.cpp" />
-    <ClCompile Include="Implementation\x_threads_ps2.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='EDITOR-Debug|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='OptDebug|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='QA|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='VIEWER-Debug|Win32'">true</ExcludedFromBuild>
-    </ClCompile>
-    <ClCompile Include="Implementation\x_threads_xbox.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='EDITOR-Debug|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='OptDebug|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='QA|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='VIEWER-Debug|Win32'">true</ExcludedFromBuild>
-    </ClCompile>
     <ClCompile Include="Implementation\x_time.cpp" />
     <ClCompile Include="Implementation\x_tool.cpp" />
     <ClCompile Include="Implementation\x_vsprintf.cpp" />
   </ItemGroup>
-  
-  <!-- External/PS2 files (excluded from PC builds) -->
-  <ItemGroup>
-    <ClInclude Include="..\3rdParty\PS2\Sony\sce\ee\gcc\ee\include\machine\ieeefp.h" />
-    <ClInclude Include="..\3rdParty\PS2\Sony\sce\ee\gcc\ee\include\sys\config.h" />
-    <ClInclude Include="..\3rdParty\PS2\Sony\sce\ee\gcc\ee\include\sys\reent.h" />
-    <ClInclude Include="..\3rdParty\PS2\Sony\sce\ee\gcc\ee\include\_ansi.h" />
-    <ClInclude Include="..\3rdParty\PS2\Sony\sce\ee\include\sifdev.h" />
-    <ClInclude Include="PS2-DevKit-Debug\_SN_in_VC.h" />
-  </ItemGroup>
-  
-  <!-- Main header files -->
   <ItemGroup>
     <ClInclude Include="x_array.hpp" />
     <ClInclude Include="x_bitmap.hpp" />
@@ -250,8 +220,6 @@
     <ClInclude Include="x_threads.hpp" />
     <ClInclude Include="x_time.hpp" />
     <ClInclude Include="x_types.hpp" />
-    
-    <!-- Implementation headers -->
     <ClInclude Include="Implementation\x_bitmap_inline.hpp" />
     <ClInclude Include="Implementation\x_color_inline.hpp" />
     <ClInclude Include="Implementation\x_math_bb_inline.hpp" />
@@ -267,8 +235,6 @@
     <ClInclude Include="Implementation\x_math_v3_inline.hpp" />
     <ClInclude Include="Implementation\x_math_v4_inline.hpp" />
     <ClInclude Include="Implementation\x_string_inline.hpp" />
-    
-    <!-- Private headers -->
     <ClInclude Include="Implementation\x_array_private.hpp" />
     <ClInclude Include="Implementation\x_files_private.hpp" />
     <ClInclude Include="Implementation\x_log_private.hpp" />
@@ -279,8 +245,7 @@
     <ClInclude Include="Implementation\x_stdio_private.hpp" />
     <ClInclude Include="Implementation\x_threads_private.hpp" />
     <ClInclude Include="Implementation\x_tool_private.hpp" />
-  </ItemGroup>
-  
+  </ItemGroup>  
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

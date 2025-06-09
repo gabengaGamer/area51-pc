@@ -1,12 +1,12 @@
-///////////////////////////////////////////////////////////////////////////
+//=========================================================================
 // INCLUDES
-///////////////////////////////////////////////////////////////////////////
+//=========================================================================
 
 #include "e_Engine.hpp"
 
-///////////////////////////////////////////////////////////////////////////
+//=========================================================================
 // DEFINES
-///////////////////////////////////////////////////////////////////////////
+//=========================================================================
 
 #define NUM_VERTEX_BUFFERS          4                               // Number of vertex buffers to cycle through
 #define NUM_VERTICES                1000                            // Number of vertices in each buffer
@@ -22,15 +22,15 @@
 
 #define NUM_SPRITES                 (NUM_VERTICES/4)                // Number of Sprites in sprite buffer
 
-///////////////////////////////////////////////////////////////////////////
+//=========================================================================
 // TYPES
-///////////////////////////////////////////////////////////////////////////
+//=========================================================================
 
 typedef void (*fnptr_dispatch)( void );
 
-///////////////////////////////////////////////////////////////////////////
+//=========================================================================
 // DRAW VERTEX
-///////////////////////////////////////////////////////////////////////////
+//=========================================================================
 
 #define D3DFVF_DRAWVERTEX_2D (D3DFVF_XYZRHW|D3DFVF_DIFFUSE|D3DFVF_TEX1)
 #define D3DFVF_DRAWVERTEX_3D (D3DFVF_XYZ|D3DFVF_DIFFUSE|D3DFVF_TEX1)
@@ -61,9 +61,9 @@ struct drawsprite
     xbool       IsRotated;
 };
 
-///////////////////////////////////////////////////////////////////////////
+//=========================================================================
 // VARIABLES
-///////////////////////////////////////////////////////////////////////////
+//=========================================================================
 
 xbool                       m_Initialized = FALSE;                  // Becomes TRUE when Initialized
 xbool                       m_bBegin = FALSE;                       // TRUE when between begin/end
@@ -110,15 +110,17 @@ fnptr_dispatch              m_pfnDispatch;                          // Dispatch 
 
 s32                         m_ZBias;
 
-///////////////////////////////////////////////////////////////////////////
+//=========================================================================
 // FUNCTIONS
-///////////////////////////////////////////////////////////////////////////
+//=========================================================================
 
 void draw_SetZBias( s32 Bias )
 {
     ASSERT( (Bias>=0) && (Bias<=16) );
     m_ZBias = Bias;
 }
+
+//=========================================================================
 
 void draw_Init( void )
 {
@@ -213,7 +215,7 @@ void draw_Init( void )
     m_Initialized = TRUE;
 }
 
-///////////////////////////////////////////////////////////////////////////
+//=========================================================================
 
 void draw_Kill( void )
 {
@@ -245,7 +247,55 @@ void draw_Kill( void )
     m_Initialized = FALSE;
 }
 
-///////////////////////////////////////////////////////////////////////////
+//=========================================================================
+
+void draw_OnDeviceLost( void )
+{
+    if( !m_Initialized )
+        return;
+
+    // Unlock any locked buffers
+    for( s32 i = 0; i < NUM_VERTEX_BUFFERS; i++ )
+    {
+        if( m_pVertexBuffer3d[i] )
+        {
+            m_pVertexBuffer3d[i]->Unlock(); // May fail, but that's OK
+            m_pVertexBuffer2d[i]->Unlock(); // May fail, but that's OK
+        }
+    }
+    
+    // Reset buffer pointers
+    m_pActiveBuffer3d = NULL;
+    m_pActiveBuffer2d = NULL;
+    m_iVertex = 0;
+}
+
+//=========================================================================
+
+void draw_OnDeviceReset( void )
+{
+    dxerr Error;
+    
+    if( !m_Initialized || !g_pd3dDevice )
+        return;
+
+    // Re-lock the active vertex buffers
+    Error = m_pVertexBuffer3d[m_iActiveBuffer]->Lock( 0, 0, (void**)&m_pActiveBuffer3dStart, D3DLOCK_NOSYSLOCK | D3DLOCK_DISCARD );
+    if( Error == 0 )
+    {
+        m_pActiveBuffer3d = m_pActiveBuffer3dStart;
+    }
+    
+    Error = m_pVertexBuffer2d[m_iActiveBuffer]->Lock( 0, 0, (void**)&m_pActiveBuffer2dStart, D3DLOCK_NOSYSLOCK | D3DLOCK_DISCARD );
+    if( Error == 0 )
+    {
+        m_pActiveBuffer2d = m_pActiveBuffer2dStart;
+    }
+    
+    m_iVertex = 0;
+}
+
+//=========================================================================
 
 static
 void draw_SetMatrices( const view* pView )
@@ -315,7 +365,7 @@ void draw_SetMatrices( const view* pView )
     }
 }
 
-///////////////////////////////////////////////////////////////////////////
+//=========================================================================
 
 static
 void draw_Dispatch( void )
@@ -396,7 +446,7 @@ void draw_Dispatch( void )
     }
 }
 
-///////////////////////////////////////////////////////////////////////////
+//=========================================================================
 
 static
 void draw_DispatchRects( void )
@@ -468,7 +518,9 @@ void draw_DispatchRects( void )
 
 //==========================================================================
 
-static inline void draw_sincos( radian Angle, f32& Sine, f32& Cosine )
+static 
+inline 
+void draw_sincos( radian Angle, f32& Sine, f32& Cosine )
 {
     #define I_360   (1<<16)
     #define I_90    (I_360/4)
@@ -502,7 +554,7 @@ static inline void draw_sincos( radian Angle, f32& Sine, f32& Cosine )
     #undef I_270
 }
 
-///////////////////////////////////////////////////////////////////////////
+//=========================================================================
 
 static
 void draw_DispatchSprites( void )
@@ -663,24 +715,13 @@ void draw_DispatchSprites( void )
     m_iSprite = 0;
 }
 
-///////////////////////////////////////////////////////////////////////////
+//=========================================================================
 
-void draw_Begin( draw_primitive Primitive, u32 Flags )
+static 
+void SetupPrimitiveStates( draw_primitive Primitive )
 {
-    ASSERT( m_Initialized );
-    ASSERT( !m_bBegin );
-
-    // Confirm we are in a render context
-    ASSERT( eng_InBeginEnd() );
-
-    // Save primitive and flags
-    m_Primitive  = Primitive;
-    m_Flags      = Flags;
-    m_Is2D       = Flags & (DRAW_2D | DRAW_2D_KEEP_Z);
-    m_IsTextured = Flags & DRAW_TEXTURED;
-
     // Set internal state from primitive type
-    switch( m_Primitive )
+    switch( Primitive )
     {
     case DRAW_POINTS:
         m_pfnDispatch = draw_Dispatch;
@@ -715,35 +756,40 @@ void draw_Begin( draw_primitive Primitive, u32 Flags )
         m_pfnDispatch = draw_DispatchSprites;
         break;
     }
+}
 
-    // Clear list pointers
-    m_pUVs    = NULL;
-    m_pColors = NULL;
-    m_pVerts  = NULL;
+//=========================================================================
 
-    // Set in begin state
-    m_bBegin = TRUE;
-    m_Color = XCOLOR_WHITE;
-    m_UV.Zero();
-
+static 
+void draw_SetupTextureStages( u32 Flags )
+{
     if( !g_pd3dDevice )
         return;
 
     // Set default texture stages
-    g_pd3dDevice->SetTextureStageState( 1, D3DTSS_COLOROP,   D3DTOP_DISABLE    );
-    g_pd3dDevice->SetTextureStageState( 1, D3DTSS_ALPHAOP,   D3DTOP_DISABLE    );
+    g_pd3dDevice->SetTextureStageState( 1, D3DTSS_COLOROP, D3DTOP_DISABLE );
+    g_pd3dDevice->SetTextureStageState( 1, D3DTSS_ALPHAOP, D3DTOP_DISABLE );
 
     if( Flags & DRAW_TEXTURED )
-	{
-		g_pd3dDevice->SetTextureStageState( 0, D3DTSS_COLOROP, D3DTOP_MODULATE  );
-		g_pd3dDevice->SetTextureStageState( 0, D3DTSS_COLORARG1, D3DTA_DIFFUSE  );
-		g_pd3dDevice->SetTextureStageState( 0, D3DTSS_COLORARG2, D3DTA_TEXTURE  );
-	}
-	else
-	{
-		g_pd3dDevice->SetTextureStageState( 0, D3DTSS_COLOROP, D3DTOP_SELECTARG1  );
-		g_pd3dDevice->SetTextureStageState( 0, D3DTSS_COLORARG1, D3DTA_DIFFUSE  );
-	}
+    {
+        g_pd3dDevice->SetTextureStageState( 0, D3DTSS_COLOROP,   D3DTOP_MODULATE );
+        g_pd3dDevice->SetTextureStageState( 0, D3DTSS_COLORARG1, D3DTA_DIFFUSE );
+        g_pd3dDevice->SetTextureStageState( 0, D3DTSS_COLORARG2, D3DTA_TEXTURE );
+    }
+    else
+    {
+        g_pd3dDevice->SetTextureStageState( 0, D3DTSS_COLOROP,   D3DTOP_SELECTARG1 );
+        g_pd3dDevice->SetTextureStageState( 0, D3DTSS_COLORARG1, D3DTA_DIFFUSE );
+    }
+}
+
+//=========================================================================
+
+static 
+void draw_SetupAlphaBlending( u32 Flags, xbool IsTextured )
+{
+    if( !g_pd3dDevice )
+        return;
 
     // Set D3D render states for ALPHA
     if( Flags & DRAW_USE_ALPHA )
@@ -752,25 +798,35 @@ void draw_Begin( draw_primitive Primitive, u32 Flags )
         g_pd3dDevice->SetRenderState( D3DRS_SRCBLEND,         D3DBLEND_SRCALPHA );
         g_pd3dDevice->SetRenderState( D3DRS_DESTBLEND,        D3DBLEND_INVSRCALPHA );
 
-        if( m_IsTextured )
+        if( IsTextured )
         {
-            g_pd3dDevice->SetTextureStageState( 0, D3DTSS_ALPHAOP,   D3DTOP_MODULATE   );
-            g_pd3dDevice->SetTextureStageState( 0, D3DTSS_ALPHAARG1, D3DTA_DIFFUSE     );
-            g_pd3dDevice->SetTextureStageState( 0, D3DTSS_ALPHAARG2, D3DTA_TEXTURE     );
+            g_pd3dDevice->SetTextureStageState( 0, D3DTSS_ALPHAOP,   D3DTOP_MODULATE );
+            g_pd3dDevice->SetTextureStageState( 0, D3DTSS_ALPHAARG1, D3DTA_DIFFUSE );
+            g_pd3dDevice->SetTextureStageState( 0, D3DTSS_ALPHAARG2, D3DTA_TEXTURE );
         }
         else
         {
             g_pd3dDevice->SetTextureStageState( 0, D3DTSS_ALPHAOP,   D3DTOP_SELECTARG1 );
-            g_pd3dDevice->SetTextureStageState( 0, D3DTSS_ALPHAARG1, D3DTA_DIFFUSE     );
+            g_pd3dDevice->SetTextureStageState( 0, D3DTSS_ALPHAARG1, D3DTA_DIFFUSE );
         }
     }
     else
     {
         g_pd3dDevice->SetRenderState( D3DRS_ALPHABLENDENABLE, FALSE );
     }
-    
+}
+
+//=========================================================================
+
+static 
+void draw_SetupZBufferStates( u32 Flags )
+{
+    if( !g_pd3dDevice )
+        return;
+
     // Set D3D render states for ZBUFFER
     g_pd3dDevice->SetRenderState( D3DRS_DEPTHBIAS, m_ZBias );
+    
     if( Flags & DRAW_NO_ZBUFFER )
     {
         g_pd3dDevice->SetRenderState( D3DRS_ZENABLE, D3DZB_FALSE );
@@ -780,7 +836,7 @@ void draw_Begin( draw_primitive Primitive, u32 Flags )
         g_pd3dDevice->SetRenderState( D3DRS_ZENABLE, D3DZB_TRUE );
     }
 
-    // No Z write?
+    // Z write enable/disable
     if( Flags & DRAW_NO_ZWRITE )
     {
         g_pd3dDevice->SetRenderState( D3DRS_ZWRITEENABLE, D3DZB_FALSE );
@@ -789,28 +845,46 @@ void draw_Begin( draw_primitive Primitive, u32 Flags )
     {
         g_pd3dDevice->SetRenderState( D3DRS_ZWRITEENABLE, D3DZB_TRUE );
     }
+}
 
-    // Add?
+//=========================================================================
+
+static 
+void draw_SetupBlendModes( u32 Flags )
+{
+    if( !g_pd3dDevice )
+        return;
+
+    // Additive blending
     if( Flags & DRAW_BLEND_ADD )
     {
-        g_pd3dDevice->SetRenderState( D3DRS_BLENDOP  , D3DBLENDOP_ADD );
-        g_pd3dDevice->SetRenderState( D3DRS_SRCBLEND , D3DBLEND_SRCALPHA );
+        g_pd3dDevice->SetRenderState( D3DRS_BLENDOP,   D3DBLENDOP_ADD );
+        g_pd3dDevice->SetRenderState( D3DRS_SRCBLEND,  D3DBLEND_SRCALPHA );
         g_pd3dDevice->SetRenderState( D3DRS_DESTBLEND, D3DBLEND_ONE );
     } 
+    // Subtractive blending
     else if( Flags & DRAW_BLEND_SUB )
     {
-        g_pd3dDevice->SetRenderState( D3DRS_BLENDOP  , D3DBLENDOP_REVSUBTRACT );
-        g_pd3dDevice->SetRenderState( D3DRS_SRCBLEND , D3DBLEND_SRCALPHA );
+        g_pd3dDevice->SetRenderState( D3DRS_BLENDOP,   D3DBLENDOP_REVSUBTRACT );
+        g_pd3dDevice->SetRenderState( D3DRS_SRCBLEND,  D3DBLEND_SRCALPHA );
         g_pd3dDevice->SetRenderState( D3DRS_DESTBLEND, D3DBLEND_ONE );
     }
-    
-    // Alpha
+    // Standard alpha blending
     else if( Flags & DRAW_USE_ALPHA )
     {
-        g_pd3dDevice->SetRenderState( D3DRS_BLENDOP  , D3DBLENDOP_ADD );
-        g_pd3dDevice->SetRenderState( D3DRS_SRCBLEND , D3DBLEND_SRCALPHA );
+        g_pd3dDevice->SetRenderState( D3DRS_BLENDOP,   D3DBLENDOP_ADD );
+        g_pd3dDevice->SetRenderState( D3DRS_SRCBLEND,  D3DBLEND_SRCALPHA );
         g_pd3dDevice->SetRenderState( D3DRS_DESTBLEND, D3DBLEND_INVSRCALPHA );
     }
+}
+
+//=========================================================================
+
+static 
+void draw_SetupCullingStates( u32 Flags )
+{
+    if( !g_pd3dDevice )
+        return;
 
     // Set D3D render states for CULLING
     if( Flags & DRAW_CULL_NONE )
@@ -821,6 +895,15 @@ void draw_Begin( draw_primitive Primitive, u32 Flags )
     {
         g_pd3dDevice->SetRenderState( D3DRS_CULLMODE, D3DCULL_CW );
     }
+}
+
+//=========================================================================
+
+static 
+void draw_SetupUVTiling( u32 Flags )
+{
+    if( !g_pd3dDevice )
+        return;
 
     // Set D3D render states for UV tiling
     if( Flags & DRAW_U_CLAMP )
@@ -832,7 +915,6 @@ void draw_Begin( draw_primitive Primitive, u32 Flags )
         g_pd3dDevice->SetSamplerState( 0, D3DSAMP_ADDRESSU, D3DTADDRESS_WRAP );
     }
 
-    // Set D3D render states for UV tiling
     if( Flags & DRAW_V_CLAMP )
     {
         g_pd3dDevice->SetSamplerState( 0, D3DSAMP_ADDRESSV, D3DTADDRESS_CLAMP );
@@ -841,6 +923,15 @@ void draw_Begin( draw_primitive Primitive, u32 Flags )
     {
         g_pd3dDevice->SetSamplerState( 0, D3DSAMP_ADDRESSV, D3DTADDRESS_WRAP );
     }
+}
+
+//=========================================================================
+
+static 
+void draw_SetupWireframeMode( u32 Flags )
+{
+    if( !g_pd3dDevice )
+        return;
 
     // Set D3D render states for WIREFRAME
     if( Flags & DRAW_WIRE_FRAME )
@@ -851,21 +942,91 @@ void draw_Begin( draw_primitive Primitive, u32 Flags )
     {
         g_pd3dDevice->SetRenderState( D3DRS_FILLMODE, D3DFILL_SOLID );
     }
+}
 
-    // Set Shader
-    if( m_Is2D )
+//=========================================================================
+
+static 
+void draw_SetupVertexFormat( xbool Is2D )
+{
+    if( !g_pd3dDevice )
+        return;
+
+    // Set Shader/Vertex format
+    if( Is2D )
         g_pd3dDevice->SetFVF( D3DFVF_DRAWVERTEX_2D );
     else
         g_pd3dDevice->SetFVF( D3DFVF_DRAWVERTEX_3D );
+}
+
+//=========================================================================
+
+static 
+void draw_ClearTextureIfNeeded( xbool IsTextured )
+{
+    if( !g_pd3dDevice )
+        return;
 
     // Clear Texture if not in textured mode
-    if( !m_IsTextured )
+    if( !IsTextured )
     {
         g_pd3dDevice->SetTexture( 0, 0 );
     }
 }
 
-///////////////////////////////////////////////////////////////////////////
+//=========================================================================
+
+static 
+void InitializeDrawState( u32 Flags )
+{
+    // Clear list pointers
+    m_pUVs    = NULL;
+    m_pColors = NULL;
+    m_pVerts  = NULL;
+
+    // Set default color and UV
+    m_Color = XCOLOR_WHITE;
+    m_UV.Zero();
+}
+
+//=========================================================================
+
+void draw_Begin( draw_primitive Primitive, u32 Flags )
+{
+    ASSERT( m_Initialized );
+    ASSERT( !m_bBegin );
+    ASSERT( eng_InBeginEnd() );
+
+    // Save primitive and flags
+    m_Primitive  = Primitive;
+    m_Flags      = Flags;
+    m_Is2D       = Flags & (DRAW_2D | DRAW_2D_KEEP_Z);
+    m_IsTextured = Flags & DRAW_TEXTURED;
+
+    // Initialize internal state
+    InitializeDrawState( Flags );
+    SetupPrimitiveStates( Primitive );
+
+    // Set in begin state
+    m_bBegin = TRUE;
+
+    // Exit early if no device
+    if( !g_pd3dDevice )
+        return;
+
+    // Setup all D3D render states
+    draw_SetupTextureStages( Flags );
+    draw_SetupAlphaBlending( Flags, m_IsTextured );
+    draw_SetupZBufferStates( Flags );
+    draw_SetupBlendModes( Flags );
+    draw_SetupCullingStates( Flags );
+    draw_SetupUVTiling( Flags );
+    draw_SetupWireframeMode( Flags );
+    draw_SetupVertexFormat( m_Is2D );
+    draw_ClearTextureIfNeeded( m_IsTextured );
+}
+
+//=========================================================================
 
 void draw_End( void )
 {
@@ -890,7 +1051,7 @@ void draw_End( void )
     g_pd3dDevice->SetTransform( D3DTS_PROJECTION, (D3DMATRIX*)&pView->GetV2C() );
 }
 
-///////////////////////////////////////////////////////////////////////////
+//=========================================================================
 
 void draw_ResetAfterException( void )
 {
@@ -911,21 +1072,21 @@ void draw_ResetAfterException( void )
     g_pd3dDevice->SetTransform( D3DTS_PROJECTION, (D3DMATRIX*)&pView->GetV2C() );
 }
 
-///////////////////////////////////////////////////////////////////////////
+//=========================================================================
 
 void draw_SetL2W( const matrix4& L2W )
 {
     m_L2W = L2W;
 }
 
-///////////////////////////////////////////////////////////////////////////
+//=========================================================================
 
 void draw_ClearL2W( void )
 {
     m_L2W.Identity();
 }
 
-///////////////////////////////////////////////////////////////////////////
+//=========================================================================
 
 void draw_SetTexture( const xbitmap& Bitmap )
 {
@@ -939,7 +1100,7 @@ void draw_SetTexture( const xbitmap& Bitmap )
 
 }
 
-///////////////////////////////////////////////////////////////////////////
+//=========================================================================
 
 void draw_SetTexture( void )
 {
@@ -951,7 +1112,7 @@ void draw_SetTexture( void )
     vram_Activate();
 }
 
-///////////////////////////////////////////////////////////////////////////
+//=========================================================================
 
 void draw_UV( const vector2& UV )
 {
@@ -961,6 +1122,8 @@ void draw_UV( const vector2& UV )
     m_pUVs = NULL;
     m_UV = UV;
 }
+
+//=========================================================================
 
 void draw_UV( f32 U, f32 V )
 {
@@ -972,7 +1135,7 @@ void draw_UV( f32 U, f32 V )
     m_UV.Y = V;
 }
 
-///////////////////////////////////////////////////////////////////////////
+//=========================================================================
 
 void draw_Color( const xcolor& Color )
 {
@@ -982,6 +1145,8 @@ void draw_Color( const xcolor& Color )
     m_pColors = NULL;
     m_Color = Color;
 }
+
+//=========================================================================
 
 void draw_Color( f32 R, f32 G, f32 B, f32 A )
 {
@@ -995,7 +1160,7 @@ void draw_Color( f32 R, f32 G, f32 B, f32 A )
     m_Color.A = (u8)(A*255.0f);
 }
 
-///////////////////////////////////////////////////////////////////////////
+//=========================================================================
 
 void draw_Vertex( const vector3& Vertex )
 {
@@ -1038,7 +1203,7 @@ void draw_Vertex( const vector3& Vertex )
     }
 }
 
-///////////////////////////////////////////////////////////////////////////
+//=========================================================================
 
 void draw_Vertex( f32 X, f32 Y, f32 Z )
 {
@@ -1081,7 +1246,7 @@ void draw_Vertex( f32 X, f32 Y, f32 Z )
     }
 }
 
-///////////////////////////////////////////////////////////////////////////
+//=========================================================================
 
 void draw_UVs( const vector2* pUVs, s32 Count, s32 Stride )
 {
@@ -1093,6 +1258,8 @@ void draw_UVs( const vector2* pUVs, s32 Count, s32 Stride )
     m_sUVs = Stride;
 }
 
+//=========================================================================
+
 void draw_Colors( const xcolor*  pColors, s32 Count, s32 Stride )
 {
     ASSERT( m_bBegin );
@@ -1102,6 +1269,8 @@ void draw_Colors( const xcolor*  pColors, s32 Count, s32 Stride )
     m_nColors = Count;
     m_sColors = Stride;
 }
+
+//=========================================================================
 
 void draw_Verts( const vector3* pVerts,  s32 Count, s32 Stride )
 {
@@ -1113,7 +1282,7 @@ void draw_Verts( const vector3* pVerts,  s32 Count, s32 Stride )
     m_sVerts = Stride;
 }
 
-///////////////////////////////////////////////////////////////////////////
+//=========================================================================
 
 void draw_Index( s32 Index )
 {
@@ -1199,7 +1368,7 @@ void draw_Index( s32 Index )
     }
 }
 
-///////////////////////////////////////////////////////////////////////////
+//=========================================================================
 
 void draw_Execute( const s16* pIndices, s32 NIndices )
 {
@@ -1225,7 +1394,7 @@ void draw_Execute( const s16* pIndices, s32 NIndices )
     }
 }
 
-///////////////////////////////////////////////////////////////////////////
+//=========================================================================
 
 void    draw_Sprite     ( const vector3& Position,  // Hot spot (2D Left-Top), (3D Center)
                           const vector2& WH,        // (2D pixel W&H), (3D World W&H)
@@ -1252,7 +1421,7 @@ void    draw_Sprite     ( const vector3& Position,  // Hot spot (2D Left-Top), (
         m_pfnDispatch();
 }
 
-///////////////////////////////////////////////////////////////////////////
+//=========================================================================
 
 void    draw_SpriteUV   ( const vector3& Position,  // Hot spot (2D Left-Top), (3D Center)
                           const vector2& WH,        // (2D pixel W&H), (3D World W&H)
