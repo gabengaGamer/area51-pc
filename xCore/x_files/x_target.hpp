@@ -24,45 +24,8 @@ enum platform
 //==============================================================================
 //  Targets
 //------------------------------------------------------------------------------
-// The valid targets are PS2, XBOX, and LINUX.
+// The valid targets are PC.
 //==============================================================================
-
-#if defined( TARGET_PS2 )
-    #ifdef VALID_TARGET
-        #define MULTIPLE_TARGETS
-    #else
-        #define TARGET_PLATFORM PLATFORM_PS2
-        #define LITTLE_ENDIAN
-        #define VALID_TARGET
-    #endif
-#endif
-
-//------------------------------------------------------------------------------
-
-#if defined( TARGET_XBOX )
-    #ifdef VALID_TARGET
-        #define MULTIPLE_TARGETS
-    #else
-        #define TARGET_PLATFORM PLATFORM_XBOX
-        #define LITTLE_ENDIAN
-        #define VALID_TARGET
-        #define _XBOX
-    #endif
-#endif
-
-//------------------------------------------------------------------------------
-
-#if defined( TARGET_LINUX )
-    #ifdef VALID_TARGET
-        #define MULTIPLE_TARGETS
-    #else
-        #define TARGET_PLATFORM PLATFORM_LINUX
-        #define LITTLE_ENDIAN
-        #define VALID_TARGET
-    #endif
-#endif
-
-//------------------------------------------------------------------------------
 
 // TARGET_PC will be the default if no TARGET_ macro was defined
 #if( defined( TARGET_PC ) || !defined( VALID_TARGET ) )
@@ -133,23 +96,6 @@ enum platform
 
 //------------------------------------------------------------------------------
 
-#if defined( CONFIG_VIEWER )
-    #if defined( VALID_CONFIG )
-        #define MULTIPLE_CONFIGS
-    #else
-        #define VALID_CONFIG
-        #define TARGET_DEV
-// CJ: Removed to save memory        #define X_LOGGING
-// CJ: Removed to save memory        #define X_ASSERT_LITE
-// CJ: Removed to save memory        #define X_ASSERT
-        #define X_OPTIMIZED
-        #define X_MEM_DEBUG
-        #define USE_OWNER_STACK
-    #endif
-#endif
-
-//------------------------------------------------------------------------------
-
 #if defined( CONFIG_QA )
     #if defined( VALID_CONFIG )
         #define MULTIPLE_CONFIGS
@@ -179,6 +125,23 @@ enum platform
 //  Applications
 //==============================================================================
 
+#if defined( CONFIG_VIEWER )
+    #if defined( VALID_CONFIG )
+        #define MULTIPLE_CONFIGS
+    #else
+        #define VALID_CONFIG
+        #define TARGET_DEV
+        #define X_LOGGING
+        #define X_ASSERT_LITE
+        #define X_ASSERT
+        #define X_OPTIMIZED
+        #define X_MEM_DEBUG
+        #define USE_OWNER_STACK
+    #endif
+#endif
+
+//------------------------------------------------------------------------------
+
 #if defined( APP_EDITOR )
     #define __PLACEMENT_NEW_INLINE  // Tells MFC that we are dealing with the placement new/delete
     #define USE_SYSTEM_NEW_DELETE   // Tells x_files not to define new/delete
@@ -188,6 +151,8 @@ enum platform
         # undef X_ASSERT_LITE
     #endif
 #endif
+
+//------------------------------------------------------------------------------
 
 // TODO: This fixes a conflict with the definition of 'new' member operators in the DX9 headers,
 // need to find a better solution to the whole who's managing memory problem
@@ -207,6 +172,8 @@ enum platform
     #error Target specification invalid or not found.
     #error The compilation environment must define one of the macros listed in x_targets.hpp.
 #endif
+
+//------------------------------------------------------------------------------
 
 #if !defined( VALID_CONFIG )
     #error Config specification invalid or not found.
@@ -236,6 +203,8 @@ enum platform
     #error Endian is not defined.
 #endif
 
+//------------------------------------------------------------------------------
+
 #if(  defined( BIG_ENDIAN ) &&  defined( LITTLE_ENDIAN ) )
     #error Both Endian specifications are defined!
 #endif
@@ -246,23 +215,25 @@ enum platform
 //
 //==============================================================================
 
-#if defined( TARGET_PS2 ) && defined( VENDOR_SN )
-#define PS2_ALIGNMENT(a)   __attribute__( (aligned(a)) )
-#else
+#ifndef PS2_ALIGNMENT
 #define PS2_ALIGNMENT(a)
 #endif
+
+//------------------------------------------------------------------------------
 
 #ifndef XBOX_ALIGNMENT
 #define XBOX_ALIGNMENT(a)
 #endif
 
-#if defined( TARGET_GCN ) && defined( VENDOR_SN )
-#define GCN_ALIGNMENT(a)   __attribute__( (aligned(a)) )
-#else
+//------------------------------------------------------------------------------
+
+#ifndef GCN_ALIGNMENT
 #define GCN_ALIGNMENT(a)
 #endif
 
-#if defined( TARGET_PC ) || defined( TARGET_XBOX ) 
+//------------------------------------------------------------------------------
+
+#ifdef TARGET_PC
 #define PC_ALIGNMENT(a) __declspec(align(a))
 #else
 #define PC_ALIGNMENT(a)

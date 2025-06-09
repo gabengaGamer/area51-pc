@@ -214,50 +214,6 @@ void bbox::Transform( const matrix4& M )
     FORCE_ALIGNED_16( this );
     FORCE_ALIGNED_16( &M );
 
-#if USE_VU0
-    vector3 Rows[3];
-    M.GetRows( Rows[0], Rows[1], Rows[2] );
-    u128 TRow0Min, TRow0Max, TRow1Min, TRow1Max, TRow2Min, TRow2Max;
-    u128 Row0Min,  Row0Max,  Row1Min,  Row1Max,  Row2Min,  Row2Max;
-    u128 NewMin, NewMax;
-    u128 Trans = M.GetTranslation().GetU128();
-    vector3 One( 1.0f, 1.0f, 1.0f );
-    asm( "vmul  RMN0, ROW0, BMIN" : "=j RMN0" (TRow0Min) : "j ROW0" (Rows[0].GetU128()), "j BMIN" (Min.GetU128()) );
-    asm( "vmul  RMN1, ROW1, BMIN" : "=j RMN1" (TRow1Min) : "j ROW1" (Rows[1].GetU128()), "j BMIN" (Min.GetU128()) );
-    asm( "vmul  RMN2, ROW2, BMIN" : "=j RMN2" (TRow2Min) : "j ROW2" (Rows[2].GetU128()), "j BMIN" (Min.GetU128()) );
-    asm( "vmul  RMX0, ROW0, BMAX" : "=j RMX0" (TRow0Max) : "j ROW0" (Rows[0].GetU128()), "j BMAX" (Max.GetU128()) );
-    asm( "vmul  RMX1, ROW1, BMAX" : "=j RMX1" (TRow1Max) : "j ROW1" (Rows[1].GetU128()), "j BMAX" (Max.GetU128()) );
-    asm( "vmul  RMX2, ROW2, BMAX" : "=j RMX2" (TRow2Max) : "j ROW2" (Rows[2].GetU128()), "j BMAX" (Max.GetU128()) );
-    asm( "vmini RMN0, RMIN, RMAX" : "=j RMN0" (Row0Min)  : "j RMIN" (TRow0Min), "j RMAX" (TRow0Max) );
-    asm( "vmini RMN1, RMIN, RMAX" : "=j RMN1" (Row1Min)  : "j RMIN" (TRow1Min), "j RMAX" (TRow1Max) );
-    asm( "vmini RMN2, RMIN, RMAX" : "=j RMN2" (Row2Min)  : "j RMIN" (TRow2Min), "j RMAX" (TRow2Max) );
-    asm( "vmax  RMX0, RMIN, RMAX" : "=j RMX0" (Row0Max)  : "j RMIN" (TRow0Min), "j RMAX" (TRow0Max) );
-    asm( "vmax  RMX1, RMIN, RMAX" : "=j RMX1" (Row1Max)  : "j RMIN" (TRow1Min), "j RMAX" (TRow1Max) );
-    asm( "vmax  RMX2, RMIN, RMAX" : "=j RMX2" (Row2Max)  : "j RMIN" (TRow2Min), "j RMAX" (TRow2Max) );
-    asm( "vmulax.x  acc,  SONE, RMN0x
-          vmadday.x acc,  SONE, RMN0y
-          vmaddz.x  BMIN, SONE, RMN0z
-          vmulax.y  acc,  SONE, RMN1x
-          vmadday.y acc,  SONE, RMN1y
-          vmaddz.y  BMIN, SONE, RMN1z
-          vmulax.z  acc,  SONE, RMN2x
-          vmadday.z acc,  SONE, RMN2y
-          vmaddz.z  BMIN, SONE, RMN2z" : "=j BMIN" (NewMin) : "j SONE" (One.GetU128()), "j RMN0" (Row0Min), "j RMN1" (Row1Min), "j RMN2" (Row2Min) );
-    asm( "vmulax.x  acc,  SONE, RMX0x
-          vmadday.x acc,  SONE, RMX0y
-          vmaddz.x  BMAX, SONE, RMX0z
-          vmulax.y  acc,  SONE, RMX1x
-          vmadday.y acc,  SONE, RMX1y
-          vmaddz.y  BMAX, SONE, RMX1z
-          vmulax.z  acc,  SONE, RMX2x
-          vmadday.z acc,  SONE, RMX2y
-          vmaddz.z  BMAX, SONE, RMX2z" : "=j BMAX" (NewMax) : "j SONE" (One.GetU128()), "j RMX0" (Row0Max), "j RMX1" (Row1Max), "j RMX2" (Row2Max) );
-    asm( "vadd.xyz  BMNO, BMNI, TRNS" : "=j BMNO" (NewMin) : "j BMNI" (NewMin), "j TRNS" (Trans) );
-    asm( "vadd.xyz  BMXO, BMXI, TRNS" : "=j BMXO" (NewMax) : "j BMXI" (NewMax), "j TRNS" (Trans) );
-
-    Min.Set( NewMin );
-    Max.Set( NewMax );
-#else
     vector3 AMin, AMax;
     f32     a, b;
     s32     i, j;
@@ -290,7 +246,6 @@ void bbox::Transform( const matrix4& M )
             }
         }
     }
-#endif
 }
 
 //==============================================================================
@@ -329,30 +284,6 @@ xbool bbox::Intersect( const bbox& BBox ) const
     FORCE_ALIGNED_16( this );
     FORCE_ALIGNED_16( &BBox );
 
-#if USE_VU0
-    register s32 BMinMinusAMaxFlags;
-    register s32 AMinMinusBMaxFlags;
-    asm __volatile__ ( "vsub.xyz vf00, BMINxyz, AMAXxyz" : : "j BMIN" (BBox.Min.GetU128()), "j AMAX" (Max.GetU128()) );
-    asm __volatile__ ( "vnop" );
-    asm __volatile__ ( "vnop" );
-    asm __volatile__ ( "vnop" );
-    asm __volatile__ ( "vnop" );
-    asm __volatile__ ( "cfc2 FLAG, vi17" : "=r FLAG" (BMinMinusAMaxFlags) );
-    asm __volatile__ ( "vsub.xyz vf00, AMINxyz, BMAXxyz" : : "j AMIN" (Min.GetU128()), "j BMAX" (BBox.Max.GetU128()) );
-    asm __volatile__ ( "vnop" );
-    asm __volatile__ ( "vnop" );
-    asm __volatile__ ( "vnop" );
-    asm __volatile__ ( "vnop" );
-    asm __volatile__ ( "cfc2 FLAG, vi17" : "=r FLAG" (AMinMinusBMaxFlags) );
-
-    if ( ((BMinMinusAMaxFlags&0xe0)!=0xe0) ||
-         ((AMinMinusBMaxFlags&0xe0)!=0xe0) )
-    {
-        return FALSE;
-    }
-
-    return TRUE;
-#else
     if( BBox.Min.GetX() > Max.GetX() ) return FALSE;
     if( BBox.Max.GetX() < Min.GetX() ) return FALSE;
     if( BBox.Min.GetZ() > Max.GetZ() ) return FALSE;
@@ -360,7 +291,6 @@ xbool bbox::Intersect( const bbox& BBox ) const
     if( BBox.Min.GetY() > Max.GetY() ) return FALSE;
     if( BBox.Max.GetY() < Min.GetY() ) return FALSE;
     return TRUE;
-#endif
 }
 
 //==============================================================================
@@ -470,29 +400,6 @@ xbool bbox::Intersect( const vector3& Center, f32 Radius ) const
     FORCE_ALIGNED_16( this );
     FORCE_ALIGNED_16( &Center );
 
-#if USE_VU0
-    // TMP0 = MAX( Zero, Min - Center );
-    // TMP1 = MAX( Zero, Center - Max );
-    // TMP2 = TMP0 + TMP1
-    // dmin = TMP2.Dot(TMP2)
-
-    f32  dmin;
-    u128 TMP0, TMP1, TMP2;
-    asm( "vsub TMP0, BMIN, CNTR" : "=j TMP0" (TMP0) : "j BMIN" (Min.GetU128()),    "j CNTR" (Center.GetU128()) );
-    asm( "vsub TMP1, CNTR, BMAX" : "=j TMP1" (TMP1) : "j CNTR" (Center.GetU128()), "j BMAX" (Max.GetU128()) );
-    asm( "vmax TMP0, TMP0, vf00" : "+j TMP0" (TMP0) );
-    asm( "vmax TMP1, TMP1, vf00" : "+j TMP1" (TMP1) );
-    asm( "vadd TMP2, TMP0, TMP1" : "=j TMP2" (TMP2) : "j TMP0" (TMP0), "j TMP1" (TMP1) );
-    asm( "vmul TMP2, TMP2, TMP2" : "+j TMP2" (TMP2) );
-    asm( "vaddy.x TMP2, TMP2y
-          vaddz.x TMP2, TMP2z"   : "+j TMP2" (TMP2) );
-    asm( "qmfc2 DMIN, TMP2" : "=r DMIN" (dmin) : "j TMP2" (TMP2) );
-
-    if( dmin <= Radius*Radius ) 
-        return TRUE;
-
-    return FALSE;
-#else
     f32     d,dmin = 0;
 
     // X Axis
@@ -535,7 +442,6 @@ xbool bbox::Intersect( const vector3& Center, f32 Radius ) const
         return TRUE;
 
     return FALSE;
-#endif
 }
 
 //==============================================================================

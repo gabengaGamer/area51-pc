@@ -49,6 +49,7 @@ enum x_language
     XL_LANG_KOREAN,
     XL_LANG_PORTUGUESE,
     XL_LANG_TCHINESE,
+    XL_LANG_RUSSIAN,
 
     XL_NUM_LANGUAGES
 };

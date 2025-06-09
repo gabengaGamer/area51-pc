@@ -726,6 +726,7 @@ xwchar* x_mstrncpy( xwchar* pDest, const char* pSrc, s32 Count )
 
 //==============================================================================
 //  "Mixed" string concatenate.  Concatenate a narrow string to a wide string
+
 xwchar* x_mstrcat( xwchar* pDest, const char* pSrc )
 {
     xwchar* p = pDest;
@@ -749,6 +750,7 @@ xwchar* x_mstrcat( xwchar* pDest, const char* pSrc )
 
 //==============================================================================
 //  "Mixed" string concatenate.  Concatenate a wide string to a narrow string
+
 char* x_mstrcat( char* pDest, const xwchar* pSrc )
 {
     char* p = pDest;
@@ -833,10 +835,8 @@ char* x_mstristr( const char* pMainStr, const xwchar* pSubStr )
 }
 
 //==============================================================================
-//  Not included if Xbox intrinsic.
-#ifndef x_strlen
-//------------------------------------------------------------------------------
 
+#ifndef x_strlen
 s32 x_strlen( const char* pStr )
 {
     const char *pEnd = pStr;
@@ -848,16 +848,11 @@ s32 x_strlen( const char* pStr )
 
     return( (s32)(pEnd - pStr - 1) );
 }
-
-//------------------------------------------------------------------------------
 #endif
-//==============================================================================
 
 //==============================================================================
-//  Not included if Xbox intrinsic.
+
 #ifndef x_strcpy
-//------------------------------------------------------------------------------
-
 char* x_strcpy( char* pDest, const char* pSrc )
 {
     char* p = pDest;
@@ -870,23 +865,22 @@ char* x_strcpy( char* pDest, const char* pSrc )
 
     return( pDest );
 }
-
-//------------------------------------------------------------------------------
 #endif
+
 //==============================================================================
 
 char* x_strdup( const char* pStr )
 {
-	ASSERT( pStr );
+    ASSERT( pStr );
 
-	char* pStrResult = (char *)x_malloc( sizeof(char) * x_strlen(pStr) + 1);
-	char* p = pStrResult;
-	ASSERT( pStrResult );
+    char* pStrResult = (char *)x_malloc( sizeof(char) * x_strlen(pStr) + 1);
+    char* p = pStrResult;
+    ASSERT( pStrResult );
 
-	while( (*p++ = *pStr++) )
-		;
+    while( (*p++ = *pStr++) )
+        ;
 
-	return( pStrResult );
+    return( pStrResult );
 }
 
 //==============================================================================
@@ -948,10 +942,8 @@ char* x_strsavecpy( char* pDest, const char* pSrc, s32 Count )
 }
 
 //==============================================================================
-//  Not included if Xbox intrinsic.
-#ifndef x_strcat
-//------------------------------------------------------------------------------
 
+#ifndef x_strcat
 char* x_strcat( char* pFront, const char* pBack )
 {
     char* p = pFront;
@@ -967,9 +959,8 @@ char* x_strcat( char* pFront, const char* pBack )
 
     return( pFront );
 }
-
-//------------------------------------------------------------------------------
 #endif
+
 //==============================================================================
 
 char* x_strncat( char* pFront, const char* pBack, s32 Count )
@@ -995,10 +986,8 @@ char* x_strncat( char* pFront, const char* pBack, s32 Count )
 }
 
 //==============================================================================
-//  Not included if Xbox intrinsic.
-#ifndef x_strcmp
-//------------------------------------------------------------------------------
 
+#ifndef x_strcmp
 s32 x_strcmp( const char* pStr1, const char* pStr2 )
 {
     s32 Result = 0;
@@ -1011,9 +1000,8 @@ s32 x_strcmp( const char* pStr1, const char* pStr2 )
 
     return( Result );
 }
-
-//------------------------------------------------------------------------------
 #endif
+
 //==============================================================================
 
 s32 x_strncmp( const char* pStr1, const char* pStr2, s32 Count )
@@ -1230,15 +1218,15 @@ xwchar* x_wstrcpy( xwchar* pDest, const xwchar* pSrc )
 
 xwchar* x_strdup( const xwchar* pWideStr )
 {
-	ASSERT( pWideStr );
+    ASSERT( pWideStr );
 
-	xwchar* pWideStrResult = (xwchar *)x_malloc( sizeof(xwchar) * x_wstrlen(pWideStr) );
-	ASSERT( pWideStrResult );
+    xwchar* pWideStrResult = (xwchar *)x_malloc( sizeof(xwchar) * x_wstrlen(pWideStr) );
+    ASSERT( pWideStrResult );
 
-	while( (*pWideStrResult++ = *pWideStr++) )
-		;
+    while( (*pWideStrResult++ = *pWideStr++) )
+        ;
 
-	return( pWideStrResult );
+    return( pWideStrResult );
 }
 
 //==============================================================================
@@ -1430,11 +1418,7 @@ xwchar* x_wstrrchr( const xwchar* pStr, s32 C )
 //  Standard block memory functions.
 //==============================================================================
 
-//==============================================================================
-//  Not included if Xbox intrinsic.
 #ifndef x_memcpy
-//------------------------------------------------------------------------------
-
 void* x_memcpy( void* pDest, const void* pSrc, s32 Count )
 {
     ASSERT( pDest );
@@ -1447,10 +1431,7 @@ void* x_memcpy( void* pDest, const void* pSrc, s32 Count )
 
     return( x_memmove( pDest, pSrc, Count ) );
 }
-
-//------------------------------------------------------------------------------
 #endif
-//==============================================================================
 
 //==============================================================================
 // This version of memmove will attempt to move as much memory as possible
@@ -1458,54 +1439,54 @@ void* x_memcpy( void* pDest, const void* pSrc, s32 Count )
 
 void* x_memmove( void* pDest, const void* pSrc, s32 Count )
 {
-	byte* pFrom;
-	byte* pTo;
-	s32   t;
+    byte* pFrom;
+    byte* pTo;
+    s32   t;
 
     ASSERT( pDest );
     ASSERT( pSrc  );
     ASSERT( Count >= 0 );
 
     // See if we have anything to do.
-	if( (Count == 0) || (pSrc == pDest) )
+    if( (Count == 0) || (pSrc == pDest) )
         return( pDest );
 
     pFrom = (byte*)pSrc;
     pTo   = (byte*)pDest;
 
-	if( pTo < pFrom )
+    if( pTo < pFrom )
     {
         //
         // Copy forward.
         //
 
-		t = (s32)pFrom;
+        t = (s32)pFrom;
 
-		if( (t | (s32)pTo) & 3 )
+        if( (t | (s32)pTo) & 3 )
         {
             // Try to align operands.  This cannot be done unless the low 
             // bits match.
 
-			if( ((t ^ (s32)pTo) & 3) || (Count < 4) )
+            if( ((t ^ (s32)pTo) & 3) || (Count < 4) )
             {
                 t = Count;
             }
-			else
+            else
             {
                 t = 4 - ( t & 3 );
             }
 
-			Count -= t;
+            Count -= t;
 
             do
             {
                 *pTo++ = *pFrom++;
             } while( --t );
-		}
+        }
 
         // Try to copy 32 bits at a time.
 
-		t = Count >> 2;
+        t = Count >> 2;
 
         if( t )
         {
@@ -1519,7 +1500,7 @@ void* x_memmove( void* pDest, const void* pSrc, s32 Count )
 
         // Copy any left over bytes.
 
-		t = Count & 3;
+        t = Count & 3;
 
         if( t )
         {
@@ -1528,40 +1509,40 @@ void* x_memmove( void* pDest, const void* pSrc, s32 Count )
                 *pTo++ = *pFrom++;
             } while( --t );
         }
-	}
+    }
     else
     {
-		//
-		// Copy backwards.
-		//
+        //
+        // Copy backwards.
+        //
 
-		pFrom += Count;
-		pTo   += Count;
+        pFrom += Count;
+        pTo   += Count;
 
-		t = (s32)pFrom;
+        t = (s32)pFrom;
 
-		if( (t | (s32)pTo) & 3 )
+        if( (t | (s32)pTo) & 3 )
         {
-			if( ((t ^ (s32)pTo) & 3) || (Count <= 4) )
+            if( ((t ^ (s32)pTo) & 3) || (Count <= 4) )
             {
-				t = Count;
+                t = Count;
             }
-			else
+            else
             {
-				t &= 3;
+                t &= 3;
             }
 
-			Count -= t;
+            Count -= t;
 
             do
             {
                 *--pTo = *--pFrom;
             } while( --t );
-		}
+        }
 
         // Try to copy 32 bits at a time.
 
-		t = Count >> 2;
+        t = Count >> 2;
 
         if( t )
         {
@@ -1576,7 +1557,7 @@ void* x_memmove( void* pDest, const void* pSrc, s32 Count )
 
         // Copy any left over bytes.
 
-		t = Count & 3;
+        t = Count & 3;
 
         if( t )
         {
@@ -1585,16 +1566,14 @@ void* x_memmove( void* pDest, const void* pSrc, s32 Count )
                 *--pTo = *--pFrom;
             } while( --t );
         }
-	}
+    }
 
-	return( pDest );
+    return( pDest );
 }
 
 //==============================================================================
-//  Not included if Xbox intrinsic.
-#ifndef x_memset
-//------------------------------------------------------------------------------
 
+#ifndef x_memset
 void* x_memset( void* pBuf, s32 C, s32 Count )
 {
     byte* p;
@@ -1630,10 +1609,7 @@ void* x_memset( void* pBuf, s32 C, s32 Count )
 
     return( pBuf );
 }
-
-//------------------------------------------------------------------------------
 #endif
-//==============================================================================
 
 //==============================================================================
 
@@ -1658,10 +1634,8 @@ void* x_memchr( void* pBuf, s32 C, s32 Count )
 }
 
 //==============================================================================
-//  Not included if Xbox intrinsic.
-#ifndef x_memcmp
-//------------------------------------------------------------------------------
 
+#ifndef x_memcmp
 s32 x_memcmp( const void* pBuf1, const void* pBuf2, s32 Count )
 {
     byte* p1;
@@ -1710,9 +1684,8 @@ s32 x_memcmp( const void* pBuf1, const void* pBuf2, s32 Count )
 
     return( 0 );
 }
-
-//------------------------------------------------------------------------------
 #endif
+
 //==============================================================================
 
 static u32      crc32_table[256];               // Lookup table array 
@@ -1790,8 +1763,6 @@ u32 x_chksum( const void* pBuf, s32 Count )
 
 //==============================================================================
 //  Standard ASCII conversion functions.
-//==============================================================================
-
 //==============================================================================
 
 s32 x_atoi( const char* pStr )
@@ -2120,9 +2091,13 @@ void x_makepath( char* pPath, const char* pDrive,
 // maintained by Simon Shepherd at the above web site.
 //
 //==============================================================================
+
 static const u32 ENCRYPT_DELTA = 0x9E3779B9;
 static const u32 ENCRYPT_ITERATIONS = 8;
 static const u32 ENCRYPT_SUM = (u32)(ENCRYPT_DELTA*ENCRYPT_ITERATIONS);
+
+//==============================================================================
+
 void encipher(u32 *const v, u32 *const w, const u32 *const k)
 {
     u32 y=v[0],z=v[1];
@@ -2140,6 +2115,8 @@ void encipher(u32 *const v, u32 *const w, const u32 *const k)
 
     w[0]=y; w[1]=z;
 }
+
+//==============================================================================
 
 void decipher(u32 *const v,u32 *const w, const u32 *const k)
 {

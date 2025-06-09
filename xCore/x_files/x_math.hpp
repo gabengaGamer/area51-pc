@@ -151,19 +151,9 @@
 #include "x_debug.hpp"
 #endif
 
-#if defined(TARGET_PS2)
-    #define USE_VU0                1
-    #define FORCE_ALIGNED_16( x )  
-    #define FORCE_ALIGNED_64( x )
-    //extern s32 x_GetThreadID        (void);
-    //extern s32 x_GetMainThreadID    (void);
-    //#define FORCE_ALIGNED_16( x )  { ASSERT( (((u32)(x))&0x0f)==0 ); ASSERT( x_GetThreadID() == x_GetMainThreadID() ); }
-    //#define FORCE_ALIGNED_64( x )  { ASSERT( (((u32)(x))&0x3f)==0 ); ASSERT( x_GetThreadID() == x_GetMainThreadID() ); }
-#else
-    #define USE_VU0                0
-    #define FORCE_ALIGNED_16( x )  
-    #define FORCE_ALIGNED_64( x )
-#endif
+#define USE_VU0             0
+#define FORCE_ALIGNED_16( x )  
+#define FORCE_ALIGNED_64( x )
 
 //==============================================================================
 //  TYPE DECLARATIONS
@@ -172,13 +162,8 @@
 typedef f32 radian;
 
 struct  vector2;
-#ifdef TARGET_PS2
-struct  vector3;
-struct  vector4;
-#else
 union   vector3;
 union   vector4;
-#endif
 struct  radian3;
 struct  quaternion;
 class   matrix3;
@@ -339,7 +324,7 @@ radian  x_MinAngleDiff  ( radian Angle1, radian Angle2 );
 
 //==============================================================================
 
-#if ( defined TARGET_XBOX || defined TARGET_PC )
+#ifdef TARGET_PC
 
 /* fast sine-cosine */
 
@@ -497,13 +482,8 @@ friend  vector2         operator *          (       f32      S,  const vector2& 
 //==============================================================================
 
 PC_ALIGNMENT(16)
-#ifdef TARGET_PS2
-struct vector3
-#else
 union vector3
-#endif
 {
-
 
 //------------------------------------------------------------------------------
 //  Functions
@@ -514,10 +494,6 @@ union vector3
                         vector3                 ( radian Pitch, radian Yaw );
                         vector3                 ( const radian3& R );
 
-                        #ifdef TARGET_PS2
-                        vector3                 ( u128 V );
-                        #endif  
-
         f32             GetX                    ( void ) const;
         f32&            GetX                    ( void );
         f32             GetY                    ( void ) const;
@@ -526,17 +502,9 @@ union vector3
         f32&            GetZ                    ( void );
         s32             GetIW                   ( void ) const;
         s32&            GetIW                   ( void );
- 
-        #ifdef TARGET_PS2
-        u128            GetU128                 ( void ) const;
-        #endif
 
         void            Set                     ( radian Pitch, radian Yaw );
         void            Set                     ( const radian3& R );
-
-        #ifdef TARGET_PS2
-        void            Set                     ( u128 V );
-        #endif
 
         void            Set                     ( f32 X, f32 Y, f32 Z );
         void            operator ()             ( f32 X, f32 Y, f32 Z );
@@ -575,10 +543,10 @@ union vector3
         vector3         GetClosestPToLSeg       ( const vector3& Start, const vector3& End ) const;
         vector3         GetClosestVToLSeg       ( const vector3& Start, const vector3& End ) const;
         f32             GetClosestPToLSegRatio  ( const vector3& Start, const vector3& End ) const;
-		f32				ClosestPointToRectangle ( const vector3& P0,   // Origin from the edges. 
-												  const vector3& E0, 
-												  const vector3& E1,	
-												  vector3&       OutClosestPoint ) const;
+        f32                ClosestPointToRectangle ( const vector3& P0,   // Origin from the edges. 
+                                                  const vector3& E0, 
+                                                  const vector3& E1,    
+                                                  vector3&       OutClosestPoint ) const;
 
 
 friend  f32             v3_Dot                  ( const vector3& V1, const vector3& V2 );
@@ -620,15 +588,6 @@ friend  vector3         operator *              ( const vector3& V1, const vecto
 
 protected:
 
-    #ifdef TARGET_XBOX
-    f128    XYZW;
-    #endif
-
-    #ifdef TARGET_PS2
-    u128    XYZW;
-    #endif
-
-    #ifndef TARGET_PS2
     struct
     {
         f32 X;
@@ -636,8 +595,7 @@ protected:
         f32 Z;
         f32 W;
     };
-    #endif
-
+    
 } PS2_ALIGNMENT(16);
 
 //==============================================================================
@@ -659,11 +617,7 @@ struct vector3p
 //==============================================================================
 
 PC_ALIGNMENT(16)
-#ifdef TARGET_PS2
-struct vector4
-#else
 union vector4
-#endif
 {
 
 //------------------------------------------------------------------------------
@@ -673,9 +627,6 @@ union vector4
                         vector4                 ( void );                     
                         vector4                 ( const vector3& V );    
                         vector4                 ( f32 X, f32 Y, f32 Z, f32 W ); 
-                        #ifdef TARGET_PS2
-                        vector4                 ( u128 V );
-                        #endif  
 
         f32             GetX                    ( void ) const;
         f32&            GetX                    ( void );
@@ -687,10 +638,6 @@ union vector4
         f32&            GetW                    ( void );
         s32             GetIW                   ( void ) const;
         s32&            GetIW                   ( void );
-
-        #ifdef TARGET_PS2
-        u128            GetU128                 ( void ) const;
-        #endif
                                             
         void            Set                     ( f32 X, f32 Y, f32 Z, f32 W );
         void            operator ()             ( f32 X, f32 Y, f32 Z, f32 W );
@@ -738,15 +685,6 @@ friend  vector4         operator *              ( const vector4& V1, const vecto
 
 protected:
 
-    #ifdef TARGET_XBOX
-    f128    XYWZ;
-    #endif
-
-    #ifdef TARGET_PS2
-    u128    XYZW;
-    #endif
-
-    #ifndef TARGET_PS2
     struct
     {
         f32 X;
@@ -754,7 +692,7 @@ protected:
         f32 Z;
         f32 W;
     };
-
+    
     struct
     {
         s32 iX;
@@ -762,8 +700,7 @@ protected:
         s32 iZ;
         s32 iW;
     };
-    #endif
-
+    
 } PS2_ALIGNMENT(16);
 
 
@@ -926,13 +863,6 @@ public:
         void            GetRows             (       vector3& V1,       vector3& V2,       vector3& V3 ) const;
         void            GetColumns          (       vector3& V1,       vector3& V2,       vector3& V3 ) const;
         
-#ifdef TARGET_PS2
-        u128            GetCol0_U128        ( void ) const;
-        u128            GetCol1_U128        ( void ) const;
-        u128            GetCol2_U128        ( void ) const;
-        u128            GetCol3_U128        ( void ) const;
-#endif
-        
         void            SetRows             ( const vector3& V1, const vector3& V2, const vector3& V3 );
         void            SetColumns          ( const vector3& V1, const vector3& V2, const vector3& V3 );
         
@@ -988,26 +918,6 @@ friend  matrix4         m4_InvertRT         ( const matrix4& M );
 protected:
 
     f32     m_Cell[4][4];
-
-    #ifdef TARGET_PS2
-    struct
-    {
-        u128    m_Col0;
-        u128    m_Col1;
-        u128    m_Col2;
-        u128    m_Col3;
-    };
-    #endif
-
-    #ifdef TARGET_XBOX
-    struct
-    {
-        f128    m_Col0;
-        f128    m_Col1;
-        f128    m_Col2;
-        f128    m_Col3;
-    };
-    #endif
 
     struct
     {
@@ -1187,7 +1097,7 @@ struct sphere
 
         s32         Intersect       ( f32& t0, f32& t1, const vector3& P0, const vector3& P1 ) const;
         xbool       Intersect       ( f32& t0, const vector3& P0, const vector3& P1 ) const;
-//        xbool       Intersert       ( f32& t, vector3& S0, vector3& E0, sphere& Sphere1, vector3& S1, vector3& E1 );
+        //xbool       Intersert       ( f32& t, vector3& S0, vector3& E0, sphere& Sphere1, vector3& S1, vector3& E1 );
         //xbool       Intersect       ( sphere& Sphere ) const;
         //xbool       Intersect       ( vector3& P0, vector3& P1, vector3& P3 ) const;
 } PS2_ALIGNMENT(16);

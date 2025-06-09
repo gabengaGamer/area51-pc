@@ -6,41 +6,24 @@
 // Define this to enable profile code. You will also need to make sure the timer routines in x_timer.cpp are
 // using the non-zero timer versions. See notes there.
 //
-#if defined(TARGET_PS2) && defined(X_DEBUG) && (defined(bwatson) || defined(sskelton) )
-//#define ENABLE_PROFILE
-#define USE_SN_PROFILER
-#endif
-
 
 #ifdef TARGET_PC
 #include <windows.h>
-#endif
-
-#ifdef TARGET_XBOX
-#include <Xtl.h>
-#endif
-
-#ifdef TARGET_PS2
-#include <eekernel.h>
-#endif
-
-#ifdef TARGET_GCN
-#include <dolphin/os.h>
 #endif
 
 #ifdef ENABLE_PROFILE
 #include <sifdev.h>
 #include <libsn.h>
 #include "../entropy/ps2/iopmanager.hpp"
-#define PROFILE_BUFFER_LENGTH	X_KILOBYTE(16)			// 16K profile buffer
-#define PROFILE_FILENAME		"profile.dat"
-#define PROFILE_INTERVAL		2*16				// 16 ticks per ms
-#define PROFILE_PC_ADDRESS		0x80078230
+#define PROFILE_BUFFER_LENGTH    X_KILOBYTE(16)            // 16K profile buffer
+#define PROFILE_FILENAME        "profile.dat"
+#define PROFILE_INTERVAL        2*16                // 16 ticks per ms
+#define PROFILE_PC_ADDRESS        0x80078230
+
 struct profile_sample
 {
-	u32	ProgramCounter;
+    u32    ProgramCounter;
 };
-
 
 #ifndef USE_SN_PROFILER
 static void s_ProfileThread(void);
@@ -68,12 +51,12 @@ xarray<xthread*>    xthread::m_MasterThreadList( s_ThreadBuffer,0,X_MAX_THREADS 
 
 struct thread_vars
 {
-    xthreadlist			m_RunList;
-    s32					m_ThreadTicks;
-    xmutex				m_Lock;
-    s32					m_TopThreadId;
+    xthreadlist            m_RunList;
+    s32                    m_ThreadTicks;
+    xmutex                m_Lock;
+    s32                    m_TopThreadId;
     s32                 m_InterruptCount;
-    xthread*			m_pAppMain;
+    xthread*            m_pAppMain;
     s64                 m_IdleTicks;
     volatile xthread*           m_pActiveThread;
     volatile xthread_private    m_ActiveThreadId;
@@ -88,15 +71,15 @@ struct thread_vars
     xthread*            m_ThreadList[MAX_TRACKED_THREADS];
 
 #ifdef DEBUG_THREADS
-	xthread*			m_pWatchdogThread;
+    xthread*            m_pWatchdogThread;
 #endif
 #ifdef ENABLE_PROFILE
-	xthread*			m_pProfileThread;
-	profile_sample*		m_pProfileBuffer;
-	s32					m_ProfileLength;
-	s32					m_ProfileFileHandle;
-	xbool				m_ProfileEnabled;
-	s32					m_ProfileInterval;
+    xthread*            m_pProfileThread;
+    profile_sample*        m_pProfileBuffer;
+    s32                    m_ProfileLength;
+    s32                    m_ProfileFileHandle;
+    xbool                m_ProfileEnabled;
+    s32                    m_ProfileInterval;
 #endif
 };
 
@@ -120,8 +103,9 @@ static void x_IdleLoop(void);
 void CreateThreadVars( void );
 void CreateIdleThread( void );
 
-//-----------------------------------------------------------------------------
+//==============================================================================
 // Global startup function
+
 void x_InitThreads(s32 argc, char** argv)
 {
     (void)argc;
@@ -150,28 +134,29 @@ void x_InitThreads(s32 argc, char** argv)
     CreateIdleThread();
 
 #ifdef ENABLE_PROFILE
-	s_pThreadVars->m_ProfileLength  = PROFILE_BUFFER_LENGTH;
-	s_pThreadVars->m_pProfileBuffer = (profile_sample*)x_malloc(PROFILE_BUFFER_LENGTH);
-	ASSERT(s_pThreadVars->m_pProfileBuffer);
+    s_pThreadVars->m_ProfileLength  = PROFILE_BUFFER_LENGTH;
+    s_pThreadVars->m_pProfileBuffer = (profile_sample*)x_malloc(PROFILE_BUFFER_LENGTH);
+    ASSERT(s_pThreadVars->m_pProfileBuffer);
 #ifdef USE_SN_PROFILER
-	g_IopManager.LoadModule("snprofil.irx");
-	snProfInit(_4KHZ,s_pThreadVars->m_pProfileBuffer,s_pThreadVars->m_ProfileLength);
-	//xprof_Disable();
+    g_IopManager.LoadModule("snprofil.irx");
+    snProfInit(_4KHZ,s_pThreadVars->m_pProfileBuffer,s_pThreadVars->m_ProfileLength);
+    //xprof_Disable();
 #else
-	s_pThreadVars->m_ProfileFileHandle = sceOpen("host0:"PROFILE_FILENAME,SCE_WRONLY|SCE_CREAT|SCE_TRUNC);
-	ASSERT(s_pThreadVars->m_ProfileFileHandle >=0);
-	s_pThreadVars->m_pProfileThread = new xthread(s_ProfileThread,"Profiler Thread",8192,1);
-	ASSERT(s_pThreadVars->m_pProfileThread);
+    s_pThreadVars->m_ProfileFileHandle = sceOpen("host0:"PROFILE_FILENAME,SCE_WRONLY|SCE_CREAT|SCE_TRUNC);
+    ASSERT(s_pThreadVars->m_ProfileFileHandle >=0);
+    s_pThreadVars->m_pProfileThread = new xthread(s_ProfileThread,"Profiler Thread",8192,1);
+    ASSERT(s_pThreadVars->m_pProfileThread);
 #endif
 #endif
 
 #ifdef DEBUG_THREADS
-	s_pThreadVars->m_pWatchdogThread = new xthread(s_WatchdogThread,"Watchdog timer",8192,5);
+    s_pThreadVars->m_pWatchdogThread = new xthread(s_WatchdogThread,"Watchdog timer",8192,5);
 #endif
 }
 
-//-----------------------------------------------------------------------------
+//==============================================================================
 // Global shutdown function
+
 void x_KillThreads(void)
 {
     xthread* pThread;
@@ -197,7 +182,8 @@ void x_KillThreads(void)
     s_pThreadVars = NULL;
     s_Initialized = FALSE;
 }
-//-----------------------------------------------------------------------------
+
+//==============================================================================
 // NOTE: This is only used for the initial thread structure that is created for
 // the main game entry point. It will be used to set the 'default' thread to
 // idle priority and also allocate some stack space for that thread that will only
@@ -261,9 +247,13 @@ xthread::xthread(s32 StackSize, const char* pName)
 #endif
 }
 
+//==============================================================================
+
 xthread::xthread( void )
 {
 }
+
+//==============================================================================
 
 void xthread::InitIdle( void* pUserStack, s32 StackSize )
 {
@@ -318,19 +308,16 @@ void xthread::InitIdle( void* pUserStack, s32 StackSize )
 #endif
 }
 
-//-----------------------------------------------------------------------------
+//==============================================================================
 // Thread constructor (adds it to the master list and determines correct id #
+
 void xthread::Init    (x_thread_entry_fn *pEntry,const char *pName,s32 StackSize,s32 Priority,s32 argc, char** argv)
 {
     // Stack has to be allocated before we lock the thread handler system
-#if defined(TARGET_XBOX) || defined(TARGET_PC)
-    // For xbox and pc, the stack is automatically sized by the system so we only allocate enough space for
-    // the string buffers
 #ifdef TARGET_PC
-    u32 StringSize          = X_KILOBYTE(32); // PC get's a bigger string buffer
-#else
-    u32 StringSize          = X_KILOBYTE(4);
-#endif
+    // For pc, the stack is automatically sized by the system so we only allocate enough space for
+    // the string buffers
+    u32 StringSize          = X_KILOBYTE(32);
     m_pStack                = x_malloc(StringSize);
     m_Globals.BufferSize    = StringSize;
     m_Globals.StringBuffer  = (char*)m_pStack;
@@ -394,7 +381,7 @@ void xthread::Init    (x_thread_entry_fn *pEntry,const char *pName,s32 StackSize
     s_pThreadVars->m_Lock.Exit();
 }
 
-//-----------------------------------------------------------------------------
+//==============================================================================
 // Even though we are using a static data area to 'start' up a thread, this will have locked access since the
 // access to the thread vars is currently locked.
 
@@ -408,8 +395,9 @@ void x_thread_Root(void* pInit)
     pThread->Kill();
 }
 
-//-----------------------------------------------------------------------------
+//==============================================================================
 // Thread destructor
+
 xthread::~xthread(void)
 {
     ASSERT(m_Initialized);
@@ -498,7 +486,8 @@ xthread::~xthread(void)
 
 }
 
-//-----------------------------------------------------------------------------
+//==============================================================================
+
 xbool xthread::IsActive(void)
 {
     if( m_NeedToTerminate || (m_Status==TERMINATED) || (m_Status==TERMINATING) )
@@ -508,7 +497,8 @@ xbool xthread::IsActive(void)
     return TRUE;
 }
 
-//-----------------------------------------------------------------------------
+//==============================================================================
+
 void xthread::Kill(void)
 {
     xbool CommitSuicide;
@@ -525,12 +515,13 @@ void xthread::Kill(void)
     }
 }
 
-//-----------------------------------------------------------------------------
+//==============================================================================
 // Note:
 // 1. The thread should currently be in the runlist.
 // 2. It will be moved to the specified list
 // 3. On resume, it should NOT be 'owned' by anyone
 // 4. It will be placed back in the runlist.
+
 void xthread::Suspend( s32 Flags, state Status )
 {
     if( m_NeedToTerminate )
@@ -545,7 +536,8 @@ void xthread::Suspend( s32 Flags, state Status )
     x_SetCurrentThread( this );
 }
 
-//-----------------------------------------------------------------------------
+//==============================================================================
+
 void xthread::Resume( s32 Flags )
 {
     if( m_NeedToTerminate==FALSE )
@@ -558,41 +550,46 @@ void xthread::Resume( s32 Flags )
     x_SetCurrentThread( this );
 }
 
-//-----------------------------------------------------------------------------
+//==============================================================================
 // Link this thread to the runlist
-//-----------------------------------------------------------------------------
+//==============================================================================
+
 void    xthread::Link( void )
 {
     s_pThreadVars->m_RunList.Link( this );
 }
 
-//-----------------------------------------------------------------------------
+//==============================================================================
 // Unlink this thread from the runlist
-//-----------------------------------------------------------------------------
+//==============================================================================
+
 void xthread::Unlink( void )
 {
     s_pThreadVars->m_RunList.Unlink( this );
 }
 
-//-----------------------------------------------------------------------------
+//==============================================================================
 // Link this thread to a specific thread list
-//-----------------------------------------------------------------------------
+//==============================================================================
+
 void    xthread::Link( xthreadlist &List )
 {
     ASSERT( List.Find( GetSystemId() )==NULL );
     List.Link( this );
 }
 
-//-----------------------------------------------------------------------------
+//==============================================================================
 // Unlink this thread from a specific thread list
-//-----------------------------------------------------------------------------
+//==============================================================================
+
 void xthread::Unlink( xthreadlist &List )
 {
     ASSERT( List.Find( GetSystemId() )!=NULL );
     List.Unlink( this );
 }
 
-//-----------------------------------------------------------------------------
+//==============================================================================
+
 void    xthread::SetFormatBufferSize(s32 Size)
 {
     (void)Size;
@@ -605,25 +602,27 @@ void    xthread::SetFormatBufferSize(s32 Size)
     m_Globals.BufferSize = Size;
 }
 
-//-----------------------------------------------------------------------------
-//-----------------------------------------------------------------------------
+//==============================================================================
+
 xthreadlist::xthreadlist(void)
 {
     m_pHead = NULL;
     m_pTail = NULL;
 }
 
-//-----------------------------------------------------------------------------
+//==============================================================================
+
 xthreadlist::~xthreadlist(void)
 {
 }
 
-//-----------------------------------------------------------------------------
+//==============================================================================
 // Search for a thread within this threadlist. The system supplied thread id is
 // used as the search criteria. This is often used in a debug build to check that
 // the thread you're attempting to remove from a list is in the list and one
 // that you're attempting to insert has not already been inserted.
-//-----------------------------------------------------------------------------
+//==============================================================================
+
 xthread* xthreadlist::Find(s32 id)
 {
     xthread* pThread;
@@ -640,9 +639,11 @@ xthread* xthreadlist::Find(s32 id)
     }
     return pThread;
 }
-//-----------------------------------------------------------------------------
+
+//==============================================================================
 // Link a thread in to this list at the end
-//-----------------------------------------------------------------------------
+//==============================================================================
+
 void    xthreadlist::Link(xthread *pThread)
 {
     // Make sure this thread isn't already in the list
@@ -672,9 +673,10 @@ void    xthreadlist::Link(xthread *pThread)
     pThread->m_pOwningQueue = this;
 }
 
-//-----------------------------------------------------------------------------
+//==============================================================================
 // Unlink a thread from this list
-//-----------------------------------------------------------------------------
+//==============================================================================
+
 void    xthreadlist::Unlink(xthread *pThread)
 {
     ASSERT(pThread->m_pOwningQueue);
@@ -707,16 +709,17 @@ void    xthreadlist::Unlink(xthread *pThread)
     pThread->m_pOwningQueue = NULL;
 }
 
-//-----------------------------------------------------------------------------
+//==============================================================================
 // Unlink the first thread within this list
-//-----------------------------------------------------------------------------
+//==============================================================================
+
 xthread* xthreadlist::GetHead(void)
 {
     return m_pHead;
 }
 
+//==============================================================================
 
-//-----------------------------------------------------------------------------
 void xthread::Delay(s32 milliseconds)
 {
     ASSERT(s_Initialized);
@@ -733,7 +736,8 @@ void xthread::Delay(s32 milliseconds)
     m_Status = RUNNING;
 }
 
-//-----------------------------------------------------------------------------
+//==============================================================================
+
 void x_DelayThread(s32 milliseconds)
 {
     xthread* pThread;
@@ -743,14 +747,16 @@ void x_DelayThread(s32 milliseconds)
     pThread->Delay( milliseconds );
 }
 
-//-----------------------------------------------------------------------------
+//==============================================================================
+
 void x_StartMain         (x_thread_entry_fn* pEntry, s32 argc, char** argv)
 {
     s_pThreadVars->m_pAppMain = new xthread( pEntry," Main Application", X_KILOBYTE(128), 0, argc, argv );
     x_IdleLoop();
 }
 
-//-----------------------------------------------------------------------------
+//==============================================================================
+
 xtick x_GetIdleTicks(void)
 {
     if( s_pThreadVars->m_Idle.Max )
@@ -760,17 +766,19 @@ xtick x_GetIdleTicks(void)
     return 0;
 }
 
-//-----------------------------------------------------------------------------
+//==============================================================================
+
 s32 x_GetMainThreadID( void )
 {
     return s_pThreadVars->m_pAppMain->GetId();
 }
 
-//-----------------------------------------------------------------------------
+//==============================================================================
 // The idle loop doesn't really do much. It just sits and counts. When 100ms has
 // passed, it will re-average the cpu utilization. That is actually quite hard
 // to do since the processor may be 100% busy. In that case, it will not be
 // very accurate!
+
 static void x_IdleLoop(void)
 {
 
@@ -840,10 +848,11 @@ static void x_IdleLoop(void)
 #endif // defined( bwatson ) && defined( TARGET_DEV )
     }
 }
-//-----------------------------------------------------------------------------
-//-----------------------------------------------------------------------------
+
+//==============================================================================
 //------------- DEBUG FUNCTIONS
-//-----------------------------------------------------------------------------
+//==============================================================================
+
 void x_CheckThreads(xbool ForceDump)
 {
     (void)ForceDump;
@@ -854,20 +863,24 @@ void x_CheckThreads(xbool ForceDump)
     }
 }
 
-//-----------------------------------------------------------------------------
+//==============================================================================
+
 void xthread::DumpState(void)
 {
 }
 
-//-----------------------------------------------------------------------------
+//==============================================================================
 // Dump the status of the entire threading system
-//-----------------------------------------------------------------------------
-//-----------------------------------------------------------------------------
+//==============================================================================
+//==============================================================================
 // Global access function to dump entire thread state
-//-----------------------------------------------------------------------------
+//==============================================================================
+
 void x_DumpThreads(void)
 {
 }
+
+//==============================================================================
 
 static xthread* FindThread(void)
 {
@@ -889,7 +902,8 @@ static xthread* FindThread(void)
     return pReturn;
 }
 
-//-----------------------------------------------------------------------------
+//==============================================================================
+
 xthread* x_GetCurrentThread( void )
 {
     //ASSERT(FindThread() == s_pThreadVars->m_pActiveThread);
@@ -900,7 +914,9 @@ xthread* x_GetCurrentThread( void )
     return FindThread();
 
 }
-//-----------------------------------------------------------------------------
+
+//==============================================================================
+
 void x_SetCurrentThread( xthread* pThread )
 {
     if( pThread==NULL )
@@ -909,48 +925,53 @@ void x_SetCurrentThread( xthread* pThread )
     }
 }
 
-//-----------------------------------------------------------------------------
+//==============================================================================
+
 void x_WatchdogReset(void)
 {
     ASSERT(s_Initialized);
     s_pThreadVars->m_ThreadTicks = 40;         // 2 second delay until the threadticks time out
 }
 
-#ifdef DEBUG_THREADS
+//==============================================================================
 
+#ifdef DEBUG_THREADS
 void xthread::DumpThreads(void)
 {
-	xthread* pThread;
-	s32		 count,i;
-	struct ThreadParam threadparam;
+    xthread* pThread;
+    s32         count,i;
+    struct ThreadParam threadparam;
 
-	count = xthread::m_MasterThreadList.GetCount();
-	for (i=0;i<count;i++)
-	{
-		pThread = xthread::m_MasterThreadList[i];
-		ReferThreadStatus(pThread->GetSystemId(),&threadparam);
-		x_DebugMsg("Thread %d (%s), pc=0x%08x\n",i,pThread->m_pName,threadparam.entry);
-	}
+    count = xthread::m_MasterThreadList.GetCount();
+    for (i=0;i<count;i++)
+    {
+        pThread = xthread::m_MasterThreadList[i];
+        ReferThreadStatus(pThread->GetSystemId(),&threadparam);
+        x_DebugMsg("Thread %d (%s), pc=0x%08x\n",i,pThread->m_pName,threadparam.entry);
+    }
 }
 
+//==============================================================================
 
-static void	s_WatchdogThread(void)
+static void    s_WatchdogThread(void)
 {
-	while(1)
-	{
-		x_DelayThread(100);
+    while(1)
+    {
+        x_DelayThread(100);
 
-		s_pThreadVars->m_ThreadTicks--;
-		if ( s_pThreadVars->m_ThreadTicks < 0)
-		{
-			x_DebugMsg("--------------- THREAD STALL -------------------\n");
-			xthread::DumpThreads();
-			s_pThreadVars->m_ThreadTicks = 40;
+        s_pThreadVars->m_ThreadTicks--;
+        if ( s_pThreadVars->m_ThreadTicks < 0)
+        {
+            x_DebugMsg("--------------- THREAD STALL -------------------\n");
+            xthread::DumpThreads();
+            s_pThreadVars->m_ThreadTicks = 40;
             BREAK;
-		}
-	}
+        }
+    }
 }
 #else
+
+//==============================================================================
 
 void xthread::DumpThreads(void)
 {
@@ -966,6 +987,8 @@ static volatile LONG s_InterruptCount=0;
 static volatile s32 s_InterruptCount=0;
 #endif
 
+//==============================================================================
+
 void x_BeginAtomic(void)
 {
     sys_thread_Lock();
@@ -978,6 +1001,7 @@ void x_BeginAtomic(void)
 }
 
 //==============================================================================
+
 xbool x_IsAtomic(void)
 {
 //#if defined( TARGET_PC )
@@ -994,6 +1018,7 @@ xbool x_IsAtomic(void)
 }
 
 //==============================================================================
+
 void x_EndAtomic(void)
 {
     ASSERT(s_InterruptCount);
@@ -1007,6 +1032,8 @@ void x_EndAtomic(void)
     sys_thread_Unlock();
 }
 
+//==============================================================================
+
 #ifdef ENABLE_PROFILE
 #ifndef USE_SN_PROFILER
 void    s_ProfileDelayCallback(s32 id, u16 count,void *arg)
@@ -1016,86 +1043,105 @@ void    s_ProfileDelayCallback(s32 id, u16 count,void *arg)
     iWakeupThread((s32)arg);
     ExitHandler();
 }
-//-----------------------------------------------------------------------------
+
+//==============================================================================
+
 static void s_ProfileThread(void)
 {
-	profile_sample*	pBuffer;
-	s32				Count;
-	s32				status;
-	ThreadParam		info;
-	s32				lastpc;
+    profile_sample*    pBuffer;
+    s32                Count;
+    s32                status;
+    ThreadParam        info;
+    s32                lastpc;
 
 
-	s_pThreadVars->m_ProfileInterval = PROFILE_INTERVAL;				// 10ms profile interval
-	s_pThreadVars->m_ProfileEnabled  = TRUE;
+    s_pThreadVars->m_ProfileInterval = PROFILE_INTERVAL;                // 10ms profile interval
+    s_pThreadVars->m_ProfileEnabled  = TRUE;
 
-	while(1)
-	{
-		pBuffer = s_pThreadVars->m_pProfileBuffer;
-		Count = s_pThreadVars->m_ProfileLength / sizeof(profile_sample);
-		ASSERT(Count);
-		ASSERT(pBuffer);
-		ASSERT(s_pThreadVars->m_ProfileInterval);
+    while(1)
+    {
+        pBuffer = s_pThreadVars->m_pProfileBuffer;
+        Count = s_pThreadVars->m_ProfileLength / sizeof(profile_sample);
+        ASSERT(Count);
+        ASSERT(pBuffer);
+        ASSERT(s_pThreadVars->m_ProfileInterval);
 
-		while (Count)
-		{
-		    SetAlarm(s_pThreadVars->m_ProfileInterval,s_ProfileDelayCallback,(void *)GetThreadId());
-		    SleepThread();
+        while (Count)
+        {
+            SetAlarm(s_pThreadVars->m_ProfileInterval,s_ProfileDelayCallback,(void *)GetThreadId());
+            SleepThread();
 
-			if (s_pThreadVars->m_ProfileEnabled)
-			{
-				status = ReferThreadStatus(s_pThreadVars->m_pAppMain->GetSystemId(),&info);
-				lastpc = (s32)info.entry;
-				pBuffer->ProgramCounter = ENDIAN_SWAP_32(lastpc);
-				pBuffer++;
-				Count--;
-			}
-		}
-		sceWrite(s_pThreadVars->m_ProfileFileHandle,s_pThreadVars->m_pProfileBuffer,s_pThreadVars->m_ProfileLength);
-	}
+            if (s_pThreadVars->m_ProfileEnabled)
+            {
+                status = ReferThreadStatus(s_pThreadVars->m_pAppMain->GetSystemId(),&info);
+                lastpc = (s32)info.entry;
+                pBuffer->ProgramCounter = ENDIAN_SWAP_32(lastpc);
+                pBuffer++;
+                Count--;
+            }
+        }
+        sceWrite(s_pThreadVars->m_ProfileFileHandle,s_pThreadVars->m_pProfileBuffer,s_pThreadVars->m_ProfileLength);
+    }
 
 }
 #endif
+
+//==============================================================================
 
 void xprof_Enable(void)
 {
-	s_pThreadVars->m_ProfileEnabled = TRUE;
+    s_pThreadVars->m_ProfileEnabled = TRUE;
 #ifdef USE_SN_PROFILER
-	snProfEnableInt();
+    snProfEnableInt();
 #endif
 }
+
+//==============================================================================
 
 void xprof_Disable(void)
 {
-	s_pThreadVars->m_ProfileEnabled = FALSE;
+    s_pThreadVars->m_ProfileEnabled = FALSE;
 #ifdef USE_SN_PROFILER
-	snProfDisableInt();
+    snProfDisableInt();
 #endif
 }
 
+//==============================================================================
+
 void xprof_SetSampleRate(s32 ms)
 {
-	s_pThreadVars->m_ProfileInterval = ms;
+    s_pThreadVars->m_ProfileInterval = ms;
 #ifdef USE_SN_PROFILER
-//	snProfSetInterval(ms);
+//    snProfSetInterval(ms);
 #endif
 }
+
+//==============================================================================
 
 void xprof_Flush(void)
 {
 }
 #else
+    
+//==============================================================================
+
 void xprof_Enable(void)
 {
 }
+
+//==============================================================================
 
 void xprof_Disable(void)
 {
 }
 
+//==============================================================================
+
 void xprof_SetSampleRate(s32)
 {
 }
+
+//==============================================================================
 
 void xprof_Flush(void)
 {
@@ -1115,6 +1161,8 @@ void CreateThreadVars( void )
     s_pThreadVars = (thread_vars*)&s_ThreadVars;
     ASSERT(s_pThreadVars);
 }
+
+//==============================================================================
 
 void CreateIdleThread( void )
 {

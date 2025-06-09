@@ -53,40 +53,6 @@ pc_forcestartup ForceStartup;
 #pragma warning(pop)
 #endif
 
-
-//------------------------------------------------------------------------------
-
-#if defined( TARGET_XBOX )
-#   ifdef CONFIG_RETAIL
-#       define D3DCOMPILE_PUREDEVICE 1
-#   endif
-#include <xtl.h>
-// This is Xbox specific. This will force x_Init to be called
-// prior to the constructors so constructors should be able to
-// do memory allocations WITH the allocator initialized.
-#pragma warning(push)
-
-#pragma warning(disable:4073)
-#pragma  init_seg(lib)
-class xbox_forcestartup
-{
-public:
-    xbox_forcestartup(void)
-    {
-        x_Init(0,NULL);
-    }
-
-    ~xbox_forcestartup(void)
-    {
-        x_Kill();
-    }
-};
-
-xbox_forcestartup ForceStartup;
-
-#pragma warning(pop)
-#endif
-
 //==============================================================================
 //  DEFINITIONS
 //==============================================================================

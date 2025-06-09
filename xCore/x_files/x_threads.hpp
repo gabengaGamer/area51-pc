@@ -41,21 +41,9 @@
 #include "implementation/x_files_private.hpp"
 #include "implementation/x_threads_private.hpp"
 
-#if defined(TARGET_GCN)
-#include <dolphin/os.h>
-#endif
-
-#if defined(TARGET_PS2)
-#include "eekernel.h"
-#endif
-
 #define X_MAX_THREADS           16
 
-#ifdef TARGET_GCN
-    #define THREAD_BASE_PRIORITY    (OS_PRIORITY_MAX/2)
-#elif defined(TARGET_XBOX)
-    #define THREAD_BASE_PRIORITY    0 // normal on xbox
-#elif defined(TARGET_PC)
+#ifdef TARGET_PC
     #define THREAD_BASE_PRIORITY    THREAD_PRIORITY_NORMAL
 #else
     #define THREAD_BASE_PRIORITY    64

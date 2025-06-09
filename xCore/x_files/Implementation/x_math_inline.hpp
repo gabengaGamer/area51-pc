@@ -19,6 +19,7 @@
 //
 // Definitions for R_0 thru R_5 are in x_math.hpp.
 //
+
 #define R_6     RADIAN(   6 )
 #define R_7     RADIAN(   7 )
 #define R_8     RADIAN(   8 )
@@ -368,6 +369,7 @@
 #define R_352   RADIAN( 352 )
 #define R_353   RADIAN( 353 )
 #define R_354   RADIAN( 354 )
+
 //
 // Definitions for R_355 thru R_360 are in x_math.hpp.
 //
@@ -380,29 +382,13 @@
 
 inline f32 x_sqr ( f32 a )  { return( a * a ); }
 
-//==============================================================================
-
-#if 0
-inline xbool x_isvalid( f32 a )
-{
-/*
-#if (defined(TARGET_PC) && !defined(X_DEBUG))
-    return TRUE;
-#else
-    return( ( (*((u32*)(&a))) & 0x7F800000 ) != 0x7F800000 );
-#endif
-*/
-    return ((a>=F32_MIN) && (a<=F32_MAX));
-}
-#endif
-
 //------------------------------------------------------------------------------
 //  TEMPORARY VERSIONS!
 //------------------------------------------------------------------------------
 
 #include <math.h>
 
-#if ( defined TARGET_PC || defined TARGET_XBOX )
+#ifdef TARGET_PC
 __forceinline f32 x_sqrt    ( f32 a )        { return(                (f32)(sqrtf ( a ) ) ); }
 __forceinline f32 x_1sqrt   ( f32 a )        { return(         1.0f / (f32)(sqrtf ( a ) ) ); }
 __forceinline f32 x_log     ( f32 a )        { return(                (f32)(logf  ( a ) ) ); }
@@ -417,34 +403,6 @@ __forceinline f32 x_acos    ( f32 a )        { return(                (f32)(acos
 __forceinline radian x_atan2( f32 y, f32 x ) { return                 (radian)atan2f( y,x ); }
 __forceinline f32 x_sin     ( radian a )     { return                 (f32)sinf( a ); }
 __forceinline f32 x_cos     ( radian a )     { return                 (f32)cosf( a ); }
-#endif
-
-
-#ifdef TARGET_PS2
-inline f32 x_sqrt  ( f32 a )        { f32 v;asm("sqrt.s %0,%1":"=f"(v):"f"(a));return v; }
-inline f32 x_1sqrt ( f32 a )        { f32 v;asm("rsqrt.s %0,%2,%1":"=f"(v):"f"(a),"f"(1.0f));return v;}
-inline f32 x_log   ( f32 a )        { return(                (f32)(log   ( (f64)a ) ) ); }
-inline f32 x_log2  ( f32 a )        { return(                (f32)(log2f ( (f32)a ) ) ); }
-inline f32 x_log10 ( f32 a )        { return(                (f32)(log10f( (f32)a ) ) ); }
-inline f32 x_exp   ( f32 a )        { return(                (f32)(exp   ( (f64)a ) ) ); }
-inline f32 x_pow   ( f32 a, f32 b ) { return(                (f32)(pow   ( (f64)a, (f64)b ) ) ); }
-inline f32 x_tan   ( f32 a )        { return(                (f32)(tanf  ( (f32)a ) ) ); }
-#endif
-
-
-#ifdef TARGET_GCN
-inline f32 x_sqrt  ( f32 a )        { return(                (f32)(sqrtf ( (f32)a ) ) ); }
-inline f32 x_1sqrt ( f32 a )        { return(         1.0f / (f32)(sqrtf ( (f32)a ) ) ); }
-inline f32 x_log   ( f32 a )        { return(                (f32)(log   ( (f64)a ) ) ); }
-inline f32 x_log2  ( f32 a )        { return(                (f32)(log2f ( (f32)a ) ) ); }
-inline f32 x_log10 ( f32 a )        { return(                (f32)(log10f( (f32)a ) ) ); }
-inline f32 x_exp   ( f32 a )        { return(                (f32)(exp   ( (f64)a ) ) ); }
-inline f32 x_pow   ( f32 a, f32 b ) { return(                (f32)(pow   ( (f64)a, (f64)b ) ) ); }
-
-inline f32 x_tan   ( f32 a )        { return(                (f32)(tanf  ( (f32)a ) ) ); }
-inline f32 x_atan  ( f32 a )        { return(                (f32)(atanf ( (f32)a ) ) ); }
-inline f32 x_asin  ( f32 a )        { return(                (f32)(asinf ( (f32)a ) ) ); }
-inline f32 x_acos  ( f32 a )        { return(                (f32)(acosf ( (f32)a ) ) ); }
 #endif
 
 //==============================================================================

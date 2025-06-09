@@ -12,6 +12,7 @@
 // we will eliminate the need for a system call. If we need to block, we don't
 // really care about the time it takes anyway. This will help make it very efficient
 // to use message queues for general queuing.
+
 s32 s_AcquiresDone=0;
 s32 s_ReleasesDone=0;
 s32 s_EntersDone=0;
@@ -21,6 +22,7 @@ s32 s_ExitsDone=0;
 //--- Mutexes are implemented as single entry semaphores. The code optimizations
 // for using mutexes in a special case are minimal and not worth it.
 //==============================================================================
+
 xmutex::xmutex( void )
        :m_Semaphore( 1, 1 )
 {
@@ -33,8 +35,7 @@ xmutex::xmutex( void )
 }
 
 //==============================================================================
-//
-//==============================================================================
+
 xmutex::~xmutex( void )
 {
     ASSERT(m_Initialized);
@@ -44,8 +45,7 @@ xmutex::~xmutex( void )
 }
 
 //==============================================================================
-//
-//==============================================================================
+
 xbool xmutex::Enter( s32 Flags )
 {
     xbool status;
@@ -63,8 +63,7 @@ xbool xmutex::Enter( s32 Flags )
 }
 
 //==============================================================================
-//
-//==============================================================================
+
 xbool xmutex::Exit( s32 Flags )
 {
     ASSERT(m_Initialized);
@@ -79,8 +78,7 @@ xbool xmutex::Exit( s32 Flags )
 }
 
 //==============================================================================
-//
-//==============================================================================
+
 xsema::xsema( s32 count, s32 initial )
 {
     m_Initialized       = TRUE;
@@ -93,8 +91,7 @@ xsema::xsema( s32 count, s32 initial )
 }
 
 //==============================================================================
-//
-//==============================================================================
+
 xsema::~xsema( void )
 {
     ASSERT( m_Initialized );
@@ -104,8 +101,7 @@ xsema::~xsema( void )
 }
 
 //==============================================================================
-//
-//==============================================================================
+
 xbool xsema::Acquire( s32 Flags )
 {
     xthread* pThread;
@@ -171,8 +167,7 @@ xbool xsema::Acquire( s32 Flags )
 }
 
 //==============================================================================
-//
-//==============================================================================
+
 xbool xsema::Release(s32 Flags)
 {
     xthread* pThread;

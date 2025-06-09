@@ -26,10 +26,6 @@
 
 //==============================================================================
 
-#if !( defined( TARGET_PS2 ) && defined( CONFIG_RETAIL ) )
-
-//==============================================================================
-
 void quant_Begin            ( void );
 void quant_SetPixels        ( const xcolor* pColor, s32 NColors );
 void quant_End              ( xcolor* pPalette, s32 NColors, xbool UseAlpha );
@@ -1144,7 +1140,3 @@ void quant_End( xcolor* pPalette, s32 aNColors, xbool UseAlpha )
     T.Stop();
 //    x_DebugMsg("quant_End time : %1.2f\n",T.ReadMs());
 }
-
-//==============================================================================
-
-#endif // !( defined( TARGET_PS2 ) && defined( CONFIG_RETAIL ) )

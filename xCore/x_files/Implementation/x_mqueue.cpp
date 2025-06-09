@@ -9,6 +9,7 @@ xarray<xmesgq*>     xmesgq::m_MasterMessageList(s_MesgqBuffer,0,X_MAX_MESSAGE_QU
 #endif
 
 //==============================================================================
+
 xmesgq::xmesgq( s32 nEntries )
 {
     ASSERT( (nEntries > 0) && (nEntries < 32767) );
@@ -38,6 +39,7 @@ xmesgq::xmesgq( s32 nEntries )
 }
 
 //==============================================================================
+
 xmesgq::~xmesgq(void)
 {
     if( m_MaxEntries > MAX_DEFAULT_MESSAGES )
@@ -48,6 +50,8 @@ xmesgq::~xmesgq(void)
 #endif
 }
 
+//==============================================================================
+
 void xmesgq::Clear(void)
 {
     x_BeginAtomic();
@@ -56,7 +60,9 @@ void xmesgq::Clear(void)
     m_ValidEntries = 0;
     x_EndAtomic();
 }
+
 //==============================================================================
+
 xbool xmesgq::Send(void *message,s32 flags)
 {
     xthread *pThread;
@@ -141,6 +147,7 @@ xbool xmesgq::Send(void *message,s32 flags)
 }
 
 //==============================================================================
+
 void *xmesgq::Recv(s32 flags)
 {
     xthread *pThread;
@@ -220,6 +227,7 @@ void *xmesgq::Recv(s32 flags)
 }
 
 //==============================================================================
+
 xbool xmesgq::IsEmpty(void)
 {
     ASSERT(m_Initialized);
@@ -227,6 +235,7 @@ xbool xmesgq::IsEmpty(void)
 }
 
 //==============================================================================
+
 xbool xmesgq::IsFull(void)
 {
     ASSERT(m_Initialized);
@@ -234,6 +243,7 @@ xbool xmesgq::IsFull(void)
 }
 
 //==============================================================================
+
 s32 xmesgq::ValidEntries(void)
 {
     ASSERT(m_Initialized);
@@ -241,6 +251,7 @@ s32 xmesgq::ValidEntries(void)
 }
 
 //==============================================================================
+
 void mq_DebugDump(void)
 {
 }

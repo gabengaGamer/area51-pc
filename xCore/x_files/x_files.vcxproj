@@ -179,7 +179,6 @@
     <ClCompile Include="Implementation\x_flare.cpp" />
     <ClCompile Include="Implementation\x_locale.cpp" />
     <ClCompile Include="Implementation\x_log.cpp" />
-    <ClCompile Include="Implementation\x_malloc.cpp" />
     <ClCompile Include="Implementation\x_math.cpp" />
     <ClCompile Include="Implementation\x_math_basic.cpp" />
     <ClCompile Include="Implementation\x_math_misc.cpp" />
@@ -198,6 +197,7 @@
     <ClCompile Include="Implementation\x_vsprintf.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Implementation\x_tool_private.hpp" />
     <ClInclude Include="x_array.hpp" />
     <ClInclude Include="x_bitmap.hpp" />
     <ClInclude Include="x_bitstream.hpp" />
@@ -244,8 +244,7 @@
     <ClInclude Include="Implementation\x_semaphore_private.hpp" />
     <ClInclude Include="Implementation\x_stdio_private.hpp" />
     <ClInclude Include="Implementation\x_threads_private.hpp" />
-    <ClInclude Include="Implementation\x_tool_private.hpp" />
-  </ItemGroup>  
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

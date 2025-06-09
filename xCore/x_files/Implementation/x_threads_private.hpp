@@ -16,26 +16,11 @@ typedef void x_thread_boot_fn(void*);
 #include <windows.h>
 #endif
 
-#if defined TARGET_XBOX
-#   ifdef CONFIG_RETAIL
-#       define D3DCOMPILE_PUREDEVICE 1
-#   endif
-#   include <xtl.h>
-#endif
-
-#if defined(TARGET_GCN)
-#include <os.h>
-#endif
-
 struct xthread_private
 {
             s32                 ThreadId;
 
-#ifdef TARGET_GCN
-            OSThread            TaskControlBlock;
-#endif
-
-#if (defined TARGET_PC)||(defined TARGET_XBOX)
+#ifdef TARGET_PC
             HANDLE              Handle;
             HANDLE              SuspendSemaphore;
             s32                 SemaphoreCount;

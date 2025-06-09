@@ -30,13 +30,6 @@
 
 #include <stdio.h>
 
-#ifdef TARGET_XBOX
-#   ifdef CONFIG_RETAIL
-#       define D3DCOMPILE_PUREDEVICE 1
-#   endif
-#   include <xtl.h>
-#endif
-
 //==============================================================================
 //  DEFINES
 //==============================================================================
@@ -55,10 +48,6 @@
 
 #ifdef x_realloc
 #undef x_realloc
-#endif
-
-#if defined(TARGET_PS2) && defined(X_DEBUG)
-#define DO_MEMORY_FILLS
 #endif
 
 #define MEMORY_ALLOC_FILL_VALUE (0xFEEDC0DE)
@@ -166,12 +155,6 @@ static xbool UsingNew = FALSE;
 static mem_header   Anchor;
 #endif
 
-// Craig: Do not remove this without speaking with me!!!
-#if defined( TARGET_PS2 ) && !defined( X_RETAIL )
-byte g_MemoryBallast[1*1024];
-#endif
-
-
 #if defined(USE_OWNER_STACK)
 
 void x_MemQueryExcludeAll( void )
@@ -183,6 +166,8 @@ void x_MemQueryExcludeAll( void )
     OwnerRequirementExists = FALSE;
 }
 
+//==============================================================================
+
 void x_MemQueryIncludeAll( void )
 {
     // Nuke the inclusion list
@@ -191,6 +176,8 @@ void x_MemQueryIncludeAll( void )
     x_memset( OwnerExclude, 0, sizeof(OwnerExclude) );
     OwnerRequirementExists = FALSE;
 }
+
+//==============================================================================
 
 void x_MemQueryInclude( const char* pString )
 {
@@ -202,6 +189,8 @@ void x_MemQueryInclude( const char* pString )
         }
     }
 }
+
+//==============================================================================
 
 void x_MemQueryRequire( const char* pString )
 {
@@ -220,6 +209,8 @@ void x_MemQueryRequire( const char* pString )
     ASSERT( count <= 1 );
 }
 
+//==============================================================================
+
 void x_MemQueryExclude( const char *pString )
 {
     for( s32 i=1 ; i<nOwnerStrings ; i++ )
@@ -228,6 +219,8 @@ void x_MemQueryExclude( const char *pString )
             OwnerExclude[i] = TRUE;
     }
 }
+
+//==============================================================================
 
 s32 x_MemQuery( xbool bIncludeAll )
 {
@@ -300,8 +293,6 @@ void x_MemInit( void )
     #else
         #ifdef TARGET_PC
             // Not supported by PC compiler
-            Anchor.pFunction    = "unknown" ;
-        #elif defined( TARGET_XBOX )
             Anchor.pFunction    = "unknown" ;
         #else
             Anchor.pFunction    = __PRETTY_FUNCTION__;
@@ -451,6 +442,8 @@ u8 InsertOwner( const char* pOwnerName )
     }
 }
 
+//==============================================================================
+
 void x_MemPushOwner( const char* pOwnerName )
 {
     (void)pOwnerName;
@@ -596,6 +589,8 @@ void* x_debug_malloc( s32         NBytes,
     return( pHeader + 1 );
 }
 
+//==============================================================================
+
 void* x_debug_realloc( void* pMemory, s32 NewNBytes, const char* pFileName, s32 Line )
 {
     ASSERT( NewNBytes >= 0 );
@@ -670,6 +665,8 @@ void* x_debug_realloc( void* pMemory, s32 NewNBytes, const char* pFileName, s32 
     return( pHeader + 1 );
 }
 
+//==============================================================================
+
 void x_debug_free( void* pMemory, const char* pFileName, s32 Line )
 {
     (void)pFileName;
@@ -731,6 +728,8 @@ extern void x_DebugSetCause( const char* pCause );
 static s32 s_Free,s_Largest,s_Fragments;
 #endif
 
+//==============================================================================
+
 void* x_malloc( s32 NBytes )
 {
     ASSERT( NBytes >= 0 );
@@ -752,7 +751,7 @@ void* x_malloc( s32 NBytes )
         ASSERTS( pHeader, 
                  (const char*)xfs( "Heap exhuasted.  Malloc %d bytes.", NBytes ) );
 
-#if defined( CONFIG_VIEWER ) || (defined( CONFIG_QA )&& !defined TARGET_XBOX)
+#if defined(CONFIG_VIEWER) || defined(CONFIG_QA)
         x_DebugSetCause( xfs( "OUT OF MEMORY - need: %d\n"
                               "                       free: %d\n"
                               "                    largest: %d\n"
@@ -802,6 +801,8 @@ void* x_malloc( s32 NBytes )
 #endif // USE_MEM_HEADERS
 
 }
+
+//==============================================================================
 
 void* x_realloc( void* pMemory, s32 NewNBytes )
 {
@@ -888,6 +889,8 @@ void* x_realloc( void* pMemory, s32 NewNBytes )
 
 #endif // USE_MEM_HEADERS
 }
+
+//==============================================================================
 
 void x_free( void* pMemory )
 {
@@ -1141,6 +1144,8 @@ void x_MemDump( void )
     x_MemDump( "MemDump.txt", TRUE );
 }
 
+//==============================================================================
+
 #if defined(X_MEM_DEBUG)
 static const char* LimitLength(const char* pString,s32 count) 
 {
@@ -1152,6 +1157,8 @@ static const char* LimitLength(const char* pString,s32 count)
 
     return pString;
 }
+
+//==============================================================================
 
 #if defined(TARGET_DEV) && !defined(USE_OWNER_STACK)
 static const char* PrettyFunction(char* pOut, const char* pString, s32 Count)
@@ -1203,6 +1210,7 @@ static const char* PrettyFunction(char* pOut, const char* pString, s32 Count)
 }
 #endif
 #endif
+
 //==============================================================================
 
 void x_MemDump( const char* pFileName, xbool bCommaSeperated )
@@ -1527,93 +1535,13 @@ s32 x_MemGetPtrSize( void* pMemory )
 //  using a heap of my own. The malloc() function will still go to the old
 //  place.
 //
-#if defined(TARGET_XBOX) || defined(TARGET_PS2) || defined(TARGET_GCN)
-//==============================================================================
-// BW - This is a copy of the structure from the x_malloc.cpp file. This will be placed
-// in a header file properly when we clean up x_malloc.cpp.
-
-    struct mallinfo 
-    {
-      int arena;    /* non-mmapped space allocated from system */
-      int ordblks;  /* number of free chunks */
-      int smblks;   /* number of fastbin blocks */
-      int hblks;    /* number of mmapped regions */
-      int hblkhd;   /* space in mmapped regions */
-      int usmblks;  /* maximum total allocated space */
-      int fsmblks;  /* space available in freed fastbin blocks */
-      int uordblks; /* total allocated space */
-      int fordblks; /* total free space */
-      int keepcost; /* top-most, releasable (via malloc_trim) space */
-      int flargest; /* Largest free block */
-    };
-
-    extern "C"
-    {
-        void*           dlmalloc(int, size_t);
-        void            dlfree(int, void*);
-        void*           dlrealloc(int, void*,size_t);
-        struct mallinfo dlmallinfo(int);
-    }
-
-    void* sys_mem_realloc( void* pBlock, u32 nBytes )
-	{
-        void *pNew = dlrealloc(0,pBlock,nBytes);
-		return pNew;
-	}
-
-    void* sys_mem_malloc( u32 nBytes )
-	{
-#if defined(X_DEBUG)
-        static xbool s_ForceMemDump = FALSE;
-        if (s_ForceMemDump)
-        {
-            x_EndAtomic();
-            s_ForceMemDump = FALSE;
-            x_MemDump();
-            x_BeginAtomic();
-        }
-#endif
-        void* pBlock = dlmalloc(0, nBytes );
-
-        #ifdef TARGET_XBOX
-        if( ! pBlock )
-        {
-        static u32 Req  = nBytes;
-        static u32 Size = x_MemGetFree();
-            D3D__pDevice->Clear( 0,0,D3DCLEAR_TARGET,D3DCOLOR_RGBA( 0,127,0,0),0.0f,0 );
-            D3D__pDevice->Present( 0,0,0,0 );
-        __asm int 3
-        __asm int 3
-        }
-        #endif
-
-        return pBlock;
-	}
-
-    void sys_mem_free( void* pBlock )
-	{
-		dlfree(0,pBlock);
-	}
-
-    void x_MemGetFree( s32& Free, s32& Largest, s32& Fragments)
-    {
-        // the dlmallinfo needs to happen in an atomic state, but
-        // x_MemGetFree may get called from various points, so
-        // do a check and put us into atomic if necessary
-        x_BeginAtomic();
-        mallinfo m = dlmallinfo(0);
-        Free      = m.fordblks;
-        Largest   = m.flargest;
-        Fragments = m.ordblks;
-        x_EndAtomic();
-    }
-
-#else
 
     void* sys_mem_realloc( void* pBlock, u32 nBytes )
     {
         return realloc( pBlock, size_t(nBytes) );
     }
+
+    //---------------------------------------------------------
 
     void* sys_mem_malloc( u32 nBytes )
     {
@@ -1621,10 +1549,14 @@ s32 x_MemGetPtrSize( void* pMemory )
         return malloc( nBytes );
     }
 
+    //---------------------------------------------------------
+
     void sys_mem_free( void* pBlock )
     {
         free( pBlock );
     }
+
+    //---------------------------------------------------------
 
     void    x_MemGetFree( s32& Free, s32& Largest, s32& Fragments)
     {
@@ -1633,68 +1565,14 @@ s32 x_MemGetPtrSize( void* pMemory )
         Fragments = -1;
     }
 
-#endif
+    //---------------------------------------------------------
 
-//---------------------------------------------------------
-// System specific memory alloc init routines
-#if defined(TARGET_PS2)
-
-void* __heap_start;
-void* __heap_end;
-
-extern byte _stack_size[];
-extern byte _memory_size[];
-extern byte _end[];
-extern s32  AdditionalMemoryForDebug;
-
-void    sys_mem_Init(void)
-{
-    // End of code
-    __heap_start = _end;
-
-#if defined(CONFIGURATION_DEBUG) || defined(CONFIGURATION_RELEASE) || defined(X_DEBUG)
-
-    volatile s32 testvar;
-    if ( (u32)&testvar > X_MEGABYTE(32) )
+    void    sys_mem_Init(void)
     {
-        __heap_end   = (void*)( X_MEGABYTE(32) - (u32)_stack_size + AdditionalMemoryForDebug);
     }
-    else
-
-#endif
-    {
-        __heap_end   = (void*)( (u32)_memory_size - (u32)_stack_size );
-    }
-}
-
-#elif defined(TARGET_GCN)
-
-void* __heap_start;
-void* __heap_end;
-
-void    sys_mem_Init(void)
-{
-    __heap_start = OSGetArenaLo();
-    __heap_end   = OSGetArenaHi();
-    OSSetArenaLo(__heap_end);
-}
-
-#elif defined(TARGET_XBOX)
-
-//void* __heap_start;
-//void* __heap_end;
-void    sys_mem_Init(void)
-{
-}
-
-#else
-void    sys_mem_Init(void)
-{
-}
-#endif
-
 
 //============================================================================
+
 s32 x_MemGetFree(void)
 {
     s32 Free,Largest,Fragments;
@@ -1704,6 +1582,7 @@ s32 x_MemGetFree(void)
 }
 
 //============================================================================
+
 s32 x_MemGetUsed(void)
 {
 #if defined(TARGET_PC)
@@ -1714,146 +1593,3 @@ s32 x_MemGetUsed(void)
     return m.uordblks;
 #endif
 }
-
-#ifdef TARGET_PS2
-
-#ifdef X_DEBUG
-s32 AdditionalMemoryForDebug = 8*1048576;
-#else
-s32 AdditionalMemoryForDebug = (3*1024+512)*1024;
-#endif  // X_DEBUG
-
-#endif      // TARGET_PS2
-
-//============================================================================
-//**** FUNCTIONS REQUIRED FOR the Doug Lea Malloc code
-
-//////////////////////////////////////////////////////////////////////////////
-//
-// FUNCTION     PS2_GetHeapMem().
-// DESCRIPTION  the MORECORE function
-//
-//////////////////////////////////////////////////////////////////////////////
-
-#if defined(TARGET_PS2) || defined(TARGET_GCN)
-extern void* __heap_start;
-extern void* __heap_end;
-
-void* sys_mem_sbrk(int pool, int iSize)
-{
-    static char* pcEndOfMem = 0;
-    (void)pool;
-
-    if (0 == pcEndOfMem)
-    {
-        u32 HeapStart =  (u32)__heap_start;
-        u32 HeapEnd = (u32)__heap_end;
-
-        pcEndOfMem = (char*) (HeapEnd & ~4095 );
-
-        if (iSize > 0)
-        {
-            // align prog end to page size (4096)
-            unsigned int uHeapStart = HeapStart;
-            uHeapStart = (uHeapStart + 4095) & ~4095;
-            return (void*)uHeapStart;
-        }    
-    }
-
-    if (iSize == 0)
-    {
-        // return end of mem
-        return pcEndOfMem;
-    }
-    else
-    {
-        return (void*)-1;
-    }
-}
-// End function PS2_GetHeapMem().
-
-void sys_mem_oom(void)
-{
-}
-#endif
-
-
-#if defined(TARGET_XBOX)
-
-#define XBOX_MEM_SIZE u32(1048576.0f*22.75f+0.5f)
-
-void* __heap_start=NULL;
-void* __heap_end  =NULL;
-
-
-
-#if defined(X_MEM_DEBUG)
-
-static byte* DebugMainHeapStart = NULL;
-static byte* DebugMainHeapEnd   = NULL;
-
-void SetLoggerBounds()
-{
-    LOG_MALLOC( DebugMainHeapStart, 1, "FALSE--TELLING LOGGER OUR LOW ADDRESS", 0 );
-    LOG_FREE( DebugMainHeapStart, "FALSE--TELLING LOGGER OUR LOW ADDRESS", 0 );
-
-    LOG_MALLOC( DebugMainHeapEnd - 1, 1, "FALSE--TELLING LOGGER OUR HIGH ADDRESS", 0 );
-    LOG_FREE( DebugMainHeapEnd + XBOX_MEM_SIZE - 1, "FALSE--TELLING LOGGER OUR HIGH ADDRESS", 0 );
-}
-#endif //X_MEM_DEBUG
-
-
-void* sys_mem_sbrk(int pool, int iSize)
-{
-    static char* pcEndOfMem = 0;
-    (void)pool;
-
-    ASSERT( !pool );
-
-    static byte* s_MainHeapStart = NULL;
-    static byte* s_MainHeapEnd   = NULL;
-
-    if( !s_MainHeapStart )
-    {
-        s_MainHeapStart=( byte* )GlobalAlloc(GMEM_FIXED,XBOX_MEM_SIZE);
-
-        if( !s_MainHeapStart )
-        {
-            __asm int 3 // cannot use assert
-        }
-
-        s_MainHeapEnd = s_MainHeapStart + XBOX_MEM_SIZE;
-#if defined(X_MEM_DEBUG)
-        DebugMainHeapStart = s_MainHeapStart;
-        DebugMainHeapEnd = s_MainHeapEnd;
-#endif
-
-        ASSERTS(s_MainHeapStart,"Unable to allocate heap 1 memory");
-        if (iSize > 0)
-        {
-            // align prog end to page size (4096)
-            unsigned int uHeapStart = (unsigned int)s_MainHeapStart;
-            uHeapStart= (uHeapStart + 4095) & ~4095;
-            return (void*)uHeapStart;
-        }    
-    }
-
-    if (iSize == 0)
-    {
-        // return end of mem
-        return s_MainHeapEnd;
-    }
-    else
-    {
-        return (void*)-1;
-    }
-}
-
-void sys_mem_oom(void)
-{
-    mallinfo m0 = dlmallinfo(0);
-    mallinfo m1 = dlmallinfo(1);
-
-}
-
-#endif

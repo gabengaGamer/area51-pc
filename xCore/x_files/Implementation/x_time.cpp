@@ -27,87 +27,14 @@
 //==============================================================================
 
 //******************************************************************************
-#ifdef TARGET_PS2
-//==============================================================================
-// This is defined as BUSCLK / 256 / 1000 (BUSCLK == 147.456Mhz)
-#define XTICKS_PER_MS       576
-#define XTICKS_PER_SECOND   (XTICKS_PER_MS * 1000)
-
-#include "eeregs.h"
-
-static volatile xtick s_TimerWrapCount;
-static s32 s_HandlerId;
-
-//==============================================================================
-static s32 s_TimerWrapCallback(s32)
-{
-    // Overflow flag MUST have been set
-    ASSERT(DGET_T0_MODE() & (1<<11) );
-    // Make sure timer will fire off an interrupt when it wraps again
-    DPUT_T0_MODE( DGET_T0_MODE());
-    s_TimerWrapCount++;
-    ExitHandler();
-    return 0;
-}
-
-//==============================================================================
-void x_TimeInit( void )
-{
-    s_HandlerId = AddIntcHandler(INTC_TIM0,s_TimerWrapCallback,0);
-    ASSERT(s_HandlerId >= 0);
-    s_TimerWrapCount=0;
-    DPUT_T0_COUNT(0);
-    DPUT_T0_MODE(   (2<<0)|         // Clock is BUSCLK/256
-                    (1<<7)|         // Continue counting
-                    (1<<9)          // Overflow will generate an interrupt
-                    );
-    EnableIntc(INTC_TIM0);
-}
-
-//==============================================================================
-void x_TimeKill( void )
-{    
-    DisableIntc(INTC_TIM0);
-    RemoveIntcHandler(INTC_TIM0,s_HandlerId);
-}
-
-//==============================================================================
-xtick x_GetTime( void )
-{
-    xtick Ret;
-    xtick start;
-    u16   time;
-
-    
-    start = s_TimerWrapCount;
-
-    time = *T0_COUNT;
-    // If an interrupt occured between the wrap read and the hw timer read,
-    // then we reload everything.
-    if (start!= s_TimerWrapCount)
-    {
-        start = s_TimerWrapCount;
-        time = *T0_COUNT;
-    }
-
-    Ret = (start << 16) | time;
-
-    return( Ret );
-}
-
-//==============================================================================
-#endif // TARGET_PS2
-//******************************************************************************
-
-//******************************************************************************
-#if defined(TARGET_PC) || defined(TARGET_XBOX)
+#ifdef TARGET_PC
 //==============================================================================
 
 #if defined(TARGET_PC)
 #include <windows.h>
 #else
 #ifdef CONFIG_RETAIL
-#   define D3DCOMPILE_PUREDEVICE 1	
+#   define D3DCOMPILE_PUREDEVICE 1    
 #endif
 #include <xtl.h>
 #endif
@@ -166,71 +93,17 @@ xtick x_GetTime( void )
 #endif // TARGET_PC
 //******************************************************************************
 
-//******************************************************************************
-#ifdef TARGET_GCN
-//==============================================================================
-
-#include <dolphin/os.h>
-
-#define XTICKS_PER_MS       (OS_TIMER_CLOCK / 1000)
-#define XTICKS_PER_SECOND   (OS_TIMER_CLOCK)
-
-OSTime s_BaseTick;
-//==============================================================================
-
-void x_TimeInit( void )
-{    
-
-    s_BaseTick = OSGetTime();
-}
-
-//==============================================================================
-
-void x_TimeKill( void )
-{    
-}
-
-//==============================================================================
-
-xtick x_GetTime( void )
-{   
-    xtick Ticks;
-
-    OSTime  T = (OSGetTime()-s_BaseTick);
-    
-    Ticks = (s64)T;
-
-    return( Ticks );
-}
-
-//==============================================================================
-
-//==============================================================================
-#endif // TARGET_GCN
-//******************************************************************************
-
-
-
 //==============================================================================
 //  PLATFORM INDEPENDENT CODE
 //==============================================================================
 
-
-#ifdef TARGET_PS2
-#define ONE_HOUR ((s32)XTICKS_PER_MS * 1000 * 60 * 60)
-#if XTICKS_PER_MS != 576
-#error Craig: XTICKS_PER_MS has changed from 576 x_time will no longer work correctly
-#endif
-#else
 #define ONE_HOUR ((s64)XTICKS_PER_MS * 1000 * 60 * 60)
-#endif
-
-
 #define ONE_DAY  ((s64)XTICKS_PER_MS * 1000 * 60 * 60 * 24)
 
 //
 // This is so we can see these values in the debugger
 //
+
 xtick s_XTICKS_PER_MS   = (xtick)XTICKS_PER_MS;
 xtick s_XTICKS_PER_DAY  = (xtick)ONE_DAY;
 xtick s_XTICKS_PER_HOUR = (xtick)ONE_HOUR;
@@ -253,28 +126,19 @@ s64 x_GetTicksPerSecond ( void )
 
 f32 x_TicksToMs( xtick Ticks )
 {
-#ifdef TARGET_PS2
-    ASSERT( Ticks < ONE_HOUR );
-    return( ((s32)Ticks) / (f32)XTICKS_PER_MS );
-#else
     #ifndef X_EDITOR
         ASSERT( Ticks < ONE_DAY );
     #endif
     // We do the multiple casting here to try and preserve as much accuracy as possible
     //return( (f32)(     Ticks) / (f32)XTICKS_PER_MS );
     return f32(f64(Ticks)/f64(s_PCFrequency2)*1000);
-#endif
 }
 
 //==============================================================================
 
 f64 x_TicksToSec( xtick Ticks )
 {
-#ifdef TARGET_PS2
-    return( ((u32)Ticks) / ((f32)XTICKS_PER_MS * 1000.0f) );
-#else
     return( ((f64)Ticks) / ((f64)(XTICKS_PER_MS * 1000)) );
-#endif
 }
 
 //==============================================================================
@@ -295,7 +159,7 @@ xtimer::xtimer( void )
 }
 
 //==============================================================================
-#include "..\x_context.hpp"
+
 void xtimer::Start( void )
 {
     //CONTEXT( "xtimer::Start" );
@@ -342,15 +206,10 @@ f32 xtimer::StopMs( void )
         m_Running    = FALSE;
     }
 
-#ifdef TARGET_PS2
-    ASSERT( m_TotalTime < ONE_HOUR );
-    return( ((s32)m_TotalTime) / (f32)XTICKS_PER_MS );
-#else
     #ifndef X_EDITOR
         ASSERT( m_TotalTime < ONE_DAY );
     #endif
     return( (f32)(m_TotalTime) / (f32)XTICKS_PER_MS );
-#endif
 }
 
 //==============================================================================
@@ -364,15 +223,10 @@ f32 xtimer::StopSec( void )
         m_Running    = FALSE;
     }
 
-#ifdef TARGET_PS2
-    ASSERT( m_TotalTime < ONE_HOUR );
-    return( ((s32)m_TotalTime) / ((f32)XTICKS_PER_MS * 1000.0f) );
-#else
     #ifndef X_EDITOR
         ASSERT( m_TotalTime < ONE_DAY );
     #endif
     return( (f32)(m_TotalTime) / ((f32)XTICKS_PER_MS * 1000.0f) );
-#endif
 }
 
 //==============================================================================
@@ -391,15 +245,10 @@ f32 xtimer::ReadMs( void ) const
     if( m_Running )  Ticks = m_TotalTime + (x_GetTime() - m_StartTime);
     else             Ticks = m_TotalTime;
 
-#ifdef TARGET_PS2
-    ASSERT( Ticks < ONE_HOUR );
-    return( ((s32)Ticks) / (f32)XTICKS_PER_MS );
-#else
     #ifndef X_EDITOR
         ASSERT( Ticks < ONE_DAY );
     #endif
     return( (f32)(Ticks) / (f32)XTICKS_PER_MS );
-#endif
 }
 
 //==============================================================================
@@ -410,12 +259,7 @@ f32 xtimer::ReadSec( void ) const
     if( m_Running )  Ticks = m_TotalTime + (x_GetTime() - m_StartTime);
     else             Ticks = m_TotalTime;
 
-#ifdef TARGET_PS2
-    ASSERT( Ticks < ONE_HOUR );
-    return( ((s32)Ticks) / ((f32)XTICKS_PER_MS * 1000.0f) );
-#else
     return( (f32)(Ticks) / ((f32)XTICKS_PER_MS * 1000.0f) );
-#endif
 }
 
 //==============================================================================
@@ -448,15 +292,10 @@ f32 xtimer::TripMs( void )
         m_NSamples++;
     }
 
-#ifdef TARGET_PS2
-    ASSERT( Ticks < ONE_HOUR );
-    return( ((s32)Ticks) / (f32)XTICKS_PER_MS );
-#else
     #ifndef X_EDITOR
         ASSERT( Ticks < ONE_DAY );
     #endif
     return( (f32)(Ticks) / (f32)XTICKS_PER_MS );
-#endif
 }
 
 //==============================================================================
@@ -473,15 +312,10 @@ f32 xtimer::TripSec( void )
         m_NSamples++;
     }
 
-#ifdef TARGET_PS2
-    ASSERT( Ticks < ONE_HOUR );
-    return( ((s32)Ticks) / ((f32)XTICKS_PER_MS * 1000.0f) );
-#else
     #ifndef X_EDITOR
         ASSERT( Ticks < ONE_DAY );
     #endif
     return( (f32)(Ticks) / ((f32)XTICKS_PER_MS * 1000.0f) );
-#endif
 }
 
 //==============================================================================

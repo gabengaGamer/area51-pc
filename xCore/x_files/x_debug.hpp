@@ -41,23 +41,20 @@
 typedef void x_debug_msg_fn     ( const char* pBuffer );
 typedef void x_debug_crash_fn   ( char *pBuffer, s32 Length );
 #ifdef X_RETAIL
-	#if defined( TARGET_XBOX ) || defined( TARGET_PC )
-		//	The #define approach doesn't work on VC 7.x
-		inline void         x_DebugMsg( ... ){ }
-		inline void         x_DebugLog( ... ){ }
+    #ifdef TARGET_PC
+        //    The #define approach doesn't work on VC 7.x
+        inline void         x_DebugMsg( ... ){ }
+        inline void         x_DebugLog( ... ){ }
         inline void         x_DebugMsgSetFunction( x_debug_msg_fn* CallBack ){ }
-		inline const char*  x_DebugGetVersionString( void ){ return ""; }
-		inline void         x_DebugSetVersionString( ... ){ }
-	#else
-		// Evaporate functions on GCN / PS2
-        inline void         x_DebugNull( ... ){ }
-        inline void         x_DebugMsg ( ... ){ }
-		#define             x_DebugMsg if(0)x_DebugNull
-		#define             x_DebugLog if(0)x_DebugNull
-        #define             x_DebugMsgSetFunction if(0)x_DebugNull
-		inline const char*  x_DebugGetVersionString( ){ return ""; }
-		inline void         x_DebugSetVersionString( ... ){ }
-	#endif
+        inline const char*  x_DebugGetVersionString( void ){ return ""; }
+        inline void         x_DebugSetVersionString( ... ){ }
+    #else
+        inline void         x_DebugMsg( ... ){ }
+        inline void         x_DebugLog( ... ){ }
+        inline void         x_DebugMsgSetFunction( x_debug_msg_fn* CallBack ){ }
+        inline const char*  x_DebugGetVersionString( void ){ return ""; }
+        inline void         x_DebugSetVersionString( ... ){ }
+    #endif
 #else
 void        x_DebugMsg              ( const char* pFormatStr, ... );
 void        x_DebugMsg              ( s32 Channel, const char* pFormatStr, ... );
@@ -91,23 +88,6 @@ x_debug_crash_fn*   x_DebugGetCrashFunction( void );
 // If we can implement BREAK properly on any given platform, do it!
 
 #ifdef TARGET_PC
-#define BREAK      { __asm int 3 }
-#endif
-
-#ifdef TARGET_PS2
-#define BREAK       asm("break 1");
-#endif
-
-#ifdef TARGET_GCN
-#ifdef TARGET_GCN_DEV
-    #define BREAK       asm(".long 0");
-#else
-    extern "C" void VIFlush(void);
-    #define BREAK       while(1){VIFlush();};
-#endif
-#endif
-
-#ifdef TARGET_XBOX
 #define BREAK      { __asm int 3 }
 #endif
 
@@ -207,10 +187,6 @@ extern volatile s32 DDBZ;   // Debug Divide By Zero
 //  Define the run-time validation macros.
 //------------------------------------------------------------------------------
 
-#ifdef TARGET_XBOX
-#pragma warning( disable : 4127 ) // conditional expression is constant
-#endif
-
 #ifdef X_ASSERT
 
   #ifdef X_ASSERT_LITE             
@@ -244,47 +220,24 @@ extern volatile s32 DDBZ;   // Debug Divide By Zero
 template< class T, int Count >
 struct save_array
 {
-	T Item[ Count ];
-	inline T& operator[] ( int Index )
-	{
-		ASSERT( Index >= 0 );
-		ASSERT( Index < Count );
-		return Item[ Index ];
-	}
+    T Item[ Count ];
+    inline T& operator[] ( int Index )
+    {
+        ASSERT( Index >= 0 );
+        ASSERT( Index < Count );
+        return Item[ Index ];
+    }
 };
-
-//------------------------------------------------------------------------------
-/*
-template< class T >
-struct db_parray
-{
-	T* pItem;
-
-	inline void operator = ( T* pMem )
-	{
-		pItem = pMem;
-		ASSERT( pItem );
-	}
-
-	inline T& operator[] ( s32 Index )
-	{
-		ASSERT( Index >= 0 );
-		ASSERT( x_MemPointerValidation( pItem, sizeof(T)*Index ) );
-		return pItem[ Index ];
-	}
-};
-*/
 
 //------------------------------------------------------------------------------
 
 #ifdef X_DEBUG
-	#define array(  Type, VarName, Count ) save_array < Type, Count > VarName
-	#define parray( Type, VarName        ) db_parray< Type >        VarName
+    #define array(  Type, VarName, Count ) save_array < Type, Count > VarName
+    #define parray( Type, VarName        ) db_parray< Type >        VarName
 #else
-	#define array(  Type, VarName, Count ) Type  VarName[ Count ]
-	#define parray( Type, VarName        ) Type* VarName
+    #define array(  Type, VarName, Count ) Type  VarName[ Count ]
+    #define parray( Type, VarName        ) Type* VarName
 #endif
-
 
 //==============================================================================
 //  Customizable run-time failure (RTF) behavior.

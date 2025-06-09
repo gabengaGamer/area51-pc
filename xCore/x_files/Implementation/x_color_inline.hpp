@@ -30,44 +30,30 @@ inline xcolor::xcolor( void )
 
 inline xcolor::xcolor( const xcolor& C )
 {
-#ifdef TARGET_PS2
-    ASSERT( ((u32)this & 0x03) == 0 );
-    *(u32*)&B = *(u32*)&C.B;
-#else
     A = C.A;
     R = C.R;
     G = C.G;
     B = C.B;
-#endif
 }
 
 //==============================================================================
 
 inline xcolor::xcolor( u8 aR, u8 aG, u8 aB, u8 aA )
 {   
-#ifdef TARGET_PS2
-    *(u32*)&B = ((u32)aA<<24) | ((u32)aR<<16) | ((u32)aG<<8) | ((u32)aB);
-#else
     A = aA;
     R = aR;
     G = aG;
     B = aB;
-#endif
 }
 
 //==============================================================================
 
 inline xcolor::xcolor( u32 ARGB )
 {   
-#ifdef TARGET_PS2
-    ASSERT( ((u32)this & 0x03) == 0 );
-    *(u32*)&B = ARGB;
-#else
     A = (u8)((ARGB & 0xFF000000) >> 24);
     R = (u8)((ARGB & 0x00FF0000) >> 16);
     G = (u8)((ARGB & 0x0000FF00) >>  8);
     B = (u8)((ARGB & 0x000000FF) >>  0);
-#endif
 }
 
 //==============================================================================
@@ -84,15 +70,10 @@ inline void xcolor::Set( u8 aR, u8 aG, u8 aB, u8 aA )
 
 inline void xcolor::Set( u32 ARGB )
 {   
-#ifdef TARGET_PS2
-    ASSERT( ((u32)this & 0x03) == 0 );
-    *(u32*)&B = ARGB;
-#else
     A = (u8)((ARGB & 0xFF000000) >> 24);
     R = (u8)((ARGB & 0x00FF0000) >> 16);
     G = (u8)((ARGB & 0x0000FF00) >>  8);
     B = (u8)((ARGB & 0x000000FF) >>  0);
-#endif
 }
 
 //==============================================================================
@@ -109,15 +90,10 @@ inline void xcolor::Random( u8 aA )
 
 inline const xcolor& xcolor::operator = ( const xcolor& C )
 {
-#ifdef TARGET_PS2
-    ASSERT( ((u32)this & 0x03) == 0 );
-    *(u32*)&B = *(u32*)&C.B;
-#else
     A = C.A;
     R = C.R;
     G = C.G;
     B = C.B;
-#endif
 
     return( *this );
 }
@@ -126,15 +102,10 @@ inline const xcolor& xcolor::operator = ( const xcolor& C )
 
 inline const xcolor& xcolor::operator = ( u32 ARGB )
 {   
-#ifdef TARGET_PS2
-    ASSERT( ((u32)this & 0x03) == 0 );
-    *(u32*)&B = ARGB;
-#else
     A = (u8)((ARGB & 0xFF000000) >> 24);
     R = (u8)((ARGB & 0x00FF0000) >> 16);
     G = (u8)((ARGB & 0x0000FF00) >>  8);
     B = (u8)((ARGB & 0x000000FF) >>  0);
-#endif
 
     return( *this );
 }

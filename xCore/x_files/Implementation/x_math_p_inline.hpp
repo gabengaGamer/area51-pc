@@ -147,29 +147,6 @@ void plane::Transform( const matrix4& M )
     FORCE_ALIGNED_16( &M );
 
     (*this) = M * (*this);
-
-    /*
-    vector3 Axis1, Axis2;
-    vector3 P[3];
-
-    GetOrthoVectors( Axis1, Axis2 );
-
-    P[0] = Normal * -D;
-
-    // Scale up D
-    if( x_abs(D) > 1.0f )
-    {
-        Axis1 *= D; // Scaling up by D although it's unecessary to 
-        Axis2 *= D; // help get P1,P2 around same magnitude as P0
-    }
-
-    P[1] = P[0] + Axis1;  
-    P[2] = P[0] + Axis2;  
-
-    M.Transform( P, P, 3 );
-
-    Setup( P[0], P[1], P[2] );
-    */
 }
 
 //==============================================================================

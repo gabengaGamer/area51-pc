@@ -19,14 +19,9 @@ static byte*    s_pBufferEnd;
 static byte*    s_pCurrent;
 static byte*    s_pLastFrame;
 
-#if   defined(TARGET_PC)
+#ifdef TARGET_PC
 static u8       s_Platform = PROFILE_PLATFORM_PC;
-#elif defined(TARGET_PS2)
-static u8       s_Platform = PROFILE_PLATFORM_PS2;
-#elif defined(TARGET_GCN)
-static u8       s_Platform = PROFILE_PLATFORM_GCN;
-#elif defined(TARGET_XBOX)
-static u8       s_Platform = PROFILE_PLATFORM_XBOX;
+#else
 #endif
 
 //==============================================================================
@@ -73,6 +68,8 @@ void profile_Init( const char* pFileName, s32 BufferSize, byte* pBuffer )
     profile_FrameBegin();
 }
 
+//==============================================================================
+
 void profile_Kill( void )
 {
     ASSERT( s_Initialized );
@@ -108,6 +105,8 @@ void profile_Flush( void )
     s_pLastFrame = s_pBufferStart;
 }
 
+//==============================================================================
+
 void profile_DiscardFrame( void )
 {
     ASSERT( s_Initialized );
@@ -137,6 +136,8 @@ void profile_FrameBegin( void )
     s_pCurrent += sizeof(xtick);
 }
 
+//==============================================================================
+
 void profile_FrameEnd( void )
 {
     ASSERT( s_Initialized );
@@ -154,6 +155,8 @@ void profile_FrameEnd( void )
     s_pCurrent += sizeof(xtick);
 }
 
+//==============================================================================
+
 void profile_Begin( s32 SectionID )
 {
     ASSERT( s_Initialized );
@@ -168,6 +171,8 @@ void profile_Begin( s32 SectionID )
     x_memcpy( s_pCurrent, &Tick, sizeof(xtick) );
     s_pCurrent += sizeof(xtick);
 }
+
+//==============================================================================
 
 void profile_End( s32 SectionID )
 {
@@ -184,6 +189,8 @@ void profile_End( s32 SectionID )
     s_pCurrent += sizeof(xtick);
 }
 
+//==============================================================================
+
 void profile_Event( s32 EventID )
 {
     ASSERT( s_Initialized );
@@ -198,6 +205,8 @@ void profile_Event( s32 EventID )
     x_memcpy( s_pCurrent, &Tick, sizeof(xtick) );
     s_pCurrent += sizeof(xtick);
 }
+
+//==============================================================================
 
 void profile_Stat( s32 StatID, s32 Value )
 {
@@ -215,6 +224,8 @@ void profile_Stat( s32 StatID, s32 Value )
     x_memcpy( s_pCurrent, &Tick, sizeof(xtick) );
     s_pCurrent += sizeof(xtick);
 }
+
+//==============================================================================
 
 void profile_Stat( s32 StatID, f32 Value )
 {
@@ -245,6 +256,8 @@ void x_profile::stat::Reset( void )
     Count = 0;
 };
 
+//==============================================================================
+
 void x_profile::stat::Add( f32 Value )
 {
     if( Value < Min ) Min = Value;
@@ -252,6 +265,8 @@ void x_profile::stat::Add( f32 Value )
     Total += Value;
     Count++;
 };
+
+//==============================================================================
 
 f32 x_profile::stat::GetAverage( void )
 {

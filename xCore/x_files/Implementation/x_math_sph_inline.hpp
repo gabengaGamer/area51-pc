@@ -19,6 +19,7 @@
 //==============================================================================
 
 //==============================================================================
+
 inline
 sphere::sphere( void )
 {    
@@ -26,6 +27,7 @@ sphere::sphere( void )
 }
 
 //==============================================================================
+
 inline
 sphere::sphere( const vector3& aPos, f32 aR )
 {
@@ -37,6 +39,7 @@ sphere::sphere( const vector3& aPos, f32 aR )
 }
 
 //==============================================================================
+
 inline
 sphere::sphere( const bbox& BBox )
 {
@@ -48,6 +51,7 @@ sphere::sphere( const bbox& BBox )
 }
 
 //==============================================================================
+
 inline
 void sphere::Clear( void )
 {
@@ -57,6 +61,7 @@ void sphere::Clear( void )
 }
 
 //==============================================================================
+
 inline
 void sphere::Set( const vector3& aPos, f32 aR )
 {
@@ -68,6 +73,7 @@ void sphere::Set( const vector3& aPos, f32 aR )
 }
 
 //==============================================================================
+
 inline
 bbox sphere::GetBBox( void ) const
 {
@@ -77,6 +83,7 @@ bbox sphere::GetBBox( void ) const
 }
 
 //==============================================================================
+
 inline
 xbool sphere::TestIntersect( const vector3& P0, const vector3& P1 ) const
 {
@@ -89,6 +96,7 @@ xbool sphere::TestIntersect( const vector3& P0, const vector3& P1 ) const
 }
 
 //==============================================================================
+
 inline
 s32 sphere::Intersect( f32& t0, f32& t1, const vector3& P0, const vector3& P1 ) const
 {
@@ -157,6 +165,7 @@ s32 sphere::Intersect( f32& t0, f32& t1, const vector3& P0, const vector3& P1 ) 
 }
 
 //==============================================================================
+
 inline
 xbool sphere::Intersect( f32& t0, const vector3& P0, const vector3& P1 ) const
 {
@@ -192,6 +201,7 @@ xbool sphere::Intersect( f32& t0, const vector3& P0, const vector3& P1 ) const
 }
 
 //==============================================================================
+
 inline
 s32 sphere::TestIntersection( const plane& Plane ) const
 {
@@ -206,8 +216,3 @@ s32 sphere::TestIntersection( const plane& Plane ) const
     if( Distance < 0 ) return -1;
     return 1;
 }
-
-
-
-//xbool sphere::Intersect       ( vector3& P0, vector3& P1, vector3& P3 ) const;
-//xbool sphere::Intersect       ( sphere& Sphere ) const;

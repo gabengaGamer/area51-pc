@@ -8,16 +8,7 @@
 #include "windows.h"
 #endif
 
-#ifdef TARGET_XBOX
-#   ifdef CONFIG_RETAIL
-#       define D3DCOMPILE_PUREDEVICE 1
-#   endif
-#   include <xtl.h>
-#endif
-
 #include "../x_types.hpp"
-
-//#if !defined(X_RETAIL)
 
 //==============================================================================
 //  xtool
@@ -85,11 +76,8 @@ public:
 
 protected:
     xbool           m_Initialized;
-#if defined(TARGET_PC) || defined(TARGET_XBOX)
+#ifdef TARGET_PC
     HANDLE          m_hPipe;
-#endif
-#if defined(TARGET_PS2) || defined(TARGET_GCN)
-    s32             m_hPipe;
 #endif
     packet_header   m_PacketHeader;
     void*           m_pPacketData;

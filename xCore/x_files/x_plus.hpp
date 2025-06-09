@@ -41,7 +41,7 @@
 #include "x_memory.hpp"
 #endif
 
-#if( defined TARGET_XBOX )||( defined TARGET_PC )
+#ifdef TARGET_PC
 #include <string.h>
 #endif
 
@@ -106,16 +106,6 @@
                                       ((((u32)(A)) & 0x00FF0000) >> 8) | \
                                       ((((u32)(A)) & 0x0000FF00) << 8) ) 
 
-#ifdef TARGET_GCN
-#define ENDIAN_SWAP_64(A)           ( (((u64)(A)) >> 56) |  \
-                                      (((u64)(A)) << 56) |  \
-                                      ((((u64)(A)) & 0x00FF000000000000ULL) >> 40)   | \
-                                      ((((u64)(A)) & 0x000000000000FF00ULL) << 40)   | \
-                                      ((((u64)(A)) & 0x0000FF0000000000ULL) >> 24)   | \
-                                      ((((u64)(A)) & 0x0000000000FF0000ULL) << 24)   | \
-                                      ((((u64)(A)) & 0x000000FF00000000ULL) >> 8)    | \
-                                      ((((u64)(A)) & 0x00000000FF000000ULL) << 8) ) 
-#else
 #define ENDIAN_SWAP_64(A)           ( (((u64)(A)) >> 56) |  \
                                       (((u64)(A)) << 56) |  \
                                       ((((u64)(A)) & 0x00FF000000000000) >> 40)   | \
@@ -124,7 +114,6 @@
                                       ((((u64)(A)) & 0x0000000000FF0000) << 24)   | \
                                       ((((u64)(A)) & 0x000000FF00000000) >> 8)    | \
                                       ((((u64)(A)) & 0x00000000FF000000) << 8) ) 
-#endif
 
 #ifdef LITTLE_ENDIAN
     #define LITTLE_ENDIAN_16(A)     A 
@@ -154,21 +143,6 @@ typedef va_list x_va_list;
 //  TYPES
 //==============================================================================
 
-//==============================================================================
-//  
-//  Mutex class.
-//
-//==============================================================================
-/*
-class mutex
-{
-public:
-            mutex   ( void );
-           ~mutex   ( void );
-    void    Enter   ( void );
-    void    Exit    ( void );
-};
-*/
 //==============================================================================
 //
 //  Define a "standard compare function" type.  Functions which match this 
@@ -266,11 +240,7 @@ void* x_bsearch ( const void*     pKey,           // Reference item to search fo
 //==============================================================================
 
 struct vector2;
-#ifdef TARGET_PS2
-struct vector3;
-#else
 union vector3;
-#endif
 struct xcolor;
 
 //==============================================================================
@@ -358,7 +328,7 @@ private:
 
 s32     x_strlen    ( const char* pStr );
 char*   x_strcpy    (       char* pDest,    const char* pSrc );
-char*	x_strdup	( const char* pStr );
+char*    x_strdup    ( const char* pStr );
 char*   x_strcat    (       char* pFront,   const char* pBack );
 s32     x_strcmp    ( const char* pStr1,    const char* pStr2 );
 char*   x_strncpy   (       char* pDest,    const char* pSrc,   s32 Count );
@@ -376,7 +346,7 @@ char*   x_strtolower( char* pStr );
 
 s32     x_wstrlen   ( const xwchar* pWideStr );
 xwchar* x_wstrcpy   (       xwchar* pWideDest,    const xwchar* pWideSrc );
-xwchar*	x_strdup	( const xwchar* pWideStr );
+xwchar*    x_strdup    ( const xwchar* pWideStr );
 xwchar* x_wstrcat   (       xwchar* pWideFront,   const xwchar* pWideBack );
 s32     x_wstrcmp   ( const xwchar* pWideStr1,    const xwchar* pWideStr2 );
 s32     x_wstricmp  ( const xwchar* pWideStr1,    const xwchar* pWideStr2 );
@@ -395,16 +365,6 @@ char*   x_mstrcat   (   char* pDest, const xwchar* pSrc );
 xwchar* x_mstrcat   ( xwchar* pDest, const   char* pSrc );
 xwchar* x_mstristr  ( const xwchar* pMainStr, const   char* pSubStr );
 char*   x_mstristr  ( const   char* pMainStr, const xwchar* pSubStr );
-
-//------------------------------------------------------------------------------
-//  Xbox intrinsic versions.
-//------------------------------------------------------------------------------
-#if defined(TARGET_XBOX) && !defined(X_DEBUG)
-    #define x_strlen strlen
-    #define x_strcpy strcpy
-    #define x_strcat strcat
-    #define x_strcmp strcmp
-#endif
 
 //==============================================================================
 //  Standard block memory functions.
@@ -428,15 +388,6 @@ s32     x_memcmp    ( const void* pBuf1, const void* pBuf2, s32 Count );
 void*   x_memmove   ( void* pDest, const void* pSrc, s32 Count );
 void*   x_memchr    ( void* pBuf, s32 C, s32 Count );
 u32     x_chksum    ( const void* pBuf, s32 Count );
-
-//------------------------------------------------------------------------------
-//  Xbox intrinsic versions.
-//------------------------------------------------------------------------------
-#if defined(TARGET_XBOX) && !defined(X_DEBUG)
-    #define x_memcpy memcpy
-    #define x_memset memset
-    #define x_memcmp memcmp
-#endif
 
 //==============================================================================
 //  Standard ASCII conversion functions.

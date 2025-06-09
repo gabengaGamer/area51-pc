@@ -24,16 +24,6 @@
 #include "..\x_debug.hpp"
 #endif
 
-//------------------------------------------------------------------------------
-
-#ifdef TARGET_XBOX
-#include <xtl.h>
-#endif
-
-#ifdef TARGET_PS2
-#include <libscf.h>
-#endif
-
 //==============================================================================
 //  VARIABLES
 //==============================================================================
@@ -56,6 +46,7 @@ static const char* const s_pLanguageStr[] =
     "KOR",      // XL_LANG_KOREAN
     "POR",      // XL_LANG_PORTUGUESE
     "CHI"       // XL_LANG_TCHINESE
+    "RUS"       // XL_LANG_RUSSIAN
 };
 
 //==============================================================================
@@ -75,49 +66,31 @@ static const char* const s_pLanguageStr[] =
 //  Application is responsible for determining whether the returned language is 
 //  supported, and supply a suitable default.
 //==============================================================================
-const x_language x_GetConsoleLanguage( void )
-{
-#if defined (TARGET_XBOX)
 
+const x_language x_GetConsoleLanguage( void )
+{    
+/* XBOX
     switch( XGetLanguage() )
     {
-        case XC_LANGUAGE_PORTUGUESE:return XL_LANG_PORTUGUESE;	break;
-        case XC_LANGUAGE_JAPANESE:	return XL_LANG_JAPANESE;	break;
-        case XC_LANGUAGE_TCHINESE:	return XL_LANG_TCHINESE;	break;
-        case XC_LANGUAGE_KOREAN:	return XL_LANG_KOREAN;	    break;
-        case XC_LANGUAGE_ENGLISH:	return XL_LANG_ENGLISH;	    break;
-        case XC_LANGUAGE_FRENCH:	return XL_LANG_FRENCH;  	break;
-        case XC_LANGUAGE_GERMAN:	return XL_LANG_GERMAN;	    break;
-        case XC_LANGUAGE_SPANISH:	return XL_LANG_SPANISH;	    break;
-        case XC_LANGUAGE_ITALIAN:	return XL_LANG_ITALIAN;	    break;
+        case XC_LANGUAGE_PORTUGUESE:return XL_LANG_PORTUGUESE;    break;
+        case XC_LANGUAGE_JAPANESE:    return XL_LANG_JAPANESE;    break;
+        case XC_LANGUAGE_TCHINESE:    return XL_LANG_TCHINESE;    break;
+        case XC_LANGUAGE_KOREAN:    return XL_LANG_KOREAN;        break;
+        case XC_LANGUAGE_ENGLISH:    return XL_LANG_ENGLISH;        break;
+        case XC_LANGUAGE_FRENCH:    return XL_LANG_FRENCH;      break;
+        case XC_LANGUAGE_GERMAN:    return XL_LANG_GERMAN;        break;
+        case XC_LANGUAGE_SPANISH:    return XL_LANG_SPANISH;        break;
+        case XC_LANGUAGE_ITALIAN:    return XL_LANG_ITALIAN;        break;
 
         default:
             ASSERTS(0, "XBOX returned unknown language.");
             return XL_LANG_ENGLISH;
     }
-
-#elif defined (TARGET_PS2)
-
-    switch( sceScfGetLanguage() )
-    {
-        case SCE_JAPANESE_LANGUAGE:     return XL_LANG_JAPANESE;    break;
-        case SCE_ENGLISH_LANGUAGE:	    return XL_LANG_ENGLISH;	    break;
-        case SCE_FRENCH_LANGUAGE:	    return XL_LANG_FRENCH;	    break;
-        case SCE_SPANISH_LANGUAGE:	    return XL_LANG_SPANISH; 	break;
-        case SCE_GERMAN_LANGUAGE:	    return XL_LANG_GERMAN;	    break;
-        case SCE_ITALIAN_LANGUAGE:      return XL_LANG_ITALIAN;	    break;
-        case SCE_DUTCH_LANGUAGE:        return XL_LANG_DUTCH;       break;
-        case SCE_PORTUGUESE_LANGUAGE:   return XL_LANG_PORTUGUESE;  break;
-
-        default:
-            ASSERTS(0, "PS2 returned unknown language.");
-            return XL_LANG_ENGLISH;
-    }
-
-#elif defined (TARGET_PC)
-
+*/    
+#ifdef TARGET_PC
     return XL_LANG_ENGLISH;
-
+#else
+    return XL_LANG_ENGLISH;
 #endif
 }
 
@@ -132,9 +105,10 @@ const x_language x_GetConsoleLanguage( void )
 // Remarks:
 //  This is only supported on Xbox - PS2 and PC have no equivelent.
 //==============================================================================
+
 const x_console_territory x_GetConsoleRegion  ( void )
 {
-#if defined (TARGET_XBOX)
+/* XBOX
     switch( XGetGameRegion() )
     {
         default:
@@ -142,10 +116,9 @@ const x_console_territory x_GetConsoleRegion  ( void )
         case XC_GAME_REGION_JAPAN:      return XL_TERRITORY_JAPAN; 
         case XC_GAME_REGION_RESTOFWORLD:return XL_TERRITORY_EUROPE;
     }
-#else
+*/
     ASSERTS(0, "This function is no supported on this platform");
     return XL_TERRITORY_AMERICA;
-#endif
 }
 
 
@@ -161,6 +134,7 @@ const x_console_territory x_GetConsoleRegion  ( void )
 //  Once the application determines the correct default language (or it is changed
 //  in the case we have a menu), we set the system language here.
 //==============================================================================
+
 void x_SetLocale( const x_language lang )
 {
     s_LocaleLang = lang;
@@ -178,6 +152,7 @@ void x_SetLocale( const x_language lang )
 //  Use THIS instead of GetLanguage() for run-time operations that 
 //  require the current language.
 //==============================================================================
+
 const x_language x_GetLocale( void )
 {
     return s_LocaleLang;
@@ -194,6 +169,7 @@ const x_language x_GetLocale( void )
 // Remarks:
 //  Use for filename manipulation to select localized assets.
 //==============================================================================
+
 const char * x_GetLocaleString( void )
 {
     ASSERT( s_LocaleLang < XL_NUM_LANGUAGES );
@@ -212,6 +188,7 @@ const char * x_GetLocaleString( void )
 // Remarks:
 //  
 //==============================================================================
+
 const char * x_GetLocaleString( const x_language lang )
 {
     ASSERT( lang < XL_NUM_LANGUAGES );
@@ -230,6 +207,7 @@ const char * x_GetLocaleString( const x_language lang )
 // Remarks:
 //  
 //==============================================================================
+
 void x_SetTerritory( const x_console_territory territory )
 {
     s_Territory = territory;
@@ -246,6 +224,7 @@ void x_SetTerritory( const x_console_territory territory )
 // Remarks:
 //  
 //==============================================================================
+
 const x_console_territory x_GetTerritory( void )
 {
     return s_Territory;
@@ -263,6 +242,7 @@ const x_console_territory x_GetTerritory( void )
 //   Currently, European build is censored.
 //  
 //==============================================================================
+
 const xbool x_IsBuildCensored( void )
 {
     return (x_GetTerritory() == XL_TERRITORY_EUROPE);

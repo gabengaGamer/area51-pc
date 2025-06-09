@@ -40,11 +40,7 @@ static bool s_EnableMemory = false;
 // Global variables
 //==============================================================================
 log_control  g_LogControl = {
-#if defined(TARGET_XBOX)
-                              false,            // Disable logging system - must be disabled until NETFS initializes.
-#else
                               true,             // Enable logging system
-#endif
                               true,             // Enable messages
                               true,             // Enable warnings
                               true,             // Enable errors
@@ -117,19 +113,6 @@ void log_TTY( const char* pChannel, const char* pSeverity, const char* pMessage 
     (void)pChannel;
     (void)pSeverity;
     (void)pMessage;
-/*
-    if( !g_LogControl.Enable )
-        return;
-
-    x_DebugMsg( "%s %6.3f \"%s\" \"%s\" \"%s\" %d\n",
-                pSeverity,
-                (f32)x_GetTimeSec(),
-                pChannel,
-                pMessage,
-                s_pFileName,
-                s_LineNumber
-              );
-*/
 }
 
 //==============================================================================
@@ -271,6 +254,8 @@ static void vlog_WARNING( const char* pChannel, const char* pFormatStr, x_va_lis
     }
 }
 
+//==============================================================================
+
 void clog_WARNING( xbool Condition, const char* pChannel, const char* pFormatStr, ... )
 {
     if( Condition )
@@ -289,6 +274,8 @@ void clog_WARNING( xbool Condition, const char* pChannel, const char* pFormatStr
     else
         log_UNLOCK();
 }
+
+//==============================================================================
 
 void log_WARNING( const char* pChannel, const char* pFormatStr, ... )
 {

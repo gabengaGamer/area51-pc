@@ -20,21 +20,23 @@
 // it a semaphore! Only difference is that mutexes should have been Entered()
 // before they can be Exited()
 //==============================================================================
+
 // When a mutex is initially constructed, it is unlocked
+
 class xmutex
 {
 public:
                         xmutex          ( void );
                        ~xmutex          ( void );
 
-			xbool		Enter		    ( s32 Flags );
+            xbool        Enter            ( s32 Flags );
             xbool       Exit            ( s32 Flags );
 
-			void        Enter           ( void )			{ Enter(X_TH_BLOCK); };
-			void		Exit			( void )			{ Exit(X_TH_BLOCK);  };
+            void        Enter           ( void )            { Enter(X_TH_BLOCK); };
+            void        Exit            ( void )            { Exit(X_TH_BLOCK);  };
 
-            void        Acquire         ( void )			{ Enter(X_TH_BLOCK); };          // Same functionality as enter
-            void        Release         ( void )			{ Exit(X_TH_BLOCK);  };          // Same functionality as exit
+            void        Acquire         ( void )            { Enter(X_TH_BLOCK); };          // Same functionality as enter
+            void        Release         ( void )            { Exit(X_TH_BLOCK);  };          // Same functionality as exit
 
             xbool       Acquire         ( s32 Flags )       { return Enter(Flags);  };
             xbool       Release         ( s32 Flags )       { return Exit(Flags);  };

@@ -57,9 +57,6 @@
     <ClCompile Include="Implementation\x_log.cpp">
       <Filter>Implementation</Filter>
     </ClCompile>
-    <ClCompile Include="Implementation\x_malloc.cpp">
-      <Filter>Implementation</Filter>
-    </ClCompile>
     <ClCompile Include="Implementation\x_math.cpp">
       <Filter>Implementation</Filter>
     </ClCompile>
@@ -99,16 +96,7 @@
     <ClCompile Include="Implementation\x_threads_pc.cpp">
       <Filter>Implementation</Filter>
     </ClCompile>
-    <ClCompile Include="Implementation\x_threads_ps2.cpp">
-      <Filter>Implementation</Filter>
-    </ClCompile>
-    <ClCompile Include="Implementation\x_threads_xbox.cpp">
-      <Filter>Implementation</Filter>
-    </ClCompile>
     <ClCompile Include="Implementation\x_time.cpp">
-      <Filter>Implementation</Filter>
-    </ClCompile>
-    <ClCompile Include="Implementation\x_tool.cpp">
       <Filter>Implementation</Filter>
     </ClCompile>
     <ClCompile Include="Implementation\x_vsprintf.cpp">
@@ -117,109 +105,9 @@
     <ClCompile Include="Implementation\x_flare.cpp">
       <Filter>Under Construction</Filter>
     </ClCompile>
-    <ClCompile Include="Implementation\x_bitmap_inline.hpp">
-      <Filter>Implementation\Inline</Filter>
+    <ClCompile Include="Implementation\x_tool.cpp">
+      <Filter>Implementation</Filter>
     </ClCompile>
-    <ClCompile Include="Implementation\x_color_inline.hpp">
-      <Filter>Implementation\Inline</Filter>
-    </ClCompile>
-    <ClCompile Include="Implementation\x_math_bb_inline.hpp">
-      <Filter>Implementation\Inline</Filter>
-    </ClCompile>
-    <ClCompile Include="Implementation\x_math_inline.hpp">
-      <Filter>Implementation\Inline</Filter>
-    </ClCompile>
-    <ClCompile Include="Implementation\x_math_m3_inline.hpp">
-      <Filter>Implementation\Inline</Filter>
-    </ClCompile>
-    <ClCompile Include="Implementation\x_math_m4_inline.hpp">
-      <Filter>Implementation\Inline</Filter>
-    </ClCompile>
-    <ClCompile Include="Implementation\x_math_p_inline.hpp">
-      <Filter>Implementation\Inline</Filter>
-    </ClCompile>
-    <ClCompile Include="Implementation\x_math_q_inline.hpp">
-      <Filter>Implementation\Inline</Filter>
-    </ClCompile>
-    <ClCompile Include="Implementation\x_math_r3_inline.hpp">
-      <Filter>Implementation\Inline</Filter>
-    </ClCompile>
-    <ClCompile Include="Implementation\x_math_rect_inline.hpp">
-      <Filter>Implementation\Inline</Filter>
-    </ClCompile>
-    <ClCompile Include="Implementation\x_math_sph_inline.hpp">
-      <Filter>Implementation\Inline</Filter>
-    </ClCompile>
-    <ClCompile Include="Implementation\x_math_v2_inline.hpp">
-      <Filter>Implementation\Inline</Filter>
-    </ClCompile>
-    <ClCompile Include="Implementation\x_math_v3_inline.hpp">
-      <Filter>Implementation\Inline</Filter>
-    </ClCompile>
-    <ClCompile Include="Implementation\x_math_v4_inline.hpp">
-      <Filter>Implementation\Inline</Filter>
-    </ClCompile>
-    <ClCompile Include="Implementation\x_string_inline.hpp">
-      <Filter>Implementation\Inline</Filter>
-    </ClCompile>
-    <ClCompile Include="Implementation\x_array_private.hpp">
-      <Filter>Implementation\Private</Filter>
-    </ClCompile>
-    <ClCompile Include="Implementation\x_files_private.hpp">
-      <Filter>Implementation\Private</Filter>
-    </ClCompile>
-    <ClCompile Include="Implementation\x_log_private.hpp">
-      <Filter>Implementation\Private</Filter>
-    </ClCompile>
-    <ClCompile Include="Implementation\x_memory_private.hpp">
-      <Filter>Implementation\Private</Filter>
-    </ClCompile>
-    <ClCompile Include="Implementation\x_mqueue_private.hpp">
-      <Filter>Implementation\Private</Filter>
-    </ClCompile>
-    <ClCompile Include="Implementation\x_mutex_private.hpp">
-      <Filter>Implementation\Private</Filter>
-    </ClCompile>
-    <ClCompile Include="Implementation\x_semaphore_private.hpp">
-      <Filter>Implementation\Private</Filter>
-    </ClCompile>
-    <ClCompile Include="Implementation\x_stdio_private.hpp">
-      <Filter>Implementation\Private</Filter>
-    </ClCompile>
-    <ClCompile Include="Implementation\x_threads_private.hpp">
-      <Filter>Implementation\Private</Filter>
-    </ClCompile>
-    <ClCompile Include="Implementation\x_tool_private.hpp">
-      <Filter>Implementation\Private</Filter>
-    </ClCompile>
-    <ClCompile Include="..\3rdParty\PS2\Sony\sce\ee\gcc\ee\include\_ansi.h">
-      <Filter>Implementation\External</Filter>
-    </ClCompile>
-    <ClCompile Include="PS2-DevKit-Debug\_SN_in_VC.h">
-      <Filter>Implementation\External</Filter>
-    </ClCompile>
-    <ClCompile Include="..\3rdParty\PS2\Sony\sce\ee\gcc\ee\include\sys\config.h">
-      <Filter>Implementation\External</Filter>
-    </ClCompile>
-    <ClCompile Include="..\3rdParty\PS2\Sony\sce\ee\gcc\ee\include\machine\ieeefp.h">
-      <Filter>Implementation\External</Filter>
-    </ClCompile>
-    <ClCompile Include="..\3rdParty\PS2\Sony\sce\ee\gcc\ee\include\sys\reent.h">
-      <Filter>Implementation\External</Filter>
-    </ClCompile>
-    <ClCompile Include="..\3rdParty\PS2\Sony\sce\ee\include\sifdev.h">
-      <Filter>Implementation\External</Filter>
-    </ClCompile>
-    <ClCompile Include="x_flare.hpp">
-      <Filter>Under Construction</Filter>
-    </ClCompile>
-    <ClCompile Include="x_array.hpp" />
-    <ClCompile Include="x_color.hpp" />
-    <ClCompile Include="x_context.hpp" />
-    <ClCompile Include="x_memfile.hpp" />
-    <ClCompile Include="x_plus.hpp" />
-    <ClCompile Include="x_target.hpp" />
-    <ClCompile Include="x_types.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="x_bitmap.hpp" />
@@ -236,5 +124,41 @@
     <ClInclude Include="x_string.hpp" />
     <ClInclude Include="x_threads.hpp" />
     <ClInclude Include="x_time.hpp" />
+    <ClInclude Include="x_array.hpp" />
+    <ClInclude Include="x_color.hpp" />
+    <ClInclude Include="x_context.hpp" />
+    <ClInclude Include="x_flare.hpp" />
+    <ClInclude Include="x_memfile.hpp" />
+    <ClInclude Include="x_plus.hpp" />
+    <ClInclude Include="x_target.hpp" />
+    <ClInclude Include="x_types.hpp" />
+    <ClInclude Include="Implementation\x_bitmap_inline.hpp" />
+    <ClInclude Include="Implementation\x_color_inline.hpp" />
+    <ClInclude Include="Implementation\x_math_bb_inline.hpp" />
+    <ClInclude Include="Implementation\x_math_inline.hpp" />
+    <ClInclude Include="Implementation\x_math_m3_inline.hpp" />
+    <ClInclude Include="Implementation\x_math_m4_inline.hpp" />
+    <ClInclude Include="Implementation\x_math_p_inline.hpp" />
+    <ClInclude Include="Implementation\x_math_q_inline.hpp" />
+    <ClInclude Include="Implementation\x_math_r3_inline.hpp" />
+    <ClInclude Include="Implementation\x_math_rect_inline.hpp" />
+    <ClInclude Include="Implementation\x_math_sph_inline.hpp" />
+    <ClInclude Include="Implementation\x_math_v2_inline.hpp" />
+    <ClInclude Include="Implementation\x_math_v3_inline.hpp" />
+    <ClInclude Include="Implementation\x_math_v4_inline.hpp" />
+    <ClInclude Include="Implementation\x_string_inline.hpp" />
+    <ClInclude Include="Implementation\x_array_private.hpp" />
+    <ClInclude Include="Implementation\x_files_private.hpp" />
+    <ClInclude Include="Implementation\x_log_private.hpp" />
+    <ClInclude Include="Implementation\x_memory_private.hpp" />
+    <ClInclude Include="Implementation\x_mqueue_private.hpp" />
+    <ClInclude Include="Implementation\x_mutex_private.hpp" />
+    <ClInclude Include="Implementation\x_semaphore_private.hpp" />
+    <ClInclude Include="Implementation\x_stdio_private.hpp" />
+    <ClInclude Include="Implementation\x_threads_private.hpp" />
+    <ClInclude Include="Implementation\x_tool_private.hpp" />
+    <ClInclude Include="Implementation\x_tool_private.hpp">
+      <Filter>Implementation\Private</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

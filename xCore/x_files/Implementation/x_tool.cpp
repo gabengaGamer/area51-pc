@@ -8,14 +8,6 @@
 
 #include <stdio.h>
 
-#ifdef TARGET_PS2
-#include "sifdev.h"
-#endif
-
-#ifdef TARGET_GCN
-#include "libsn.h"
-#endif
-
 //==============================================================================
 //  Make this whole file go away in X_RETAIL builds
 //==============================================================================
@@ -30,15 +22,12 @@ xtool   g_Tool;
 
 s32     s_WriteOffset;
 s32     s_ReadOffset;
+
 //==============================================================================
 //  Static data
 //==============================================================================
 
-#if defined(TARGET_PS2) && defined(X_DEBUG)
-#define BUFFER_SIZE (32768) //(1*1024*1024) //(32768)
-#else
 #define BUFFER_SIZE 32768
-#endif // defined(TARGET_PS2) && defined(X_DEBUG)
 
 static u8   s_Buffer[BUFFER_SIZE];
 
@@ -78,6 +67,8 @@ HANDLE OpenPipe( void )
         NULL );
 }
 
+//==============================================================================
+
 xbool WritePipe( HANDLE hPipe, const void* pData, s32 nBytes, s32* pnWritten )
 {
     BOOL    result;
@@ -103,277 +94,18 @@ xbool WritePipe( HANDLE hPipe, const void* pData, s32 nBytes, s32* pnWritten )
     return TRUE;
 }
 
+//==============================================================================
+
 xbool ReadPipe( HANDLE hPipe, void* pData, s32 nBytes, s32* pnRead )
 {
     return ReadFile( hPipe, pData, nBytes, (DWORD*)pnRead, NULL );
 }
 
+//==============================================================================
+
 xbool ClosePipe( HANDLE hPipe )
 {
     return CloseHandle( hPipe );
-}
-
-#endif
-
-//==============================================================================
-//  XBOX specifics
-//==============================================================================
-
-#ifdef TARGET_XBOX
-
-// Note:
-// For the xbox only, we need to make sure that logging is disabled during the
-// logging calls to the x_files. This is because the x_files will try to log!
-
-// ***NOTE*** logging will only work for xbox if entropy is included and netfs
-// has been enabled.
-
-xbool   s_Busy = FALSE;
-
-void*   netfs_Open  ( const char* pFilename, const char* pMode );
-s32     netfs_Write ( void* Handle, const void* pBuffer, s32 Offset, s32 Length );
-s32     netfs_Read  ( void* Handle, void* pBuffer, s32 Offset, s32 Length );
-void    netfs_Close ( void* Handle );
-
-
-HANDLE OpenPipe( void )
-{
-    ASSERT( s_Busy == FALSE );
-    s_Busy = TRUE;
-    HANDLE Handle;
-    Handle = netfs_Open( "\\\\.\\pipe\\xlink", "wb" );
-
-    s_Busy = FALSE;
-    if( Handle == 0 )
-    {
-        return INVALID_HANDLE_VALUE;
-    }
-    s_WriteOffset   = 0;
-    s_ReadOffset    = 0;
-    return Handle;
-}
-
-xbool WritePipe( HANDLE hPipe, const void* pData, s32 nBytes, s32* pnWritten )
-{
-    ASSERT( s_Busy == FALSE );
-    s_Busy = TRUE;
-    *pnWritten = netfs_Write( (void*)hPipe, pData, s_WriteOffset, nBytes );
-    s_WriteOffset+= *pnWritten;
-    s_Busy = FALSE;
-
-    return (*pnWritten>=0);
-}
-
-xbool ReadPipe( HANDLE hPipe, void* pData, s32 nBytes, s32* pnRead )
-{
-    ASSERT( s_Busy == FALSE );
-    s_Busy = TRUE;
-    *pnRead = netfs_Read( (void*)hPipe, pData, s_ReadOffset, nBytes );
-    s_ReadOffset += *pnRead;
-    s_Busy = FALSE;
-    return (*pnRead>=0);
-}
-
-xbool ClosePipe( HANDLE hPipe )
-{
-    ASSERT( s_Busy == FALSE );
-    s_Busy = TRUE;
-    netfs_Close( (void*)hPipe );
-    s_Busy = FALSE;
-    return TRUE;
-}
-
-#endif
-
-//==============================================================================
-//  PS2 specifics
-//==============================================================================
-
-#ifdef TARGET_PS2
-
-typedef s32 HANDLE;
-#define INVALID_HANDLE_VALUE    -1
-
-HANDLE OpenPipe( void )
-{
-    s32 hPipe = sceOpen( "host0:\\\\.\\pipe\\xlink", SCE_RDWR );
-    return hPipe;
-}
-
-xbool WritePipe( HANDLE hPipe, const void* pData, s32 nBytes, s32* pnWritten )
-{
-    s32     FailCount       = 0;
-    s32     bytes_written   = 0;
-    s32     bytes_remaining = nBytes;
-    s32     total_written   = 0;
-    u8*     pBuffer         = (u8*)pData;
-    xbool   IsAtomic;
-
-    //****BAD BAD BAD BAD!
-    // We should not be trying to write to a file while the system is in an
-    // atomic state. This can happen like so: Allocations are threadsafe so
-    // they are done in an atomic state. All allocations are logged if memory
-    // logging is enabled. When enough go by, it trys to flush the log when it's
-    // in the atomic state. This causes the PS2 to mess up royally!
-    //
-    // NOTE: This has been set up to clear the atomic state since it's used
-    // in all sorts of different places.
-
-    IsAtomic = x_IsAtomic();
-    if( IsAtomic )
-    {
-        x_EndAtomic();
-    }
-
-    do
-    {
-        bytes_written = sceWrite( hPipe, pBuffer, bytes_remaining );
-
-        if( (bytes_written == 1) && (bytes_remaining != 1) )
-        {
-            FailCount++;
-        }
-
-        if( (bytes_written < 0) || (FailCount > 10) )
-        {
-            *pnWritten = total_written;
-            if( IsAtomic )
-            {
-                x_BeginAtomic();
-            }
-            return FALSE;
-        }
-
-        bytes_remaining -= bytes_written;
-        total_written   += bytes_written;
-        pBuffer         += bytes_written;
-    } while( bytes_remaining > 0 );
-
-    if( IsAtomic )
-    {
-        x_BeginAtomic();
-    }
-    *pnWritten = total_written;
-    return TRUE;
-}
-
-xbool ReadPipe( HANDLE hPipe, void* pData, s32 nBytes, s32* pnRead )
-{
-    s32 bytes_read      = 0;
-    s32 bytes_remaining = nBytes;
-    s32 total_read      = 0;
-    u8* pBuffer         = (u8*)pData;
-    xbool IsAtomic;
-
-    IsAtomic = x_IsAtomic();
-    if( IsAtomic )
-    {
-        x_EndAtomic();
-    }
-    do
-    {
-        bytes_read = sceRead( hPipe, pBuffer, bytes_remaining );
-        if( bytes_read < 0 )
-        {
-            *pnRead = total_read;
-            if( IsAtomic )
-            {
-                x_BeginAtomic();
-            }
-            return FALSE;
-        }
-
-        bytes_remaining -= bytes_read;
-        total_read      += bytes_read;
-        pBuffer         += bytes_read;
-    } while( bytes_remaining > 0 );
-
-    *pnRead = total_read;
-    if( IsAtomic )
-    {
-        x_BeginAtomic();
-    }
-    return TRUE;
-}
-
-xbool ClosePipe( HANDLE hPipe )
-{
-    return sceClose( hPipe );
-}
-
-#endif
-
-//==============================================================================
-//  GCN specifics
-//==============================================================================
-
-#ifdef TARGET_GCN
-
-typedef s32 HANDLE;
-#define INVALID_HANDLE_VALUE    -1
-
-HANDLE OpenPipe( void )
-{
-    HANDLE hPipe = PCopen( "\\\\.\\pipe\\xlink", 2, 0 );
-    return hPipe;
-}
-
-s32 WRITE_CHUNK_SIZE = 2048; //1024;
-
-xbool WritePipe( HANDLE hPipe, const void* pData, s32 nBytes, s32* pnWritten )
-{
-    s32 bytes_written   = 0;
-    s32 bytes_remaining = nBytes;
-    s32 total_written   = 0;
-    u8* pBuffer         = (u8*)pData;
-
-    do
-    {
-        s32 bytes_to_write = MIN( bytes_remaining, WRITE_CHUNK_SIZE );
-        bytes_written = PCwrite( hPipe, pBuffer, bytes_to_write );
-        if( bytes_written < 0 )
-        {
-            *pnWritten = total_written;
-            return FALSE;
-        }
-
-        bytes_remaining -= bytes_written;
-        total_written   += bytes_written;
-        pBuffer         += bytes_written;
-    } while( bytes_remaining > 0 );
-
-    *pnWritten = total_written;
-    return TRUE;
-}
-
-xbool ReadPipe( HANDLE hPipe, void* pData, s32 nBytes, s32* pnRead )
-{
-    s32 bytes_read      = 0;
-    s32 bytes_remaining = nBytes;
-    s32 total_read      = 0;
-    u8* pBuffer         = (u8*)pData;
-
-    do
-    {
-        bytes_read = PCread( hPipe, pBuffer, bytes_remaining );
-        if( bytes_read < 0 )
-        {
-            *pnRead = total_read;
-            return FALSE;
-        }
-
-        bytes_remaining -= bytes_read;
-        total_read      += bytes_read;
-        pBuffer         += bytes_read;
-    } while( bytes_remaining > 0 );
-
-    *pnRead = total_read;
-    return TRUE;
-}
-
-xbool ClosePipe( HANDLE hPipe )
-{
-    return PCclose( hPipe );
 }
 
 #endif
@@ -431,11 +163,6 @@ xtool::~xtool( void )
 
 //==============================================================================
 
-#if defined(TARGET_PS2) || defined(TARGET_GCN)
-extern void* __heap_start;
-extern void* __heap_end;
-#endif
-
 xbool xtool::Init( void )
 {
     m_hPipe             = INVALID_HANDLE_VALUE;
@@ -476,14 +203,8 @@ xbool xtool::Init( void )
 #endif
         Connect.Version         = 1;
         Connect.Platform        = TARGET_PLATFORM;
-
-#if defined(TARGET_PS2) || defined(TARGET_GCN)
-        Connect.HeapStart       = (u32)__heap_start;
-        Connect.HeapEnd         = (u32)__heap_end;
-#else
         Connect.HeapStart       = 0;
-        Connect.HeapEnd         = 0;
-#endif
+        Connect.HeapEnd         = 0;    
         Connect.TicksPerSecond  = x_GetTicksPerSecond();
         Connect.BaselineTicks   = x_GetTime();
         x_memset( Connect.ApplicationName, 0, sizeof(Connect.ApplicationName) );

@@ -12,24 +12,11 @@
 #include "..\x_math.hpp"
 #endif
 
-#ifdef TARGET_XBOX
-    #ifdef CONFIG_RETAIL
-        #define D3DCOMPILE_PUREDEVICE 1
-    #endif
-    #include<xtl.h>
-    #include<xgraphics.h>
-    #include "xmmintrin.h"
-    #include "D3dx8math.h"
-    #include <xgmath.h>
-#endif
-
 //==============================================================================
 //  DEFINES
 //==============================================================================
 
 #define M(row,column)   m_Cell[row][column]
-
-
 
 //==============================================================================
 //  FUNCTIONS
@@ -249,15 +236,6 @@ quaternion BlendToIdentity( const quaternion& Q0, f32 T )
 
 void matrix4::CleanRotation( void )
 {
-/*
-    static X_FILE* fp = NULL;
-    if( !fp ) fp = x_fopen("c:/temp/cleanrot.txt","wt");
-    ASSERT(fp);
-
-    x_fprintf(fp,"----------------------------------------------\n");
-    radian3 Rot = GetRotation();
-    x_fprintf(fp,"Rot   (%16.10f,%16.10f,%16.10f)\n",RAD_TO_DEG(Rot.Pitch),RAD_TO_DEG(Rot.Yaw),RAD_TO_DEG(Rot.Roll));
-*/
     {
         f32 ANGLE_SNAP_EPSILON = 0.001f;
         radian3 Rot = GetRotation();
@@ -288,21 +266,12 @@ void matrix4::CleanRotation( void )
         }
         SetRotation(Rot);
     }
-/*
-    Rot = GetRotation();
-    x_fprintf(fp,"Rot   (%16.10f,%16.10f,%16.10f)\n",RAD_TO_DEG(Rot.Pitch),RAD_TO_DEG(Rot.Yaw),RAD_TO_DEG(Rot.Roll));
-    x_fflush(fp);
-*/
 }
 
 //==============================================================================
 
 xbool matrix4::Invert( void )
 {
-#ifdef TARGET_XBOX
-    FLOAT Det;
-    XGMatrixInverse((XGMATRIX*)this,&Det,(CONST XGMATRIX*)this );
-#else
     f32 Scratch[4][8];
     f32 a;
     s32 i, j, k, jr, Pivot;
@@ -407,7 +376,6 @@ xbool matrix4::Invert( void )
             M(j,k) = Scratch[jr][k+4];
         }
     }
-#endif
 
     // Success!
     return( TRUE );
@@ -562,24 +530,12 @@ quaternion matrix4::GetQuaternion( void ) const
                 Q.Y = (O(1,2) + O(2,1)) * T;
                 break;
     }
-
-    // for consistency, force positive scalar component
-/*
-    if( Q.W < 0)
-    {
-        Q.X = -Q.X;
-        Q.Y = -Q.Y;
-        Q.Z = -Q.Z;
-        Q.W = -Q.W;
-    }
-*/
     Q.Normalize();
     return Q;
 }
 
 //==============================================================================
 
-#if !USE_VU0 && !(defined TARGET_XBOX)
 matrix4 operator * ( const matrix4& L, const matrix4& R )
 {
     matrix4 Result;
@@ -591,66 +547,7 @@ matrix4 operator * ( const matrix4& L, const matrix4& R )
         Result.M(i,3) = (L.M(0,3)*R.M(i,0)) + (L.M(1,3)*R.M(i,1)) + (L.M(2,3)*R.M(i,2)) + (L.M(3,3)*R.M(i,3));
     }
     return Result;
-
-/*
-    matrix4 Result;
-
-    // If the bottom row of both L and R are [0 0 0 1], then we can do a
-    // streamlined matrix multiplication.  Otherwise, we must do a full force
-    // multiplication.
-
-    if( (L.M(0,3) == 0.0f) && (R.M(0,3) == 0.0f) &&
-        (L.M(1,3) == 0.0f) && (R.M(1,3) == 0.0f) && 
-        (L.M(2,3) == 0.0f) && (R.M(2,3) == 0.0f) &&
-        (L.M(3,3) == 1.0f) && (R.M(3,3) == 1.0f) )
-    {
-        Result.M(0,0) = (L.M(0,0)*R.M(0,0)) + (L.M(1,0)*R.M(0,1)) + (L.M(2,0)*R.M(0,2));
-        Result.M(1,0) = (L.M(0,0)*R.M(1,0)) + (L.M(1,0)*R.M(1,1)) + (L.M(2,0)*R.M(1,2));
-        Result.M(2,0) = (L.M(0,0)*R.M(2,0)) + (L.M(1,0)*R.M(2,1)) + (L.M(2,0)*R.M(2,2));
-        Result.M(3,0) = (L.M(0,0)*R.M(3,0)) + (L.M(1,0)*R.M(3,1)) + (L.M(2,0)*R.M(3,2)) + L.M(3,0);
-
-        Result.M(0,1) = (L.M(0,1)*R.M(0,0)) + (L.M(1,1)*R.M(0,1)) + (L.M(2,1)*R.M(0,2));
-        Result.M(1,1) = (L.M(0,1)*R.M(1,0)) + (L.M(1,1)*R.M(1,1)) + (L.M(2,1)*R.M(1,2));
-        Result.M(2,1) = (L.M(0,1)*R.M(2,0)) + (L.M(1,1)*R.M(2,1)) + (L.M(2,1)*R.M(2,2));
-        Result.M(3,1) = (L.M(0,1)*R.M(3,0)) + (L.M(1,1)*R.M(3,1)) + (L.M(2,1)*R.M(3,2)) + L.M(3,1);
-
-        Result.M(0,2) = (L.M(0,2)*R.M(0,0)) + (L.M(1,2)*R.M(0,1)) + (L.M(2,2)*R.M(0,2));
-        Result.M(1,2) = (L.M(0,2)*R.M(1,0)) + (L.M(1,2)*R.M(1,1)) + (L.M(2,2)*R.M(1,2));
-        Result.M(2,2) = (L.M(0,2)*R.M(2,0)) + (L.M(1,2)*R.M(2,1)) + (L.M(2,2)*R.M(2,2));
-        Result.M(3,2) = (L.M(0,2)*R.M(3,0)) + (L.M(1,2)*R.M(3,1)) + (L.M(2,2)*R.M(3,2)) + L.M(3,2);
-
-        Result.M(0,3) = 0.0f;
-        Result.M(1,3) = 0.0f;
-        Result.M(2,3) = 0.0f;
-        Result.M(3,3) = 1.0f;
-    }
-    else
-    {
-        Result.M(0,0) = (L.M(0,0)*R.M(0,0)) + (L.M(1,0)*R.M(0,1)) + (L.M(2,0)*R.M(0,2)) + (L.M(3,0)*R.M(0,3));
-        Result.M(1,0) = (L.M(0,0)*R.M(1,0)) + (L.M(1,0)*R.M(1,1)) + (L.M(2,0)*R.M(1,2)) + (L.M(3,0)*R.M(1,3));
-        Result.M(2,0) = (L.M(0,0)*R.M(2,0)) + (L.M(1,0)*R.M(2,1)) + (L.M(2,0)*R.M(2,2)) + (L.M(3,0)*R.M(2,3));
-        Result.M(3,0) = (L.M(0,0)*R.M(3,0)) + (L.M(1,0)*R.M(3,1)) + (L.M(2,0)*R.M(3,2)) + (L.M(3,0)*R.M(3,3));
-
-        Result.M(0,1) = (L.M(0,1)*R.M(0,0)) + (L.M(1,1)*R.M(0,1)) + (L.M(2,1)*R.M(0,2)) + (L.M(3,1)*R.M(0,3));
-        Result.M(1,1) = (L.M(0,1)*R.M(1,0)) + (L.M(1,1)*R.M(1,1)) + (L.M(2,1)*R.M(1,2)) + (L.M(3,1)*R.M(1,3));
-        Result.M(2,1) = (L.M(0,1)*R.M(2,0)) + (L.M(1,1)*R.M(2,1)) + (L.M(2,1)*R.M(2,2)) + (L.M(3,1)*R.M(2,3));
-        Result.M(3,1) = (L.M(0,1)*R.M(3,0)) + (L.M(1,1)*R.M(3,1)) + (L.M(2,1)*R.M(3,2)) + (L.M(3,1)*R.M(3,3));
-
-        Result.M(0,2) = (L.M(0,2)*R.M(0,0)) + (L.M(1,2)*R.M(0,1)) + (L.M(2,2)*R.M(0,2)) + (L.M(3,2)*R.M(0,3));
-        Result.M(1,2) = (L.M(0,2)*R.M(1,0)) + (L.M(1,2)*R.M(1,1)) + (L.M(2,2)*R.M(1,2)) + (L.M(3,2)*R.M(1,3));
-        Result.M(2,2) = (L.M(0,2)*R.M(2,0)) + (L.M(1,2)*R.M(2,1)) + (L.M(2,2)*R.M(2,2)) + (L.M(3,2)*R.M(2,3));
-        Result.M(3,2) = (L.M(0,2)*R.M(3,0)) + (L.M(1,2)*R.M(3,1)) + (L.M(2,2)*R.M(3,2)) + (L.M(3,2)*R.M(3,3));
-
-        Result.M(0,3) = (L.M(0,3)*R.M(0,0)) + (L.M(1,3)*R.M(0,1)) + (L.M(2,3)*R.M(0,2)) + (L.M(3,3)*R.M(0,3));
-        Result.M(1,3) = (L.M(0,3)*R.M(1,0)) + (L.M(1,3)*R.M(1,1)) + (L.M(2,3)*R.M(1,2)) + (L.M(3,3)*R.M(1,3));
-        Result.M(2,3) = (L.M(0,3)*R.M(2,0)) + (L.M(1,3)*R.M(2,1)) + (L.M(2,3)*R.M(2,2)) + (L.M(3,3)*R.M(2,3));
-        Result.M(3,3) = (L.M(0,3)*R.M(3,0)) + (L.M(1,3)*R.M(3,1)) + (L.M(2,3)*R.M(3,2)) + (L.M(3,3)*R.M(3,3));
-    }
-
-    return( Result );
-*/
 }
-#endif
 
 //==============================================================================
 xbool bbox::Intersect( const vector3* pVert,

@@ -555,9 +555,9 @@ void bitstream::TruncateRangedF32( f32& Value, s32 NBits, f32 Min, f32 Max )
 
 void bitstream::TruncateRangedVector( vector3& N, s32 NBits, f32 Min, f32 Max )
 {
-	TruncateRangedF32(N.GetX(), NBits, Min, Max) ;
-	TruncateRangedF32(N.GetY(), NBits, Min, Max) ;
-	TruncateRangedF32(N.GetZ(), NBits, Min, Max) ;
+    TruncateRangedF32(N.GetX(), NBits, Min, Max) ;
+    TruncateRangedF32(N.GetY(), NBits, Min, Max) ;
+    TruncateRangedF32(N.GetZ(), NBits, Min, Max) ;
 }
 
 //=========================================================================
@@ -1121,13 +1121,9 @@ u32    bitstream::ReadRaw32          ( s32 NBits ) const
     m_Cursor += NBits;
 
     // Get mask highlighting bits that will be read
-#ifdef _WIN32
+#ifdef TARGET_PC
     u64 ReadMask = (0xFFFFFFFFFF >> LeftOffset) & 
                    (0xFFFFFFFFFF << RightOffset);
-#elif defined(TARGET_GCN)
-    u64 ReadMask = (0xFFFFFFFFFFULL >> LeftOffset) & 
-                   (0xFFFFFFFFFFULL << RightOffset);
-//#warning The 'ULL' above needs to be removed for gamecube when the compilers are upgraded.
 #else
     u64 ReadMask = (0xFFFFFFFFFFUL >> LeftOffset) & 
                    (0xFFFFFFFFFFUL << RightOffset);

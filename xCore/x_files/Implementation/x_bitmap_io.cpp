@@ -275,12 +275,6 @@ xbool xbitmap::Load( X_FILE* pFile )
     ToggleEndian();
     #endif
 
-    #ifdef TARGET_GCN
-    DCFlushRange((void *) m_Data.pPixel, m_DataSize);
-    if( m_ClutSize )
-        DCFlushRange((void *) m_pClut, m_ClutSize);
-    #endif  
-
     // We made it!
     Success = TRUE;
     goto EXIT;
@@ -298,9 +292,6 @@ xbool xbitmap::Load( const char* pFileName )
     xbool   Success;
 
     ASSERT( pFileName );
-#ifdef TARGET_XBOX
-    xbox_SetAllocationName( pFileName );
-#endif
     pFile = x_fopen( pFileName, "rb" );
     if( !pFile )  return( FALSE );
     Success = Load( pFile );
@@ -392,10 +383,6 @@ void xbitmap::ToggleEndian( void )
         }
     }
 }
-
-//==============================================================================
-
-#if !( defined( TARGET_PS2 ) && defined( CONFIG_RETAIL ) )
 
 //==============================================================================
 
@@ -686,9 +673,3 @@ xbool xbitmap::SaveMipsTGA( const char* pFileName ) const
 
     return( TRUE );
 }
-
-//==============================================================================
-
-#endif // !( defined( TARGET_PS2 ) && defined( CONFIG_RETAIL ) )
-
-//==============================================================================
