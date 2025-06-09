@@ -762,6 +762,8 @@ struct alpha_pal
     s32    NColors;
 };
 
+//==============================================================================
+
 void ComputeCenterAlpha( alpha_info* pAI, alpha_box* pAB )
 {
     // Compute weighted alpha
@@ -787,6 +789,8 @@ void ComputeCenterAlpha( alpha_info* pAI, alpha_box* pAB )
         pAB->Error += DE*pAI[i].HistCount;
     }
 }
+
+//==============================================================================
 
 xbool FindAlphaSplit( alpha_info* pAI, 
                      alpha_box* pAB,
@@ -826,29 +830,7 @@ xbool FindAlphaSplit( alpha_info* pAI,
 
     *pLB = BestLB;
     *pRB = BestRB;
-/*
-    // Confirm there are pixels in each box
-    s32 nPixelsInLBox=0;
-    s32 nPixelsInRBox=0;
-    {
-        s32 NColors = s_NPixels;
-        xcolor* pColor = s_Pixel;
-        while( NColors-- )
-        {
-            if( (pColor->A >= pLB->MinA) &&
-                (pColor->A <= pLB->MaxA) )
-                nPixelsInLBox++;
 
-            if( (pColor->A >= pRB->MinA) &&
-                (pColor->A <= pRB->MaxA) )
-                nPixelsInRBox++;
-
-            pColor++;
-        }
-    }
-
-    ASSERT( (nPixelsInLBox>0) && (nPixelsInRBox>0) );
-*/
     return TRUE;
 }
 
@@ -905,16 +887,6 @@ void quant_End( xcolor* pPalette, s32 aNColors, xbool UseAlpha )
             AI[ pColor->A ].HistCount++;
             pColor++;
         }
-
-        // Write out histogram
-/*
-        static s32 C=0;
-        X_FILE* fp = x_fopen(xfs("hist%03d.txt",C),"wt");
-        C++;
-        ASSERT(fp);
-        for( i=0; i<256; i++ )
-            x_fprintf(fp,"%3d] %5d\n",i,AI[i].HistCount);
-*/
 
         // Setup initial alpha boxes
         NAlphaBoxes = 1;
@@ -1053,14 +1025,6 @@ void quant_End( xcolor* pPalette, s32 aNColors, xbool UseAlpha )
                 AB[BI].NPalColors++;
             }
         }
-
-        // Dump alpha boxes
-/*
-        x_fprintf(fp,"------------------------------\n");
-        for( i=0; i<NAlphaBoxes; i++ )
-            x_fprintf(fp,"%3d] %3d <-> %3d  (%3d,%3d)  %3d   %5d  %5d  %5d\n",
-                i, AB[i].MinA, AB[i].MaxA, AB[i].NPalColors,AP[i].NColors, AB[i].Alpha, AB[i].Error, AB[i].NSrcColors, AB[i].TotalColors );
-*/
 
         // Build palettes
         {
