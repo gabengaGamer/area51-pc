@@ -48,7 +48,7 @@
 #endif
 
 //
-// 
+// PC Target macroses.
 //
 
 #ifdef TARGET_PC
@@ -56,7 +56,7 @@
     #define WIN32_LEAN_AND_MEAN
     #endif
     
-    #ifndef _WIN64
+    #ifndef WIN64
     #define POINTER_64
     #else
     #define POINTER_64 __ptr64
@@ -149,26 +149,27 @@
 //==============================================================================
 
 #ifdef TARGET_PC
-
   // Types for PC targets under Microsoft's Visual Studio.
   #ifdef _MSC_VER
-    typedef unsigned char       u8;
-    typedef unsigned short      u16;
-    typedef unsigned int        u32;
-    typedef unsigned __int64    u64;
-    typedef   signed char       s8;
-    typedef   signed short      s16;
-    typedef   signed int        s32;
-    typedef   signed __int64    s64;
-    typedef          float      f32;
-    typedef          double     f64;
+    typedef uint8_t             u8;
+    typedef uint16_t            u16;
+    typedef uint32_t            u32;
+    typedef uint64_t            u64;
+    typedef int8_t              s8;
+    typedef int16_t             s16;
+    typedef int32_t             s32;
+    typedef int64_t             s64;
+    typedef float               f32;
+    typedef double              f64;
     typedef u8                  byte;
     typedef s32                 xbool;
     typedef u16                 xwchar;
+    typedef uintptr_t           uaddr;
+    typedef ptrdiff_t           saddr;
+    typedef size_t              usize;
+    typedef intptr_t            sptr;
   #endif
-
-#define X_SECTION(x)
-  
+  #define X_SECTION(x) 
 #endif
 
 //------------------------------------------------------------------------------

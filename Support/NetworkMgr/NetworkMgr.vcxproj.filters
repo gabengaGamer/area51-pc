@@ -84,9 +84,6 @@
     <ClCompile Include="MatchMgr_WIN32.cpp">
       <Filter>Connection</Filter>
     </ClCompile>
-    <ClCompile Include="MatchMgr_XBOX.cpp">
-      <Filter>Connection</Filter>
-    </ClCompile>
     <ClCompile Include="ClientProxy.cpp">
       <Filter>ClientServer</Filter>
     </ClCompile>
@@ -193,15 +190,6 @@
       <Filter>UpdateMgr</Filter>
     </ClCompile>
     <ClCompile Include="Voice\headset_common.cpp">
-      <Filter>VoiceMgr</Filter>
-    </ClCompile>
-    <ClCompile Include="Voice\Headset_PS2.cpp">
-      <Filter>VoiceMgr</Filter>
-    </ClCompile>
-    <ClCompile Include="Voice\Headset_Stub.cpp">
-      <Filter>VoiceMgr</Filter>
-    </ClCompile>
-    <ClCompile Include="Voice\Headset_XBOX.cpp">
       <Filter>VoiceMgr</Filter>
     </ClCompile>
     <ClCompile Include="Voice\VoiceMgr.cpp">
@@ -475,67 +463,6 @@
       <Filter>Downloader\zlib</Filter>
     </ClCompile>
     <ClCompile Include="NetworkMgr.cpp" />
-    <ClCompile Include="Blowfish.h">
-      <Filter>Connection</Filter>
-    </ClCompile>
-    <ClCompile Include="DebugTicker.hpp">
-      <Filter>Connection</Filter>
-    </ClCompile>
-    <ClCompile Include="Dh.hpp">
-      <Filter>Connection</Filter>
-    </ClCompile>
-    <ClCompile Include="int.h">
-      <Filter>Connection</Filter>
-    </ClCompile>
-    <ClCompile Include="integer.h">
-      <Filter>Connection</Filter>
-    </ClCompile>
-    <ClCompile Include="MatchMgr.hpp">
-      <Filter>Connection</Filter>
-    </ClCompile>
-    <ClCompile Include="MsgQueue.hpp">
-      <Filter>GameMgr</Filter>
-    </ClCompile>
-    <ClCompile Include="Blender.hpp">
-      <Filter>NetObjects</Filter>
-    </ClCompile>
-    <ClCompile Include="NetObj.hpp">
-      <Filter>NetObjects</Filter>
-    </ClCompile>
-    <ClCompile Include="NetObjMgr.hpp">
-      <Filter>NetObjects</Filter>
-    </ClCompile>
-    <ClCompile Include="NetPickup.hpp">
-      <Filter>NetObjects\Defunct</Filter>
-    </ClCompile>
-    <ClCompile Include="NetPlayer.hpp">
-      <Filter>NetObjects\Defunct</Filter>
-    </ClCompile>
-    <ClCompile Include="NetRocket.hpp">
-      <Filter>NetObjects\Defunct</Filter>
-    </ClCompile>
-    <ClCompile Include="Move.hpp">
-      <Filter>MoveMgr</Filter>
-    </ClCompile>
-    <ClCompile Include="MoveMgr.hpp">
-      <Filter>MoveMgr</Filter>
-    </ClCompile>
-    <ClCompile Include="Voice\Headset.hpp">
-      <Filter>VoiceMgr</Filter>
-    </ClCompile>
-    <ClCompile Include="Voice\Logitech\Include\liblgaud.h">
-      <Filter>VoiceMgr\Logitech</Filter>
-    </ClCompile>
-    <ClCompile Include="Voice\Logitech\Lib\liblgaud.lib">
-      <Filter>VoiceMgr\Logitech</Filter>
-    </ClCompile>
-    <ClCompile Include="Voice\Logitech\Include\liblgcodec.h">
-      <Filter>VoiceMgr\Logitech</Filter>
-    </ClCompile>
-    <ClCompile Include="GameSpy\callbacks.hpp">
-      <Filter>GameSpy</Filter>
-    </ClCompile>
-    <ClCompile Include="ServerVersion.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ConnMgr.hpp">
@@ -845,31 +772,36 @@
       <Filter>Downloader\zlib</Filter>
     </ClInclude>
     <ClInclude Include="NetworkMgr.hpp" />
+    <ClInclude Include="Blender.hpp" />
+    <ClInclude Include="Blowfish.h" />
+    <ClInclude Include="DebugTicker.hpp" />
+    <ClInclude Include="Dh.hpp" />
+    <ClInclude Include="GameSpy\available.h" />
+    <ClInclude Include="GameSpy\callbackprototypes.hpp" />
+    <ClInclude Include="GameSpy\callbacks.hpp" />
+    <ClInclude Include="GameSpy\darray.h" />
+    <ClInclude Include="GameSpy\EntropyAbstraction.h" />
+    <ClInclude Include="GameSpy\hashtable.h" />
+    <ClInclude Include="GameSpy\md5.h" />
+    <ClInclude Include="GameSpy\nonport.h" />
+    <ClInclude Include="GameSpy\stringutil.h" />
+    <ClInclude Include="int.h" />
+    <ClInclude Include="integer.h" />
+    <ClInclude Include="MatchMgr.hpp" />
+    <ClInclude Include="Move.hpp" />
+    <ClInclude Include="MoveMgr.hpp" />
+    <ClInclude Include="MsgQueue.hpp" />
+    <ClInclude Include="NetObj.hpp" />
+    <ClInclude Include="NetObjMgr.hpp" />
+    <ClInclude Include="NetPickup.hpp" />
+    <ClInclude Include="NetPlayer.hpp" />
+    <ClInclude Include="NetRocket.hpp" />
+    <ClInclude Include="ServerVersion.hpp" />
+    <ClInclude Include="Voice\Headset.hpp" />
+    <ClInclude Include="Voice\Logitech\Include\liblgaud.h" />
+    <ClInclude Include="Voice\Logitech\Include\liblgcodec.h" />
   </ItemGroup>
   <ItemGroup>
-    <CustomBuild Include="GameSpy\available.h">
-      <Filter>GameSpy</Filter>
-    </CustomBuild>
-    <CustomBuild Include="GameSpy\callbackprototypes.hpp">
-      <Filter>GameSpy</Filter>
-    </CustomBuild>
-    <CustomBuild Include="GameSpy\darray.h">
-      <Filter>GameSpy</Filter>
-    </CustomBuild>
-    <CustomBuild Include="GameSpy\EntropyAbstraction.h">
-      <Filter>GameSpy</Filter>
-    </CustomBuild>
-    <CustomBuild Include="GameSpy\hashtable.h">
-      <Filter>GameSpy</Filter>
-    </CustomBuild>
-    <CustomBuild Include="GameSpy\md5.h">
-      <Filter>GameSpy</Filter>
-    </CustomBuild>
-    <CustomBuild Include="GameSpy\nonport.h">
-      <Filter>GameSpy</Filter>
-    </CustomBuild>
-    <CustomBuild Include="GameSpy\stringutil.h">
-      <Filter>GameSpy</Filter>
-    </CustomBuild>
+    <None Include="Voice\Logitech\Lib\liblgaud.lib" />
   </ItemGroup>
 </Project>
