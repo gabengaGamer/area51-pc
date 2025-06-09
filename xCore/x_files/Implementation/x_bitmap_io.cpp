@@ -229,26 +229,6 @@ xbool xbitmap::Load( X_FILE* pFile )
     m_NMips         =  (s8)Buffer.NMips;
     m_Format        =  (s8)Buffer.Format;
 
-    // On Xbox everything can be a texture object but because
-    // GetPixelColor(x,y) doesn't support swizzling yet we
-    // can't optimise everything.
-    #if defined TARGET_XBOX
-    if( 1 )
-    {
-        if( m_NMips )
-        {
-            s32 nBytes  = (m_NMips+1)*sizeof(mip);
-            m_Data.pMip = (mip *)x_malloc(nBytes);
-            BytesRead   = x_fread( m_Data.pMip,1,nBytes,pFile );
-        }
-        m_Flags |=  xbitmap::FLAG_XBOX_PRE_REGISTERED;
-        m_Flags |=  xbitmap::FLAG_XBOX_DATA_SWIZZLED;
-        m_Flags &= ~xbitmap::FLAG_DATA_OWNED;
-
-        m_VRAMID=( s32 )xbox_AllocateTexels( *this,pFile );
-    }
-    else
-    #endif
     {
         // Read in the pixel data block.
         m_Data.pPixel = (byte*)x_malloc( m_DataSize );

@@ -455,7 +455,7 @@ rtf_fn   RTFHandler;
     #define x_catch_begin           } if( 0 ) {
     #define x_catch_end             }
 
-    #if defined( TARGET_XBOX ) || defined( TARGET_PC )
+    #ifdef TARGET_PC
     inline void x_throw(const char* pString) { (void)pString; ASSERT(0); }
     inline void x_append_throw(const char* pString) { (void)pString; ASSERT(0); }
     #else

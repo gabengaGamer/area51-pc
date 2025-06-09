@@ -1070,13 +1070,9 @@ void    bitstream::WriteRaw32         ( u32 Value, s32 NBits )
     m_HighestBitWritten = MAX( m_Cursor-1, m_HighestBitWritten );
 
     // Get mask highlighting bits that will be overwritten
-#ifdef _WIN32
+#ifdef TARGET_PC
     u64 WriteMask = (0xFFFFFFFFFF >> LeftOffset) &
                     (0xFFFFFFFFFF << RightOffset);
-#elif defined(TARGET_GCN)
-//#warning The 'ULL' above needs to be removed for gamecube when the compilers are upgraded.
-    u64 WriteMask = (0xFFFFFFFFFFULL >> LeftOffset) & 
-                    (0xFFFFFFFFFFULL << RightOffset);
 #else
     u64 WriteMask = (0xFFFFFFFFFFUL >> LeftOffset) & 
                     (0xFFFFFFFFFFUL << RightOffset);
