@@ -1,6 +1,10 @@
 //==============================================================================
 //  
-//  x_bitmap_dxtc.cpp - Native DXT decoder implementation
+//  x_bitmap_dxtc.cpp 
+//
+//
+//  Native DXT decoder implementation.
+//
 //  
 //==============================================================================
 
