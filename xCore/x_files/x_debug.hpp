@@ -88,7 +88,7 @@ x_debug_crash_fn*   x_DebugGetCrashFunction( void );
 // If we can implement BREAK properly on any given platform, do it!
 
 #ifdef TARGET_PC
-#define BREAK      { __asm int 3 }
+//#define BREAK      { __asm int 3 }
 #endif
 
 // Generic BREAK to be used if no proper version can be created.
