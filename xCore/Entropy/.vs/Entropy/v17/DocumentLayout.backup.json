@@ -1,0 +1,69 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "E:\\DeveloperSurface\\area51-pc\\xCore\\Entropy\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{A8AF0F46-11ED-4D6E-B6D4-96B32F64476A}|Entropy.vcxproj|E:\\DeveloperSurface\\area51-pc\\xCore\\Entropy\\D3DEngine\\d3deng_state.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{A8AF0F46-11ED-4D6E-B6D4-96B32F64476A}|Entropy.vcxproj|solutionrelative:D3DEngine\\d3deng_state.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A8AF0F46-11ED-4D6E-B6D4-96B32F64476A}|Entropy.vcxproj|E:\\DeveloperSurface\\area51-pc\\xCore\\Entropy\\D3DEngine\\d3deng_shader.hpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{A8AF0F46-11ED-4D6E-B6D4-96B32F64476A}|Entropy.vcxproj|solutionrelative:D3DEngine\\d3deng_shader.hpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A8AF0F46-11ED-4D6E-B6D4-96B32F64476A}|Entropy.vcxproj|E:\\DeveloperSurface\\area51-pc\\xCore\\Entropy\\D3DEngine\\d3deng_draw.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{A8AF0F46-11ED-4D6E-B6D4-96B32F64476A}|Entropy.vcxproj|solutionrelative:D3DEngine\\d3deng_draw.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 0,
+          "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "d3deng_state.cpp",
+              "DocumentMoniker": "E:\\DeveloperSurface\\area51-pc\\xCore\\Entropy\\D3DEngine\\d3deng_state.cpp",
+              "RelativeDocumentMoniker": "D3DEngine\\d3deng_state.cpp",
+              "ToolTip": "E:\\DeveloperSurface\\area51-pc\\xCore\\Entropy\\D3DEngine\\d3deng_state.cpp",
+              "RelativeToolTip": "D3DEngine\\d3deng_state.cpp",
+              "ViewState": "AgIAAIkBAAAAAAAAAAASwJYBAABNAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
+              "WhenOpened": "2025-07-30T22:41:10.446Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "d3deng_draw.cpp",
+              "DocumentMoniker": "E:\\DeveloperSurface\\area51-pc\\xCore\\Entropy\\D3DEngine\\d3deng_draw.cpp",
+              "RelativeDocumentMoniker": "D3DEngine\\d3deng_draw.cpp",
+              "ToolTip": "E:\\DeveloperSurface\\area51-pc\\xCore\\Entropy\\D3DEngine\\d3deng_draw.cpp",
+              "RelativeToolTip": "D3DEngine\\d3deng_draw.cpp",
+              "ViewState": "AgIAALEBAAAAAAAAAAASwL8BAAA4AAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
+              "WhenOpened": "2025-07-29T16:38:03.93Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "d3deng_shader.hpp",
+              "DocumentMoniker": "E:\\DeveloperSurface\\area51-pc\\xCore\\Entropy\\D3DEngine\\d3deng_shader.hpp",
+              "RelativeDocumentMoniker": "D3DEngine\\d3deng_shader.hpp",
+              "ToolTip": "E:\\DeveloperSurface\\area51-pc\\xCore\\Entropy\\D3DEngine\\d3deng_shader.hpp",
+              "RelativeToolTip": "D3DEngine\\d3deng_shader.hpp",
+              "ViewState": "AgIAAFoAAAAAAAAAAAASwGYAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000680|",
+              "WhenOpened": "2025-07-29T16:37:00.447Z"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
