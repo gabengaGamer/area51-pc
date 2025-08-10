@@ -1,7 +1,0 @@
-Texture SaveImage
-{
-   Source saveimage.tga
-   Format D3DFMT_DXT1
-   Width  64
-   Height 64
-}
