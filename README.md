@@ -48,7 +48,7 @@ The following prerequisites are required to build the source tree for PC:
 ## Running PC Build
 
 1. Put shaders folder from "area51-pc\Apps\GameApp\media" to "C:\".
-2. Put .webm/.mp4/.avi videos cinema videos to "C:\GameData\A51\Release\PC". (You must make it from .bik, so far so)
+2. Put .webm/.mp4/.avi cinema videos to "C:\GameData\A51\Release\PC". (You must make it from .bik, so far so)
 3. Run game.
 
 
