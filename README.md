@@ -15,33 +15,25 @@ The main goal is to get the source code into a buildable state on modern systems
 
 [![Join our Discord](https://github.com/gabengaGamer/area51-pc/assets/54669564/bac6c8a8-2d95-4513-8943-c5c26bd09173)](https://discord.gg/7gGhFSjxsq)
 
-## PC Code issues
+## PC Code Issues
 
-1. **Model Format Compatibility (rigidgeom, skingeom):**
-The most critical issue at present is the incompatibility of the PC build with the new retail model formats. The engine does not currently support updated rigidgeom and skingeom model structures used in the latest retail version.
-- Update: GEOM V41 may be partially restored — further testing required to confirm stability.
+1. **Audio System Malfunctions:**
+The Miles Sound System 6 implementation is very often causes crash, unstable. (Delete Voice.DFS for stability)
 
-2. **Audio System Malfunctions:**
-The Miles Sound System 6 implementation is broken — MP3 decoding fails, and both Bink audio playback and world ambient audio systems are non-functional.
-- Update: Miles6 may be partially restored — further testing required to confirm stability.
-
-3. **Multiplayer & Network Stack Failure:**
-The network layer is completely broken. Multiplayer functionality is non-operational, and several systems tied to single-player logic are also affected.
-- Update: Single-player logic may be partially restored — further testing required to confirm stability.
-
-4. **Console UI (Incomplete Interface):**
+2. **Console UI (Incomplete Interface):**
 The PC version is currently using the console UI. This results in:
 
   - Missing PC-specific settings (graphics, keybindings, etc.)
 
   - Redundant console-only interface logic included in the build, which clutters the UI codebase.
 
-5. **Save System Not Implemented:**
-The save system has not been implemented for the PC version.
-- Update: Save system logic may be recreated — further testing required to confirm stability.
+3. **Simple PC render:**
+A very basic DX11 renderer is implemented, without complex effects and shaders.
 
-6. **PC Renderer Not Implemented:**
-There is no functional rendering backend for the PC version — rendering code is almost not implemented. The game cannot post-process, lighting and etc. 
+4. **Unstable FFmpeg decoding:**
+It's just poorly implemented so far, sorry.
+
+5. **Multiplayer & Network Stack Failure:** The network layer is completely broken. Multiplayer functionality is non-operational.
 
 ## Building PC Code
 
@@ -52,6 +44,14 @@ The following prerequisites are required to build the source tree for PC:
 3. You'll need to create an environment variable called **X** and **S** that points to the important library directions of the source tree. For example, if the source tree is located at **'D:\area51-pc'** the **X** environment variable should point to **'D:\area51-pc\xCore'**. the **S** environment variable should point to **'D:\area51-pc\Support'**
 4. Put game assets to **'C:\GameData\A51\Release\PC\DVD'**
 6. ~~**XtremeToolkit 4100** **(FOR UI TOOLS)** | Install it from "xCore\3rdParty\CodeJock"~~ **UNDER CONSTRUCTION!!!!**
+
+## Running PC Build
+
+1. Put shaders folder from "area51-pc\Apps\GameApp\media" to "C:\".
+2. Put .webm/.mp4/.avi videos cinema videos to "C:\GameData\A51\Release\PC". (You must make it from .bik, so far so)
+3. Run game.
+
+
 
 ## List of valid WIN32 targets.
 Debug           | OptDebug           | QA                 | Release            | EDITOR-Debug        | VIEWER-Debug 
