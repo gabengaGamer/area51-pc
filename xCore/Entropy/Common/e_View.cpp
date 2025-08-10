@@ -1232,57 +1232,6 @@ void view::UpdateV2C( void ) const
 	    m_V2C(3,2) = -Q*m_ZNear;
 	    m_V2C(2,3) =  1;
 
-    #elif defined TARGET_XBOX
-
-        f32 W = (f32)(1.0f / x_tan( m_XFOV*0.5f ));
-        f32 H = (f32)(1.0f / x_tan( m_YFOV*0.5f ));
-        f32 Q = m_ZFar/( m_ZFar - m_ZNear);
-        m_V2C(0,0) = -W;
-        m_V2C(1,1) =  H;
-	    m_V2C(2,2) =  Q;
-	    m_V2C(3,2) = -Q*m_ZNear;
-	    m_V2C(2,3) =  1;
-
-    #elif defined(TARGET_PS2)
-    
-        // Simple case
-#if !defined( CONFIG_RETAIL )
-        if (m_ShotSize == 1)
-#endif // !defined( CONFIG_RETAIL )
-        {
-            f32 W = (f32)(1.0f / x_tan( m_XFOV*0.5f ));
-            f32 H = (f32)(1.0f / x_tan( m_YFOV*0.5f ));
-            m_V2C(0,0) = -W;
-            m_V2C(1,1) =  H;
-	        m_V2C(2,2) = (m_ZFar+m_ZNear)/(m_ZFar-m_ZNear);
-	        m_V2C(3,2) = (-2*m_ZNear*m_ZFar)/(m_ZFar-m_ZNear);
-	        m_V2C(2,3) = 1.0f;
-        }
-#if !defined( CONFIG_RETAIL )
-        else
-        {
-            // Get full furstrum
-            f32 W = m_ZNear * (f32)x_tan(m_XFOV*0.5f) ;
-            f32 H = m_ZNear * (f32)x_tan(m_YFOV*0.5f) ;
-
-            // Setup sub frustrum L + R
-            f32 R = (-W) + (((f32)m_SubShotX     / (f32)m_ShotSize) * (W - (-W))) ;
-            f32 L = (-W) + (((f32)(m_SubShotX+1) / (f32)m_ShotSize) * (W - (-W))) ;
-
-            // Setup sub frustrum T + B
-            f32 T = (-H) + (((f32)m_SubShotY     / (f32)m_ShotSize) * (H - (-H))) ;
-            f32 B = (-H) + (((f32)(m_SubShotY+1) / (f32)m_ShotSize) * (H - (-H))) ;
-
-            // Finally, setup the view to clip matrix
-            m_V2C(0,0) = (2 * m_ZNear) / (R - L) ;
-            m_V2C(1,1) = (2 * m_ZNear) / (B - T) ;
-            m_V2C(2,0) = (R + L) / (R - L) ;
-            m_V2C(2,1) = (B + T) / (B - T) ;
-	        m_V2C(2,2) = (m_ZFar+m_ZNear)/(m_ZFar-m_ZNear);
-	        m_V2C(2,3) = 1.0f;
-            m_V2C(3,2) = (-2*m_ZNear*m_ZFar)/(m_ZFar-m_ZNear);
-        }
-#endif // !defined( CONFIG_RETAIL )
     #else
 
         ASSERT( FALSE );
@@ -1312,20 +1261,6 @@ void view::UpdateC2S( void ) const
 	    m_C2S(3,3) =  1;
 	    m_C2S(3,0) =  W + m_ViewportX0;
 	    m_C2S(3,1) =  H + m_ViewportY0;
-
-    #elif defined(TARGET_PS2)
-
-        f32 W = (m_ViewportX1 - m_ViewportX0+1)*0.5f;
-        f32 H = (m_ViewportY1 - m_ViewportY0+1)*0.5f;
-        f32 ZScale = (f32)((s32)1<<19);
-        
-        m_C2S(0,0) =  W;
-        m_C2S(1,1) = -H;
-        m_C2S(2,2) = -ZScale/2;
-        m_C2S(3,3) = 1.0f;
-        m_C2S(3,0) = W + m_ViewportX0 + (f32)(2048-(512/2));
-        m_C2S(3,1) = H + m_ViewportY0 + (f32)(2048-(512/2));
-        m_C2S(3,2) =  ZScale/2;
     
     #else
 
@@ -1525,12 +1460,6 @@ void view::UpdateProjection( void ) const
             // Scale onto big virtual screen
             m_ProjectX[1] *= m_ShotSize ;
             m_ProjectY[1] *= m_ShotSize ;
-
-            // Make relative to top corner of regular screen
-//            m_ProjectX[0] = m_ProjectX[0] - 0.5f*(f32)m_ShotSize * (m_ViewportX1 - m_ViewportX0) +
-//                            ((f32)m_SubShotX / (f32)m_ShotSize) * (m_ViewportX1 - m_ViewportX0);
-//            m_ProjectY[0] = m_ProjectY[0] - 0.5f*(f32)m_ShotSize * (m_ViewportY1 - m_ViewportY0) +
-//                            ((f32)m_SubShotY / (f32)m_ShotSize) * (m_ViewportY1 - m_ViewportY0);
 
             m_ProjectX[0] -= m_ViewportX0 ;
             m_ProjectY[0] -= m_ViewportY0 ;

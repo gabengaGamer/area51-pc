@@ -1,3 +1,19 @@
+//==============================================================================
+//  
+//  d3deng_vram.cpp
+//  
+//==============================================================================
+
+//==============================================================================
+//  PLATFORM CHECK
+//==============================================================================
+
+#include "x_target.hpp"
+
+#ifndef TARGET_PC
+#error This file should only be compiled for PC platform. Please check your exclusions on your project spec.
+#endif
+
 //=========================================================================
 // INCLUDES
 //=========================================================================
@@ -8,16 +24,17 @@
 // DEFINES
 //=========================================================================
 
-#define MAX_TEXTURES 5000
+#define MAX_TEXTURES 8192
 
 //=========================================================================
 // TYPES
 //=========================================================================
 
-union d3d_tex_node
+struct d3d_tex_node
 {
-    IDirect3DTexture9*  pTexture;
-    s32                 iNext;    
+    ID3D11Texture2D*           pTexture;
+    ID3D11ShaderResourceView*  pSRV;
+    s32                        iNext;
 };
 
 //=========================================================================
@@ -28,7 +45,6 @@ static s32          s_LastActiveID = 0;
 static d3d_tex_node s_List[ MAX_TEXTURES ];
 static s32          s_iEmpty;
 
-
 //=========================================================================
 // FUNCTIONS
 //=========================================================================
@@ -38,12 +54,17 @@ void vram_Init( void )
     //
     // Initialize the empty list
     //
-    for( s32 i=0; i<MAX_TEXTURES-1; i++ )
+	s32 i;
+    for( i=0; i<MAX_TEXTURES-1; i++ )
     {
-        s_List[i].iNext = i+1;
+        s_List[i].iNext    = i+1;
+		s_List[i].pTexture = 0;
+        s_List[i].pSRV     = 0;  
     }
-    s_List[MAX_TEXTURES-1].iNext = 0;    // Zero is the universal NULL
-    s_iEmpty        = 1;                 // Leave empty the node 0
+    s_List[i].iNext    = 0;    // Zero is the universal NULL
+	s_List[i].pTexture = 0;
+    s_List[i].pSRV     = 0;    
+    s_iEmpty           = 1;    // Leave empty the node 0
 }
 
 //=============================================================================
@@ -52,34 +73,19 @@ void vram_Kill( void )
 {
     for( s32 i=0; i<MAX_TEXTURES; i++ )
     {
-        if( s_List[i].iNext > MAX_TEXTURES )
+        if( s_List[i].pTexture != 0 )
         {
-            s_List[i].pTexture->Release();
+            if( s_List[i].pSRV )     s_List[i].pSRV->Release();
+            if( s_List[i].pTexture ) s_List[i].pTexture->Release();
+            s_List[i].pTexture = 0;
+            s_List[i].pSRV     = 0;
         }
     }
 }
 
 //=============================================================================
 
-void vram_OnDeviceLost( void )
-{
-    // MANAGED pool textures are automatically handled by DirectX
-    // We just need to clear our active state
-    s_LastActiveID = 0;
-}
-
-//=============================================================================
-void vram_OnDeviceReset( void )
-{
-    // MANAGED pool textures are automatically restored by DirectX
-    // We just need to clear our active state
-    s_LastActiveID = 0;
-}
-
-//=============================================================================
-
-static
-s32 AddNode( IDirect3DTexture9* pTexture )
+static s32 AddNode( ID3D11Texture2D* pTexture, ID3D11ShaderResourceView* pSRV )
 {
     s32 NewID;
 
@@ -92,8 +98,8 @@ s32 AddNode( IDirect3DTexture9* pTexture )
     ASSERT( NewID < MAX_TEXTURES );
 
     s_List[ NewID ].pTexture = pTexture;
-
-    ASSERT( (s_List[ NewID ].iNext >= MAX_TEXTURES) || (s_List[ NewID ].iNext==0));
+    s_List[ NewID ].pSRV     = pSRV;
+    s_List[ NewID ].iNext    = 0;
 
     return NewID;
 }
@@ -102,30 +108,8 @@ s32 AddNode( IDirect3DTexture9* pTexture )
 
 s32 vram_LoadTexture( const char* pFileName )
 {
-    dxerr               Error;
-    IDirect3DTexture9*  pTexture = NULL;
-
-    // Check if device is available
-    if( !g_pd3dDevice )
-        return 0;
-        
-    // Check device cooperative level before proceeding
-    HRESULT hr = g_pd3dDevice->TestCooperativeLevel();
-    if( FAILED( hr ) )
-    {
-        // Device is lost, return invalid ID
-        return 0;
-    }
-
-    Error = D3DXCreateTextureFromFile( g_pd3dDevice, pFileName, &pTexture );
-    if( FAILED( Error ) )
-    {
-        // File load failed, could be due to device loss or missing file
-        return 0;
-    }
-
-    ASSERT( pTexture );
-    return AddNode( pTexture );
+	// TODO: GS: Implement this.
+    return 0;
 }
 
 //=============================================================================
@@ -136,8 +120,11 @@ void vram_Activate( void )
 
     s_LastActiveID = 0;
     
-    if( g_pd3dDevice )
-        g_pd3dDevice->SetTexture( 0, NULL );
+    if( g_pd3dContext )
+    {
+        ID3D11ShaderResourceView* nullSRV = NULL;
+        g_pd3dContext->PSSetShaderResources( 0, 1, &nullSRV );
+    }
 }
 
 //=============================================================================
@@ -148,29 +135,47 @@ void vram_Activate( s32 VRAM_ID )
     ASSERT( VRAM_ID > 0 );              
     ASSERT( VRAM_ID < MAX_TEXTURES );
     ASSERT( eng_InBeginEnd() );
+	ASSERT( s_List[ VRAM_ID ].pTexture != NULL );
+	ASSERT( s_List[ VRAM_ID ].pSRV != NULL );
 
     s_LastActiveID = VRAM_ID;
     
-    if( g_pd3dDevice )
+    if( g_pd3dContext )
     {
-        // Check device state before setting texture
-        HRESULT hr = g_pd3dDevice->TestCooperativeLevel();
-        if( SUCCEEDED( hr ) )
-        {
-            ASSERT( s_List[ VRAM_ID ].iNext > MAX_TEXTURES );
-            g_pd3dDevice->SetTexture( 0, s_List[ VRAM_ID ].pTexture );
-        }
+        g_pd3dContext->PSSetShaderResources( 0, 1, &s_List[ VRAM_ID ].pSRV );
     }
 }
 
 //=============================================================================
 
-s32 vram_Register( IDirect3DTexture9* pTexture )
+s32 vram_Register( ID3D11Texture2D* pTexture )
 {
-	//GS: So, I added this code to fix the shaders working with PIP.
-	//This code was borrowed from the Xbox implementation.
-	//So I’m not sure if it’s even needed here.
-    s32 Index = AddNode( pTexture );
+    ID3D11ShaderResourceView* pSRV = NULL;
+    HRESULT                   Error;
+    D3D11_TEXTURE2D_DESC      desc;
+
+    if( !pTexture || !g_pd3dDevice )
+        return 0;
+
+    // Get texture description
+    pTexture->GetDesc( &desc );
+
+    // Create shader resource view
+    D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc;
+    x_memset( &srvDesc, 0, sizeof(srvDesc) );
+    srvDesc.Format                    = desc.Format;
+    srvDesc.ViewDimension             = D3D11_SRV_DIMENSION_TEXTURE2D;
+    srvDesc.Texture2D.MipLevels       = desc.MipLevels;
+    srvDesc.Texture2D.MostDetailedMip = 0;
+
+    Error = g_pd3dDevice->CreateShaderResourceView( pTexture, &srvDesc, &pSRV );
+    if( FAILED( Error ) )
+        return 0;
+
+    // Add reference to texture since we're storing it
+    pTexture->AddRef();
+
+    s32 Index = AddNode( pTexture, pSRV );
     return Index;
 }
 
@@ -178,37 +183,30 @@ s32 vram_Register( IDirect3DTexture9* pTexture )
 
 s32 vram_Register( const xbitmap& Bitmap )
 {
-    IDirect3DTexture9*  pSurface = NULL;
-    dxerr               Error;
-    D3DFORMAT           Format;
+    ID3D11Texture2D*          pTexture = NULL;
+    ID3D11ShaderResourceView* pSRV = NULL;
+    HRESULT                   Error;
+    DXGI_FORMAT               Format;
 
     ASSERT( Bitmap.GetClutData() == NULL && "Not clut is suported" );
 
     // Check if device is available
     if( !g_pd3dDevice )
         return 0;
-        
-    // Check device cooperative level before proceeding
-    HRESULT hr = g_pd3dDevice->TestCooperativeLevel();
-    if( FAILED( hr ) )
-    {
-        // Device is lost, return invalid ID but don't assert
-        return 0;
-    }
 
     //
-    // Get the DX format
+    // Get the DX11 format
     //
     switch( Bitmap.GetFormat() )
     {
-        case xbitmap::FMT_32_ARGB_8888: Format = D3DFMT_A8R8G8B8; break;
-        case xbitmap::FMT_32_URGB_8888: Format = D3DFMT_X8R8G8B8; break;
-        case xbitmap::FMT_16_ARGB_4444: Format = D3DFMT_A4R4G4B4; break;
-        case xbitmap::FMT_16_ARGB_1555: Format = D3DFMT_A1R5G5B5; break;
-        case xbitmap::FMT_16_URGB_1555: Format = D3DFMT_X1R5G5B5; break;
-        case xbitmap::FMT_16_RGB_565:   Format = D3DFMT_R5G6B5;   break;
-        case xbitmap::FMT_DXT3:         Format = D3DFMT_DXT3;     break;
-        case xbitmap::FMT_DXT1:         Format = D3DFMT_DXT1;     break;
+        case xbitmap::FMT_32_ARGB_8888: Format = DXGI_FORMAT_B8G8R8A8_UNORM; break;
+        case xbitmap::FMT_32_URGB_8888: Format = DXGI_FORMAT_B8G8R8X8_UNORM; break;
+        case xbitmap::FMT_16_ARGB_4444: Format = DXGI_FORMAT_B4G4R4A4_UNORM; break;
+        case xbitmap::FMT_16_ARGB_1555: Format = DXGI_FORMAT_B5G5R5A1_UNORM; break;
+        case xbitmap::FMT_16_URGB_1555: Format = DXGI_FORMAT_B5G5R5A1_UNORM; break;
+        case xbitmap::FMT_16_RGB_565:   Format = DXGI_FORMAT_B5G6R5_UNORM;   break;
+        case xbitmap::FMT_DXT3:         Format = DXGI_FORMAT_BC2_UNORM;      break;
+        case xbitmap::FMT_DXT1:         Format = DXGI_FORMAT_BC1_UNORM;      break;
         default:
             {
                 ASSERT( FALSE );
@@ -218,16 +216,50 @@ s32 vram_Register( const xbitmap& Bitmap )
     //
     // Create the texture
     //
-    Error = g_pd3dDevice->CreateTexture( Bitmap.GetWidth(), 
-                                         Bitmap.GetHeight(), 
-                                         0, 0, 
-                                         Format,
-                                         D3DPOOL_MANAGED,
-                                         &pSurface,
-                                         NULL );
+    D3D11_TEXTURE2D_DESC desc;
+    x_memset( &desc, 0, sizeof(desc) );
+    desc.Width              = Bitmap.GetWidth();
+    desc.Height             = Bitmap.GetHeight();
+    desc.MipLevels          = 0;
+    desc.ArraySize          = 1;
+    desc.Format             = Format;
+    desc.SampleDesc.Count   = 1;
+    desc.SampleDesc.Quality = 0;
+    desc.Usage              = D3D11_USAGE_DEFAULT;
+    desc.BindFlags          = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET;
+    desc.CPUAccessFlags     = 0;
+    desc.MiscFlags          = D3D11_RESOURCE_MISC_GENERATE_MIPS;
+
+    //
+    // For compressed formats, don't use mipmaps
+	//
+    if( (Bitmap.GetFormat() == xbitmap::FMT_DXT1) || (Bitmap.GetFormat() == xbitmap::FMT_DXT3) )
+    {
+        desc.MipLevels = 1;
+        desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+        desc.MiscFlags = 0;
+    }
+
+    Error = g_pd3dDevice->CreateTexture2D( &desc, NULL, &pTexture );
     if( FAILED( Error ) )
     {
-        // Creation failed, probably due to device loss
+        return 0;
+    }
+
+    //
+    // Create shader resource view
+    //
+    D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc;
+    x_memset( &srvDesc, 0, sizeof(srvDesc) );
+    srvDesc.Format                    = Format;
+    srvDesc.ViewDimension             = D3D11_SRV_DIMENSION_TEXTURE2D;
+    srvDesc.Texture2D.MipLevels       = -1;
+    srvDesc.Texture2D.MostDetailedMip = 0;
+
+    Error = g_pd3dDevice->CreateShaderResourceView( pTexture, &srvDesc, &pSRV );
+    if( FAILED( Error ) )
+    {
+        pTexture->Release();
         return 0;
     }
 
@@ -235,192 +267,64 @@ s32 vram_Register( const xbitmap& Bitmap )
     // Copy texture data safely
     //
     {
-        D3DLOCKED_RECT  Locked;
-        char*           pSrcData;   
-        char*           pDestData;
-        s32             BitmapPitch;
+        char* pSrcData;   
+        s32   BitmapPitch;
 
-        x_memset( &Locked, 0, sizeof(Locked) );
-        Error = pSurface->LockRect( 0, &Locked, NULL, 0 );
-        
-        // Check for lock failure (could be due to device loss)
-        if( FAILED( Error ) )
-        {
-            // Lock failed, clean up and return
-            pSurface->Release();
-            return 0;
-        }
-
-        pSrcData    = (char*)Bitmap.GetPixelData();
-        pDestData   = (char*)Locked.pBits;
+        pSrcData = (char*)Bitmap.GetPixelData();
 
         if( (Bitmap.GetFormat() == xbitmap::FMT_DXT1) || (Bitmap.GetFormat() == xbitmap::FMT_DXT3) )
         {
-            x_memcpy( pDestData, pSrcData, Bitmap.GetMipDataSize(0) );
+            // Calculate correct pitch for compressed textures
+            s32 blockSize = (Bitmap.GetFormat() == xbitmap::FMT_DXT1) ? 8 : 16;
+            s32 rowPitch = MAX(1, ((Bitmap.GetWidth() + 3) / 4)) * blockSize;
+            
+            g_pd3dContext->UpdateSubresource( pTexture, 0, NULL, 
+                                             pSrcData, 
+                                             rowPitch, 
+                                             0 );
         }
         else
         {
-            BitmapPitch = (Bitmap.GetPWidth() * Bitmap.GetFormatInfo().BPP)/8 ;
+            BitmapPitch = (Bitmap.GetPWidth() * Bitmap.GetFormatInfo().BPP)/8;
 
-            for( s32 y=0; y<Bitmap.GetHeight(); y++ )
-            {
-                x_memcpy( pDestData, pSrcData, BitmapPitch );
-                pDestData += Locked.Pitch;
-                pSrcData  += BitmapPitch;
-            }
-        }
-
-        Error = pSurface->UnlockRect( 0 );
-        // Don't assert on unlock failure, just log it
-        if( FAILED( Error ) )
-        {
-            DebugMessage( "Warning: UnlockRect failed during texture registration\n" );
+            g_pd3dContext->UpdateSubresource( pTexture, 0, NULL, 
+                                             pSrcData, 
+                                             BitmapPitch, 
+                                             BitmapPitch * Bitmap.GetHeight() );
         }
     }
 
     //
     // Create the mipmaps
     //
-    Error = D3DXFilterTexture( pSurface, NULL, D3DX_DEFAULT, D3DX_DEFAULT );
-    if( FAILED( Error ) )
+    if( desc.MiscFlags & D3D11_RESOURCE_MISC_GENERATE_MIPS )
     {
-        // Mipmap generation failed, but we can still use the texture
-        DebugMessage( "Warning: Mipmap generation failed for texture\n" );
+        g_pd3dContext->GenerateMips( pSRV );
     }
 
     //
     // Add texture in the list
     //
-    s32 Index = AddNode( pSurface );
+    s32 Index = AddNode( pTexture, pSRV );
     Bitmap.SetVRAMID( Index );
     return Index;
 }
 
 //=============================================================================
 
-// Util function for getting height
 s32 GetHeight(const xbitmap& BMP, s32 x, s32 y)
 {
-    xcolor Col = BMP.GetPixelColor(x,y) ;
-    s32    H   = (Col.R + Col.G + Col.B) / 3 ;
-    return H ;
+    xcolor Col = BMP.GetPixelColor(x,y);
+    s32    H   = (Col.R + Col.G + Col.B) / 3;
+    return H;
 }
 
 //=============================================================================
 
 s32 vram_RegisterDuDv( const xbitmap& Bitmap )
-{
-    IDirect3DTexture9*  pSurface = NULL;
-    dxerr               Error;
-    D3DFORMAT           Format = D3DFMT_X8L8V8U8;
-
-    // Check if device is available
-    if( !g_pd3dDevice )
-        return 0;
-        
-    // Check device cooperative level before proceeding
-    HRESULT hr = g_pd3dDevice->TestCooperativeLevel();
-    if( FAILED( hr ) )
-    {
-        // Device is lost, return invalid ID
-        return 0;
-    }
-
-    // Create the bump map texture
-    Error = g_pd3dDevice->CreateTexture( Bitmap.GetWidth(), 
-                                         Bitmap.GetHeight(), 
-                                         0, 0, 
-                                         Format,
-                                         D3DPOOL_MANAGED,
-                                         &pSurface,
-                                         NULL );
-    if( FAILED( Error ) )
-    {
-        return 0;
-    }
-
-    // Create the texture from the bitmap
-    D3DLOCKED_RECT  d3dlr;
-    Error = pSurface->LockRect( 0, &d3dlr, 0, 0 );
-    if( FAILED( Error ) )
-    {
-        // Lock failed, clean up and return
-        pSurface->Release();
-        return 0;
-    }
-	
-    DWORD dwDstPitch = (DWORD)d3dlr.Pitch;
-    BYTE* pDst       = (BYTE*)d3dlr.pBits;
-    for( s32 y=0; y< Bitmap.GetHeight(); y++ )
-    {
-        BYTE* pDstT  = pDst;
-
-        for( s32 x=0; x< Bitmap.GetWidth(); x++ )
-        {
-            s32 v00 = GetHeight(Bitmap, x,y) ;                              // Get the current pixel
-            s32 v01 = GetHeight(Bitmap, MIN(x+1, Bitmap.GetWidth()-1), y) ; // and the pixel to the right
-            s32 vM1 = GetHeight(Bitmap, MAX(x-1,0), y) ;                    // and the pixel to the left
-            s32 v10 = GetHeight(Bitmap, x, MIN(y+1, Bitmap.GetHeight()-1)); // and the pixel one line below.
-            s32 v1M = GetHeight(Bitmap, x, MAX(y-1, 0));                    // and the pixel one line above.
-
-            s32 iDu = (vM1-v01); // The delta-u bump value
-            s32 iDv = (v1M-v10); // The delta-v bump value
-
-            if( (v00 < vM1) && (v00 < v01) )  // If we are at valley
-            {
-                iDu = vM1-v00;                 // Choose greater of 1st order diffs
-                if( iDu < v00-v01 )
-                    iDu = v00-v01;
-            }
-
-            // The luminance bump value (land masses are less shiny)
-            WORD uL = ( v00>1 ) ? 63 : 127;
-            // Use luminance of max
-            uL = 255 ;
-            switch( Format )
-            {
-                case D3DFMT_V8U8:
-                    *pDstT++ = (BYTE)iDu;
-                    *pDstT++ = (BYTE)iDv;
-                    break;
-
-                case D3DFMT_L6V5U5:
-                    *(WORD*)pDstT  = (WORD)( ( (iDu>>3) & 0x1f ) <<  0 );
-                    *(WORD*)pDstT |= (WORD)( ( (iDv>>3) & 0x1f ) <<  5 );
-                    *(WORD*)pDstT |= (WORD)( ( ( uL>>2) & 0x3f ) << 10 );
-                    pDstT += 2;
-                    break;
-
-                case D3DFMT_X8L8V8U8:
-                    *pDstT++ = (BYTE)iDu;
-                    *pDstT++ = (BYTE)iDv;
-                    *pDstT++ = (BYTE)uL;
-                    *pDstT++ = (BYTE)0L;
-                    break;
-            }
-        }
-
-        // Move to the next line
-        pDst += dwDstPitch;
-    }
-
-    Error = pSurface->UnlockRect(0);
-    if( FAILED( Error ) )
-    {
-        DebugMessage( "Warning: UnlockRect failed during DuDv texture registration\n" );
-    }
-
-    // Create the mipmaps
-    Error = D3DXFilterTexture( pSurface, NULL, D3DX_DEFAULT, D3DX_DEFAULT );
-    if( FAILED( Error ) )
-    {
-        DebugMessage( "Warning: Mipmap generation failed for DuDv texture\n" );
-    }
-
-    // Add texture in the list
-    s32 Index = AddNode( pSurface );
-    Bitmap.SetVRAMID( Index );
-    return Index;
+{ 
+    ASSERT( FALSE && "vram_RegisterDuDv is deprecated." );
+    return 0;
 }
 
 //=============================================================================
@@ -432,9 +336,11 @@ void vram_Unregister( s32 VRAM_ID )
 
     if( VRAM_ID == s_LastActiveID ) s_LastActiveID = 0;
 
-    if( s_List[ VRAM_ID ].pTexture )
-        s_List[ VRAM_ID ].pTexture->Release();
+    if( s_List[ VRAM_ID ].pSRV )     s_List[ VRAM_ID ].pSRV->Release();
+    if( s_List[ VRAM_ID ].pTexture ) s_List[ VRAM_ID ].pTexture->Release();
 
+    s_List[ VRAM_ID ].pTexture = NULL;
+    s_List[ VRAM_ID ].pSRV = NULL;    
     s_List[ VRAM_ID ].iNext = s_iEmpty;
     s_iEmpty = VRAM_ID;
 }
@@ -477,7 +383,7 @@ s32 vram_GetNRegistered( void )
 
     for( s32 i=0; i<MAX_TEXTURES; i++ )
     {
-        if( s_List[i].iNext > MAX_TEXTURES )
+        if( s_List[i].pTexture != NULL )
         {
             nRegister++;
         }
@@ -494,7 +400,7 @@ s32 vram_GetRegistered( s32 ID )
 
     for( s32 i=0; i<MAX_TEXTURES; i++ )
     {
-        if( s_List[i].iNext > MAX_TEXTURES )
+        if( s_List[i].pTexture != NULL )
         {
             nRegister++;
             if( nRegister == ID ) return i;
@@ -509,7 +415,8 @@ s32 vram_GetRegistered( s32 ID )
 
 void vram_PrintStats( void )
 {
-    x_printfxy( 0,  6, "Free Vmem:   %d", g_pd3dDevice->GetAvailableTextureMem() );
+	//TODO: GS: To make this work, need to implement new functionality, I'm too lazy.
+    x_printfxy( 0,  6, "Free Vmem:   N/A (DX11)" );
     x_printfxy( 0,  7, "NTextures:   %d", vram_GetNRegistered() );
 }
 
@@ -517,26 +424,44 @@ void vram_PrintStats( void )
 
 void vram_SanityCheck( void )
 {
-
 }
 
 //=============================================================================
 
-IDirect3DTexture9* vram_GetSurface( s32 VRAM_ID )
+ID3D11ShaderResourceView* vram_GetSRV( s32 VRAM_ID )
 {
     // Note: VRAM_ID == 0 means bitmap not registered!
     ASSERT( VRAM_ID > 0 );
     ASSERT( VRAM_ID < MAX_TEXTURES );
-    ASSERT( s_List[ VRAM_ID ].iNext > MAX_TEXTURES );
+    ASSERT( s_List[ VRAM_ID ].pTexture != NULL );
+
+    return s_List[ VRAM_ID ].pSRV;
+}
+
+//=============================================================================
+
+ID3D11ShaderResourceView* vram_GetSRV( const xbitmap& Bitmap ) 
+{
+    return vram_GetSRV( Bitmap.GetVRAMID() );
+}
+
+//=============================================================================
+
+ID3D11Texture2D* vram_GetTexture2D( s32 VRAM_ID )
+{
+    // Note: VRAM_ID == 0 means bitmap not registered!
+    ASSERT( VRAM_ID > 0 );
+    ASSERT( VRAM_ID < MAX_TEXTURES );
+    ASSERT( s_List[ VRAM_ID ].pTexture != NULL );
 
     return s_List[ VRAM_ID ].pTexture;
 }
 
 //=============================================================================
 
-IDirect3DTexture9*  vram_GetSurface( const xbitmap& Bitmap ) 
+ID3D11Texture2D* vram_GetTexture2D( const xbitmap& Bitmap ) 
 {
-    return vram_GetSurface( Bitmap.GetVRAMID() );
+    return vram_GetTexture2D( Bitmap.GetVRAMID() );
 }
 
 //=============================================================================

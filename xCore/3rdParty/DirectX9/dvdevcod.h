@@ -8,6 +8,11 @@
 
 #ifndef __DVDEVCOD__
 #define __DVDEVCOD__
+#include <winapifamily.h>
+
+#pragma region Application Family
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_APP)
+
 
 
 #define EC_DVDBASE                          0x0100
@@ -32,9 +37,12 @@ typedef enum _tagDVD_ERROR {
     DVD_ERROR_IncompatibleSystemAndDecoderRegions=7,
                                     // No discs can be played because the system region
                                     // does not match the decoder region.
-    DVD_ERROR_IncompatibleDiscAndDecoderRegions=8
+    DVD_ERROR_IncompatibleDiscAndDecoderRegions=8,
                                     // The disc cannot be played because the disc is
                                     // not authored to be played in the decoder's region
+    DVD_ERROR_CopyProtectOutputFail=9,  // DVD copy protection failed due to output display
+    DVD_ERROR_CopyProtectOutputNotSupported=10,  // DVD copy protection failed due to lack of driver
+                                    // support for checking the output display
 } DVD_ERROR;
 
 typedef enum _tagDVD_WARNING {
@@ -65,7 +73,10 @@ typedef enum _tagDVD_PB_STOPPED {
     DVD_PB_STOPPED_RegionFailure = 10,      // A region failure prevented playback
     DVD_PB_STOPPED_MacrovisionFailure = 11, // A Macrovision failure prevented playback.
     DVD_PB_STOPPED_DiscReadError = 12,      // A read error prevented playback.
-    DVD_PB_STOPPED_CopyProtectFailure = 13  // Copy protection failure.
+    DVD_PB_STOPPED_CopyProtectFailure = 13, // Copy protection failure.
+    DVD_PB_STOPPED_CopyProtectOutputFailure = 14, // Copy protection failure due to non-compliant output device
+    DVD_PB_STOPPED_CopyProtectOutputNotSupported = 15 // Copy protection failure due to missing driver support to check
+                                            // output device
 } DVD_PB_STOPPED;
 
 
@@ -360,4 +371,57 @@ typedef enum _tagDVD_PB_STOPPED {
 // Parameters: ( BOOL, reserved ) 
 // lParam1 is either TRUE (a karaoke track is being played) or FALSE (no karaoke data is being played).
 //
+
+#define EC_DVD_PROGRAM_CELL_CHANGE              (EC_DVDBASE + 0x1c)
+// Parameters: ( ULONG, ULONG )
+// Sent when current program ID and/or cell ID change
+// lParam1 contains the new Program ID
+// lParam2 contains the new Cell ID
+
+#define EC_DVD_TITLE_SET_CHANGE                 (EC_DVDBASE + 0x1d)
+// Parameters: ( BYTE, void )
+// Sent when current VTS (Video Title Set) changes
+// lParam1 contains the new VTSN (Video Title Set Number)
+
+#define EC_DVD_PROGRAM_CHAIN_CHANGE             (EC_DVDBASE + 0x1e)
+// Parameters: ( WORD, void )
+// Sent when current PGC (Program Chain) changes
+// lParam1 contains the new PGCN (Program Chain Number)
+
+#define EC_DVD_VOBU_Offset                     (EC_DVDBASE + 0x1f)
+// Parameters: ( BlockOffset, VTSN ) 
+// lParam1 is the block offset of the most recent VOBU.
+//
+
+#define EC_DVD_VOBU_Timestamp                  (EC_DVDBASE + 0x20)
+// Parameters: ( rtTimestamp.LowPart, rtTimeStamps.HighPart ) 
+// lParam1 is the dshow timestamp of the most recent VOBU.
+//
+
+#define EC_DVD_GPRM_Change                     (EC_DVDBASE + 0x21)
+// Parameters: ( GPRM index, GPRM value ) 
+// lParam1 is the GPRM index
+// loword(lParam2) is the new GPRM value, hiword(lParam2) is type
+//
+
+#define EC_DVD_SPRM_Change                     (EC_DVDBASE + 0x22)
+// Parameters: ( SPRM index, SPRM value ) 
+// lParam1 is the SPRM index
+// loword(lParam2) is the new SPRM value, hiword(lParam2) is type
+//
+
+#define EC_DVD_BeginNavigationCommands         (EC_DVDBASE + 0x23)
+// Parameters: ( command type, reserved ) 
+// Sent when navigation commands are starting
+//
+
+#define EC_DVD_NavigationCommand               (EC_DVDBASE + 0x24)
+// Parameters: ( cmd.LowPart, cmd.HighPart ) 
+// 64 bits of DVD navigation command.
+//
+
+
+#endif /* WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_APP) */
+#pragma endregion
+
 #endif // __DVDEVCOD__

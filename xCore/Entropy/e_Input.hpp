@@ -23,15 +23,9 @@
 //------------------------------------------------------------------------------
 
 xbool           input_UpdateState   ( void );
-#ifdef TARGET_XBOX
-xbool           input_IsPressed     ( input_gadget GadgetID, s32 ControllerID = -1 );
-xbool           input_WasPressed    ( input_gadget GadgetID, s32 ControllerID = -1 );
-f32             input_GetValue      ( input_gadget GadgetID, s32 ControllerID = -1 );
-#else
 xbool           input_IsPressed     ( input_gadget GadgetID, s32 ControllerID = 0 );
 xbool           input_WasPressed    ( input_gadget GadgetID, s32 ControllerID = 0 );
 f32             input_GetValue      ( input_gadget GadgetID, s32 ControllerID = 0 );
-#endif
 xbool           input_IsPresent     ( input_gadget GadgetID, s32 ControllerID = -1 );
 //------------------------------------------------------------------------------
 //  Public functions in e_Input.cpp

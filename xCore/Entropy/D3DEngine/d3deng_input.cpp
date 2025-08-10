@@ -1,22 +1,37 @@
+//==============================================================================
+//  
+//  d3deng_input.cpp
+//  
+//==============================================================================
 
-///////////////////////////////////////////////////////////////////////////
+//==============================================================================
+//  PLATFORM CHECK
+//==============================================================================
+
+#include "x_target.hpp"
+
+#ifndef TARGET_PC
+#error This file should only be compiled for PC platform. Please check your exclusions on your project spec.
+#endif
+
+//==============================================================================
 // INCLUDES 
-///////////////////////////////////////////////////////////////////////////
+//==============================================================================
 
 #include "..\e_Engine.hpp"
 
 #define DIRECTINPUT_VERSION  0x0800
 #include "dinput.h"
 
-///////////////////////////////////////////////////////////////////////////
+//==============================================================================
 // DEFINES
-///////////////////////////////////////////////////////////////////////////
+//==============================================================================
 
 #define MAX_DEVICES      8          // Maximun number of device per type
 #define REFRESH_RATE    15          // times a second. 30
-#define MAX_STATES      64           // ( REFRESH_RATE - MAX_STATES ) is how 
+#define MAX_STATES      64          // ( REFRESH_RATE - MAX_STATES ) is how 
                                     // long we can go without loosing info. 16
-#define MAX_EVENTS      64           // This is how long DirectX can go 
+#define MAX_EVENTS      64          // This is how long DirectX can go 
                                     // before loosing input. 16
 
 enum device_flags
@@ -45,9 +60,9 @@ enum
     ANALOG_COUNT_MOUSE   = INPUT_MOUSE__END     - INPUT_MOUSE__ANALOG,
 };
 
-///////////////////////////////////////////////////////////////////////////
+//==============================================================================
 // TYPES
-///////////////////////////////////////////////////////////////////////////
+//==============================================================================
 
 struct device
 {
@@ -87,9 +102,9 @@ struct state
     input_ps2_pad       PS2Pad  [ MAX_DEVICES ];
 };
 
-///////////////////////////////////////////////////////////////////////////
+//==============================================================================
 // VARIABLES
-///////////////////////////////////////////////////////////////////////////
+//==============================================================================
 
 static struct
 {
@@ -133,9 +148,9 @@ static struct
 
 } s_Input = {0};
 
-///////////////////////////////////////////////////////////////////////////
+//==============================================================================
 // FUNCTIONS
-///////////////////////////////////////////////////////////////////////////
+//==============================================================================
 
 static dxerr CreateMouse   ( device& Device, const DIDEVICEINSTANCE* pInstance, s32 SampleBufferSize );
 static dxerr CreateKeyboard( device& Device, const DIDEVICEINSTANCE* pInstance, s32 SampleBufferSize );
@@ -746,9 +761,6 @@ dxerr CreateJoystick( device& Device, const DIDEVICEINSTANCE* pInstance, s32 Sam
         s_Input.nPCPads++;
     
 	}  
-
-
-
     return Error;
 }
 
@@ -1166,52 +1178,6 @@ dxerr ReadJoystickBufferedData( device& Device, s32 ID )
     if( FAILED(Error) )  
         return Error;
 
-    // Study each of the buffer elements and process them.
-    //
-    // Since we really don't do anything, our "processing"
-    // consists merely of squirting the name into our
-    // local buffer.
-/*
-    //---------------------------------------------------------------------
-    // PS2 DIGITAL GADGETS
-    //---------------------------------------------------------------------
-    INPUT_PS2__DIGITAL,
-
-    INPUT_PS2_BTN_ANALOG_MODE,                
-
-    INPUT_PS2_BTN_SELECT,                 
-    INPUT_PS2_BTN_START,                  
-                      
-    INPUT_PS2_BTN_L_STICK,                
-    INPUT_PS2_BTN_R_STICK,                
-
-    //---------------------------------------------------------------------
-    // PS2 ANOLOG GADGETS
-    //---------------------------------------------------------------------
-    INPUT_PS2__ANOLOG,
-
-    INPUT_PS2_BTN_D_UP,                   
-    INPUT_PS2_BTN_D_LEFT,                 
-    INPUT_PS2_BTN_D_RIGHT,                
-    INPUT_PS2_BTN_D_DOWN,                 
-                                
-    INPUT_PS2_BTN_L1,                     
-    INPUT_PS2_BTN_L2,                     
-    INPUT_PS2_BTN_R1,                     
-    INPUT_PS2_BTN_R2,                     
-                                
-    INPUT_PS2_BTN_TRIANGLE,               
-    INPUT_PS2_BTN_SQUARE,                 
-    INPUT_PS2_BTN_CIRCLE,                 
-    INPUT_PS2_BTN_CROSS,                  
-
-    INPUT_PS2_STICK_LEFT_X,               
-    INPUT_PS2_STICK_LEFT_Y,               
-    INPUT_PS2_STICK_RIGHT_X,              
-    INPUT_PS2_STICK_RIGHT_Y,              
-    
-    INPUT_PS2__END,              
-*/
     for( u32 i = 0; i < dwElements; i++ ) 
     {
         state& State = GetState( didod[ i ].dwTimeStamp );
@@ -1261,12 +1227,6 @@ dxerr ReadJoystickBufferedData( device& Device, s32 ID )
 					}
 					else // Hat Switch Pressed.
 					{
-						// SOYO USB Converter gives the following values in dwData 
-						// INPUT_PS2_BTN_L_UP		= 0
-						// INPUT_PS2_BTN_L_RIGHT	= 9000,
-						// INPUT_PS2_BTN_L_DOWN		= 18000
-						// INPUT_PS2_BTN_L_LEFT 	= 27000
-
 						s32 Index = didod[ i ].dwData/9000 + 12; // Mapped to buttons 12-15 
                         State.PS2Pad[ID].Anolog[ Index ] = 1.0001f;
 					}
@@ -1395,22 +1355,6 @@ dxerr ReadJoystickBufferedData( device& Device, s32 ID )
             }
         }
     }
-/*
-
-    for(  i=0; i<16; i++ )
-    {
-        x_DebugMsg( "%2d ", i );
-    }
-    x_DebugMsg( "\n");
-
-    for(  i=0; i<16; i++ )
-    {
-        x_DebugMsg( "%2d ", (s32)s_Input.State[ s_Input.iState ].PS2Pad[ 0 ].Anolog[ i ] );
-    }
-    x_DebugMsg( "\n");
-
-    //x_DebugMsg("\n");
-*/
     return Error;
 }
 
@@ -1868,23 +1812,6 @@ f32 GetValue( s32 ControllerID, input_gadget GadgetID, digital_type DigitalType 
         case INPUT_MOUSE_BTN_R:     return s_Input.State[0].Mouse[ControllerID].Digital[1]; //return (f32)d3deng_MouseGetRButton();
         case INPUT_MOUSE_BTN_C:     return s_Input.State[0].Mouse[ControllerID].Digital[2]; //return (f32)d3deng_MouseGetMButton();
         } 
-/*
-        s32 DeviceID = s_Input.MouseDevice[ ControllerID ];
-
-        if( DeviceID >= 0 )
-        {
-            if( GadgetID < INPUT_MOUSE__ANALOG )
-            {
-                s32 Index = GadgetID - INPUT_MOUSE__DIGITAL -1;
-                return (f32)(s_Input.State[ s_Input.iState ].Mouse[ ControllerID ].Digital[ Index ] & DigitalType );
-            }
-            else
-            {
-                s32 Index = GadgetID - INPUT_MOUSE__ANALOG -1;
-                return s_Input.State[ s_Input.iState ].Mouse[ ControllerID ].Anolog[ Index ];
-            }
-        }
-*/
     }
 
     if( GadgetID < INPUT_PC__END && GadgetID > INPUT_PC__BEGIN )
@@ -1949,23 +1876,6 @@ f32 GetValue( s32 ControllerID, input_gadget GadgetID, digital_type DigitalType 
 
                     return V;
                 }
-/*
-                else
-                if( DigitalType == DIGITAL_DEBAUNCE )
-                {
-                    if( (s_Input.State[ s_Input.iState ].PS2Pad[ ControllerID ].Anolog[ Index ] - 1) > 0 )
-                    {
-                        return 1;
-                    }
-                    else
-                    {
-                        if( s_Input.State[ s_Input.iState ].PS2Pad[ ControllerID ].Anolog[ Index ] == 0 )
-                            return 0;
-
-                        return 1;
-                    }
-                }
-*/
                 return s_Input.State[ s_Input.iState ].PS2Pad[ ControllerID ].Anolog[ Index ];
             }
         }

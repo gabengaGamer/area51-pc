@@ -7,6 +7,11 @@
  *
  **************************************************************************/
 
+#include <winapifamily.h>
+
+#pragma region Desktop Family
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
+
 #define COM_NO_WINDOWS_H
 #include <objbase.h>
 #include <float.h>
@@ -463,33 +468,33 @@ typedef const DSBPOSITIONNOTIFY *LPCDSBPOSITIONNOTIFY;
 typedef BOOL (CALLBACK *LPDSENUMCALLBACKA)(LPGUID, LPCSTR, LPCSTR, LPVOID);
 typedef BOOL (CALLBACK *LPDSENUMCALLBACKW)(LPGUID, LPCWSTR, LPCWSTR, LPVOID);
 
-extern HRESULT WINAPI DirectSoundCreate(__in_opt LPCGUID pcGuidDevice, __deref_out LPDIRECTSOUND *ppDS, __null LPUNKNOWN pUnkOuter);
-extern HRESULT WINAPI DirectSoundEnumerateA(__in LPDSENUMCALLBACKA pDSEnumCallback, __in_opt LPVOID pContext);
-extern HRESULT WINAPI DirectSoundEnumerateW(__in LPDSENUMCALLBACKW pDSEnumCallback, __in_opt LPVOID pContext);
+extern _Check_return_ HRESULT WINAPI DirectSoundCreate(_In_opt_ LPCGUID pcGuidDevice, _Outptr_ LPDIRECTSOUND *ppDS, _Pre_null_ LPUNKNOWN pUnkOuter);
+extern HRESULT WINAPI DirectSoundEnumerateA(_In_ LPDSENUMCALLBACKA pDSEnumCallback, _In_opt_ LPVOID pContext);
+extern HRESULT WINAPI DirectSoundEnumerateW(_In_ LPDSENUMCALLBACKW pDSEnumCallback, _In_opt_ LPVOID pContext);
 
-extern HRESULT WINAPI DirectSoundCaptureCreate(__in_opt LPCGUID pcGuidDevice, __deref_out LPDIRECTSOUNDCAPTURE *ppDSC, __null LPUNKNOWN pUnkOuter);
-extern HRESULT WINAPI DirectSoundCaptureEnumerateA(__in LPDSENUMCALLBACKA pDSEnumCallback, __in_opt LPVOID pContext);
-extern HRESULT WINAPI DirectSoundCaptureEnumerateW(__in LPDSENUMCALLBACKW pDSEnumCallback, __in_opt LPVOID pContext);
+extern HRESULT WINAPI DirectSoundCaptureCreate(_In_opt_ LPCGUID pcGuidDevice, _Outptr_ LPDIRECTSOUNDCAPTURE *ppDSC, _Pre_null_ LPUNKNOWN pUnkOuter);
+extern HRESULT WINAPI DirectSoundCaptureEnumerateA(_In_ LPDSENUMCALLBACKA pDSEnumCallback, _In_opt_ LPVOID pContext);
+extern HRESULT WINAPI DirectSoundCaptureEnumerateW(_In_ LPDSENUMCALLBACKW pDSEnumCallback, _In_opt_ LPVOID pContext);
 
 #if DIRECTSOUND_VERSION >= 0x0800
-extern HRESULT WINAPI DirectSoundCreate8(__in_opt LPCGUID pcGuidDevice, __deref_out LPDIRECTSOUND8 *ppDS8, __null LPUNKNOWN pUnkOuter);
-extern HRESULT WINAPI DirectSoundCaptureCreate8(__in_opt LPCGUID pcGuidDevice, __deref_out LPDIRECTSOUNDCAPTURE8 *ppDSC8, __null LPUNKNOWN pUnkOuter);
+extern HRESULT WINAPI DirectSoundCreate8(_In_opt_ LPCGUID pcGuidDevice, _Outptr_ LPDIRECTSOUND8 *ppDS8, _Pre_null_ LPUNKNOWN pUnkOuter);
+extern HRESULT WINAPI DirectSoundCaptureCreate8(_In_opt_ LPCGUID pcGuidDevice, _Outptr_ LPDIRECTSOUNDCAPTURE8 *ppDSC8, _Pre_null_ LPUNKNOWN pUnkOuter);
 extern HRESULT WINAPI DirectSoundFullDuplexCreate
 (
-    __in_opt LPCGUID pcGuidCaptureDevice,
-    __in_opt LPCGUID pcGuidRenderDevice,
-    __in LPCDSCBUFFERDESC pcDSCBufferDesc,
-    __in LPCDSBUFFERDESC pcDSBufferDesc,
+    _In_opt_ LPCGUID pcGuidCaptureDevice,
+    _In_opt_ LPCGUID pcGuidRenderDevice,
+    _In_ LPCDSCBUFFERDESC pcDSCBufferDesc,
+    _In_ LPCDSBUFFERDESC pcDSBufferDesc,
     HWND hWnd,
     DWORD dwLevel,
-    __deref_out LPDIRECTSOUNDFULLDUPLEX* ppDSFD,
-    __deref_out LPDIRECTSOUNDCAPTUREBUFFER8 *ppDSCBuffer8,
-    __deref_out LPDIRECTSOUNDBUFFER8 *ppDSBuffer8,
-    __null LPUNKNOWN pUnkOuter
+    _Outptr_ LPDIRECTSOUNDFULLDUPLEX* ppDSFD,
+    _Outptr_ LPDIRECTSOUNDCAPTUREBUFFER8 *ppDSCBuffer8,
+    _Outptr_ LPDIRECTSOUNDBUFFER8 *ppDSBuffer8,
+    _Pre_null_ LPUNKNOWN pUnkOuter
 );
 #define DirectSoundFullDuplexCreate8 DirectSoundFullDuplexCreate
 
-extern HRESULT WINAPI GetDeviceID(__in_opt LPCGUID pGuidSrc, __out LPGUID pGuidDest);
+extern HRESULT WINAPI GetDeviceID(_In_opt_ LPCGUID pGuidSrc, _Out_ LPGUID pGuidDest);
 #endif // DIRECTSOUND_VERSION >= 0x0800
 
 #ifdef UNICODE
@@ -542,16 +547,16 @@ DEFINE_GUID(IID_IReferenceClock, 0x56a86897, 0x0ad4, 0x11ce, 0xb0, 0x3a, 0x00, 0
 DECLARE_INTERFACE_(IReferenceClock, IUnknown)
 {
     // IUnknown methods
-    STDMETHOD(QueryInterface)       (THIS_ __in REFIID, __deref_out LPVOID*) PURE;
+    STDMETHOD(QueryInterface)       (THIS_ _In_ REFIID, _Outptr_ LPVOID*) PURE;
     STDMETHOD_(ULONG,AddRef)        (THIS) PURE;
     STDMETHOD_(ULONG,Release)       (THIS) PURE;
 
     // IReferenceClock methods
-    STDMETHOD(GetTime)              (THIS_ __out REFERENCE_TIME *pTime) PURE;
+    STDMETHOD(GetTime)              (THIS_ _Out_ REFERENCE_TIME *pTime) PURE;
     STDMETHOD(AdviseTime)           (THIS_ REFERENCE_TIME rtBaseTime, REFERENCE_TIME rtStreamTime,
-                                           HANDLE hEvent, __out LPDWORD pdwAdviseCookie) PURE;
+                                           HANDLE hEvent, _Out_ LPDWORD pdwAdviseCookie) PURE;
     STDMETHOD(AdvisePeriodic)       (THIS_ REFERENCE_TIME rtStartTime, REFERENCE_TIME rtPeriodTime,
-                                           HANDLE hSemaphore, __out LPDWORD pdwAdviseCookie) PURE;
+                                           HANDLE hSemaphore, _Out_ LPDWORD pdwAdviseCookie) PURE;
     STDMETHOD(Unadvise)             (THIS_ DWORD dwAdviseCookie) PURE;
 };
 
@@ -589,19 +594,19 @@ DEFINE_GUID(IID_IDirectSound, 0x279AFA83, 0x4981, 0x11CE, 0xA5, 0x21, 0x00, 0x20
 DECLARE_INTERFACE_(IDirectSound, IUnknown)
 {
     // IUnknown methods
-    STDMETHOD(QueryInterface)       (THIS_ __in REFIID, __deref_out LPVOID*) PURE;
+    STDMETHOD(QueryInterface)       (THIS_ _In_ REFIID, _Outptr_ LPVOID*) PURE;
     STDMETHOD_(ULONG,AddRef)        (THIS) PURE;
     STDMETHOD_(ULONG,Release)       (THIS) PURE;
 
     // IDirectSound methods
-    STDMETHOD(CreateSoundBuffer)    (THIS_ __in LPCDSBUFFERDESC pcDSBufferDesc, __deref_out LPDIRECTSOUNDBUFFER *ppDSBuffer, __null LPUNKNOWN pUnkOuter) PURE;
-    STDMETHOD(GetCaps)              (THIS_ __out LPDSCAPS pDSCaps) PURE;
-    STDMETHOD(DuplicateSoundBuffer) (THIS_ __in LPDIRECTSOUNDBUFFER pDSBufferOriginal, __deref_out LPDIRECTSOUNDBUFFER *ppDSBufferDuplicate) PURE;
+    STDMETHOD(CreateSoundBuffer)    (THIS_ _In_ LPCDSBUFFERDESC pcDSBufferDesc, _Outptr_ LPDIRECTSOUNDBUFFER *ppDSBuffer, _Pre_null_ LPUNKNOWN pUnkOuter) PURE;
+    STDMETHOD(GetCaps)              (THIS_ _Out_ LPDSCAPS pDSCaps) PURE;
+    STDMETHOD(DuplicateSoundBuffer) (THIS_ _In_ LPDIRECTSOUNDBUFFER pDSBufferOriginal, _Outptr_ LPDIRECTSOUNDBUFFER *ppDSBufferDuplicate) PURE;
     STDMETHOD(SetCooperativeLevel)  (THIS_ HWND hwnd, DWORD dwLevel) PURE;
     STDMETHOD(Compact)              (THIS) PURE;
-    STDMETHOD(GetSpeakerConfig)     (THIS_ __out LPDWORD pdwSpeakerConfig) PURE;
+    STDMETHOD(GetSpeakerConfig)     (THIS_ _Out_ LPDWORD pdwSpeakerConfig) PURE;
     STDMETHOD(SetSpeakerConfig)     (THIS_ DWORD dwSpeakerConfig) PURE;
-    STDMETHOD(Initialize)           (THIS_ __in_opt LPCGUID pcGuidDevice) PURE;
+    STDMETHOD(Initialize)           (THIS_ _In_opt_ LPCGUID pcGuidDevice) PURE;
 };
 
 #define IDirectSound_QueryInterface(p,a,b)       IUnknown_QueryInterface(p,a,b)
@@ -642,22 +647,22 @@ DEFINE_GUID(IID_IDirectSound8, 0xC50A7E93, 0xF395, 0x4834, 0x9E, 0xF6, 0x7F, 0xA
 DECLARE_INTERFACE_(IDirectSound8, IDirectSound)
 {
     // IUnknown methods
-    STDMETHOD(QueryInterface)       (THIS_ __in REFIID, __deref_out LPVOID*) PURE;
+    STDMETHOD(QueryInterface)       (THIS_ _In_ REFIID, _Outptr_ LPVOID*) PURE;
     STDMETHOD_(ULONG,AddRef)        (THIS) PURE;
     STDMETHOD_(ULONG,Release)       (THIS) PURE;
 
     // IDirectSound methods
-    STDMETHOD(CreateSoundBuffer)    (THIS_ __in LPCDSBUFFERDESC pcDSBufferDesc, __out LPDIRECTSOUNDBUFFER *ppDSBuffer, __null LPUNKNOWN pUnkOuter) PURE;
-    STDMETHOD(GetCaps)              (THIS_ __out LPDSCAPS pDSCaps) PURE;
-    STDMETHOD(DuplicateSoundBuffer) (THIS_ __in LPDIRECTSOUNDBUFFER pDSBufferOriginal, __out LPDIRECTSOUNDBUFFER *ppDSBufferDuplicate) PURE;
+    STDMETHOD(CreateSoundBuffer)    (THIS_ _In_ LPCDSBUFFERDESC pcDSBufferDesc, _Out_ LPDIRECTSOUNDBUFFER *ppDSBuffer, _Pre_null_ LPUNKNOWN pUnkOuter) PURE;
+    STDMETHOD(GetCaps)              (THIS_ _Out_ LPDSCAPS pDSCaps) PURE;
+    STDMETHOD(DuplicateSoundBuffer) (THIS_ _In_ LPDIRECTSOUNDBUFFER pDSBufferOriginal, _Out_ LPDIRECTSOUNDBUFFER *ppDSBufferDuplicate) PURE;
     STDMETHOD(SetCooperativeLevel)  (THIS_ HWND hwnd, DWORD dwLevel) PURE;
     STDMETHOD(Compact)              (THIS) PURE;
-    STDMETHOD(GetSpeakerConfig)     (THIS_ __out LPDWORD pdwSpeakerConfig) PURE;
+    STDMETHOD(GetSpeakerConfig)     (THIS_ _Out_ LPDWORD pdwSpeakerConfig) PURE;
     STDMETHOD(SetSpeakerConfig)     (THIS_ DWORD dwSpeakerConfig) PURE;
-    STDMETHOD(Initialize)           (THIS_ __in_opt LPCGUID pcGuidDevice) PURE;
+    STDMETHOD(Initialize)           (THIS_ _In_opt_ LPCGUID pcGuidDevice) PURE;
 
     // IDirectSound8 methods
-    STDMETHOD(VerifyCertification)  (THIS_ __out LPDWORD pdwCertified) PURE;
+    STDMETHOD(VerifyCertification)  (THIS_ _Out_ LPDWORD pdwCertified) PURE;
 };
 
 #define IDirectSound8_QueryInterface(p,a,b)       IDirectSound_QueryInterface(p,a,b)
@@ -692,31 +697,31 @@ DEFINE_GUID(IID_IDirectSoundBuffer, 0x279AFA85, 0x4981, 0x11CE, 0xA5, 0x21, 0x00
 DECLARE_INTERFACE_(IDirectSoundBuffer, IUnknown)
 {
     // IUnknown methods
-    STDMETHOD(QueryInterface)       (THIS_ __in REFIID, __deref_out LPVOID*) PURE;
+    STDMETHOD(QueryInterface)       (THIS_ _In_ REFIID, _Outptr_ LPVOID*) PURE;
     STDMETHOD_(ULONG,AddRef)        (THIS) PURE;
     STDMETHOD_(ULONG,Release)       (THIS) PURE;
 
     // IDirectSoundBuffer methods
-    STDMETHOD(GetCaps)              (THIS_ __out LPDSBCAPS pDSBufferCaps) PURE;
-    STDMETHOD(GetCurrentPosition)   (THIS_ __out_opt LPDWORD pdwCurrentPlayCursor, __out_opt LPDWORD pdwCurrentWriteCursor) PURE;
-    STDMETHOD(GetFormat)            (THIS_ __out_bcount_opt(dwSizeAllocated) LPWAVEFORMATEX pwfxFormat, DWORD dwSizeAllocated, __out_opt LPDWORD pdwSizeWritten) PURE;
-    STDMETHOD(GetVolume)            (THIS_ __out LPLONG plVolume) PURE;
-    STDMETHOD(GetPan)               (THIS_ __out LPLONG plPan) PURE;
-    STDMETHOD(GetFrequency)         (THIS_ __out LPDWORD pdwFrequency) PURE;
-    STDMETHOD(GetStatus)            (THIS_ __out LPDWORD pdwStatus) PURE;
-    STDMETHOD(Initialize)           (THIS_ __in LPDIRECTSOUND pDirectSound, __in LPCDSBUFFERDESC pcDSBufferDesc) PURE;
+    STDMETHOD(GetCaps)              (THIS_ _Out_ LPDSBCAPS pDSBufferCaps) PURE;
+    STDMETHOD(GetCurrentPosition)   (THIS_ _Out_opt_ LPDWORD pdwCurrentPlayCursor, _Out_opt_ LPDWORD pdwCurrentWriteCursor) PURE;
+    STDMETHOD(GetFormat)            (THIS_ _Out_writes_bytes_opt_(dwSizeAllocated) LPWAVEFORMATEX pwfxFormat, DWORD dwSizeAllocated, _Out_opt_ LPDWORD pdwSizeWritten) PURE;
+    STDMETHOD(GetVolume)            (THIS_ _Out_ LPLONG plVolume) PURE;
+    STDMETHOD(GetPan)               (THIS_ _Out_ LPLONG plPan) PURE;
+    STDMETHOD(GetFrequency)         (THIS_ _Out_ LPDWORD pdwFrequency) PURE;
+    STDMETHOD(GetStatus)            (THIS_ _Out_ LPDWORD pdwStatus) PURE;
+    STDMETHOD(Initialize)           (THIS_ _In_ LPDIRECTSOUND pDirectSound, _In_ LPCDSBUFFERDESC pcDSBufferDesc) PURE;
     STDMETHOD(Lock)                 (THIS_ DWORD dwOffset, DWORD dwBytes,
-                                           __deref_out_bcount(*pdwAudioBytes1) LPVOID *ppvAudioPtr1, __out LPDWORD pdwAudioBytes1,
-                                           __deref_opt_out_bcount(*pdwAudioBytes2) LPVOID *ppvAudioPtr2, __out_opt LPDWORD pdwAudioBytes2, DWORD dwFlags) PURE;
+                                           _Outptr_result_bytebuffer_(*pdwAudioBytes1) LPVOID *ppvAudioPtr1, _Out_ LPDWORD pdwAudioBytes1,
+                                           _Outptr_opt_result_bytebuffer_(*pdwAudioBytes2) LPVOID *ppvAudioPtr2, _Out_opt_ LPDWORD pdwAudioBytes2, DWORD dwFlags) PURE;
     STDMETHOD(Play)                 (THIS_ DWORD dwReserved1, DWORD dwPriority, DWORD dwFlags) PURE;
     STDMETHOD(SetCurrentPosition)   (THIS_ DWORD dwNewPosition) PURE;
-    STDMETHOD(SetFormat)            (THIS_ __in LPCWAVEFORMATEX pcfxFormat) PURE;
+    STDMETHOD(SetFormat)            (THIS_ _In_ LPCWAVEFORMATEX pcfxFormat) PURE;
     STDMETHOD(SetVolume)            (THIS_ LONG lVolume) PURE;
     STDMETHOD(SetPan)               (THIS_ LONG lPan) PURE;
     STDMETHOD(SetFrequency)         (THIS_ DWORD dwFrequency) PURE;
     STDMETHOD(Stop)                 (THIS) PURE;
-    STDMETHOD(Unlock)               (THIS_ __in_bcount(dwAudioBytes1) LPVOID pvAudioPtr1, DWORD dwAudioBytes1,
-                                           __in_bcount_opt(dwAudioBytes2) LPVOID pvAudioPtr2, DWORD dwAudioBytes2) PURE;
+    STDMETHOD(Unlock)               (THIS_ _In_reads_bytes_(dwAudioBytes1) LPVOID pvAudioPtr1, DWORD dwAudioBytes1,
+                                           _In_reads_bytes_opt_(dwAudioBytes2) LPVOID pvAudioPtr2, DWORD dwAudioBytes2) PURE;
     STDMETHOD(Restore)              (THIS) PURE;
 };
 
@@ -778,37 +783,37 @@ DEFINE_GUID(IID_IDirectSoundBuffer8, 0x6825a449, 0x7524, 0x4d82, 0x92, 0x0f, 0x5
 DECLARE_INTERFACE_(IDirectSoundBuffer8, IDirectSoundBuffer)
 {
     // IUnknown methods
-    STDMETHOD(QueryInterface)       (THIS_ __in REFIID, __deref_out LPVOID*) PURE;
+    STDMETHOD(QueryInterface)       (THIS_ _In_ REFIID, _Outptr_ LPVOID*) PURE;
     STDMETHOD_(ULONG,AddRef)        (THIS) PURE;
     STDMETHOD_(ULONG,Release)       (THIS) PURE;
 
     // IDirectSoundBuffer methods
-    STDMETHOD(GetCaps)              (THIS_ __out LPDSBCAPS pDSBufferCaps) PURE;
-    STDMETHOD(GetCurrentPosition)   (THIS_ __out_opt LPDWORD pdwCurrentPlayCursor, __out_opt LPDWORD pdwCurrentWriteCursor) PURE;
-    STDMETHOD(GetFormat)            (THIS_ __out_bcount_opt(dwSizeAllocated) LPWAVEFORMATEX pwfxFormat, DWORD dwSizeAllocated, __out_opt LPDWORD pdwSizeWritten) PURE;
-    STDMETHOD(GetVolume)            (THIS_ __out LPLONG plVolume) PURE;
-    STDMETHOD(GetPan)               (THIS_ __out LPLONG plPan) PURE;
-    STDMETHOD(GetFrequency)         (THIS_ __out LPDWORD pdwFrequency) PURE;
-    STDMETHOD(GetStatus)            (THIS_ __out LPDWORD pdwStatus) PURE;
-    STDMETHOD(Initialize)           (THIS_ __in LPDIRECTSOUND pDirectSound, __in LPCDSBUFFERDESC pcDSBufferDesc) PURE;
+    STDMETHOD(GetCaps)              (THIS_ _Out_ LPDSBCAPS pDSBufferCaps) PURE;
+    STDMETHOD(GetCurrentPosition)   (THIS_ _Out_opt_ LPDWORD pdwCurrentPlayCursor, _Out_opt_ LPDWORD pdwCurrentWriteCursor) PURE;
+    STDMETHOD(GetFormat)            (THIS_ _Out_writes_bytes_opt_(dwSizeAllocated) LPWAVEFORMATEX pwfxFormat, DWORD dwSizeAllocated, _Out_opt_ LPDWORD pdwSizeWritten) PURE;
+    STDMETHOD(GetVolume)            (THIS_ _Out_ LPLONG plVolume) PURE;
+    STDMETHOD(GetPan)               (THIS_ _Out_ LPLONG plPan) PURE;
+    STDMETHOD(GetFrequency)         (THIS_ _Out_ LPDWORD pdwFrequency) PURE;
+    STDMETHOD(GetStatus)            (THIS_ _Out_ LPDWORD pdwStatus) PURE;
+    STDMETHOD(Initialize)           (THIS_ _In_ LPDIRECTSOUND pDirectSound, _In_ LPCDSBUFFERDESC pcDSBufferDesc) PURE;
     STDMETHOD(Lock)                 (THIS_ DWORD dwOffset, DWORD dwBytes,
-                                           __deref_out_bcount(*pdwAudioBytes1) LPVOID *ppvAudioPtr1, __out LPDWORD pdwAudioBytes1,
-                                           __deref_opt_out_bcount(*pdwAudioBytes2) LPVOID *ppvAudioPtr2, __out_opt LPDWORD pdwAudioBytes2, DWORD dwFlags) PURE;
+                                           _Outptr_result_bytebuffer_(*pdwAudioBytes1) LPVOID *ppvAudioPtr1, _Out_ LPDWORD pdwAudioBytes1,
+                                           _Outptr_opt_result_bytebuffer_(*pdwAudioBytes2) LPVOID *ppvAudioPtr2, _Out_opt_ LPDWORD pdwAudioBytes2, DWORD dwFlags) PURE;
     STDMETHOD(Play)                 (THIS_ DWORD dwReserved1, DWORD dwPriority, DWORD dwFlags) PURE;
     STDMETHOD(SetCurrentPosition)   (THIS_ DWORD dwNewPosition) PURE;
-    STDMETHOD(SetFormat)            (THIS_ __in LPCWAVEFORMATEX pcfxFormat) PURE;
+    STDMETHOD(SetFormat)            (THIS_ _In_ LPCWAVEFORMATEX pcfxFormat) PURE;
     STDMETHOD(SetVolume)            (THIS_ LONG lVolume) PURE;
     STDMETHOD(SetPan)               (THIS_ LONG lPan) PURE;
     STDMETHOD(SetFrequency)         (THIS_ DWORD dwFrequency) PURE;
     STDMETHOD(Stop)                 (THIS) PURE;
-    STDMETHOD(Unlock)               (THIS_ __in_bcount(dwAudioBytes1) LPVOID pvAudioPtr1, DWORD dwAudioBytes1,
-                                           __in_bcount_opt(dwAudioBytes2) LPVOID pvAudioPtr2, DWORD dwAudioBytes2) PURE;
+    STDMETHOD(Unlock)               (THIS_ _In_reads_bytes_(dwAudioBytes1) LPVOID pvAudioPtr1, DWORD dwAudioBytes1,
+                                           _In_reads_bytes_opt_(dwAudioBytes2) LPVOID pvAudioPtr2, DWORD dwAudioBytes2) PURE;
     STDMETHOD(Restore)              (THIS) PURE;
 
     // IDirectSoundBuffer8 methods
-    STDMETHOD(SetFX)                (THIS_ DWORD dwEffectsCount, __in_ecount_opt(dwEffectsCount) LPDSEFFECTDESC pDSFXDesc, __out_ecount_opt(dwEffectsCount) LPDWORD pdwResultCodes) PURE;
-    STDMETHOD(AcquireResources)     (THIS_ DWORD dwFlags, DWORD dwEffectsCount, __out_ecount(dwEffectsCount) LPDWORD pdwResultCodes) PURE;
-    STDMETHOD(GetObjectInPath)      (THIS_ __in REFGUID rguidObject, DWORD dwIndex, __in REFGUID rguidInterface, __deref_out LPVOID *ppObject) PURE;
+    STDMETHOD(SetFX)                (THIS_ DWORD dwEffectsCount, _In_reads_opt_(dwEffectsCount) LPDSEFFECTDESC pDSFXDesc, _Out_writes_opt_(dwEffectsCount) LPDWORD pdwResultCodes) PURE;
+    STDMETHOD(AcquireResources)     (THIS_ DWORD dwFlags, DWORD dwEffectsCount, _Out_writes_(dwEffectsCount) LPDWORD pdwResultCodes) PURE;
+    STDMETHOD(GetObjectInPath)      (THIS_ _In_ REFGUID rguidObject, DWORD dwIndex, _In_ REFGUID rguidInterface, _Outptr_ LPVOID *ppObject) PURE;
 };
 
 // Special GUID meaning "select all objects" for use in GetObjectInPath()
@@ -861,19 +866,19 @@ DEFINE_GUID(IID_IDirectSound3DListener, 0x279AFA84, 0x4981, 0x11CE, 0xA5, 0x21, 
 DECLARE_INTERFACE_(IDirectSound3DListener, IUnknown)
 {
     // IUnknown methods
-    STDMETHOD(QueryInterface)           (THIS_ __in REFIID, __deref_out LPVOID*) PURE;
+    STDMETHOD(QueryInterface)           (THIS_ _In_ REFIID, _Outptr_ LPVOID*) PURE;
     STDMETHOD_(ULONG,AddRef)            (THIS) PURE;
     STDMETHOD_(ULONG,Release)           (THIS) PURE;
 
     // IDirectSound3DListener methods
-    STDMETHOD(GetAllParameters)         (THIS_ __out LPDS3DLISTENER pListener) PURE;
-    STDMETHOD(GetDistanceFactor)        (THIS_ __out D3DVALUE* pflDistanceFactor) PURE;
-    STDMETHOD(GetDopplerFactor)         (THIS_ __out D3DVALUE* pflDopplerFactor) PURE;
-    STDMETHOD(GetOrientation)           (THIS_ __out D3DVECTOR* pvOrientFront, __out D3DVECTOR* pvOrientTop) PURE;
-    STDMETHOD(GetPosition)              (THIS_ __out D3DVECTOR* pvPosition) PURE;
-    STDMETHOD(GetRolloffFactor)         (THIS_ __out D3DVALUE* pflRolloffFactor) PURE;
-    STDMETHOD(GetVelocity)              (THIS_ __out D3DVECTOR* pvVelocity) PURE;
-    STDMETHOD(SetAllParameters)         (THIS_ __in LPCDS3DLISTENER pcListener, DWORD dwApply) PURE;
+    STDMETHOD(GetAllParameters)         (THIS_ _Out_ LPDS3DLISTENER pListener) PURE;
+    STDMETHOD(GetDistanceFactor)        (THIS_ _Out_ D3DVALUE* pflDistanceFactor) PURE;
+    STDMETHOD(GetDopplerFactor)         (THIS_ _Out_ D3DVALUE* pflDopplerFactor) PURE;
+    STDMETHOD(GetOrientation)           (THIS_ _Out_ D3DVECTOR* pvOrientFront, _Out_ D3DVECTOR* pvOrientTop) PURE;
+    STDMETHOD(GetPosition)              (THIS_ _Out_ D3DVECTOR* pvPosition) PURE;
+    STDMETHOD(GetRolloffFactor)         (THIS_ _Out_ D3DVALUE* pflRolloffFactor) PURE;
+    STDMETHOD(GetVelocity)              (THIS_ _Out_ D3DVECTOR* pvVelocity) PURE;
+    STDMETHOD(SetAllParameters)         (THIS_ _In_ LPCDS3DLISTENER pcListener, DWORD dwApply) PURE;
     STDMETHOD(SetDistanceFactor)        (THIS_ D3DVALUE flDistanceFactor, DWORD dwApply) PURE;
     STDMETHOD(SetDopplerFactor)         (THIS_ D3DVALUE flDopplerFactor, DWORD dwApply) PURE;
     STDMETHOD(SetOrientation)           (THIS_ D3DVALUE xFront, D3DVALUE yFront, D3DVALUE zFront,
@@ -934,21 +939,21 @@ DEFINE_GUID(IID_IDirectSound3DBuffer, 0x279AFA86, 0x4981, 0x11CE, 0xA5, 0x21, 0x
 DECLARE_INTERFACE_(IDirectSound3DBuffer, IUnknown)
 {
     // IUnknown methods
-    STDMETHOD(QueryInterface)       (THIS_ __in REFIID, __deref_out LPVOID*) PURE;
+    STDMETHOD(QueryInterface)       (THIS_ _In_ REFIID, _Outptr_ LPVOID*) PURE;
     STDMETHOD_(ULONG,AddRef)        (THIS) PURE;
     STDMETHOD_(ULONG,Release)       (THIS) PURE;
 
     // IDirectSound3DBuffer methods
-    STDMETHOD(GetAllParameters)     (THIS_ __out LPDS3DBUFFER pDs3dBuffer) PURE;
-    STDMETHOD(GetConeAngles)        (THIS_ __out LPDWORD pdwInsideConeAngle, __out LPDWORD pdwOutsideConeAngle) PURE;
-    STDMETHOD(GetConeOrientation)   (THIS_ __out D3DVECTOR* pvOrientation) PURE;
-    STDMETHOD(GetConeOutsideVolume) (THIS_ __out LPLONG plConeOutsideVolume) PURE;
-    STDMETHOD(GetMaxDistance)       (THIS_ __out D3DVALUE* pflMaxDistance) PURE;
-    STDMETHOD(GetMinDistance)       (THIS_ __out D3DVALUE* pflMinDistance) PURE;
-    STDMETHOD(GetMode)              (THIS_ __out LPDWORD pdwMode) PURE;
-    STDMETHOD(GetPosition)          (THIS_ __out D3DVECTOR* pvPosition) PURE;
-    STDMETHOD(GetVelocity)          (THIS_ __out D3DVECTOR* pvVelocity) PURE;
-    STDMETHOD(SetAllParameters)     (THIS_ __in LPCDS3DBUFFER pcDs3dBuffer, DWORD dwApply) PURE;
+    STDMETHOD(GetAllParameters)     (THIS_ _Out_ LPDS3DBUFFER pDs3dBuffer) PURE;
+    STDMETHOD(GetConeAngles)        (THIS_ _Out_ LPDWORD pdwInsideConeAngle, _Out_ LPDWORD pdwOutsideConeAngle) PURE;
+    STDMETHOD(GetConeOrientation)   (THIS_ _Out_ D3DVECTOR* pvOrientation) PURE;
+    STDMETHOD(GetConeOutsideVolume) (THIS_ _Out_ LPLONG plConeOutsideVolume) PURE;
+    STDMETHOD(GetMaxDistance)       (THIS_ _Out_ D3DVALUE* pflMaxDistance) PURE;
+    STDMETHOD(GetMinDistance)       (THIS_ _Out_ D3DVALUE* pflMinDistance) PURE;
+    STDMETHOD(GetMode)              (THIS_ _Out_ LPDWORD pdwMode) PURE;
+    STDMETHOD(GetPosition)          (THIS_ _Out_ D3DVECTOR* pvPosition) PURE;
+    STDMETHOD(GetVelocity)          (THIS_ _Out_ D3DVECTOR* pvVelocity) PURE;
+    STDMETHOD(SetAllParameters)     (THIS_ _In_ LPCDS3DBUFFER pcDs3dBuffer, DWORD dwApply) PURE;
     STDMETHOD(SetConeAngles)        (THIS_ DWORD dwInsideConeAngle, DWORD dwOutsideConeAngle, DWORD dwApply) PURE;
     STDMETHOD(SetConeOrientation)   (THIS_ D3DVALUE x, D3DVALUE y, D3DVALUE z, DWORD dwApply) PURE;
     STDMETHOD(SetConeOutsideVolume) (THIS_ LONG lConeOutsideVolume, DWORD dwApply) PURE;
@@ -1015,14 +1020,14 @@ DEFINE_GUID(IID_IDirectSoundCapture, 0xb0210781, 0x89cd, 0x11d0, 0xaf, 0x8, 0x0,
 DECLARE_INTERFACE_(IDirectSoundCapture, IUnknown)
 {
     // IUnknown methods
-    STDMETHOD(QueryInterface)       (THIS_ __in REFIID, __deref_out LPVOID*) PURE;
+    STDMETHOD(QueryInterface)       (THIS_ _In_ REFIID, _Outptr_ LPVOID*) PURE;
     STDMETHOD_(ULONG,AddRef)        (THIS) PURE;
     STDMETHOD_(ULONG,Release)       (THIS) PURE;
 
     // IDirectSoundCapture methods
-    STDMETHOD(CreateCaptureBuffer)  (THIS_ __in LPCDSCBUFFERDESC pcDSCBufferDesc, __deref_out LPDIRECTSOUNDCAPTUREBUFFER *ppDSCBuffer, __null LPUNKNOWN pUnkOuter) PURE;
-    STDMETHOD(GetCaps)              (THIS_ __out LPDSCCAPS pDSCCaps) PURE;
-    STDMETHOD(Initialize)           (THIS_ __in_opt LPCGUID pcGuidDevice) PURE;
+    STDMETHOD(CreateCaptureBuffer)  (THIS_ _In_ LPCDSCBUFFERDESC pcDSCBufferDesc, _Outptr_ LPDIRECTSOUNDCAPTUREBUFFER *ppDSCBuffer, _Pre_null_ LPUNKNOWN pUnkOuter) PURE;
+    STDMETHOD(GetCaps)              (THIS_ _Out_ LPDSCCAPS pDSCCaps) PURE;
+    STDMETHOD(Initialize)           (THIS_ _In_opt_ LPCGUID pcGuidDevice) PURE;
 };
 
 #define IDirectSoundCapture_QueryInterface(p,a,b)           IUnknown_QueryInterface(p,a,b)
@@ -1051,23 +1056,23 @@ DEFINE_GUID(IID_IDirectSoundCaptureBuffer, 0xb0210782, 0x89cd, 0x11d0, 0xaf, 0x8
 DECLARE_INTERFACE_(IDirectSoundCaptureBuffer, IUnknown)
 {
     // IUnknown methods
-    STDMETHOD(QueryInterface)       (THIS_ __in REFIID, __deref_out LPVOID*) PURE;
+    STDMETHOD(QueryInterface)       (THIS_ _In_ REFIID, _Outptr_ LPVOID*) PURE;
     STDMETHOD_(ULONG,AddRef)        (THIS) PURE;
     STDMETHOD_(ULONG,Release)       (THIS) PURE;
 
     // IDirectSoundCaptureBuffer methods
-    STDMETHOD(GetCaps)              (THIS_ __out LPDSCBCAPS pDSCBCaps) PURE;
-    STDMETHOD(GetCurrentPosition)   (THIS_ __out_opt LPDWORD pdwCapturePosition, __out_opt LPDWORD pdwReadPosition) PURE;
-    STDMETHOD(GetFormat)            (THIS_ __out_bcount_opt(dwSizeAllocated) LPWAVEFORMATEX pwfxFormat, DWORD dwSizeAllocated, __out_opt LPDWORD pdwSizeWritten) PURE;
-    STDMETHOD(GetStatus)            (THIS_ __out LPDWORD pdwStatus) PURE;
-    STDMETHOD(Initialize)           (THIS_ __in LPDIRECTSOUNDCAPTURE pDirectSoundCapture, __in LPCDSCBUFFERDESC pcDSCBufferDesc) PURE;
+    STDMETHOD(GetCaps)              (THIS_ _Out_ LPDSCBCAPS pDSCBCaps) PURE;
+    STDMETHOD(GetCurrentPosition)   (THIS_ _Out_opt_ LPDWORD pdwCapturePosition, _Out_opt_ LPDWORD pdwReadPosition) PURE;
+    STDMETHOD(GetFormat)            (THIS_ _Out_writes_bytes_opt_(dwSizeAllocated) LPWAVEFORMATEX pwfxFormat, DWORD dwSizeAllocated, _Out_opt_ LPDWORD pdwSizeWritten) PURE;
+    STDMETHOD(GetStatus)            (THIS_ _Out_ LPDWORD pdwStatus) PURE;
+    STDMETHOD(Initialize)           (THIS_ _In_ LPDIRECTSOUNDCAPTURE pDirectSoundCapture, _In_ LPCDSCBUFFERDESC pcDSCBufferDesc) PURE;
     STDMETHOD(Lock)                 (THIS_ DWORD dwOffset, DWORD dwBytes,
-                                           __deref_out_bcount(*pdwAudioBytes1) LPVOID *ppvAudioPtr1, __out LPDWORD pdwAudioBytes1,
-                                           __deref_opt_out_bcount(*pdwAudioBytes2) LPVOID *ppvAudioPtr2, __out_opt LPDWORD pdwAudioBytes2, DWORD dwFlags) PURE;
+                                           _Outptr_result_bytebuffer_(*pdwAudioBytes1) LPVOID *ppvAudioPtr1, _Out_ LPDWORD pdwAudioBytes1,
+                                           _Outptr_opt_result_bytebuffer_(*pdwAudioBytes2) LPVOID *ppvAudioPtr2, _Out_opt_ LPDWORD pdwAudioBytes2, DWORD dwFlags) PURE;
     STDMETHOD(Start)                (THIS_ DWORD dwFlags) PURE;
     STDMETHOD(Stop)                 (THIS) PURE;
-    STDMETHOD(Unlock)               (THIS_ __in_bcount(dwAudioBytes1) LPVOID pvAudioPtr1, DWORD dwAudioBytes1,
-                                           __in_bcount_opt(dwAudioBytes2) LPVOID pvAudioPtr2, DWORD dwAudioBytes2) PURE;
+    STDMETHOD(Unlock)               (THIS_ _In_reads_bytes_(dwAudioBytes1) LPVOID pvAudioPtr1, DWORD dwAudioBytes1,
+                                           _In_reads_bytes_opt_(dwAudioBytes2) LPVOID pvAudioPtr2, DWORD dwAudioBytes2) PURE;
 };
 
 #define IDirectSoundCaptureBuffer_QueryInterface(p,a,b)         IUnknown_QueryInterface(p,a,b)
@@ -1110,27 +1115,27 @@ DEFINE_GUID(IID_IDirectSoundCaptureBuffer8, 0x990df4, 0xdbb, 0x4872, 0x83, 0x3e,
 DECLARE_INTERFACE_(IDirectSoundCaptureBuffer8, IDirectSoundCaptureBuffer)
 {
     // IUnknown methods
-    STDMETHOD(QueryInterface)       (THIS_ __in REFIID, __deref_out LPVOID*) PURE;
+    STDMETHOD(QueryInterface)       (THIS_ _In_ REFIID, _Outptr_ LPVOID*) PURE;
     STDMETHOD_(ULONG,AddRef)        (THIS) PURE;
     STDMETHOD_(ULONG,Release)       (THIS) PURE;
 
     // IDirectSoundCaptureBuffer methods
-    STDMETHOD(GetCaps)              (THIS_ __out LPDSCBCAPS pDSCBCaps) PURE;
-    STDMETHOD(GetCurrentPosition)   (THIS_ __out_opt LPDWORD pdwCapturePosition, __out_opt LPDWORD pdwReadPosition) PURE;
-    STDMETHOD(GetFormat)            (THIS_ __out_bcount_opt(dwSizeAllocated) LPWAVEFORMATEX pwfxFormat, DWORD dwSizeAllocated, __out_opt LPDWORD pdwSizeWritten) PURE;
-    STDMETHOD(GetStatus)            (THIS_ __out LPDWORD pdwStatus) PURE;
-    STDMETHOD(Initialize)           (THIS_ __in LPDIRECTSOUNDCAPTURE pDirectSoundCapture, __in LPCDSCBUFFERDESC pcDSCBufferDesc) PURE;
+    STDMETHOD(GetCaps)              (THIS_ _Out_ LPDSCBCAPS pDSCBCaps) PURE;
+    STDMETHOD(GetCurrentPosition)   (THIS_ _Out_opt_ LPDWORD pdwCapturePosition, _Out_opt_ LPDWORD pdwReadPosition) PURE;
+    STDMETHOD(GetFormat)            (THIS_ _Out_writes_bytes_opt_(dwSizeAllocated) LPWAVEFORMATEX pwfxFormat, DWORD dwSizeAllocated, _Out_opt_ LPDWORD pdwSizeWritten) PURE;
+    STDMETHOD(GetStatus)            (THIS_ _Out_ LPDWORD pdwStatus) PURE;
+    STDMETHOD(Initialize)           (THIS_ _In_ LPDIRECTSOUNDCAPTURE pDirectSoundCapture, _In_ LPCDSCBUFFERDESC pcDSCBufferDesc) PURE;
     STDMETHOD(Lock)                 (THIS_ DWORD dwOffset, DWORD dwBytes,
-                                           __deref_out_bcount(*pdwAudioBytes1) LPVOID *ppvAudioPtr1, __out LPDWORD pdwAudioBytes1,
-                                           __deref_opt_out_bcount(*pdwAudioBytes2) LPVOID *ppvAudioPtr2, __out_opt LPDWORD pdwAudioBytes2, DWORD dwFlags) PURE;
+                                           _Outptr_result_bytebuffer_(*pdwAudioBytes1) LPVOID *ppvAudioPtr1, _Out_ LPDWORD pdwAudioBytes1,
+                                           _Outptr_opt_result_bytebuffer_(*pdwAudioBytes2) LPVOID *ppvAudioPtr2, _Out_opt_ LPDWORD pdwAudioBytes2, DWORD dwFlags) PURE;
     STDMETHOD(Start)                (THIS_ DWORD dwFlags) PURE;
     STDMETHOD(Stop)                 (THIS) PURE;
-    STDMETHOD(Unlock)               (THIS_ __in_bcount(dwAudioBytes1) LPVOID pvAudioPtr1, DWORD dwAudioBytes1,
-                                           __in_bcount_opt(dwAudioBytes2) LPVOID pvAudioPtr2, DWORD dwAudioBytes2) PURE;
+    STDMETHOD(Unlock)               (THIS_ _In_reads_bytes_(dwAudioBytes1) LPVOID pvAudioPtr1, DWORD dwAudioBytes1,
+                                           _In_reads_bytes_opt_(dwAudioBytes2) LPVOID pvAudioPtr2, DWORD dwAudioBytes2) PURE;
 
     // IDirectSoundCaptureBuffer8 methods
-    STDMETHOD(GetObjectInPath)      (THIS_ __in REFGUID rguidObject, DWORD dwIndex, __in REFGUID rguidInterface, __deref_out LPVOID *ppObject) PURE;
-    STDMETHOD(GetFXStatus)          (DWORD dwEffectsCount, __out_ecount(dwEffectsCount) LPDWORD pdwFXStatus) PURE;
+    STDMETHOD(GetObjectInPath)      (THIS_ _In_ REFGUID rguidObject, DWORD dwIndex, _In_ REFGUID rguidInterface, _Outptr_ LPVOID *ppObject) PURE;
+    STDMETHOD(GetFXStatus)          (DWORD dwEffectsCount, _Out_writes_(dwEffectsCount) LPDWORD pdwFXStatus) PURE;
 };
 
 #define IDirectSoundCaptureBuffer8_QueryInterface(p,a,b)            IUnknown_QueryInterface(p,a,b)
@@ -1169,12 +1174,12 @@ DEFINE_GUID(IID_IDirectSoundNotify, 0xb0210783, 0x89cd, 0x11d0, 0xaf, 0x8, 0x0, 
 DECLARE_INTERFACE_(IDirectSoundNotify, IUnknown)
 {
     // IUnknown methods
-    STDMETHOD(QueryInterface)           (THIS_ __in REFIID, __deref_out LPVOID*) PURE;
+    STDMETHOD(QueryInterface)           (THIS_ _In_ REFIID, _Outptr_ LPVOID*) PURE;
     STDMETHOD_(ULONG,AddRef)            (THIS) PURE;
     STDMETHOD_(ULONG,Release)           (THIS) PURE;
 
     // IDirectSoundNotify methods
-    STDMETHOD(SetNotificationPositions) (THIS_ DWORD dwPositionNotifies, __in_ecount(dwPositionNotifies) LPCDSBPOSITIONNOTIFY pcPositionNotifies) PURE;
+    STDMETHOD(SetNotificationPositions) (THIS_ DWORD dwPositionNotifies, _In_reads_(dwPositionNotifies) LPCDSBPOSITIONNOTIFY pcPositionNotifies) PURE;
 };
 
 #define IDirectSoundNotify_QueryInterface(p,a,b)            IUnknown_QueryInterface(p,a,b)
@@ -1212,16 +1217,16 @@ DEFINE_GUID(IID_IKsPropertySet, 0x31efac30, 0x515c, 0x11d0, 0xa9, 0xaa, 0x00, 0x
 DECLARE_INTERFACE_(IKsPropertySet, IUnknown)
 {
     // IUnknown methods
-    STDMETHOD(QueryInterface)   (THIS_ __in REFIID, __deref_out LPVOID*) PURE;
+    STDMETHOD(QueryInterface)   (THIS_ _In_ REFIID, _Outptr_ LPVOID*) PURE;
     STDMETHOD_(ULONG,AddRef)    (THIS) PURE;
     STDMETHOD_(ULONG,Release)   (THIS) PURE;
 
     // IKsPropertySet methods
-    STDMETHOD(Get)              (THIS_ __in REFGUID rguidPropSet, ULONG ulId, __in_bcount(ulInstanceLength) LPVOID pInstanceData, ULONG ulInstanceLength,
-                                       __out_bcount(ulDataLength) LPVOID pPropertyData, ULONG ulDataLength, __out PULONG pulBytesReturned) PURE;
-    STDMETHOD(Set)              (THIS_ __in REFGUID rguidPropSet, ULONG ulId, __in_bcount(ulInstanceLength)  LPVOID pInstanceData, ULONG ulInstanceLength,
-                                       __in_bcount(ulDataLength) LPVOID pPropertyData, ULONG ulDataLength) PURE;
-    STDMETHOD(QuerySupport)     (THIS_ __in REFGUID rguidPropSet, ULONG ulId, __out PULONG pulTypeSupport) PURE;
+    STDMETHOD(Get)              (THIS_ _In_ REFGUID rguidPropSet, ULONG ulId, _In_reads_bytes_opt_(ulInstanceLength) LPVOID pInstanceData, ULONG ulInstanceLength,
+                                       _Out_writes_bytes_(ulDataLength) LPVOID pPropertyData, ULONG ulDataLength, _Out_opt_ PULONG pulBytesReturned) PURE;
+    STDMETHOD(Set)              (THIS_ _In_ REFGUID rguidPropSet, ULONG ulId, _In_reads_bytes_opt_(ulInstanceLength)  LPVOID pInstanceData, ULONG ulInstanceLength,
+                                       _In_reads_bytes_(ulDataLength) LPVOID pPropertyData, ULONG ulDataLength) PURE;
+    STDMETHOD(QuerySupport)     (THIS_ _In_ REFGUID rguidPropSet, ULONG ulId, _Out_ PULONG pulTypeSupport) PURE;
 };
 
 #define IKsPropertySet_QueryInterface(p,a,b)       IUnknown_QueryInterface(p,a,b)
@@ -1268,13 +1273,13 @@ typedef const DSFXGargle *LPCDSFXGargle;
 DECLARE_INTERFACE_(IDirectSoundFXGargle, IUnknown)
 {
     // IUnknown methods
-    STDMETHOD(QueryInterface)       (THIS_ __in REFIID, __deref_out LPVOID*) PURE;
+    STDMETHOD(QueryInterface)       (THIS_ _In_ REFIID, _Outptr_ LPVOID*) PURE;
     STDMETHOD_(ULONG,AddRef)        (THIS) PURE;
     STDMETHOD_(ULONG,Release)       (THIS) PURE;
 
     // IDirectSoundFXGargle methods
-    STDMETHOD(SetAllParameters)     (THIS_ __in LPCDSFXGargle pcDsFxGargle) PURE;
-    STDMETHOD(GetAllParameters)     (THIS_ __out LPDSFXGargle pDsFxGargle) PURE;
+    STDMETHOD(SetAllParameters)     (THIS_ _In_ LPCDSFXGargle pcDsFxGargle) PURE;
+    STDMETHOD(GetAllParameters)     (THIS_ _Out_ LPDSFXGargle pDsFxGargle) PURE;
 };
 
 #define IDirectSoundFXGargle_QueryInterface(p,a,b)          IUnknown_QueryInterface(p,a,b)
@@ -1336,13 +1341,13 @@ typedef const DSFXChorus *LPCDSFXChorus;
 DECLARE_INTERFACE_(IDirectSoundFXChorus, IUnknown)
 {
     // IUnknown methods
-    STDMETHOD(QueryInterface)       (THIS_ __in REFIID, __deref_out LPVOID*) PURE;
+    STDMETHOD(QueryInterface)       (THIS_ _In_ REFIID, _Outptr_ LPVOID*) PURE;
     STDMETHOD_(ULONG,AddRef)        (THIS) PURE;
     STDMETHOD_(ULONG,Release)       (THIS) PURE;
 
     // IDirectSoundFXChorus methods
-    STDMETHOD(SetAllParameters)     (THIS_ __in LPCDSFXChorus pcDsFxChorus) PURE;
-    STDMETHOD(GetAllParameters)     (THIS_ __out LPDSFXChorus pDsFxChorus) PURE;
+    STDMETHOD(SetAllParameters)     (THIS_ _In_ LPCDSFXChorus pcDsFxChorus) PURE;
+    STDMETHOD(GetAllParameters)     (THIS_ _Out_ LPDSFXChorus pDsFxChorus) PURE;
 };
 
 #define IDirectSoundFXChorus_QueryInterface(p,a,b)          IUnknown_QueryInterface(p,a,b)
@@ -1404,13 +1409,13 @@ typedef const DSFXFlanger *LPCDSFXFlanger;
 DECLARE_INTERFACE_(IDirectSoundFXFlanger, IUnknown)
 {
     // IUnknown methods
-    STDMETHOD(QueryInterface)       (THIS_ __in REFIID, __deref_out LPVOID*) PURE;
+    STDMETHOD(QueryInterface)       (THIS_ _In_ REFIID, _Outptr_ LPVOID*) PURE;
     STDMETHOD_(ULONG,AddRef)        (THIS) PURE;
     STDMETHOD_(ULONG,Release)       (THIS) PURE;
 
     // IDirectSoundFXFlanger methods
-    STDMETHOD(SetAllParameters)     (THIS_ __in LPCDSFXFlanger pcDsFxFlanger) PURE;
-    STDMETHOD(GetAllParameters)     (THIS_ __out LPDSFXFlanger pDsFxFlanger) PURE;
+    STDMETHOD(SetAllParameters)     (THIS_ _In_ LPCDSFXFlanger pcDsFxFlanger) PURE;
+    STDMETHOD(GetAllParameters)     (THIS_ _Out_ LPDSFXFlanger pDsFxFlanger) PURE;
 };
 
 #define IDirectSoundFXFlanger_QueryInterface(p,a,b)         IUnknown_QueryInterface(p,a,b)
@@ -1459,13 +1464,13 @@ typedef const DSFXEcho *LPCDSFXEcho;
 DECLARE_INTERFACE_(IDirectSoundFXEcho, IUnknown)
 {
     // IUnknown methods
-    STDMETHOD(QueryInterface)       (THIS_ __in REFIID, __deref_out LPVOID*) PURE;
+    STDMETHOD(QueryInterface)       (THIS_ _In_ REFIID, _Outptr_ LPVOID*) PURE;
     STDMETHOD_(ULONG,AddRef)        (THIS) PURE;
     STDMETHOD_(ULONG,Release)       (THIS) PURE;
 
     // IDirectSoundFXEcho methods
-    STDMETHOD(SetAllParameters)     (THIS_ __in LPCDSFXEcho pcDsFxEcho) PURE;
-    STDMETHOD(GetAllParameters)     (THIS_ __out LPDSFXEcho pDsFxEcho) PURE;
+    STDMETHOD(SetAllParameters)     (THIS_ _In_ LPCDSFXEcho pcDsFxEcho) PURE;
+    STDMETHOD(GetAllParameters)     (THIS_ _Out_ LPDSFXEcho pDsFxEcho) PURE;
 };
 
 #define IDirectSoundFXEcho_QueryInterface(p,a,b)            IUnknown_QueryInterface(p,a,b)
@@ -1514,13 +1519,13 @@ typedef const DSFXDistortion *LPCDSFXDistortion;
 DECLARE_INTERFACE_(IDirectSoundFXDistortion, IUnknown)
 {
     // IUnknown methods
-    STDMETHOD(QueryInterface)       (THIS_ __in REFIID, __deref_out LPVOID*) PURE;
+    STDMETHOD(QueryInterface)       (THIS_ _In_ REFIID, _Outptr_ LPVOID*) PURE;
     STDMETHOD_(ULONG,AddRef)        (THIS) PURE;
     STDMETHOD_(ULONG,Release)       (THIS) PURE;
 
     // IDirectSoundFXDistortion methods
-    STDMETHOD(SetAllParameters)     (THIS_ __in LPCDSFXDistortion pcDsFxDistortion) PURE;
-    STDMETHOD(GetAllParameters)     (THIS_ __out LPDSFXDistortion pDsFxDistortion) PURE;
+    STDMETHOD(SetAllParameters)     (THIS_ _In_ LPCDSFXDistortion pcDsFxDistortion) PURE;
+    STDMETHOD(GetAllParameters)     (THIS_ _Out_ LPDSFXDistortion pDsFxDistortion) PURE;
 };
 
 #define IDirectSoundFXDistortion_QueryInterface(p,a,b)      IUnknown_QueryInterface(p,a,b)
@@ -1572,13 +1577,13 @@ typedef const DSFXCompressor *LPCDSFXCompressor;
 DECLARE_INTERFACE_(IDirectSoundFXCompressor, IUnknown)
 {
     // IUnknown methods
-    STDMETHOD(QueryInterface)       (THIS_ __in REFIID, __deref_out LPVOID*) PURE;
+    STDMETHOD(QueryInterface)       (THIS_ _In_ REFIID, _Outptr_ LPVOID*) PURE;
     STDMETHOD_(ULONG,AddRef)        (THIS) PURE;
     STDMETHOD_(ULONG,Release)       (THIS) PURE;
 
     // IDirectSoundFXCompressor methods
-    STDMETHOD(SetAllParameters)     (THIS_ __in LPCDSFXCompressor pcDsFxCompressor) PURE;
-    STDMETHOD(GetAllParameters)     (THIS_ __out LPDSFXCompressor pDsFxCompressor) PURE;
+    STDMETHOD(SetAllParameters)     (THIS_ _In_ LPCDSFXCompressor pcDsFxCompressor) PURE;
+    STDMETHOD(GetAllParameters)     (THIS_ _Out_ LPDSFXCompressor pDsFxCompressor) PURE;
 };
 
 #define IDirectSoundFXCompressor_QueryInterface(p,a,b)      IUnknown_QueryInterface(p,a,b)
@@ -1621,13 +1626,13 @@ typedef const DSFXParamEq *LPCDSFXParamEq;
 DECLARE_INTERFACE_(IDirectSoundFXParamEq, IUnknown)
 {
     // IUnknown methods
-    STDMETHOD(QueryInterface)       (THIS_ __in REFIID, __deref_out LPVOID*) PURE;
+    STDMETHOD(QueryInterface)       (THIS_ _In_ REFIID, _Outptr_ LPVOID*) PURE;
     STDMETHOD_(ULONG,AddRef)        (THIS) PURE;
     STDMETHOD_(ULONG,Release)       (THIS) PURE;
 
     // IDirectSoundFXParamEq methods
-    STDMETHOD(SetAllParameters)     (THIS_ __in LPCDSFXParamEq pcDsFxParamEq) PURE;
-    STDMETHOD(GetAllParameters)     (THIS_ __out LPDSFXParamEq pDsFxParamEq) PURE;
+    STDMETHOD(SetAllParameters)     (THIS_ _In_ LPCDSFXParamEq pcDsFxParamEq) PURE;
+    STDMETHOD(GetAllParameters)     (THIS_ _Out_ LPDSFXParamEq pDsFxParamEq) PURE;
 };
 
 #define IDirectSoundFXParamEq_QueryInterface(p,a,b)      IUnknown_QueryInterface(p,a,b)
@@ -1724,17 +1729,17 @@ typedef const DSFXI3DL2Reverb *LPCDSFXI3DL2Reverb;
 DECLARE_INTERFACE_(IDirectSoundFXI3DL2Reverb, IUnknown)
 {
     // IUnknown methods
-    STDMETHOD(QueryInterface)       (THIS_ __in REFIID, __deref_out LPVOID*) PURE;
+    STDMETHOD(QueryInterface)       (THIS_ _In_ REFIID, _Outptr_ LPVOID*) PURE;
     STDMETHOD_(ULONG,AddRef)        (THIS) PURE;
     STDMETHOD_(ULONG,Release)       (THIS) PURE;
 
     // IDirectSoundFXI3DL2Reverb methods
-    STDMETHOD(SetAllParameters)     (THIS_ __in LPCDSFXI3DL2Reverb pcDsFxI3DL2Reverb) PURE;
-    STDMETHOD(GetAllParameters)     (THIS_ __out LPDSFXI3DL2Reverb pDsFxI3DL2Reverb) PURE;
+    STDMETHOD(SetAllParameters)     (THIS_ _In_ LPCDSFXI3DL2Reverb pcDsFxI3DL2Reverb) PURE;
+    STDMETHOD(GetAllParameters)     (THIS_ _Out_ LPDSFXI3DL2Reverb pDsFxI3DL2Reverb) PURE;
     STDMETHOD(SetPreset)            (THIS_ DWORD dwPreset) PURE;
-    STDMETHOD(GetPreset)            (THIS_ __out LPDWORD pdwPreset) PURE;
+    STDMETHOD(GetPreset)            (THIS_ _Out_ LPDWORD pdwPreset) PURE;
     STDMETHOD(SetQuality)           (THIS_ LONG lQuality) PURE;
-    STDMETHOD(GetQuality)           (THIS_ __out LONG *plQuality) PURE;
+    STDMETHOD(GetQuality)           (THIS_ _Out_ LONG *plQuality) PURE;
 };
 
 #define IDirectSoundFXI3DL2Reverb_QueryInterface(p,a,b)     IUnknown_QueryInterface(p,a,b)
@@ -1788,13 +1793,13 @@ typedef const DSFXWavesReverb *LPCDSFXWavesReverb;
 DECLARE_INTERFACE_(IDirectSoundFXWavesReverb, IUnknown)
 {
     // IUnknown methods
-    STDMETHOD(QueryInterface)       (THIS_ __in REFIID, __deref_out LPVOID*) PURE;
+    STDMETHOD(QueryInterface)       (THIS_ _In_ REFIID, _Outptr_ LPVOID*) PURE;
     STDMETHOD_(ULONG,AddRef)        (THIS) PURE;
     STDMETHOD_(ULONG,Release)       (THIS) PURE;
 
     // IDirectSoundFXWavesReverb methods
-    STDMETHOD(SetAllParameters)     (THIS_ __in LPCDSFXWavesReverb pcDsFxWavesReverb) PURE;
-    STDMETHOD(GetAllParameters)     (THIS_ __out LPDSFXWavesReverb pDsFxWavesReverb) PURE;
+    STDMETHOD(SetAllParameters)     (THIS_ _In_ LPCDSFXWavesReverb pcDsFxWavesReverb) PURE;
+    STDMETHOD(GetAllParameters)     (THIS_ _Out_ LPDSFXWavesReverb pDsFxWavesReverb) PURE;
 };
 
 #define IDirectSoundFXWavesReverb_QueryInterface(p,a,b)     IUnknown_QueryInterface(p,a,b)
@@ -1841,14 +1846,14 @@ typedef const DSCFXAec *LPCDSCFXAec;
 DECLARE_INTERFACE_(IDirectSoundCaptureFXAec, IUnknown)
 {
     // IUnknown methods
-    STDMETHOD(QueryInterface)       (THIS_ __in REFIID, __deref_out LPVOID*) PURE;
+    STDMETHOD(QueryInterface)       (THIS_ _In_ REFIID, _Outptr_ LPVOID*) PURE;
     STDMETHOD_(ULONG,AddRef)        (THIS) PURE;
     STDMETHOD_(ULONG,Release)       (THIS) PURE;
 
     // IDirectSoundCaptureFXAec methods
-    STDMETHOD(SetAllParameters)     (THIS_ __in LPCDSCFXAec pDscFxAec) PURE;
-    STDMETHOD(GetAllParameters)     (THIS_ __out LPDSCFXAec pDscFxAec) PURE;
-    STDMETHOD(GetStatus)            (THIS_ __out LPDWORD pdwStatus) PURE;
+    STDMETHOD(SetAllParameters)     (THIS_ _In_ LPCDSCFXAec pDscFxAec) PURE;
+    STDMETHOD(GetAllParameters)     (THIS_ _Out_ LPDSCFXAec pDscFxAec) PURE;
+    STDMETHOD(GetStatus)            (THIS_ _Out_ LPDWORD pdwStatus) PURE;
     STDMETHOD(Reset)                (THIS) PURE;
 };
 
@@ -1884,13 +1889,13 @@ typedef const DSCFXNoiseSuppress *LPCDSCFXNoiseSuppress;
 DECLARE_INTERFACE_(IDirectSoundCaptureFXNoiseSuppress, IUnknown)
 {
     // IUnknown methods
-    STDMETHOD(QueryInterface)       (THIS_ __in REFIID, __deref_out LPVOID*) PURE;
+    STDMETHOD(QueryInterface)       (THIS_ _In_ REFIID, _Outptr_ LPVOID*) PURE;
     STDMETHOD_(ULONG,AddRef)        (THIS) PURE;
     STDMETHOD_(ULONG,Release)       (THIS) PURE;
 
     // IDirectSoundCaptureFXNoiseSuppress methods
-    STDMETHOD(SetAllParameters)     (THIS_ __in LPCDSCFXNoiseSuppress pcDscFxNoiseSuppress) PURE;
-    STDMETHOD(GetAllParameters)     (THIS_ __out LPDSCFXNoiseSuppress pDscFxNoiseSuppress) PURE;
+    STDMETHOD(SetAllParameters)     (THIS_ _In_ LPCDSCFXNoiseSuppress pcDscFxNoiseSuppress) PURE;
+    STDMETHOD(GetAllParameters)     (THIS_ _Out_ LPDSCFXNoiseSuppress pDscFxNoiseSuppress) PURE;
     STDMETHOD(Reset)                (THIS) PURE;
 };
 
@@ -1929,13 +1934,13 @@ DEFINE_GUID(IID_IDirectSoundFullDuplex, 0xedcb4c7a, 0xdaab, 0x4216, 0xa4, 0x2e, 
 DECLARE_INTERFACE_(IDirectSoundFullDuplex, IUnknown)
 {
     // IUnknown methods
-    STDMETHOD(QueryInterface)   (THIS_ __in REFIID, __deref_out LPVOID*) PURE;
+    STDMETHOD(QueryInterface)   (THIS_ _In_ REFIID, _Outptr_ LPVOID*) PURE;
     STDMETHOD_(ULONG,AddRef)    (THIS) PURE;
     STDMETHOD_(ULONG,Release)   (THIS) PURE;
 
     // IDirectSoundFullDuplex methods
-    STDMETHOD(Initialize)     (THIS_ __in LPCGUID pCaptureGuid, __in LPCGUID pRenderGuid, __in LPCDSCBUFFERDESC lpDscBufferDesc, __in LPCDSBUFFERDESC lpDsBufferDesc, HWND hWnd, DWORD dwLevel,
-                               __deref_out LPLPDIRECTSOUNDCAPTUREBUFFER8 lplpDirectSoundCaptureBuffer8, __deref_out LPLPDIRECTSOUNDBUFFER8 lplpDirectSoundBuffer8) PURE;
+    STDMETHOD(Initialize)     (THIS_ _In_ LPCGUID pCaptureGuid, _In_ LPCGUID pRenderGuid, _In_ LPCDSCBUFFERDESC lpDscBufferDesc, _In_ LPCDSBUFFERDESC lpDsBufferDesc, HWND hWnd, DWORD dwLevel,
+                               _Outptr_ LPLPDIRECTSOUNDCAPTUREBUFFER8 lplpDirectSoundCaptureBuffer8, _Outptr_ LPLPDIRECTSOUNDBUFFER8 lplpDirectSoundBuffer8) PURE;
 };
 
 #define IDirectSoundFullDuplex_QueryInterface(p,a,b)    IUnknown_QueryInterface(p,a,b)
@@ -2382,4 +2387,8 @@ DEFINE_GUID(GUID_DSCFX_SYSTEM_NS, 0x5ab0882e, 0x7274, 0x4516, 0x87, 0x7d, 0x4e, 
 #ifdef __cplusplus
 };
 #endif // __cplusplus
+
+#endif /* WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP) */
+#pragma endregion
+
 

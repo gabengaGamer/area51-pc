@@ -1,5 +1,17 @@
+//=========================================================================
+//  
+//  Soft Vertex Manager for PC
+//  
+//=========================================================================
+
 #ifndef SOFT_VERTEX_MANAGER_HPP
 #define SOFT_VERTEX_MANAGER_HPP
+
+//=========================================================================
+//  PLATFORM CHECK
+//=========================================================================
+
+#include "x_types.hpp"
 
 #if !defined(TARGET_PC)
 #error "This is only for the PC target platform. Please check build exclusion rules"
@@ -8,9 +20,9 @@
 //=========================================================================
 // INCLUDES
 //=========================================================================
+
 #include "VertexMgr.hpp"
 #include "Render/SkinGeom.hpp"
-#include "Shaders/SkinShader.h"
 
 //=========================================================================
 // CLASS
@@ -30,7 +42,6 @@ public:
                                       s32                     nCmds, 
                                       skin_geom::command_pc*  pCmd );
 
-
     void        DelDList            ( xhandle hDList );
     void        BeginRender         ( void );
     void        DrawDList           ( xhandle hDList, const matrix4* pBone, const d3d_skin_lighting* pLighting );
@@ -47,10 +58,14 @@ protected:
 
 protected:
 
-    xharray<soft_dlist> m_lSoftDList;
-    static DWORD        s_hShader;
-    static s32          s_InitCount;
+    xharray<soft_dlist>     m_lSoftDList;
 };
+
+//=========================================================================
+//  GLOBAL INSTANCE
+//=========================================================================
+
+extern soft_vertex_mgr g_SkinVertMgr;
 
 //=========================================================================
 // END

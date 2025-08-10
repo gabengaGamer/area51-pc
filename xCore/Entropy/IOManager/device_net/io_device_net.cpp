@@ -35,7 +35,7 @@ static io_device_file s_CdromFiles[ CDROM_NUM_FILES ];
 
 io_device::device_data s_DeviceData_NET =
 {
-    "NETFS",            // Name
+    "NETFS",                // Name
         TRUE,               // IsSupported
         TRUE,               // IsReadable
         FALSE,              // IsWriteable
@@ -48,8 +48,6 @@ io_device::device_data s_DeviceData_NET =
         CDROM_CACHE,        // pCache    
         CDROM_FILES         // pFilesBuffer
 };
-//#define LOG_PHYSICAL_READ "io_device_net::PhysicalRead(read)"
-//#define LOG_PHYSICAL_SEEK "io_device_net::PhysicalRead(seek)"
 
 //==============================================================================
 
@@ -72,6 +70,7 @@ io_device_net::~io_device_net( void )
 }
 
 //==============================================================================
+
 void io_device_net::Init( void )
 {
     const char          WaitChars[] = "-\\|/";
@@ -86,73 +85,6 @@ void io_device_net::Init( void )
     SimpleDialog("Please wait.\n"
         "Initializing network layer.");
     net_Init();
-
-#if defined(TARGET_PS2)
-    char            Path[64];
-    s32             ConfigIndex;
-    net_config_list ConfigList;
-    s32             status;
-    xbool           Done;
-    s32             error;
-
-    net_BeginConfig();
-    net_ActivateConfig(FALSE);
-    // First, try to find ANY network configuration
-    x_strcpy(Path,"mc0:BWNETCNF/BWNETCNF");
-    status = net_GetConfigList(Path,&ConfigList);
-    if ( (status < 0) || (ConfigList.Count <= 0) )
-    {
-        x_strcpy(Path,"mc1:BWNETCNF/BWNETCNF");
-        status = net_GetConfigList(Path,&ConfigList);
-        if ( (status < 0) || (ConfigList.Count <= 0) )
-        {
-            SimpleDialog("No network configurations present.",1.5f);
-            ASSERT(FALSE);
-        }
-    }
-
-    // Just use the first one.
-    ConfigIndex = 0;
-    status = net_SetConfiguration(Path,ConfigIndex);
-    ASSERT(status >=0);
-    Timeout.Reset();
-    Timeout.Start();
-    Done = FALSE;
-
-    while (Timeout.ReadSec() < 30.0f)
-    {
-        error = 0;
-        error = net_GetAttachStatus(error);
-        if ( (error==ATTACH_STATUS_CONFIGURED) ||
-            (error==ATTACH_STATUS_ATTACHED) )
-        {
-            net_ActivateConfig(TRUE);
-
-            // Wait until DHCP assigns us an address
-            while ( Timeout.ReadSec() < 30.0f )
-            {
-                SimpleDialog((const char*)xfs("Please wait...\n"
-                    "Connecting to the network.\n"
-                    "Timeout remaining: %d",30 - (s32)Timeout.ReadSec()) );
-                net_GetInterfaceInfo(-1,Info);
-                if (Info.Address)
-                {
-                    Done = TRUE;
-                    break;
-                }
-            }
-            ASSERT(Done);
-            break;
-        }
-        else
-        {
-            // Invalid net config file - its fatal!
-            ASSERT( 0 );
-        }
-    }
-    net_EndConfig();
-
-#endif
 
     count = 0;
     while(1)
@@ -226,6 +158,7 @@ void io_device_net::Init( void )
 }
 
 //==============================================================================
+
 void io_device_net::Kill( void )
 {
     // We should be killing the network here
@@ -233,6 +166,7 @@ void io_device_net::Kill( void )
 }
 
 //==============================================================================
+
 void io_device_net::LogPhysRead( io_device_file* pFile, s32 Length, s32 Offset )
 {
     (void)pFile;
@@ -264,10 +198,8 @@ void io_device_net::LogPhysRead( io_device_file* pFile, s32 Length, s32 Offset )
 #endif // LOG_PHYSICAL_READ
 }
 
-
-
-
 //==============================================================================
+
 static void ReadCallback( s32 Result, void* pFileInfo )
 {
     (void)pFileInfo;
@@ -292,6 +224,7 @@ static void ReadCallback( s32 Result, void* pFileInfo )
 }
 
 //==============================================================================
+
 void io_device_net::CleanFilename( char* pClean, const char* pFilename )
 {
     // Gotta fit.
@@ -330,6 +263,7 @@ io_device::device_data* io_device_net::GetDeviceData( void )
 }
 
 //==============================================================================
+
 xbool io_device_net::PhysicalOpen( const char* pFilename, io_device_file* pFile, io_device::open_flags OpenFlags  )
 {
     char                ModeFlags[8];
@@ -387,6 +321,7 @@ xbool io_device_net::PhysicalWrite( io_device_file* pFile, void* pBuffer, s32 Le
 }
 
 //==============================================================================
+
 void* io_device_net::SystemOpen( const char* pFilename, const char* Mode, s32& Length )
 {
     fileserver_request  Request;
@@ -413,7 +348,6 @@ void* io_device_net::SystemOpen( const char* pFilename, const char* Mode, s32& L
     Length = Reply.Open.Length;
     return (void*)Reply.Open.Handle;
 }
-
 
 //==============================================================================
 
@@ -464,6 +398,7 @@ s32 io_device_net::SystemWrite( void* Handle, const void* pBuffer, s32 Offset, s
 }
 
 //==============================================================================
+
 s32 io_device_net::SystemRead( void* Handle, void* pBuffer, s32 Offset, s32 Length )
 {
     struct pending_read
@@ -601,6 +536,7 @@ s32 io_device_net::SystemRead( void* Handle, void* pBuffer, s32 Offset, s32 Leng
 }
 
 //==============================================================================
+
 void io_device_net::SystemClose( void* Handle )
 {
     fileserver_request  Request;
@@ -618,6 +554,7 @@ void io_device_net::SystemClose( void* Handle )
 }
 
 //==============================================================================
+
 xbool io_device_net::WaitForReply( fileserver_reply& Reply, f32 Timeout )
 {
     s32         TimeoutTicks;
@@ -642,6 +579,7 @@ xbool io_device_net::WaitForReply( fileserver_reply& Reply, f32 Timeout )
 }
 
 //==============================================================================
+
 void io_device_net::SimpleDialog( const char* pText, f32 Timeout)
 {
     xtimer      t;
@@ -701,48 +639,16 @@ void io_device_net::SimpleDialog( const char* pText, f32 Timeout)
 }
 
 //==============================================================================
+
 void io_device_net::Lock( void )
 {
     m_LockMutex.Acquire();
 }
 
 //==============================================================================
+
 void io_device_net::Unlock( void )
 {
     m_LockMutex.Release();
 
 }
-#if defined(TARGET_XBOX) && defined(X_LOGGING)
-//==============================================================================
-//
-//*** PLEASE NOTE *** These functions are only required for xtool.
-//
-//==============================================================================
-void* netfs_Open( const char* pFilename, const char* pMode )
-{
-    void*   Handle;
-    s32     Length;
-
-    Handle = g_IODeviceNET.SystemOpen( pFilename, pMode, Length );
-    return Handle;
-}
-
-//==============================================================================
-s32 netfs_Write( void* Handle, const void* pBuffer, s32 Offset, s32 Length )
-{
-    return g_IODeviceNET.SystemWrite( Handle, pBuffer, Offset, Length );
-}
-
-//==============================================================================
-s32 netfs_Read( void* Handle, void* pBuffer, s32 Offset, s32 Length )
-{
-    return g_IODeviceNET.SystemRead( Handle, pBuffer, Offset, Length );
-}
-
-//==============================================================================
-void netfs_Close( void* Handle )
-{
-    g_IODeviceNET.SystemClose( Handle );
-}
-
-#endif

@@ -120,7 +120,7 @@
       <StringPooling>true</StringPooling>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <FunctionLevelLinking>true</FunctionLevelLinking>
-      <WarningLevel>Level3</WarningLevel>
+      <WarningLevel>TurnOffAllWarnings</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <CallingConvention>FastCall</CallingConvention>
     </ClCompile>
@@ -139,7 +139,7 @@
       <StructMemberAlignment>Default</StructMemberAlignment>
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <EnableEnhancedInstructionSet>NotSet</EnableEnhancedInstructionSet>
-      <WarningLevel>Level3</WarningLevel>
+      <WarningLevel>TurnOffAllWarnings</WarningLevel>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
       <CallingConvention>Cdecl</CallingConvention>
     </ClCompile>
@@ -155,7 +155,7 @@
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
-      <WarningLevel>Level3</WarningLevel>
+      <WarningLevel>TurnOffAllWarnings</WarningLevel>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
     </ClCompile>
     <Lib>
@@ -170,7 +170,7 @@
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
-      <WarningLevel>Level3</WarningLevel>
+      <WarningLevel>TurnOffAllWarnings</WarningLevel>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
     </ClCompile>
     <Lib>
@@ -221,6 +221,9 @@
     <ClCompile Include="LightMgr.cpp" />
     <ClCompile Include="Material.cpp" />
     <ClCompile Include="MaterialArray.cpp" />
+    <ClCompile Include="PC\GBufferMgr.cpp" />
+    <ClCompile Include="PC\MaterialMgr.cpp" />
+    <ClCompile Include="PC\PostMgr.cpp" />
     <ClCompile Include="Pc\SoftVertexMgr.cpp" />
     <ClCompile Include="Pc\VertexMgr.cpp" />
     <ClCompile Include="ProjTextureMgr.cpp" />
@@ -587,23 +590,20 @@
     <ClInclude Include="Material.hpp" />
     <ClInclude Include="MaterialArray.hpp" />
     <ClInclude Include="Material_Prefs.hpp" />
-    <ClInclude Include="Pc\pc_render.hpp" />
+    <ClInclude Include="PC\GBufferMgr.hpp" />
+    <ClInclude Include="PC\MaterialMgr.hpp" />
+    <ClInclude Include="PC\PostMgr.hpp" />
     <ClInclude Include="Pc\SoftVertexMgr.hpp" />
     <ClInclude Include="Pc\VertexMgr.hpp" />
     <ClInclude Include="platform_Render.hpp" />
     <ClInclude Include="ProjTextureMgr.hpp" />
     <ClInclude Include="Render.hpp" />
     <ClInclude Include="RigidGeom.hpp" />
-    <ClInclude Include="Shaders\SkinShader.h" />
-    <ClInclude Include="Shaders\SkinShader.vsa.h" />
     <ClInclude Include="SkinGeom.hpp" />
     <ClInclude Include="Texture.hpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Pc\pc_platform.inl" />
-    <None Include="Pc\pc_post.inl" />
-    <None Include="Pc\pc_shader_mgr.inl" />
-    <None Include="Shaders\SkinShader.vsa" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

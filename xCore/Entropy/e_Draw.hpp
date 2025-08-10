@@ -38,20 +38,51 @@
 
 // Values to be used in the Flags parameter for function draw_Begin().
 
-#define DRAW_2D             ( 1 <<  0 )     // Default: 3D
-#define DRAW_TEXTURED       ( 1 <<  1 )     // Default: Not textured
-#define DRAW_USE_ALPHA      ( 1 <<  2 )     // Default: Alpha disabled
-#define DRAW_WIRE_FRAME     ( 1 <<  3 )     // Default: Solid/filled
-#define DRAW_NO_ZBUFFER     ( 1 <<  4 )     // Default: Z-Buffer
-#define DRAW_NO_ZWRITE      ( 1 <<  5 )     // Default: Z-Write enabled
-#define DRAW_2D_KEEP_Z      ( 1 <<  6 )     // Default: all on same Z plane close to camera
-#define DRAW_BLEND_ADD      ( 1 <<  7 )     // Default: Multiplicative (alpha) ADD and SUB mutually exclusive
-#define DRAW_BLEND_SUB      ( 1 <<  8 )     // Default: Multiplicative (alpha) ADD and SUB mutually exclusive
-#define DRAW_U_CLAMP        ( 1 <<  9 )     // Default: WRAP
-#define DRAW_V_CLAMP        ( 1 << 10 )     // Default: WRAP
-#define DRAW_KEEP_STATES	( 1 << 11 )		// Default: Off (doesn't set any render/texture-stage states)
-#define DRAW_XBOX_NO_BEGIN  ( 1 << 12 )     // Default: Off
-#define DRAW_XBOX_WRITE_A   ( 1 << 13 )     // Default: Off (writes into the frame-buffer alpha channel)
+#define DRAW_2D                ( 1 <<  0 )     // Default: 3D
+#define DRAW_TEXTURED          ( 1 <<  1 )     // Default: Not textured
+#define DRAW_USE_ALPHA         ( 1 <<  2 )     // Default: Alpha disabled
+#define DRAW_WIRE_FRAME        ( 1 <<  3 )     // Default: Solid/filled
+#define DRAW_NO_ZBUFFER        ( 1 <<  4 )     // Default: Z-Buffer
+#define DRAW_NO_ZWRITE         ( 1 <<  5 )     // Default: Z-Write enabled
+#define DRAW_2D_KEEP_Z         ( 1 <<  6 )     // Default: all on same Z plane close to camera
+#define DRAW_BLEND_ADD         ( 1 <<  7 )     // Default: Multiplicative (alpha) ADD and SUB mutually exclusive
+#define DRAW_BLEND_SUB         ( 1 <<  8 )     // Default: Multiplicative (alpha) ADD and SUB mutually exclusive
+#define DRAW_U_CLAMP           ( 1 <<  9 )     // Default: WRAP
+#define DRAW_V_CLAMP           ( 1 << 10 )     // Default: WRAP
+#define DRAW_KEEP_STATES	   ( 1 << 11 )	   // Default: Off (doesn't set any render/texture-stage states)
+
+//------------------------------------------------------------------------------
+// Use custom shaders for rendering.
+//------------------------------------------------------------------------------
+
+// GS: The idea is quite simple, 
+// if you want to use your own shader instead of the ones prepared from d3deng_shader, 
+// then just enter one of these flags and load your own, easy.
+
+#define DRAW_CUSTOM_VS_SHADER  ( 1 << 12 )     // Default: Off
+#define DRAW_CUSTOM_PS_SHADER  ( 1 << 13 )     // Default: Off
+#define DRAW_CUSTOM_GS_SHADER  ( 1 << 14 )     // Default: Off
+#define DRAW_CUSTOM_CS_SHADER  ( 1 << 15 )     // Default: Off
+//#define DRAW_CUSTOM_[]_BUFFER  ( 1 << 16 )   // Default: Off
+//#define DRAW_CUSTOM_[]_LAYOUT  ( 1 << 17 )   // Default: Off
+
+//------------------------------------------------------------------------------
+// Render on custom render targets, we only support 4 for now. 
+//------------------------------------------------------------------------------
+
+// GS: Theoretically, i can bind the UI render target to the DRAW_2D flag, 
+// but in some cases DRAW_2D should be drawn on a separate target from the UI render target, 
+// so that's why this code is here.
+
+#define DRAW_UI_RTARGET       ( 1 << 18 )      // Default: Off. Global render target is used.
+#define DRAW_DEBUG_RTARGET    ( 1 << 19 )      // Default: Off. Global render target is used.
+#define DRAW_CUSTOM_RTARGET_0 ( 1 << 20 )      // Default: Off. Global render target is used.
+#define DRAW_CUSTOM_RTARGET_1 ( 1 << 21 )      // Default: Off. Global render target is used.
+
+
+//------------------------------------------------------------------------------
+// Other.
+//------------------------------------------------------------------------------
 
 #define DRAW_CULL_NONE      ( 1 << 29 )     // Default: Cull CW
 #define DRAW_CUSTOM_MODE    ( 1 << 30 )     // Default: Off
@@ -90,11 +121,6 @@ void    draw_SetTexture         ( void );
 void    draw_DisableBilinear    ( void );
 void    draw_EnableBilinear     ( void );
 void    draw_SetZBias           ( s32 Bias );
-
-#ifdef TARGET_XBOX
-void    draw_DisableSatCompensation ( void );
-void    draw_EnableSatCompensation  ( void );
-#endif
 
 void    draw_UV                 ( const vector2& UV );
 void    draw_UV                 ( f32 U, f32 V );

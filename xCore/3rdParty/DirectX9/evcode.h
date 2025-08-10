@@ -12,6 +12,11 @@
 //   -- extension event codes
 // All system event codes are below EC_USER
 
+#include <winapifamily.h>
+
+#pragma region Desktop Family
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
+
 #define EC_SYSTEMBASE                       0x00
 #define EC_USER                             0x8000
 
@@ -291,8 +296,34 @@
 // (through WM_DEVICECHANGED messages registered with
 // RegisterDeviceNotification; see IAMDeviceRemoval interface)
 
-#define EC_STEP_COMPLETE                      0x24
-// (BOOL bCacelled, void)
+#define EC_SAMPLE_NEEDED                    0x20
+// (PinID, 0)
+//
+// Indication that a sample is needed on the specified input pin 
+// of the filter in order to produce a new sample on the output.
+
+#define EC_PROCESSING_LATENCY               0x21
+// (const REFERENCE_TIME *pLatency, 0)
+//
+// Indication that the firing component is currently taking the specified 
+// amount of time to process a sample.
+
+#define EC_SAMPLE_LATENCY                   0x22
+// (const REFERENCE_TIME *pLatency, 0)
+//
+// Indication that the firing component is that amount of time behind in 
+// processing samples coming in. A negative time indicates that the component 
+// is running ahead of schedule.
+
+#define EC_SCRUB_TIME                       0x23
+// (DWORD, DWORD)
+// To be sent immediately after the EC_STEP_COMPLETE notification 
+// when a step completes and the rate is 0.
+// This is the timestamp of the frame that was displayed.
+// lParam1 is the low DWORD of the time; lParam2 is the high DWORD
+
+#define EC_STEP_COMPLETE                    0x24
+// (BOOL bCancelled, void)
 // Step request complete
 // if bCancelled is TRUE the step was cancelled.  This can happen
 // if the application issued some control request or because there
@@ -426,3 +457,82 @@ typedef struct {
 
 #define EC_UNBUILT                          0x301
 // Sent to notify transtion from built to unbuilt state
+
+
+//-------------------------------------------------------------------------------------------------
+//
+//   Other miscellaneous events used by various componnents
+//   Published here to assist debugging
+//
+//-------------------------------------------------------------------------------------------------
+#define EC_SKIP_FRAMES                      0x25
+// ( nFramesToSkip, IFrameSkipResultCallback)
+// Get the filter graph to skip nFramesToSkip and notify.
+
+#define EC_PLEASE_REOPEN		    0x40
+// (void, void) : application
+// Something has changed enough that the graph should be re-rendered.
+
+#define EC_STATUS	                    0x41
+// ( BSTR, BSTR) : application
+// Two arbitrary strings, a short one and a long one.
+
+#define EC_MARKER_HIT			    0x42
+// (int, void) : application
+// The specified "marker #" has just been passed
+
+#define EC_LOADSTATUS			    0x43
+// (int, void) : application
+// Sent when various points during the loading of a network file are reached
+
+#define EC_FILE_CLOSED			    0x44
+// (void, void) : application
+// Sent when the file is involuntarily closed, i.e. by a network server shutdown
+
+#define EC_ERRORABORTEX			    0x45
+// ( HRESULT, BSTR ) : application
+// Operation aborted because of error.  Additional information available.
+
+// status codes for EC_LOADSTATUS....
+#define AM_LOADSTATUS_CLOSED	        0x0000
+#define AM_LOADSTATUS_LOADINGDESCR      0x0001
+#define AM_LOADSTATUS_LOADINGMCAST      0x0002
+#define AM_LOADSTATUS_LOCATING		0x0003
+#define AM_LOADSTATUS_CONNECTING	0x0004
+#define AM_LOADSTATUS_OPENING		0x0005
+#define AM_LOADSTATUS_OPEN		0x0006
+
+
+#define EC_NEW_PIN			    0x20
+#define	EC_RENDER_FINISHED		    0x21
+
+
+#define EC_EOS_SOON			   0x046
+// (void, void) : application
+// sent when the source filter is about to deliver an EOS downstream....
+
+#define EC_CONTENTPROPERTY_CHANGED   0x47
+// (ULONG, void) 
+// Sent when a streaming media filter recieves a change in stream description information.
+// the UI is expected to re-query for the changed property in response
+#define AM_CONTENTPROPERTY_TITLE     0x0001
+#define AM_CONTENTPROPERTY_AUTHOR    0x0002
+#define AM_CONTENTPROPERTY_COPYRIGHT 0x0004
+#define AM_CONTENTPROPERTY_DESCRIPTION 0x0008
+
+
+#define EC_BANDWIDTHCHANGE		    0x48
+// (WORD, long) : application
+// sent when the bandwidth of the streaming data has changed.  First parameter
+// is the new level of bandwidth. Second is the MAX number of levels. Second
+// parameter may be 0, if the max levels could not be determined.
+
+#define EC_VIDEOFRAMEREADY		    0x49
+// (void, void) : application
+// sent to notify the application that the first video frame is about to be drawn
+
+
+
+#endif /* WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP) */
+#pragma endregion
+

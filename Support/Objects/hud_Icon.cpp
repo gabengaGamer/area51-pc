@@ -231,7 +231,7 @@ void hud_icon::RenderIcon( player* pPlayer, icon_inf& Icon )
 
                 /*
                 // Debug code.
-                draw_Begin( DRAW_LINES, DRAW_2D );
+                draw_Begin( DRAW_LINES, DRAW_2D, DRAW_UI_RTARGET );
                 xcolor DrawColor = XCOLOR_GREEN;
                 draw_Color( DrawColor );
 
@@ -371,7 +371,7 @@ void hud_icon::RenderIcon( player* pPlayer, icon_inf& Icon )
         }
 
         // Draw the icon.
-        draw_Begin( DRAW_SPRITES, DRAW_USE_ALPHA|DRAW_TEXTURED|DRAW_2D|DRAW_NO_ZWRITE|DRAW_UV_CLAMP );                
+        draw_Begin( DRAW_SPRITES, DRAW_USE_ALPHA|DRAW_TEXTURED|DRAW_2D|DRAW_UI_RTARGET|DRAW_NO_ZWRITE|DRAW_UV_CLAMP );                
         draw_SetTexture( *pBitmap );
         draw_SpriteUV( RenderScreenPos, WH, UV0, UV1, Color, BitmapRotation ); 
         draw_End();

@@ -7,6 +7,11 @@
  *
  ****************************************************************************/
 
+#include <winapifamily.h>
+
+#pragma region Desktop Family
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
+
 #ifndef _D3D_H_
 #define _D3D_H_
 
@@ -1685,4 +1690,7 @@ typedef struct IDirect3DVertexBuffer7 *LPDIRECT3DVERTEXBUFFER7;
 
 #endif /* (DIRECT3D_VERSION < 0x0800) */
 #endif /* _D3D_H_ */
+
+#endif /* WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP) */
+#pragma endregion
 

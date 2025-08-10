@@ -9,6 +9,11 @@
 
 #ifndef __DMORT_H__
 #define __DMORT_H__
+#include <winapifamily.h>
+
+#pragma region Desktop Family
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
+
 
 //
 // Mediatype helpers.  MoInitMediaType() goes with MoFreeMediaType(), and
@@ -71,5 +76,9 @@ STDAPI MoDeleteMediaType(DMO_MEDIA_TYPE *pmt);
 STDAPI MoDuplicateMediaType(DMO_MEDIA_TYPE **ppmtDest, const DMO_MEDIA_TYPE *pmtSrc);
 
 
+
+
+#endif /* WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP) */
+#pragma endregion
 
 #endif //__DMORT_H__

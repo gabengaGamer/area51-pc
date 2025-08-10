@@ -115,6 +115,7 @@
       <EnableEnhancedInstructionSet>NotSet</EnableEnhancedInstructionSet>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <CallingConvention>Cdecl</CallingConvention>
+      <WarningLevel>TurnOffAllWarnings</WarningLevel>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='OptDebug|Win32'">
@@ -124,6 +125,7 @@
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <WarningLevel>TurnOffAllWarnings</WarningLevel>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='QA|Win32'">
@@ -133,6 +135,7 @@
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <WarningLevel>TurnOffAllWarnings</WarningLevel>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -144,6 +147,7 @@
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <WarningLevel>TurnOffAllWarnings</WarningLevel>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='EDITOR-Debug|Win32'">
@@ -175,6 +179,7 @@
     <ClCompile Include="Implementation\x_bytestream.cpp" />
     <ClCompile Include="Implementation\x_context.cpp" />
     <ClCompile Include="Implementation\x_debug.cpp" />
+    <ClCompile Include="Implementation\x_deltatime.cpp" />
     <ClCompile Include="Implementation\x_files.cpp" />
     <ClCompile Include="Implementation\x_flare.cpp" />
     <ClCompile Include="Implementation\x_locale.cpp" />
@@ -194,9 +199,9 @@
     <ClCompile Include="Implementation\x_threads_pc.cpp" />
     <ClCompile Include="Implementation\x_time.cpp" />
     <ClCompile Include="Implementation\x_tool.cpp" />
-    <ClCompile Include="Implementation\x_vsprintf.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Implementation\x_time_inline.hpp" />
     <ClInclude Include="Implementation\x_tool_private.hpp" />
     <ClInclude Include="x_array.hpp" />
     <ClInclude Include="x_bitmap.hpp" />
@@ -205,6 +210,7 @@
     <ClInclude Include="x_color.hpp" />
     <ClInclude Include="x_context.hpp" />
     <ClInclude Include="x_debug.hpp" />
+    <ClInclude Include="x_deltatime.hpp" />
     <ClInclude Include="x_files.hpp" />
     <ClInclude Include="x_flare.hpp" />
     <ClInclude Include="x_locale.hpp" />

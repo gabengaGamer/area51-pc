@@ -8,10 +8,6 @@
 #include "x_log.hpp"
 #include "x_bytestream.hpp"
 
-#ifdef TARGET_GCN
-#include <dolphin.h>
-#endif
-
 #if defined(rbrannon)
 #define LOG_AUDIO_STREAM_ACQUIRE_SUCCESS "stream_mgr::Acquire"
 #define LOG_AUDIO_STREAM_ACQUIRE_FAIL    "stream_mgr::Acquire"
@@ -459,24 +455,6 @@ xbool audio_stream_mgr::ReadStream( audio_stream* pStream, io_request::callback_
         // It's all good.
         Result = TRUE;
     }
-/*
-#if !defined(X_RETAIL) && defined(rbrannon)
-    else
-    {
-        io_request* pRequest = pStream->pIoRequest;
-        xtick DispatchTicks  = pRequest->m_DispatchTick - pRequest->m_QueueTick;
-        xtick ReadTicks      = x_GetTime() - pRequest->m_DispatchTick;
-        f32   DispatchMS     = x_TicksToMs( DispatchTicks );
-        f32   ReadMS         = x_TicksToMs( ReadTicks );
-        #ifdef TARGET_GCN
-        s32   HardwareStatus = DVDGetFileInfoStatus( (DVDFileInfo*)pRequest->m_pOpenFile->pDeviceFile->pHardwareData);
-        #else
-        s32   HardwareStatus = 0;
-        #endif
-        ASSERTS( 0, xfs( "StreamBuffUnderRun. Disp: %08.3fms, Read: %08.3fms\nStatus: %d, HWStatus: %d", DispatchMS, ReadMS, status, HardwareStatus ) );
-    }
-#endif
-*/
     return Result;
 }
 
@@ -556,7 +534,7 @@ void audio_stream_mgr::Update( void )
             // Clear the flag
             pStream->bStartStream = FALSE;
             
-#if defined(TARGET_GCN) || defined(TARGET_PC)
+#if defined(TARGET_PC)
             // Handle mp3 streams.
             if( pStream->CompressionType == MP3 )
             {
@@ -600,15 +578,6 @@ void audio_stream_mgr::Update( void )
                         bStereoBad = (pStream->pChannel[LEFT_CHANNEL]->pElement->pStereoElement != pStream->pChannel[RIGHT_CHANNEL]->pElement) ||
                                      (pStream->pChannel[RIGHT_CHANNEL]->pElement->pStereoElement != pStream->pChannel[LEFT_CHANNEL]->pElement);
                     }
-
-                    //ASSERT( pStream->pChannel[LEFT_CHANNEL] );
-                    //ASSERT( pStream->pChannel[RIGHT_CHANNEL] );
-                    //ASSERT( pStream->pChannel[LEFT_CHANNEL]->pElement );
-                    //ASSERT( pStream->pChannel[RIGHT_CHANNEL]->pElement );
-                    //ASSERT( pStream->pChannel[LEFT_CHANNEL]->pElement->pStereoElement );
-                    //ASSERT( pStream->pChannel[RIGHT_CHANNEL]->pElement->pStereoElement );
-                    //ASSERT( pStream->pChannel[LEFT_CHANNEL]->pElement->pStereoElement == pStream->pChannel[RIGHT_CHANNEL]->pElement );
-                    //ASSERT( pStream->pChannel[RIGHT_CHANNEL]->pElement->pStereoElement == pStream->pChannel[LEFT_CHANNEL]->pElement );
                     
                     // Is something wrong?
                     if( bLeftBad || bRightBad || bStereoBad )
@@ -676,7 +645,7 @@ void audio_stream_mgr::Update( void )
                 // Clear flag
                 pStream->bStopStream = FALSE;
 
-#if defined(TARGET_GCN) || defined(TARGET_PC)
+#if defined(TARGET_PC)
                 // Nuke the mp3 stream.
                 if( (pStream->CompressionType == MP3) && pStream->HandleMP3 )
                     g_AudioMP3Mgr.Close( pStream );
@@ -736,125 +705,4 @@ xbool audio_stream_mgr::UnReserveStreams( s32 nStreams )
     ASSERT( m_nReservedStreams >= 0 );
     return TRUE;
 }
-
-/*
-#include "e_Audio.hpp"
-
-xbool SHOW_STREAM_INFO = 0;
-
-#if !defined(X_RETAIL)
-
-char g_AudioStreamInfo[MAX_AUDIO_STREAMS][128];
-
-void audio_stream_mgr::DisplayDebugInfo( void )
-{
-//    s32 y=4;
-    s32 seconds;
-    s32 milli;
-
-    if( SHOW_STREAM_INFO )
-    {
-        // For every stream...
-        for( s32 i=0 ; i<MAX_AUDIO_STREAMS ; i++ )
-        {
-            audio_stream* pStream = &m_AudioStreams[ i ];
-            char Type[64];
-            char Done[64];
-            char Channel[2][64];
-            char ChannelState[2][64];
-            char Time[64];
-//            char Request[64];
-            char* pName = NULL;
-            voice* pVoice = NULL;
-
-            if( pStream->StreamDone )
-                x_strcpy( Done, "D" );
-            else
-                x_strcpy( Done, " " );        
-
-            if( pStream->pChannel[0] && (pStream->Type != INACTIVE) )
-            {
-                x_sprintf( Channel[0], "%02d", pStream->pChannel[0] - g_AudioHardware.GetChannelBuffer() );
-                switch( pStream->pChannel[0]->State )
-                {
-                    case STATE_NOT_STARTED: strcpy( ChannelState[0], " WAITN" ); break;
-                    case STATE_STARTING:    strcpy( ChannelState[0], "STARTN" ); break;
-                    case STATE_RESUMING:    strcpy( ChannelState[0], "RESUME" ); break;
-                    case STATE_RUNNING:     strcpy( ChannelState[0], "RUNNIN" ); break;
-                    case STATE_PAUSING:     strcpy( ChannelState[0], "PAUSEN" ); break;
-                    case STATE_PAUSED:      strcpy( ChannelState[0], "PAUSED" ); break;
-                    default:                strcpy( ChannelState[0], "******" ); break;
-                }
-
-                if( pStream->pChannel[0]->pElement )
-                {
-                    pVoice = pStream->pChannel[0]->pElement->pVoice;
-                }
-            }
-            else
-            {
-                x_strcpy( Channel[0], "  " );
-                strcpy( ChannelState[0], "      " );
-            }
-
-            if( pStream->pChannel[1] && (pStream->Type != INACTIVE) )
-            {
-                x_sprintf( Channel[1], "%2d", pStream->pChannel[1] - g_AudioHardware.GetChannelBuffer() );
-                switch( pStream->pChannel[1]->State )
-                {
-                    case STATE_NOT_STARTED: strcpy( ChannelState[1], " WAITN" ); break;
-                    case STATE_STARTING:    strcpy( ChannelState[1], "STARTN" ); break;
-                    case STATE_RESUMING:    strcpy( ChannelState[1], "RESUME" ); break;
-                    case STATE_RUNNING:     strcpy( ChannelState[1], "RUNNIN" ); break;
-                    case STATE_PAUSING:     strcpy( ChannelState[1], "PAUSEN" ); break;
-                    case STATE_PAUSED:      strcpy( ChannelState[1], "PAUSED" ); break;
-                    default:                strcpy( ChannelState[1], "******" ); break;
-                }
-            }
-            else
-            {
-                x_strcpy( Channel[1], "  " );
-                strcpy( ChannelState[1], "      " );
-            }
-
-            switch( pStream->Type )
-            {
-                case INACTIVE:
-                    x_strcpy( Type, "0" );
-                    break;
-
-                case MONO_STREAM:
-                    x_strcpy( Type, "1" );
-                    break;
-                
-                case STEREO_STREAM:
-                    x_strcpy( Type, "2" );
-                    break;
-                
-                default:
-                    ASSERT( 0 );
-                    break;
-            }
-
-            if( pVoice )
-            {
-                seconds = (s32)pVoice->StartTime;
-                milli   = (s32)((pVoice->StartTime - (f32)seconds) * 1000.0f);
-                x_sprintf( Time, "%04d", seconds );
-                pName = pVoice->pDescriptorName;
-            }
-            else
-            {
-                x_strcpy( Time, "    " );
-                pName   =       "";
-            }
-
-            x_sprintf( g_AudioStreamInfo[i], "%d: %s%s %s:%s %s:%s %s", i, Type, Done, Channel[0], ChannelState[0], Channel[1], ChannelState[1], pName );
-            //x_printfxy( 0, y++, "%d: %s%s %s:%s %s:%s %s", i, Type, Done, Channel[0], ChannelState[0], Channel[1], ChannelState[1], pName );
-        }
-    }
-}
-
-#endif
-*/
 

@@ -80,10 +80,6 @@ volatile    u32             m_TickCount;
             xbool           m_InterruptState;
             xbool           m_InterruptLevel;
 volatile    xbool           m_bDoHardwareUpdate;
-
-#ifdef TARGET_XBOX
-            LPDIRECTSOUND8  m_pdsSystem;
-#endif
             xmutex          m_LockMutex;
 };
 

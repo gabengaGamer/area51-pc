@@ -45,7 +45,7 @@ static const char* const s_pLanguageStr[] =
     "JPN",      // XL_LANG_JAPANESE
     "KOR",      // XL_LANG_KOREAN
     "POR",      // XL_LANG_PORTUGUESE
-    "CHI"       // XL_LANG_TCHINESE
+    "CHI",      // XL_LANG_TCHINESE
     "RUS"       // XL_LANG_RUSSIAN
 };
 

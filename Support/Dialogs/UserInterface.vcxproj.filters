@@ -84,18 +84,6 @@
     <ClCompile Include="..\Ui\ui_win.cpp">
       <Filter>UI</Filter>
     </ClCompile>
-    <ClCompile Include="Xbox\dlg_MemcardSelectXBOX.cpp">
-      <Filter>XBOX</Filter>
-    </ClCompile>
-    <ClCompile Include="Xbox\dlg_MultiPlayerXBOX.cpp">
-      <Filter>XBOX</Filter>
-    </ClCompile>
-    <ClCompile Include="Xbox\dlg_OnlineMainXBOX.cpp">
-      <Filter>XBOX</Filter>
-    </ClCompile>
-    <ClCompile Include="Xbox\dlg_QuickMatch.cpp">
-      <Filter>XBOX</Filter>
-    </ClCompile>
     <ClCompile Include="dlg_MemcardSelect.cpp">
       <Filter>PS2</Filter>
     </ClCompile>
@@ -164,6 +152,7 @@
     <ClCompile Include="dlg_TeamLeaderboard.cpp" />
     <ClCompile Include="dlg_VoteKick.cpp" />
     <ClCompile Include="dlg_VoteMap.cpp" />
+    <ClCompile Include="dlg_COPA.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Ui\ui_bitmap.hpp">
@@ -289,44 +278,16 @@
     <ClInclude Include="dlg_Template.hpp" />
     <ClInclude Include="dlg_VoteKick.hpp" />
     <ClInclude Include="dlg_VoteMap.hpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <CustomBuild Include="Xbox\dlg_MemcardSelectXBOX.hpp">
-      <Filter>XBOX</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Xbox\dlg_MultiPlayerXBOX.hpp">
-      <Filter>XBOX</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Xbox\dlg_OnlineConnectXBOX.cpp">
-      <Filter>XBOX</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Xbox\dlg_OnlineMainXBOX.hpp">
-      <Filter>XBOX</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Xbox\dlg_QuickMatch.hpp">
-      <Filter>XBOX</Filter>
-    </CustomBuild>
-    <CustomBuild Include="dlg_COPA.cpp">
-      <Filter>PS2</Filter>
-    </CustomBuild>
-    <CustomBuild Include="dlg_COPA.hpp">
-      <Filter>PS2</Filter>
-    </CustomBuild>
-    <CustomBuild Include="dlg_MemcardSelect.hpp">
-      <Filter>PS2</Filter>
-    </CustomBuild>
-    <CustomBuild Include="dlg_MultiPlayer.hpp">
-      <Filter>PS2</Filter>
-    </CustomBuild>
-    <CustomBuild Include="dlg_OnlineMain.hpp">
-      <Filter>PS2</Filter>
-    </CustomBuild>
-    <CustomBuild Include="dlg_OnlineEULA.hpp" />
-    <CustomBuild Include="dlg_OnlineHost.hpp" />
-    <CustomBuild Include="dlg_OnlineHostOptions.hpp" />
-    <CustomBuild Include="dlg_OnlineJoin.hpp" />
-    <CustomBuild Include="dlg_OnlineLevelSelect.hpp" />
-    <CustomBuild Include="dlg_OnlineLogin.hpp" />
-    <CustomBuild Include="dlg_PauseOnline.hpp" />
+    <ClInclude Include="dlg_COPA.hpp" />
+    <ClInclude Include="dlg_MemcardSelect.hpp" />
+    <ClInclude Include="dlg_MultiPlayer.hpp" />
+    <ClInclude Include="dlg_OnlineEULA.hpp" />
+    <ClInclude Include="dlg_OnlineHost.hpp" />
+    <ClInclude Include="dlg_OnlineHostOptions.hpp" />
+    <ClInclude Include="dlg_OnlineJoin.hpp" />
+    <ClInclude Include="dlg_OnlineLevelSelect.hpp" />
+    <ClInclude Include="dlg_OnlineLogin.hpp" />
+    <ClInclude Include="dlg_OnlineMain.hpp" />
+    <ClInclude Include="dlg_PauseOnline.hpp" />
   </ItemGroup>
 </Project>

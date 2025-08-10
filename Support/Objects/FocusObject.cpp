@@ -300,7 +300,7 @@ void focus_object::OnRender( void )
         {
             if( (m_bHasLOS && m_bInViewRange) || m_CircleFocusColorAlpha > 0 )
             {
-                draw_Begin( DRAW_SPRITES, DRAW_2D|DRAW_USE_ALPHA|DRAW_TEXTURED|DRAW_NO_ZWRITE );
+                draw_Begin( DRAW_SPRITES, DRAW_2D|DRAW_UI_RTARGET|DRAW_USE_ALPHA|DRAW_TEXTURED|DRAW_NO_ZWRITE );
                 xbitmap* pBitmap = NULL;
 
                 // render all of the 3 circle pc of art to make up the FO
@@ -427,7 +427,7 @@ void focus_object::OnRender( void )
             {
                 //draw_BBox( BBox, XCOLOR_AQUA );
 
-                draw_Begin( DRAW_LINES, DRAW_2D );
+                draw_Begin( DRAW_LINES, DRAW_2D  );
 
                 xcolor RectColor = XCOLOR_GREEN;
                 draw_Color( RectColor );
@@ -476,7 +476,7 @@ void focus_object::OnRender( void )
 
             WH.Scale( BracketSize );
 
-            draw_Begin( DRAW_SPRITES, DRAW_2D|DRAW_USE_ALPHA|DRAW_TEXTURED|DRAW_NO_ZWRITE );
+            draw_Begin( DRAW_SPRITES, DRAW_2D|DRAW_UI_RTARGET|DRAW_USE_ALPHA|DRAW_TEXTURED|DRAW_NO_ZWRITE );
             draw_SetTexture( *pBitmap );
 
             vector3 Displacement[ 4 ] = { P3D[ 0 ] + m_AnimState * CornerOffset * (-RightOne + UpOne),

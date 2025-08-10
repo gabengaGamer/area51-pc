@@ -4,12 +4,17 @@
 // Desc: Interface to the parser to get current time.  This is useful for
 //       multifile playback.
 //
-// Copyright (c) 1996-2001, Microsoft Corporation.  All rights reserved.
+// Copyright (c) 1996 - 2001, Microsoft Corporation.  All rights reserved.
 //------------------------------------------------------------------------------
 
 
 #ifndef __AMPARSE__
 #define __AMPARSE__
+#include <winapifamily.h>
+
+#pragma region Desktop Family
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
+
 
 #ifdef __cplusplus
 extern "C" {
@@ -24,7 +29,7 @@ DEFINE_GUID(IID_IAMParse,
 //
 DECLARE_INTERFACE_(IAMParse, IUnknown) {
     STDMETHOD(GetParseTime) (THIS_
-                             REFERENCE_TIME *prtCurrent
+                             _Out_ REFERENCE_TIME *prtCurrent
                             ) PURE;
     STDMETHOD(SetParseTime) (THIS_
                              REFERENCE_TIME rtCurrent
@@ -35,4 +40,8 @@ DECLARE_INTERFACE_(IAMParse, IUnknown) {
 #ifdef __cplusplus
 }
 #endif // __cplusplus
+
+#endif /* WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP) */
+#pragma endregion
+
 #endif // __AMPARSE__

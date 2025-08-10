@@ -38,15 +38,6 @@
     <ClInclude Include="main.hpp" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\..\..\..\GameData\A51\Release\Ps2\Config.ini">
-      <Filter>Configuration\PS2</Filter>
-    </None>
-    <None Include="..\..\..\..\GameData\A51\Release\Xbox\Config.ini">
-      <Filter>Configuration\XBOX</Filter>
-    </None>
-    <None Include="..\..\..\..\GameData\A51\Release\Pc\Config.ini">
-      <Filter>Configuration\PC</Filter>
-    </None>
     <None Include="media\saves.rdf">
       <Filter>Media</Filter>
     </None>
@@ -54,29 +45,5 @@
       <Filter>Media</Filter>
     </None>
     <None Include="main_pc.inl" />
-  </ItemGroup>
-  <ItemGroup>
-    <Text Include="..\..\..\..\GameData\A51\Release\Ps2\eng_DiskMaps.txt">
-      <Filter>Configuration\PS2</Filter>
-    </Text>
-    <Text Include="..\..\..\..\GameData\A51\Release\Ps2\FRE_DiskMaps.txt">
-      <Filter>Configuration\PS2</Filter>
-    </Text>
-    <Text Include="..\..\..\..\GameData\A51\Release\Xbox\eng_DiskMaps.txt">
-      <Filter>Configuration\XBOX</Filter>
-    </Text>
-    <Text Include="..\..\..\..\GameData\A51\Release\Xbox\FRE_DiskMaps.txt">
-      <Filter>Configuration\XBOX</Filter>
-    </Text>
-    <Text Include="..\..\..\..\GameData\A51\Release\Pc\eng_DiskMaps.txt">
-      <Filter>Configuration\PC</Filter>
-    </Text>
-    <Text Include="..\..\..\..\GameData\A51\Release\Pc\FRE_DiskMaps.txt">
-      <Filter>Configuration\PC</Filter>
-    </Text>
-  </ItemGroup>
-  <ItemGroup>
-    <CustomBuild Include="main_ps2.inl" />
-    <CustomBuild Include="main_xbox.inl" />
   </ItemGroup>
 </Project>

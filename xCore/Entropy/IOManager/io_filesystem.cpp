@@ -6,37 +6,16 @@
 #include "x_log.hpp"
 
 //==============================================================================
-
-#ifdef TARGET_XBOX
-#   include "xbox/xbox_private.hpp"
-#endif
-
-#define USE_VM_ALLOC
-
-//==============================================================================
 // defines.
 
-#if defined(TARGET_GCN) && defined(TARGET_DEV)
-#define ENABLE_PASSTHROUGH  (1)
-#elif defined( TARGET_XBOX ) && defined(X_DEBUG)
-#define ENABLE_PASSTHROUGH  (1)
-#elif defined(TARGET_PS2) && defined(TARGET_DEV)
-#define ENABLE_PASSTHROUGH  (1)
-#elif defined(TARGET_PC)
+#if defined(TARGET_PC)
 #define ENABLE_PASSTHROUGH  (1)
 #else
-#define ENABLE_PASSTHROUGH  (0)
+#define ENABLE_PASSTHROUGH  (1)
 #endif
 
-// CJ: DEBUG_DVD    #undef ENABLE_PASSTHROUGH
-// CJ: DEBUG_DVD    #define ENABLE_PASSTHROUGH 0
-
-//#define IO_FS_OPEN_SUCCESS      "io_fs::Open(success)"
-//#define IO_FS_OPEN_FAILURE      "io_fs::Open(failure)"
 #define IO_FS_PASS_OPEN_SUCCESS "io_fs::Open(pass success)"
 #define IO_FS_PASS_OPEN_FAILURE "io_fs::Open(pass failure)"
-//#define IO_FS_CLOSE             "io_fs::Close"
-//#define DEBUG_IO
 
 //==============================================================================
 // Local variables.
@@ -133,9 +112,6 @@ static s32 io_read_sync( io_device_file* pFile, void* Buffer, s32 Offset, s32 Le
     // Wait for read to finish.
     while( Request.GetStatus() < io_request::COMPLETED )
     {
-#ifdef TARGET_XBOX
-        Sleep( 1 );
-#endif // TARGET_XBOX
     }
 
     // Success?
@@ -146,7 +122,6 @@ static s32 io_read_sync( io_device_file* pFile, void* Buffer, s32 Offset, s32 Le
 }
 
 //==============================================================================
-// X-files hooks
 
 static X_FILE* io_open( const char* pFileName, const char* pMode )
 {
@@ -372,7 +347,7 @@ xbool io_fs::Init( void )
                        old_EOF,
                        old_Length );
 
-#if defined(TARGET_GCN) || defined(TARGET_PS2) || defined(TARGET_XBOX) || ( defined(TARGET_PC) && !defined(X_EDITOR) )
+#if ( defined(TARGET_PC) && !defined(X_EDITOR) )
     // Set new IOHooks
     x_SetFileIOHooks(  io_open,
                        io_close,
@@ -519,11 +494,8 @@ xbool io_fs::MountFileSystem( const char* pPathName, s32 SearchPriority )
     if( pFile )
     {
         // Allocate space for the header file.
-#ifdef USE_VM_ALLOC
-        pHeader = (dfs_header*)vm_Alloc( pFile->Length );
-#else
         pHeader = (dfs_header*)x_malloc( pFile->Length );
-#endif
+
         // Read the file system header
         if( io_read_sync( pFile, pHeader, 0, pFile->Length ) )
         {
@@ -545,11 +517,7 @@ xbool io_fs::MountFileSystem( const char* pPathName, s32 SearchPriority )
         if( !bSuccess )
         {
             // Free ram and nuke the pointer.
-#ifdef USE_VM_ALLOC
-            vm_Free( pHeader );
-#else
             x_free( pHeader );
-#endif
             pHeader = NULL;
         }
 
@@ -617,11 +585,7 @@ xbool io_fs::MountFileSystem( const char* pPathName, s32 SearchPriority )
             m_DFS[FileIndex].DeviceFiles.Clear();
 
             // Free the header file now.
-#ifdef USE_VM_ALLOC
-            vm_Free( m_DFS[FileIndex].pHeader );
-#else
             x_free( m_DFS[FileIndex].pHeader );
-#endif
             // Now nuke it from the list.
             m_DFS.Delete( FileIndex );
         }
@@ -703,11 +667,7 @@ xbool io_fs::UnmountFileSystem( const char* pPathName )
         // Free the header file now.
         if( m_DFS[i].RamAddress == NULL )
         {
-#ifdef USE_VM_ALLOC
-            vm_Free( m_DFS[i].pHeader );
-#else
             x_free( m_DFS[i].pHeader );
-#endif
         }
         // Now nuke it from the list.
         m_DFS[i].PathName.Clear();
@@ -1180,18 +1140,6 @@ io_open_file* io_fs::Open( const char* pPathName, const char* pMode )
     if( !pOpenFile && bOpenDeviceFile )
     {
         io_device_file* pDeviceFile;
-
-#if !defined(TARGET_DVD) && defined(TARGET_PS2)
-        char temp[256];
-        g_IoMgr.GetDevicePathPrefix( temp, Device );
-        g_IoMgr.SetDevicePathPrefix( "host:", Device );
-#endif
-
-#if !defined(TARGET_DVD) && defined(TARGET_XBOX)
-        char temp[256];
-        g_IoMgr.GetDevicePathPrefix( temp, Device );
-        g_IoMgr.SetDevicePathPrefix( "", Device );
-#endif
 
         // Open the file.
         pDeviceFile = g_IoMgr.OpenDeviceFile( pPathName, Device, (io_device::open_flags)OpenFlags );

@@ -512,9 +512,6 @@ void audio_mgr::SetReverbWetDryMix( f32 Mix )
 {
     if( Mix != m_WetDryMix )
     {
-#if defined(TARGET_PS2)
-        g_AudioHardware.SetReverbWetDryMix( Mix );
-#endif
         m_WetDryMix = Mix;
     }
 }
@@ -2601,21 +2598,6 @@ void audio_mgr::ResumeAll( void )
 }
 
 //------------------------------------------------------------------------------
-/*
-void audio_mgr::ReleaseLoop( voice_id VoiceID )
-{
-    // Error check.
-#ifndef AUDIO_ENABLE
-    if( !s_Initialized )
-        return;
-#else
-    ASSERT( s_Initialized );
-#endif
-
-    g_AudioVoiceMgr.ReleaseVoiceLoop( IdToVoice( VoiceID ) );
-}
-*/
-//------------------------------------------------------------------------------
 
 void audio_mgr::Release( voice_id VoiceID, f32 Time )
 {
@@ -3224,26 +3206,6 @@ void audio_mgr::MergeIdentifierTables( void )
             PackageIndices.Delete( i );
         }
     }
-/*
-    X_FILE* f = x_fopen( xfs( "ident%03d.txt", s_nMerges ), "w+t" );
-    if( f )
-    {
-        descriptor_identifier* pIdentifier;
-        audio_package*         pPackage;
-        char*                  pString;
-
-        for( i=0 ; i<m_pIdentifiers.GetCount() ; i++ )
-        {
-            // Get package, index and offset from table
-            pIdentifier = m_pIdentifiers[ i ];
-            pPackage    = pIdentifier->pPackage;
-            pString     = pPackage->m_IdentifierStringTable + pIdentifier->StringOffset;
-            x_fprintf( f, "%s\n", pString );
-        }
-
-        x_fclose( f );
-    }
-*/
     s_nMerges++;
 }
 //=========================================================================
@@ -3720,11 +3682,6 @@ void audio_mgr::SetSpeakerAngles( s32 FrontLeft, s32 FrontRight, s32 BackRight, 
                 P0 = x_sqrt( 1.0f - Q );
                 P1 = x_sqrt( Q );
                 m_Pan[j].Set( P0, P1, 0.0f, 0.0f );
-                /*
-                LOG_MESSAGE( "audio_mgr::SetSpeakerAngles",
-                            "%d: [%f,%f]",
-                            j, m_Pan[j].GetX(), m_Pan[j].GetY() );
-                            */
             }
             
             DeltaTheta = (f32)x_abs( FrontLeft+360 - FrontRight );
@@ -3735,11 +3692,6 @@ void audio_mgr::SetSpeakerAngles( s32 FrontLeft, s32 FrontRight, s32 BackRight, 
                 P0 = x_sqrt( 1.0f - Q );
                 P1 = x_sqrt( Q );
                 m_Pan[i].Set( P1, P0, 0.0f, 0.0f );
-                /*
-                LOG_MESSAGE( "audio_mgr::SetSpeakerAngles",
-                            "%d: [%f,%f]",
-                            i, m_Pan[i].GetX(), m_Pan[i].GetY() );
-                            */
             }
             break;
 
@@ -3767,11 +3719,6 @@ void audio_mgr::SetSpeakerAngles( s32 FrontLeft, s32 FrontRight, s32 BackRight, 
                 P0 = x_sqrt( 1.0f - Q );
                 P1 = x_sqrt( Q );
                 m_Pan[j].Set( P0, P1, 0.0f, 0.0f );
-                /*
-                LOG_MESSAGE( "audio_mgr::SetSpeakerAngles",
-                            "%d: [%f,%f]",
-                            j, m_Pan[j].GetX(), m_Pan[j].GetY() );
-                            */
             }
 
             DeltaTheta = (f32)x_abs( BackRight - FrontRight );
@@ -3782,11 +3729,6 @@ void audio_mgr::SetSpeakerAngles( s32 FrontLeft, s32 FrontRight, s32 BackRight, 
                 P0 = x_sqrt( 1.0f - Q );
                 P1 = x_sqrt( Q );
                 m_Pan[i].Set( 0.0f, P0, P1, 0.0f );
-                /*
-                LOG_MESSAGE( "audio_mgr::SetSpeakerAngles",
-                            "%d: [%f,%f]",
-                            i, m_Pan[i].GetX(), m_Pan[i].GetY() );
-                            */
             }
 
             DeltaTheta = (f32)x_abs( FrontLeft+360 - BackRight );
@@ -3797,11 +3739,6 @@ void audio_mgr::SetSpeakerAngles( s32 FrontLeft, s32 FrontRight, s32 BackRight, 
                 P0 = x_sqrt( 1.0f - Q );
                 P1 = x_sqrt( Q );
                 m_Pan[i].Set( P1, 0.0f, P0, 0.0f );
-                /*
-                LOG_MESSAGE( "audio_mgr::SetSpeakerAngles",
-                            "%d: [%f,%f]",
-                            i, m_Pan[i].GetX(), m_Pan[i].GetY() );
-                            */
             }
             break;
 

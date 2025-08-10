@@ -305,7 +305,7 @@ void hud_health::RenderEKG( void )
 
         if( staticBMP )
         {        
-            draw_Begin( DRAW_SPRITES, DRAW_TEXTURED | DRAW_USE_ALPHA | DRAW_2D | DRAW_NO_ZBUFFER );
+            draw_Begin( DRAW_SPRITES, DRAW_TEXTURED | DRAW_USE_ALPHA | DRAW_2D | DRAW_UI_RTARGET | DRAW_NO_ZBUFFER  );
             draw_SetTexture(*staticBMP);
             draw_DisableBilinear();
             static xcolor EKGBackColor = xcolor( 0, 150, 0, EKG_BACK_ALPHA );
@@ -327,7 +327,7 @@ void hud_health::RenderEKG( void )
     // Render Line (ekg)
     //
     {
-        draw_Begin( DRAW_QUADS, DRAW_2D|DRAW_USE_ALPHA|DRAW_NO_ZBUFFER );
+        draw_Begin( DRAW_QUADS, DRAW_2D|DRAW_UI_RTARGET|DRAW_USE_ALPHA|DRAW_NO_ZBUFFER );
         s32 W = 1;
         s32 H = 1;
         u8 AlphaStep = (255 / NUM_DOTS);
@@ -476,7 +476,7 @@ void hud_health::AdvanceEKG( player* pPlayer, f32 DeltaTime )
 //==============================================================================
 void Draw_ShiftCube( f32 X, f32 Y, f32 W, f32 H, f32 S, xcolor tColor, xcolor bColor )
 {
-    draw_Begin( DRAW_QUADS, DRAW_2D|DRAW_USE_ALPHA|DRAW_NO_ZBUFFER );
+    draw_Begin( DRAW_QUADS, DRAW_2D|DRAW_UI_RTARGET|DRAW_USE_ALPHA|DRAW_NO_ZBUFFER );
     draw_Color( tColor );
     draw_Vertex( X, Y, 0.001f ); 
     draw_Color( bColor );
@@ -527,7 +527,7 @@ void hud_health::RenderBar( bar_type BarNum )
             DisplayColor = g_HudColor;
         }
 
-        draw_Begin( DRAW_SPRITES, DRAW_TEXTURED | DRAW_USE_ALPHA | DRAW_2D | DRAW_NO_ZBUFFER );
+        draw_Begin( DRAW_SPRITES, DRAW_TEXTURED | DRAW_USE_ALPHA | DRAW_2D | DRAW_UI_RTARGET | DRAW_NO_ZBUFFER  );
         draw_SetTexture( *pBitmap );
         draw_DisableBilinear();
         vector2 TL;
@@ -546,7 +546,7 @@ void hud_health::RenderBar( bar_type BarNum )
     //    xbitmap* flashLightBMP;
     //    flashLightBMP = m_FlashLightBmp.GetPointer();
 
-    //    draw_Begin( DRAW_SPRITES, DRAW_TEXTURED | DRAW_USE_ALPHA | DRAW_2D | DRAW_NO_ZBUFFER );
+    //    draw_Begin( DRAW_SPRITES, DRAW_TEXTURED | DRAW_USE_ALPHA | DRAW_2D | DRAW_UI_RTARGET | DRAW_NO_ZBUFFER  );
     //    draw_SetTexture(*flashLightBMP);
     //    draw_DisableBilinear();
 
@@ -957,7 +957,7 @@ void hud_health::RenderVolScanner( void )
 
     if( volScannerBMP )
     {        
-        draw_Begin( DRAW_SPRITES, DRAW_TEXTURED | DRAW_USE_ALPHA | DRAW_2D | DRAW_NO_ZBUFFER );
+        draw_Begin( DRAW_SPRITES, DRAW_TEXTURED | DRAW_USE_ALPHA | DRAW_2D | DRAW_UI_RTARGET | DRAW_NO_ZBUFFER );
         draw_SetTexture(*volScannerBMP);
         draw_DisableBilinear();
         static xcolor HUD_VOL_SCAN_COLOR = xcolor( 80,150,150,180 );
@@ -1031,7 +1031,7 @@ void hud_health::RenderMutationTakeOver( void )
 
                 DisplayColor.A = m_MutationBarAlpha;
 
-                draw_Begin( DRAW_SPRITES, DRAW_TEXTURED | DRAW_USE_ALPHA | DRAW_2D | DRAW_NO_ZBUFFER );
+                draw_Begin( DRAW_SPRITES, DRAW_TEXTURED | DRAW_USE_ALPHA | DRAW_2D | DRAW_UI_RTARGET | DRAW_NO_ZBUFFER  );
                 draw_SetTexture( *pBitmap );
                 draw_DisableBilinear();
                 vector2 TL;

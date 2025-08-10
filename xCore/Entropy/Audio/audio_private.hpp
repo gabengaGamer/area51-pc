@@ -5,17 +5,8 @@
 #include "audio_ram_mgr.hpp"
 #include "..\IOManager\io_filesystem.hpp"
 
-#ifdef TARGET_GCN
-#include <dolphin.h>
-#endif
-
 #ifdef TARGET_PC
-//#include "..\3rdparty\miles6\include\mss.h"
 #include "IAL\IAL.h"
-#endif
-
-#ifdef TARGET_XBOX
-#   include "xbox/xbox_private.hpp"
 #endif
 
 #include "audio_private_pkg.hpp"
@@ -26,30 +17,9 @@
 //------------------------------------------------------------------------------
 // Platform specific constants (for use at runtime on target platform).
 
-#ifdef TARGET_GCN
-#define PACKAGE_VERSION                 GCN_PACKAGE_VERSION
-#define TARGET_ID                       GCN_TARGET_ID
-#define ADPCM_BUFFER_SIZE               GCN_ADPCM_CHANNEL_BUFFER_SIZE
-#define STREAM_BUFFER_SIZE              (32 * 1024)
-#endif
-
 #ifdef TARGET_PC
 #define PACKAGE_VERSION                 PC_PACKAGE_VERSION
 #define TARGET_ID                       PC_TARGET_ID
-#define STREAM_BUFFER_SIZE              (32 * 1024)
-#endif
-
-#ifdef TARGET_PS2
-#define PACKAGE_VERSION                 PS2_PACKAGE_VERSION
-#define TARGET_ID                       PS2_TARGET_ID
-#define ADPCM_BUFFER_SIZE               PS2_ADPCM_CHANNEL_BUFFER_SIZE
-#define STREAM_BUFFER_SIZE              (32 * 1024)
-#endif
-
-#ifdef TARGET_XBOX
-#define PACKAGE_VERSION                 XBOX_PACKAGE_VERSION
-#define TARGET_ID                       XBOX_TARGET_ID
-#define ADPCM_BUFFER_SIZE               XBOX_ADPCM_CHANNEL_BUFFER_SIZE
 #define STREAM_BUFFER_SIZE              (32 * 1024)
 #endif
 
@@ -252,32 +222,12 @@ volatile element_state           State;                  // Status of this eleme
 struct hardware_data
 {
     s32                 Priority;   // Hardware priority.
-#ifdef TARGET_GCN
-    AXVPB*              pVPB;       // Voice pointer.
-    u16                 Ve;         // Hardware state mirror.
-#endif
 
 #ifdef TARGET_PC
     ial_hchannel        hChannel;   // IAL channel handle
     s32                 CurrentPosition;
     s32                 BasePosition;
     xbool               InUse;
-#endif
-
-#ifdef TARGET_PS2
-	s32					ChannelId;	// Channel ID
-    u32                 RelativeBufferPosition;
-#endif
-
-#ifdef TARGET_XBOX
-    LPDIRECTSOUNDBUFFER8 pdsBuffer;
-    DSMIXBINVOLUMEPAIR  dsmbvp[6];            // Mix bin volumes
-    DSMIXBINS           dsmb;                 // DSound MixBin struct
-    s32                 CurrentPosition;
-    s32                 BasePosition;
-    xbool               IsStarted;
-    xbool               InUse;
-    xbool               IsLooped;
 #endif
 };
 

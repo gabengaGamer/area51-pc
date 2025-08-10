@@ -7,6 +7,11 @@
  *
  ***************************************************************************/
 
+#include <winapifamily.h>
+
+#pragma region Desktop Family
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
+
 #ifndef _D3DCAPS_H
 #define _D3DCAPS_H
 
@@ -598,4 +603,7 @@ typedef struct _D3DDEVINFO_TEXTURING {
 
 
 #endif /* _D3DCAPS_H_ */
+
+#endif /* WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP) */
+#pragma endregion
 

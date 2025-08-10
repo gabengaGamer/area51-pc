@@ -4,12 +4,30 @@
 //
 //=========================================================================
 
+//=========================================================================
+//  PLATFORM CHECK
+//=========================================================================
+
+#include "x_types.hpp"
+
 #if !defined(TARGET_PC)
 #error "This is only for the PC target platform. Please check build exclusion rules"
 #endif
 
+//=========================================================================
+// INCLUDES
+//=========================================================================
+
 #include "VertexMgr.hpp"
 
+//=========================================================================
+//  GLOBAL INSTANCE
+//=========================================================================
+
+vertex_mgr g_RigidVertMgr;
+
+//=========================================================================
+// IMPLEMENTATION
 //=========================================================================
 
 s32 vertex_mgr::NextLog2( u32 n )
@@ -36,7 +54,7 @@ s32 vertex_mgr::GetHashEntry( s32 nItems, xbool bVertex )
 
 //=========================================================================
 
-void vertex_mgr::Init( DWORD FVF, s32 VStride )
+void vertex_mgr::Init( s32 VStride )
 {
     s32 i;
 
@@ -54,8 +72,11 @@ void vertex_mgr::Init( DWORD FVF, s32 VStride )
 
     // Init fields
     m_Stride = VStride;
-    m_FVF    = FVF;
+
+    m_LastVertexPool.Handle = HNULL;
+    m_LastIndexPool.Handle  = HNULL;
 }
+
 
 //=========================================================================
 
@@ -112,10 +133,9 @@ void vertex_mgr::AddNodeToHash( xhandle hNode, xbool bVertex )
         m_lNode( Node.hHashNext ).hHashPrev = hNode;
 }
 
-
 //=========================================================================
 
-xhandle vertex_mgr::AllocNode( s32 nItems, xbool bVertex, s32 Stride, DWORD FVF )
+xhandle vertex_mgr::AllocNode( s32 nItems, xbool bVertex, s32 Stride )
 {
     xhandle     hNode;
 
@@ -160,7 +180,7 @@ xhandle vertex_mgr::AllocNode( s32 nItems, xbool bVertex, s32 Stride, DWORD FVF 
         //
         // Create the physical pool
         //
-        dxerr           Error;
+        HRESULT         hr;
         xhandle         hPool;
         pool*           pPool;
 
@@ -171,29 +191,28 @@ xhandle vertex_mgr::AllocNode( s32 nItems, xbool bVertex, s32 Stride, DWORD FVF 
             pPool           = &Pool;
 
             Pool.nItems     = MAX_VERTEX_POOL;
-            Pool.FVF        = FVF;
             Pool.Stride     = Stride;
-            Pool.pVertex    = NULL;
+            Pool.pBuffer    = NULL;
 
             if( g_pd3dDevice )
             {
-                Error = g_pd3dDevice->CreateVertexBuffer( Pool.Stride * Pool.nItems, 
-                                                          D3DUSAGE_WRITEONLY,
-                                                          (Pool.FVF<100)?0:Pool.FVF,
-                                                          D3DPOOL_MANAGED,
-                                                          &Pool.pVertex,
-                                                          NULL );
+                D3D11_BUFFER_DESC bd = {0};
+                bd.Usage = D3D11_USAGE_DYNAMIC;
+                bd.ByteWidth = Pool.Stride * Pool.nItems;
+                bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+                bd.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
 
-                if( Error )
+                hr = g_pd3dDevice->CreateBuffer( &bd, NULL, &Pool.pBuffer );
+
+                if( FAILED(hr) )
                 {
                     m_lVertexPool.DeleteByHandle( hPool );
-                    x_throw( "Unable to create a new vetex buffer in D3D" );
+                    x_throw( "Unable to create vertex buffer in D3D11" );
                 }
             }
             else
             {
-                // LIE!!!!
-                Pool.pVertex = (IDirect3DVertexBuffer9*)x_malloc( Pool.Stride * Pool.nItems );
+                Pool.pBuffer = (ID3D11Buffer*)x_malloc( Pool.Stride * Pool.nItems );
             }
         }
         else
@@ -204,28 +223,28 @@ xhandle vertex_mgr::AllocNode( s32 nItems, xbool bVertex, s32 Stride, DWORD FVF 
 
             Pool.nItems     = MAX_INDEX_POOL;
             Pool.Stride     = Stride;
-            Pool.pIndex     = NULL;
+            Pool.pBuffer    = NULL;
 
             if( g_pd3dDevice )
             {
-                Error = g_pd3dDevice->CreateIndexBuffer( Pool.Stride * Pool.nItems, 
-                                                         D3DUSAGE_WRITEONLY,
-                                                         Pool.Stride==sizeof(u16)?D3DFMT_INDEX16:D3DFMT_INDEX32,
-                                                         D3DPOOL_MANAGED,
-                                                         &Pool.pIndex,
-                                                         NULL );
+                D3D11_BUFFER_DESC bd = {0};
+                bd.Usage = D3D11_USAGE_DYNAMIC;
+                bd.ByteWidth = Pool.Stride * Pool.nItems;
+                bd.BindFlags = D3D11_BIND_INDEX_BUFFER;
+                bd.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+
+                hr = g_pd3dDevice->CreateBuffer( &bd, NULL, &Pool.pBuffer );
 
                 ASSERT( Pool.Stride == sizeof(u16) );
-                if( Error )
+                if( FAILED(hr) )
                 {
                     m_lIndexPool.DeleteByHandle( hPool );
-                    x_throw( "Unable to create a new index buffer in D3D" );
+                    x_throw( "Unable to create index buffer in D3D11" );
                 }
             }
             else
             {
-                // LIE!!!!
-                Pool.pIndex = (IDirect3DIndexBuffer9*)x_malloc( Pool.Stride * Pool.nItems );
+                Pool.pBuffer = (ID3D11Buffer*)x_malloc( Pool.Stride * Pool.nItems );
             }
         }
 
@@ -239,14 +258,11 @@ xhandle vertex_mgr::AllocNode( s32 nItems, xbool bVertex, s32 Stride, DWORD FVF 
         EmptyNode.Flags    = bVertex?FLAGS_VERTEX:0;
         EmptyNode.User     = -1;
 
-        // Set the global next and prev
         EmptyNode.hGlobalNext.Handle = HNULL;
         EmptyNode.hGlobalPrev.Handle = HNULL;
 
-        // Insert the node into the hash
         AddNodeToHash( hNode, bVertex );
 
-        // Set in the pool's first node
         pPool->hFirstNode = hNode;
     }
 
@@ -290,7 +306,6 @@ xhandle vertex_mgr::AllocNode( s32 nItems, xbool bVertex, s32 Stride, DWORD FVF 
         EmptyNode.User     = -1;
         EmptyNode.hPool    = Node.hPool;
 
-        // Set the global next and prev
         EmptyNode.hGlobalNext = Node.hGlobalNext;
         EmptyNode.hGlobalPrev = hNode;
         Node.hGlobalNext = hEmptyNode;
@@ -298,10 +313,8 @@ xhandle vertex_mgr::AllocNode( s32 nItems, xbool bVertex, s32 Stride, DWORD FVF 
         if( EmptyNode.hGlobalNext.IsNull() == FALSE )
             m_lNode( EmptyNode.hGlobalNext ).hGlobalPrev = hEmptyNode;
 
-        // Insert the node into the hash
         AddNodeToHash( hEmptyNode, bVertex );
 
-        // Now let's reset the node with the right count
         Node.Count = nItems;
     }
 
@@ -320,22 +333,23 @@ void* vertex_mgr::LockDListVerts( xhandle hDList )
     BYTE*           pDest = NULL;
     node&           Node  = m_lNode( m_lDList(hDList).hVertexNode );
     vertex_pool&    Pool  = m_lVertexPool( Node.hPool );
-    dxerr           Error;
     ASSERT( (Node.Flags&FLAGS_VERTEX) == FLAGS_VERTEX );
 
-    if( g_pd3dDevice )
+    if( g_pd3dDevice && g_pd3dContext )
     {
-        Error = Pool.pVertex->Lock( Pool.Stride*Node.Offset, Pool.Stride*Node.User, (void**)&pDest, 0 );
-        if( Error != 0 )
+        D3D11_MAPPED_SUBRESOURCE mappedResource;
+        HRESULT hr = g_pd3dContext->Map( Pool.pBuffer, 0, D3D11_MAP_WRITE_NO_OVERWRITE, 0, &mappedResource );
+        if( FAILED(hr) )
         {
-            x_throw( "Unable to lock the dest vertex buffer in D3D" );
+            x_throw( "Unable to map vertex buffer in D3D11" );
         }
 
+        pDest = ((BYTE*)mappedResource.pData) + (Pool.Stride * Node.Offset);
         return pDest;
     }
     else
     {   
-        pDest = ((BYTE*)Pool.pVertex) + (Pool.Stride*Node.Offset);
+        pDest = ((BYTE*)Pool.pBuffer) + (Pool.Stride * Node.Offset);
         return pDest;
     }
 }
@@ -346,20 +360,11 @@ void vertex_mgr::UnlockDListVerts( xhandle hDList )
 {
     node&           Node  = m_lNode( m_lDList(hDList).hVertexNode );
     vertex_pool&    Pool  = m_lVertexPool( Node.hPool );
-    dxerr           Error;
     ASSERT( (Node.Flags&FLAGS_VERTEX) == FLAGS_VERTEX );
 
-    if( g_pd3dDevice )
+    if( g_pd3dDevice && g_pd3dContext )
     {
-        Error = Pool.pVertex->Unlock();
-        if( Error != 0 )
-        {
-            x_throw( "Unable to unlock the Index buffer in D3D" );
-        }
-    }
-    else
-    {
-        // Don't need to do anything
+        g_pd3dContext->Unmap( Pool.pBuffer, 0 );
     }
 }
 
@@ -371,27 +376,27 @@ void* vertex_mgr::LockDListIndices( xhandle hDList, s32& Index )
     node&        IndexNode   = m_lNode( m_lDList(hDList).hIndexNode );
     node&        VertexNode  = m_lNode( m_lDList(hDList).hVertexNode );
     index_pool&  Pool  = m_lIndexPool( IndexNode.hPool );
-    dxerr        Error;
     ASSERT( (IndexNode.Flags&FLAGS_VERTEX) == FALSE );
 
-    if( g_pd3dDevice )
+    if( g_pd3dDevice && g_pd3dContext )
     {
-        Error = Pool.pIndex->Lock( Pool.Stride*IndexNode.Offset, Pool.Stride*IndexNode.User, (void**)&pDest, 0 );
-        if( Error != 0 )
+        D3D11_MAPPED_SUBRESOURCE mappedResource;
+        HRESULT hr = g_pd3dContext->Map( Pool.pBuffer, 0, D3D11_MAP_WRITE_NO_OVERWRITE, 0, &mappedResource );
+        if( FAILED(hr) )
         {
-            x_throw( "Unable to lock the Index buffer in D3D" );
+            x_throw( "Unable to map index buffer in D3D11" );
         }
 
         Index = VertexNode.Offset;
+        pDest = ((BYTE*)mappedResource.pData) + (Pool.Stride * IndexNode.Offset);
         return pDest;
     }
     else
     {
         Index = VertexNode.Offset;
-        pDest = ((BYTE*)Pool.pIndex) + (Pool.Stride*IndexNode.Offset);
+        pDest = ((BYTE*)Pool.pBuffer) + (Pool.Stride * IndexNode.Offset);
         return pDest;
     }
-
 }
 
 //=========================================================================
@@ -400,32 +405,23 @@ void vertex_mgr::UnlockDListIndices( xhandle hDList )
 {
     node&           Node  = m_lNode( m_lDList(hDList).hIndexNode );
     index_pool&     Pool  = m_lIndexPool( Node.hPool );
-    dxerr           Error;
     ASSERT( (Node.Flags&FLAGS_VERTEX) == FALSE );
 
-    if( g_pd3dDevice )
+    if( g_pd3dDevice && g_pd3dContext )
     {
-        Error = Pool.pIndex->Unlock();
-        if( Error != 0 )
-        {
-            x_throw( "Unable to unlock the Index buffer in D3D" );
-        }
-    }
-    else
-    {
-        // Don't need to do anything
+        g_pd3dContext->Unmap( Pool.pBuffer, 0 );
     }
 }
 
 //=========================================================================
 
-xhandle vertex_mgr::AllocVertexSet( s32 nVertices, s32 Stride, DWORD FVF )
+xhandle vertex_mgr::AllocVertexSet( s32 nVertices, s32 Stride )
 {
     ASSERT( MAX_VERTEX_POOL == 0xffff );
     if( nVertices > 0xffff )
         x_throw( "Unable to allocated object that have more than 65,000 vertices" );
 
-    return AllocNode( nVertices, TRUE, Stride, FVF );
+    return AllocNode( nVertices, TRUE, Stride );
 }
 
 //=========================================================================
@@ -456,10 +452,8 @@ void vertex_mgr::FreeNode( xhandle hNode, xbool bVertex )
             xhandle hDelNode = Node.hGlobalNext;
             node&   DelNode  = m_lNode( Node.hGlobalNext );
 
-            // First lets remove the node from the hash
             RemoveNodeFormHash( hDelNode, bVertex );
 
-            // Now remove the node from the global list
             Node.Count += DelNode.Count;
             Node.hGlobalNext = DelNode.hGlobalNext;
 
@@ -477,10 +471,8 @@ void vertex_mgr::FreeNode( xhandle hNode, xbool bVertex )
             xhandle hNewNode = Node.hGlobalPrev;
             node&   NewNode  = m_lNode( Node.hGlobalPrev );
 
-            // First lets remove the new node from the hash
             RemoveNodeFormHash( hNewNode, bVertex );
 
-            // Now lets merge
             NewNode.Count += Node.Count;
 
             NewNode.hGlobalNext = Node.hGlobalNext;
@@ -490,7 +482,6 @@ void vertex_mgr::FreeNode( xhandle hNode, xbool bVertex )
 
             m_lNode.DeleteByHandle( hNode );        
 
-            // Set the new handle
             hNode = hNewNode;
         }
     }
@@ -532,7 +523,7 @@ xhandle vertex_mgr::AddDList( void* pVertex, s32 nVertices, u16* pIndex, s32 nIn
     x_try;
 
     DList.hIndexNode  = AllocIndexSet   ( nIndices );
-    DList.hVertexNode = AllocVertexSet  ( nVertices, m_Stride, m_FVF );
+    DList.hVertexNode = AllocVertexSet  ( nVertices, m_Stride );
 
     // Copy the verts
     {
@@ -543,10 +534,7 @@ xhandle vertex_mgr::AddDList( void* pVertex, s32 nVertices, u16* pIndex, s32 nIn
     }
 
     // Copy the Indices
-    static s32 b=1;
-    //if( b )
     {
-        b=0;
         u16* pNewIndex;
         node& VNode = m_lNode( DList.hVertexNode );
         node& INode = m_lNode( DList.hIndexNode );
@@ -594,26 +582,24 @@ void vertex_mgr::ActivateStreams( xhandle hDList )
     node&  Vertex = m_lNode ( DList.hVertexNode );
     node&  Index  = m_lNode ( DList.hIndexNode  );
 
-    //
-    // Handle mini cash
-    //
-    if( Vertex.hPool != m_LastVertexPool  )
+    if( Vertex.hPool != m_LastVertexPool )
     {
         vertex_pool& Pool = m_lVertexPool( Vertex.hPool );
-        if( g_pd3dDevice )
+        if( g_pd3dDevice && g_pd3dContext )
         {
-            g_pd3dDevice->SetFVF( Pool.FVF );
-            g_pd3dDevice->SetStreamSource( 0, Pool.pVertex, 0, Pool.Stride );
+            UINT stride = Pool.Stride;
+            UINT offset = 0;
+            g_pd3dContext->IASetVertexBuffers( 0, 1, &Pool.pBuffer, &stride, &offset );
         }
         m_LastVertexPool = Vertex.hPool;
     }
 
-    if( Index.hPool != m_LastIndexPool  )
+    if( Index.hPool != m_LastIndexPool )
     {
         index_pool& Pool = m_lIndexPool( Index.hPool );
-        if( g_pd3dDevice )
+        if( g_pd3dDevice && g_pd3dContext )
         {
-            g_pd3dDevice->SetIndices( Pool.pIndex );
+            g_pd3dContext->IASetIndexBuffer( Pool.pBuffer, DXGI_FORMAT_R16_UINT, 0 );
         }
         m_LastIndexPool = Index.hPool;
     }
@@ -621,7 +607,10 @@ void vertex_mgr::ActivateStreams( xhandle hDList )
 
 //=========================================================================
 
-void vertex_mgr::DrawDList( xhandle hDList, D3DPRIMITIVETYPE PrimType )
+// TODO: GS: Now shaders and settings are set for each DList separately, am I doing it right?
+// IDK, maybe it shoud be reworked.
+
+void vertex_mgr::DrawDList( xhandle hDList, const matrix4* pWorld, const d3d_rigid_lighting* pLighting )
 {
     ASSERT( hDList.Handle >= 0 );
 
@@ -629,102 +618,81 @@ void vertex_mgr::DrawDList( xhandle hDList, D3DPRIMITIVETYPE PrimType )
     node&  Vertex = m_lNode ( DList.hVertexNode );
     node&  Index  = m_lNode ( DList.hIndexNode  );
 
-    //
-    // Activate streams
-    //
     ActivateStreams( hDList );
-
-    //
-    // Sanity check
-    //
-
-#ifdef INTERVELOP
-    s32 IndexOffset;
-
-    struct vertex 
-    {
-        vector3p Pos;
-        float GetX() const { return Pos.X; }
-        float GetY() const { return Pos.Y; }
-        float GetZ() const { return Pos.Z; }
-    };
     
-    vertex* pVert = (vertex*)LockDListVerts( hDList );
-    u16* pIndx = (u16*)LockDListIndices( hDList, IndexOffset );
-
-    for (s32 i = 0; i < DList.nPrims; i++)
-    {
-        x_DebugMsg( "%f %f %f -- ", 
-            pVert[ pIndx[ i * 3 + 0 ] - Vertex.Offset ].GetX(),
-            pVert[ pIndx[ i * 3 + 0 ] - Vertex.Offset ].GetY(),
-            pVert[ pIndx[ i * 3 + 0 ] - Vertex.Offset ].GetZ());
-
-        x_DebugMsg( "%f %f %f -- ", 
-            pVert[ pIndx[ i * 3 + 1 ] - Vertex.Offset ].GetX(),
-            pVert[ pIndx[ i * 3 + 1 ] - Vertex.Offset ].GetY(),
-            pVert[ pIndx[ i * 3 + 1 ] - Vertex.Offset ].GetZ());
-
-        x_DebugMsg( "%f %f %f\n ", 
-            pVert[ pIndx[ i * 3 + 2 ] - Vertex.Offset ].GetX(),
-            pVert[ pIndx[ i * 3 + 2 ] - Vertex.Offset ].GetY(),
-            pVert[ pIndx[ i * 3 + 2 ] - Vertex.Offset ].GetZ());
-    }
-    UnlockDListVerts(hDList);
-    UnlockDListIndices(hDList);
-#endif        
-
-
-    //
-    // Get ready to render now
-    //
-    if( g_pd3dDevice )
+    if( g_pd3dDevice && g_pd3dContext )
     {
         ASSERT( DList.nPrims*3 == Index.User );
         ASSERT( (Index.Offset + Index.User) < MAX_INDEX_POOL );
-        g_pd3dDevice->DrawIndexedPrimitive( PrimType, 
-                                            0,
-                                            Vertex.Offset, 
-                                            Vertex.User, 
-                                            Index.Offset, 
-                                            DList.nPrims );
+        
+        g_pd3dContext->DrawIndexed( Index.User, Index.Offset, 0 );
     }
 }
 
 //=========================================================================
+
+void vertex_mgr::ApplyLightmapColors( xhandle hDList, const u32* pColors, s32 nColors, s32 colorOffset )
+{
+    if( !pColors || !nColors )
+        return;
+        
+    BYTE* pVertData = (BYTE*)LockDListVerts( hDList );
+    if( pVertData )
+    {
+        const u32* pColorData = pColors + colorOffset;
+        
+        for( s32 i = 0; i < nColors; i++ )
+        {
+            // Color field at offset 24 in each vertex
+            BYTE* pVertexStart = pVertData + (i * m_Stride);
+            xcolor* pColor = (xcolor*)(pVertexStart + 24);
+            
+            u32 color = pColorData[i];
+            *pColor = xcolor( (color >> 16) & 0xFF,  // R
+                              (color >> 8)  & 0xFF,  // G
+                               color & 0xFF,         // B
+                              (color >> 24) & 0xFF); // A
+        }        
+        UnlockDListVerts( hDList );
+    }
+}
+
+//=========================================================================
+
 void vertex_mgr::Kill( void )
 {
     s32 i;
 
     for( i=0; i<m_lIndexPool.GetCount(); i++ )
     {
-        if( m_lIndexPool[i].pIndex ) 
+        if( m_lIndexPool[i].pBuffer ) 
         {
             if( g_pd3dDevice )
             {
-                m_lIndexPool[i].pIndex->Release();
-                m_lIndexPool[i].pIndex = NULL;
+                m_lIndexPool[i].pBuffer->Release();
+                m_lIndexPool[i].pBuffer = NULL;
             }
             else
             {
-                x_free( m_lIndexPool[i].pIndex );
-                m_lIndexPool[i].pIndex = NULL;
+                x_free( m_lIndexPool[i].pBuffer );
+                m_lIndexPool[i].pBuffer = NULL;
             }
         }
     }
 
     for( i=0; i<m_lVertexPool.GetCount(); i++ )
     {
-        if( m_lVertexPool[i].pVertex ) 
+        if( m_lVertexPool[i].pBuffer ) 
         {
             if( g_pd3dDevice )
             {
-                m_lVertexPool[i].pVertex->Release();
-                m_lVertexPool[i].pVertex = NULL;
+                m_lVertexPool[i].pBuffer->Release();
+                m_lVertexPool[i].pBuffer = NULL;
             }
             else
             {
-                x_free(m_lVertexPool[i].pVertex);
-                m_lVertexPool[i].pVertex = NULL;
+                x_free(m_lVertexPool[i].pBuffer);
+                m_lVertexPool[i].pBuffer = NULL;
             }
         }
     }

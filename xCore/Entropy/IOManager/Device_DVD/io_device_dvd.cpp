@@ -3,10 +3,6 @@
 #include "io_device_dvd.hpp"
 #include "x_log.hpp"
 
-//#define LOG_PHYSICAL_READ  "io_device_dvd::PhysicalRead(read)"
-//#define LOG_PHYSICAL_SEEK  "io_device_dvd::PhysicalRead(seek)"
-//#define LOG_PHYSICAL_WRITE "io_device_dvd::PhysicalWrite"
-
 //==============================================================================
 
 io_device_dvd g_IODeviceDVD;

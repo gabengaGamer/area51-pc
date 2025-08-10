@@ -269,8 +269,31 @@ s32 x_sprintf( char* pStr, const char* pFormatStr, ... )
 }
 
 //==============================================================================
-// Function x_vsprintf is implemented in file x_vsprintf.cpp.
-//==============================================================================
+
+s32 x_vsprintf( char* pStr, const char* pFormatStr, x_va_list Args )
+{
+    // TO DO : Implement x_vsprintf.
+    return( vsprintf( pStr, pFormatStr, Args ) );
+}
+
+/*
+s32 x_vsprintf( char* pStr, const char* pFormatStr, x_va_list Args )
+{
+    CONTEXT( "x_vsprintf" );
+    
+    ASSERT( pStr );
+    ASSERT( pFormatStr );
+    
+    xvfs XVFS( pFormatStr, Args );
+    s32 NChars = *(((s32*)(const char*)XVFS)-1);
+    
+    // Copy formatted string to output buffer
+    x_memcpy( pStr, (const char*)XVFS, NChars );
+    pStr[NChars] = '\0';  // Null terminate
+    
+    return NChars;
+}
+*/
 
 //==============================================================================
 //  STANDARD FILE I/O FUNCTIONS
@@ -301,6 +324,7 @@ X_FILE* x_fopen( const char* pFileName, const char* pMode )
 }
 
 //==============================================================================
+
 void x_EnableLoadMap (xbool Flag)
 {
     (void)Flag;
@@ -310,6 +334,7 @@ void x_EnableLoadMap (xbool Flag)
 }
 
 //==============================================================================
+
 void x_DumpLoadMap(const char* pFilename)
 {
     (void)pFilename;
@@ -324,6 +349,7 @@ void x_DumpLoadMap(const char* pFilename)
 }
 
 //==============================================================================
+
 void AddToLoadMap(const char* pFilename)
 {
     (void)pFilename;

@@ -2,9 +2,11 @@
 #include "audio_channel_mgr.hpp"
 #include "audio_hardware.hpp"
 #include "audio_mp3_mgr.hpp"
-#include "codecs\mp3api.hpp"
+//#include "audio\codecs\mp3api.hpp"
 #include "x_bytestream.hpp"
 #include "x_log.hpp"
+
+//TODO: GS: Replace with FFmpeg or something like that.
 
 //------------------------------------------------------------------------------
 
@@ -34,7 +36,7 @@ void AIL_mem_free_lock( void* pBuffer )
 
 //------------------------------------------------------------------------------
 
-S32 mp3_fetch_data( U32 UserData, void* pBuffer, S32 nBytes, S32 Offset )
+s32 mp3_fetch_data( u32 UserData, void* pBuffer, s32 nBytes, s32 Offset )
 {
     (void)Offset;
 
@@ -125,7 +127,7 @@ audio_mp3_mgr::~audio_mp3_mgr( void )
 void audio_mp3_mgr::Init( void )
 {
     ASSERT( s_Initialized == FALSE );
-    ASI_startup();
+  //  ASI_startup();
     s_Initialized = TRUE;
 }
 
@@ -134,7 +136,7 @@ void audio_mp3_mgr::Init( void )
 void audio_mp3_mgr::Kill( void )
 {
     ASSERT( s_Initialized );
-    ASI_shutdown();
+   // ASI_shutdown();
     s_Initialized = FALSE;
 }
 
@@ -145,7 +147,7 @@ void audio_mp3_mgr::Open( audio_stream* pStream )
     ASSERT( s_Initialized );
     ASSERT( VALID_STREAM(pStream) );
     pStream->CursorMP3 = 0;
-    pStream->HandleMP3 = (void*)ASI_stream_open( (U32)pStream, mp3_fetch_data, pStream->Samples[0].Sample.WaveformLength );
+  //  pStream->HandleMP3 = (void*)ASI_stream_open( (U32)pStream, mp3_fetch_data, pStream->Samples[0].Sample.WaveformLength );
 }
 
 //------------------------------------------------------------------------------
@@ -155,8 +157,8 @@ void audio_mp3_mgr::Close( audio_stream* pStream )
     ASSERT( s_Initialized );
     ASSERT( VALID_STREAM(pStream) );
 
-    if( pStream->HandleMP3 )
-        ASI_stream_close( (s32)pStream->HandleMP3 );
+  //  if( pStream->HandleMP3 )
+   //   ASI_stream_close( (s32)pStream->HandleMP3 );
     pStream->HandleMP3 = NULL;
 }
 
@@ -208,7 +210,7 @@ void audio_mp3_mgr::Decode( audio_stream* pStream, s16* pBufferL, s16* pBufferR,
         }
 
         // Decode it.
-        ASI_stream_process( (s32)pStream->HandleMP3, pDest, nBytes );
+       // ASI_stream_process( (s32)pStream->HandleMP3, pDest, nBytes );
 
         // Need to "un-interleave"?
         if( bIsStereo )

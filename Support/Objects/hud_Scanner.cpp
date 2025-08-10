@@ -695,7 +695,7 @@ void hud_scanner::RenderGeiger( player* pPlayer )
     if( pBitmap == NULL )
         return;
 
-    draw_Begin( DRAW_SPRITES, DRAW_TEXTURED | DRAW_2D | DRAW_USE_ALPHA | DRAW_NO_ZBUFFER );
+    draw_Begin( DRAW_SPRITES, DRAW_TEXTURED | DRAW_2D | DRAW_UI_RTARGET | DRAW_USE_ALPHA | DRAW_NO_ZBUFFER  );
     s32 BitmapWidth  = m_ScannerBarBmp.GetPointer()->GetWidth();
     s32 BitmapHeight = m_ScannerBarBmp.GetPointer()->GetHeight();
     vector2 WH( (f32)(BitmapWidth), (f32)(BitmapHeight) );
@@ -806,7 +806,7 @@ void hud_scanner::RenderBar( void )
         Pos.GetY() -= YOffset;
 
         xcolor DisplayColor = m_Bar.m_OuterColor;
-        draw_Begin( DRAW_SPRITES, DRAW_TEXTURED | DRAW_USE_ALPHA | DRAW_2D | DRAW_NO_ZBUFFER );
+        draw_Begin( DRAW_SPRITES, DRAW_TEXTURED | DRAW_USE_ALPHA | DRAW_2D | DRAW_UI_RTARGET | DRAW_NO_ZBUFFER  );
         draw_SetTexture( *pBitmap );
         draw_DisableBilinear();
 
@@ -829,7 +829,7 @@ void hud_scanner::RenderBar( void )
         draw_End(); 
     }
 
-    draw_Begin( DRAW_SPRITES, DRAW_TEXTURED | DRAW_2D | DRAW_USE_ALPHA | DRAW_NO_ZBUFFER );
+    draw_Begin( DRAW_SPRITES, DRAW_TEXTURED | DRAW_2D | DRAW_UI_RTARGET | DRAW_USE_ALPHA | DRAW_NO_ZBUFFER  );
 
     pBitmap = m_InnerBmp.GetPointer();
 
@@ -879,7 +879,7 @@ void hud_scanner::RenderBar( void )
     }
 
     draw_End();
-    draw_Begin( DRAW_SPRITES, DRAW_TEXTURED | DRAW_2D | DRAW_USE_ALPHA | DRAW_NO_ZBUFFER );
+    draw_Begin( DRAW_SPRITES, DRAW_TEXTURED | DRAW_2D | DRAW_UI_RTARGET | DRAW_USE_ALPHA | DRAW_NO_ZBUFFER  );
 
 
     //

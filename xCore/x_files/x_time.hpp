@@ -74,6 +74,16 @@ s64     x_GetTicksPerSecond ( void );
 void    x_TimeInit          ( void );
 void    x_TimeKill          ( void );    
 
+#ifdef X_DEBUG
+void    x_TimeUpdateDebugVars( void );
+#endif
+
+//==============================================================================
+//  INLINE IMPLEMENTATIONS
+//==============================================================================
+
+#include "Implementation/x_time_inline.hpp"
+
 //==============================================================================
 #endif // X_TIME_HPP
 //==============================================================================

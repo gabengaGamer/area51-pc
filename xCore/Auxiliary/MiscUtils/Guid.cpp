@@ -337,9 +337,9 @@ void guid_Init( void )
         return;
     s_Inited = TRUE;
 
-    x_DebugMsg("***************************\n");
-    x_DebugMsg("***** GUID Initialize *****\n");
-    x_DebugMsg("***************************\n");
+    //x_DebugMsg("***************************\n");
+    //x_DebugMsg("***** GUID Initialize *****\n");
+    //x_DebugMsg("***************************\n");
 
     // Start with 1 so we never create a null guid by mistake
     s_Sequence = 1;

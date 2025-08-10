@@ -4,7 +4,7 @@
 // Desc: Additional infrastructure to extend the tuner.idl.  Works nicely
 //       from C++.
 //
-// Copyright (c) 1999 - 2001, Microsoft Corporation.  All rights reserved.
+// Copyright (c) 1999 - 2007, Microsoft Corporation.  All rights reserved.
 //------------------------------------------------------------------------------
 
 
@@ -12,6 +12,11 @@
 
 #ifndef TUNE_H
 #define TUNE_H
+
+#include <winapifamily.h>
+
+#pragma region Desktop Family
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
 
 #include <tuner.h>
 
@@ -26,23 +31,31 @@ const TunerInputType DEFAULT_ANALOG_TUNER_INPUT_TYPE = TunerInputCable; //usa
 
 typedef CComQIPtr<ITuningSpaceContainer> PQTuningSpaceContainer;
 typedef CComQIPtr<ITuningSpace> PQTuningSpace;
-typedef CComQIPtr<IAnalogRadioTuningSpace> PQAnalogRadioTuningSpace;
+typedef CComQIPtr<IAnalogRadioTuningSpace2> PQAnalogRadioTuningSpace;
 typedef CComQIPtr<IAnalogTVTuningSpace> PQAnalogTVTuningSpace;
 typedef CComQIPtr<IATSCTuningSpace> PQATSCTuningSpace;
+typedef CComQIPtr<IDigitalCableTuningSpace> PQDigitalCableTuningSpace;
 typedef CComQIPtr<ITuneRequest> PQTuneRequest;
 typedef CComQIPtr<IChannelTuneRequest> PQChannelTuneRequest;
+typedef CComQIPtr<IChannelIDTuneRequest> PQChannelIDTuneRequest;
 typedef CComQIPtr<IATSCChannelTuneRequest> PQATSCChannelTuneRequest;
+typedef CComQIPtr<IDigitalCableTuneRequest> PQDigitalCableTuneRequest;
 typedef CComQIPtr<ILocator> PQLocator;
+typedef CComQIPtr<IDigitalLocator> PQDigitalLocator;
 typedef CComQIPtr<IATSCLocator> PQATSCLocator;
 typedef CComQIPtr<IDVBTuningSpace> PQDVBTuningSpace;
 typedef CComQIPtr<IDVBTuneRequest> PQDVBTuneRequest;
 typedef CComQIPtr<IDVBSLocator> PQDVBSLocator;
+typedef CComQIPtr<IDVBSLocator2> PQDVBSLocator2;
 typedef CComQIPtr<IDVBTLocator> PQDVBTLocator;
+typedef CComQIPtr<IDVBTLocator2> PQDVBTLocator2;
 typedef CComQIPtr<IDVBCLocator> PQDVBCLocator;
-typedef CComQIPtr<IAuxInTuningSpace> PQAuxInTuningSpace;
+typedef CComQIPtr<IAuxInTuningSpace2> PQAuxInTuningSpace;
+typedef CComQIPtr<IBDAComparable> PQBDAComparable;
 
 // tuning space container
 class TNTuningSpaceContainer : public PQTuningSpaceContainer {
+public:
      TNTuningSpaceContainer() {}
      TNTuningSpaceContainer(const PQTuningSpaceContainer &a) : PQTuningSpaceContainer(a) {}
      TNTuningSpaceContainer(ITuningSpace *p) : PQTuningSpaceContainer(p) {}
@@ -123,7 +136,7 @@ public:
         PQTuningSpace t;
         HRESULT hr = (*this)->Clone(&t);
         if (FAILED(hr) || !t) {
-            Release();  // clone failed, clear ourselves
+            this->Release();  // clone failed, clear ourselves
             return;
         }
         TUNINGSPACETYPE::operator=(t);
@@ -180,6 +193,19 @@ public:
     HRESULT MinFrequency(long freq) {
         _ASSERT(*this);
         return (*this)->put_MinFrequency(freq);
+    }
+        long CountryCode() {
+        _ASSERT(*this);
+        long cc;
+        HRESULT hr = (*this)->get_CountryCode(&cc);
+        if (FAILED(hr)) {
+            cc = DEFAULT_ANALOG_TUNER_INPUT_TYPE;
+        }
+        return cc;
+    }
+    HRESULT CountryCode(long cc) {
+        _ASSERT(*this);
+        return (*this)->put_CountryCode(cc);
     }
 };
 typedef TNAnalogRadioTuningSpaceHelper<PQAnalogRadioTuningSpace, PQChannelTuneRequest> TNAnalogRadioTuningSpace;
@@ -283,6 +309,19 @@ public:
         TNTuningSpaceHelper<TUNINGSPACETYPE, TUNEREQUESTTYPE>::operator=(rhs);
         return *this;
     }
+    long CountryCode() {
+        _ASSERT(*this);
+        long cc;
+        HRESULT hr = (*this)->get_CountryCode(&cc);
+        if (FAILED(hr)) {
+            cc = DEFAULT_ANALOG_TUNER_INPUT_TYPE;
+        }
+        return cc;
+    }
+    HRESULT CountryCode(long cc) {
+        _ASSERT(*this);
+        return (*this)->put_CountryCode(cc);
+    }
 };
 typedef TNAuxInTuningSpaceHelper<PQAuxInTuningSpace, PQChannelTuneRequest> TNAuxInTuningSpace;
 
@@ -367,6 +406,89 @@ public:
 };
 typedef TNATSCTuningSpaceHelper<PQATSCTuningSpace, PQATSCChannelTuneRequest> TNATSCTuningSpace;
 
+// DigitalCable
+template<class TUNINGSPACETYPE, class TUNEREQUESTTYPE> class TNDigitalCableTuningSpaceHelper : public TNATSCTuningSpaceHelper<TUNINGSPACETYPE, TUNEREQUESTTYPE> {
+public:
+    TNDigitalCableTuningSpaceHelper() {}
+    TNDigitalCableTuningSpaceHelper(const TUNINGSPACETYPE &a) : TNATSCTuningSpaceHelper<TUNINGSPACETYPE, TUNEREQUESTTYPE>(a) {}
+    TNDigitalCableTuningSpaceHelper(IUnknown *p) : TNATSCTuningSpaceHelper<TUNINGSPACETYPE, TUNEREQUESTTYPE>(p) {}
+    TNDigitalCableTuningSpaceHelper(const TNDigitalCableTuningSpaceHelper<TUNINGSPACETYPE, TUNEREQUESTTYPE> &a) : TNATSCTuningSpaceHelper<TUNINGSPACETYPE, TUNEREQUESTTYPE>(a) {}
+
+    TNDigitalCableTuningSpaceHelper<TUNINGSPACETYPE, TUNEREQUESTTYPE>& operator=(TNDigitalCableTuningSpaceHelper<TUNINGSPACETYPE, TUNEREQUESTTYPE>& rhs) {
+        TNATSCTuningSpaceHelper<TUNINGSPACETYPE, TUNEREQUESTTYPE>::operator=(rhs);
+        return *this;
+    }
+    template<class TS, class TR> TNDigitalCableTuningSpaceHelper<TUNINGSPACETYPE, TUNEREQUESTTYPE>& operator=(TNTuningSpaceHelper<TS, TR>& rhs) {
+        TNATSCTuningSpaceHelper<TUNINGSPACETYPE, TUNEREQUESTTYPE>::operator=(TUNINGSPACETYPE(rhs));
+        return *this;
+    }
+    TNDigitalCableTuningSpaceHelper<TUNINGSPACETYPE, TUNEREQUESTTYPE>& operator=(TUNINGSPACETYPE& rhs) {
+        TNATSCTuningSpaceHelper<TUNINGSPACETYPE, TUNEREQUESTTYPE>::operator=(rhs);
+        return *this;
+    }
+    TNDigitalCableTuningSpaceHelper<TUNINGSPACETYPE, TUNEREQUESTTYPE>& operator=(IUnknown* rhs) {
+        TNATSCTuningSpaceHelper<TUNINGSPACETYPE, TUNEREQUESTTYPE>::operator=(rhs);
+        return *this;
+    }
+    long MinMajorChannel() {
+        _ASSERT(*this);
+        long chan;
+        HRESULT hr = (*this)->get_MinMajorChannel(&chan);
+        if (FAILED(hr)) {
+            chan = DEFAULT_MIN_CHANNEL;
+        }
+        return chan;
+    }
+    HRESULT MinMajorChannel(long chan) {
+        _ASSERT(*this);
+        return (*this)->put_MinMajorChannel(chan);
+    }
+
+    long MaxMajorChannel() {
+        _ASSERT(*this);
+        long chan;
+        HRESULT hr = (*this)->get_MaxMajorChannel(&chan);
+        if (FAILED(hr)) {
+            chan = DEFAULT_MAX_CHANNEL;
+        }
+        return chan;
+    }
+    HRESULT MaxMajorChannel(long chan) {
+        _ASSERT(*this);
+        return (*this)->put_MaxMajorChannel(chan);
+    }
+    long MinSourceID() {
+        _ASSERT(*this);
+        long chan;
+        HRESULT hr = (*this)->get_MinSourceID(&chan);
+        if (FAILED(hr)) {
+            chan = DEFAULT_MIN_CHANNEL;
+        }
+        return chan;
+    }
+    HRESULT MinSourceID(long chan) {
+        _ASSERT(*this);
+        return (*this)->put_MinSourceID(chan);
+    }
+
+    long MaxSourceID() {
+        _ASSERT(*this);
+        long chan;
+        HRESULT hr = (*this)->get_MaxSourceID(&chan);
+        if (FAILED(hr)) {
+            chan = DEFAULT_MAX_CHANNEL;
+        }
+        return chan;
+    }
+
+    HRESULT MaxSourceID(long chan) {
+        _ASSERT(*this);
+        return (*this)->put_MaxSourceID(chan);
+    }
+};
+typedef TNDigitalCableTuningSpaceHelper<PQDigitalCableTuningSpace, PQDigitalCableTuneRequest> TNDigitalCableTuningSpace;
+
+
 // dvb tuning space
 template<class TUNINGSPACETYPE, class TUNEREQUESTTYPE> class TNDVBTuningSpaceHelper : public TNTuningSpaceHelper<TUNINGSPACETYPE, TUNEREQUESTTYPE> {
 public:
@@ -434,7 +556,7 @@ public:
         PQLocator t;
         HRESULT hr = (*this)->Clone(&t);
         if (FAILED(hr) || !t) {
-            Release();  // clone failed, clear ourselves
+            this->Release();  // clone failed, clear ourselves
             return;
         }
         LOCATORTYPE::operator=(t);
@@ -452,6 +574,46 @@ public:
     HRESULT CarrierFrequency(long f) {
         _ASSERT(*this);
         return (*this)->put_CarrierFrequency(f);
+    }
+    ModulationType Modulation() {
+        _ASSERT(*this);
+        ModulationType f;
+        HRESULT hr = (*this)->get_Modulation(&f);
+        if (FAILED(hr)) {
+            return BDA_MOD_NOT_SET;
+        }
+        return f;
+    }
+    HRESULT Modulation(ModulationType f) {
+        _ASSERT(*this);
+        return (*this)->put_Modulation(f);
+    }
+
+};
+typedef TNLocatorHelper<PQLocator> TNLocator;
+
+template<class LOCATORTYPE> class TNDigitalLocatorHelper : public TNLocatorHelper<LOCATORTYPE> {
+public:
+     TNDigitalLocatorHelper() {}
+     TNDigitalLocatorHelper(const LOCATORTYPE &a) : TNLocatorHelper<LOCATORTYPE>(a) {}
+     TNDigitalLocatorHelper(IUnknown *p) : TNLocatorHelper<LOCATORTYPE>(p) {}
+     TNDigitalLocatorHelper(const TNDigitalLocatorHelper<LOCATORTYPE> &a) : TNLocatorHelper<LOCATORTYPE>(a) {}
+     TNDigitalLocatorHelper(ILocator *p) : TNLocatorHelper<LOCATORTYPE>(p) {}
+     TNDigitalLocatorHelper<LOCATORTYPE>& operator=(TNDigitalLocatorHelper<LOCATORTYPE>& rhs) {
+        LOCATORTYPE::operator=(rhs);
+        return *this;
+    }
+     TNDigitalLocatorHelper<LOCATORTYPE>& operator=(LOCATORTYPE& rhs) {
+        TNLocatorHelper<LOCATORTYPE>::operator=(rhs);
+        return *this;
+    }
+     TNDigitalLocatorHelper<LOCATORTYPE>& operator=(ILocator* rhs) {
+        TNLocatorHelper<LOCATORTYPE>::operator=(rhs);
+        return *this;
+    }
+     TNDigitalLocatorHelper<LOCATORTYPE>& operator=(IUnknown* rhs) {
+        TNLocatorHelper<LOCATORTYPE>::operator=(rhs);
+        return *this;
     }
 
     FECMethod InnerFEC() {
@@ -506,20 +668,6 @@ public:
         _ASSERT(*this);
         return (*this)->put_OuterFECRate(f);
     }
-    ModulationType Modulation() {
-        _ASSERT(*this);
-        ModulationType f;
-        HRESULT hr = (*this)->get_Modulation(&f);
-        if (FAILED(hr)) {
-            return BDA_MOD_NOT_SET;
-        }
-        return f;
-    }
-    HRESULT Modulation(ModulationType f) {
-        _ASSERT(*this);
-        return (*this)->put_Modulation(f);
-    }
-
     long SymbolRate() {
         _ASSERT(*this);
         long f;
@@ -535,34 +683,34 @@ public:
     }
 
 };
-typedef TNLocatorHelper<PQLocator> TNLocator;
+typedef TNDigitalLocatorHelper<PQDigitalLocator> TNDigitalLocator;
 
-template<class LOCATORTYPE> class TNATSCLocatorHelper : public TNLocatorHelper<LOCATORTYPE> {
+template<class LOCATORTYPE> class TNATSCLocatorHelper : public TNDigitalLocatorHelper<LOCATORTYPE> {
 public:
     TNATSCLocatorHelper() {}
-    TNATSCLocatorHelper(const LOCATORTYPE &a) : TNLocatorHelper<LOCATORTYPE>(a) {}
-    TNATSCLocatorHelper(IUnknown *p) : TNLocatorHelper<LOCATORTYPE>(p) {}
-    TNATSCLocatorHelper(const TNATSCLocatorHelper<LOCATORTYPE> &a) : TNLocatorHelper<LOCATORTYPE>(a) {}
-    TNATSCLocatorHelper(IATSCLocator *p) : TNLocatorHelper<LOCATORTYPE>(p) {}
-    TNATSCLocatorHelper(const TNLocatorHelper<LOCATORTYPE> &a) : TNLocatorHelper<LOCATORTYPE>(a) {}
+    TNATSCLocatorHelper(const LOCATORTYPE &a) : TNDigitalLocatorHelper<LOCATORTYPE>(a) {}
+    TNATSCLocatorHelper(IUnknown *p) : TNDigitalLocatorHelper<LOCATORTYPE>(p) {}
+    TNATSCLocatorHelper(const TNATSCLocatorHelper<LOCATORTYPE> &a) : TNDigitalLocatorHelper<LOCATORTYPE>(a) {}
+    TNATSCLocatorHelper(IATSCLocator *p) : TNDigitalLocatorHelper<LOCATORTYPE>(p) {}
+    TNATSCLocatorHelper(const TNLocatorHelper<LOCATORTYPE> &a) : TNDigitalLocatorHelper<LOCATORTYPE>(a) {}
     TNATSCLocatorHelper<LOCATORTYPE>& operator=(TNATSCLocatorHelper<LOCATORTYPE>& rhs) {
-        TNLocatorHelper<LOCATORTYPE>::operator=(rhs);
+        TNDigitalLocatorHelper<LOCATORTYPE>::operator=(rhs);
         return *this;
     }
     TNATSCLocatorHelper<LOCATORTYPE>& operator=(TNLocatorHelper<LOCATORTYPE>& rhs) {
-        TNLocatorHelper<LOCATORTYPE>::operator=(rhs);
+        TNDigitalLocatorHelper<LOCATORTYPE>::operator=(rhs);
         return *this;
     }
     TNATSCLocatorHelper<LOCATORTYPE>& operator=(LOCATORTYPE& rhs) {
-        TNLocatorHelper<LOCATORTYPE>::operator=(rhs);
+        TNDigitalLocatorHelper<LOCATORTYPE>::operator=(rhs);
         return *this;
     }
     TNATSCLocatorHelper<LOCATORTYPE>& operator=(IATSCLocator* rhs) {
-        TNLocatorHelper<LOCATORTYPE>::operator=(rhs);
+        TNDigitalLocatorHelper<LOCATORTYPE>::operator=(rhs);
         return *this;
     }
     TNATSCLocatorHelper<LOCATORTYPE>& operator=(IUnknown* rhs) {
-        TNLocatorHelper<LOCATORTYPE>::operator=(rhs);
+        TNDigitalLocatorHelper<LOCATORTYPE>::operator=(rhs);
         return *this;
     }
 
@@ -610,32 +758,32 @@ public:
 };
 typedef TNATSCLocatorHelper<PQATSCLocator> TNATSCLocator;
 
-template<class LOCATORTYPE> class TNDVBSLocatorHelper : public TNLocatorHelper<LOCATORTYPE> {
+template<class LOCATORTYPE> class TNDVBSLocatorHelper : public TNDigitalLocatorHelper<LOCATORTYPE> {
 public:
     TNDVBSLocatorHelper() {}
-    TNDVBSLocatorHelper(const LOCATORTYPE &a) : TNLocatorHelper<LOCATORTYPE>(a) {}
-    TNDVBSLocatorHelper(IUnknown *p) : TNLocatorHelper<LOCATORTYPE>(p) {}
-    TNDVBSLocatorHelper(const TNDVBSLocatorHelper<LOCATORTYPE> &a) : TNLocatorHelper<LOCATORTYPE>(a) {}
-    TNDVBSLocatorHelper(IDVBSLocator *p) : TNLocatorHelper<LOCATORTYPE>(p) {}
-    TNDVBSLocatorHelper(const TNLocatorHelper<LOCATORTYPE> &a) : TNLocatorHelper<LOCATORTYPE>(a) {}
+    TNDVBSLocatorHelper(const LOCATORTYPE &a) : TNDigitalLocatorHelper<LOCATORTYPE>(a) {}
+    TNDVBSLocatorHelper(IUnknown *p) : TNDigitalLocatorHelper<LOCATORTYPE>(p) {}
+    TNDVBSLocatorHelper(const TNDVBSLocatorHelper<LOCATORTYPE> &a) : TNDigitalLocatorHelper<LOCATORTYPE>(a) {}
+    TNDVBSLocatorHelper(IDVBSLocator *p) : TNDigitalLocatorHelper<LOCATORTYPE>(p) {}
+    TNDVBSLocatorHelper(const TNLocatorHelper<LOCATORTYPE> &a) : TNDigitalLocatorHelper<LOCATORTYPE>(a) {}
     TNDVBSLocatorHelper<LOCATORTYPE>& operator=(TNDVBSLocatorHelper<LOCATORTYPE>& rhs) {
-        TNLocatorHelper<LOCATORTYPE>::operator=(rhs);
+        TNDigitalLocatorHelper<LOCATORTYPE>::operator=(rhs);
         return *this;
     }
-    TNDVBSLocatorHelper<LOCATORTYPE>& operator=(TNLocatorHelper<LOCATORTYPE>& rhs) {
-        TNLocatorHelper<LOCATORTYPE>::operator=(rhs);
+    TNDVBSLocatorHelper<LOCATORTYPE>& operator=(TNDigitalLocatorHelper<LOCATORTYPE>& rhs) {
+        TNDigitalLocatorHelper<LOCATORTYPE>::operator=(rhs);
         return *this;
     }
     TNDVBSLocatorHelper<LOCATORTYPE>& operator=(LOCATORTYPE& rhs) {
-        TNLocatorHelper<LOCATORTYPE>::operator=(rhs);
+        TNDigitalLocatorHelper<LOCATORTYPE>::operator=(rhs);
         return *this;
     }
     TNDVBSLocatorHelper<LOCATORTYPE>& operator=(IDVBSLocator* rhs) {
-        TNLocatorHelper<LOCATORTYPE>::operator=(rhs);
+        TNDigitalLocatorHelper<LOCATORTYPE>::operator=(rhs);
         return *this;
     }
     TNDVBSLocatorHelper<LOCATORTYPE>& operator=(IUnknown* rhs) {
-        TNLocatorHelper<LOCATORTYPE>::operator=(rhs);
+        TNDigitalLocatorHelper<LOCATORTYPE>::operator=(rhs);
         return *this;
     }
 
@@ -644,7 +792,7 @@ public:
         Polarisation pc;
         HRESULT hr = (*this)->get_SignalPolarisation(&pc);
         if (FAILED(hr)) {
-            return -1;
+            return BDA_POLARISATION_NOT_SET;
         }
         return pc;
     }
@@ -714,32 +862,170 @@ typedef TNDVBSLocatorHelper<PQDVBSLocator> TNDVBSLocator;
 
 
 
-template<class LOCATORTYPE> class TNDVBTLocatorHelper : public TNLocatorHelper<LOCATORTYPE> {
+template<class LOCATORTYPE> class TNDVBSLocator2Helper : public TNDVBSLocatorHelper<LOCATORTYPE> {
 public:
-    TNDVBTLocatorHelper() {}
-    TNDVBTLocatorHelper(const LOCATORTYPE &a) : TNLocatorHelper<LOCATORTYPE>(a) {}
-    TNDVBTLocatorHelper(IUnknown *p) : TNLocatorHelper<LOCATORTYPE>(p) {}
-    TNDVBTLocatorHelper(const TNDVBTLocatorHelper<LOCATORTYPE> &a) : TNLocatorHelper<LOCATORTYPE>(a) {}
-    TNDVBTLocatorHelper(IDVBTLocator *p) : TNLocatorHelper<LOCATORTYPE>(p) {}
-    TNDVBTLocatorHelper(const TNLocatorHelper<LOCATORTYPE> &a) : TNLocatorHelper<LOCATORTYPE>(a) {}
-    TNDVBTLocatorHelper<LOCATORTYPE>& operator=(TNDVBTLocatorHelper<LOCATORTYPE>& rhs) {
-        TNLocatorHelper<LOCATORTYPE>::operator=(rhs);
+    TNDVBSLocator2Helper() {}
+
+    TNDVBSLocator2Helper(const LOCATORTYPE &a) : TNDVBSLocatorHelper<LOCATORTYPE>(a) {}
+    TNDVBSLocator2Helper(IUnknown *p) : TNDVBSLocatorHelper<LOCATORTYPE>(p) {}
+    TNDVBSLocator2Helper(const TNDVBSLocator2Helper<LOCATORTYPE> &a) : TNDVBSLocatorHelper<LOCATORTYPE>(a) {}
+    TNDVBSLocator2Helper(IDVBSLocator2 *p) : TNDVBSLocatorHelper<LOCATORTYPE>(p) {}
+
+    TNDVBSLocator2Helper(const TNLocatorHelper<LOCATORTYPE> &a) : TNDVBSLocatorHelper<LOCATORTYPE>(a) {}
+
+    TNDVBSLocator2Helper<LOCATORTYPE>& operator=(TNDVBSLocator2Helper<LOCATORTYPE>& rhs) {
+        TNDVBSLocatorHelper<LOCATORTYPE>::operator=(rhs);
         return *this;
     }
-    TNDVBTLocatorHelper<LOCATORTYPE>& operator=(TNLocatorHelper<LOCATORTYPE>& rhs) {
-        TNLocatorHelper<LOCATORTYPE>::operator=(rhs);
+    TNDVBSLocator2Helper<LOCATORTYPE>& operator=(TNDVBSLocatorHelper<LOCATORTYPE>& rhs) {
+        TNDVBSLocatorHelper<LOCATORTYPE>::operator=(rhs);
+        return *this;
+    }
+    TNDVBSLocator2Helper<LOCATORTYPE>& operator=(TNDigitalLocatorHelper<LOCATORTYPE>& rhs) {
+        TNDVBSLocatorHelper<LOCATORTYPE>::operator=(rhs);
+        return *this;
+    }
+    TNDVBSLocator2Helper<LOCATORTYPE>& operator=(LOCATORTYPE& rhs) {
+        TNDVBSLocatorHelper<LOCATORTYPE>::operator=(rhs);
+        return *this;
+    }
+
+    TNDVBSLocator2Helper<LOCATORTYPE>& operator=(IDVBSLocator2* rhs) {
+        TNDVBSLocatorHelper<LOCATORTYPE>::operator=(rhs);
+        return *this;
+    }
+    TNDVBSLocator2Helper<LOCATORTYPE>& operator=(IUnknown* rhs) {
+        TNDVBSLocatorHelper<LOCATORTYPE>::operator=(rhs);
+        return *this;
+    }
+
+    LNB_Source DiseqLNBSource() {
+        _ASSERT(*this);
+        LNB_Source pc;
+        HRESULT hr = (*this)->get_DiseqLNBSource(&pc);
+        if (FAILED(hr)) {
+            return BDA_LNB_SOURCE_NOT_SET;
+        }
+        return pc;
+    }
+    HRESULT DiseqLNBSource(LNB_Source pc) {
+        _ASSERT(*this);
+        return (*this)->put_DiseqLNBSource(pc);
+    }
+
+    long LocalOscillatorOverrideLow() {
+        _ASSERT(*this);
+        long pc;
+        HRESULT hr = (*this)->get_LocalOscillatorOverrideLow(&pc);
+        if (FAILED(hr)) {
+            return -1;
+        }
+        return pc;
+    }
+    HRESULT LocalOscillatorOverrideLow(long pc) {
+        _ASSERT(*this);
+        return (*this)->put_LocalOscillatorOverrideLow(pc);
+    }
+
+    long LocalOscillatorOverrideHigh() {
+        _ASSERT(*this);
+        long pc;
+        HRESULT hr = (*this)->get_LocalOscillatorOverrideHigh(&pc);
+        if (FAILED(hr)) {
+            return -1;
+        }
+        return pc;
+    }
+    HRESULT LocalOscillatorOverrideHigh(long pc) {
+        _ASSERT(*this);
+        return (*this)->put_LocalOscillatorOverrideHigh(pc);
+    }
+
+    long LocalLNBSwitchOverride() {
+        _ASSERT(*this);
+        long pc;
+        HRESULT hr = (*this)->get_LocalLNBSwitchOverride(&pc);
+        if (FAILED(hr)) {
+            return -1;
+        }
+        return pc;
+    }
+    HRESULT LocalLNBSwitchOverride(long pc) {
+        _ASSERT(*this);
+        return (*this)->put_LocalLNBSwitchOverride(pc);
+    }
+
+    long LocalSpectralInversionOverride() {
+        _ASSERT(*this);
+        long pc;
+        HRESULT hr = (*this)->get_LocalSpectralInversionOverride(&pc);
+        if (FAILED(hr)) {
+            return -1;
+        }
+        return pc;
+    }
+    HRESULT LocalSpectralInversionOverride(long pc) {
+        _ASSERT(*this);
+        return (*this)->put_LocalSpectralInversionOverride(pc);
+    }
+
+    RollOff SignalRollOff() {
+        _ASSERT(*this);
+        RollOff pc;
+        HRESULT hr = (*this)->get_SignalRollOff(&pc);
+        if (FAILED(hr)) {
+            return BDA_ROLL_OFF_NOT_SET;
+        }
+        return pc;
+    }
+    HRESULT SignalRollOff(long pc) {
+        _ASSERT(*this);
+        return (*this)->put_SignalRollOff(pc);
+    }
+
+    Pilot SignalPilot() {
+        _ASSERT(*this);
+        Pilot pc;
+        HRESULT hr = (*this)->get_SignalPilot(&pc);
+        if (FAILED(hr)) {
+            return BDA_PILOT_NOT_SET;
+        }
+        return pc;
+    }
+    HRESULT SignalPilot(long pc) {
+        _ASSERT(*this);
+        return (*this)->put_SignalPilot(pc);
+    }
+
+};
+typedef TNDVBSLocator2Helper<PQDVBSLocator2> TNDVBSLocator2;
+
+template<class LOCATORTYPE> class TNDVBTLocatorHelper : public TNDigitalLocatorHelper<LOCATORTYPE> {
+public:
+    TNDVBTLocatorHelper() {}
+    TNDVBTLocatorHelper(const LOCATORTYPE &a) : TNDigitalLocatorHelper<LOCATORTYPE>(a) {}
+    TNDVBTLocatorHelper(IUnknown *p) : TNDigitalLocatorHelper<LOCATORTYPE>(p) {}
+    TNDVBTLocatorHelper(const TNDVBTLocatorHelper<LOCATORTYPE> &a) : TNDigitalLocatorHelper<LOCATORTYPE>(a) {}
+    TNDVBTLocatorHelper(IDVBTLocator *p) : TNDigitalLocatorHelper<LOCATORTYPE>(p) {}
+    TNDVBTLocatorHelper(const TNLocatorHelper<LOCATORTYPE> &a) : TNDigitalLocatorHelper<LOCATORTYPE>(a) {}
+    TNDVBTLocatorHelper<LOCATORTYPE>& operator=(TNDVBTLocatorHelper<LOCATORTYPE>& rhs) {
+        TNDigitalLocatorHelper<LOCATORTYPE>::operator=(rhs);
+        return *this;
+    }
+    TNDVBTLocatorHelper<LOCATORTYPE>& operator=(TNDigitalLocatorHelper<LOCATORTYPE>& rhs) {
+        TNDigitalLocatorHelper<LOCATORTYPE>::operator=(rhs);
         return *this;
     }
     TNDVBTLocatorHelper<LOCATORTYPE>& operator=(LOCATORTYPE& rhs) {
-        TNLocatorHelper<LOCATORTYPE>::operator=(rhs);
+        TNDigitalLocatorHelper<LOCATORTYPE>::operator=(rhs);
         return *this;
     }
     TNDVBTLocatorHelper<LOCATORTYPE>& operator=(IDVBTLocator* rhs) {
-        TNLocatorHelper<LOCATORTYPE>::operator=(rhs);
+        TNDigitalLocatorHelper<LOCATORTYPE>::operator=(rhs);
         return *this;
     }
     TNDVBTLocatorHelper<LOCATORTYPE>& operator=(IUnknown* rhs) {
-        TNLocatorHelper<LOCATORTYPE>::operator=(rhs);
+        TNDigitalLocatorHelper<LOCATORTYPE>::operator=(rhs);
         return *this;
     }
 
@@ -762,7 +1048,7 @@ public:
         FECMethod pc;
         HRESULT hr = (*this)->get_LPInnerFec(&pc);
         if (FAILED(hr)) {
-            return -1;
+            return BDA_FEC_METHOD_NOT_SET;
         }
         return pc;
     }
@@ -776,7 +1062,7 @@ public:
         BinaryConvolutionCodeRate pc;
         HRESULT hr = (*this)->get_LPInnerFecRate(&pc);
         if (FAILED(hr)) {
-            return -1;
+            return BDA_BCC_RATE_NOT_SET;
         }
         return pc;
     }
@@ -790,7 +1076,7 @@ public:
         HierarchyAlpha pc;
         HRESULT hr = (*this)->get_HAlpha(&pc);
         if (FAILED(hr)) {
-            return -1;
+            return BDA_HALPHA_NOT_SET;
         }
         return pc;
     }
@@ -804,7 +1090,7 @@ public:
         GuardInterval pc;
         HRESULT hr = (*this)->get_Guard(&pc);
         if (FAILED(hr)) {
-            return -1;
+            return BDA_GUARD_NOT_SET;
         }
         return pc;
     }
@@ -818,7 +1104,7 @@ public:
         TransmissionMode pc;
         HRESULT hr = (*this)->get_Mode(&pc);
         if (FAILED(hr)) {
-            return -1;
+            return BDA_XMIT_MODE_NOT_SET;
         }
         return pc;
     }
@@ -843,32 +1129,77 @@ public:
 };
 typedef TNDVBTLocatorHelper<PQDVBTLocator> TNDVBTLocator;
 
-template<class LOCATORTYPE> class TNDVBCLocatorHelper : public TNLocatorHelper<LOCATORTYPE> {
+template<class LOCATORTYPE> class TNDVBTLocator2Helper : public TNDVBTLocatorHelper<LOCATORTYPE> {
 public:
-    TNDVBCLocatorHelper() {}
-    TNDVBCLocatorHelper(const LOCATORTYPE &a) : TNLocatorHelper<LOCATORTYPE>(a) {}
-    TNDVBCLocatorHelper(IUnknown *p) : TNLocatorHelper<LOCATORTYPE>(p) {}
-    TNDVBCLocatorHelper(const TNDVBCLocatorHelper<LOCATORTYPE> &a) : TNLocatorHelper<LOCATORTYPE>(a) {}
-    TNDVBCLocatorHelper(IDVBCLocator *p) : TNLocatorHelper<LOCATORTYPE>(p) {}
-    TNDVBCLocatorHelper(const TNLocatorHelper<LOCATORTYPE> &a) : TNLocatorHelper<LOCATORTYPE>(a) {}
-    TNDVBCLocatorHelper<LOCATORTYPE>& operator=(TNDVBCLocatorHelper<LOCATORTYPE>& rhs) {
-        TNLocatorHelper<LOCATORTYPE>::operator=(rhs);
+    TNDVBTLocator2Helper() {}
+    TNDVBTLocator2Helper(const LOCATORTYPE &a) : TNDVBTLocatorHelper<LOCATORTYPE>(a) {}
+    TNDVBTLocator2Helper(IUnknown *p) : TNDVBTLocatorHelper<LOCATORTYPE>(p) {}
+    TNDVBTLocator2Helper(const TNDVBTLocatorHelper<LOCATORTYPE> &a) : TNDVBTLocatorHelper<LOCATORTYPE>(a) {}
+    TNDVBTLocator2Helper(IDVBTLocator2 *p) : TNDVBTLocatorHelper<LOCATORTYPE>(p) {}
+    TNDVBTLocator2Helper(const TNLocatorHelper<LOCATORTYPE> &a) : TNDVBTLocatorHelper<LOCATORTYPE>(a) {}
+    TNDVBTLocator2Helper<LOCATORTYPE>& operator=(TNDVBTLocator2Helper<LOCATORTYPE>& rhs) {
+        TNDVBTLocatorHelper<LOCATORTYPE>::operator=(rhs);
         return *this;
     }
-    TNDVBCLocatorHelper<LOCATORTYPE>& operator=(TNLocatorHelper<LOCATORTYPE>& rhs) {
-        TNLocatorHelper<LOCATORTYPE>::operator=(rhs);
+    TNDVBTLocator2Helper<LOCATORTYPE>& operator=(TNDVBTLocatorHelper<LOCATORTYPE>& rhs) {
+        TNDVBTLocatorHelper<LOCATORTYPE>::operator=(rhs);
+        return *this;
+    }
+    TNDVBTLocator2Helper<LOCATORTYPE>& operator=(LOCATORTYPE& rhs) {
+        TNDVBTLocatorHelper<LOCATORTYPE>::operator=(rhs);
+        return *this;
+    }
+    TNDVBTLocator2Helper<LOCATORTYPE>& operator=(IDVBTLocator2* rhs) {
+        TNDVBTLocatorHelper<LOCATORTYPE>::operator=(rhs);
+        return *this;
+    }
+    TNDVBTLocator2Helper<LOCATORTYPE>& operator=(IUnknown* rhs) {
+        TNDVBTLocatorHelper<LOCATORTYPE>::operator=(rhs);
+        return *this;
+    }
+
+    long PhysicalLayerPipeId() {
+        _ASSERT(*this);
+        long pc;
+        HRESULT hr = (*this)->get_PhysicalLayerPipeId(&pc);
+        if (FAILED(hr)) {
+            return -1;
+        }
+        return pc;
+    }
+    HRESULT PhysicalLayerPipeId(long pc) {
+        _ASSERT(*this);
+        return (*this)->put_PhysicalLayerPipeId(pc);
+    }
+};
+typedef TNDVBTLocator2Helper<PQDVBTLocator2> TNDVBTLocator2;
+
+template<class LOCATORTYPE> class TNDVBCLocatorHelper : public TNDigitalLocatorHelper<LOCATORTYPE> {
+public:
+    TNDVBCLocatorHelper() {}
+    TNDVBCLocatorHelper(const LOCATORTYPE &a) : TNDigitalLocatorHelper<LOCATORTYPE>(a) {}
+    TNDVBCLocatorHelper(IUnknown *p) : TNDigitalLocatorHelper<LOCATORTYPE>(p) {}
+    TNDVBCLocatorHelper(const TNDVBCLocatorHelper<LOCATORTYPE> &a) : TNDigitalLocatorHelper<LOCATORTYPE>(a) {}
+    TNDVBCLocatorHelper(IDVBCLocator *p) : TNDigitalLocatorHelper<LOCATORTYPE>(p) {}
+    TNDVBCLocatorHelper(const TNLocatorHelper<LOCATORTYPE> &a) : TNDigitalLocatorHelper<LOCATORTYPE>(a) {}
+    TNDVBCLocatorHelper<LOCATORTYPE>& operator=(TNDVBCLocatorHelper<LOCATORTYPE>& rhs) {
+        TNDigitalLocatorHelper<LOCATORTYPE>::operator=(rhs);
+        return *this;
+    }
+    TNDVBCLocatorHelper<LOCATORTYPE>& operator=(TNDigitalLocatorHelper<LOCATORTYPE>& rhs) {
+        TNDigitalLocatorHelper<LOCATORTYPE>::operator=(rhs);
         return *this;
     }
     TNDVBCLocatorHelper<LOCATORTYPE>& operator=(LOCATORTYPE& rhs) {
-        TNLocatorHelper<LOCATORTYPE>::operator=(rhs);
+        TNDigitalLocatorHelper<LOCATORTYPE>::operator=(rhs);
         return *this;
     }
     TNDVBCLocatorHelper<LOCATORTYPE>& operator=(IDVBCLocator* rhs) {
-        TNLocatorHelper<LOCATORTYPE>::operator=(rhs);
+        TNDigitalLocatorHelper<LOCATORTYPE>::operator=(rhs);
         return *this;
     }
     TNDVBCLocatorHelper<LOCATORTYPE>& operator=(IUnknown* rhs) {
-        TNLocatorHelper<LOCATORTYPE>::operator=(rhs);
+        TNDigitalLocatorHelper<LOCATORTYPE>::operator=(rhs);
         return *this;
     }
 
@@ -906,7 +1237,7 @@ public:
         PQTuneRequest t;
         HRESULT hr = (*this)->Clone(&t);
         if (FAILED(hr) || !t) {
-            Release();  // clone failed, clear ourselves
+            this->Release();  // clone failed, clear ourselves
             return;
         }
         TUNEREQUESTTYPE::operator=(t);
@@ -984,6 +1315,51 @@ public:
 
 typedef TNChannelTuneRequestHelper<PQChannelTuneRequest, PQLocator> TNChannelTuneRequest;
 
+template<class TUNEREQUESTTYPE, class LOCATORTYPE> class TNChannelIDTuneRequestHelper : public TNTuneRequestHelper<TUNEREQUESTTYPE, LOCATORTYPE> {
+public:
+     TNChannelIDTuneRequestHelper() {}
+     TNChannelIDTuneRequestHelper(const TNTuneRequest &a) : TNTuneRequestHelper<TUNEREQUESTTYPE, LOCATORTYPE>(a) {}
+     TNChannelIDTuneRequestHelper(IChannelIDTuneRequest *p) : TNTuneRequestHelper<TUNEREQUESTTYPE, LOCATORTYPE>(p) {}
+     TNChannelIDTuneRequestHelper(IUnknown *p) : TNTuneRequestHelper<TUNEREQUESTTYPE, LOCATORTYPE>(p) {}
+     TNChannelIDTuneRequestHelper(const TNTuneRequestHelper<TUNEREQUESTTYPE, LOCATORTYPE> &a) : TNTuneRequestHelper<TUNEREQUESTTYPE, LOCATORTYPE>(a) {}
+     TNChannelIDTuneRequestHelper(const TNChannelIDTuneRequestHelper<TUNEREQUESTTYPE, LOCATORTYPE> &a) : TNTuneRequestHelper<TUNEREQUESTTYPE, LOCATORTYPE>(a) {}
+     TNChannelIDTuneRequestHelper<TUNEREQUESTTYPE, LOCATORTYPE>& operator=(TNChannelIDTuneRequestHelper<TUNEREQUESTTYPE, LOCATORTYPE>& rhs) {
+        TNTuneRequestHelper<TUNEREQUESTTYPE, LOCATORTYPE>::operator=(rhs);
+        return *this;
+    }
+    template<class TR, class LOC> TNChannelIDTuneRequestHelper<TUNEREQUESTTYPE, LOCATORTYPE>& operator=(TNTuneRequestHelper<TR, LOC>& rhs) {
+        TNTuneRequestHelper<TUNEREQUESTTYPE, LOCATORTYPE>::operator=(TUNEREQUESTTYPE(rhs));
+        return *this;
+    }
+     TNChannelIDTuneRequestHelper<TUNEREQUESTTYPE, LOCATORTYPE>& operator=(TUNEREQUESTTYPE& rhs) {
+        TNTuneRequestHelper<TUNEREQUESTTYPE, LOCATORTYPE>::operator=(rhs);
+        return *this;
+    }
+     TNChannelIDTuneRequestHelper<TUNEREQUESTTYPE, LOCATORTYPE>& operator=(IChannelIDTuneRequest* rhs) {
+        TNTuneRequestHelper<TUNEREQUESTTYPE, LOCATORTYPE>::operator=(rhs);
+        return *this;
+    }
+     TNChannelIDTuneRequestHelper<TUNEREQUESTTYPE, LOCATORTYPE>& operator=(IUnknown* rhs) {
+        TUNEREQUESTTYPE::operator=(rhs);
+        return *this;
+    }
+    BSTR ChannelID() {
+        _ASSERT(*this);
+        BSTR chanid;
+        HRESULT hr = (*this)->get_ChannelID(&chanid);
+        if (FAILED(hr)) {
+            return NULL;
+        }
+        return chanid;
+    }
+    HRESULT ChannelID(BSTR chanid) {
+        _ASSERT(*this);
+        return (*this)->put_ChannelID(chanid);
+    }
+};
+
+typedef TNChannelIDTuneRequestHelper<PQChannelIDTuneRequest, PQLocator> TNChannelIDTuneRequest;
+
 template<class TUNEREQUESTTYPE, class LOCATORTYPE> class TNATSCChannelTuneRequestHelper : public TNChannelTuneRequestHelper<TUNEREQUESTTYPE, LOCATORTYPE> {
 public:
     TNATSCChannelTuneRequestHelper() {}
@@ -1027,6 +1403,65 @@ public:
     }
 };
 typedef TNATSCChannelTuneRequestHelper<PQATSCChannelTuneRequest, PQATSCLocator> TNATSCChannelTuneRequest;
+
+//digital cable
+template<class TUNEREQUESTTYPE, class LOCATORTYPE> class TNDigitalCableTuneRequestHelper : public TNATSCChannelTuneRequestHelper<TUNEREQUESTTYPE, LOCATORTYPE> {
+public:
+    TNDigitalCableTuneRequestHelper() {}
+    TNDigitalCableTuneRequestHelper(const TNTuneRequest &a) : TNATSCChannelTuneRequestHelper<TUNEREQUESTTYPE, LOCATORTYPE>(a) {}
+    TNDigitalCableTuneRequestHelper(IDigitalCableTuneRequest *p) : TNATSCChannelTuneRequestHelper<TUNEREQUESTTYPE, LOCATORTYPE>(p) {}
+    TNDigitalCableTuneRequestHelper(IUnknown *p) : TNATSCChannelTuneRequestHelper<TUNEREQUESTTYPE, LOCATORTYPE>(p) {}
+    TNDigitalCableTuneRequestHelper(const TNATSCChannelTuneRequestHelper<TUNEREQUESTTYPE, LOCATORTYPE> &a) : TNATSCChannelTuneRequestHelper<TUNEREQUESTTYPE, LOCATORTYPE>(a) {}
+    TNDigitalCableTuneRequestHelper(const TNDigitalCableTuneRequestHelper<TUNEREQUESTTYPE, LOCATORTYPE> &a) : TNATSCChannelTuneRequestHelper<TUNEREQUESTTYPE, LOCATORTYPE>(a) {}
+    TNDigitalCableTuneRequestHelper<TUNEREQUESTTYPE, LOCATORTYPE>& operator=(TNDigitalCableTuneRequestHelper<TUNEREQUESTTYPE, LOCATORTYPE>& rhs) {
+        TNATSCChannelTuneRequestHelper<TUNEREQUESTTYPE, LOCATORTYPE>::operator=(rhs);
+        return *this;
+    }
+    template<class TR, class LOC>TNDigitalCableTuneRequestHelper<TUNEREQUESTTYPE, LOCATORTYPE>& operator=(TNTuneRequestHelper<TR, LOC>& rhs) {
+        TNATSCChannelTuneRequestHelper<TUNEREQUESTTYPE, LOCATORTYPE>::operator=(TR(rhs));
+        return *this;
+    }
+    TNDigitalCableTuneRequestHelper<TUNEREQUESTTYPE, LOCATORTYPE>& operator=(TUNEREQUESTTYPE& rhs) {
+        TNATSCChannelTuneRequestHelper<TUNEREQUESTTYPE, LOCATORTYPE>::operator=(rhs);
+        return *this;
+    }
+    TNDigitalCableTuneRequestHelper<TUNEREQUESTTYPE, LOCATORTYPE>& operator=(IDigitalCableTuneRequest *rhs) {
+        TNATSCChannelTuneRequestHelper<TUNEREQUESTTYPE, LOCATORTYPE>::operator=(rhs);
+        return *this;
+    }
+    TNTuneRequestHelper<TUNEREQUESTTYPE, LOCATORTYPE>& operator=(IUnknown* rhs) {
+        TUNEREQUESTTYPE::operator=(rhs);
+        return *this;
+    }
+    long MajorChannel() {
+        _ASSERT(*this);
+        long mc;
+        HRESULT hr = (*this)->get_MajorChannel(&mc);
+        if (FAILED(hr)) {
+            return -1;
+        }
+        return mc;
+    }
+    HRESULT MajorChannel(long mc) {
+        _ASSERT(*this);
+        return (*this)->put_MajorChannel(mc);
+    }
+    long SourceID() {
+        _ASSERT(*this);
+        long mc;
+        HRESULT hr = (*this)->get_SourceID(&mc);
+        if (FAILED(hr)) {
+            return -1;
+        }
+        return mc;
+    }
+    HRESULT SourceID(long mc) {
+        _ASSERT(*this);
+        return (*this)->put_SourceID(mc);
+    }
+};
+typedef TNDigitalCableTuneRequestHelper<PQDigitalCableTuneRequest, PQATSCLocator> TNDigitalCableTuneRequest;
+
 
 template<class TUNEREQUESTTYPE, class LOCATORTYPE> class TNDVBTuneRequestHelper : public TNTuneRequestHelper<TUNEREQUESTTYPE, LOCATORTYPE> {
 public:
@@ -1096,12 +1531,31 @@ public:
         return (*this)->put_SID(c);
     }
 };
-typedef TNDVBTuneRequestHelper<PQDVBTuneRequest, PQLocator> TNDVBTuneRequest;
+typedef TNDVBTuneRequestHelper<PQDVBTuneRequest, PQDigitalLocator> TNDVBTuneRequest;
+
+// public declarations for DVB-S scanning data structures
+#define DVBS_SCAN_TABLE_MAX_SIZE 400 // 400 TS across all DiseqC positions!
+
+typedef struct _DVBS_SCAN_POSITION
+{
+    LONG                   lDiseqcLNB;
+    LONG                   lkHzCarrierFrequency;
+    LONG                   lSymbolRate;
+    LONG                   lOrbitalPosition;
+    Polarisation           signalPolarisation;
+} DVBS_SCAN_POSITION;
+
 }; // namespace
+
 
 #ifndef NO_DEFAULT_BDATUNINGMODEL_NAMESPACE
 using namespace BDATuningModel;
 #endif
 
+
+#endif /* WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP) */
+#pragma endregion
+
 #endif
 // end of file - tune.h
+

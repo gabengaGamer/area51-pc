@@ -1,20 +1,20 @@
+//=============================================================================
+//
+//  Render Manager
+//
+//=============================================================================
+
 #ifndef RENDER_HPP
 #define RENDER_HPP
 
 #include "x_types.hpp"
 #include "x_time.hpp"
+
 #include "ResourceMgr\ResourceMgr.hpp"
+
 #include "Render\Material.hpp"
 #include "Render\RigidGeom.hpp"
 #include "Render\SkinGeom.hpp"
-
-//=============================================================================
-
-#if defined(dstewart) && !defined(X_OPTIMIZED)
-#define ENABLE_RENDER_STATS 1
-#else
-#define ENABLE_RENDER_STATS 0
-#endif
 
 //=============================================================================
 
@@ -125,8 +125,6 @@ namespace render
         DISABLE_FILTERLIGHT  = 0x04000000,
         DISABLE_PROJ_SHADOWS = 0x08000000,
         DO_SIMPLE_LIGHTING   = 0x10000000,  // for optimization--enables the lighting for AddRigidInstanceSimple
-
-        // Xbox per pixel lighting:
         PERPIXEL_POINTLIGHT  = 0x20000000,
         
         // TODO: Our flags have started clashing. For now, if we make INSTFLAG_CLIPPED
@@ -135,6 +133,7 @@ namespace render
         // flags, and the render system can internally do whatever it needs to do to make
         // things work.
         // these instance flags are considered private. don't look!
+		
         INSTFLAG_CLIPPED       = 0x00000080,    // Does the instance intersect with the frustum?
         INSTFLAG_GLOWING       = 0x00000100,    // we have forced something that doesn't normally glow to glow
         INSTFLAG_SHADOW_PASS   = 0x00000200,    // we are receiving dynamic shadows
@@ -192,11 +191,6 @@ namespace render
                                       u32                    Flags,
                                       u64                    ProjMask   ) X_SECTION( render_add_shadow );
 
-    // xbox specific light map rendering
-    #ifdef TARGET_XBOX
-    void ZPrimeRenderTarget( void );
-    void RenderLightMap( void );
-    #endif
 
     // basic instance-rendering routines
     // you should call them in this order:
@@ -281,33 +275,6 @@ namespace render
         FALLOFF_EXP,
         FALLOFF_EXP2,
         FALLOFF_CUSTOM,
-        
-        ///////////////////////////////////////////////////////////////////////
-        // For all types of fogging, the final color is:
-        // C = f*OrigColor + (1-f)*FogColor
-        //
-        // CONSTANT:
-        //  f=(z>start)?1.0f-color.a:0
-        //  Param1 = start
-        //  
-        // LINEAR:
-        //  f=(end-z)/(end-start)
-        //  Param1 = start
-        //  Param2 = end
-        //
-        // EXP
-        //  (d=(z-n)/(f-n), f=1/e^(d*density)
-        //  Param1 = density
-        //  Param2 = unused
-        //
-        // EXP2
-        //  (d=(z-n)/(f-n), f=1/e^((d*density)*(d*density))
-        //  Param1 = density
-        //  Param2 = unused
-        //
-        // CUSTOM
-        //  A bitmap palette is used to describe the fog pattern.
-        ///////////////////////////////////////////////////////////////////////
     };
 
     // For the post-effects, colors are considered to be 128==1, and 255==2 so that we
@@ -364,80 +331,11 @@ namespace render
     void    NoiseFilter         ( xcolor                    Color )                     X_SECTION( render_post );
     void    ScreenFade          ( xcolor                    Color )                     X_SECTION( render_post );
 
-    // Functions for locking the display list. These functions are here specifically for
-    // lighting the level in the editor, and will only work on the PC. If you feel like
-    // you need to lock display lists for general purpose vertex mucking around, then
-    // the system needs to be rethought.
-#ifdef TARGET_PC
-    void*   LockRigidDListVertex    ( hgeom_inst hInst, s32 iSubMesh )                      X_SECTION( render_infrequent );
-    void    UnlockRigidDListVertex  ( hgeom_inst hInst, s32 iSubMesh )                      X_SECTION( render_infrequent );
-    void*   LockRigidDListIndex     ( hgeom_inst hInst, s32 iSubMesh,  s32& VertexOffset )  X_SECTION( render_infrequent );
-    void    UnlockRigidDListIndex   ( hgeom_inst hInst, s32 iSubMesh )                      X_SECTION( render_infrequent );
-#endif
-
     // Filter lighting functions
     void    EnableFilterLight       ( xbool  bEnable )      X_SECTION( render_infrequent );
     xbool   IsFilterLightEnabled    ( void )                X_SECTION( render_infrequent );
     void    SetFilterLightColor     ( xcolor Color   )      X_SECTION( render_infrequent );
     xcolor  GetFilterLightColor     ( void )                X_SECTION( render_infrequent );
-
-    // Stats logging for the renderer...some of these stats should be collected per frame.
-    // let the the stats class know when to begin and end collecting by using the Begin() and
-    // End() call. The other functions should be self-explanatory.
-    #if ENABLE_RENDER_STATS
-    class stats
-    {
-    public:
-        enum
-        {
-            OUTPUT_TO_DEBUG = 0,
-            OUTPUT_TO_SCREEN,
-            OUTPUT_TO_FILE,
-        };
-
-        enum
-        {
-            FLAG_VERBOSE = 0x0001,
-        };
-
-         stats                  ( void )                        X_SECTION( render_stats );
-        ~stats                  ( void )                        X_SECTION( render_stats );
-
-        void    Begin           ( void )                        X_SECTION( render_stats );
-        void    End             ( void )                        X_SECTION( render_stats );
-        void    Print           ( s32 Mode  = OUTPUT_TO_SCREEN,
-                                  s32 Flags = 0 )               X_SECTION( render_stats );
-        void    ClearAllStats   ( void )                        X_SECTION( render_stats );
-
-        // simple counting stats (kept per frame)
-        s32             m_nMaterialsRendered;
-        s32             m_nInstancesRendered;
-        s32             m_nSubMeshesRendered;
-        s32             m_nVerticesRendered;
-        s32             m_nTrisRendered;
-
-        // times in xtimer ticks
-        xtick           m_InstanceSortTime;
-        xtick           m_MaterialActivateTime;
-        xtick           m_InstanceAddTime;
-        xtick           m_TotalEndRenderTime;
-    
-        // accumulated worst-case statistics
-        s32             m_MaxMaterialsRendered;
-        s32             m_MaxInstancesRendered;
-        s32             m_MaxSubMeshesRendered;
-        s32             m_MaxVerticesRendered;
-        s32             m_MaxTrisRendered;
-        xtick           m_MaxInstanceSortTime;
-        xtick           m_MaxMaterialActivateTime;
-        xtick           m_MaxInstanceAddTime;
-        xtick           m_MaxTotalEndRenderTime;
-    };
-
-    // and I suppose you want a way to access this stat class?
-    stats&  GetStats        ( void )    X_SECTION( render_stats );
-    #endif
-
 
     // New session methods
     void BeginSession   ( u32 nPlayers )    X_SECTION( init );
@@ -532,11 +430,11 @@ private:
         u16 *       m_pColor16;   // 16-bit color
         void*       m_pVoid;
     };
-
+	
 #ifdef TARGET_XBOX
 public:
     vert_factory::handle m_hColors;
-#endif
+#endif	
 };
 
 //=========================================================================
@@ -548,11 +446,8 @@ inline void color_info::FileIO( fileio& File )
     switch( m_Usage )
     {
         case kUse32:
-		    #if defined(TARGET_XBOX)
-                File.Dynamic( m_pColor32,m_nColors );
-            #elif defined(TARGET_PC)
-                File.Static( m_pColor32,m_nColors );
-            #endif
+            File.Static( m_pColor32,m_nColors );
+			//File.Dynamic( m_pColor32,m_nColors );
             break;
 
         case kUse16:
@@ -569,10 +464,8 @@ inline void color_info::FileIO( fileio& File )
 
 inline void color_info::Init( void )
 {
-#ifdef TARGET_XBOX
-    m_hColors = 0;
-    m_Usage   = kUse32;
-#elif defined(TARGET_PC)
+#ifdef TARGET_PC
+    //m_hColors = 0;
     m_Usage   = kUse32;
 #else
     m_Usage   = kUnknown;

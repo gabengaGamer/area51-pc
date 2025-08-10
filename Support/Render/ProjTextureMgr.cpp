@@ -1,7 +1,17 @@
+//==============================================================================
+//  
+//  ProjTextureMgr.cpp  
+//
+//==============================================================================
+
+//==============================================================================
+//  INCLUDES
+//==============================================================================
+
 #include "ProjTextureMgr.hpp"
 
 //=========================================================================
-// The global object
+// GLOBAL INSTANCE
 //=========================================================================
 
 proj_texture_mgr    g_ProjTextureMgr;
@@ -11,8 +21,8 @@ proj_texture_mgr    g_ProjTextureMgr;
 //=========================================================================
 
 proj_texture_mgr::proj_texture_mgr( void ) :
-m_NLightProjections(0),
-m_NShadowProjections(0)
+    m_NLightProjections     ( 0 ),
+    m_NShadowProjections    ( 0 )
 {
 }
 
@@ -20,14 +30,6 @@ m_NShadowProjections(0)
 
 proj_texture_mgr::~proj_texture_mgr( void )
 {
-}
-
-//=========================================================================
-
-void proj_texture_mgr::ClearProjTextures( void )
-{
-    m_NLightProjections  = 0;
-    m_NShadowProjections = 0;
 }
 
 //=========================================================================
@@ -96,7 +98,6 @@ void proj_texture_mgr::GetCollectedShadow( matrix4& ShadMatrix, xbitmap*& pBitma
     //#### TODO: Finish this function
 }
 
-
 //=========================================================================
 
 void proj_texture_mgr::SetupProjection ( projection&     Dest,
@@ -119,8 +120,9 @@ void proj_texture_mgr::SetupProjection ( projection&     Dest,
 
     // set up the projection matrix
     Dest.ProjMatrix.Identity();
-    //Dest.ProjMatrix.Scale( vector3( 0.5f, -0.5f, 1.0f ) );
     Dest.ProjMatrix.Scale( vector3( 0.5f, -0.5f, 1.0f ) );
     Dest.ProjMatrix.Translate( vector3( 0.5f, 0.5f, 0.0f ) );
     Dest.ProjMatrix *= Dest.ProjView.GetW2C();
 }
+
+//=========================================================================

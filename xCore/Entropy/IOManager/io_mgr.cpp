@@ -12,9 +12,6 @@
 #include "io_filesystem.hpp"
 #include "device_dvd\io_device_dvd.hpp"
 #include "device_net\io_device_net.hpp"
-#if defined(TARGET_XBOX)
-#include "Implementation/x_log_private.hpp"
-#endif
 
 //==============================================================================
 // Local variables
@@ -146,14 +143,7 @@ s32 io_mgr::Init( void )
     // Error check.
     ASSERT( s_Initialized == FALSE );
 
-    // Initialise some important xbox stuff
-    //   (a hook is needed before DeviceCDROMOpen to launch a thread)
-    // Set up the dvd
-#if defined(ENABLE_NETFS)
-    m_Devices[ IO_DEVICE_DVD ] = &g_IODeviceNET;
-#else
     m_Devices[ IO_DEVICE_DVD ] = &g_IODeviceDVD;
-#endif
     m_Devices[ IO_DEVICE_DVD ]->Init();
 
     // It's inited.
@@ -164,9 +154,6 @@ s32 io_mgr::Init( void )
 
     // Initialize file system
     g_IOFSMgr.Init();
-#if defined(ENABLE_NETFS) && defined(TARGET_XBOX) && defined(X_LOGGING)
-    g_LogControl.Enable = TRUE;
-#endif
 
     // It's all good!
     return TRUE;
@@ -199,8 +186,6 @@ s32 io_mgr::Kill( void )
     s_DispatcherActive = FALSE;
 
     // ok its all good.
-    // Destroy some xbox stuff
-    //   (a hook is needed before DeviceCDROMClose to kill a thread)
     return 1;
 }
 

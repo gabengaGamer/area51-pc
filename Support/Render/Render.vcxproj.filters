@@ -20,9 +20,6 @@
       <UniqueIdentifier>{8f9eb36c-f5da-4a90-94b0-c4a00acda577}</UniqueIdentifier>
       <Extensions>cpp;hpp</Extensions>
     </Filter>
-    <Filter Include="PC\Shaders">
-      <UniqueIdentifier>{efa90398-3cc0-4d00-90d5-60b7fdacda15}</UniqueIdentifier>
-    </Filter>
     <Filter Include="LeastSquares">
       <UniqueIdentifier>{5b4a0b8c-44b0-4876-823f-0baf8d4018e9}</UniqueIdentifier>
     </Filter>
@@ -37,21 +34,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Ps2\ps2_post.cpp">
-      <Filter>PS2</Filter>
-    </ClCompile>
-    <ClCompile Include="Ps2\ps2_Render.cpp">
-      <Filter>PS2</Filter>
-    </ClCompile>
-    <ClCompile Include="Ps2\ps2_skin.cpp">
-      <Filter>PS2</Filter>
-    </ClCompile>
-    <ClCompile Include="Ps2\vu0\vu0.cpp">
-      <Filter>PS2\vu0</Filter>
-    </ClCompile>
-    <ClCompile Include="Ps2\vu1\vu1.cpp">
-      <Filter>PS2\vu1</Filter>
-    </ClCompile>
     <ClCompile Include="Pc\SoftVertexMgr.cpp">
       <Filter>PC</Filter>
     </ClCompile>
@@ -94,22 +76,22 @@
     <ClCompile Include="Texture.cpp">
       <Filter>PS2</Filter>
     </ClCompile>
+    <ClCompile Include="PC\MaterialMgr.cpp">
+      <Filter>PC</Filter>
+    </ClCompile>
+    <ClCompile Include="PC\PostMgr.cpp">
+      <Filter>PC</Filter>
+    </ClCompile>
+    <ClCompile Include="PC\GBufferMgr.cpp">
+      <Filter>PC</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Pc\pc_render.hpp">
-      <Filter>PC</Filter>
-    </ClInclude>
     <ClInclude Include="Pc\SoftVertexMgr.hpp">
       <Filter>PC</Filter>
     </ClInclude>
     <ClInclude Include="Pc\VertexMgr.hpp">
       <Filter>PC</Filter>
-    </ClInclude>
-    <ClInclude Include="Shaders\SkinShader.h">
-      <Filter>PC\Shaders</Filter>
-    </ClInclude>
-    <ClInclude Include="Shaders\SkinShader.vsa.h">
-      <Filter>PC\Shaders</Filter>
     </ClInclude>
     <ClInclude Include="LeastSquares\LeastSquares.hpp">
       <Filter>LeastSquares</Filter>
@@ -150,234 +132,169 @@
     <ClInclude Include="Texture.hpp">
       <Filter>PS2</Filter>
     </ClInclude>
+    <ClInclude Include="Editor\editor_icons.hpp">
+      <Filter>PS2\vu0</Filter>
+    </ClInclude>
+    <ClInclude Include="Editor\Icons\icon_ai_nav_con.hpp">
+      <Filter>PS2\vu0</Filter>
+    </ClInclude>
+    <ClInclude Include="Editor\Icons\icon_ai_nav_node.hpp">
+      <Filter>PS2\vu0</Filter>
+    </ClInclude>
+    <ClInclude Include="Editor\Icons\icon_alien_shield.hpp">
+      <Filter>PS2\vu0</Filter>
+    </ClInclude>
+    <ClInclude Include="Editor\Icons\icon_arrow.hpp">
+      <Filter>PS2\vu0</Filter>
+    </ClInclude>
+    <ClInclude Include="Editor\Icons\icon_bot_spawn_point.hpp">
+      <Filter>PS2\vu0</Filter>
+    </ClInclude>
+    <ClInclude Include="Editor\Icons\icon_bp_anchor.hpp">
+      <Filter>PS2\vu0</Filter>
+    </ClInclude>
+    <ClInclude Include="Editor\Icons\icon_bp_bag.hpp">
+      <Filter>PS2\vu0</Filter>
+    </ClInclude>
+    <ClInclude Include="Editor\Icons\icon_camera.hpp">
+      <Filter>PS2\vu0</Filter>
+    </ClInclude>
+    <ClInclude Include="Editor\Icons\icon_character_light.hpp">
+      <Filter>PS2\vu0</Filter>
+    </ClInclude>
+    <ClInclude Include="Editor\Icons\icon_cinema_obj.hpp">
+      <Filter>PS2\vu0</Filter>
+    </ClInclude>
+    <ClInclude Include="Editor\Icons\icon_closed_door.hpp">
+      <Filter>PS2\vu0</Filter>
+    </ClInclude>
+    <ClInclude Include="Editor\Icons\icon_controller.hpp">
+      <Filter>PS2\vu0</Filter>
+    </ClInclude>
+    <ClInclude Include="Editor\Icons\icon_coupler.hpp">
+      <Filter>PS2\vu0</Filter>
+    </ClInclude>
+    <ClInclude Include="Editor\Icons\icon_cover.hpp">
+      <Filter>PS2\vu0</Filter>
+    </ClInclude>
+    <ClInclude Include="Editor\Icons\icon_ctf_flag.hpp">
+      <Filter>PS2\vu0</Filter>
+    </ClInclude>
+    <ClInclude Include="Editor\Icons\icon_damage.hpp">
+      <Filter>PS2\vu0</Filter>
+    </ClInclude>
+    <ClInclude Include="Editor\Icons\icon_dynamic_light.hpp">
+      <Filter>PS2\vu0</Filter>
+    </ClInclude>
+    <ClInclude Include="Editor\Icons\icon_focus_obj.hpp">
+      <Filter>PS2\vu0</Filter>
+    </ClInclude>
+    <ClInclude Include="Editor\Icons\icon_gear.hpp">
+      <Filter>PS2\vu0</Filter>
+    </ClInclude>
+    <ClInclude Include="Editor\Icons\icon_group.hpp">
+      <Filter>PS2\vu0</Filter>
+    </ClInclude>
+    <ClInclude Include="Editor\Icons\icon_hud_obj.hpp">
+      <Filter>PS2\vu0</Filter>
+    </ClInclude>
+    <ClInclude Include="Editor\Icons\icon_input_settings.hpp">
+      <Filter>PS2\vu0</Filter>
+    </ClInclude>
+    <ClInclude Include="Editor\Icons\icon_jump_pad.hpp">
+      <Filter>PS2\vu0</Filter>
+    </ClInclude>
+    <ClInclude Include="Editor\Icons\icon_level_settings.hpp">
+      <Filter>PS2\vu0</Filter>
+    </ClInclude>
+    <ClInclude Include="Editor\Icons\icon_light.hpp">
+      <Filter>PS2\vu0</Filter>
+    </ClInclude>
+    <ClInclude Include="Editor\Icons\icon_loop.hpp">
+      <Filter>PS2\vu0</Filter>
+    </ClInclude>
+    <ClInclude Include="Editor\Icons\icon_marker.hpp">
+      <Filter>PS2\vu0</Filter>
+    </ClInclude>
+    <ClInclude Include="Editor\Icons\icon_mp_settings.hpp">
+      <Filter>PS2\vu0</Filter>
+    </ClInclude>
+    <ClInclude Include="Editor\Icons\icon_music_logic.hpp">
+      <Filter>PS2\vu0</Filter>
+    </ClInclude>
+    <ClInclude Include="Editor\Icons\icon_note.hpp">
+      <Filter>PS2\vu0</Filter>
+    </ClInclude>
+    <ClInclude Include="Editor\Icons\icon_open_door.hpp">
+      <Filter>PS2\vu0</Filter>
+    </ClInclude>
+    <ClInclude Include="Editor\Icons\icon_padlock.hpp">
+      <Filter>PS2\vu0</Filter>
+    </ClInclude>
+    <ClInclude Include="Editor\Icons\icon_particle_emitter.hpp">
+      <Filter>PS2\vu0</Filter>
+    </ClInclude>
+    <ClInclude Include="Editor\Icons\icon_path.hpp">
+      <Filter>PS2\vu0</Filter>
+    </ClInclude>
+    <ClInclude Include="Editor\Icons\icon_pip.hpp">
+      <Filter>PS2\vu0</Filter>
+    </ClInclude>
+    <ClInclude Include="Editor\Icons\icon_player_obj.hpp">
+      <Filter>PS2\vu0</Filter>
+    </ClInclude>
+    <ClInclude Include="Editor\Icons\icon_portal.hpp">
+      <Filter>PS2\vu0</Filter>
+    </ClInclude>
+    <ClInclude Include="Editor\Icons\icon_projector.hpp">
+      <Filter>PS2\vu0</Filter>
+    </ClInclude>
+    <ClInclude Include="Editor\Icons\icon_simple_trigger.hpp">
+      <Filter>PS2\vu0</Filter>
+    </ClInclude>
+    <ClInclude Include="Editor\Icons\icon_sound.hpp">
+      <Filter>PS2\vu0</Filter>
+    </ClInclude>
+    <ClInclude Include="Editor\Icons\icon_spacial_trigger.hpp">
+      <Filter>PS2\vu0</Filter>
+    </ClInclude>
+    <ClInclude Include="Editor\Icons\icon_spawner.hpp">
+      <Filter>PS2\vu0</Filter>
+    </ClInclude>
+    <ClInclude Include="Editor\Icons\icon_spawn_point.hpp">
+      <Filter>PS2\vu0</Filter>
+    </ClInclude>
+    <ClInclude Include="Editor\Icons\icon_sphere.hpp">
+      <Filter>PS2\vu0</Filter>
+    </ClInclude>
+    <ClInclude Include="Editor\Icons\icon_task_obj.hpp">
+      <Filter>PS2\vu0</Filter>
+    </ClInclude>
+    <ClInclude Include="Editor\Icons\icon_tracker.hpp">
+      <Filter>PS2\vu0</Filter>
+    </ClInclude>
+    <ClInclude Include="Editor\Icons\icon_trigger.hpp">
+      <Filter>PS2\vu0</Filter>
+    </ClInclude>
+    <ClInclude Include="Editor\Icons\icon_viewable_trigger.hpp">
+      <Filter>PS2\vu0</Filter>
+    </ClInclude>
+    <ClInclude Include="Editor\Icons\icon_volumetric_light.hpp">
+      <Filter>PS2\vu0</Filter>
+    </ClInclude>
+    <ClInclude Include="PC\MaterialMgr.hpp">
+      <Filter>PC</Filter>
+    </ClInclude>
+    <ClInclude Include="PC\PostMgr.hpp">
+      <Filter>PC</Filter>
+    </ClInclude>
+    <ClInclude Include="PC\GBufferMgr.hpp">
+      <Filter>PC</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Pc\pc_platform.inl">
       <Filter>PC</Filter>
     </None>
-    <None Include="Pc\pc_post.inl">
-      <Filter>PC</Filter>
-    </None>
-    <None Include="Pc\pc_shader_mgr.inl">
-      <Filter>PC</Filter>
-    </None>
-    <None Include="Shaders\Make.bat">
-      <Filter>PC\Shaders</Filter>
-    </None>
-    <None Include="Shaders\SkinShader.vsa">
-      <Filter>PC\Shaders</Filter>
-    </None>
-  </ItemGroup>
-  <ItemGroup>
-    <CustomBuild Include="Ps2\ps2_skin.hpp">
-      <Filter>PS2</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Ps2\vu0\vu0.hpp">
-      <Filter>PS2\vu0</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Ps2\vu1\vu1.hpp">
-      <Filter>PS2\vu1</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Ps2\vu1\mcode\clipper.vu">
-      <Filter>PS2\vu1\mcode</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Ps2\vu1\mcode\include.vu">
-      <Filter>PS2\vu1\mcode</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Ps2\vu1\mcode\init.vu">
-      <Filter>PS2\vu1\mcode</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Ps2\vu1\mcode\materials.vu">
-      <Filter>PS2\vu1\mcode</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Ps2\vu1\mcode\shadcast_transform.vu">
-      <Filter>PS2\vu1\mcode</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Ps2\vu1\mcode\shadow_include.vu">
-      <Filter>PS2\vu1\mcode</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Ps2\vu1\mcode\shadreceive_passes.vu">
-      <Filter>PS2\vu1\mcode</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Ps2\vu1\mcode\shadreceive_transform.vu">
-      <Filter>PS2\vu1\mcode</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Ps2\vu1\mcode\skinning.vu">
-      <Filter>PS2\vu1\mcode</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Ps2\vu1\mcode\sprite_transform.vu">
-      <Filter>PS2\vu1\mcode</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Ps2\vu1\mcode\sync.vu">
-      <Filter>PS2\vu1\mcode</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Ps2\vu1\mcode\transform.vu">
-      <Filter>PS2\vu1\mcode</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Xbox\geom_mgr.inl">
-      <Filter>XBOX</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Xbox\shader_mgr.inl">
-      <Filter>XBOX</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Xbox\xbox_platform.inl">
-      <Filter>XBOX</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Xbox\xbox_Post.inl">
-      <Filter>XBOX</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Xbox\xbox_render.hpp">
-      <Filter>XBOX</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Editor\editor_icons.hpp">
-      <Filter>Editor</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Editor\Icons\icon_ai_nav_con.hpp">
-      <Filter>Editor\Icons</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Editor\Icons\icon_ai_nav_node.hpp">
-      <Filter>Editor\Icons</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Editor\Icons\icon_alien_shield.hpp">
-      <Filter>Editor\Icons</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Editor\Icons\icon_arrow.hpp">
-      <Filter>Editor\Icons</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Editor\Icons\icon_bot_spawn_point.hpp">
-      <Filter>Editor\Icons</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Editor\Icons\icon_bp_anchor.hpp">
-      <Filter>Editor\Icons</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Editor\Icons\icon_bp_bag.hpp">
-      <Filter>Editor\Icons</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Editor\Icons\icon_camera.hpp">
-      <Filter>Editor\Icons</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Editor\Icons\icon_character_light.hpp">
-      <Filter>Editor\Icons</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Editor\Icons\icon_cinema_obj.hpp">
-      <Filter>Editor\Icons</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Editor\Icons\icon_closed_door.hpp">
-      <Filter>Editor\Icons</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Editor\Icons\icon_controller.hpp">
-      <Filter>Editor\Icons</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Editor\Icons\icon_coupler.hpp">
-      <Filter>Editor\Icons</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Editor\Icons\icon_cover.hpp">
-      <Filter>Editor\Icons</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Editor\Icons\icon_ctf_flag.hpp">
-      <Filter>Editor\Icons</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Editor\Icons\icon_damage.hpp">
-      <Filter>Editor\Icons</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Editor\Icons\icon_dynamic_light.hpp">
-      <Filter>Editor\Icons</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Editor\Icons\icon_focus_obj.hpp">
-      <Filter>Editor\Icons</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Editor\Icons\icon_gear.hpp">
-      <Filter>Editor\Icons</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Editor\Icons\icon_group.hpp">
-      <Filter>Editor\Icons</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Editor\Icons\icon_hud_obj.hpp">
-      <Filter>Editor\Icons</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Editor\Icons\icon_input_settings.hpp">
-      <Filter>Editor\Icons</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Editor\Icons\icon_jump_pad.hpp">
-      <Filter>Editor\Icons</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Editor\Icons\icon_level_settings.hpp">
-      <Filter>Editor\Icons</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Editor\Icons\icon_light.hpp">
-      <Filter>Editor\Icons</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Editor\Icons\icon_loop.hpp">
-      <Filter>Editor\Icons</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Editor\Icons\icon_marker.hpp">
-      <Filter>Editor\Icons</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Editor\Icons\icon_mp_settings.hpp">
-      <Filter>Editor\Icons</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Editor\Icons\icon_music_logic.hpp">
-      <Filter>Editor\Icons</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Editor\Icons\icon_note.hpp">
-      <Filter>Editor\Icons</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Editor\Icons\icon_open_door.hpp">
-      <Filter>Editor\Icons</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Editor\Icons\icon_padlock.hpp">
-      <Filter>Editor\Icons</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Editor\Icons\icon_particle_emitter.hpp">
-      <Filter>Editor\Icons</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Editor\Icons\icon_path.hpp">
-      <Filter>Editor\Icons</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Editor\Icons\icon_pip.hpp">
-      <Filter>Editor\Icons</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Editor\Icons\icon_player_obj.hpp">
-      <Filter>Editor\Icons</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Editor\Icons\icon_portal.hpp">
-      <Filter>Editor\Icons</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Editor\Icons\icon_projector.hpp">
-      <Filter>Editor\Icons</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Editor\Icons\icon_simple_trigger.hpp">
-      <Filter>Editor\Icons</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Editor\Icons\icon_sound.hpp">
-      <Filter>Editor\Icons</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Editor\Icons\icon_spacial_trigger.hpp">
-      <Filter>Editor\Icons</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Editor\Icons\icon_spawn_point.hpp">
-      <Filter>Editor\Icons</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Editor\Icons\icon_spawner.hpp">
-      <Filter>Editor\Icons</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Editor\Icons\icon_sphere.hpp">
-      <Filter>Editor\Icons</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Editor\Icons\icon_task_obj.hpp">
-      <Filter>Editor\Icons</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Editor\Icons\icon_tracker.hpp">
-      <Filter>Editor\Icons</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Editor\Icons\icon_trigger.hpp">
-      <Filter>Editor\Icons</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Editor\Icons\icon_viewable_trigger.hpp">
-      <Filter>Editor\Icons</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Editor\Icons\icon_volumetric_light.hpp">
-      <Filter>Editor\Icons</Filter>
-    </CustomBuild>
   </ItemGroup>
 </Project>

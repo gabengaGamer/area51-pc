@@ -4,7 +4,7 @@
  |~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~|
  |PROJECT: XAPO                         MODEL:   Unmanaged User-mode        |
  |VERSION: 1.0                          EXCEPT:  No Exceptions              |
- |CLASS:   N / A                        MINREQ:  WinXP, Xbox360             |
+ |CLASS:   N / A                        MINREQ:  Win8, Xbox One             |
  |BASE:    N / A                        DIALECT: MSC++ 14.00                |
  |>------------------------------------------------------------------------<|
  | DUTY: XAPO base classes                                                  |
@@ -13,6 +13,7 @@
     1.  See XAPO.h for the rules governing XAPO interface behaviour.        */
 
 #pragma once
+
 //--------------<D-E-F-I-N-I-T-I-O-N-S>-------------------------------------//
 #include "XAPO.h"
 
@@ -40,6 +41,13 @@
         #define XAPOASSERT(exp) __assume(exp)
     #endif
 #endif
+#if !defined(XAPOASSERT_NO_OUTPUT)
+    #if XAPODEBUG
+        #define XAPOASSERT_NO_OUTPUT(exp) if (!(exp)) { __debugbreak(); }
+    #else
+        #define XAPOASSERT_NO_OUTPUT(exp) __assume(exp)
+    #endif
+#endif
 
 
 //--------------<D-A-T-A---T-Y-P-E-S>---------------------------------------//
@@ -55,7 +63,7 @@ typedef float FLOAT32; // 32-bit IEEE float
   //  Default implementation of the IXAPO and IUnknown interfaces.
   //  Provides overridable implementations for all methods save IXAPO::Process.
   ////
-class __declspec(novtable) CXAPOBase: public IXAPO {
+class DECLSPEC_NOVTABLE CXAPOBase: public IXAPO {
 private:
     const XAPO_REGISTRATION_PROPERTIES* m_pRegistrationProperties; // pointer to registration properties of the XAPO, set via constructor
 
@@ -89,7 +97,7 @@ protected:
       //    XAPO_E_FORMAT_UNSUPPORTED - audio format unsupported, pFormat overwritten with nearest audio format supported if fOverwrite TRUE
       //    E_INVALIDARG              - audio format invalid, pFormat left untouched
       ////
-    virtual HRESULT ValidateFormatDefault (__inout WAVEFORMATEX* pFormat, BOOL fOverwrite);
+    virtual HRESULT ValidateFormatDefault (_Inout_ WAVEFORMATEX* pFormat, BOOL fOverwrite);
 
       ////
       // DESCRIPTION:
@@ -113,7 +121,7 @@ protected:
       //    XAPO_E_FORMAT_UNSUPPORTED - input/output configuration unsupported, pRequestedFormat overwritten with nearest audio format supported if fOverwrite TRUE
       //    E_INVALIDARG              - either audio format invalid, pRequestedFormat left untouched
       ////
-    HRESULT ValidateFormatPair (const WAVEFORMATEX* pSupportedFormat, __inout WAVEFORMATEX* pRequestedFormat, BOOL fOverwrite);
+    HRESULT ValidateFormatPair (const WAVEFORMATEX* pSupportedFormat, _Inout_ WAVEFORMATEX* pRequestedFormat, BOOL fOverwrite);
 
       ////
       // DESCRIPTION:
@@ -142,7 +150,7 @@ protected:
       // RETURN VALUE:
       //  void
       ////
-    void ProcessThru (__in void* pInputBuffer, __inout FLOAT32* pOutputBuffer, UINT32 FrameCount, WORD InputChannelCount, WORD OutputChannelCount, BOOL MixWithOutput);
+    void ProcessThru (const void* pInputBuffer, _Inout_updates_(FrameCount*OutputChannelCount) FLOAT32* pOutputBuffer, UINT32 FrameCount, UINT32 InputChannelCount, UINT32 OutputChannelCount, BOOL MixWithOutput);
 
     // accessors
     const XAPO_REGISTRATION_PROPERTIES* GetRegistrationPropertiesInternal () { return m_pRegistrationProperties; }
@@ -155,7 +163,7 @@ public:
 
     // IUnknown methods:
     // retrieves the requested interface pointer if supported
-    STDMETHOD(QueryInterface) (REFIID riid, __deref_out_opt void** ppInterface)
+    STDMETHOD(QueryInterface) (REFIID riid, _Outptr_ void** ppInterface)
     {
         XAPOASSERT(ppInterface != NULL);
         HRESULT hr = S_OK;
@@ -194,21 +202,21 @@ public:
     // Allocates a copy of the registration properties of the XAPO.
     // This default implementation returns a copy of the registration
     // properties given to the constructor, allocated via XAPOAlloc.
-    STDMETHOD(GetRegistrationProperties) (__deref_out XAPO_REGISTRATION_PROPERTIES** ppRegistrationProperties);
+    STDMETHOD(GetRegistrationProperties) (_Outptr_ XAPO_REGISTRATION_PROPERTIES** ppRegistrationProperties);
 
     // Queries if a specific input format is supported for a given output format.
     // This default implementation assumes only the format described by the
     // XAPOBASE_DEFAULT_FORMAT values are supported for both input and output.
-    STDMETHOD(IsInputFormatSupported) (const WAVEFORMATEX* pOutputFormat, const WAVEFORMATEX* pRequestedInputFormat, __deref_opt_out WAVEFORMATEX** ppSupportedInputFormat);
+    STDMETHOD(IsInputFormatSupported) (const WAVEFORMATEX* pOutputFormat, const WAVEFORMATEX* pRequestedInputFormat, _Outptr_opt_ WAVEFORMATEX** ppSupportedInputFormat);
 
     // Queries if a specific output format is supported for a given input format.
     // This default implementation assumes only the format described by the
     // XAPOBASE_DEFAULT_FORMAT values are supported for both input and output.
-    STDMETHOD(IsOutputFormatSupported) (const WAVEFORMATEX* pInputFormat, const WAVEFORMATEX* pRequestedOutputFormat, __deref_opt_out WAVEFORMATEX** ppSupportedOutputFormat);
+    STDMETHOD(IsOutputFormatSupported) (const WAVEFORMATEX* pInputFormat, const WAVEFORMATEX* pRequestedOutputFormat, _Outptr_opt_ WAVEFORMATEX** ppSupportedOutputFormat);
 
     // Performs any effect-specific initialization.
     // This default implementation is a no-op and only returns S_OK.
-    STDMETHOD(Initialize) (__in_bcount_opt(DataByteSize) const void*, UINT32 DataByteSize)
+    STDMETHOD(Initialize) (_In_reads_bytes_opt_(DataByteSize) const void*, UINT32 DataByteSize)
     {
         UNREFERENCED_PARAMETER(DataByteSize);
         return S_OK;
@@ -223,7 +231,7 @@ public:
     // This default implementation performs basic input/output format
     // validation against the XAPO's registration properties.
     // Derived XAPOs should call the base implementation first.
-    STDMETHOD(LockForProcess) (UINT32 InputLockedParameterCount, __in_ecount_opt(InputLockedParameterCount) const XAPO_LOCKFORPROCESS_BUFFER_PARAMETERS* pInputLockedParameters, UINT32 OutputLockedParameterCount, __in_ecount_opt(OutputLockedParameterCount) const XAPO_LOCKFORPROCESS_BUFFER_PARAMETERS* pOutputLockedParameters);
+    STDMETHOD(LockForProcess) (_Pre_equal_to_(OutputLockedParameterCount) UINT32 InputLockedParameterCount, _In_reads_opt_(InputLockedParameterCount) const XAPO_LOCKFORPROCESS_BUFFER_PARAMETERS* pInputLockedParameters, _Pre_equal_to_(InputLockedParameterCount) UINT32 OutputLockedParameterCount, _In_reads_opt_(OutputLockedParameterCount) const XAPO_LOCKFORPROCESS_BUFFER_PARAMETERS* pOutputLockedParameters);
 
     // Opposite of LockForProcess.
     // Derived XAPOs should call the base implementation first.
@@ -254,7 +262,7 @@ public:
   //  For smaller parameter blocks, use atomic operations directly
   //  on the parameters for synchronization.
   ////
-class __declspec(novtable) CXAPOParametersBase: public CXAPOBase, public IXAPOParameters {
+class DECLSPEC_NOVTABLE CXAPOParametersBase: public CXAPOBase, public IXAPOParameters {
 private:
     BYTE*  m_pParameterBlocks;           // three contiguous process parameter blocks used for synchronization, user responsible for initialization of parameter blocks before IXAPO::Process/SetParameters/GetParameters called
     BYTE*  m_pCurrentParameters;         // pointer to current process parameters, must be aligned for atomic operations
@@ -262,23 +270,23 @@ private:
     UINT32 m_uCurrentParametersIndex;    // index of current process parameters
     UINT32 m_uParameterBlockByteSize;    // size of a single parameter block in bytes, must be > 0
     BOOL   m_fNewerResultsReady;         // TRUE if there exists new processing results not yet picked up by GetParameters(), must be aligned for atomic operations
-    BOOL   m_fProducer;                  // IXAPO::Process produces data to be returned by GetParameters(); SetParameters() disallowed
+    BOOL   m_fProducer;                  // TRUE if IXAPO::Process produces data to be returned by GetParameters(), SetParameters() and ParametersChanged() disallowed
 
 
 public:
-    ////
-    // PARAMETERS:
-    //  pRegistrationProperties - [in] registration properties of the XAPO
-    //  pParameterBlocks        - [in] three contiguous process parameter blocks used for synchronization
-    //  uParameterBlockByteSize - [in] size of one of the parameter blocks, must be > 0
-    //  fProducer               - [in] TRUE if IXAPO::Process produces data to be returned by GetParameters() (SetParameters() and ParametersChanged() disallowed)
-    ////
-    CXAPOParametersBase (const XAPO_REGISTRATION_PROPERTIES* pRegistrationProperties, BYTE* pParameterBlocks, UINT32 uParameterBlockByteSize, BOOL fProducer);
+      ////
+      // PARAMETERS:
+      //  pRegistrationProperties - [in] registration properties of the XAPO
+      //  pParameterBlocks        - [in] three contiguous process parameter blocks used for synchronization
+      //  uParameterBlockByteSize - [in] size of one of the parameter blocks, must be > 0, should be > 4
+      //  fProducer               - [in] TRUE if IXAPO::Process produces data to be returned by GetParameters() (SetParameters() and ParametersChanged() disallowed)
+      ////
+    CXAPOParametersBase (const XAPO_REGISTRATION_PROPERTIES* pRegistrationProperties, _In_reads_bytes_opt_(3*uParameterBlockByteSize) BYTE* pParameterBlocks, UINT32 uParameterBlockByteSize, BOOL fProducer);
     virtual ~CXAPOParametersBase ();
 
     // IUnknown methods:
     // retrieves the requested interface pointer if supported
-    STDMETHOD(QueryInterface) (REFIID riid, __deref_out_opt void** ppInterface)
+    STDMETHOD(QueryInterface) (REFIID riid, _Outptr_result_maybenull_ void** ppInterface)
     {
         XAPOASSERT(ppInterface != NULL);
         HRESULT hr = S_OK;
@@ -302,18 +310,23 @@ public:
     // IXAPOParameters methods:
     // Sets effect-specific parameters.
     // This method may only be called on the realtime audio processing thread.
-    STDMETHOD_(void, SetParameters) (__in_bcount(ParameterByteSize) const void* pParameters, UINT32 ParameterByteSize);
+    STDMETHOD_(void, SetParameters) (_In_reads_bytes_(ParameterByteSize) const void* pParameters, UINT32 ParameterByteSize);
 
     // Gets effect-specific parameters.
     // This method may block and should not be called from the realtime thread.
     // Get the current parameters via BeginProcess.
-    STDMETHOD_(void, GetParameters) (__out_bcount(ParameterByteSize) void* pParameters, UINT32 ParameterByteSize);
+    STDMETHOD_(void, GetParameters) (_Out_writes_bytes_(ParameterByteSize) void* pParameters, UINT32 ParameterByteSize);
 
     // Called by SetParameters() to allow for user-defined parameter validation.
     // SetParameters validates that ParameterByteSize == m_uParameterBlockByteSize
     // so the user may assume/assert ParameterByteSize == m_uParameterBlockByteSize.
     // This method should not block as it is called from the realtime thread.
-    virtual void OnSetParameters (const void*, UINT32) { }
+    virtual void OnSetParameters (_In_reads_bytes_(ParameterByteSize) const void* pParameters, UINT32 ParameterByteSize)
+    {
+        XAPOASSERT(m_uParameterBlockByteSize > 0);
+        XAPOASSERT(pParameters != NULL);
+        XAPOASSERT(ParameterByteSize == m_uParameterBlockByteSize);
+    }
 
     // Returns TRUE if SetParameters() has been called since the last processing pass.
     // May only be used within the XAPO's IXAPO::Process implementation,

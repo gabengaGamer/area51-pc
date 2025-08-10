@@ -1,9 +1,0 @@
-NAME            MILESP16
-
-DESCRIPTION     'Miles Player'
-EXETYPE         WINDOWS
-STUB            'WINSTUB.EXE'
-CODE            PRELOAD FIXED
-DATA            PRELOAD FIXED MULTIPLE
-HEAPSIZE        1024
-STACKSIZE       8192

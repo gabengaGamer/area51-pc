@@ -19,4 +19,3 @@ void                Decode              ( audio_stream* pStream,
 };
 
 extern audio_mp3_mgr g_AudioMP3Mgr;
-

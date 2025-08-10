@@ -1,7 +1,0 @@
-EXPORTS
-        DLSOpen
-        DLSClose
-        DLSCompactMemory
-        DLSLoadFile
-        DLSUnloadAll
-        DLSUnloadFile

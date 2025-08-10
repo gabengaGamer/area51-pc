@@ -2,8 +2,6 @@
 //  
 //  x_time.cpp
 //
-//  TODO - Make nice and inline happy for performance.
-//
 //==============================================================================
 
 #include "..\x_context.hpp"
@@ -39,55 +37,71 @@
 #include <xtl.h>
 #endif
 
-#define XTICKS_PER_MS       s_PCFrequency
-#define XTICKS_PER_SECOND   s_PCFrequency2
+// Global variables for time system
+f64     g_PCFrequency     = 0.0;
+f64     g_PCFrequency2    = 0.0;
+f64     g_PCInvFrequency  = 0.0;        // Inverse frequency for faster division
+f64     g_PCInvFrequency2 = 0.0;        // Inverse frequency for seconds
+xtick   g_BaseTimeTick    = 0;
+xtick   g_LastTicks       = 0;
 
-static f64 s_PCFrequency;
-static f64 s_PCFrequency2;
-static xtick s_BaseTimeTick;
+#define XTICKS_PER_MS       g_PCFrequency
+#define XTICKS_PER_SECOND   g_PCFrequency2
 
 //==============================================================================
 
 void x_TimeInit( void )
 {    
-    LARGE_INTEGER C;
+    LARGE_INTEGER F, C;
 
-    QueryPerformanceCounter( &C );
-
-    LARGE_INTEGER F;
+    // Get frequency first
     QueryPerformanceFrequency( &F );
-    s_PCFrequency  = (f64)F.QuadPart / 1000.0;
-    s_PCFrequency2 = (f64)F.QuadPart;
-    s_BaseTimeTick = (xtick)C.QuadPart;
+    g_PCFrequency2 = (f64)F.QuadPart;
+    g_PCFrequency  = g_PCFrequency2 / 1000.0;
+    
+    // Pre-calculate inverse frequencies for faster division
+    g_PCInvFrequency  = 1000.0 / g_PCFrequency2;
+    g_PCInvFrequency2 = 1.0 / g_PCFrequency2;
+    
+    // Get base time
+    QueryPerformanceCounter( &C );
+    g_BaseTimeTick = (xtick)C.QuadPart;
+    g_LastTicks = 0;
+
+#ifdef X_DEBUG
+    x_TimeUpdateDebugVars();
+#endif
 }
 
 //==============================================================================
 
 void x_TimeKill( void )
 {    
+    // Reset all global variables
+    g_PCFrequency     = 0.0;
+    g_PCFrequency2    = 0.0;
+    g_PCInvFrequency  = 0.0;
+    g_PCInvFrequency2 = 0.0;
+    g_BaseTimeTick    = 0;
+    g_LastTicks       = 0;
 }
 
 //==============================================================================
 
 xtick x_GetTime( void )
 {
-    static xtick LastTicks = 0;
-    
-    xtick Ticks;
     LARGE_INTEGER C;
-
     QueryPerformanceCounter( &C );
-    Ticks = (xtick)(C.QuadPart)-s_BaseTimeTick;
+    
+    xtick Ticks = (xtick)(C.QuadPart) - g_BaseTimeTick;
 
-    if( Ticks < LastTicks )     
-        Ticks = LastTicks + 1;
+    // Ensure monotonic time progression
+    if( Ticks < g_LastTicks )     
+        Ticks = g_LastTicks + 1;
 
-    LastTicks = Ticks;
-
-    return( Ticks );
+    g_LastTicks = Ticks;
+    return Ticks;
 }
-
-//==============================================================================
 
 //==============================================================================
 #endif // TARGET_PC
@@ -97,29 +111,35 @@ xtick x_GetTime( void )
 //  PLATFORM INDEPENDENT CODE
 //==============================================================================
 
-#define ONE_HOUR ((s64)XTICKS_PER_MS * 1000 * 60 * 60)
-#define ONE_DAY  ((s64)XTICKS_PER_MS * 1000 * 60 * 60 * 24)
+#define ONE_HOUR_TICKS ((s64)XTICKS_PER_MS * 1000 * 60 * 60)
+#define ONE_DAY_TICKS  ((s64)XTICKS_PER_MS * 1000 * 60 * 60 * 24)
 
-//
-// This is so we can see these values in the debugger
-//
+// Debug variables for easier inspection
+#ifdef X_DEBUG
+xtick g_XTICKS_PER_MS   = 0;
+xtick g_XTICKS_PER_DAY  = 0;
+xtick g_XTICKS_PER_HOUR = 0;
 
-xtick s_XTICKS_PER_MS   = (xtick)XTICKS_PER_MS;
-xtick s_XTICKS_PER_DAY  = (xtick)ONE_DAY;
-xtick s_XTICKS_PER_HOUR = (xtick)ONE_HOUR;
+void x_TimeUpdateDebugVars( void )
+{
+    g_XTICKS_PER_MS   = (xtick)XTICKS_PER_MS;
+    g_XTICKS_PER_DAY  = (xtick)ONE_DAY_TICKS;
+    g_XTICKS_PER_HOUR = (xtick)ONE_HOUR_TICKS;
+}
+#endif
 
 //==============================================================================
 
-s64 x_GetTicksPerMs ( void )
+s64 x_GetTicksPerMs( void )
 {
-    return( (s64)XTICKS_PER_MS );
+    return (s64)XTICKS_PER_MS;
 }
 
 //==============================================================================
 
-s64 x_GetTicksPerSecond ( void )
+s64 x_GetTicksPerSecond( void )
 {
-    return( (s64)XTICKS_PER_SECOND );
+    return (s64)XTICKS_PER_SECOND;
 }
 
 //==============================================================================
@@ -127,25 +147,34 @@ s64 x_GetTicksPerSecond ( void )
 f32 x_TicksToMs( xtick Ticks )
 {
     #ifndef X_EDITOR
-        ASSERT( Ticks < ONE_DAY );
+        ASSERT( Ticks < ONE_DAY_TICKS );
     #endif
-    // We do the multiple casting here to try and preserve as much accuracy as possible
-    //return( (f32)(     Ticks) / (f32)XTICKS_PER_MS );
-    return f32(f64(Ticks)/f64(s_PCFrequency2)*1000);
+    
+    #ifdef TARGET_PC
+        // Use pre-calculated inverse frequency for faster conversion
+        return (f32)((f64)Ticks * g_PCInvFrequency);
+    #else
+        return (f32)((f64)Ticks / (f64)XTICKS_PER_MS);
+    #endif
 }
 
 //==============================================================================
 
 f64 x_TicksToSec( xtick Ticks )
 {
-    return( ((f64)Ticks) / ((f64)(XTICKS_PER_MS * 1000)) );
+    #ifdef TARGET_PC
+        // Use pre-calculated inverse frequency for faster conversion
+        return (f64)Ticks * g_PCInvFrequency2;
+    #else
+        return ((f64)Ticks) / ((f64)(XTICKS_PER_MS * 1000));
+    #endif
 }
 
 //==============================================================================
 
 f64 x_GetTimeSec( void )
 {
-    return( x_TicksToSec( x_GetTime() ) );
+    return x_TicksToSec( x_GetTime() );
 }
 
 //==============================================================================
@@ -156,183 +185,6 @@ xtimer::xtimer( void )
     m_StartTime = 0;
     m_TotalTime = 0;
     m_NSamples  = 0;
-}
-
-//==============================================================================
-
-void xtimer::Start( void )
-{
-    //CONTEXT( "xtimer::Start" );
-    if( !m_Running )
-    {
-        m_StartTime = x_GetTime();
-        m_Running   = TRUE;        
-        m_NSamples++;
-    }
-}
-
-//==============================================================================
-
-void xtimer::Reset( void )
-{
-    //CONTEXT( "xtimer::Reset" );
-    m_Running   = FALSE;
-    m_StartTime = 0;
-    m_TotalTime = 0;
-    m_NSamples  = 0;
-}
-
-//==============================================================================
-
-xtick xtimer::Stop( void )
-{
-    //CONTEXT( "xtimer::Stop" );
-    if( m_Running )
-    {
-        m_TotalTime += x_GetTime() - m_StartTime;
-        m_Running    = FALSE;
-    }
-    return( m_TotalTime );
-}
-
-//==============================================================================
-
-f32 xtimer::StopMs( void )
-{
-    //CONTEXT( "xtimer::StopMs" );
-    if( m_Running )
-    {
-        m_TotalTime += x_GetTime() - m_StartTime;
-        m_Running    = FALSE;
-    }
-
-    #ifndef X_EDITOR
-        ASSERT( m_TotalTime < ONE_DAY );
-    #endif
-    return( (f32)(m_TotalTime) / (f32)XTICKS_PER_MS );
-}
-
-//==============================================================================
-
-f32 xtimer::StopSec( void )
-{
-    //CONTEXT( "xtimer::StopSec" );
-    if( m_Running )
-    {
-        m_TotalTime += x_GetTime() - m_StartTime;
-        m_Running    = FALSE;
-    }
-
-    #ifndef X_EDITOR
-        ASSERT( m_TotalTime < ONE_DAY );
-    #endif
-    return( (f32)(m_TotalTime) / ((f32)XTICKS_PER_MS * 1000.0f) );
-}
-
-//==============================================================================
-
-xtick xtimer::Read( void ) const
-{
-    if( m_Running )  return( m_TotalTime + (x_GetTime() - m_StartTime) );
-    else             return( m_TotalTime );
-}
-
-//==============================================================================
-
-f32 xtimer::ReadMs( void ) const
-{
-    xtick Ticks;
-    if( m_Running )  Ticks = m_TotalTime + (x_GetTime() - m_StartTime);
-    else             Ticks = m_TotalTime;
-
-    #ifndef X_EDITOR
-        ASSERT( Ticks < ONE_DAY );
-    #endif
-    return( (f32)(Ticks) / (f32)XTICKS_PER_MS );
-}
-
-//==============================================================================
-
-f32 xtimer::ReadSec( void ) const
-{
-    xtick Ticks;
-    if( m_Running )  Ticks = m_TotalTime + (x_GetTime() - m_StartTime);
-    else             Ticks = m_TotalTime;
-
-    return( (f32)(Ticks) / ((f32)XTICKS_PER_MS * 1000.0f) );
-}
-
-//==============================================================================
-
-xtick xtimer::Trip( void )
-{
-    xtick Ticks = 0;
-    if( m_Running )
-    {
-        xtick Now = x_GetTime();
-        Ticks = m_TotalTime + (Now - m_StartTime);
-        m_TotalTime = 0;
-        m_StartTime = Now;
-        m_NSamples++;
-    }
-    return( Ticks );
-}
-
-//==============================================================================
-
-f32 xtimer::TripMs( void )
-{
-    xtick Ticks = 0;
-    if( m_Running )
-    {
-        xtick Now = x_GetTime();
-        Ticks = m_TotalTime + (Now - m_StartTime);
-        m_TotalTime = 0;
-        m_StartTime = Now;
-        m_NSamples++;
-    }
-
-    #ifndef X_EDITOR
-        ASSERT( Ticks < ONE_DAY );
-    #endif
-    return( (f32)(Ticks) / (f32)XTICKS_PER_MS );
-}
-
-//==============================================================================
-
-f32 xtimer::TripSec( void )
-{
-    xtick Ticks = 0;
-    if( m_Running )
-    {
-        xtick Now = x_GetTime();
-        Ticks = m_TotalTime + (Now - m_StartTime);
-        m_TotalTime = 0;
-        m_StartTime = Now;
-        m_NSamples++;
-    }
-
-    #ifndef X_EDITOR
-        ASSERT( Ticks < ONE_DAY );
-    #endif
-    return( (f32)(Ticks) / ((f32)XTICKS_PER_MS * 1000.0f) );
-}
-
-//==============================================================================
-
-s32 xtimer::GetNSamples( void ) const
-{
-    return( m_NSamples );
-}
-
-//==============================================================================
-
-f32 xtimer::GetAverageMs( void ) const
-{
-    if( m_NSamples <= 0 ) 
-        return( 0 );
-
-    return( ReadMs() / m_NSamples );
 }
 
 //==============================================================================

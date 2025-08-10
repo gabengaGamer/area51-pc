@@ -7,6 +7,11 @@
  *
  ***************************************************************************/
 
+#include <winapifamily.h>
+
+#pragma region Desktop Family
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
+
 #ifndef _D3DTYPES_H_
 #define _D3DTYPES_H_
 
@@ -14,15 +19,26 @@
 #define DIRECT3D_VERSION         0x0700
 #endif
 
-#if (DIRECT3D_VERSION >= 0x0800)
-#pragma message("should not include d3dtypes.h when compiling for DX8 or newer interfaces")
-#endif
-
 #include <windows.h>
 
 #include <float.h>
+
+#if (DIRECT3D_VERSION >= 0x0800)
+
+#ifndef _D3DHAL_H_
+#pragma message("should not include d3dtypes.h when compiling for DX8 or newer interfaces")
+#endif
+
+#if (DIRECT3D_VERSION >= 0x0900)
+#include <d3d9types.h>
+#else
+#include <d3d8types.h>
+#endif
+#endif
+
 #include "ddraw.h"
 
+#pragma warning(push)
 #pragma warning(disable:4201) // anonymous unions warning
 #if defined(_X86_) || defined(_IA64_)
 #pragma pack(4)
@@ -773,7 +789,6 @@ typedef enum _D3DLIGHTTYPE {
 } D3DLIGHTTYPE;
 
 #else
-typedef enum _D3DLIGHTTYPE D3DLIGHTTYPE;
 #define D3DLIGHT_PARALLELPOINT  (D3DLIGHTTYPE)4
 #define D3DLIGHT_GLSPOT         (D3DLIGHTTYPE)5
 
@@ -1152,7 +1167,6 @@ typedef enum _D3DTRANSFORMSTATETYPE {
 //
 // legacy transform state names
 //
-typedef enum _D3DTRANSFORMSTATETYPE D3DTRANSFORMSTATETYPE;
 #define D3DTRANSFORMSTATE_WORLD         (D3DTRANSFORMSTATETYPE)1
 #define D3DTRANSFORMSTATE_VIEW          (D3DTRANSFORMSTATETYPE)2
 #define D3DTRANSFORMSTATE_PROJECTION    (D3DTRANSFORMSTATETYPE)3
@@ -1347,8 +1361,6 @@ typedef enum _D3DRENDERSTATETYPE {
 } D3DRENDERSTATETYPE;
 
 #else
-
-typedef enum _D3DRENDERSTATETYPE D3DRENDERSTATETYPE;
 
 //
 // legacy renderstate names
@@ -2104,7 +2116,6 @@ typedef enum _D3DTEXTURETRANSFORMFLAGS {
 //
 // legacy vertex blend names
 //
-typedef enum _D3DVERTEXBLENDFLAGS D3DVERTEXBLENDFLAGS;
 #define D3DVBLEND_DISABLE  (D3DVERTEXBLENDFLAGS)0
 #define D3DVBLEND_1WEIGHT  (D3DVERTEXBLENDFLAGS)1
 #define D3DVBLEND_2WEIGHTS (D3DVERTEXBLENDFLAGS)2
@@ -2113,7 +2124,10 @@ typedef enum _D3DVERTEXBLENDFLAGS D3DVERTEXBLENDFLAGS;
 #endif //(DIRECT3D_VERSION < 0x0800)
 
 #pragma pack()
-#pragma warning(default:4201)
+#pragma warning(pop)
 
 #endif /* _D3DTYPES_H_ */
+
+#endif /* WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP) */
+#pragma endregion
 

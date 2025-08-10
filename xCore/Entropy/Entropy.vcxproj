@@ -110,63 +110,69 @@
     <ClCompile>
       <Optimization>MaxSpeed</Optimization>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
-      <AdditionalIncludeDirectories>$(X)\..\support;$(X)\x_files;$(X)\Entropy;$(X)\Entropy\Audio;$(X)\3rdParty;$(X)\3rdParty\DirectX9;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(X)\..\support;$(X)\x_files;$(X)\Entropy;$(X)\Entropy\Audio;$(X)\3rdParty;$(X)\3rdParty\DirectX9;$(X)\3rdParty\ffmpeg-win32\include;$(X)\3rdParty\DirectXTex;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>TARGET_PC;CONFIG_RETAIL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <WarningLevel>TurnOffAllWarnings</WarningLevel>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>$(X)\..\support;$(X)\x_files;$(X)\Entropy;$(X)\Entropy\Audio;$(X)\3rdParty;$(X)\3rdParty\DirectX9;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(X)\..\support;$(X)\x_files;$(X)\Entropy;$(X)\Entropy\Audio;$(X)\3rdParty;$(X)\3rdParty\DirectX9;$(X)\3rdParty\ffmpeg-win32\include;$(X)\3rdParty\DirectXTex;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>TARGET_PC;CONFIG_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <StructMemberAlignment>Default</StructMemberAlignment>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <WarningLevel>TurnOffAllWarnings</WarningLevel>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='OptDebug|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>$(X)\..\support;$(X)\x_files;$(X)\Entropy;$(X)\Entropy\Audio;$(X)\3rdParty;$(X)\3rdParty\DirectX9;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(X)\..\support;$(X)\x_files;$(X)\Entropy;$(X)\Entropy\Audio;$(X)\3rdParty;$(X)\3rdParty\DirectX9;$(X)\3rdParty\ffmpeg-win32\include;$(X)\3rdParty\DirectXTex;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>TARGET_PC;CONFIG_OPTDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <WarningLevel>TurnOffAllWarnings</WarningLevel>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='QA|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>$(X)\..\support;$(X)\x_files;$(X)\Entropy;$(X)\Entropy\Audio;$(X)\3rdParty;$(X)\3rdParty\DirectX9;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(X)\..\support;$(X)\x_files;$(X)\Entropy;$(X)\Entropy\Audio;$(X)\3rdParty;$(X)\3rdParty\DirectX9;$(X)\3rdParty\ffmpeg-win32\include;$(X)\3rdParty\DirectXTex;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>TARGET_PC;CONFIG_QA;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <WarningLevel>TurnOffAllWarnings</WarningLevel>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='EDITOR-Debug|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>$(X)\..\support;$(X)\x_files;$(X)\Entropy;$(X)\Entropy\Audio;$(X)\3rdParty;$(X)\3rdParty\DirectX9;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(X)\..\support;$(X)\x_files;$(X)\Entropy;$(X)\Entropy\Audio;$(X)\3rdParty;$(X)\3rdParty\DirectX9;$(X)\3rdParty\ffmpeg-win32\include;$(X)\3rdParty\DirectXTex;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>TARGET_PC;CONFIG_DEBUG;X_EDITOR;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <WarningLevel>TurnOffAllWarnings</WarningLevel>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='VIEWER-Debug|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>$(X)\..\support;$(X)\x_files;$(X)\Entropy;$(X)\Entropy\Audio;$(X)\3rdParty;$(X)\3rdParty\DirectX9;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(X)\..\support;$(X)\x_files;$(X)\Entropy;$(X)\Entropy\Audio;$(X)\3rdParty;$(X)\3rdParty\DirectX9;$(X)\3rdParty\ffmpeg-win32\include;$(X)\3rdParty\DirectXTex;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>TARGET_PC;CONFIG_DEBUG;CONFIG_VIEWER;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <WarningLevel>TurnOffAllWarnings</WarningLevel>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -180,12 +186,14 @@
     <ClCompile Include="Audio\audio_stream_controller.cpp" />
     <ClCompile Include="Audio\audio_stream_mgr.cpp" />
     <ClCompile Include="Audio\audio_voice_mgr.cpp" />
-    <ClCompile Include="Audio\Codecs\mp3api.cpp" />
-    <ClCompile Include="Audio\Codecs\MP3DEC.CPP" />
     <ClCompile Include="Audio\Hardware\audio_hardware_pc.cpp" />
     <ClCompile Include="Audio\Hardware\audio_stream_pc.cpp" />
     <ClCompile Include="Audio\IAL\IAL.cpp" />
-	<ClCompile Include="e_Profile.cpp" />
+    <ClCompile Include="D3DEngine\d3deng_composite.cpp" />
+    <ClCompile Include="D3DEngine\d3deng_rtarget.cpp" />
+    <ClCompile Include="D3DEngine\d3deng_shader.cpp" />
+    <ClCompile Include="D3DEngine\d3deng_state.cpp" />
+    <ClCompile Include="e_Profile.cpp" />
     <ClCompile Include="Common\e_Draw.cpp" />
     <ClCompile Include="Common\e_Input.cpp" />
     <ClCompile Include="Common\e_ScratchMem.cpp" />
@@ -197,7 +205,6 @@
     <ClCompile Include="D3DEngine\d3deng_draw.cpp" />
     <ClCompile Include="D3DEngine\d3deng_font.cpp" />
     <ClCompile Include="D3DEngine\d3deng_input.cpp" />
-    <ClCompile Include="D3DEngine\d3deng_video.cpp" />
     <ClCompile Include="D3DEngine\d3deng_vram.cpp" />
     <ClCompile Include="IOManager\Device_DVD\io_device_dvd.cpp" />
     <ClCompile Include="IOManager\Device_DVD\io_device_dvd_pc.cpp" />
@@ -233,11 +240,15 @@
     <ClCompile Include="Network\PC\NetLib.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Audio\Hardware\audio_prologic2.hpp" />
+    <ClInclude Include="D3DEngine\d3deng_composite.hpp" />
     <ClInclude Include="D3DEngine\d3deng_font.hpp" />
-    <ClInclude Include="D3DEngine\d3deng_video.hpp" />
-	<ClInclude Include="D3DEngine\d3deng_private.hpp" />
+    <ClInclude Include="D3DEngine\d3deng_rtarget.hpp" />
+    <ClInclude Include="D3DEngine\d3deng_shader.hpp" />
+    <ClInclude Include="D3DEngine\d3deng_private.hpp" />
+    <ClInclude Include="D3DEngine\d3deng_state.hpp" />
     <ClInclude Include="Entropy.hpp" />
-	<ClInclude Include="Common\e_View_inline.hpp" />
+    <ClInclude Include="Common\e_View_inline.hpp" />
     <ClInclude Include="e_Audio.hpp" />
     <ClInclude Include="e_Draw.hpp" />
     <ClInclude Include="e_Engine.hpp" />
@@ -265,13 +276,6 @@
     <ClInclude Include="Audio\audio_stream_controller.hpp" />
     <ClInclude Include="Audio\audio_stream_mgr.hpp" />
     <ClInclude Include="Audio\audio_voice_mgr.hpp" />
-    <ClInclude Include="Audio\Codecs\DATATBL.H" />
-    <ClInclude Include="Audio\Codecs\IMSSAPI.H" />
-    <ClInclude Include="Audio\Codecs\mp3api.hpp" />
-    <ClInclude Include="Audio\Codecs\MP3DEC.H" />
-    <ClInclude Include="Audio\Codecs\MSS.H" />
-    <ClInclude Include="Audio\Codecs\mssasi.h" />
-    <ClInclude Include="Audio\Codecs\Rib.h" />
     <ClInclude Include="Audio\IAL\IAL.h" />
     <ClInclude Include="IOManager\Device_DVD\io_device_dvd.hpp" />
     <ClInclude Include="IOManager\device_net\io_device_net.hpp" />

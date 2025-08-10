@@ -48,12 +48,6 @@
     <ClCompile Include="fx_Sprite.cpp">
       <Filter>Elements</Filter>
     </ClCompile>
-    <ClCompile Include="fx_Mgr_insert.hpp">
-      <Filter>Implementation</Filter>
-    </ClCompile>
-    <ClCompile Include="fx_Mgr_private.hpp">
-      <Filter>Implementation</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="fx_Cylinder.hpp">
@@ -75,5 +69,7 @@
       <Filter>Elements</Filter>
     </ClInclude>
     <ClInclude Include="fx_Mgr.hpp" />
+    <ClInclude Include="fx_Mgr_insert.hpp" />
+    <ClInclude Include="fx_Mgr_private.hpp" />
   </ItemGroup>
 </Project>

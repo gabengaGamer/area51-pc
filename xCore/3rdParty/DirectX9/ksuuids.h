@@ -4,9 +4,13 @@
 // Desc: Contains the GUIDs for the MediaType type, subtype fields and format
 //       types for DVD/MPEG2 media types.
 //
-// Copyright (c) 1992 - 2002, Microsoft Corporation.  All rights reserved.
+// Copyright (c) Microsoft Corporation. All rights reserved.
 //------------------------------------------------------------------------------
 
+#include <winapifamily.h>
+
+#pragma region Desktop Family
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
 
 //
 // --- MPEG 2 definitions ---
@@ -26,9 +30,14 @@ DEFINE_GUID(MEDIATYPE_CONTROL,
 0xe06d8021, 0xdb46, 0x11cf, 0xb4, 0xd1, 0x00, 0x80, 0x05f, 0x6c, 0xbb, 0xea);
 #endif // #if 0
 
+#if ( (NTDDI_VERSION >= NTDDI_WINXPSP2) && (NTDDI_VERSION < NTDDI_WS03) ) || (NTDDI_VERSION >= NTDDI_WS03SP1)
 
 OUR_GUID_ENTRY( MEDIATYPE_MPEG2_SECTIONS,
     0x455f176c, 0x4b06, 0x47ce, 0x9a, 0xef, 0x8c, 0xae, 0xf7, 0x3d, 0xf7, 0xb5)
+
+// {1ED988B0-3FFC-4523-8725-347BEEC1A8A0}
+OUR_GUID_ENTRY( MEDIASUBTYPE_MPEG2_VERSIONED_TABLES,
+    0x1ed988b0, 0x3ffc, 0x4523, 0x87, 0x25, 0x34, 0x7b, 0xee, 0xc1, 0xa8, 0xa0)
 
 OUR_GUID_ENTRY(MEDIASUBTYPE_ATSC_SI,
 0xb3c7397c, 0xd303, 0x414d, 0xb3, 0x3c, 0x4e, 0xd2, 0xc9, 0xd2, 0x97, 0x33)
@@ -36,12 +45,21 @@ OUR_GUID_ENTRY(MEDIASUBTYPE_ATSC_SI,
 OUR_GUID_ENTRY(MEDIASUBTYPE_DVB_SI,
 0xe9dd31a3, 0x221d, 0x4adb, 0x85, 0x32, 0x9a, 0xf3, 0x9, 0xc1, 0xa4, 0x8)
 
+OUR_GUID_ENTRY(MEDIASUBTYPE_ISDB_SI,
+0xe89ad298, 0x3601, 0x4b06, 0xaa, 0xec, 0x9d, 0xde, 0xed, 0xcc, 0x5b, 0xd0)
+
+// {EC232EB2-CB96-4191-B226-0EA129F38250}
+OUR_GUID_ENTRY(MEDIASUBTYPE_TIF_SI,
+0xec232eb2, 0xcb96, 0x4191, 0xb2, 0x26, 0xe, 0xa1, 0x29, 0xf3, 0x82, 0x50)
 
 // {C892E55B-252D-42b5-A316-D997E7A5D995}
-OUR_GUID_ENTRY(MEDIASUBTYPE_MPEG2DATA, 
+OUR_GUID_ENTRY(MEDIASUBTYPE_MPEG2DATA,
 0xc892e55b, 0x252d, 0x42b5, 0xa3, 0x16, 0xd9, 0x97, 0xe7, 0xa5, 0xd9, 0x95)
 
+#endif
 
+OUR_GUID_ENTRY(MEDIASUBTYPE_MPEG2_WMDRM_TRANSPORT,
+0x18BEC4EA, 0x4676, 0x450e, 0xB4, 0x78, 0x0C, 0xD8, 0x4C, 0x54, 0xB3, 0x27)
 
 // e06d8026-db46-11cf-b4d1-00805f6cbbea
 OUR_GUID_ENTRY(MEDIASUBTYPE_MPEG2_VIDEO,
@@ -65,9 +83,25 @@ OUR_GUID_ENTRY(MEDIASUBTYPE_MPEG2_PROGRAM,
 OUR_GUID_ENTRY(MEDIASUBTYPE_MPEG2_TRANSPORT,
 0xe06d8023, 0xdb46, 0x11cf, 0xb4, 0xd1, 0x00, 0x80, 0x05f, 0x6c, 0xbb, 0xea)
 
+#if (NTDDI_VERSION >= NTDDI_WINXP)
+
 // 138AA9A4-1EE2-4c5b-988E-19ABFDBC8A11
 OUR_GUID_ENTRY(MEDIASUBTYPE_MPEG2_TRANSPORT_STRIDE,
 0x138aa9a4, 0x1ee2, 0x4c5b, 0x98, 0x8e, 0x19, 0xab, 0xfd, 0xbc, 0x8a, 0x11)
+
+// {18BEC4EA-4676-450e-B478-0CD84C54B327}
+OUR_GUID_ENTRY(MEDIASUBTYPE_MPEG2_UDCR_TRANSPORT,
+0x18BEC4EA, 0x4676, 0x450e, 0xB4, 0x78, 0x0C, 0xD8, 0x4C, 0x54, 0xB3, 0x27)
+
+// {0d7aed42-cb9a-11db-9705-005056c00008}
+OUR_GUID_ENTRY( MEDIASUBTYPE_MPEG2_PBDA_TRANSPORT_RAW, 
+0x0d7aed42, 0xcb9a, 0x11db, 0x97, 0x5, 0x0, 0x50, 0x56, 0xc0, 0x0, 0x8 )
+
+// {af748dd4-d800-11db-9705-005056c00008}
+OUR_GUID_ENTRY ( MEDIASUBTYPE_MPEG2_PBDA_TRANSPORT_PROCESSED,
+0xaf748dd4, 0xd80, 0x11db, 0x97, 0x5, 0x0, 0x50, 0x56, 0xc0, 0x0, 0x8 )
+
+#endif
 
 // e06d802b-db46-11cf-b4d1-00805f6cbbea
 OUR_GUID_ENTRY(MEDIASUBTYPE_MPEG2_AUDIO,
@@ -85,6 +119,8 @@ OUR_GUID_ENTRY(MEDIASUBTYPE_DVD_SUBPICTURE,
 OUR_GUID_ENTRY(MEDIASUBTYPE_DVD_LPCM_AUDIO,
 0xe06d8032, 0xdb46, 0x11cf, 0xb4, 0xd1, 0x00, 0x80, 0x05f, 0x6c, 0xbb, 0xea)
 
+#if (NTDDI_VERSION >= NTDDI_WINXP)
+
 // e06d8033-db46-11cf-b4d1-00805f6cbbea
 OUR_GUID_ENTRY(MEDIASUBTYPE_DTS,
 0xe06d8033, 0xdb46, 0x11cf, 0xb4, 0xd1, 0x00, 0x80, 0x05f, 0x6c, 0xbb, 0xea)
@@ -92,6 +128,8 @@ OUR_GUID_ENTRY(MEDIASUBTYPE_DTS,
 // e06d8034-db46-11cf-b4d1-00805f6cbbea
 OUR_GUID_ENTRY(MEDIASUBTYPE_SDDS,
 0xe06d8034, 0xdb46, 0x11cf, 0xb4, 0xd1, 0x00, 0x80, 0x05f, 0x6c, 0xbb, 0xea)
+
+#endif
 
 // DVD-related mediatypes
 // ED0B916A-044D-11d1-AA78-00C04FC31D60
@@ -133,6 +171,26 @@ OUR_GUID_ENTRY(FORMAT_MPEG2Audio,
 OUR_GUID_ENTRY(FORMAT_DVD_LPCMAudio,
 0xe06d80e6, 0xdb46, 0x11cf, 0xb4, 0xd1, 0x00, 0x80, 0x05f, 0x6c, 0xbb, 0xea)
 
+//
+// UVC 1.2 H.264 Video Format
+//
+// 2017be05-6629-4248-aaed-7e1a47bc9b9c
+OUR_GUID_ENTRY(FORMAT_UVCH264Video, 
+0x2017be05, 0x6629, 0x4248, 0xaa, 0xed, 0x7e, 0x1a, 0x47, 0xbc, 0x9b, 0x9c)
+
+//
+// JPEG Image Format
+//
+// 692fa379-d3e8-4651-b5b4-0b94b013eeaf
+OUR_GUID_ENTRY(FORMAT_JPEGImage, 
+0x692fa379, 0xd3e8, 0x4651, 0xb5, 0xb4, 0xb, 0x94, 0xb0, 0x13, 0xee, 0xaf)
+
+//
+// Image Format
+//
+// 692fa379-d3e8-4651-b5b4-0b94b013eeaf
+OUR_GUID_ENTRY(FORMAT_Image, 
+0x692fa379, 0xd3e8, 0x4651, 0xb5, 0xb4, 0xb, 0x94, 0xb0, 0x13, 0xee, 0xaf)
 
 //
 // KS Property Set Id (to communicate with the WDM Proxy filter) -- from
@@ -155,6 +213,8 @@ OUR_GUID_ENTRY(AM_KSPROPSETID_CopyProt,
 OUR_GUID_ENTRY(AM_KSPROPSETID_TSRateChange,
 0xa503c5c0, 0x1d1d, 0x11d1, 0xad, 0x80, 0x44, 0x45, 0x53, 0x54, 0x0, 0x0)
 
+#if (NTDDI_VERSION >= NTDDI_WINXP)
+
 // 3577EB09-9582-477f-B29C-B0C452A4FF9A
 OUR_GUID_ENTRY(AM_KSPROPSETID_DVD_RateChange,
 0x3577eb09, 0x9582, 0x477f, 0xb2, 0x9c, 0xb0, 0xc4, 0x52, 0xa4, 0xff, 0x9a)
@@ -166,6 +226,16 @@ OUR_GUID_ENTRY(AM_KSPROPSETID_DvdKaraoke,
 // c830acbd-ab07-492f-8852-45b6987c2979
 OUR_GUID_ENTRY(AM_KSPROPSETID_FrameStep,
 0xc830acbd, 0xab07, 0x492f, 0x88, 0x52, 0x45, 0xb6, 0x98, 0x7c, 0x29, 0x79)
+
+#endif
+
+// -----------------------------------------------
+// MPEG4 related KSPROPSETIDs from ksmedia.h of WDK
+// -----------------------------------------------
+
+// FF6C4BFA-07A9-4c7b-A237-672F9D68065F
+OUR_GUID_ENTRY(AM_KSPROPSETID_MPEG4_MediaType_Attributes,
+0xff6c4bfa, 0x7a9, 0x4c7b, 0xa2, 0x37, 0x67, 0x2f, 0x9d, 0x68, 0x6, 0x5f)
 
 //
 // KS categories from ks.h and ksmedia.h
@@ -209,6 +279,12 @@ OUR_GUID_ENTRY(AM_KSCATEGORY_TVAUDIO,
 OUR_GUID_ENTRY(AM_KSCATEGORY_VBICODEC,
 0x07dad660L, 0x22f1, 0x11d1, 0xa9, 0xf4, 0x00, 0xc0, 0x4f, 0xbb, 0xde, 0x8f)
 
+#if (NTDDI_VERSION >= NTDDI_WS03SP1)
+// multi-instance safe codec categories(kernel or user mode)
+// {9C24A977-0951-451a-8006-0E49BD28CD5F}
+OUR_GUID_ENTRY(AM_KSCATEGORY_VBICODEC_MI,
+0x9c24a977, 0x951, 0x451a, 0x80, 0x6, 0xe, 0x49, 0xbd, 0x28, 0xcd, 0x5f)
+#endif
 
 // 0A4252A0L-7E70-11D0-A5D6-28DB04C10000
 OUR_GUID_ENTRY(AM_KSCATEGORY_SPLITTER,
@@ -242,3 +318,7 @@ OUR_GUID_ENTRY(IID_IKsPinFactory,
 // 1A8766A0-62CE-11CF-A5D6-28DB04C10000
 OUR_GUID_ENTRY(AM_INTERFACESETID_Standard,
 0x1A8766A0L, 0x62CE, 0x11CF, 0xA5, 0xD6, 0x28, 0xDB, 0x04, 0xC1, 0x00, 0x00)
+
+#endif /* WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP) */
+#pragma endregion
+

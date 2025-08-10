@@ -3,7 +3,9 @@
 // DVD Device layer for PC
 //
 //==============================================================================
+
 #include "x_target.hpp"
+
 #if !defined(TARGET_PC)
 #error This is not for this target platform. Check dependancy rules.
 #endif
@@ -145,11 +147,8 @@ io_device::device_data* io_device_dvd::GetDeviceData( void )
     return &s_DeviceData;
 }
 
-
-//==============================================================================
 //==============================================================================
 //================================ DVD Functions ===============================
-//==============================================================================
 //==============================================================================
 
 xbool io_device_dvd::PhysicalOpen( const char* pFilename, io_device_file* pFile, open_flags OpenFlags )

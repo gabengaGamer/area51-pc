@@ -9,16 +9,17 @@
 
 #ifndef __DDRAW_INCLUDED__
 #define __DDRAW_INCLUDED__
+#include <winapifamily.h>
 
-//Disable the nameless union warning when building internally
-#undef ENABLE_NAMELESS_UNION_PRAGMA
-#ifdef DIRECTX_REDIST
-#define ENABLE_NAMELESS_UNION_PRAGMA
+#pragma region Desktop Family
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
+
+// Always disable warning C4201: "nonstandard extension used :
+// nameless struct/union"
+#if _MSC_VER >= 1200
+#pragma warning(push)
 #endif
-
-#ifdef ENABLE_NAMELESS_UNION_PRAGMA
 #pragma warning(disable:4201)
-#endif
 
 /*
  * If you wish an application built against the newest version of DirectDraw
@@ -55,6 +56,7 @@ extern "C" {
 //
 // before #include <ddraw.h>
 //
+
 #ifndef DUMMYUNIONNAMEN
 #if defined(__cplusplus) || !defined(NONAMELESSUNION)
 #define DUMMYUNIONNAMEN(n)
@@ -130,7 +132,10 @@ typedef struct IDirectDrawColorControl          FAR *LPDIRECTDRAWCOLORCONTROL;
 typedef struct IDirectDrawGammaControl          FAR *LPDIRECTDRAWGAMMACONTROL;
 
 typedef struct _DDFXROP                 FAR *LPDDFXROP;
+
+
 typedef struct _DDSURFACEDESC           FAR *LPDDSURFACEDESC;
+
 typedef struct _DDSURFACEDESC2          FAR *LPDDSURFACEDESC2;
 typedef struct _DDCOLORCONTROL          FAR *LPDDCOLORCONTROL;
 
@@ -141,8 +146,8 @@ typedef struct _DDCOLORCONTROL          FAR *LPDDCOLORCONTROL;
 //#if defined( _WIN32 ) && !defined( _NO_ENUM )
     typedef BOOL (FAR PASCAL * LPDDENUMCALLBACKA)(GUID FAR *, LPSTR, LPSTR, LPVOID);
     typedef BOOL (FAR PASCAL * LPDDENUMCALLBACKW)(GUID FAR *, LPWSTR, LPWSTR, LPVOID);
-    extern HRESULT WINAPI DirectDrawEnumerateW( LPDDENUMCALLBACKW lpCallback, LPVOID lpContext );
-    extern HRESULT WINAPI DirectDrawEnumerateA( LPDDENUMCALLBACKA lpCallback, LPVOID lpContext );
+    extern _Check_return_ HRESULT WINAPI DirectDrawEnumerateW( LPDDENUMCALLBACKW lpCallback, LPVOID lpContext );
+    extern _Check_return_ HRESULT WINAPI DirectDrawEnumerateA( LPDDENUMCALLBACKA lpCallback, LPVOID lpContext );
     /*
      * Protect against old SDKs
      */
@@ -170,9 +175,9 @@ typedef struct _DDCOLORCONTROL          FAR *LPDDCOLORCONTROL;
         typedef LPDIRECTDRAWENUMERATEEXA        LPDIRECTDRAWENUMERATEEX;
         #define DirectDrawEnumerateEx       DirectDrawEnumerateExA
     #endif
-    extern HRESULT WINAPI DirectDrawCreate( GUID FAR *lpGUID, LPDIRECTDRAW FAR *lplpDD, IUnknown FAR *pUnkOuter );
+    extern _Check_return_ HRESULT WINAPI DirectDrawCreate( GUID FAR *lpGUID, LPDIRECTDRAW FAR *lplpDD, IUnknown FAR *pUnkOuter );
     extern HRESULT WINAPI DirectDrawCreateEx( GUID FAR * lpGuid, LPVOID  *lplpDD, REFIID  iid,IUnknown FAR *pUnkOuter );
-    extern HRESULT WINAPI DirectDrawCreateClipper( DWORD dwFlags, LPDIRECTDRAWCLIPPER FAR *lplpDDClipper, IUnknown FAR *pUnkOuter );
+    extern _Check_return_ HRESULT WINAPI DirectDrawCreateClipper( DWORD dwFlags, LPDIRECTDRAWCLIPPER FAR *lplpDDClipper, IUnknown FAR *pUnkOuter );
 #endif
 /*
  * Flags for DirectDrawEnumerateEx
@@ -208,7 +213,10 @@ typedef struct _DDCOLORCONTROL          FAR *LPDDCOLORCONTROL;
 #define DDCREATE_EMULATIONONLY          0x00000002l
 
 #if defined(WINNT) || !defined(WIN32)
-typedef long HRESULT;
+#ifndef _HRESULT_DEFINED
+#define _HRESULT_DEFINED
+typedef _Return_type_success_(return >= 0) long HRESULT;
+#endif // !_HRESULT_DEFINED
 #endif
 
 //#ifndef WINNT
@@ -691,11 +699,11 @@ typedef DDCAPS_DX7 FAR* LPDDCAPS_DX7;
 
 typedef DDCAPS FAR* LPDDCAPS;
 
-
-
 /*
  * DDPIXELFORMAT
  */
+#ifndef _DDPIXELFORMAT_DEFINED
+#define _DDPIXELFORMAT_DEFINED
 typedef struct _DDPIXELFORMAT
 {
     DWORD       dwSize;                 // size of structure
@@ -750,6 +758,7 @@ typedef struct _DDPIXELFORMAT
         DWORD   dwYUVZBitMask;          // mask for Z channel
     } DUMMYUNIONNAMEN(5);
 } DDPIXELFORMAT;
+#endif // _DDPIXELFORMAT_DEFINED
 
 typedef DDPIXELFORMAT FAR* LPDDPIXELFORMAT;
 
@@ -2963,6 +2972,31 @@ typedef struct _DDCOLORCONTROL
  */
 #define DDSCAPS3_DMAP                           0x00001000L
 
+/* D3D9Ex only -- */
+#if !defined(D3D_DISABLE_9EX)
+
+/*
+ * This indicates that this surface is to be shared by processes
+ */
+#define DDSCAPS3_CREATESHAREDRESOURCE           0x00002000L
+
+/*
+ * This indicates that this surface need to be initialized before being
+ * shared, this bit implies that this surface is read only after initialization
+ * absence of this bit implies that this surface allows both read and write
+ */
+#define DDSCAPS3_READONLYRESOURCE               0x00004000L
+
+/*
+ * This indicates that this surface is to share an existing video memory with 
+ * another surface created with DDSCAPS3_CREATESHAREDRESOURCE, This bit is never
+ * used with DDSCAPS3_CREATESHAREDRESOURCE
+ */
+#define DDSCAPS3_OPENSHAREDRESOURCE             0x00008000L
+
+#endif // !D3D_DISABLE_9EX
+/* -- D3D9Ex only */
+
 
  /****************************************************************************
  *
@@ -3331,6 +3365,17 @@ typedef struct _DDCOLORCONTROL
  * Driver supports auto-generation of mipmaps.
  */
 #define DDCAPS2_CANAUTOGENMIPMAP              0x40000000L
+
+/* D3D9Ex only -- */
+#if !defined(D3D_DISABLE_9EX)
+
+/*
+ * Driver supports sharing of cross process resouces
+ */
+#define DDCAPS2_CANSHARERESOURCE              0x80000000L
+
+#endif // !D3D_DISABLE_9EX
+/* -- D3D9Ex only */
 
 
 /****************************************************************************
@@ -4716,6 +4761,31 @@ typedef struct _DDCOLORCONTROL
 #define DDOVER_DEGRADEARGBSCALING               0x04000000l
 
 
+#ifdef  COMBOX_SANDBOX
+#define DX_LONGHORN_PRESERVEDC
+#endif
+
+#ifdef DX_LONGHORN_PRESERVEDC
+
+/****************************************************************************
+ *
+ * DIRECTDRAWSURFACE SETSURFACEDESC FLAGS
+ *
+ ****************************************************************************/
+
+/*
+ * The default.  The GDI DC will be tore down.
+ */
+#define DDSETSURFACEDESC_RECREATEDC             0x00000000L     // default
+
+/*
+ * The default.  The GDI DC will be kept.
+ */
+#define DDSETSURFACEDESC_PRESERVEDC             0x00000001L
+
+
+#endif // DX_LONGHORN_PRESERVEDC
+
 /****************************************************************************
  *
  * DIRECTDRAWSURFACE LOCK FLAGS
@@ -5783,10 +5853,15 @@ typedef struct _DDCOLORCONTROL
 };
 #endif
 
-#ifdef ENABLE_NAMELESS_UNION_PRAGMA
+#if _MSC_VER >= 1200
+#pragma warning(pop)
+#else
 #pragma warning(default:4201)
 #endif
 
-#endif //__DDRAW_INCLUDED__
 
+#endif /* WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP) */
+#pragma endregion
+
+#endif //__DDRAW_INCLUDED__
 

@@ -3,12 +3,17 @@
 //
 // Desc: Audio related definitions and interfaces for ActiveMovie.
 //
-// Copyright (c) 1992-2001, Microsoft Corporation.  All rights reserved.
+// Copyright (c) 1992 - 2001, Microsoft Corporation.  All rights reserved.
 //------------------------------------------------------------------------------
 
 
 #ifndef __AMAUDIO__
 #define __AMAUDIO__
+#include <winapifamily.h>
+
+#pragma region Desktop Family
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
+
 
 #ifdef __cplusplus
 extern "C" {
@@ -18,9 +23,9 @@ extern "C" {
 #include <dsound.h>
 
 // This is the interface the audio renderer supports to give the application
-// access to the direct sound object and the buffers it is using, to allow the
+// access to the direct sound object and buffers it is using, to allow the
 // application to use things like the 3D features of Direct Sound for the
-// soundtrack of a movie being played with Active Movie.
+// soundtrack of a movie being played with Active Movie
 
 // be nice to our friends in C
 #undef INTERFACE
@@ -46,9 +51,39 @@ DECLARE_INTERFACE_(IAMDirectSound,IUnknown)
     STDMETHOD(GetFocusWindow)(THIS_ HWND *, BOOL*) PURE ;
 };
 
+//  Validate WAVEFORMATEX block of length cb
+__inline HRESULT AMValidateAndFixWaveFormatEx(_Inout_updates_bytes_(cb) WAVEFORMATEX *pwfx, DWORD cb)
+{
+    if (cb < sizeof(PCMWAVEFORMAT)) {
+        return E_INVALIDARG;
+    }
+    if (pwfx->wFormatTag != WAVE_FORMAT_PCM) {
+        if (cb < sizeof(WAVEFORMATEX)) {
+            return E_INVALIDARG;
+        }
+        if (cb < sizeof(WAVEFORMATEX) + pwfx->cbSize ) {
+            pwfx->cbSize = 0;
+        }
+    }
+
+    // Sanity check
+    if (pwfx->nAvgBytesPerSec > 10000000 || pwfx->nAvgBytesPerSec == 0) {
+        pwfx->nAvgBytesPerSec = 176400;
+    }
+
+    if (pwfx->nChannels > 32) {
+        pwfx->nChannels = 1;
+    }
+
+    return S_OK;
+}
 
 #ifdef __cplusplus
 }
 #endif // __cplusplus
+
+#endif /* WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP) */
+#pragma endregion
+
 #endif // __AMAUDIO__
 

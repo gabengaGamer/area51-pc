@@ -16,12 +16,6 @@
     <Filter Include="Audio">
       <UniqueIdentifier>{de2b6ffd-e14d-485a-962c-1a32a52583a0}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Audio\Codecs">
-      <UniqueIdentifier>{a3a7e9c4-eb2b-4c9b-86c1-152599df2aa1}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Audio\Debug">
-      <UniqueIdentifier>{43f9318c-118d-4dd2-8b0a-032b05cf2d82}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Audio\Hardware">
       <UniqueIdentifier>{c8a3d48c-ef4c-462f-8b8d-a26dc2be56b3}</UniqueIdentifier>
     </Filter>
@@ -105,12 +99,6 @@
     <ClCompile Include="Audio\audio_voice_mgr.cpp">
       <Filter>Audio</Filter>
     </ClCompile>
-    <ClCompile Include="Audio\Codecs\mp3api.cpp">
-      <Filter>Audio\Codecs</Filter>
-    </ClCompile>
-    <ClCompile Include="Audio\Codecs\MP3DEC.CPP">
-      <Filter>Audio\Codecs</Filter>
-    </ClCompile>
     <ClCompile Include="Audio\Hardware\audio_hardware_pc.cpp">
       <Filter>Audio\Hardware</Filter>
     </ClCompile>
@@ -178,11 +166,20 @@
     <ClCompile Include="D3DEngine\d3deng_font.cpp">
       <Filter>PC</Filter>
     </ClCompile>
-    <ClCompile Include="D3DEngine\d3deng_video.cpp">
-      <Filter>PC</Filter>
-    </ClCompile>
     <ClCompile Include="Common\e_Virtual.cpp">
       <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="D3DEngine\d3deng_shader.cpp">
+      <Filter>PC</Filter>
+    </ClCompile>
+    <ClCompile Include="D3DEngine\d3deng_rtarget.cpp">
+      <Filter>PC</Filter>
+    </ClCompile>
+    <ClCompile Include="D3DEngine\d3deng_state.cpp">
+      <Filter>PC</Filter>
+    </ClCompile>
+    <ClCompile Include="D3DEngine\d3deng_composite.cpp">
+      <Filter>PC</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -256,9 +253,6 @@
     <ClInclude Include="D3DEngine\d3deng_font.hpp">
       <Filter>PC</Filter>
     </ClInclude>
-    <ClInclude Include="D3DEngine\d3deng_video.hpp">
-      <Filter>PC</Filter>
-    </ClInclude>
     <ClInclude Include="D3DEngine\d3deng_private.hpp">
       <Filter>PC</Filter>
     </ClInclude>
@@ -286,29 +280,8 @@
     <ClInclude Include="Audio\audio_ram_mgr.hpp">
       <Filter>Audio</Filter>
     </ClInclude>
-    <ClInclude Include="Audio\Codecs\DATATBL.H">
-      <Filter>Audio\Codecs</Filter>
-    </ClInclude>
     <ClInclude Include="Audio\IAL\IAL.h">
       <Filter>Audio\IAL</Filter>
-    </ClInclude>
-    <ClInclude Include="Audio\Codecs\mp3api.hpp">
-      <Filter>Audio\Codecs</Filter>
-    </ClInclude>
-    <ClInclude Include="Audio\Codecs\MP3DEC.H">
-      <Filter>Audio\Codecs</Filter>
-    </ClInclude>
-    <ClInclude Include="Audio\Codecs\MSS.H">
-      <Filter>Audio\Codecs</Filter>
-    </ClInclude>
-    <ClInclude Include="Audio\Codecs\mssasi.h">
-      <Filter>Audio\Codecs</Filter>
-    </ClInclude>
-    <ClInclude Include="Audio\Codecs\IMSSAPI.H">
-      <Filter>Audio\Codecs</Filter>
-    </ClInclude>
-    <ClInclude Include="Audio\Codecs\Rib.h">
-      <Filter>Audio\Codecs</Filter>
     </ClInclude>
     <ClInclude Include="Network\netdefines.hpp">
       <Filter>Network</Filter>
@@ -318,6 +291,21 @@
     </ClInclude>
     <ClInclude Include="IOManager\io_device_netfs.hpp">
       <Filter>IOManager</Filter>
+    </ClInclude>
+    <ClInclude Include="Audio\Hardware\audio_prologic2.hpp">
+      <Filter>Audio\Hardware</Filter>
+    </ClInclude>
+    <ClInclude Include="D3DEngine\d3deng_shader.hpp">
+      <Filter>PC</Filter>
+    </ClInclude>
+    <ClInclude Include="D3DEngine\d3deng_rtarget.hpp">
+      <Filter>PC</Filter>
+    </ClInclude>
+    <ClInclude Include="D3DEngine\d3deng_state.hpp">
+      <Filter>PC</Filter>
+    </ClInclude>
+    <ClInclude Include="D3DEngine\d3deng_composite.hpp">
+      <Filter>PC</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

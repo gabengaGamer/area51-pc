@@ -39,21 +39,15 @@
 #define TEXT_IMAGE_HEIGHT   64
 
 #ifdef TARGET_XBOX
-    #define TEXT_X_POSITION   50
-    #define TEXT_Y_POSITION  330
+#   define TEXT_X_POSITION   50
+#   define TEXT_Y_POSITION  330
 extern void RedirectTextureAllocator( void );
 extern void RestoreTextureAllocator ( void );
 extern u32 g_PhysW;
 extern u32 g_PhysH;
-#elif defined( TARGET_PS2 )
-    #define TEXT_X_POSITION  -50
-    #define TEXT_Y_POSITION  313
-#elif defined( TARGET_PC ) //TODO: Make it RES scalable!!!!!!!!!!!!
-    #define TEXT_X_POSITION  400
-    #define TEXT_Y_POSITION  525
-#else //For future.
-    #define TEXT_X_POSITION  -50
-    #define TEXT_Y_POSITION  313
+#else
+#   define TEXT_X_POSITION  -50
+#   define TEXT_Y_POSITION  313
 #endif
 
 #define HIGHLIGHT_SCALE             1.2f
@@ -180,47 +174,6 @@ ui_win* dlg_load_game_factory( s32 UserID, ui_manager* pManager, ui_manager::dia
 
 dlg_load_game::dlg_load_game( void )
 {
-    // Initialize platform-specific data to safe defaults
-#ifdef TARGET_PS2
-    m_OrigPermanentSize = -1;
-#endif
-
-#ifdef TARGET_XBOX
-    m_ColorWriteMask = D3DCOLORWRITEENABLE_RED | D3DCOLORWRITEENABLE_GREEN | D3DCOLORWRITEENABLE_BLUE;
-    m_BufferW = 0;
-    m_BufferH = 0;
-#endif
-    
-#ifdef TARGET_PC
-    m_pBackBuffer = NULL;
-    x_memset( m_Buffers, 0, sizeof(m_Buffers) );
-    m_ColorWriteMask = D3DCOLORWRITEENABLE_RED | D3DCOLORWRITEENABLE_GREEN | D3DCOLORWRITEENABLE_BLUE;
-    m_BufferW = 0;
-    m_BufferH = 0;
-#endif
-
-    // Initialize other members to safe defaults
-    m_VoiceID = 0;
-    m_nSlides = 0;
-    m_nTextures = 0;
-    m_StartTextAnim = 0.0f;
-    m_NameText.Clear();
-    
-    m_SlideshowState = STATE_IDLE;
-    m_LoadingComplete = FALSE;
-    m_FinalFadeoutStarted = FALSE;
-    m_ElapsedTime = 0.0f;
-    m_FadeTimeElapsed = 0.0f;
-    
-    m_FogLoaded = FALSE;
-    m_Position = -0.5f;
-    m_HorizSpeed = 0.15f;
-    m_FogAngle = R_0;
-    m_FogZoom = 0.0f;
-    m_LightShaftArea.Clear();
-    
-    // Initialize slide array
-    x_memset( m_Slides, 0, sizeof(m_Slides) );
 }
 
 //=========================================================================
@@ -249,7 +202,7 @@ xbool dlg_load_game::Create( s32                        UserID,
     // Do dialog creation
     Success = ui_dialog::Create( UserID, pManager, pDialogTem, Position, pParent, Flags );
 
-    // Make the dialog active
+    // make the dialog active
     m_State = DIALOG_STATE_ACTIVE;
 
     // initialize the slide data
@@ -266,7 +219,7 @@ xbool dlg_load_game::Create( s32                        UserID,
     m_ElapsedTime         = 0.0f;
     m_FadeTimeElapsed     = 0.0f;
 
-    // Initialize the light shaft effect data
+    // initialize the light shaft effect data
     m_FogLoaded        = FALSE;
     m_Position         = -0.5f;
     m_HorizSpeed       = 0.15f;
@@ -277,7 +230,7 @@ xbool dlg_load_game::Create( s32                        UserID,
     m_LightShaftArea.t = 0;
     m_LightShaftArea.b = 1;
 
-    // Platform-specific data
+    // platform-specific data
     #ifdef TARGET_PS2
     m_OrigPermanentSize = -1;
     #endif
@@ -292,14 +245,13 @@ void dlg_load_game::Destroy( void )
 {
     ui_dialog::Destroy();
 
-    // Kill screen wipe
-    if( g_UiMgr )
-        g_UiMgr->ResetScreenWipe();
+    // kill screen wipe
+    g_UiMgr->ResetScreenWipe();
 
-    // Do the platform-specific cleanup
+    // do the platform-specific cleanup
     platform_Destroy();
 
-    // Kill the light shaft effect
+    // kill the light shaft effect
     if( m_FogLoaded )
     {
         m_FogLoaded = FALSE;
@@ -308,15 +260,8 @@ void dlg_load_game::Destroy( void )
         vram_Unregister( m_FogBMP );
         m_FogBMP.Kill();
     }
-    
-    // Reset state variables to safe defaults
-    m_SlideshowState = STATE_IDLE;
-    m_LoadingComplete = FALSE;
-    m_FinalFadeoutStarted = FALSE;
-    m_VoiceID = 0;
-    m_nSlides = 0;
-    m_nTextures = 0;
 }
+
 
 //=========================================================================
 
@@ -1092,59 +1037,6 @@ void dlg_load_game::xbox_ClipSprite( vector3&          UL,
 
 //==============================================================================
 
-#ifdef TARGET_PC
-void dlg_load_game::pc_ClipSprite(   vector3&          UL,
-                                     vector2&          Size,
-                                     vector2&          UV0,
-                                     vector2&          UV1 )
-{
-    // don't clip collapsed sprites--that will cause divide-by-zeroes
-    if( (Size.X == 0.0f) || (Size.Y == 0.0f) )
-    {
-        return;
-    }
-
-    vector3 BR = UL + vector3( Size.X, Size.Y, 0 );
-
-    // clip to the top edge
-    if( UL.GetY() < 0.0f )
-    {
-        f32 T     = (0.0f - UL.GetY()) / (BR.GetY() - UL.GetY());
-        UL.GetY() = UL.GetY() + T * (BR.GetY() - UL.GetY());
-        UV0.Y     = UV0.Y + T * (UV1.Y - UV0.Y);
-    }
-
-    // clip to the bottom edge
-    if( BR.GetY() > (f32)m_BufferH )
-    {
-        f32 T     = ((f32)m_BufferH - UL.GetY()) / (BR.GetY() - UL.GetY());
-        BR.GetY() = UL.GetY() + T * (BR.GetY() - UL.GetY());
-        UV1.Y     = UV0.Y + T * (UV1.Y - UV0.Y);
-    }
-
-    // clip to the left edge
-    if( UL.GetX() < 0.0f )
-    {
-        f32 T     = (0.0f - UL.GetX()) / (BR.GetX() - UL.GetX());
-        UL.GetX() = UL.GetX() + T * (BR.GetX() - UL.GetX());
-        UV0.X     = UV0.X + T * (UV1.X - UV0.X);
-    }
-
-    // clip to the right edge
-    if( BR.GetX() > (f32)m_BufferW )
-    {
-        f32 T     = ((f32)m_BufferW - UL.GetX()) / (BR.GetX() - UL.GetX());
-        BR.GetX() = UL.GetX() + T * (BR.GetX() - UL.GetX());
-        UV1.X     = UV0.X + T * (UV1.X - UV0.X);
-    }
-
-    Size.X = BR.GetX() - UL.GetX();
-    Size.Y = BR.GetY() - UL.GetY();
-}
-#endif // TARGET_PC
-
-//==============================================================================
-
 #ifdef TARGET_PS2
 void dlg_load_game::ps2_CopyRG2BA( s32 XRes, s32 YRes, s32 FBP )
 {
@@ -1238,55 +1130,15 @@ void dlg_load_game::platform_Init( void )
     eng_EnableScreenClear( FALSE );
 
 #elif defined( TARGET_XBOX )
-    // Set up the default write mask
+
+    // set up the default write mask
     m_ColorWriteMask = D3DCOLORWRITEENABLE_RED | D3DCOLORWRITEENABLE_GREEN | D3DCOLORWRITEENABLE_BLUE;
     
     g_RenderTarget.Reset();
-#elif defined( TARGET_PC )
-    // Make sure everything is initialized to NULL first
-    m_pBackBuffer = NULL;
-    x_memset( m_Buffers, 0, sizeof(m_Buffers) );
-    
-    // Set up the default write mask
-    m_ColorWriteMask = D3DCOLORWRITEENABLE_RED | D3DCOLORWRITEENABLE_GREEN | D3DCOLORWRITEENABLE_BLUE;
-    
-    // Only proceed if we have a valid device
-    if( !g_pd3dDevice )
-        return;
-    
-    // Create render target textures for each buffer
-    D3DFORMAT format = D3DFMT_A8R8G8B8;
-    HRESULT hr;
-    
-    // Level name buffer
-    hr = g_pd3dDevice->CreateTexture( TEXT_IMAGE_WIDTH, TEXT_IMAGE_HEIGHT, 
-                                     1, D3DUSAGE_RENDERTARGET, format, 
-                                     D3DPOOL_DEFAULT, &m_Buffers[BUFFER_LEVEL_NAME], NULL);
-    if( FAILED(hr) )
-    {
-        m_Buffers[BUFFER_LEVEL_NAME] = NULL;
-    }
-                              
-    // Drop shadow buffers (2)
-    hr = g_pd3dDevice->CreateTexture( TEXT_IMAGE_WIDTH/2, TEXT_IMAGE_HEIGHT/2, 
-                                     1, D3DUSAGE_RENDERTARGET, format, 
-                                     D3DPOOL_DEFAULT, &m_Buffers[BUFFER_DROP_SHADOW_1], NULL);
-    if( FAILED(hr) )
-    {
-        m_Buffers[BUFFER_DROP_SHADOW_1] = NULL;
-    }
-                              
-    hr = g_pd3dDevice->CreateTexture( TEXT_IMAGE_WIDTH/2, TEXT_IMAGE_HEIGHT/2, 
-                                     1, D3DUSAGE_RENDERTARGET, format, 
-                                     D3DPOOL_DEFAULT, &m_Buffers[BUFFER_DROP_SHADOW_2], NULL);
-    if( FAILED(hr) )
-    {
-        m_Buffers[BUFFER_DROP_SHADOW_2] = NULL;
-    }
-    
-    // Init buffer dimensions
-    m_BufferW = TEXT_IMAGE_WIDTH;
-    m_BufferH = TEXT_IMAGE_HEIGHT;
+
+#else
+    // TODO: Need to implement this (just use xbox version?!?)
+    //ASSERT( FALSE );
 #endif
 }
 
@@ -1308,6 +1160,7 @@ void dlg_load_game::platform_Destroy( void )
     // re-enable the page flip screen clear
     eng_EnableScreenClear( TRUE );
 #elif defined(TARGET_XBOX)
+
     g_RenderTarget.Reset();
 
     // Make sure we destroy any slideshow images
@@ -1321,38 +1174,10 @@ void dlg_load_game::platform_Destroy( void )
         m_Slides[i].HasImage = FALSE;
         m_Slides[i].BMP.Kill();
     }
-#elif defined( TARGET_PC )
-    // Release render target textures
-    if( m_pBackBuffer )
-    {
-        m_pBackBuffer->Release();
-        m_pBackBuffer = NULL;
-    }
-    
-    // Release all render target buffers
-    for( s32 i = 0; i < BUFFER_COUNT; i++ )
-    {
-        if( m_Buffers[i] )
-        {
-            m_Buffers[i]->Release();
-            m_Buffers[i] = NULL;
-        }
-    }
-    
-    // Make sure we destroy any slideshow images
-    for( s32 i = 0; i < m_nSlides; i++ )
-    {
-        if( !m_Slides[i].HasImage )
-            continue;
-        vram_Unregister( m_Slides[i].BMP );
-        m_Slides[i].HasImage = FALSE;
-        m_Slides[i].BMP.Kill();
-    }
-    
-    // Reset platform-specific variables
-    m_ColorWriteMask = D3DCOLORWRITEENABLE_RED | D3DCOLORWRITEENABLE_GREEN | D3DCOLORWRITEENABLE_BLUE;
-    m_BufferW = 0;
-    m_BufferH = 0;
+
+#else
+    // TODO: Need to implement this (just use xbox version?!?)
+    //ASSERT( FALSE );
 #endif
 }
 
@@ -1363,6 +1188,7 @@ void dlg_load_game::platform_LoadSlide( s32         Index,
                                         const char* pTextureName )
 {
 #if defined( TARGET_PS2 )
+
     // The PS2 doesn't have enough RAM to handle all the level data plus
     // the slides. So instead what it will do is load up the slides and
     // stuff them into vram. This makes the whole process rather annoying,
@@ -1439,7 +1265,9 @@ void dlg_load_game::platform_LoadSlide( s32         Index,
 
     // finished
     eng_End();
+
 #elif defined( TARGET_XBOX )
+
     (void)TextureIndex;
 
     // Other targets we don't really care about giving up the memory.
@@ -1456,23 +1284,10 @@ void dlg_load_game::platform_LoadSlide( s32         Index,
     {
         m_Slides[Index].HasImage = FALSE;
     }
-#elif defined( TARGET_PC )
-    (void)TextureIndex;
 
-    // Other targets we don't really care about giving up the memory.
-    // Just load it as though it were any other image.
-    xbool Success = m_Slides[Index].BMP.Load( xfs( "%s\\%s", g_RscMgr.GetRootDirectory(), pTextureName ) );
-    if( Success )
-    {
-        vram_Register( m_Slides[Index].BMP );
-    //#ifdef X_DEBUG
-    //    vram_Activate( m_Slides[Index].BMP );
-    //#endif
-    }
-    else
-    {
-        m_Slides[Index].HasImage = FALSE;
-    }
+#else
+    // TODO: Need to implement this (just use xbox version?!?)
+    //ASSERT( FALSE );
 #endif
 }
 
@@ -1482,7 +1297,7 @@ void dlg_load_game::platform_FillScreen( xcolor C )
 {
 #if defined( TARGET_PS2 )
     irect Rect;
-    s32 XRes, YRes;
+    s32   XRes, YRes;
     eng_GetRes( XRes, YRes );
     platform_SetDstBuffer( BUFFER_SCREEN );
     Rect.Set( 0, 0, XRes, YRes );
@@ -1491,12 +1306,9 @@ void dlg_load_game::platform_FillScreen( xcolor C )
     irect Rect;
     Rect.Set( 0, 0, g_PhysW, g_PhysH );
     draw_Rect( Rect, C, FALSE );
-#elif defined( TARGET_PC )
-    irect Rect;
-    s32 XRes, YRes;
-    eng_GetRes( XRes, YRes );
-    Rect.Set( 0, 0, XRes, YRes );
-    draw_Rect( Rect, C, FALSE );
+#else
+    // TODO: Need to implement this (just use xbox version?!?)
+    //ASSERT( FALSE );
 #endif
 }
 
@@ -1505,8 +1317,9 @@ void dlg_load_game::platform_FillScreen( xcolor C )
 void dlg_load_game::platform_RenderSlide( s32 SlideIndex, xcolor C )
 {
 #if defined( TARGET_PS2 )
+
     // start up the drawing mode
-    draw_Begin( DRAW_SPRITES, DRAW_USE_ALPHA | DRAW_TEXTURED | DRAW_2D | DRAW_NO_ZBUFFER | DRAW_NO_ZWRITE | DRAW_BLEND_ADD );
+    draw_Begin( DRAW_SPRITES, DRAW_USE_ALPHA | DRAW_TEXTURED | DRAW_2D | DRAW_UI_RTARGET | DRAW_NO_ZBUFFER | DRAW_NO_ZWRITE | DRAW_BLEND_ADD );
 
     // activate the sprite texture, and use a custom blend setting
     gsreg_Begin( 4 );
@@ -1528,38 +1341,27 @@ void dlg_load_game::platform_RenderSlide( s32 SlideIndex, xcolor C )
                           vector2(1.0f,1.0f-CropAmount),
                           C );
     draw_End();
-#elif defined( TARGET_XBOX )
-    // Start up the drawing mode
-    draw_EnableBilinear();
-    draw_Begin( DRAW_SPRITES, DRAW_USE_ALPHA | DRAW_TEXTURED | DRAW_2D | DRAW_NO_ZBUFFER | DRAW_NO_ZWRITE | DRAW_BLEND_ADD );
 
-    // Activate the sprite texture
+#elif defined( TARGET_XBOX )
+
+    // start up the drawing mode
+    draw_EnableBilinear();
+    draw_Begin( DRAW_SPRITES, DRAW_USE_ALPHA | DRAW_TEXTURED | DRAW_2D | DRAW_UI_RTARGET | DRAW_NO_ZBUFFER | DRAW_NO_ZWRITE | DRAW_BLEND_ADD );
+
+    // activate the sprite texture
     draw_SetTexture( m_Slides[SlideIndex].BMP );
 
-    // Draw the sprite
+    // draw the sprite
     draw_Sprite( vector3( 0.0f, 0.0f, 0.0f ),
                  vector2( (f32)g_PhysW, (f32)g_PhysH ),
                  C );
 
-    // Finished
+    // finished
     draw_End();
-#elif defined( TARGET_PC )
-    // Start up the drawing mode
-    draw_EnableBilinear();
-    draw_Begin( DRAW_SPRITES, DRAW_USE_ALPHA | DRAW_TEXTURED | DRAW_2D | DRAW_NO_ZBUFFER | DRAW_NO_ZWRITE | DRAW_BLEND_ADD );
 
-    // Activate the sprite texture
-    draw_SetTexture( m_Slides[SlideIndex].BMP );
-
-    // Draw the sprite
-    s32 XRes, YRes;
-    eng_GetRes( XRes, YRes );
-    draw_Sprite( vector3( 0.0f, 0.0f, 0.0f ),
-                 vector2( (f32)XRes, (f32)YRes ),
-                 C );
-
-    // Finished
-    draw_End();
+#else
+    // TODO: Need to implement this (just use xbox version?!?)
+    //ASSERT( FALSE );
 #endif
 }
 
@@ -1602,7 +1404,9 @@ void dlg_load_game::platform_GetBufferInfo( vram_buffer       BufferID,
         BufferH   = TEXT_IMAGE_HEIGHT/2;
         break;
     }
+
 #elif defined( TARGET_XBOX )
+
     switch( BufferID )
     {
     default:
@@ -1630,33 +1434,10 @@ void dlg_load_game::platform_GetBufferInfo( vram_buffer       BufferID,
         BufferH   = TEXT_IMAGE_HEIGHT/2;
         break;
     }
-#elif defined( TARGET_PC )
-    switch( BufferID )
-    {
-    default:
-        ASSERT( FALSE );
-        break;
-    case BUFFER_SCREEN:
-        MemOffset = 0;
-        eng_GetRes( BufferW, BufferH );
-        break;
-    case BUFFER_LEVEL_NAME:
-        MemOffset = 0;
-        BufferW   = TEXT_IMAGE_WIDTH;
-        BufferH   = TEXT_IMAGE_HEIGHT;
-        break;
-    case BUFFER_DROP_SHADOW_1:
-        MemOffset = TEXT_IMAGE_WIDTH*TEXT_IMAGE_HEIGHT*4;
-        BufferW   = TEXT_IMAGE_WIDTH/2;
-        BufferH   = TEXT_IMAGE_HEIGHT/2;
-        break;
-    case BUFFER_DROP_SHADOW_2:
-        MemOffset = TEXT_IMAGE_WIDTH*TEXT_IMAGE_HEIGHT*4 +
-                    (TEXT_IMAGE_WIDTH/2)*(TEXT_IMAGE_HEIGHT/2)*4;
-        BufferW   = TEXT_IMAGE_WIDTH/2;
-        BufferH   = TEXT_IMAGE_HEIGHT/2;
-        break;
-    }
+
+#else
+    // TODO: Need to implement this (just use xbox version?!?)
+    //ASSERT( FALSE );
 #endif
 }
 
@@ -1685,9 +1466,10 @@ void dlg_load_game::platform_SetSrcBuffer( vram_buffer BufferID )
     gsreg_End();
 
 #elif defined(TARGET_XBOX)
+
     ASSERT( BufferID != BUFFER_SCREEN );
 
-    // Figure out the buffer info
+    // figure out the buffer info
     s32 BufferW;
     s32 BufferH;
     s32 MemOffset;
@@ -1697,7 +1479,7 @@ void dlg_load_game::platform_SetSrcBuffer( vram_buffer BufferID )
     u8* BaseTiledPtr = (u8*)g_TextureFactory.GetTiledPool().GetBase();
     BaseTiledPtr += MemOffset;
 
-    // Alias some other texture buffer memory from the system
+    // alias some other texture buffer memory from the system
     texture_factory::handle Handle = g_TextureFactory.Alias(
         BufferW*4,
         (u32)BufferW,
@@ -1709,18 +1491,10 @@ void dlg_load_game::platform_SetSrcBuffer( vram_buffer BufferID )
 
     ASSERT( Handle );
     g_Texture.Set( 0, Handle );
-#elif defined( TARGET_PC )
-    ASSERT(BufferID != BUFFER_SCREEN);
 
-    // Figure out the buffer info
-    s32 BufferW;
-    s32 BufferH;
-    s32 MemOffset;
-    platform_GetBufferInfo( BufferID, MemOffset, BufferW, BufferH );
-
-    // Set up the texture
-    IDirect3DTexture9* pTexture = ( IDirect3DTexture9* )m_Buffers[BufferID];
-    g_pd3dDevice->SetTexture( 0, pTexture );
+#else
+    // TODO: Need to implement this (just use xbox version?!?)
+    //ASSERT( FALSE );
 #endif
 }
 
@@ -1752,6 +1526,7 @@ void dlg_load_game::platform_SetDstBuffer( vram_buffer BufferID,
     gsreg_End();
 
 #elif defined(TARGET_XBOX)
+
     if( BufferID == BUFFER_SCREEN )
     {
         g_pPipeline->SetRenderTarget( pipeline_mgr::kLAST, -1 );
@@ -1760,7 +1535,7 @@ void dlg_load_game::platform_SetDstBuffer( vram_buffer BufferID,
     }
     else
     {
-        // Figure out the buffer info
+        // figure out the buffer info
         s32 MemOffset;
         platform_GetBufferInfo( BufferID, MemOffset, m_BufferW, m_BufferH );
 
@@ -1768,7 +1543,7 @@ void dlg_load_game::platform_SetDstBuffer( vram_buffer BufferID,
         u8* BaseTiledPtr = (u8*)g_TextureFactory.GetTiledPool().GetBase();
         BaseTiledPtr += MemOffset;
 
-        // Alias some other texture buffer memory from the system
+        // alias some other texture buffer memory from the system
         texture_factory::handle Handle = g_TextureFactory.Alias(
             m_BufferW*4,
             (u32)m_BufferW,
@@ -1785,53 +1560,16 @@ void dlg_load_game::platform_SetDstBuffer( vram_buffer BufferID,
         Surface->Release();
     }
 
-    // Set up the color write mask
+    // set up the color write mask
     m_ColorWriteMask = 0;
     if( EnableRGBChannel )
         m_ColorWriteMask |= D3DCOLORWRITEENABLE_RED | D3DCOLORWRITEENABLE_GREEN | D3DCOLORWRITEENABLE_BLUE;
     if( EnableAlphaChannel )
         m_ColorWriteMask |= D3DCOLORWRITEENABLE_ALPHA;
-#elif defined( TARGET_PC )
-    if( BufferID == BUFFER_SCREEN )
-    {
-        if ( m_pBackBuffer != NULL )
-        {
-            g_pd3dDevice->SetRenderTarget( 0, m_pBackBuffer );
-            m_pBackBuffer->Release();
-            m_pBackBuffer = NULL;
-        }
-        s32 Width, Height;
-        eng_GetRes( Width, Height );
-        m_BufferW = Width;
-        m_BufferH = Height;
-    }
-    else
-    {
-        // Figure out the buffer info
-        s32 MemOffset;
-        platform_GetBufferInfo( BufferID, MemOffset, m_BufferW, m_BufferH );
-        
-        IDirect3DTexture9* pTexture = ( IDirect3DTexture9* )m_Buffers[BufferID];
-        IDirect3DSurface9* pSurface = NULL;
-        pTexture->GetSurfaceLevel( 0, &pSurface );
-        
-        if( m_pBackBuffer == NULL )
-        {
-            g_pd3dDevice->GetRenderTarget( 0, &m_pBackBuffer );
-        }
-        
-        g_pd3dDevice->SetRenderTarget( 0, pSurface );
-        pSurface->Release();
-    }
 
-    // Set up the color write mask
-    m_ColorWriteMask = 0;
-    if( EnableRGBChannel )
-        m_ColorWriteMask |= D3DCOLORWRITEENABLE_RED | D3DCOLORWRITEENABLE_GREEN | D3DCOLORWRITEENABLE_BLUE;
-    if( EnableAlphaChannel )
-        m_ColorWriteMask |= D3DCOLORWRITEENABLE_ALPHA;
-    
-    g_pd3dDevice->SetRenderState( D3DRS_COLORWRITEENABLE, m_ColorWriteMask );
+#else
+    // TODO: Need to implement this (just use xbox version?!?)
+    //ASSERT( FALSE );
 #endif
 }
 
@@ -1854,14 +1592,9 @@ void dlg_load_game::platform_ClearBuffer( vram_buffer BufferID, xbool EnableRGBC
     if( EnableAlphaChannel )
         Flags |= D3DCLEAR_TARGET_A;
     g_pd3dDevice->Clear( 0,0,Flags,0,0.0f,0 );
-#elif defined( TARGET_PC )
-    platform_SetDstBuffer( BufferID, EnableRGBChannel, EnableAlphaChannel ); 
-    u32 Flags = 0;
-    if( EnableRGBChannel )
-        Flags |= D3DCLEAR_TARGET;
-    if( EnableAlphaChannel )
-        Flags |= D3DCLEAR_TARGET;
-    g_pd3dDevice->Clear( 0,0,Flags,0,0.0f,0 );
+#else
+    // TODO: Need to implement this (just use xbox version?!?)
+    //ASSERT( FALSE );
 #endif
 }
 
@@ -1875,7 +1608,8 @@ void dlg_load_game::platform_DrawSprite( const vector2& UpperLeft,
                                          xbool          Additive )
 {
 #if defined( TARGET_PS2 )
-    u32 DrawFlags = DRAW_2D | DRAW_USE_ALPHA | DRAW_TEXTURED | DRAW_NO_ZBUFFER | DRAW_NO_ZWRITE;
+
+    u32 DrawFlags = DRAW_2D | DRAW_UI_RTARGET | DRAW_USE_ALPHA | DRAW_TEXTURED | DRAW_NO_ZBUFFER | DRAW_NO_ZWRITE;
     if( Additive )
         DrawFlags |= DRAW_BLEND_ADD;
     draw_Begin( DRAW_SPRITES, DrawFlags );
@@ -1885,7 +1619,9 @@ void dlg_load_game::platform_DrawSprite( const vector2& UpperLeft,
                           UV1,
                           C );
     draw_End();
+
 #elif defined( TARGET_XBOX )
+
     // Xbox doesn't seem to like sprites that go outside the view bounds.
     // We'll clip it manually.
 
@@ -1902,19 +1638,15 @@ void dlg_load_game::platform_DrawSprite( const vector2& UpperLeft,
                     DRAW_NO_ZBUFFER     |
                     DRAW_NO_ZWRITE      |
                     DRAW_XBOX_NO_BEGIN;
-                    
     if( Additive )
         DrawFlags |= DRAW_BLEND_ADD;
-    
     draw_EnableBilinear();
     draw_Begin( DRAW_SPRITES, DrawFlags );
     g_RenderState.Set( D3DRS_COLORWRITEENABLE, m_ColorWriteMask );
-    
     g_TextureStageState.Set( 0, D3DTSS_ALPHAOP, D3DTOP_SELECTARG1 );
     g_TextureStageState.Set( 0, D3DTSS_ALPHAARG1, D3DTA_DIFFUSE );
     g_TextureStageState.Set( 0, D3DTSS_ALPHAARG2, D3DTA_TEXTURE );
     g_TextureStageState.Set( 0, D3DTSS_ALPHAKILL, D3DTALPHAKILL_DISABLE );
-    
     draw_Begin( DRAW_SPRITES, DRAW_KEEP_STATES );
     draw_SpriteUV( ClippedUL,
                    ClippedSize,
@@ -1922,41 +1654,9 @@ void dlg_load_game::platform_DrawSprite( const vector2& UpperLeft,
                    ClippedUV1,
                    C );
     draw_End();
-#elif defined( TARGET_PC )
-    // PC doesn't seem to like sprites that go outside the view bounds.
-    // We'll clip it manually.
-
-    vector3 ClippedUL  ( UpperLeft.X, UpperLeft.Y, 0.0f );
-    vector2 ClippedSize( Size );
-    vector2 ClippedUV0 ( UV0 );
-    vector2 ClippedUV1 ( UV1 );
-    pc_ClipSprite( ClippedUL, ClippedSize, ClippedUV0, ClippedUV1 );
-    
-    u32 DrawFlags =   DRAW_2D         | 
-                      DRAW_USE_ALPHA  | 
-                      DRAW_CULL_NONE  | 
-                      DRAW_TEXTURED   | 
-                      DRAW_NO_ZBUFFER | 
-                      DRAW_NO_ZWRITE;
-    
-    if( Additive )
-        DrawFlags |= DRAW_BLEND_ADD;
-        
-    draw_EnableBilinear();
-    draw_Begin( DRAW_SPRITES, DrawFlags );
-    
-    g_pd3dDevice->SetRenderState( D3DRS_COLORWRITEENABLE, m_ColorWriteMask );
-    g_pd3dDevice->SetTextureStageState( 0, D3DTSS_ALPHAOP, D3DTOP_SELECTARG1 );
-    g_pd3dDevice->SetTextureStageState( 0, D3DTSS_ALPHAARG1, D3DTA_DIFFUSE );
-    g_pd3dDevice->SetTextureStageState( 0, D3DTSS_ALPHAARG2, D3DTA_TEXTURE );
-    
-    draw_SpriteUV( ClippedUL,
-                   ClippedSize,
-                   ClippedUV0,
-                   ClippedUV1,
-                   C );
-                  
-    draw_End();
+#else
+    // TODO: Need to implement this (just use xbox version?!?)
+    //ASSERT( FALSE );
 #endif
 }
 
@@ -1977,13 +1677,14 @@ void dlg_load_game::platform_BeginFogRender( void )
     gsreg_Set( SCE_GS_ALPHA_1, SCE_GS_SET_ALPHA( C_SRC, C_ZERO, A_SRC, C_DST, 0x80 ) );
     gsreg_End();
 #elif defined( TARGET_XBOX )
-    // Make sure the screen is cleared to start
+    
+    // make sure the screen is cleared to start
     platform_ClearBuffer( BUFFER_SCREEN, FALSE, TRUE );
 
-    // Render to the screen, but mask out everything except alpha
+    // render to the screen, but mask out everything except alpha
     platform_SetDstBuffer( BUFFER_SCREEN, FALSE, TRUE );
 
-    // Begin drawing
+    // begin drawing
     draw_Begin( DRAW_SPRITES, DRAW_USE_ALPHA     |
                               DRAW_TEXTURED      |
                               DRAW_2D            |
@@ -1994,21 +1695,10 @@ void dlg_load_game::platform_BeginFogRender( void )
     g_RenderState.Set( D3DRS_COLORWRITEENABLE, m_ColorWriteMask );
     draw_Begin( DRAW_SPRITES, DRAW_KEEP_STATES );
     draw_SetTexture( m_FogBMP );
-#elif defined( TARGET_PC )
-    // Make sure the screen is cleared to start
-    platform_ClearBuffer( BUFFER_SCREEN, FALSE, TRUE );
-
-    // Render to the screen, but mask out everything except alpha
-    platform_SetDstBuffer( BUFFER_SCREEN, FALSE, TRUE );
-
-    // Begin drawing
-    draw_Begin( DRAW_SPRITES, DRAW_USE_ALPHA | 
-                              DRAW_TEXTURED  | 
-                              DRAW_2D        | 
-                              DRAW_NO_ZBUFFER| 
-                              DRAW_NO_ZWRITE | 
-                              DRAW_BLEND_ADD );                           
-    draw_SetTexture( m_FogBMP );
+    
+#else
+    // TODO: Need to implement this (just use xbox version?!?)
+    //ASSERT( FALSE );
 #endif
 }
 
@@ -2040,10 +1730,15 @@ void dlg_load_game::platform_EndFogRender( void )
 
    
     platform_ClearBuffer( BUFFER_SCREEN, TRUE, FALSE );
+
 #elif defined( TARGET_XBOX )
+
+    // end drawing
     draw_End();
-#elif defined( TARGET_PC )
-    draw_End();
+
+#else
+    // TODO: Need to implement this (just use xbox version?!?)
+    //ASSERT( FALSE );
 #endif
 }
 
@@ -2106,19 +1801,17 @@ void dlg_load_game::platform_DrawFogSprite( const vector2&    SpriteCenter,
     gsreg_Set( SCE_GS_XYZ2,  SCE_GS_SET_XYZ     ( CornerX[2], CornerY[2], 0 ) );
     gsreg_End();
 #elif defined( TARGET_XBOX )
+
     draw_SpriteUV( vector3( SpriteCenter.X, SpriteCenter.Y, 0.0f ),
                    WH,
                    UV0,
                    UV1,
                    C,
                    Rotation );
-#elif defined( TARGET_PC )
-    draw_SpriteUV( vector3( SpriteCenter.X, SpriteCenter.Y, 0.0f ),
-                   WH,
-                   UV0,
-                   UV1,
-                   C,
-                   Rotation );
+
+#else
+    // TODO: Need to implement this (just use xbox version?!?)
+    //ASSERT( FALSE );
 #endif
 }
 
@@ -2127,6 +1820,7 @@ void dlg_load_game::platform_DrawFogSprite( const vector2&    SpriteCenter,
 void dlg_load_game::platform_BeginShaftRender( void )
 {
 #if defined( TARGET_PS2 )
+
     // set the level name as our texture, and the screen as our render
     // target, but mask out writing to the alpha channel
     platform_SetDstBuffer( BUFFER_SCREEN, TRUE, FALSE );
@@ -2137,8 +1831,10 @@ void dlg_load_game::platform_BeginShaftRender( void )
     gsreg_Set( SCE_GS_TEST_1, SCE_GS_SET_TEST_1( 0, 0, 0, 0, 0, 0, 1, SCE_GS_ZALWAYS ) );
     gsreg_Set( SCE_GS_ALPHA_1, SCE_GS_SET_ALPHA( C_SRC, C_ZERO, A_DST, C_DST, 0x80 ) );
     gsreg_End();
+
 #elif defined( TARGET_XBOX )
-    // Set the level name as our texture, and the screen as our render
+
+    // set the level name as our texture, and the screen as our render
     // target, but mask out writing to the alpha channel
     platform_SetDstBuffer( BUFFER_SCREEN, TRUE, FALSE );
     platform_SetSrcBuffer( BUFFER_LEVEL_NAME );
@@ -2158,7 +1854,6 @@ void dlg_load_game::platform_BeginShaftRender( void )
     g_RenderState.Set( D3DRS_SRCBLEND , D3DBLEND_DESTALPHA );
     g_RenderState.Set( D3DRS_DESTBLEND, D3DBLEND_ONE );
     g_RenderState.Set( D3DRS_COLORWRITEENABLE, m_ColorWriteMask );
-    
     g_TextureStageState.Set( 0, D3DTSS_ALPHAOP,   D3DTOP_MODULATE );
     g_TextureStageState.Set( 0, D3DTSS_ALPHAARG1, D3DTA_DIFFUSE  );
     g_TextureStageState.Set( 0, D3DTSS_ALPHAARG2, D3DTA_TEXTURE  );
@@ -2167,33 +1862,10 @@ void dlg_load_game::platform_BeginShaftRender( void )
     g_TextureStageState.Set( 0, D3DTSS_COLORARG2, D3DTA_TEXTURE );
 
     draw_Begin( DRAW_QUADS, DRAW_KEEP_STATES );
-#elif defined( TARGET_PC )
-    // Set the level name as our texture, and the screen as our render
-    // target, but mask out writing to the alpha channel
-    platform_SetDstBuffer( BUFFER_SCREEN, TRUE, FALSE );
-    platform_SetSrcBuffer( BUFFER_LEVEL_NAME );
-    
-    draw_Begin( DRAW_QUADS, DRAW_CULL_NONE  |
-                            DRAW_2D         |
-                            DRAW_NO_ZBUFFER |
-                            DRAW_TEXTURED   |
-                            DRAW_USE_ALPHA  |
-                            DRAW_BLEND_ADD  |
-                            DRAW_U_CLAMP    |
-                            DRAW_V_CLAMP    );
 
-    g_pd3dDevice->SetRenderState( D3DRS_ALPHABLENDENABLE, TRUE );
-    g_pd3dDevice->SetRenderState( D3DRS_BLENDOP, D3DBLENDOP_ADD );
-    g_pd3dDevice->SetRenderState( D3DRS_SRCBLEND, D3DBLEND_DESTALPHA );
-    g_pd3dDevice->SetRenderState( D3DRS_DESTBLEND, D3DBLEND_ONE );                                  
-    g_pd3dDevice->SetRenderState( D3DRS_COLORWRITEENABLE, m_ColorWriteMask );
-    
-    g_pd3dDevice->SetTextureStageState( 0, D3DTSS_ALPHAOP, D3DTOP_MODULATE );
-    g_pd3dDevice->SetTextureStageState( 0, D3DTSS_ALPHAARG1, D3DTA_DIFFUSE );
-    g_pd3dDevice->SetTextureStageState( 0, D3DTSS_ALPHAARG2, D3DTA_TEXTURE );
-    g_pd3dDevice->SetTextureStageState( 0, D3DTSS_COLOROP, D3DTOP_MODULATE );
-    g_pd3dDevice->SetTextureStageState( 0, D3DTSS_COLORARG1, D3DTA_DIFFUSE );
-    g_pd3dDevice->SetTextureStageState( 0, D3DTSS_COLORARG2, D3DTA_TEXTURE );
+#else
+    // TODO: Need to implement this (just use xbox version?!?)
+    //ASSERT( FALSE );
 #endif
 }
 
@@ -2202,11 +1874,16 @@ void dlg_load_game::platform_BeginShaftRender( void )
 void dlg_load_game::platform_EndShaftRender( void )
 {
 #if defined( TARGET_PS2 )
-    // Nothing to do...
+
+    // nothing to do...
+
 #elif defined( TARGET_XBOX )
+
     draw_End();
-#elif defined( TARGET_PC )
-    draw_End();
+
+#else
+    // TODO: Need to implement this (just use xbox version?!?)
+    //ASSERT( FALSE );
 #endif
 }
 
@@ -2217,6 +1894,7 @@ void dlg_load_game::platform_DrawShaftQuad( const vector2* pCorners,
                                             const xcolor*  pColors )
 {
 #if defined( TARGET_PS2 )
+
     s32 i;
 
     // convert the data to ps2-friendly format
@@ -2253,16 +1931,17 @@ void dlg_load_game::platform_DrawShaftQuad( const vector2* pCorners,
     gsreg_Set( SCE_GS_RGBAQ, SCE_GS_SET_RGBAQ   ( PS2Colors[2].R, PS2Colors[2].G, PS2Colors[2].B, PS2Colors[2].A, 0x3f800000 ) );
     gsreg_Set( SCE_GS_XYZ2,  SCE_GS_SET_XYZ     ( CornerX[2], CornerY[2], 0 ) );
     gsreg_End();
+
 #elif defined( TARGET_XBOX )
+
     draw_Color( pColors[0] );  draw_UV( pUVs[0] );  draw_Vertex( pCorners[0].X,  pCorners[0].Y, 0.0f );
     draw_Color( pColors[1] );  draw_UV( pUVs[1] );  draw_Vertex( pCorners[1].X,  pCorners[1].Y, 0.0f );
     draw_Color( pColors[2] );  draw_UV( pUVs[2] );  draw_Vertex( pCorners[2].X,  pCorners[2].Y, 0.0f );
     draw_Color( pColors[3] );  draw_UV( pUVs[3] );  draw_Vertex( pCorners[3].X,  pCorners[3].Y, 0.0f );
-#elif defined( TARGET_PC )
-    draw_Color( pColors[0] );  draw_UV( pUVs[0] );  draw_Vertex( pCorners[0].X,  pCorners[0].Y, 0.0f );
-    draw_Color( pColors[1] );  draw_UV( pUVs[1] );  draw_Vertex( pCorners[1].X,  pCorners[1].Y, 0.0f );
-    draw_Color( pColors[2] );  draw_UV( pUVs[2] );  draw_Vertex( pCorners[2].X,  pCorners[2].Y, 0.0f );
-    draw_Color( pColors[3] );  draw_UV( pUVs[3] );  draw_Vertex( pCorners[3].X,  pCorners[3].Y, 0.0f );
+
+#else
+    // TODO: Need to implement this (just use xbox version?!?)
+    //ASSERT( FALSE );
 #endif
 }
 

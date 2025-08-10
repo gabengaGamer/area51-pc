@@ -382,7 +382,7 @@ void postfx::RenderGlow ( const vector3& Pt, f32 Size, xcolor Color )
     {
         // Step 1: Render rectangle to clear backbuffer
         //vram_Sync() ;
-        //draw_Begin( DRAW_QUADS, DRAW_2D | DRAW_2D_KEEP_Z);
+        //draw_Begin( DRAW_QUADS, DRAW_2D | DRAW_UI_RTARGET | DRAW_2D_KEEP_Z);
         draw_Begin( DRAW_TRIANGLES, DRAW_2D );//| DRAW_NO_ZBUFFER | DRAW_2D_KEEP_Z);
         gsreg_Begin();
         gsreg_SetZBuffer( FALSE ) ;
@@ -421,7 +421,7 @@ void postfx::RenderGlow ( const vector3& Pt, f32 Size, xcolor Color )
     {
         // Step 2: Render rectangle to set backbuffer using z buffer
         //vram_Sync() ;
-        //draw_Begin( DRAW_QUADS, DRAW_2D | DRAW_2D_KEEP_Z);
+        //draw_Begin( DRAW_QUADS, DRAW_2D | DRAW_UI_RTARGET | DRAW_2D_KEEP_Z);
         draw_Begin( DRAW_TRIANGLES, DRAW_2D );//| DRAW_2D_KEEP_Z);
         gsreg_Begin();
         gsreg_SetZBuffer( TRUE ) ;
@@ -457,7 +457,7 @@ void postfx::RenderGlow ( const vector3& Pt, f32 Size, xcolor Color )
         // simply replicating itself, so the referenced pixel will remain unchanged
         vram_Sync() ;
         if (IN2D)
-            draw_Begin( DRAW_SPRITES, DRAW_2D | DRAW_2D_KEEP_Z | DRAW_TEXTURED | DRAW_NO_ZBUFFER );
+            draw_Begin( DRAW_SPRITES, DRAW_2D | DRAW_UI_RTARGET | DRAW_2D_KEEP_Z | DRAW_TEXTURED | DRAW_NO_ZBUFFER );
         else
             draw_Begin( DRAW_SPRITES, DRAW_TEXTURED | DRAW_NO_ZBUFFER );
     
@@ -485,7 +485,7 @@ void postfx::RenderGlow ( const vector3& Pt, f32 Size, xcolor Color )
         // Step 4: render final image into rgba
         vram_Sync() ;
         if (IN2D)
-            draw_Begin( DRAW_SPRITES, DRAW_2D | DRAW_2D_KEEP_Z | DRAW_USE_ALPHA | DRAW_TEXTURED | DRAW_NO_ZBUFFER );
+            draw_Begin( DRAW_SPRITES, DRAW_2D | DRAW_UI_RTARGET | DRAW_2D_KEEP_Z | DRAW_USE_ALPHA | DRAW_TEXTURED | DRAW_NO_ZBUFFER );
         else
             draw_Begin( DRAW_SPRITES, DRAW_USE_ALPHA | DRAW_TEXTURED | DRAW_NO_ZBUFFER );
 

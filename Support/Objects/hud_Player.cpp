@@ -139,7 +139,7 @@ void player_hud::OnRender( void )
 
             if( pBitmap && g_VoiceMgr.IsHeadsetPresent() )
             {
-                draw_Begin( DRAW_SPRITES, DRAW_TEXTURED | DRAW_USE_ALPHA | DRAW_2D | DRAW_NO_ZBUFFER );
+                draw_Begin( DRAW_SPRITES, DRAW_TEXTURED | DRAW_USE_ALPHA | DRAW_2D | DRAW_UI_RTARGET | DRAW_NO_ZBUFFER  );
                 draw_SetTexture(*pBitmap);
                 draw_DisableBilinear();                
                 static f32 HOW_BMP_X =   8; 
@@ -208,7 +208,7 @@ void player_hud::OnRender( void )
                     if( pWHOBitmap )
                     {
                         // Render art
-                        draw_Begin( DRAW_SPRITES, DRAW_TEXTURED | DRAW_USE_ALPHA | DRAW_2D | DRAW_NO_ZBUFFER );
+                        draw_Begin( DRAW_SPRITES, DRAW_TEXTURED | DRAW_USE_ALPHA | DRAW_2D | DRAW_UI_RTARGET | DRAW_NO_ZBUFFER  );
                         draw_SetTexture(*pWHOBitmap);
                         draw_DisableBilinear();                
                         static f32 WHO_BMP_X = 148;
@@ -304,7 +304,7 @@ void player_hud::OnRender( void )
                 }
             }
 
-            draw_Begin( DRAW_SPRITES, DRAW_TEXTURED | DRAW_USE_ALPHA | DRAW_2D | DRAW_NO_ZBUFFER );
+            draw_Begin( DRAW_SPRITES, DRAW_TEXTURED | DRAW_USE_ALPHA | DRAW_2D | DRAW_UI_RTARGET | DRAW_NO_ZBUFFER  );
             draw_SetTexture(*pInvBitmap);
             draw_DisableBilinear();                
 
@@ -346,7 +346,7 @@ void player_hud::OnRender( void )
                 }
             }
 
-            draw_Begin( DRAW_SPRITES, DRAW_TEXTURED | DRAW_USE_ALPHA | DRAW_2D | DRAW_NO_ZBUFFER );
+            draw_Begin( DRAW_SPRITES, DRAW_TEXTURED | DRAW_USE_ALPHA | DRAW_2D | DRAW_UI_RTARGET | DRAW_NO_ZBUFFER  );
             draw_SetTexture(*pAutoSaveBitmap);
             draw_DisableBilinear();                
 

@@ -3,13 +3,18 @@
 //
 // Desc: List of Audio device error event codes and the expected params.
 //
-// Copyright (c) 1999-2001, Microsoft Corporation.  All rights reserved.
+// Copyright (c) 1999 - 2001, Microsoft Corporation.  All rights reserved.
 //------------------------------------------------------------------------------
 
 
 
 #ifndef __AUDEVCOD__
 #define __AUDEVCOD__
+#include <winapifamily.h>
+
+#pragma region Desktop Family
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
+
 
 
 #define EC_SND_DEVICE_ERROR_BASE   0x0200
@@ -49,5 +54,9 @@ typedef enum _tagSND_DEVICE_ERROR {
 //
 // lParam2 is the error returned from the sound device call.
 //
+
+
+#endif /* WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP) */
+#pragma endregion
 
 #endif // __AUDEVCOD__

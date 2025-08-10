@@ -3513,7 +3513,7 @@ void player::OnRenderTransparent(void)
             xbitmap* pBitmap = m_MissionFailedBmp.GetPointer();
             if( pBitmap )
             {
-                draw_Begin( DRAW_SPRITES, DRAW_TEXTURED | DRAW_USE_ALPHA | DRAW_2D | DRAW_NO_ZBUFFER );
+                draw_Begin( DRAW_SPRITES, DRAW_TEXTURED | DRAW_USE_ALPHA | DRAW_2D | DRAW_UI_RTARGET | DRAW_NO_ZBUFFER );
                 draw_SetTexture(*pBitmap);
                 draw_DisableBilinear();
                 f32 X = f32( 256 - (m_MissionFailedBmp.GetPointer()->GetWidth()/2) );

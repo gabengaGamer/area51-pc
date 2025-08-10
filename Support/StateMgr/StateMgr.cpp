@@ -309,12 +309,6 @@ void state_mgr::Init( void )
     m_View.SetPosition( vector3(1356,-1922,-285) );
     m_View.LookAtPoint( vector3(0,0,0) );
 
-    // set movie position/size
-    s32 XRes, YRes;
-    eng_GetRes( XRes, YRes );
-    m_MovieSize.Set( (f32)XRes, (f32)YRes );
-    m_MoviePosition.Set( 0.0f, 0.0f );
-
     // Set initial states
     m_bInited                   = TRUE;
     m_bDoSystemError            = FALSE;
@@ -1237,15 +1231,12 @@ void state_mgr::Render( void )
         eng_SetBackColor( xcolor( 0,0,0 ) );
 
 #if defined( USE_MOVIES )
-        //vector3 Pos( 0.0f, 0.0f, 0.0f );
-        //vector2 Size ( 512, 448 );
-
         // render the movie in the background
         if( m_bPlayMovie )
         {
             if( Movie.IsPlaying() )
             {
-                Movie.Render( m_MoviePosition, m_MovieSize );
+                Movie.Render();
             }
         }
 #endif
@@ -2329,6 +2320,14 @@ void state_mgr::EnterInevitableIntro( void )
 
 xstring SelectBestClip( const char* pName )
 {
+	//const char* langCode = x_GetLocaleString(); //For lang-video support. (future)
+
+#ifdef TARGET_PC
+    return (const char*)xfs( "%s_640x480_%d", pName, 30 );
+	//return (const char*)xfs( "%s_640x480_%s_%d", pName, langCode, 30 ); //For lang-video support. (future)
+#endif
+
+/* Console Graveyard.
 #ifdef TARGET_XBOX
     if( x_GetTerritory() == XL_TERRITORY_AMERICA )
     {
@@ -2341,10 +2340,6 @@ xstring SelectBestClip( const char* pName )
 
         return (const char*)xfs( "%s_640x480_%d",pName,g_PhysFPS/2 );
     }
-#endif
-
-#ifdef TARGET_PC
-        return (const char*)xfs( "%s_640x480_%d",pName,30 );
 #endif
 
 #ifdef TARGET_PS2
@@ -2360,7 +2355,7 @@ xstring SelectBestClip( const char* pName )
         return (const char*)xfs( "NTSC_%s", pName );
     }
 #endif
-
+*/
     return pName;
 }
 
@@ -2454,7 +2449,7 @@ void state_mgr::UpdateAutoSaveDialog( void )
             Done = TRUE;
         }
 
-        draw_Begin( DRAW_SPRITES, DRAW_TEXTURED | DRAW_USE_ALPHA | DRAW_2D | DRAW_NO_ZBUFFER );
+        draw_Begin( DRAW_SPRITES, DRAW_TEXTURED | DRAW_USE_ALPHA | DRAW_2D | DRAW_UI_RTARGET | DRAW_NO_ZBUFFER  );
 
         irect rect(0+32,0,512-32,340);
         xwstring noticeString = g_StringTableMgr("ui","IDS_AUTOSAVE_NOTICE");
@@ -2471,7 +2466,7 @@ void state_mgr::UpdateAutoSaveDialog( void )
 
         if( pAutoSaveBitmap )
         {       
-            draw_Begin( DRAW_SPRITES, DRAW_TEXTURED | DRAW_USE_ALPHA | DRAW_2D | DRAW_NO_ZBUFFER );
+            draw_Begin( DRAW_SPRITES, DRAW_TEXTURED | DRAW_USE_ALPHA | DRAW_2D | DRAW_UI_RTARGET | DRAW_NO_ZBUFFER  );
             draw_SetTexture(*pAutoSaveBitmap);
             draw_DisableBilinear();                
             draw_Sprite( vector3( 256-(pAutoSaveBitmap->GetWidth()/2), 300, 0 ), 
@@ -10398,11 +10393,6 @@ void state_mgr::ExitClientDisconnect( void )
 void state_mgr::EnableBackgroundMovie( void )
 {
 #if !defined( X_EDITOR ) && (!CONFIG_IS_DEMO)
-    s32 XRes, YRes;
-    eng_GetRes( XRes, YRes );
-    m_MovieSize.Set( (f32)XRes, (f32)YRes );
-
-    m_MoviePosition.Set( 0.0f, 0.0f );
     m_bPlayMovie = Movie.Open( SelectBestClip("MenuBackground"),TRUE,TRUE );
 #endif
 }
@@ -11738,17 +11728,6 @@ void state_mgr::StartBackgroundRendering( void )
         DLIST.SetThreadID( m_pBackgroundRenderer->GetId() );
     #endif
         smem_SetThreadId( m_pBackgroundRenderer->GetId() );
-    #if defined(USE_MOVIES)
-        if( m_bPlayMovie && (Movie.CachingComplete()==FALSE) )
-        {
-            LOG_WARNING( "state_mgr::StartBackgroundRendering", "Background rendering waiting until movie has completed caching." );
-            while( Movie.CachingComplete() == FALSE )
-            {
-                x_DelayThread( 32 );
-            }
-            LOG_WARNING( "state_mgr::StartBackgroundRendering", "Movie caching complete." );
-        }
-    #endif
     }
 }
 

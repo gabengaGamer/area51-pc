@@ -498,7 +498,7 @@ void dlg_lore_menu::Render( s32 ox, s32 oy )
 #if defined( TARGET_PC )
                     if( Movie.IsPlaying() )
                     {               
-                        Movie.Render( vector2( 129.0f, 59.0f ), vector2( 256.0f, 192.0f ), TRUE );
+                        Movie.Render( TRUE );
                     }
 #endif
                     break;

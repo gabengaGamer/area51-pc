@@ -4,22 +4,13 @@
  |~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~|
  |PROJECT: X3DAudio                     MODEL:   Unmanaged User-mode        |
  |VERSION: 1.7                          EXCEPT:  No Exceptions              |
- |CLASS:   N / A                        MINREQ:  WinXP, Xbox360             |
+ |CLASS:   N / A                        MINREQ:  Win8, Xbox One             |
  |BASE:    N / A                        DIALECT: MSC++ 14.00                |
  |>------------------------------------------------------------------------<|
  | DUTY: Cross-platform stand-alone 3D audio math library                   |
  ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
   NOTES:
-    1.  USE THE DEBUG DLL TO ENABLE PARAMETER VALIDATION VIA ASSERTS!
-        Here's how:
-        Copy X3DAudioDX_X.dll to where your application exists.
-        The debug DLL can be found under %WINDIR%\system32.
-        Rename X3DAudioDX_X.dll to X3DAudioX_X.dll to use the debug version.
-
-        Only parameters required by DSP settings being calculated as
-        stipulated by the calculation control flags are validated.
-
-    2.  Definition of terms:
+    1.  Definition of terms:
             LFE: Low Frequency Effect -- always omnidirectional.
             LPF: Low Pass Filter, divided into two classifications:
                  Direct -- Applied to the direct signal path,
@@ -27,7 +18,7 @@
                  Reverb -- Applied to the reverb signal path,
                            used for occlusion effects only.
 
-    3.  Volume level is expressed as a linear amplitude scaler:
+    2.  Volume level is expressed as a linear amplitude scaler:
         1.0f represents no attenuation applied to the original signal,
         0.5f denotes an attenuation of 6dB, and 0.0f results in silence.
         Amplification (volume > 1.0f) is also allowed, and is not clamped.
@@ -35,7 +26,7 @@
         LPF values range from 1.0f representing all frequencies pass through,
         to 0.0f which results in silence as all frequencies are filtered out.
 
-    4.  X3DAudio uses a left-handed Cartesian coordinate system with values
+    3.  X3DAudio uses a left-handed Cartesian coordinate system with values
         on the x-axis increasing from left to right, on the y-axis from
         bottom to top, and on the z-axis from near to far.
         Azimuths are measured clockwise from a given reference direction.
@@ -47,17 +38,26 @@
         Metric constants are supplied only as a convenience.
         Distance is calculated using the Euclidean norm formula.
 
-    5.  Only real values are permissible with functions using 32-bit
+    4.  Only real values are permissible with functions using 32-bit
         float parameters -- NAN and infinite values are not accepted.
         All computation occurs in 32-bit precision mode.                    */
 
 #pragma once
+
+#include <sdkddkver.h>
+
+#if(_WIN32_WINNT < _WIN32_WINNT_WIN8)
+#error "This version of XAudio2 is available only in Windows 8 or later. Use the XAudio2 headers and libraries from the DirectX SDK with applications that target Windows 7 and earlier versions."
+#endif // (_WIN32_WINNT < _WIN32_WINNT_WIN8)
+
+#include <winapifamily.h>
+
+#pragma region Application Family
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_APP | WINAPI_PARTITION_TV_APP | WINAPI_PARTITION_TV_TITLE | WINAPI_PARTITION_GAMES)
+
 //--------------<D-E-F-I-N-I-T-I-O-N-S>-------------------------------------//
 #include <windef.h>    // general windows types
-#if defined(_XBOX)
-    #include <vectorintrinsics.h>
-#endif
-#include <d3d9types.h> // for D3DVECTOR
+#include <DirectXMath.h>
 
 // speaker geometry configuration flags, specifies assignment of channels to speaker positions, defined as per WAVEFORMATEXTENSIBLE.dwChannelMask
 #if !defined(_SPEAKER_POSITIONS_)
@@ -98,12 +98,6 @@
     #define SPEAKER_7POINT1_SURROUND (SPEAKER_FRONT_LEFT | SPEAKER_FRONT_RIGHT | SPEAKER_FRONT_CENTER | SPEAKER_LOW_FREQUENCY | SPEAKER_BACK_LEFT | SPEAKER_BACK_RIGHT | SPEAKER_SIDE_LEFT  | SPEAKER_SIDE_RIGHT)
 #endif
 
-// Xbox360 speaker geometry configuration, used with X3DAudioInitialize
-#if defined(_XBOX)
-    #define SPEAKER_XBOX SPEAKER_5POINT1
-#endif
-
-
 // size of instance handle in bytes
 #define X3DAUDIO_HANDLE_BYTESIZE 20
 
@@ -133,7 +127,7 @@
 
 // primitive types
 typedef float FLOAT32; // 32-bit IEEE float
-typedef D3DVECTOR X3DAUDIO_VECTOR; // float 3D vector
+typedef DirectX::XMFLOAT3 X3DAUDIO_VECTOR; // float 3D vector
 
 // instance handle of precalculated constants
 typedef BYTE X3DAUDIO_HANDLE[X3DAUDIO_HANDLE_BYTESIZE];
@@ -165,7 +159,7 @@ typedef struct X3DAUDIO_DISTANCE_CURVE
     X3DAUDIO_DISTANCE_CURVE_POINT* pPoints;    // distance curve point array, must have at least PointCount elements with no duplicates and be sorted in ascending order with respect to Distance
     UINT32                         PointCount; // number of distance curve points, must be >= 2 as all distance curves must have at least two endpoints, defining DSP settings at 0.0f and 1.0f normalized distance
 } X3DAUDIO_DISTANCE_CURVE, *LPX3DAUDIO_DISTANCE_CURVE;
-static const X3DAUDIO_DISTANCE_CURVE_POINT X3DAudioDefault_LinearCurvePoints[2] = { 0.0f, 1.0f, 1.0f, 0.0f };
+static const X3DAUDIO_DISTANCE_CURVE_POINT X3DAudioDefault_LinearCurvePoints[2] = { { 0.0f, 1.0f }, { 1.0f, 0.0f } };
 static const X3DAUDIO_DISTANCE_CURVE       X3DAudioDefault_LinearCurve          = { (X3DAUDIO_DISTANCE_CURVE_POINT*)&X3DAudioDefault_LinearCurvePoints[0], 2 };
 
 // Cone:
@@ -292,25 +286,23 @@ typedef struct X3DAUDIO_DSP_SETTINGS
 
 //--------------<M-A-C-R-O-S>-----------------------------------------------//
 // function storage-class attribute and calltype
-#if defined(_XBOX) || defined(X3DAUDIOSTATIC)
-    #define X3DAUDIO_API_(type) EXTERN_C type STDAPIVCALLTYPE
+#if defined(X3DEXPORT)
+#define X3DAUDIO_API_(type) EXTERN_C __declspec(dllexport) type STDAPIVCALLTYPE
 #else
-    #if defined(X3DEXPORT)
-        #define X3DAUDIO_API_(type) EXTERN_C __declspec(dllexport) type STDAPIVCALLTYPE
-    #else
-        #define X3DAUDIO_API_(type) EXTERN_C __declspec(dllimport) type STDAPIVCALLTYPE
-    #endif
+#define X3DAUDIO_API_(type) EXTERN_C __declspec(dllimport) type STDAPIVCALLTYPE
 #endif
-#define X3DAUDIO_IMP_(type) type STDMETHODVCALLTYPE
-
 
 //--------------<F-U-N-C-T-I-O-N-S>-----------------------------------------//
 // initializes instance handle
-X3DAUDIO_API_(void) X3DAudioInitialize (UINT32 SpeakerChannelMask, FLOAT32 SpeedOfSound, __out X3DAUDIO_HANDLE Instance);
+X3DAUDIO_API_(HRESULT) X3DAudioInitialize (UINT32 SpeakerChannelMask, FLOAT32 SpeedOfSound, _Out_writes_bytes_(X3DAUDIO_HANDLE_BYTESIZE) X3DAUDIO_HANDLE Instance);
 
 // calculates DSP settings with respect to 3D parameters
-X3DAUDIO_API_(void) X3DAudioCalculate (__in const X3DAUDIO_HANDLE Instance, __in const X3DAUDIO_LISTENER* pListener, __in const X3DAUDIO_EMITTER* pEmitter, UINT32 Flags, __inout X3DAUDIO_DSP_SETTINGS* pDSPSettings);
+X3DAUDIO_API_(void) X3DAudioCalculate (_In_reads_bytes_(X3DAUDIO_HANDLE_BYTESIZE) const X3DAUDIO_HANDLE Instance, _In_ const X3DAUDIO_LISTENER* pListener, _In_ const X3DAUDIO_EMITTER* pEmitter, UINT32 Flags, _Inout_ X3DAUDIO_DSP_SETTINGS* pDSPSettings);
 
 
 #pragma pack(pop) // revert packing alignment
+
+#endif /* WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_APP | WINAPI_PARTITION_TV_APP | WINAPI_PARTITION_TV_TITLE | WINAPI_PARTITION_GAMES) */
+#pragma endregion
 //---------------------------------<-EOF->----------------------------------//
+

@@ -4,15 +4,20 @@
 // Desc: Structures and defines for the RIFF AVI file format extended to
 //       handle very large/long files.
 //
-// Copyright (c) 1996-2001, Microsoft Corporation.  All rights reserved.
+// Copyright (c) 1996 - 2001, Microsoft Corporation.  All rights reserved.
 //------------------------------------------------------------------------------
 
-// Disable some compiler warnings
+
 #pragma warning(disable: 4097 4511 4512 4514 4705)
 
 
 #if !defined AVIRIFF_H
 #define AVIRIFF_H
+
+#include <winapifamily.h>
+
+#pragma region Desktop Family
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
 
 #if !defined NUMELMS
   #define NUMELMS(aa) (sizeof(aa)/sizeof((aa)[0]))
@@ -221,6 +226,13 @@ typedef union _timecode {
    DWORDLONG  qw;
    } TIMECODE;
 
+typedef struct tagTIMECODE_SAMPLE {
+    LONGLONG qwTick;
+    TIMECODE timecode;
+    DWORD dwUser;
+    DWORD dwFlags;
+} TIMECODE_SAMPLE;
+
 #endif // TIMECODE_DEFINED
 
 #define TIMECODE_RATE_30DROP 0   // this MUST be zero
@@ -252,11 +264,11 @@ typedef struct _timecodedata {
 
 // index subtype codes
 //
-#define AVI_INDEX_SUB_DEFAULT      0x00
+#define AVI_INDEX_SUB_DEFAULT     0x00
 
 // INDEX_OF_CHUNKS subtype codes
 //
-#define AVI_INDEX_SUB_2FIELD       0x01
+#define AVI_INDEX_SUB_2FIELD      0x01
 
 // meta structure of all avi indexes
 //
@@ -398,5 +410,9 @@ typedef struct _avifieldindex_chunk {
 
 
 #include <poppack.h>
+
+
+#endif /* WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP) */
+#pragma endregion
 
 #endif

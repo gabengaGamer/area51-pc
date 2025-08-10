@@ -139,7 +139,7 @@ void hud_reticle::OnRender( player* pPlayer )
         P6.GetY() += Inner;
         P7.GetY() += Outer;
         
-        draw_Begin( DRAW_LINES, DRAW_2D | DRAW_NO_ZBUFFER );
+        draw_Begin( DRAW_LINES, DRAW_2D | DRAW_UI_RTARGET | DRAW_NO_ZBUFFER  );
         draw_Color( Color );
         draw_Vertex( P0 );
         draw_Vertex( P1 );
@@ -158,7 +158,7 @@ void hud_reticle::OnRender( player* pPlayer )
     //
     {
         // BEGIN DRAW
-        draw_Begin( DRAW_POINTS, DRAW_2D | DRAW_NO_ZBUFFER );
+        draw_Begin( DRAW_POINTS, DRAW_2D | DRAW_UI_RTARGET | DRAW_NO_ZBUFFER );
 
         // check for pulsing
         if( m_bPulsing )
@@ -180,7 +180,7 @@ void hud_reticle::OnRender( player* pPlayer )
     //
     {
         // BEGIN DRAW
-        draw_Begin( DRAW_LINES, DRAW_2D | DRAW_NO_ZBUFFER );
+        draw_Begin( DRAW_LINES, DRAW_2D | DRAW_UI_RTARGET | DRAW_NO_ZBUFFER  );
 
         // Check for pulsing.
         if( m_bPulsing )
@@ -230,7 +230,7 @@ void hud_reticle::OnRender( player* pPlayer )
     if( pMainReticle  )
     {
         // BEGIN DRAW
-        draw_Begin( DRAW_SPRITES, DRAW_USE_ALPHA|DRAW_TEXTURED|DRAW_2D|DRAW_NO_ZBUFFER );
+        draw_Begin( DRAW_SPRITES, DRAW_USE_ALPHA|DRAW_TEXTURED|DRAW_2D|DRAW_UI_RTARGET|DRAW_NO_ZBUFFER );
 
         // Since the bitmap is going to be centered we want to get half it length and width.
         MainWidth  = (f32)pMainReticle->GetWidth()/2.0f;
@@ -301,7 +301,7 @@ void hud_reticle::OnRender( player* pPlayer )
         xcolor  Color     =  (EnemyGuid && !bMultiplayer) ? g_ReticleMutantTargetColor : g_ReticleMutantColor;
 
         // BEGIN DRAW
-        draw_Begin( DRAW_SPRITES, DRAW_USE_ALPHA|DRAW_TEXTURED|DRAW_2D|DRAW_BLEND_ADD|DRAW_NO_ZBUFFER );
+        draw_Begin( DRAW_SPRITES, DRAW_USE_ALPHA|DRAW_TEXTURED|DRAW_2D|DRAW_UI_RTARGET|DRAW_BLEND_ADD|DRAW_NO_ZBUFFER );
 
 
         draw_SetTexture( *pEdgeReticle );
@@ -419,7 +419,7 @@ void hud_reticle::OnRender( player* pPlayer )
     
     {
         // BEGIN DRAW
-        draw_Begin( DRAW_SPRITES, DRAW_USE_ALPHA|DRAW_TEXTURED|DRAW_2D|DRAW_NO_ZBUFFER );
+        draw_Begin( DRAW_SPRITES, DRAW_USE_ALPHA|DRAW_TEXTURED|DRAW_2D|DRAW_UI_RTARGET|DRAW_NO_ZBUFFER );
 
         draw_SetTexture( *pEdgeReticle );
 

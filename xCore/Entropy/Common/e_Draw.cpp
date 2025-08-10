@@ -139,63 +139,7 @@ void draw_Volume ( const vector3& P0,
     corners[7].NormalizeAndScale( Width  );
     corners[7] += P1;
     corners[7].GetY() -= Height;
-    
-#ifdef TARGET_PS2
-    // darrin - The PS2 doesn't clip quads, but does clip tris,
-    // so we'll use that instead for now.
-    draw_Begin( DRAW_TRIANGLES, DRAW_CULL_NONE | DRAW_USE_ALPHA | DRAW_NO_ZWRITE );
-    {
-        draw_Color( Color );
 
-        //  draw it in one direction....
-
-        //  draw the ends
-        draw_Vertex ( corners[0] );
-        draw_Vertex ( corners[1] );
-        draw_Vertex ( corners[3] );
-        draw_Vertex ( corners[0] );
-        draw_Vertex ( corners[2] );
-        draw_Vertex ( corners[3] );
-
-        draw_Vertex ( corners[6] );
-        draw_Vertex ( corners[7] );
-        draw_Vertex ( corners[5] );
-        draw_Vertex ( corners[6] );
-        draw_Vertex ( corners[4] );
-        draw_Vertex ( corners[5] );
-
-        // draw the top and bottom
-        draw_Vertex ( corners[4] );
-        draw_Vertex ( corners[5] );
-        draw_Vertex ( corners[1] );
-        draw_Vertex ( corners[4] );
-        draw_Vertex ( corners[0] );
-        draw_Vertex ( corners[1] );
-
-        draw_Vertex ( corners[6] );
-        draw_Vertex ( corners[2] );
-        draw_Vertex ( corners[3] );
-        draw_Vertex ( corners[6] );
-        draw_Vertex ( corners[7] );
-        draw_Vertex ( corners[3] );
-
-        //  draw the sides
-        draw_Vertex ( corners[6] );
-        draw_Vertex ( corners[4] );
-        draw_Vertex ( corners[0] );
-        draw_Vertex ( corners[6] );
-        draw_Vertex ( corners[2] );
-        draw_Vertex ( corners[0] );
-
-        draw_Vertex ( corners[3] );
-        draw_Vertex ( corners[1] );
-        draw_Vertex ( corners[5] );
-        draw_Vertex ( corners[3] );
-        draw_Vertex ( corners[7] );
-        draw_Vertex ( corners[5] );
-    }
-    draw_End();
-#else
     draw_Begin( DRAW_QUADS , DRAW_USE_ALPHA | DRAW_NO_ZWRITE );
     {
         draw_Color( Color );
@@ -236,7 +180,6 @@ void draw_Volume ( const vector3& P0,
         draw_Vertex ( corners[7] );
     }
     draw_End();
-#endif
 }
 
 #endif // X_RETAIL
@@ -723,14 +666,14 @@ void draw_Rect( const irect&   Rect,
     {
         if( (Rect.GetWidth() == 1) && (Rect.GetHeight() == 1) )
         {
-            draw_Begin( DRAW_POINTS, DRAW_2D|DRAW_USE_ALPHA|DRAW_NO_ZBUFFER );
+            draw_Begin( DRAW_POINTS, DRAW_2D|DRAW_USE_ALPHA|DRAW_NO_ZBUFFER|DRAW_UI_RTARGET );
             draw_Color( Color );
 
             draw_Vertex( (f32)Rect.l, (f32)Rect.t, Near );
         }
         else
         {
-            draw_Begin( DRAW_LINES, DRAW_2D|DRAW_USE_ALPHA|DRAW_NO_ZBUFFER );
+            draw_Begin( DRAW_LINES, DRAW_2D|DRAW_USE_ALPHA|DRAW_NO_ZBUFFER|DRAW_UI_RTARGET );
             draw_Color( Color );
 
 
@@ -749,7 +692,7 @@ void draw_Rect( const irect&   Rect,
     }
     else
     {
-        draw_Begin( DRAW_QUADS, DRAW_2D|DRAW_USE_ALPHA|DRAW_NO_ZBUFFER|DRAW_CULL_NONE );
+        draw_Begin( DRAW_QUADS, DRAW_2D|DRAW_USE_ALPHA|DRAW_NO_ZBUFFER|DRAW_CULL_NONE|DRAW_UI_RTARGET );
         draw_Color( Color );
 
         draw_Vertex( (f32)Rect.l, (f32)Rect.t, Near );
@@ -777,14 +720,14 @@ void draw_GouraudRect( const irect&   Rect,
     {
         if( (Rect.GetWidth() == 1) && (Rect.GetHeight() == 1) )
         {
-            draw_Begin( DRAW_POINTS, DRAW_2D|DRAW_USE_ALPHA|DRAW_NO_ZBUFFER );
+            draw_Begin( DRAW_POINTS, DRAW_2D|DRAW_USE_ALPHA|DRAW_NO_ZBUFFER|DRAW_UI_RTARGET );
 
             draw_Color( c1 );
             draw_Vertex( (f32)Rect.l, (f32)Rect.t, Near );
         }
         else
         {
-            draw_Begin( DRAW_LINES, DRAW_2D|DRAW_USE_ALPHA|DRAW_NO_ZBUFFER );
+            draw_Begin( DRAW_LINES, DRAW_2D|DRAW_USE_ALPHA|DRAW_NO_ZBUFFER|DRAW_UI_RTARGET );
 
             draw_Color( c1 );
             draw_Vertex( (f32)Rect.l    , (f32)Rect.t    , Near );
@@ -807,9 +750,9 @@ void draw_GouraudRect( const irect&   Rect,
     else
     {
         if (DoAdditive)
-            draw_Begin( DRAW_QUADS, DRAW_2D|DRAW_USE_ALPHA|DRAW_NO_ZBUFFER|DRAW_BLEND_ADD|DRAW_CULL_NONE );
+            draw_Begin( DRAW_QUADS, DRAW_2D|DRAW_USE_ALPHA|DRAW_NO_ZBUFFER|DRAW_BLEND_ADD|DRAW_CULL_NONE|DRAW_UI_RTARGET );
         else
-            draw_Begin( DRAW_QUADS, DRAW_2D|DRAW_USE_ALPHA|DRAW_NO_ZBUFFER|DRAW_CULL_NONE );
+            draw_Begin( DRAW_QUADS, DRAW_2D|DRAW_USE_ALPHA|DRAW_NO_ZBUFFER|DRAW_CULL_NONE|DRAW_UI_RTARGET );
 
         draw_Color( c1 );
         draw_Vertex( (f32)Rect.l, (f32)Rect.t, Near );

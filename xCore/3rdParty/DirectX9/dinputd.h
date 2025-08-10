@@ -9,6 +9,8 @@
 #ifndef __DINPUTD_INCLUDED__
 #define __DINPUTD_INCLUDED__
 
+#include <winapifamily.h>
+
 #ifndef DIRECTINPUT_VERSION
 #define DIRECTINPUT_VERSION         0x0800
 #pragma message(__FILE__ ": DIRECTINPUT_VERSION undefined. Defaulting to version 0x0800")
@@ -17,6 +19,9 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+#pragma region Desktop Family
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
 
 /****************************************************************************
  *
@@ -747,6 +752,9 @@ typedef struct IDirectInputJoyConfig8 *LPDIRECTINPUTJOYCONFIG8;
  *  Delete particular data from default map file.
  */
 #define DIDIFT_DELETE                   0x01000000
+
+#endif /* WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP) */
+#pragma endregion
 
 #ifdef __cplusplus
 };

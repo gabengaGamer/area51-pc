@@ -99,8 +99,8 @@ static struct rigid_color : public rsc_loader
     virtual void Unload( void* pData )
     {
         color_info* pRigidColor=( color_info* )pData;
-    #ifdef TARGET_XBOX
-        delete pRigidColor->m_hColors;
+    #ifdef TARGET_PC
+        //delete pRigidColor->m_hColors;
     #endif
         delete pRigidColor;
     }

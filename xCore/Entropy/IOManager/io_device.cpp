@@ -5,12 +5,6 @@
 #include "x_time.hpp"
 #include "x_log.hpp"
 
-#ifdef TARGET_GCN
-#include <dolphin.h>
-#include <libsn.h>
-#include "Device_DVD\io_device_dvd.hpp"
-#endif
-
 //==============================================================================
 //  Checksum Helper Class
 //==============================================================================
@@ -54,17 +48,10 @@ u16 crc16Table[] = {
 
 //==============================================================================
 
-//#define LOG_REQUESTS
-#if defined(TARGET_XBOX) && defined(X_DEBUG)
-//#define USE_NET_FS
-#endif
-//==============================================================================
-
 void ProcessEndOfRequest( s32 DeviceIndex, s32 Status );
 
 //==============================================================================
 //========================== Hardware Specific Stuff ===========================
-//==============================================================================
 //==============================================================================
 
 void ProcessEndOfRequest( io_device* pDevice, s32 Status )
@@ -107,14 +94,6 @@ void ProcessEndOfRequest( io_device* pDevice, s32 Status )
 
             (void)CheckSum2;
             ASSERT( CheckSum2 == CheckSum );
-
-#ifdef TARGET_XBOX
-            extern void OnIOErrorCallback( void );
-            if( CheckSum2 != CheckSum )
-            {
-                OnIOErrorCallback();
-            }
-#endif
         }
     }
 
@@ -281,12 +260,6 @@ void io_device::ServiceDeviceCurrentRequest( void )
     // Device no longer has a current request.
     m_CurrentRequest = NULL;
 
-#ifdef TARGET_GCN
-    // This st00pid code fixes a problem with the optimizer on the GCN.
-    f32 f = x_sqrt( 1.0f );       // DO NOT REMOVE!!!!
-    (void)f;
-#endif
-
     // Only if current request is valid...
     if( pRequest )
     {
@@ -431,11 +404,7 @@ void io_device::ProcessReadRequest( io_request* pRequest )
     s32   Length = pRequest->m_ChunkLength;
 
     // any length alignment needed?
-#ifdef TARGET_GCN
-    if( m_LengthAlign && ((this==&g_IODeviceDVD) && !IsDevLink()) )
-#else
     if( m_LengthAlign )
-#endif
     {
         s32 Mask = m_LengthAlign-1;
 

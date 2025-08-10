@@ -7,74 +7,37 @@
  *
  **************************************************************************/
 
+#pragma once
 #ifndef __XAUDIO2FX_INCLUDED__
 #define __XAUDIO2FX_INCLUDED__
 
+#include <sdkddkver.h>
 
-/**************************************************************************
- *
- * XAudio2 effect class IDs.
- *
- **************************************************************************/
+#if(_WIN32_WINNT < _WIN32_WINNT_WIN8)
+#error "This version of XAudio2 is available only in Windows 8 or later. Use the XAudio2 headers and libraries from the DirectX SDK with applications that target Windows 7 and earlier versions."
+#endif // (_WIN32_WINNT < _WIN32_WINNT_WIN8)
 
-#include "comdecl.h"        // For DEFINE_CLSID and DEFINE_IID
+#include <winapifamily.h>
 
-// XAudio 2.0 (March 2008 SDK)
-//DEFINE_CLSID(AudioVolumeMeter, C0C56F46, 29B1, 44E9, 99, 39, A3, 2C, E8, 68, 67, E2);
-//DEFINE_CLSID(AudioVolumeMeter_Debug, C0C56F46, 29B1, 44E9, 99, 39, A3, 2C, E8, 68, 67, DB);
-//DEFINE_CLSID(AudioReverb, 6F6EA3A9, 2CF5, 41CF, 91, C1, 21, 70, B1, 54, 00, 63);
-//DEFINE_CLSID(AudioReverb_Debug, 6F6EA3A9, 2CF5, 41CF, 91, C1, 21, 70, B1, 54, 00, DB);
+#pragma region Application Family
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_APP | WINAPI_PARTITION_TV_APP | WINAPI_PARTITION_TV_TITLE | WINAPI_PARTITION_GAMES)
 
-// XAudio 2.1 (June 2008 SDK)
-//DEFINE_CLSID(AudioVolumeMeter, c1e3f122, a2ea, 442c, 85, 4f, 20, d9, 8f, 83, 57, a1);
-//DEFINE_CLSID(AudioVolumeMeter_Debug, 6d97a461, b02d, 48ae, b5, 43, 82, bc, 35, fd, fa, e2);
-//DEFINE_CLSID(AudioReverb, f4769300, b949, 4df9, b3, 33, 00, d3, 39, 32, e9, a6);
-//DEFINE_CLSID(AudioReverb_Debug, aea2cabc, 8c7c, 46aa, ba, 44, 0e, 6d, 75, 88, a1, f2);
+#ifdef __cplusplus
+// XAudio 2.8
+class __declspec(uuid("4FC3B166-972A-40CF-BC37-7DB03DB2FBA3")) AudioVolumeMeter;
+EXTERN_C const GUID DECLSPEC_SELECTANY CLSID_AudioVolumeMeter = __uuidof(AudioVolumeMeter);
 
-// XAudio 2.2 (August 2008 SDK)
-//DEFINE_CLSID(AudioVolumeMeter, f5ca7b34, 8055, 42c0, b8, 36, 21, 61, 29, eb, 7e, 30);
-//DEFINE_CLSID(AudioVolumeMeter_Debug, f796f5f7, 6059, 4a9f, 98, 2d, 61, ee, c2, ed, 67, ca);
-//DEFINE_CLSID(AudioReverb, 629cf0de, 3ecc, 41e7, 99, 26, f7, e4, 3e, eb, ec, 51);
-//DEFINE_CLSID(AudioReverb_Debug, 4aae4299, 3260, 46d4, 97, cc, 6c, c7, 60, c8, 53, 29);
-
-// XAudio 2.3 (November 2008 SDK)
-//DEFINE_CLSID(AudioVolumeMeter, e180344b, ac83, 4483, 95, 9e, 18, a5, c5, 6a, 5e, 19);
-//DEFINE_CLSID(AudioVolumeMeter_Debug, 922a0a56, 7d13, 40ae, a4, 81, 3c, 6c, 60, f1, 14, 01);
-//DEFINE_CLSID(AudioReverb, 9cab402c, 1d37, 44b4, 88, 6d, fa, 4f, 36, 17, 0a, 4c);
-//DEFINE_CLSID(AudioReverb_Debug, eadda998, 3be6, 4505, 84, be, ea, 06, 36, 5d, b9, 6b);
-
-// XAudio 2.4 (March 2009 SDK)
-//DEFINE_CLSID(AudioVolumeMeter, c7338b95, 52b8, 4542, aa, 79, 42, eb, 01, 6c, 8c, 1c);
-//DEFINE_CLSID(AudioVolumeMeter_Debug, 524bd872, 5c0b, 4217, bd, b8, 0a, 86, 81, 83, 0b, a5);
-//DEFINE_CLSID(AudioReverb, 8bb7778b, 645b, 4475, 9a, 73, 1d, e3, 17, 0b, d3, af);
-//DEFINE_CLSID(AudioReverb_Debug, da7738a2, cd0c, 4367, 9a, ac, d7, ea, d7, c6, 4f, 98);
-
-// XAudio 2.5 (March 2009 SDK)
-//DEFINE_CLSID(AudioVolumeMeter, 2139e6da, c341, 4774, 9a, c3, b4, e0, 26, 34, 7f, 64);
-//DEFINE_CLSID(AudioVolumeMeter_Debug, a5cc4e13, ca00, 416b, a6, ee, 49, fe, e7, b5, 43, d0);
-//DEFINE_CLSID(AudioReverb, d06df0d0, 8518, 441e, 82, 2f, 54, 51, d5, c5, 95, b8);
-//DEFINE_CLSID(AudioReverb_Debug, 613604ec, 304c, 45ec, a4, ed, 7a, 1c, 61, 2e, 9e, 72);
-
-// XAudio 2.6 (February 2010 SDK)
-//DEFINE_CLSID(AudioVolumeMeter, e48c5a3f, 93ef, 43bb, a0, 92, 2c, 7c, eb, 94, 6f, 27);
-//DEFINE_CLSID(AudioVolumeMeter_Debug, 9a9eaef7, a9e0, 4088, 9b, 1b, 9c, a0, 3a, 1a, ec, d4);
-//DEFINE_CLSID(AudioReverb, cecec95a, d894, 491a, be, e3, 5e, 10, 6f, b5, 9f, 2d);
-//DEFINE_CLSID(AudioReverb_Debug, 99a1c72e, 364c, 4c1b, 96, 23, fd, 5c, 8a, bd, 90, c7);
-
-// XAudio 2.7 (June 2010 SDK)
-DEFINE_CLSID(AudioVolumeMeter, cac1105f, 619b, 4d04, 83, 1a, 44, e1, cb, f1, 2d, 57);
-DEFINE_CLSID(AudioVolumeMeter_Debug, 2d9a0f9c, e67b, 4b24, ab, 44, 92, b3, e7, 70, c0, 20);
-DEFINE_CLSID(AudioReverb, 6a93130e, 1d53, 41d1, a9, cf, e7, 58, 80, 0b, b1, 79);
-DEFINE_CLSID(AudioReverb_Debug, c4f82dd4, cb4e, 4ce1, 8b, db, ee, 32, d4, 19, 82, 69);
+class __declspec(uuid("C2633B16-471B-4498-B8C5-4F0959E2EC09")) AudioReverb;
+EXTERN_C const GUID DECLSPEC_SELECTANY CLSID_AudioReverb = __uuidof(AudioReverb);
+#else // __cplusplus
+DEFINE_GUID(CLSID_AudioVolumeMeter,     0x4FC3B166, 0x972A, 0x40CF, 0xBC, 0x37, 0x7D, 0xB0, 0x3D, 0xB2, 0xFB, 0xA3);
+DEFINE_GUID(CLSID_AudioReverb,          0xC2633B16, 0x471B, 0x4498, 0xB8, 0xC5, 0x4F, 0x09, 0x59, 0xE2, 0xEC, 0x09);
+#endif
 
 // Ignore the rest of this header if only the GUID definitions were requested
 #ifndef GUID_DEFS_ONLY
 
-#ifdef _XBOX
-    #include <xobjbase.h>   // Xbox COM declarations (IUnknown, etc)
-#else
-    #include <objbase.h>    // Windows COM declarations
-#endif
+#include <objbase.h>    // Windows COM declarations
 #include <math.h>           // For log10()
 
 
@@ -84,12 +47,10 @@ DEFINE_CLSID(AudioReverb_Debug, c4f82dd4, cb4e, 4ce1, 8b, db, ee, 32, d4, 19, 82
 
 /**************************************************************************
  *
- * Effect creation functions.  On Windows, these are just inline functions
- * that call CoCreateInstance and Initialize; the XAUDIO2FX_DEBUG flag can
- * be used to select the debug version of the effects.  On Xbox, these map
- * to real functions included in xaudio2.lib, and the XAUDIO2FX_DEBUG flag
- * is ignored; the application must link with the debug library to use the
- * debug functionality.
+ * Effect creation functions.
+ *
+ * On Xbox the application can link with the debug library to use the debug
+ * functionality.
  *
  **************************************************************************/
 
@@ -99,53 +60,23 @@ DEFINE_CLSID(AudioReverb_Debug, c4f82dd4, cb4e, 4ce1, 8b, db, ee, 32, d4, 19, 82
 #else
     #define DEFAULT(x)
 #endif
+#define XAUDIO2FX_STDAPI STDAPI
 
-#define XAUDIO2FX_DEBUG 1   // To select the debug version of an effect
+XAUDIO2FX_STDAPI CreateAudioVolumeMeter(_Outptr_ IUnknown** ppApo);
+XAUDIO2FX_STDAPI CreateAudioReverb(_Outptr_ IUnknown** ppApo);
 
-#ifdef _XBOX
+__inline HRESULT XAudio2CreateVolumeMeter(_Outptr_ IUnknown** ppApo, UINT32 Flags DEFAULT(0))
+{
+    UNREFERENCED_PARAMETER(Flags);
+    return CreateAudioVolumeMeter(ppApo);
+}
 
-    STDAPI CreateAudioVolumeMeter(__deref_out IUnknown** ppApo);
-    STDAPI CreateAudioReverb(__deref_out IUnknown** ppApo);
+__inline HRESULT XAudio2CreateReverb(_Outptr_ IUnknown** ppApo, UINT32 Flags DEFAULT(0))
+{
+    UNREFERENCED_PARAMETER(Flags);
+    return CreateAudioReverb(ppApo);
+}
 
-    __inline HRESULT XAudio2CreateVolumeMeter(__deref_out IUnknown** ppApo, UINT32 /*Flags*/ DEFAULT(0))
-    {
-        return CreateAudioVolumeMeter(ppApo);
-    }
-
-    __inline HRESULT XAudio2CreateReverb(__deref_out IUnknown** ppApo, UINT32 /*Flags*/ DEFAULT(0))
-    {
-        return CreateAudioReverb(ppApo);
-    }
-
-#else // Windows
-
-    __inline HRESULT XAudio2CreateVolumeMeter(__deref_out IUnknown** ppApo, UINT32 Flags DEFAULT(0))
-    {
-        #ifdef __cplusplus
-            return CoCreateInstance((Flags & XAUDIO2FX_DEBUG) ? __uuidof(AudioVolumeMeter_Debug)
-                                                              : __uuidof(AudioVolumeMeter),
-                                    NULL, CLSCTX_INPROC_SERVER, __uuidof(IUnknown), (void**)ppApo);
-        #else
-            return CoCreateInstance((Flags & XAUDIO2FX_DEBUG) ? &CLSID_AudioVolumeMeter_Debug
-                                                              : &CLSID_AudioVolumeMeter,
-                                    NULL, CLSCTX_INPROC_SERVER, &IID_IUnknown, (void**)ppApo);
-        #endif
-    }
-
-    __inline HRESULT XAudio2CreateReverb(__deref_out IUnknown** ppApo, UINT32 Flags DEFAULT(0))
-    {
-        #ifdef __cplusplus
-            return CoCreateInstance((Flags & XAUDIO2FX_DEBUG) ? __uuidof(AudioReverb_Debug)
-                                                              : __uuidof(AudioReverb),
-                                    NULL, CLSCTX_INPROC_SERVER, __uuidof(IUnknown), (void**)ppApo);
-        #else
-            return CoCreateInstance((Flags & XAUDIO2FX_DEBUG) ? &CLSID_AudioReverb_Debug
-                                                              : &CLSID_AudioReverb,
-                                    NULL, CLSCTX_INPROC_SERVER, &IID_IUnknown, (void**)ppApo);
-        #endif
-    }
-
-#endif // #ifdef _XBOX
 
 
 
@@ -204,7 +135,11 @@ typedef struct XAUDIO2FX_REVERB_PARAMETERS
     // Delay times
     UINT32 ReflectionsDelay;    // [0, 300] in ms
     BYTE ReverbDelay;           // [0, 85] in ms
-    BYTE RearDelay;             // [0, 5] in ms
+    BYTE RearDelay;             // 7.1: [0, 20] in ms, all other: [0, 5] in ms
+#if(_WIN32_WINNT >= _WIN32_WINNT_WIN10)
+    BYTE SideDelay;             // 7.1: [0, 5] in ms, all other: not used, but still validated
+#endif
+
 
     // Indexed parameters
     BYTE PositionLeft;          // [0, 30] no units
@@ -227,6 +162,9 @@ typedef struct XAUDIO2FX_REVERB_PARAMETERS
     float DecayTime;            // [0.1, inf] in seconds
     float Density;              // [0, 100] (percentage)
     float RoomSize;             // [1, 100] in feet
+
+    // component control
+    BOOL DisableLateField;      // TRUE to disable late field reflections
 } XAUDIO2FX_REVERB_PARAMETERS;
 
 
@@ -235,6 +173,8 @@ typedef struct XAUDIO2FX_REVERB_PARAMETERS
 #define XAUDIO2FX_REVERB_MIN_REFLECTIONS_DELAY      0
 #define XAUDIO2FX_REVERB_MIN_REVERB_DELAY           0
 #define XAUDIO2FX_REVERB_MIN_REAR_DELAY             0
+#define XAUDIO2FX_REVERB_MIN_7POINT1_SIDE_DELAY     0
+#define XAUDIO2FX_REVERB_MIN_7POINT1_REAR_DELAY     0
 #define XAUDIO2FX_REVERB_MIN_POSITION               0
 #define XAUDIO2FX_REVERB_MIN_DIFFUSION              0
 #define XAUDIO2FX_REVERB_MIN_LOW_EQ_GAIN            0
@@ -254,6 +194,8 @@ typedef struct XAUDIO2FX_REVERB_PARAMETERS
 #define XAUDIO2FX_REVERB_MAX_REFLECTIONS_DELAY      300
 #define XAUDIO2FX_REVERB_MAX_REVERB_DELAY           85
 #define XAUDIO2FX_REVERB_MAX_REAR_DELAY             5
+#define XAUDIO2FX_REVERB_MAX_7POINT1_SIDE_DELAY     5
+#define XAUDIO2FX_REVERB_MAX_7POINT1_REAR_DELAY     20
 #define XAUDIO2FX_REVERB_MAX_POSITION               30
 #define XAUDIO2FX_REVERB_MAX_DIFFUSION              15
 #define XAUDIO2FX_REVERB_MAX_LOW_EQ_GAIN            12
@@ -272,6 +214,8 @@ typedef struct XAUDIO2FX_REVERB_PARAMETERS
 #define XAUDIO2FX_REVERB_DEFAULT_REFLECTIONS_DELAY  5
 #define XAUDIO2FX_REVERB_DEFAULT_REVERB_DELAY       5
 #define XAUDIO2FX_REVERB_DEFAULT_REAR_DELAY         5
+#define XAUDIO2FX_REVERB_DEFAULT_7POINT1_SIDE_DELAY 5
+#define XAUDIO2FX_REVERB_DEFAULT_7POINT1_REAR_DELAY 20
 #define XAUDIO2FX_REVERB_DEFAULT_POSITION           6
 #define XAUDIO2FX_REVERB_DEFAULT_POSITION_MATRIX    27
 #define XAUDIO2FX_REVERB_DEFAULT_EARLY_DIFFUSION    8
@@ -288,6 +232,7 @@ typedef struct XAUDIO2FX_REVERB_PARAMETERS
 #define XAUDIO2FX_REVERB_DEFAULT_DECAY_TIME         1.0f
 #define XAUDIO2FX_REVERB_DEFAULT_DENSITY            100.0f
 #define XAUDIO2FX_REVERB_DEFAULT_ROOM_SIZE          100.0f
+#define XAUDIO2FX_REVERB_DEFAULT_DISABLE_LATE_FIELD FALSE
 
 
 // XAUDIO2FX_REVERB_I3DL2_PARAMETERS: Parameter set compliant with the I3DL2 standard
@@ -317,8 +262,11 @@ typedef struct XAUDIO2FX_REVERB_I3DL2_PARAMETERS
 
 __inline void ReverbConvertI3DL2ToNative
 (
-    __in const XAUDIO2FX_REVERB_I3DL2_PARAMETERS* pI3DL2,
-    __out XAUDIO2FX_REVERB_PARAMETERS* pNative
+    _In_ const XAUDIO2FX_REVERB_I3DL2_PARAMETERS* pI3DL2,
+    _Out_ XAUDIO2FX_REVERB_PARAMETERS* pNative
+#if(_WIN32_WINNT >= _WIN32_WINNT_WIN10)
+    ,  BOOL sevenDotOneReverb DEFAULT(TRUE)
+#endif
 )
 {
     float reflectionsDelay;
@@ -327,7 +275,19 @@ __inline void ReverbConvertI3DL2ToNative
     // RoomRolloffFactor is ignored
 
     // These parameters have no equivalent in I3DL2
+#if(_WIN32_WINNT >= _WIN32_WINNT_WIN10)
+    if(sevenDotOneReverb)
+    {
+        pNative->RearDelay = XAUDIO2FX_REVERB_DEFAULT_7POINT1_REAR_DELAY; // 20
+    }
+    else
+    {
+        pNative->RearDelay = XAUDIO2FX_REVERB_DEFAULT_REAR_DELAY; // 5
+    }
+    pNative->SideDelay = XAUDIO2FX_REVERB_DEFAULT_7POINT1_SIDE_DELAY; // 5
+#else
     pNative->RearDelay = XAUDIO2FX_REVERB_DEFAULT_REAR_DELAY; // 5
+#endif
     pNative->PositionLeft = XAUDIO2FX_REVERB_DEFAULT_POSITION; // 6
     pNative->PositionRight = XAUDIO2FX_REVERB_DEFAULT_POSITION; // 6
     pNative->PositionMatrixLeft = XAUDIO2FX_REVERB_DEFAULT_POSITION_MATRIX; // 27
@@ -375,14 +335,15 @@ __inline void ReverbConvertI3DL2ToNative
     }
     pNative->ReverbDelay = (BYTE)reverbDelay;
 
-    pNative->ReflectionsGain = pI3DL2->Reflections / 100.0f;
-    pNative->ReverbGain = pI3DL2->Reverb / 100.0f;
+    pNative->ReflectionsGain = (float)pI3DL2->Reflections / 100.0f;
+    pNative->ReverbGain = (float)pI3DL2->Reverb / 100.0f;
     pNative->EarlyDiffusion = (BYTE)(15.0f * pI3DL2->Diffusion / 100.0f);
     pNative->LateDiffusion = pNative->EarlyDiffusion;
     pNative->Density = pI3DL2->Density;
     pNative->RoomFilterFreq = pI3DL2->HFReference;
 
     pNative->WetDryMix = pI3DL2->WetDryMix;
+    pNative->DisableLateField = FALSE;
 }
 
 
@@ -428,4 +389,9 @@ __inline void ReverbConvertI3DL2ToNative
 #pragma pack(pop)
 
 #endif // #ifndef GUID_DEFS_ONLY
+
+#endif /* WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_APP | WINAPI_PARTITION_TV_APP | WINAPI_PARTITION_TV_TITLE | WINAPI_PARTITION_GAMES) */
+#pragma endregion
+
 #endif // #ifndef __XAUDIO2FX_INCLUDED__
+

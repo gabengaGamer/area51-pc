@@ -1,0 +1,14 @@
+prefix=/home/runner/work/FFmpeg-Auto-Build/FFmpeg-Auto-Build/ffmpeg-windows-build-helpers/sandbox/win32/ffmpeg_git_master_shared
+exec_prefix=${prefix}
+libdir=/home/runner/work/FFmpeg-Auto-Build/FFmpeg-Auto-Build/ffmpeg-windows-build-helpers/sandbox/win32/ffmpeg_git_master_shared/lib
+includedir=/home/runner/work/FFmpeg-Auto-Build/FFmpeg-Auto-Build/ffmpeg-windows-build-helpers/sandbox/win32/ffmpeg_git_master_shared/include
+
+Name: libavdevice
+Description: FFmpeg device handling library
+Version: 61.4.100
+Requires: 
+Requires.private: libavfilter >= 10.6.101, libswscale >= 8.13.100, libpostproc >= 58.4.100, libavformat >= 61.9.106, libavcodec >= 61.31.100, libswresample >= 5.4.100, libavutil >= 59.55.100
+Conflicts:
+Libs: -L${libdir}  -lavdevice 
+Libs.private: -lpsapi -lole32 -lstrmiids -luuid -loleaut32 -lshlwapi -lgdi32 -lm -latomic -lvfw32 -L/home/runner/work/FFmpeg-Auto-Build/FFmpeg-Auto-Build/ffmpeg-windows-build-helpers/sandbox/cross_compilers/mingw-w64-i686/i686-w64-mingw32/lib -lcaca -lz -lopengl32 -lgdi32 -L/home/runner/work/FFmpeg-Auto-Build/FFmpeg-Auto-Build/ffmpeg-windows-build-helpers/sandbox/cross_compilers/mingw-w64-i686/i686-w64-mingw32/lib -lmingw32 -lSDL2main -lSDL2 -lmingw32 -lSDL2main -lSDL2 -Wl,--no-undefined -Wl,--dynamicbase -Wl,--nxcompat -lm -ldinput8 -ldxguid -ldxerr8 -luser32 -lgdi32 -lwinmm -limm32 -lole32 -loleaut32 -lshell32 -lsetupapi -lversion -luuid -static-libgcc
+Cflags: -I${includedir}

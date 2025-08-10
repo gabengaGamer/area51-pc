@@ -4,7 +4,6 @@
 //
 //==============================================================================
 
-
 //==============================================================================
 //  INCLUDES
 //==============================================================================
@@ -37,7 +36,6 @@
 #ifdef X_EDITOR
 extern xbool g_EditorShowNameFlag;
 #endif
-
 
 #if !defined(X_RETAIL) && 0
 #define DO_SANITY_CHECK()   SanityCheck();
@@ -665,16 +663,6 @@ void obj_mgr::UnlinkAndFreeObject( slot_id Slot )
 
     // Clear node
     m_ObjectSlot[Slot].pObject = NULL;
-
-/*
-    // Clear links
-    for( s32 i=0; i<8; i++ )
-    {
-        m_ObjectLink[((link_id)Slot)*8+i].SpacialCellID = SPATIAL_CELL_NULL;
-        m_ObjectLink[((link_id)Slot)*8+i].Next          = LINK_NULL;
-        m_ObjectLink[((link_id)Slot)*8+i].Prev          = LINK_NULL;
-    }
-    */
 }
 
 //==============================================================================
@@ -745,6 +733,7 @@ void obj_mgr::DestroyObjectEx( guid Guid, xbool bRemoveNow )
 //  Clears all objects from the list and destroys them.
 //
 //==============================================================================
+
 void obj_mgr::Clear( void )
 {
     LOG_MESSAGE( "obj_mgr::Clear", "" );
@@ -914,7 +903,6 @@ void obj_mgr::AdvanceAllLogic( f32 DeltaTime )
     EmptyDeleteObjectList();
 }
 
-
 //==============================================================================
 
 #if !defined(X_RETAIL) 
@@ -944,14 +932,8 @@ void obj_mgr::ResetSearchResult( void )
     }
 }
 
-
-
-//==============================================================================
-//==============================================================================
 //==============================================================================
 // QUERIES
-//==============================================================================
-//==============================================================================
 //==============================================================================
 
 //check LOS from point to point
@@ -989,11 +971,14 @@ xbool obj_mgr::HasLOS( guid Object0, const vector3& P0, guid Object1, const vect
 //==============================================================================
 // CheckCollisions
 //==============================================================================
+
 struct select_func_info
 {
     u32     AttrFlags;
     bbox    BBox;
 };
+
+//==============================================================================
 
 xbool SelectFunc( spatial_cell* pCell, void* pPrivateData )
 {
@@ -1041,6 +1026,7 @@ xbool SelectFunc( spatial_cell* pCell, void* pPrivateData )
 //          if -1 is used for the srcset since that is the number that will
 //          be returned by the GetFirstSearchResult call
 //==============================================================================
+
 void obj_mgr::SelectBBox( u32 Attribute, const bbox& BBox, object::type Type, u32 NotTheseAttributes )
 {
     CONTEXT( "obj_mgr::SelectBBox" );
@@ -1050,7 +1036,6 @@ void obj_mgr::SelectBBox( u32 Attribute, const bbox& BBox, object::type Type, u3
     // update the sequence
     //
     ResetSearchResult();
-
 
     //
     // Ask the spacial data base to collect cells that have object in there
@@ -1227,6 +1212,7 @@ void obj_mgr::SelectRay( u32 Attribute, const vector3& RayStart, const vector3& 
 //          if -1 is used for the srcset since that is the number that will
 //          be returned by the GetFirstSearchResult call
 //==============================================================================
+
 void obj_mgr::SelectVolume( u32 Attribute, const plane* pPlane, s32 NPlanes, xbool Fast, object::type Type  )
 {
     (void)Type;
@@ -1420,6 +1406,7 @@ void obj_mgr::RemoveFromSpatialDBase(guid Guid)
 
 }
 
+//==============================================================================
 
 void obj_mgr::AddToSpatialDBase(guid Guid)
 {
@@ -1473,7 +1460,6 @@ void obj_mgr::RemoveFromSpatialDBase( slot_id SlotID )
         pLink[LI].Prev          = LINK_NULL;
     }
 }
-
 
 //==============================================================================
 //
@@ -2445,6 +2431,7 @@ void obj_mgr::CollectShadowCasters( void )
     // but...since the directional is only a temporary thing
     // and will be replaced by point shadow sources
     // eventually, we won't worry about it
+	
     static const radian3 kLightRot( R_60, -R_15, R_0 );
     static const f32     kLightWidth  = 300.0f;
     static const f32     kLightHeight = 300.0f;
@@ -2940,28 +2927,6 @@ void obj_mgr::Render( xbool bDoPortalWalk, const view& PortalView, u8 StartZone 
 
     ///////////////////////////////////////////////////////////////////////////
 
-    #ifdef TARGET_PS2
-    {
-        // Render pip view into texture before main scene is drawn
-        SlotID = m_ObjectType[object::TYPE_PIP].FirstType;
-        while( SlotID != SLOT_NULL )
-        {
-            // Get pip and render
-            pip* pPip = (pip*)g_ObjMgr.GetObjectBySlot( SlotID );
-            ASSERT(pPip);
-            if (pPip->GetState() == pip::STATE_ACTIVE)
-            {
-                pPip->RenderView();
-            }
-
-            // Check next
-            SlotID = m_ObjectSlot[SlotID].Next;
-        }
-    }
-    #endif
-
-    ///////////////////////////////////////////////////////////////////////////
-
     // Render 3d scene
     Render3dObjects( bDoPortalWalk, PortalView, StartZone );
 
@@ -3208,18 +3173,7 @@ void obj_mgr::RenderArtistViewer( const view& View )
 #endif
 
 //==============================================================================
-
-
-//==============================================================================
-//==============================================================================
-//==============================================================================
-//==============================================================================
 // OBJECT DESC
-//==============================================================================
-//==============================================================================
-//==============================================================================
-//==============================================================================
-
 //==============================================================================
 
 void object_desc::OnEnumProp( prop_enum& List )

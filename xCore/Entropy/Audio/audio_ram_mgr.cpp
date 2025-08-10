@@ -1,10 +1,6 @@
 #include "audio_ram_mgr.hpp"
 #include "x_threads.hpp"
 
-#ifdef TARGET_GCN
-#include <dolphin.h>
-#endif
-
 // Status bit-field defines.
 
 #define USED_BIT                (1<<31)
@@ -77,11 +73,6 @@ static xmesgq            s_QueueSemaphore(1);
 // TODO: Implement handle based heap manager.
 //static heap              s_Heaps[ audio_ram_mgr::NUM_HEAPS ];
 
-// GCN Specific variables.
-#ifdef TARGET_GCN
-static ARQRequest s_ARQ_Request;
-#endif
-
 //------------------------------------------------------------------------------
 
 audio_ram_mgr g_AudioRamMgr;
@@ -91,23 +82,6 @@ audio_ram_mgr g_AudioRamMgr;
 void AudioRequestDispatcher( void );
 void AudioServiceQueue( void );
 void AudioServiceCurrentRequest( void );
-
-//------------------------------------------------------------------------------
-
-#ifdef TARGET_GCN
-static void gcn_AudioIoRequestCallback( u32 p )
-{
-    s32         MessageStatus;
-    ARQRequest* pRequest = (ARQRequest*)p;
-
-    // Nuke warning.
-    (void)pRequest;
-    
-    // Wake up the dispatcher.
-    MessageStatus = s_DispatcherMQ.Send( (void*)NULL, MQ_NOBLOCK );
-    ASSERT( MessageStatus );
-}
-#endif
 
 //------------------------------------------------------------------------------
 
@@ -232,14 +206,6 @@ void AudioServiceQueue( void )
                 ARAM = (u32)pRequest->m_Destination;
                 MRAM = (u32)pRequest->m_Source;
                 ASSERT( (MRAM & 3) == 0 );
-
-#ifdef TARGET_GCN
-                // Force d-cache writeback.
-                DCStoreRange( (void *)MRAM, Length );
-
-                // Make the request.
-                ARQPostRequest( &s_ARQ_Request, 0, ARQ_TYPE_MRAM_TO_ARAM, ARQ_PRIORITY_HIGH, (u32)MRAM, ARAM, Length, gcn_AudioIoRequestCallback );
-#endif
                 break;
             }
 
@@ -249,14 +215,6 @@ void AudioServiceQueue( void )
                 ARAM = (u32)pRequest->m_Source;
                 MRAM = (u32)pRequest->m_Destination;
                 ASSERT( (MRAM & 3) == 0 );
-
-#ifdef TARGET_GCN
-                // Invalidate the d-cache.
-                DCInvalidateRange( (void*)MRAM, Length );
-   
-                // Make the request.
-                ARQPostRequest( &s_ARQ_Request, 0, ARQ_TYPE_ARAM_TO_MRAM, ARQ_PRIORITY_HIGH, ARAM, (u32)MRAM, Length, gcn_AudioIoRequestCallback );
-#endif
                 break;
             }
 

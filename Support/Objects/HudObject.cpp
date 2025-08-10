@@ -569,7 +569,7 @@ void hud_object::RenderLetterBox( const rect& VP, f32 Amount )
         (s32)( VP.Max.Y ) );
 
     // Render bars
-    draw_Begin( DRAW_QUADS, DRAW_2D|DRAW_NO_ZBUFFER);
+    draw_Begin( DRAW_QUADS, DRAW_2D | DRAW_UI_RTARGET | DRAW_NO_ZBUFFER );
     
 #ifdef X_EDITOR    
     draw_Color( XCOLOR_PURPLE );
@@ -943,7 +943,7 @@ void hud_object::RenderFrameRateInfo( void )
                 eng_GetRes(XRes,YRes);
 
                 // draw the bad frame rate image
-                draw_Begin( DRAW_SPRITES, DRAW_USE_ALPHA|DRAW_TEXTURED|DRAW_2D|DRAW_NO_ZBUFFER );
+                draw_Begin( DRAW_SPRITES, DRAW_USE_ALPHA|DRAW_TEXTURED|DRAW_2D|DRAW_UI_RTARGET|DRAW_NO_ZBUFFER );
 
                 rhandle<xbitmap> m_ScreenEdgeBmp;
                 m_ScreenEdgeBmp.SetName( "HUD_30fps.xbmp" );

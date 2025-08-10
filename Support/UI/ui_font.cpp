@@ -938,7 +938,7 @@ void ui_font::RenderHelpText( const irect&  Rect,
     vector2 Size( 0, (f32)m_Height );
 
     // Prepare to draw characters.
-    draw_Begin( DRAW_SPRITES, DRAW_USE_ALPHA | DRAW_TEXTURED | DRAW_2D | DRAW_NO_ZBUFFER | DRAW_UV_CLAMP );
+    draw_Begin( DRAW_SPRITES, DRAW_USE_ALPHA | DRAW_TEXTURED | DRAW_2D | DRAW_UI_RTARGET | DRAW_NO_ZBUFFER | DRAW_UV_CLAMP );
 
     pBitmap = m_Bitmap.GetPointer();
     draw_SetTexture( *pBitmap );
@@ -1148,7 +1148,7 @@ void ui_font::RenderHelpText( const irect&  Rect,
                 CurrWidth = 0;
 
                 draw_End();
-                draw_Begin( DRAW_SPRITES, DRAW_TEXTURED | DRAW_2D | DRAW_USE_ALPHA | DRAW_NO_ZBUFFER );
+                draw_Begin( DRAW_SPRITES, DRAW_TEXTURED | DRAW_2D | DRAW_UI_RTARGET | DRAW_USE_ALPHA | DRAW_NO_ZBUFFER  );
                 
                 xbitmap* button = g_UiMgr->GetButtonTexture( buttonCode );
         		draw_SetTexture( *button );				
@@ -1229,7 +1229,7 @@ void ui_font::RenderHelpText( const irect&  Rect,
 
                 draw_End();
 
-                draw_Begin( DRAW_SPRITES, DRAW_TEXTURED | DRAW_2D | DRAW_USE_ALPHA | DRAW_NO_ZBUFFER );
+                draw_Begin( DRAW_SPRITES, DRAW_TEXTURED | DRAW_2D | DRAW_UI_RTARGET | DRAW_USE_ALPHA | DRAW_NO_ZBUFFER  );
 		        
                 pBitmap = m_Bitmap.GetPointer();
                 draw_SetTexture( *pBitmap );
@@ -1386,7 +1386,7 @@ void ui_font::RenderText( const irect&  Rect,
 //        f32     BmHeight = 1.0f / (f32)m_BmHeight;
 
         // Prepare to draw characters.
-        s32 DrawFlags = DRAW_USE_ALPHA | DRAW_TEXTURED | DRAW_2D | DRAW_NO_ZBUFFER | DRAW_NO_ZWRITE | DRAW_XBOX_WRITE_A | DRAW_UV_CLAMP | DRAW_CULL_NONE;
+        s32 DrawFlags = DRAW_USE_ALPHA | DRAW_TEXTURED | DRAW_2D | DRAW_UI_RTARGET | DRAW_NO_ZBUFFER | DRAW_NO_ZWRITE | DRAW_UV_CLAMP | DRAW_CULL_NONE ;
         if( Flags & ui_font::blend_additive )
             DrawFlags |= DRAW_BLEND_ADD;
         draw_Begin( DRAW_TRIANGLES, DrawFlags );
@@ -1535,7 +1535,7 @@ void ui_font::RenderText( const irect&  Rect,
                         continue;
                     }
                     //draw_End();
-                    //draw_Begin( DRAW_SPRITES, DRAW_TEXTURED | DRAW_2D | DRAW_USE_ALPHA | DRAW_NO_ZBUFFER );
+                    //draw_Begin( DRAW_SPRITES, DRAW_TEXTURED | DRAW_2D | DRAW_UI_RTARGET | DRAW_USE_ALPHA | DRAW_NO_ZBUFFER  );
                     
                     //xbitmap* button = g_UiMgr->GetButtonTexture( buttonCode );
         		    //draw_SetTexture( *button );
@@ -1578,7 +1578,7 @@ void ui_font::RenderText( const irect&  Rect,
                     
                     NumButtons++;
 
-                    //draw_Begin( DRAW_SPRITES, DRAW_TEXTURED | DRAW_2D | DRAW_USE_ALPHA | DRAW_NO_ZBUFFER );
+                    //draw_Begin( DRAW_SPRITES, DRAW_TEXTURED | DRAW_2D | DRAW_UI_RTARGET | DRAW_USE_ALPHA | DRAW_NO_ZBUFFER  );
 		            
                     //xbitmap* pBitmap = m_Bitmap.GetPointer();
                     //draw_SetTexture( *pBitmap );
@@ -1722,7 +1722,7 @@ void ui_font::RenderText( const irect&  Rect,
     if( NumButtons > 0 && UseGradient )
     {
         // now draw the buttons
-        draw_Begin( DRAW_SPRITES, DRAW_TEXTURED | DRAW_2D | DRAW_USE_ALPHA | DRAW_NO_ZBUFFER );
+        draw_Begin( DRAW_SPRITES, DRAW_TEXTURED | DRAW_2D | DRAW_UI_RTARGET | DRAW_USE_ALPHA | DRAW_NO_ZBUFFER  );
 
         s32 i;
         for( i = 0; i < NumButtons; i++ )
@@ -1842,7 +1842,7 @@ void ui_font::RenderStateControlledText( const irect& Rect, u32 Flags, const xco
     f32 ScaleY=1;
 
     // Prepare to draw characters.
-    s32 DrawFlags = DRAW_USE_ALPHA | DRAW_TEXTURED | DRAW_2D | DRAW_NO_ZBUFFER | DRAW_NO_ZWRITE | DRAW_XBOX_WRITE_A | DRAW_UV_CLAMP;
+    s32 DrawFlags = DRAW_USE_ALPHA | DRAW_TEXTURED | DRAW_2D | DRAW_UI_RTARGET | DRAW_NO_ZBUFFER | DRAW_NO_ZWRITE | DRAW_UV_CLAMP ;
     if( Flags & ui_font::blend_additive )
         DrawFlags |= DRAW_BLEND_ADD;
     draw_Begin( DRAW_SPRITES, DrawFlags );

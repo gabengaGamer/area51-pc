@@ -1,17 +1,24 @@
+//==============================================================================
+//  
+//  LightMgr.cpp  
+//
+//==============================================================================
+
+//==============================================================================
+//  INCLUDES
+//==============================================================================
 
 #include "LightMgr.hpp"
 #include "e_ScratchMem.hpp"
 
 //=========================================================================
-// The global object
+// GLOBAL INSTANCE
 //=========================================================================
 
 light_mgr   g_LightMgr;
 
 //=========================================================================
 // FUNCTIONS
-//=========================================================================
-
 //=========================================================================
 
 light_mgr::light_mgr( void ) :
@@ -391,34 +398,6 @@ s32 light_mgr::CollectLights( const bbox& WorldBBox, s32 MaxLightCount )
     ASSERT( m_bInCollection );
     ASSERT( m_pSpadLights );
 
-/*
-    //#### this code is temporarily disabled until the vector3 optimizations are finished
-    #ifdef TARGET_PS2
-    // load the bbox into vu0 registers
-    u128 temp1 = 0;
-    u128 temp2 = 0;
-    u32  temp3 = (u32)&WorldBBox;
-    asm __volatile__
-    ("
-        #// load min
-        mtsab   %2, 0
-        lq      %0, 0(%2)
-        lq      %1, 16(%2)
-        qfsrv   %0, %1, %0
-        qmtc2   %0, vf01
-
-        #// load max
-        addiu   %1, %2, 12
-        mtsab   %1, 0
-        lq      %0, 0(%1)
-        lq      %1, 16(%1)
-        qfsrv   %0, %1, %0
-        qmtc2   %0, vf02
-
-    " : "+r" (temp1), "+r" (temp2), "+r" (temp3) );
-    #endif
-    */
-
     s32 i;
     m_NCollectedLights = 0;
     for ( i = 0; (i < m_nNonCharLightsInSpad) && (m_NCollectedLights<MaxLightCount); i++ )
@@ -426,61 +405,8 @@ s32 light_mgr::CollectLights( const bbox& WorldBBox, s32 MaxLightCount )
         ASSERT( !m_pSpadLights[i].CharOnly );
 
         xbool bIntersects;
-
-        // intersection test
-        //#### this code is temporarily disabled until the vector3 optimizations are finished
-        /*
-        #ifdef TARGET_PS2
-        
-        // the math will be something like this (using vectors):
-        // temp1 = min-center
-        // temp2 = center-max
-        // temp1 = MAX(temp1,0)
-        // temp2 = MAX(temp2,0)
-        // temp1 = temp1.x*temp1.x, temp1.y*temp1.y, temp1.z*temp1.z
-        // temp2 = temp2.x*temp2.x, temp2.y*temp1.y, temp2.z*temp2.z
-        // add components of temp1 and temp2
-        // compare result to r*r
-        ASSERT( (((u32)&m_pSpadLights[i].Pos) & 0xf) == 0 );
-        f32 ftemp1;
-        f32 ftemp2;
-        asm
-        ("
-            lqc2        vf03, 0x00(%3)      # load (posx,posy,posz,radius)
-            vsub.xyz    vf04, vf01, vf03    # vf04  = min-center
-            vsub.xyz    vf05, vf03, vf02    # vf05  = center-max
-            vmax.xyz    vf04, vf04, vf00    # vf04  = MAX(vf04, 0)
-            vmax.xyz    vf05, vf05, vf00    # vf05  = MAX(vf05, 0)
-            vmul.xyz    vf04, vf04, vf04    # vf04  = (x*x,y*y,z*z)
-            vmul.xyz    vf05, vf05, vf05    # vf05  = (x*x,y*y,z*z)
-            vadd.xyz    vf06, vf04, vf05    # vf06  = vf04+vf05
-            vaddy.x     vf06, vf06, vf06y   # vf06x = vf06x+vf06y
-            vaddz.x     vf06, vf06, vf06z   # vf06x = vf06x+vf06z
-            vmul.w      vf03, vf03, vf03    # vf03w = r*r
-            vaddw.x     vf03, vf00, vf03    # vf03x = vf03w
-            qmfc2       %0,   vf06          # temp = d*d
-            mtc1        %0,   %1            # ftemp1 = d*d
-            qmfc2       %0,   vf03          # temp = r*r
-            mtc1        %0,   %2            # ftemp2 = r*r
-            .set noreorder
-            c.le.s      %1,   %2            # iff(d*d<=r*r)
-            nop
-            bc1t        wastrue
-            addi        %0,   $0,   1       # BDS (true==1)
-            addi        %0,   $0,   0       # (false==0)
-        wastrue:
-            .set reorder
-
-        " : "=r" (bIntersects), "=f" (ftemp1), "=f" (ftemp2) : "r" (&m_pSpadLights[i]) );
-        
-        ASSERT( bIntersects == WorldBBox.Intersect(m_pSpadLights[i].Pos, m_pSpadLights[i].Radius) );
-
-        #else
-        */
         
         bIntersects = WorldBBox.Intersect(m_pSpadLights[i].Pos, m_pSpadLights[i].Radius);
-        
-        //#endif
         
         if ( bIntersects )
             m_CollectedLights[m_NCollectedLights++] = i;

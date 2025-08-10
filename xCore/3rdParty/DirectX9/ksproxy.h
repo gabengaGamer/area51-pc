@@ -14,6 +14,11 @@ Abstract:
 
 #ifndef __KSPROXY__
 #define __KSPROXY__
+#include <winapifamily.h>
+
+#pragma region Desktop Family
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
+
 
 #ifdef __cplusplus
 extern "C" {
@@ -270,43 +275,43 @@ DECLARE_INTERFACE_(IKsClockPropertySet, IUnknown)
 {
     STDMETHOD(KsGetTime)(
         THIS_
-        LONGLONG* Time
+        _Out_ LONGLONG* Time
     ) PURE;
     STDMETHOD(KsSetTime)(
         THIS_
-        LONGLONG Time
+        _In_ LONGLONG Time
     ) PURE;
     STDMETHOD(KsGetPhysicalTime)(
         THIS_
-        LONGLONG* Time
+        _Out_ LONGLONG* Time
     ) PURE;
     STDMETHOD(KsSetPhysicalTime)(
         THIS_
-        LONGLONG Time
+        _In_ LONGLONG Time
     ) PURE;
     STDMETHOD(KsGetCorrelatedTime)(
         THIS_
-        KSCORRELATED_TIME* CorrelatedTime
+        _Out_ KSCORRELATED_TIME* CorrelatedTime
     ) PURE;
     STDMETHOD(KsSetCorrelatedTime)(
         THIS_
-        KSCORRELATED_TIME* CorrelatedTime
+        _In_ KSCORRELATED_TIME* CorrelatedTime
     ) PURE;
     STDMETHOD(KsGetCorrelatedPhysicalTime)(
         THIS_
-        KSCORRELATED_TIME* CorrelatedTime
+        _Out_ KSCORRELATED_TIME* CorrelatedTime
     ) PURE;
     STDMETHOD(KsSetCorrelatedPhysicalTime)(
         THIS_
-        KSCORRELATED_TIME* CorrelatedTime
+        _In_ KSCORRELATED_TIME* CorrelatedTime
     ) PURE;
     STDMETHOD(KsGetResolution)(
         THIS_
-        KSRESOLUTION* Resolution
+        _Out_ KSRESOLUTION* Resolution
     ) PURE;
     STDMETHOD(KsGetState)(
         THIS_
-        KSSTATE* State
+        _Out_ KSSTATE* State
     ) PURE;
 };
 
@@ -324,11 +329,11 @@ DECLARE_INTERFACE_(IKsAllocator, IUnknown)
     ) PURE;
     STDMETHOD(KsGetAllocatorStatus)(
         THIS_
-        PKSSTREAMALLOCATOR_STATUS AllocatorStatus
+        _Out_ PKSSTREAMALLOCATOR_STATUS AllocatorStatus
     ) PURE;
     STDMETHOD_(VOID, KsSetAllocatorMode)(
         THIS_
-        KSALLOCATORMODE Mode
+        _In_ KSALLOCATORMODE Mode
     ) PURE;
 };
 
@@ -342,15 +347,15 @@ DECLARE_INTERFACE_(IKsAllocatorEx, IKsAllocator)
     ) PURE;
     STDMETHOD_(VOID, KsSetProperties)(
         THIS_
-        PALLOCATOR_PROPERTIES_EX 
+        _In_ PALLOCATOR_PROPERTIES_EX 
     ) PURE;
     STDMETHOD_(VOID, KsSetAllocatorHandle)(
         THIS_
-        HANDLE AllocatorHandle
+        _In_ HANDLE AllocatorHandle
     ) PURE;
     STDMETHOD_(HANDLE, KsCreateAllocatorAndGetHandle)(
         THIS_
-        IKsPin*   KsPin
+        _In_ IKsPin*   KsPin
     ) PURE;
 };  
 
@@ -369,42 +374,42 @@ DECLARE_INTERFACE_(IKsPin, IUnknown)
 {
     STDMETHOD(KsQueryMediums)(
         THIS_
-        PKSMULTIPLE_ITEM* MediumList
+        _Outptr_ PKSMULTIPLE_ITEM* MediumList
     ) PURE;
     STDMETHOD(KsQueryInterfaces)(
         THIS_
-        PKSMULTIPLE_ITEM* InterfaceList
+        _Outptr_ PKSMULTIPLE_ITEM* InterfaceList
     ) PURE;
     STDMETHOD(KsCreateSinkPinHandle)(
         THIS_
-        KSPIN_INTERFACE& Interface,
-        KSPIN_MEDIUM& Medium
+        _In_ KSPIN_INTERFACE& Interface,
+        _In_ KSPIN_MEDIUM& Medium
     ) PURE;
     STDMETHOD(KsGetCurrentCommunication)(
         THIS_
-        KSPIN_COMMUNICATION *Communication,
-        KSPIN_INTERFACE *Interface,
-        KSPIN_MEDIUM *Medium
+        _Out_opt_ KSPIN_COMMUNICATION *Communication,
+        _Out_opt_ KSPIN_INTERFACE *Interface,
+        _Out_opt_ KSPIN_MEDIUM *Medium
     ) PURE;
     STDMETHOD(KsPropagateAcquire)(
         THIS
     ) PURE;
     STDMETHOD(KsDeliver)(
         THIS_
-        IMediaSample* Sample,
-        ULONG Flags
+        _In_ IMediaSample* Sample,
+        _In_ ULONG Flags
     ) PURE;
     STDMETHOD(KsMediaSamplesCompleted)(
         THIS_
-        PKSSTREAM_SEGMENT StreamSegment
+        _In_ PKSSTREAM_SEGMENT StreamSegment
     ) PURE;
     STDMETHOD_(IMemAllocator *, KsPeekAllocator)(
         THIS_
-        KSPEEKOPERATION Operation
+        _In_ KSPEEKOPERATION Operation
     ) PURE;
     STDMETHOD(KsReceiveAllocator)(
         THIS_
-        IMemAllocator *MemAllocator
+        _In_opt_ IMemAllocator *MemAllocator
     ) PURE;
     STDMETHOD(KsRenegotiateAllocator)(
         THIS
@@ -417,8 +422,8 @@ DECLARE_INTERFACE_(IKsPin, IUnknown)
     ) PURE;
     STDMETHOD(KsQualityNotify)(
         THIS_
-        ULONG Proportion,
-        REFERENCE_TIME TimeDelta
+        _In_ ULONG Proportion,
+        _In_ REFERENCE_TIME TimeDelta
     ) PURE;
 };
 
@@ -429,8 +434,8 @@ DECLARE_INTERFACE_(IKsPinEx, IKsPin)
 {
     STDMETHOD_(VOID, KsNotifyError)(
         THIS_
-        IMediaSample* Sample,
-        HRESULT hr
+        _In_ IMediaSample* Sample,
+        _In_ HRESULT hr
     ) PURE;        
 };
                          
@@ -441,40 +446,40 @@ DECLARE_INTERFACE_(IKsPinPipe, IUnknown)
 {
     STDMETHOD(KsGetPinFramingCache)(
         THIS_
-        PKSALLOCATOR_FRAMING_EX *FramingEx,
-        PFRAMING_PROP FramingProp,
-        FRAMING_CACHE_OPS Option
+        _Out_ PKSALLOCATOR_FRAMING_EX *FramingEx,
+        _Out_ PFRAMING_PROP FramingProp,
+        _In_ FRAMING_CACHE_OPS Option
     ) PURE;
     STDMETHOD(KsSetPinFramingCache)(
         THIS_
-        PKSALLOCATOR_FRAMING_EX FramingEx,
-        PFRAMING_PROP FramingProp,
-        FRAMING_CACHE_OPS Option
+        _In_ PKSALLOCATOR_FRAMING_EX FramingEx,
+        _In_ PFRAMING_PROP FramingProp,
+        _In_ FRAMING_CACHE_OPS Option
     ) PURE;
     STDMETHOD_(IPin*, KsGetConnectedPin)(
         THIS
     ) PURE;
     STDMETHOD_(IKsAllocatorEx*, KsGetPipe)(
         THIS_
-        KSPEEKOPERATION Operation
+        _In_ KSPEEKOPERATION Operation
     ) PURE;
     STDMETHOD(KsSetPipe)(
         THIS_
-        IKsAllocatorEx *KsAllocator
+        _In_ IKsAllocatorEx *KsAllocator
     ) PURE;
     STDMETHOD_(ULONG, KsGetPipeAllocatorFlag)(
         THIS
     ) PURE;
     STDMETHOD(KsSetPipeAllocatorFlag)(
         THIS_
-        ULONG Flag
+        _In_ ULONG Flag
     ) PURE;
     STDMETHOD_(GUID, KsGetPinBusCache)(
         THIS
     ) PURE;
     STDMETHOD(KsSetPinBusCache)(
         THIS_
-        GUID Bus
+        _In_ GUID Bus
     ) PURE;
 //
 // very useful methods for tracing.
@@ -495,7 +500,7 @@ DECLARE_INTERFACE_(IKsPinFactory, IUnknown)
 {
     STDMETHOD(KsPinFactory)(
         THIS_
-        ULONG* PinFactory
+        _Out_ ULONG* PinFactory
     ) PURE;
 };
 
@@ -511,28 +516,28 @@ DECLARE_INTERFACE_(IKsDataTypeHandler, IUnknown)
 {
     STDMETHOD(KsCompleteIoOperation)(
         THIS_
-        IMediaSample *Sample,
-        PVOID StreamHeader,
-        KSIOOPERATION IoOperation,
-        BOOL Cancelled
+        _Inout_ IMediaSample *Sample,
+        _Inout_ PVOID StreamHeader,
+        _In_ KSIOOPERATION IoOperation,
+        _In_ BOOL Cancelled
     ) PURE;
     STDMETHOD(KsIsMediaTypeInRanges)(
         THIS_
-        PVOID DataRanges
+        _In_ PVOID DataRanges
         ) PURE;
     STDMETHOD(KsPrepareIoOperation)(
         THIS_
-        IMediaSample *Sample,
-        PVOID StreamHeader,
-        KSIOOPERATION IoOperation
+        _Inout_ IMediaSample *Sample,
+        _Inout_ PVOID StreamHeader,
+        _In_ KSIOOPERATION IoOperation
     ) PURE;
     STDMETHOD(KsQueryExtendedSize)(
         THIS_
-        ULONG* ExtendedSize
+        _Out_ ULONG* ExtendedSize
     ) PURE;
     STDMETHOD(KsSetMediaType)(
         THIS_
-        const AM_MEDIA_TYPE* AmMediaType
+        _In_ const AM_MEDIA_TYPE* AmMediaType
     ) PURE;
 };
 
@@ -543,9 +548,9 @@ DECLARE_INTERFACE_(IKsDataTypeCompletion, IUnknown)
 {
     STDMETHOD(KsCompleteMediaType)(
         THIS_
-        HANDLE FilterHandle,
-        ULONG PinFactoryId,
-        AM_MEDIA_TYPE* AmMediaType
+        _In_ HANDLE FilterHandle,
+        _In_ ULONG PinFactoryId,
+        _Inout_ AM_MEDIA_TYPE* AmMediaType
     ) PURE;
 };
 
@@ -556,19 +561,19 @@ DECLARE_INTERFACE_(IKsInterfaceHandler, IUnknown)
 {
     STDMETHOD(KsSetPin)(
         THIS_
-        IKsPin *KsPin
+        _In_ IKsPin *KsPin
     ) PURE;
     STDMETHOD(KsProcessMediaSamples)(
         THIS_
-        IKsDataTypeHandler *KsDataTypeHandler,
-        IMediaSample** SampleList,
-        PLONG SampleCount,
-        KSIOOPERATION IoOperation,
-        PKSSTREAM_SEGMENT *StreamSegment
+        _In_ IKsDataTypeHandler *KsDataTypeHandler,
+        _In_reads_(SampleCount) IMediaSample** SampleList,
+        _Inout_ PLONG SampleCount,
+        _In_ KSIOOPERATION IoOperation,
+        _Out_ PKSSTREAM_SEGMENT *StreamSegment
     ) PURE;
     STDMETHOD(KsCompleteIo)(
         THIS_
-        PKSSTREAM_SEGMENT StreamSegment
+        _Inout_ PKSSTREAM_SEGMENT StreamSegment
     ) PURE;
 };
 
@@ -605,9 +610,11 @@ DECLARE_INTERFACE_(IKsQualityForwarder, IKsObject)
 {
     STDMETHOD_(VOID, KsFlushClient)(
         THIS_
-        IKsPin* Pin
+        _In_ IKsPin* Pin
     ) PURE;
 };
+
+#if ( (NTDDI_VERSION >= NTDDI_WINXPSP2) && (NTDDI_VERSION < NTDDI_WS03) ) || (NTDDI_VERSION >= NTDDI_WS03SP1)
 
 interface DECLSPEC_UUID("412bd695-f84b-46c1-ac73-54196dbc8fa7") IKsNotifyEvent;
 #undef INTERFACE
@@ -616,65 +623,67 @@ DECLARE_INTERFACE_(IKsNotifyEvent, IUnknown)
 {
     STDMETHOD(KsNotifyEvent)(
         THIS_
-        ULONG Event,
-        ULONG_PTR lParam1,
-        ULONG_PTR lParam2
+        _In_ ULONG Event,
+        _In_ ULONG_PTR lParam1,
+        _In_ ULONG_PTR lParam2
     ) PURE;
 };
+
+#endif
 
 KSDDKAPI
 HRESULT
 WINAPI
 KsResolveRequiredAttributes(
-    PKSDATARANGE DataRange,
-    PKSMULTIPLE_ITEM Attributes OPTIONAL
+    _In_ PKSDATARANGE DataRange,
+    _In_opt_ PKSMULTIPLE_ITEM Attributes
     );
 
 KSDDKAPI
 HRESULT
 WINAPI
 KsOpenDefaultDevice(
-    REFGUID Category,
-    ACCESS_MASK Access,
-    PHANDLE DeviceHandle
+    _In_ REFGUID Category,
+    _In_ ACCESS_MASK Access,
+    _Out_ PHANDLE DeviceHandle
     );
 KSDDKAPI
 HRESULT
 WINAPI
 KsSynchronousDeviceControl(
-    HANDLE      Handle,
-    ULONG       IoControl,
-    PVOID       InBuffer,
-    ULONG       InLength,
-    PVOID       OutBuffer,
-    ULONG       OutLength,
-    PULONG      BytesReturned
+    _In_ HANDLE      Handle,
+    _In_ ULONG       IoControl,
+    _In_reads_bytes_opt_(InLength) PVOID   InBuffer,
+    _In_ ULONG       InLength,
+    _Out_writes_bytes_opt_(OutLength) PVOID  OutBuffer,
+    _In_ ULONG       OutLength,
+    _Inout_opt_ PULONG BytesReturned
     );
 KSDDKAPI
 HRESULT
 WINAPI
 KsGetMultiplePinFactoryItems(
-    HANDLE  FilterHandle,
-    ULONG   PinFactoryId,
-    ULONG   PropertyId,
-    PVOID*  Items
+    _In_ HANDLE  FilterHandle,
+    _In_ ULONG   PinFactoryId,
+    _In_ ULONG   PropertyId,
+    _Outptr_ PVOID*  Items
     );
 KSDDKAPI
 HRESULT
 WINAPI
 KsGetMediaTypeCount(
-    HANDLE      FilterHandle,
-    ULONG       PinFactoryId,
-    ULONG*      MediaTypeCount
+    _In_ HANDLE      FilterHandle,
+    _In_ ULONG       PinFactoryId,
+    _Out_ ULONG*      MediaTypeCount
     );
 KSDDKAPI
 HRESULT
 WINAPI
 KsGetMediaType(
-    int         Position,
-    AM_MEDIA_TYPE* AmMediaType,
-    HANDLE      FilterHandle,
-    ULONG       PinFactoryId
+    _In_ int         Position,
+    _Out_ AM_MEDIA_TYPE* AmMediaType,
+    _In_ HANDLE      FilterHandle,
+    _In_ ULONG       PinFactoryId
     );
 
 #endif // __STREAMS__
@@ -715,7 +724,7 @@ DEFINE_GUID(IID_IKsPropertySet, STATIC_IID_IKsPropertySet);
 #if !defined(__cplusplus) || _MSC_VER < 1100
 DEFINE_GUID(CLSID_Proxy, STATIC_CLSID_Proxy);
 #else  // defined(__cplusplus) && _MSC_VER >= 1100
-DECLSPEC_UUID("17CCA71B-ECD7-11D0-B908-00A0C9223196") CLSID_Proxy;
+class DECLSPEC_UUID("17CCA71B-ECD7-11D0-B908-00A0C9223196") CLSID_Proxy;
 #endif  // defined(__cplusplus) && _MSC_VER >= 1100
 
 #endif // !_KS_
@@ -735,30 +744,30 @@ DECLARE_INTERFACE_(IKsPropertySet, IUnknown)
 {
     STDMETHOD(Set)(
         THIS_
-        IN REFGUID PropSet,
-        IN ULONG Id,
-        IN LPVOID InstanceData,
-        IN ULONG InstanceLength,
-        IN LPVOID PropertyData,
-        IN ULONG DataLength
+        _In_ REFGUID PropSet,
+        _In_ ULONG Id,
+        _In_reads_bytes_(InstanceLength) LPVOID InstanceData,
+        _In_ ULONG InstanceLength,
+        _In_reads_bytes_(DataLength) LPVOID PropertyData,
+        _In_ ULONG DataLength
     ) PURE;
 
     STDMETHOD(Get)(
         THIS_
-        IN REFGUID PropSet,
-        IN ULONG Id,
-        IN LPVOID InstanceData,
-        IN ULONG InstanceLength,
-        OUT LPVOID PropertyData,
-        IN ULONG DataLength,
-        OUT ULONG* BytesReturned
+        _In_ REFGUID PropSet,
+        _In_ ULONG Id,
+        _In_reads_bytes_(InstanceLength) LPVOID InstanceData,
+        _In_ ULONG InstanceLength,
+        _Out_writes_bytes_(DataLength) LPVOID PropertyData,
+        _In_ ULONG DataLength,
+        _Out_ ULONG* BytesReturned
     ) PURE;
 
     STDMETHOD(QuerySupported)(
         THIS_
-        IN REFGUID PropSet,
-        IN ULONG Id,
-        OUT ULONG* TypeSupport
+        _In_ REFGUID PropSet,
+        _In_ ULONG Id,
+        _Out_ ULONG* TypeSupport
     ) PURE;
 };
 
@@ -778,27 +787,27 @@ DECLARE_INTERFACE_(IKsControl, IUnknown)
 {
     STDMETHOD(KsProperty)(
         THIS_
-        IN PKSPROPERTY Property,
-        IN ULONG PropertyLength,
-        IN OUT LPVOID PropertyData,
-        IN ULONG DataLength,
-        OUT ULONG* BytesReturned
+        _In_reads_bytes_(PropertyLength) PKSPROPERTY Property,
+        _In_ ULONG PropertyLength,
+        _Inout_updates_bytes_(DataLength) LPVOID PropertyData,
+        _In_ ULONG DataLength,
+        _Inout_opt_ ULONG* BytesReturned
     ) PURE;
     STDMETHOD(KsMethod)(
         THIS_
-        IN PKSMETHOD Method,
-        IN ULONG MethodLength,
-        IN OUT LPVOID MethodData,
-        IN ULONG DataLength,
-        OUT ULONG* BytesReturned
+        _In_reads_bytes_(MethodLength) PKSMETHOD Method,
+        _In_ ULONG MethodLength,
+        _Inout_updates_bytes_(DataLength) LPVOID MethodData,
+        _In_ ULONG DataLength,
+        _Inout_opt_ ULONG* BytesReturned
     ) PURE;
     STDMETHOD(KsEvent)(
         THIS_
-        IN PKSEVENT Event OPTIONAL,
-        IN ULONG EventLength,
-        IN OUT LPVOID EventData,
-        IN ULONG DataLength,
-        OUT ULONG* BytesReturned
+        _In_reads_bytes_opt_(EventLength) PKSEVENT Event,
+        _In_ ULONG EventLength,
+        _Inout_updates_bytes_(DataLength) LPVOID EventData,
+        _In_ ULONG DataLength,
+        _Inout_opt_ ULONG* BytesReturned
     ) PURE;
 };
 
@@ -816,11 +825,11 @@ DECLARE_INTERFACE_(IKsAggregateControl, IUnknown)
 {
     STDMETHOD(KsAddAggregate)(
         THIS_
-        IN REFGUID AggregateClass
+        _In_ REFGUID AggregateClass
     ) PURE;
     STDMETHOD(KsRemoveAggregate)(
         THIS_
-        IN REFGUID AggregateClass
+        _In_ REFGUID AggregateClass
     ) PURE;
 };
 
@@ -838,12 +847,12 @@ DECLARE_INTERFACE_(IKsTopology, IUnknown)
 {
     STDMETHOD(CreateNodeInstance)(
         THIS_
-        IN ULONG NodeId,
-        IN ULONG Flags,
-        IN ACCESS_MASK DesiredAccess,
-        IN IUnknown* UnkOuter OPTIONAL,
-        IN REFGUID InterfaceId,
-        OUT LPVOID* Interface
+        _In_ ULONG NodeId,
+        _In_ ULONG Flags,
+        _In_ ACCESS_MASK DesiredAccess,
+        _In_opt_ IUnknown* UnkOuter,
+        _In_ REFGUID InterfaceId,
+        _Out_ LPVOID* Interface
     ) PURE;
 };
 
@@ -855,4 +864,9 @@ DECLARE_INTERFACE_(IKsTopology, IUnknown)
 }
 #endif // __cplusplus
 
+
+#endif /* WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP) */
+#pragma endregion
+
 #endif // __KSPROXY__
+

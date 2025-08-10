@@ -3,12 +3,17 @@
 //
 // Desc:  ActiveMovie error defines.
 //
-// Copyright (c) 1992-2001, Microsoft Corporation.  All rights reserved.
+// Copyright (c) 1992 - 2001, Microsoft Corporation.  All rights reserved.
 //------------------------------------------------------------------------------
 
 
 #ifndef __ERRORS__
 #define __ERRORS__
+#include <winapifamily.h>
+
+#pragma region Desktop Family
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
+
 
 #ifdef __cplusplus
 extern "C" {
@@ -29,8 +34,8 @@ extern "C" {
 typedef BOOL (WINAPI* AMGETERRORTEXTPROCA)(HRESULT, char *, DWORD);
 typedef BOOL (WINAPI* AMGETERRORTEXTPROCW)(HRESULT, WCHAR *, DWORD);
 
-AMOVIEAPI DWORD WINAPI AMGetErrorTextA( HRESULT hr , char *pbuffer , DWORD MaxLen);
-AMOVIEAPI DWORD WINAPI AMGetErrorTextW( HRESULT hr , WCHAR *pbuffer , DWORD MaxLen);
+AMOVIEAPI DWORD WINAPI AMGetErrorTextA( HRESULT hr , _Out_writes_(MaxLen) LPSTR pbuffer , DWORD MaxLen);
+AMOVIEAPI DWORD WINAPI AMGetErrorTextW( HRESULT hr , _Out_writes_(MaxLen) LPWSTR pbuffer , DWORD MaxLen);
 
 
 #ifdef UNICODE
@@ -44,4 +49,8 @@ typedef AMGETERRORTEXTPROCA AMGETERRORTEXTPROC;
 #ifdef __cplusplus
 }
 #endif // __cplusplus
+
+#endif /* WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP) */
+#pragma endregion
+
 #endif // __ERRORS__

@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 // File: DMOImpl.h
 //
-// Desc: Classes to implement a DMO.
+// Desc: Classes to implement a DMO
 //
 // Copyright (c) 2000-2001, Microsoft Corporation.  All rights reserved.
 //------------------------------------------------------------------------------
@@ -9,6 +9,11 @@
 
 #ifndef _dmoimpl_h_
 #define _dmoimpl_h_
+
+#include <winapifamily.h>
+
+#pragma region Desktop Family
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
 
 #ifdef _DEBUG
 #include <crtdbg.h>
@@ -39,6 +44,7 @@
 //
 //  Derived class implements the following methods :
 //
+
 /*
    HRESULT InternalGetInputStreamInfo(DWORD dwInputStreamIndex, DWORD *pdwFlags);
    HRESULT InternalGetOutputStreamInfo(DWORD dwOutputStreamIndex, DWORD *pdwFlags);
@@ -222,7 +228,6 @@ protected:
         *pulNumberOfOutputStreams = NUMBEROFOUTPUTS;
         return S_OK;
     }
-
     STDMETHODIMP GetInputStreamInfo(ULONG ulStreamIndex, DWORD *pdwFlags)
     {
         LockIt lck(static_cast<_DERIVED_ *>(this));
@@ -239,7 +244,6 @@ protected:
                                    DMO_INPUT_STREAMF_HOLDS_BUFFERS)));
         return hr;
     }
-
     STDMETHODIMP GetOutputStreamInfo(ULONG ulStreamIndex, DWORD *pdwFlags)
     {
         LockIt lck(static_cast<_DERIVED_ *>(this));
@@ -257,7 +261,6 @@ protected:
                                    DMO_OUTPUT_STREAMF_OPTIONAL)));
         return hr;
     }
-
     STDMETHODIMP GetInputType(ULONG ulStreamIndex, ULONG ulTypeIndex, DMO_MEDIA_TYPE *pmt) {
         if (ulStreamIndex >= NUMBEROFINPUTS) {
             return DMO_E_INVALIDSTREAMINDEX;
@@ -265,7 +268,6 @@ protected:
         LockIt lck(static_cast<_DERIVED_ *>(this));
         return INTERNAL_CALL(_DERIVED_, GetInputType)(ulStreamIndex, ulTypeIndex, pmt);
     }
-
     STDMETHODIMP GetOutputType(ULONG ulStreamIndex, ULONG ulTypeIndex, DMO_MEDIA_TYPE *pmt) {
         if (ulStreamIndex >= NUMBEROFOUTPUTS) {
             return DMO_E_INVALIDSTREAMINDEX;
@@ -273,7 +275,6 @@ protected:
         LockIt lck(static_cast<_DERIVED_ *>(this));
         return INTERNAL_CALL(_DERIVED_, GetOutputType)(ulStreamIndex, ulTypeIndex, pmt);
     }
-
     STDMETHODIMP GetInputCurrentType(ULONG ulStreamIndex, DMO_MEDIA_TYPE *pmt) {
         if (ulStreamIndex >= NUMBEROFINPUTS) {
             return DMO_E_INVALIDSTREAMINDEX;
@@ -288,7 +289,6 @@ protected:
         else
            return DMO_E_TYPE_NOT_SET;
     }
-
     STDMETHODIMP GetOutputCurrentType(ULONG ulStreamIndex, DMO_MEDIA_TYPE *pmt) {
         if (ulStreamIndex >= NUMBEROFOUTPUTS) {
             return DMO_E_INVALIDSTREAMINDEX;
@@ -303,7 +303,6 @@ protected:
         else
            return DMO_E_TYPE_NOT_SET;
     }
-
     STDMETHODIMP GetInputSizeInfo(ULONG ulStreamIndex, ULONG *pulSize, ULONG *pcbMaxLookahead, ULONG *pulAlignment) {
         if (ulStreamIndex >= NUMBEROFINPUTS) {
             return DMO_E_INVALIDSTREAMINDEX;
@@ -318,7 +317,6 @@ protected:
         }
         return INTERNAL_CALL(_DERIVED_, GetInputSizeInfo)(ulStreamIndex, pulSize, pcbMaxLookahead, pulAlignment);
     }
-
     STDMETHODIMP GetOutputSizeInfo(ULONG ulStreamIndex, ULONG *pulSize, ULONG *pulAlignment) {
         if (ulStreamIndex >= NUMBEROFOUTPUTS) {
             return DMO_E_INVALIDSTREAMINDEX;
@@ -332,7 +330,6 @@ protected:
         }
         return INTERNAL_CALL(_DERIVED_, GetOutputSizeInfo)(ulStreamIndex, pulSize, pulAlignment);
     }
-
     STDMETHODIMP SetInputType(ULONG ulStreamIndex, const DMO_MEDIA_TYPE *pmt, DWORD dwFlags) {
         if (ulStreamIndex >= NUMBEROFINPUTS) {
             return DMO_E_INVALIDSTREAMINDEX;
@@ -429,7 +426,6 @@ protected:
 
         return NOERROR;
     }
-
     STDMETHODIMP GetInputStatus(
         ULONG ulStreamIndex,
         DWORD *pdwStatus
@@ -453,7 +449,6 @@ protected:
         }
         return NOERROR;
     }
-
     STDMETHODIMP GetInputMaxLatency(unsigned long ulStreamIndex, REFERENCE_TIME *prtLatency) {
 
         if (prtLatency == NULL) {
@@ -467,7 +462,6 @@ protected:
 
         return INTERNAL_CALL(_DERIVED_, GetInputMaxLatency)(ulStreamIndex, prtLatency);
     }
-
     STDMETHODIMP SetInputMaxLatency(unsigned long ulStreamIndex, REFERENCE_TIME rtLatency) {
         if (ulStreamIndex >= NUMBEROFINPUTS) {
             return DMO_E_INVALIDSTREAMINDEX;
@@ -477,7 +471,6 @@ protected:
 
         return INTERNAL_CALL(_DERIVED_, SetInputMaxLatency)(ulStreamIndex, rtLatency);
     }
-
     STDMETHODIMP Discontinuity(ULONG ulStreamIndex) {
         if (ulStreamIndex >= NUMBEROFINPUTS) {
             return DMO_E_INVALIDSTREAMINDEX;
@@ -525,7 +518,6 @@ protected:
         }
         return hr;
     }
-
     STDMETHODIMP FreeStreamingResources()
     {
         LockIt lck(static_cast<_DERIVED_ *>(this));
@@ -608,7 +600,8 @@ protected:
             return hr;
         }
 
-        for (DWORD dw = 0; dw < NUMBEROFOUTPUTS; dw++) {
+        DWORD dw;
+        for (dw = 0; dw < NUMBEROFOUTPUTS; dw++) {
             pOutputBuffers[dw].dwStatus = 0;
         }
 
@@ -640,6 +633,10 @@ protected:
         return S_OK;
     }
 };
+
+
+#endif /* WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP) */
+#pragma endregion
 
 #endif // _dmoimpl_h_
 

@@ -234,4 +234,9 @@ static void     platform_UnlockRigidDListIndex      ( render::hgeom_inst hInst,
 
 //=============================================================================
 
+#ifdef TARGET_PC
+static void     platform_BeginNormalRender               ( void );
+static void     platform_EndNormalRender                 ( void );
+#endif
+
 #endif

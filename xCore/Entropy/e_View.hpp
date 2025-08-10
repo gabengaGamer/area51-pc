@@ -21,18 +21,7 @@
 #define PS2_VIEWPORT_WIDTH  512
 #define PS2_VIEWPORT_HEIGHT 448
 
-
-#ifdef TARGET_PS2
-// I'm not sure how to arrive at this number mathematically, but it turns circles
-// into circles (or pretty close), which is the desired effect! The number is
-// dependant on how the hardware scales pixels and how the frame buffer code is
-// set up. (scaling 512 on the ps2, or using 11x9 on the xbox, or whatever...)
-// For views that render into textures (such as projected shadows), you probably
-// want this to be 1.0.
-#define DEFAULT_PIXEL_SCALE     PS2_PIXEL_SCALE
-#else
 #define DEFAULT_PIXEL_SCALE     1.0f
-#endif
 
 class view
 {   
@@ -193,28 +182,15 @@ void            GetViewPlanes   ( f32 X0, f32 Y0, f32 X1, f32 Y1,
                                   plane& Near,
                                   plane& Far,
                                   system System = WORLD ) const;
-                
-/*              
-void            GetViewEdges    ( vector3& TLEdge, 
-                                  vector3& TREdge, 
-                                  vector3& BLEdge, 
-                                  vector3& BREdge, 
-                                  system   System = WORLD ) const;
-                
-void            GetProjection   ( f32& ProjectXC0, 
-                                  f32& ProjectXC1,
-                                  f32& ProjectYC0, 
-                                  f32& ProjectYC1 ) const;
-*/
+
 //------------------------------------------------------------------------------
 
 void            GetProjection   ( f32& XP0, f32& XP1, f32& YP0, f32& YP1 ) const;
+
 //------------------------------------------------------------------------------
 
 xbool           PointInView     ( const vector3& Point, 
                                         system   System = WORLD ) const;
-
-
 
 //------------------------------------------------------------------------------
 //  These are quick implementations, and can give false positives in certain
@@ -257,24 +233,11 @@ vector3         RayFromScreen   (       f32      ScreenX,
 f32             CalcScreenSize  ( const vector3& Position,
                                         f32      WorldRadius,
                                         system   System = WORLD ) const;
-/*              
-f32             CalcScreenPercentage
-                                ( const vector3& Position,
-                                        f32      WorldSize,
-                                        system   System = WORLD ) const;
-*/
-
 
 // Use to take a sub shot of the screen! (useful for multi-part screen shots)
 #if !defined( CONFIG_RETAIL )
 void            SetSubShot      ( s32 SubShotX, s32 SubShotY, s32 ShotSize ) ;
 #endif // !defined( CONFIG_RETAIL )
-
-//------------------------------------------------------------------------------
-//  Scissor functions
-//------------------------------------------------------------------------------
-
-//void SetScissor
 
 //------------------------------------------------------------------------------
 //  Fields
@@ -346,13 +309,6 @@ mutable f32         m_ProjectY[2];      // ScreenY = ProjectY[0] + ProjectY[1]*(
 mutable irect       m_ScissorRects[4];
 mutable s32         m_nScissors;
 mutable s32         m_iScissor;
-
-/*
-mutable vector3     TLEdge;             // Normalized frustum edges in World space
-mutable vector3     TREdge;
-mutable vector3     BLEdge;
-mutable vector3     BREdge;
-*/
 
 //------------------------------------------------------------------------------
 //  Internal Functions

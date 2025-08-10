@@ -1,0 +1,14 @@
+prefix=/home/runner/work/FFmpeg-Auto-Build/FFmpeg-Auto-Build/ffmpeg-windows-build-helpers/sandbox/win32/ffmpeg_git_master_shared
+exec_prefix=${prefix}
+libdir=/home/runner/work/FFmpeg-Auto-Build/FFmpeg-Auto-Build/ffmpeg-windows-build-helpers/sandbox/win32/ffmpeg_git_master_shared/lib
+includedir=/home/runner/work/FFmpeg-Auto-Build/FFmpeg-Auto-Build/ffmpeg-windows-build-helpers/sandbox/win32/ffmpeg_git_master_shared/include
+
+Name: libavformat
+Description: FFmpeg container format library
+Version: 61.9.106
+Requires: 
+Requires.private: libavcodec >= 61.31.100, libswresample >= 5.4.100, libavutil >= 59.55.100
+Conflicts:
+Libs: -L${libdir}  -lavformat 
+Libs.private: -lm -latomic -L/home/runner/work/FFmpeg-Auto-Build/FFmpeg-Auto-Build/ffmpeg-windows-build-helpers/sandbox/cross_compilers/mingw-w64-i686/i686-w64-mingw32/lib -lxml2 -lz -llzma -liconv -lws2_32 -lbz2 -L/home/runner/work/FFmpeg-Auto-Build/FFmpeg-Auto-Build/ffmpeg-windows-build-helpers/sandbox/cross_compilers/mingw-w64-i686/i686-w64-mingw32/lib -lgme -lstdc++ -lz -L/home/runner/work/FFmpeg-Auto-Build/FFmpeg-Auto-Build/ffmpeg-windows-build-helpers/sandbox/cross_compilers/mingw-w64-i686/i686-w64-mingw32/lib -lmodplug -lstdc++ -lm -L/home/runner/work/FFmpeg-Auto-Build/FFmpeg-Auto-Build/ffmpeg-windows-build-helpers/sandbox/cross_compilers/mingw-w64-i686/i686-w64-mingw32/lib -lbluray -lgdi32 -lxml2 -lz -llzma -liconv -lws2_32 -lfreetype -lharfbuzz -lpng -lbz2 -lpthread -lbz2 -lpng16 -lz -lfreetype -lharfbuzz -lpng -lbz2 -lpthread -lm -lgmp -L/home/runner/work/FFmpeg-Auto-Build/FFmpeg-Auto-Build/ffmpeg-windows-build-helpers/sandbox/cross_compilers/mingw-w64-i686/i686-w64-mingw32/lib -lz -L/home/runner/work/FFmpeg-Auto-Build/FFmpeg-Auto-Build/ffmpeg-windows-build-helpers/sandbox/cross_compilers/mingw-w64-i686/i686-w64-mingw32/lib -lgnutls -lcrypt32 -lnettle -lhogweed -lgmp -lidn2 -liconv -lunistring -lws2_32 -pthread -lws2_32 -lgmp -lunistring -latomic -lcrypt32 -lncrypt -lbcrypt -lhogweed -lgmp -lnettle -lidn2 -liconv -lunistring -liconv -L/home/runner/work/FFmpeg-Auto-Build/FFmpeg-Auto-Build/ffmpeg-windows-build-helpers/sandbox/cross_compilers/mingw-w64-i686/i686-w64-mingw32/lib -lsrt -lwsock32 -lws2_32 -lpthread -lstdc++ -lmingw32 -lgcc -lmoldname -lmingwex -ladvapi32 -lshell32 -luser32 -lkernel32 -lmingw32 -lgcc -lmoldname -lmingwex -lgnutls -lcrypt32 -lnettle -lhogweed -lgmp -lidn2 -liconv -lunistring -lws2_32 -pthread -lws2_32 -lgmp -lunistring -latomic -lcrypt32 -lncrypt -lbcrypt -lhogweed -lgmp -lidn2 -liconv -lunistring -liconv -lnettle -lz -lws2_32 -ldl
+Cflags: -I${includedir}

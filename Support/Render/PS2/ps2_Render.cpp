@@ -744,40 +744,6 @@ void* platform_CalculateRigidLighting( const matrix4&   L2W,
 
 //=============================================================================
 
-//#define WEAPON_LIGHTING_TESTS
-
-#if defined(dstewart) && defined(WEAPON_LIGHTING_TESTS)
-
-inline xcolor ColorMax( xcolor Color, u8 Clamp )
-{
-    return xcolor( MAX( Color.R, Clamp ),
-                   MAX( Color.G, Clamp ),
-                   MAX( Color.B, Clamp ),
-                   Color.A );
-}
-
-inline xcolor MultColors( xcolor LHS, xcolor RHS )
-{
-    s32 R = ((s32)LHS.R * (s32)RHS.R)/128;
-    s32 G = ((s32)LHS.G * (s32)RHS.G)/128;
-    s32 B = ((s32)LHS.B * (s32)RHS.B)/128;
-    s32 A = ((s32)LHS.A * (s32)RHS.A)/128;
-    return xcolor( (u8)R, (u8)G, (u8)B, (u8)A );
-}
-
-static vector3 g_ForcedWeaponLightDir0( 1.0f, -1.0f, 0.0f );
-static vector3 g_ForcedWeaponLightDir1( -1.0f, 1.0f, 0.0f );
-static xcolor  g_ForcedWeaponLightCol0( 128, 100, 100, 128 );
-static xcolor  g_ForcedWeaponLightCol1( 100, 100, 108, 128 );
-static u8      g_ForcedWeaponClamp0( 32 );
-static u8      g_ForcedWeaponClamp1( 20 );
-static xcolor  g_ForcedWeaponAmbient( 0, 0, 0, 128 );
-static xcolor  g_ForcedWeaponCharInfluence( 64, 64, 64, 128 );
-
-#endif
-
-//=============================================================================
-
 static void*   platform_CalculateSkinLighting( u32            Flags,
                                                const matrix4& L2W,
                                                const bbox&    BBox,

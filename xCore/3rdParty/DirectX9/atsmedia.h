@@ -3,9 +3,14 @@
 //
 // Desc: Broadcast Driver Architecture Media Definitions for ATSC
 //
-// Copyright (c) 1996-2001, Microsoft Corporation.  All rights reserved.
+// Copyright (c) 1996 - 2001, Microsoft Corporation.  All rights reserved.
 //------------------------------------------------------------------------------
 
+
+#include <winapifamily.h>
+
+#pragma region Desktop Family
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
 
 #if !defined(_KSMEDIA_)
 #error KSMEDIA.H must be included before BDAMEDIA.H
@@ -32,3 +37,7 @@ DEFINE_GUIDSTRUCT("71985F51-1CA1-11d3-9CC8-00C04F7971E0", BDANETWORKTYPE_ATSC);
 
 
 #endif // _ATSCMEDIA_
+
+#endif /* WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP) */
+#pragma endregion
+

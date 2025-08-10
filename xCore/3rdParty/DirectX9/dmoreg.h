@@ -9,6 +9,11 @@
 
 #ifndef __DMOREG_H__
 #define __DMOREG_H__
+#include <winapifamily.h>
+
+#pragma region Desktop Family
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
+
 
 #include "mediaobj.h"
 
@@ -105,6 +110,10 @@ STDAPI DMOGetTypes(
 
 STDAPI DMOGetName(
    REFCLSID clsidDMO,
-   WCHAR szName[80]
+   _Out_writes_(80) WCHAR szName[80]
 );
+
+#endif /* WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP) */
+#pragma endregion
+
 #endif //__DMOREG_H__

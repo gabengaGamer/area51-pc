@@ -17,10 +17,6 @@
 //  FUNCTIONS
 //==============================================================================
 
-//------------------------------------------------------------------------------
-//  Public functions
-//------------------------------------------------------------------------------
-
 s32         vram_Register       ( const xbitmap& Bitmap  );
 void        vram_Unregister     ( const xbitmap& Bitmap  );
 void        vram_Unregister     (       s32      VRAM_ID );
@@ -33,9 +29,9 @@ xbool       vram_IsActive       ( const xbitmap& Bitmap )   X_SECTION(render);
 
 void        vram_Flush          ( void );
 
-//------------------------------------------------------------------------------
+//==============================================================================
 //  Debugging functions
-//------------------------------------------------------------------------------
+//==============================================================================
 
 s32         vram_GetNRegistered ( void );
 s32         vram_GetRegistered  ( s32 ID );
@@ -43,50 +39,35 @@ s32         vram_GetRegistered  ( s32 ID );
 void        vram_PrintStats     ( void );
 void        vram_SanityCheck    ( void );
 
-//------------------------------------------------------------------------------
+//==============================================================================
 //  Private functions
-//------------------------------------------------------------------------------
+//==============================================================================
 
 void        vram_Init           ( void );
 void        vram_Kill           ( void );
 
-//------------------------------------------------------------------------------
+//==============================================================================
 //  PC specific functions
-//------------------------------------------------------------------------------
+//==============================================================================
 
 #ifdef TARGET_PC
 
 #include "D3DEngine\d3deng_private.hpp"
 
-s32                 vram_LoadTexture    ( const char*    pFileName );
+s32                         vram_LoadTexture    ( const char*    pFileName  );
+s32                         vram_Register       ( ID3D11Texture2D* pTexture );
 
-IDirect3DTexture9*  vram_GetSurface     ( const xbitmap& Bitmap  );
-IDirect3DTexture9*  vram_GetSurface     (       s32      VRAM_ID );
-
-// Register bitmap as a dudv bump map (bitmap should be grey scale height)
-// Until xbitmap supports such formats, the conversion happens when creating the D3D texture 
-s32                 vram_RegisterDuDv   ( const xbitmap& Bitmap ) ;
-
-#endif
-
-//------------------------------------------------------------------------------
-//  XBOX specific functions
-//------------------------------------------------------------------------------
-
-#ifdef TARGET_XBOX
-
-#include "xbox\xbox_private.hpp"
-
-texture_factory::handle vram_GetSurface ( const xbitmap& Bitmap );
-texture_factory::handle vram_GetSurface (       s32      VramId );
-
-s32  vram_RegisterLocked( s32   Width, 
-                          s32   Height, 
-                          s32   BPP );
+ID3D11ShaderResourceView*   vram_GetSRV         ( const xbitmap& Bitmap    );
+ID3D11ShaderResourceView*   vram_GetSRV         (       s32      VRAM_ID   );
+																		   
+ID3D11Texture2D*            vram_GetTexture2D   ( const xbitmap& Bitmap    );
+ID3D11Texture2D*            vram_GetTexture2D   (       s32      VRAM_ID   );
+																		   
+ID3D11UnorderedAccessView*  vram_GetUAV         ( s32 VRAM_ID              );
 
 // Register bitmap as a dudv bump map (bitmap should be grey scale height)
 // Until xbitmap supports such formats, the conversion happens when creating the D3D texture 
-s32 vram_RegisterDuDv ( const xbitmap& Bitmap ) ;
+s32                         vram_RegisterDuDv   ( const xbitmap& Bitmap ) ;
 
 #endif
 

@@ -29,10 +29,6 @@
 #include "x_stdio.hpp"
 #include "x_threads.hpp"
 
-#ifdef TARGET_PS2
-#include "eekernel.h"
-#endif
-
 //==============================================================================
 //  DEFINES
 //==============================================================================
@@ -193,10 +189,6 @@ void smem_ActivateSection( void )
     // SMEM can be DMA'ed. Using uncached writes means we don't have to flush
     // the cache, but we will sacrifices some CPU performance. Specific areas
     // that need to be hand-optimized can do that themselves...
-    #ifdef TARGET_PS2
-    g_pSMemBufferTop = (byte*)((u32)g_pSMemBufferTop | 0x20000000);
-    g_pSMemStackTop  = (byte*)((u32)g_pSMemStackTop  | 0x20000000);
-    #endif
     
     // Place a signature below the buffer region for overrun checking.
     x_memcpy( g_pSMemBufferTop, s_Signature, SMEM_ALIGNMENT );
@@ -248,9 +240,6 @@ void smem_Init( s32 NBytes )
 
     // Since we'll be accessing the memory as uncached on the PS2, we need to
     // make sure that any debugging memory fillers (i.e. 0xFEEDC0DE) are flushed
-    #ifdef TARGET_PS2
-    FlushCache( WRITEBACK_DCACHE );
-    #endif
 }
 
 //==============================================================================
@@ -289,11 +278,7 @@ void smem_Toggle( void )
     //x_printfxy(0,3,"MAXSMEM %1d",SCRATCH_MEM_MAX_USED);
 
     // Make sure all markers which were pushed, have been popped.
-#if defined( TARGET_PS2 ) && !defined( TARGET_DVD )
-    ASSERT( (g_bInsideRTF) || (g_SMemNextMarker == 0) );
-#else
     ASSERT( g_SMemNextMarker == 0 );
-#endif
 
     // Check to see if the signature under the buffer was violated.
     //
@@ -315,12 +300,7 @@ void smem_Toggle( void )
                       s_Signature, SMEM_ALIGNMENT ) == 0 );
 
     // Remember most used
-#ifdef TARGET_PS2
-    SCRATCH_MEM_MAX_USED = MAX( (((u32)g_pSMemBufferTop&0x0FFFFFFF)-(u32)s_pStorage[ s_Active ]), (u32)SCRATCH_MEM_MAX_USED );
-#else
     SCRATCH_MEM_MAX_USED = MAX( (g_pSMemBufferTop-s_pStorage[ s_Active ]), SCRATCH_MEM_MAX_USED );
-#endif
-
 
     // To make life a little easier, get the index to the non-active section.
     s32 Other = 1 - s_Active;

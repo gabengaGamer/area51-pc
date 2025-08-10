@@ -9,6 +9,11 @@
 
 #ifndef __DMO_H__
 #define __DMO_H__
+#include <winapifamily.h>
+
+#pragma region Desktop Family
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
+
 
 
 #include "mediaerr.h"
@@ -25,5 +30,9 @@
 #endif
 #include "dmoreg.h"
 #include "dmort.h"
+
+
+#endif /* WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP) */
+#pragma endregion
 
 #endif //__DMO_H__

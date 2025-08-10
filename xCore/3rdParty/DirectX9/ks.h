@@ -10,15 +10,27 @@ Abstract:
 
     Windows Driver Model/Connection and Streaming Architecture (WDM-CSA)
     core definitions.
-
 --*/
-
 #if !defined(_KS_)
 #define _KS_
+
+#include <winapifamily.h>
+
+#pragma region Desktop Family
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
+
+#pragma warning(disable:4201) // nameless struct/union
+#pragma warning(disable:4214) // bit field types other than int
 
 #if defined(__TCS__)
 #define _KS_NO_ANONYMOUS_STRUCTURES_ 1
 #endif
+
+#endif /* WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP) */
+#pragma endregion
+
+#pragma region Application Family
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_APP)
 
 #if !defined(_NTRTL_)
     #ifndef DEFINE_GUIDEX
@@ -47,8 +59,15 @@ Abstract:
 #define STATIC_GUID_NULL \
     0x00000000L, 0x0000, 0x0000, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 
+#pragma prefast(suppress: 6244, "duplicate definition is harmless in this case")
 DEFINE_GUIDSTRUCT("00000000-0000-0000-0000-000000000000", GUID_NULL);
 #define GUID_NULL DEFINE_GUIDNAMED(GUID_NULL)
+
+#endif /* WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_APP) */
+#pragma endregion
+
+#pragma region Desktop Family
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
 
 //===========================================================================
 
@@ -84,6 +103,14 @@ typedef struct {
     ULONG   PrioritySubClass;
 } KSPRIORITY, *PKSPRIORITY;
 
+#endif /* WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP) */
+#pragma endregion
+
+#pragma region Application Family
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_APP)
+
+#pragma warning(disable:4201) // nameless struct/union
+
 typedef struct {
     union {
 #if defined( _KS_NO_ANONYMOUS_STRUCTURES_ )
@@ -114,7 +141,9 @@ typedef KSIDENTIFIER KSPROPERTY, *PKSPROPERTY, KSMETHOD, *PKSMETHOD, KSEVENT, *P
 #define KSMETHOD_TYPE_TOPOLOGY 0x10000000
 
 #define KSPROPERTY_TYPE_GET                 0x00000001
+#define KSPROPERTY_TYPE_GETPAYLOADSIZE      0x00000004
 #define KSPROPERTY_TYPE_SET                 0x00000002
+#define KSPROPERTY_TYPE_GETPAYLOADSIZE      0x00000004
 #define KSPROPERTY_TYPE_SETSUPPORT          0x00000100
 #define KSPROPERTY_TYPE_BASICSUPPORT        0x00000200
 #define KSPROPERTY_TYPE_RELATIONS           0x00000400
@@ -125,13 +154,22 @@ typedef KSIDENTIFIER KSPROPERTY, *PKSPROPERTY, KSMETHOD, *PKSMETHOD, KSEVENT, *P
 #define KSPROPERTY_TYPE_SERIALIZESIZE       0x00008000
 #define KSPROPERTY_TYPE_DEFAULTVALUES       0x00010000
 
-#define KSPROPERTY_TYPE_TOPOLOGY 0x10000000
+#define KSPROPERTY_TYPE_TOPOLOGY            0x10000000
+#define KSPROPERTY_TYPE_HIGHPRIORITY        0x08000000
+#define KSPROPERTY_TYPE_FSFILTERSCOPE       0x40000000
+#define KSPROPERTY_TYPE_COPYPAYLOAD         0x80000000
 
 typedef struct {
     KSPROPERTY      Property;
     ULONG           NodeId;
     ULONG           Reserved;
 } KSP_NODE, *PKSP_NODE;
+
+#endif /* WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_APP) */
+#pragma endregion
+
+#pragma region Desktop Family
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
 
 typedef struct {
     KSMETHOD        Method;
@@ -202,6 +240,12 @@ enum VARENUM {
 };
 #endif // _NTDDK_ && !__wtypes_h__
 
+#endif /* WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP) */
+#pragma endregion
+
+#pragma region Application Family
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_APP)
+
 typedef struct {
     ULONG    Size;
     ULONG    Count;
@@ -220,8 +264,10 @@ typedef struct {
 #define KSPROPERTY_MEMBER_VALUES            0x00000003
 
 #define KSPROPERTY_MEMBER_FLAG_DEFAULT                      0x00000001
+#if (NTDDI_VERSION >= NTDDI_WINXP)
 #define KSPROPERTY_MEMBER_FLAG_BASICSUPPORT_MULTICHANNEL    0x00000002
 #define KSPROPERTY_MEMBER_FLAG_BASICSUPPORT_UNIFORM         0x00000004
+#endif // (NTDDI_VERSION >= NTDDI_WINXP)
 
 typedef struct {
     ULONG   MembersFlags;
@@ -288,7 +334,14 @@ typedef struct {
     KSPROPERTY_BOUNDS_LONGLONG  Bounds;
 } KSPROPERTY_STEPPING_LONGLONG, *PKSPROPERTY_STEPPING_LONGLONG;
 
+#endif /* WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_APP) */
+#pragma endregion
+
+#pragma region Desktop Family
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
+
 //===========================================================================
+#if (NTDDI_VERSION >= NTDDI_WINXP)
 
 #if defined(_NTDDK_)
 //
@@ -332,6 +385,8 @@ typedef struct _KSPROCESSPIN_INDEXENTRY
 KSPROCESSPIN_INDEXENTRY, *PKSPROCESSPIN_INDEXENTRY;
 #endif // _NTDDK_
 
+#endif // (NTDDI_VERSION >= NTDDI_WINXP)
+
 typedef PVOID PKSWORKER;
 
 typedef struct {
@@ -372,16 +427,6 @@ typedef struct {
             PKSWORKER           KsWorkerObject;
             ULONG_PTR           Reserved;
         } KsWorkItem;
-// @@BEGIN_DDKSPLIT
-        struct {
-            PKSFILTER           Filter;
-            ULONG_PTR           Reserved[2];
-        } KsFilterProcessing;
-        struct {
-            PKSPIN              Pin;
-            ULONG_PTR           Reserved[2];
-        } KsPinProcessing;
-// @@END_DDKSPLIT
 #endif // defined(_NTDDK_)
         struct {
             PVOID               Unused;
@@ -398,10 +443,6 @@ typedef struct {
 #define KSEVENTF_DPC                0x00000010
 #define KSEVENTF_WORKITEM           0x00000020
 #define KSEVENTF_KSWORKITEM         0x00000080
-// @@BEGIN_DDKSPLIT
-#define KSEVENTF_KSFILTERPROCESSING 0x00000100
-#define KSEVENTF_KSPINPROCESSING    0x00000200
-// @@END_DDKSPLIT
 #endif // defined(_NTDDK_)
 
 #define KSEVENT_TYPE_ENABLE         0x00000001
@@ -713,12 +754,12 @@ DEFINE_KSPROPERTY_TABLE(TopologySet) {\
 DEFINE_GUIDSTRUCT("AF627536-E719-11D2-8A1D-006097D2DF5D", KSPROPSETID_GM);
 #define KSPROPSETID_GM DEFINE_GUIDNAMED(KSPROPSETID_GM)
 
-typedef VOID (*PFNKSGRAPHMANAGER_NOTIFY)(IN PFILE_OBJECT GraphManager,
-                                         IN ULONG EventId,
-                                         IN PVOID Filter,
-                                         IN PVOID Pin,
-                                         IN PVOID Frame,
-                                         IN ULONG Duration);
+typedef VOID (*PFNKSGRAPHMANAGER_NOTIFY)(_In_ PFILE_OBJECT GraphManager,
+                                         _In_ ULONG EventId,
+                                         _In_ PVOID Filter,
+                                         _In_ PVOID Pin,
+                                         _In_ PVOID Frame,
+                                         _In_ ULONG Duration);
 
 typedef struct KSGRAPHMANAGER_FUNCTIONTABLE {
     PFNKSGRAPHMANAGER_NOTIFY NotifyEvent;
@@ -755,6 +796,26 @@ DEFINE_GUIDSTRUCT("085AFF00-62CE-11CF-A5D6-28DB04C10000", KSCATEGORY_BRIDGE);
 DEFINE_GUIDSTRUCT("65E8773D-8F56-11D0-A3B9-00A0C9223196", KSCATEGORY_CAPTURE);
 #define KSCATEGORY_CAPTURE DEFINE_GUIDNAMED(KSCATEGORY_CAPTURE)
 
+#define STATIC_KSCATEGORY_VIDEO_CAMERA \
+    0xe5323777, 0xf976, 0x4f5b, 0x9b, 0x55, 0xb9, 0x46, 0x99, 0xc4, 0x6e, 0x44
+DEFINE_GUIDSTRUCT("E5323777-F976-4f5b-9B55-B94699C46E44", KSCATEGORY_VIDEO_CAMERA);
+#define KSCATEGORY_VIDEO_CAMERA DEFINE_GUIDNAMED(KSCATEGORY_VIDEO_CAMERA)
+
+#define STATIC_KSCATEGORY_SENSOR_CAMERA \
+    0x24e552d7, 0x6523, 0x47f7, 0xa6, 0x47, 0xd3, 0x46, 0x5b, 0xf1, 0xf5, 0xca
+DEFINE_GUIDSTRUCT("24E552D7-6523-47F7-A647-D3465BF1F5CA", KSCATEGORY_SENSOR_CAMERA);
+#define KSCATEGORY_SENSOR_CAMERA DEFINE_GUIDNAMED(KSCATEGORY_SENSOR_CAMERA)
+
+#define STATIC_KSCATEGORY_NETWORK_CAMERA \
+    0xb8238652, 0xb500, 0x41eb, 0xb4, 0xf3, 0x42, 0x34, 0xf7, 0xf5, 0xae, 0x99
+DEFINE_GUIDSTRUCT("B8238652-B500-41EB-B4F3-4234F7F5AE99", KSCATEGORY_NETWORK_CAMERA);
+#define KSCATEGORY_NETWORK_CAMERA DEFINE_GUIDNAMED(KSCATEGORY_NETWORK_CAMERA)
+
+#define STATIC_KSCATEGORY_SENSOR_GROUP \
+    0x669C7214, 0x0A88, 0x4311, 0xA7, 0xF3, 0x4E, 0x79, 0x82, 0x0E, 0x33, 0xBD
+DEFINE_GUIDSTRUCT("669C7214-0A88-4311-A7F3-4E79820E33BD", KSCATEGORY_SENSOR_GROUP);
+#define KSCATEGORY_SENSOR_GROUP DEFINE_GUIDNAMED(KSCATEGORY_SENSOR_GROUP)
+
 #define STATIC_KSCATEGORY_RENDER \
     0x65E8773EL, 0x8F56, 0x11D0, 0xA3, 0xB9, 0x00, 0xA0, 0xC9, 0x22, 0x31, 0x96
 DEFINE_GUIDSTRUCT("65E8773E-8F56-11D0-A3B9-00A0C9223196", KSCATEGORY_RENDER);
@@ -784,6 +845,60 @@ DEFINE_GUIDSTRUCT("2721AE20-7E70-11D0-A5D6-28DB04C10000", KSCATEGORY_DATADECOMPR
     0x2EB07EA0L, 0x7E70, 0x11D0, 0xA5, 0xD6, 0x28, 0xDB, 0x04, 0xC1, 0x00, 0x00
 DEFINE_GUIDSTRUCT("2EB07EA0-7E70-11D0-A5D6-28DB04C10000", KSCATEGORY_DATATRANSFORM);
 #define KSCATEGORY_DATATRANSFORM DEFINE_GUIDNAMED(KSCATEGORY_DATATRANSFORM)
+
+//
+// KSMFT_CATEGORY_XXX are MF Transform category guids redefined in ks.h 
+// to facilitate KS Mini drivers to register KS Filters under MF Transform categories. 
+//
+#define STATIC_KSMFT_CATEGORY_VIDEO_DECODER \
+	0xd6c02d4b, 0x6833, 0x45b4, 0x97, 0x1a, 0x05, 0xa4, 0xb0, 0x4b, 0xab, 0x91
+DEFINE_GUIDSTRUCT("d6c02d4b-6833-45b4-971a-05a4b04bab91", KSMFT_CATEGORY_VIDEO_DECODER);
+#define KSMFT_CATEGORY_VIDEO_DECODER DEFINE_GUIDNAMED(KSMFT_CATEGORY_VIDEO_DECODER)
+
+#define STATIC_KSMFT_CATEGORY_VIDEO_ENCODER \
+	0xf79eac7d, 0xe545, 0x4387, 0xbd, 0xee, 0xd6, 0x47, 0xd7, 0xbd, 0xe4, 0x2a
+DEFINE_GUIDSTRUCT("f79eac7d-e545-4387-bdee-d647d7bde42a", KSMFT_CATEGORY_VIDEO_ENCODER);
+#define KSMFT_CATEGORY_VIDEO_ENCODER DEFINE_GUIDNAMED(KSMFT_CATEGORY_VIDEO_ENCODER)
+
+#define STATIC_KSMFT_CATEGORY_VIDEO_EFFECT \
+	0x12e17c21, 0x532c, 0x4a6e, 0x8a, 0x1c, 0x40, 0x82, 0x5a, 0x73, 0x63, 0x97
+DEFINE_GUIDSTRUCT("12e17c21-532c-4a6e-8a1c-40825a736397", KSMFT_CATEGORY_VIDEO_EFFECT);
+#define KSMFT_CATEGORY_VIDEO_EFFECT DEFINE_GUIDNAMED(KSMFT_CATEGORY_VIDEO_EFFECT)
+
+#define STATIC_KSMFT_CATEGORY_MULTIPLEXER \
+	0x059c561e, 0x05ae, 0x4b61, 0xb6, 0x9d, 0x55, 0xb6, 0x1e, 0xe5, 0x4a, 0x7b
+DEFINE_GUIDSTRUCT("059c561e-05ae-4b61-b69d-55b61ee54a7b", KSMFT_CATEGORY_MULTIPLEXER);
+#define KSMFT_CATEGORY_MULTIPLEXER DEFINE_GUIDNAMED(KSMFT_CATEGORY_MULTIPLEXER)
+
+#define STATIC_KSMFT_CATEGORY_DEMULTIPLEXER \
+	0xa8700a7a, 0x939b, 0x44c5, 0x99, 0xd7, 0x76, 0x22, 0x6b, 0x23, 0xb3, 0xf1
+DEFINE_GUIDSTRUCT("a8700a7a-939b-44c5-99d7-76226b23b3f1", KSMFT_CATEGORY_DEMULTIPLEXER);
+#define KSMFT_CATEGORY_DEMULTIPLEXER DEFINE_GUIDNAMED(KSMFT_CATEGORY_DEMULTIPLEXER)
+
+#define STATIC_KSMFT_CATEGORY_AUDIO_DECODER \
+	0x9ea73fb4, 0xef7a, 0x4559, 0x8d, 0x5d, 0x71, 0x9d, 0x8f, 0x04, 0x26, 0xc7
+DEFINE_GUIDSTRUCT("9ea73fb4-ef7a-4559-8d5d-719d8f0426c7", KSMFT_CATEGORY_AUDIO_DECODER);
+#define KSMFT_CATEGORY_AUDIO_DECODER DEFINE_GUIDNAMED(KSMFT_CATEGORY_AUDIO_DECODER)
+
+#define STATIC_KSMFT_CATEGORY_AUDIO_ENCODER \
+	0x91c64bd0, 0xf91e, 0x4d8c, 0x92, 0x76, 0xdb, 0x24, 0x82, 0x79, 0xd9, 0x75
+DEFINE_GUIDSTRUCT("91c64bd0-f91e-4d8c-9276-db248279d975", KSMFT_CATEGORY_AUDIO_ENCODER);
+#define KSMFT_CATEGORY_AUDIO_ENCODER DEFINE_GUIDNAMED(KSMFT_CATEGORY_AUDIO_ENCODER)
+
+#define STATIC_KSMFT_CATEGORY_AUDIO_EFFECT \
+	0x11064c48, 0x3648, 0x4ed0, 0x93, 0x2e, 0x05, 0xce, 0x8a, 0xc8, 0x11, 0xb7
+DEFINE_GUIDSTRUCT("11064c48-3648-4ed0-932e-05ce8ac811b7", KSMFT_CATEGORY_AUDIO_EFFECT);
+#define KSMFT_CATEGORY_AUDIO_EFFECT DEFINE_GUIDNAMED(KSMFT_CATEGORY_AUDIO_EFFECT)
+
+#define STATIC_KSMFT_CATEGORY_VIDEO_PROCESSOR \
+	0x302ea3fc, 0xaa5f, 0x47f9, 0x9f, 0x7a, 0xc2, 0x18, 0x8b, 0xb1, 0x63, 0x2
+DEFINE_GUIDSTRUCT("302ea3fc-aa5f-47f9-9f7a-c2188bb16302", KSMFT_CATEGORY_VIDEO_PROCESSOR);
+#define KSMFT_CATEGORY_VIDEO_PROCESSOR DEFINE_GUIDNAMED(KSMFT_CATEGORY_VIDEO_PROCESSOR)
+
+#define STATIC_KSMFT_CATEGORY_OTHER \
+	0x90175d57, 0xb7ea, 0x4901, 0xae, 0xb3, 0x93, 0x3a, 0x87, 0x47, 0x75, 0x6f
+DEFINE_GUIDSTRUCT("90175d57-b7ea-4901-aeb3-933a8747756f", KSMFT_CATEGORY_OTHER);
+#define KSMFT_CATEGORY_OTHER DEFINE_GUIDNAMED(KSMFT_CATEGORY_OTHER)
 
 #define STATIC_KSCATEGORY_COMMUNICATIONSTRANSFORM \
     0xCF1DDA2CL, 0x9743, 0x11D0, 0xA3, 0xEE, 0x00, 0xA0, 0xC9, 0x22, 0x31, 0x96
@@ -830,11 +945,15 @@ typedef struct {
 
 typedef struct {
     ULONG                           CategoriesCount;
+    _Field_size_(CategoriesCount)
     const GUID*                     Categories;
     ULONG                           TopologyNodesCount;
+    _Field_size_(TopologyNodesCount)
     const GUID*                     TopologyNodes;
     ULONG                           TopologyConnectionsCount;
+    _Field_size_(TopologyConnectionsCount)
     const KSTOPOLOGY_CONNECTION*    TopologyConnections;
+    _Field_size_(TopologyNodesCount)
     const GUID*                     TopologyNodesNames;
     ULONG                           Reserved;
 } KSTOPOLOGY, *PKSTOPOLOGY;
@@ -895,7 +1014,7 @@ DEFINE_GUIDSTRUCT("1A8766A0-62CE-11CF-A5D6-28DB04C10000", KSINTERFACESETID_Stand
 typedef enum {
     KSINTERFACE_STANDARD_STREAMING,
     KSINTERFACE_STANDARD_LOOPED_STREAMING,
-    KSINTERFACE_STANDARD_CONTROL
+    KSINTERFACE_STANDARD_CONTROL		//Reserved for system use
 } KSINTERFACE_STANDARD;
 
 #define STATIC_KSINTERFACESETID_FileIo \
@@ -926,6 +1045,8 @@ DEFINE_GUIDSTRUCT("4747B320-62CE-11CF-A5D6-28DB04C10000", KSMEDIUMSETID_Standard
 DEFINE_GUIDSTRUCT("8C134960-51AD-11CF-878A-94F801C10000", KSPROPSETID_Pin);
 #define KSPROPSETID_Pin DEFINE_GUIDNAMED(KSPROPSETID_Pin)
 
+
+
 typedef enum {
     KSPROPERTY_PIN_CINSTANCES,
     KSPROPERTY_PIN_CTYPES,
@@ -941,14 +1062,28 @@ typedef enum {
     KSPROPERTY_PIN_CATEGORY,
     KSPROPERTY_PIN_NAME,
     KSPROPERTY_PIN_CONSTRAINEDDATARANGES,
-    KSPROPERTY_PIN_PROPOSEDATAFORMAT
+    KSPROPERTY_PIN_PROPOSEDATAFORMAT,
+    KSPROPERTY_PIN_PROPOSEDATAFORMAT2,
+    KSPROPERTY_PIN_MODEDATAFORMATS,
 } KSPROPERTY_PIN;
+
+#define KSPROPERTY_PIN_FLAGS_ATTRIBUTE_RANGE_AWARE 0x00000001
+#define KSPROPERTY_PIN_FLAGS_MASK KSPROPERTY_PIN_FLAGS_ATTRIBUTE_RANGE_AWARE
 
 typedef struct {
     KSPROPERTY      Property;
     ULONG           PinId;
-    ULONG           Reserved;
+    union {
+        ULONG Reserved;
+        ULONG Flags;
+    };
 } KSP_PIN, *PKSP_PIN;
+
+typedef struct {
+    KSEVENT         Event;
+    ULONG           PinId;
+    ULONG           Reserved;
+} KSE_PIN, *PKSE_PIN;
 
 #define KSINSTANCE_INDETERMINATE    ((ULONG)-1)
 
@@ -1008,7 +1143,7 @@ typedef struct {
 #if defined(_NTDDK_)
 typedef struct {
     ULONG Count;
-    PKSATTRIBUTE* Attributes;
+    _Field_size_(Count) PKSATTRIBUTE* Attributes;
 } KSATTRIBUTE_LIST, *PKSATTRIBUTE_LIST;
 #endif // _NTDDK_
 
@@ -1037,25 +1172,29 @@ typedef struct {
 } KSPIN_PHYSICALCONNECTION, *PKSPIN_PHYSICALCONNECTION;
 
 #if defined(_NTDDK_)
+_Must_inspect_result_
+_IRQL_requires_max_(PASSIVE_LEVEL)
 typedef
 NTSTATUS
 (*PFNKSINTERSECTHANDLER)(
-    IN PIRP Irp,
-    IN PKSP_PIN Pin,
-    IN PKSDATARANGE DataRange,
-    OUT PVOID Data OPTIONAL
+    _In_ PIRP Irp,
+    _In_ PKSP_PIN Pin,
+    _In_ PKSDATARANGE DataRange,
+    _Out_opt_ PVOID Data
     );
+_Must_inspect_result_
+_IRQL_requires_max_(PASSIVE_LEVEL)
 typedef
 NTSTATUS
 (*PFNKSINTERSECTHANDLEREX)(
-    IN PVOID Context,
-    IN PIRP Irp,
-    IN PKSP_PIN Pin,
-    IN PKSDATARANGE DataRange,
-    IN PKSDATARANGE MatchingDataRange,
-    IN ULONG DataBufferSize,
-    OUT PVOID Data OPTIONAL,
-    OUT PULONG DataSize
+    _In_ PVOID Context,
+    _In_ PIRP Irp,
+    _In_ PKSP_PIN Pin,
+    _In_ PKSDATARANGE DataRange,
+    _In_ PKSDATARANGE MatchingDataRange,
+    _In_ ULONG DataBufferSize,
+    _Out_writes_bytes_to_opt_(DataBufferSize, *DataSize) PVOID Data,
+    _Out_ PULONG DataSize
     );
 #endif // _NTDDK_
 
@@ -1226,6 +1365,26 @@ DEFINE_KSPROPERTY_TABLE(PinSet) {\
     DEFINE_KSPROPERTY_ITEM_PIN_CONSTRAINEDDATARANGES(PropGeneral)\
 }
 
+#define STATIC_KSEVENTSETID_PinCapsChange \
+    0xDD4F192E, 0x3B78, 0x49AD, 0xA5, 0x34, 0x2C, 0x31, 0x5b, 0x82, 0x20, 0x00
+DEFINE_GUIDSTRUCT("DD4F192E-3B78-49AD-A534-2C315B822000", KSEVENTSETID_PinCapsChange);
+#define KSEVENTSETID_PinCapsChange DEFINE_GUIDNAMED(KSEVENTSETID_PinCapsChange)
+
+typedef enum {
+    KSEVENT_PINCAPS_FORMATCHANGE,
+    KSEVENT_PINCAPS_JACKINFOCHANGE
+} KSEVENT_PINCAPS_CHANGENOTIFICATIONS;
+
+#define STATIC_KSEVENTSETID_VolumeLimit \
+	0xda168465, 0x3a7c, 0x4858, 0x9d, 0x4a, 0x3e, 0x8e, 0x24, 0x70, 0x1a, 0xef
+DEFINE_GUIDSTRUCT("DA168465-3A7C-4858-9D4A-3E8E24701AEF", KSEVENTSETID_VolumeLimit);
+#define KSEVENTSETID_VolumeLimit DEFINE_GUIDNAMED(KSEVENTSETID_VolumeLimit)
+
+typedef enum {
+    KSEVENT_VOLUMELIMIT_CHANGED
+} KSEVENT_VOLUMELIMIT;
+
+
 #define STATIC_KSNAME_Filter\
     0x9b365890L, 0x165f, 0x11d0, 0xa1, 0x95, 0x00, 0x20, 0xaf, 0xd1, 0x56, 0xe4
 DEFINE_GUIDSTRUCT("9b365890-165f-11d0-a195-0020afd156e4", KSNAME_Filter);
@@ -1267,10 +1426,13 @@ DEFINE_GUIDSTRUCT("0621061A-EE75-11D0-B915-00A0C9223196", KSNAME_TopologyNode);
 
 typedef struct {
     ULONG                   InterfacesCount;
+    _Field_size_(InterfacesCount)
     const KSPIN_INTERFACE*  Interfaces;
     ULONG                   MediumsCount;
+    _Field_size_(MediumsCount)
     const KSPIN_MEDIUM*     Mediums;
     ULONG                   DataRangesCount;
+    _Field_size_(DataRangesCount)
     const PKSDATARANGE*     DataRanges;
     KSPIN_DATAFLOW          DataFlow;
     KSPIN_COMMUNICATION     Communication;
@@ -1280,6 +1442,7 @@ typedef struct {
         LONGLONG            Reserved;
         struct {
             ULONG           ConstrainedDataRangesCount;
+            _Field_size_(ConstrainedDataRangesCount)
             PKSDATARANGE*   ConstrainedDataRanges;
         };
     };
@@ -1436,7 +1599,7 @@ typedef enum {
         sizeof(KSPROPERTY),\
         sizeof(KSALLOCATOR_FRAMING),\
         NULL, NULL, 0, NULL, NULL, 0)
-        
+
 #define DEFINE_KSPROPERTY_ITEM_CONNECTION_ALLOCATORFRAMING_EX(Handler)\
     DEFINE_KSPROPERTY_ITEM(\
         KSPROPERTY_CONNECTION_ALLOCATORFRAMING_EX,\
@@ -1472,14 +1635,37 @@ typedef enum {
         NULL, 0, NULL, NULL, 0)
 
 //===========================================================================
+//VRAM transport related propset
+//===========================================================================
+
+#define STATIC_KSPROPSETID_MemoryTransport \
+    0xa3d1c5d, 0x5243, 0x4819, 0x9e, 0xd0, 0xae, 0xe8, 0x4, 0x4c, 0xee, 0x2b
+DEFINE_GUIDSTRUCT("0A3D1C5D-5243-4819-9ED0-AEE8044CEE2B", KSPROPSETID_MemoryTransport);
+#define KSPROPSETID_MemoryTransport DEFINE_GUIDNAMED(KSPROPSETID_MemoryTransport)
+enum {
+    // a value of zero is ignored
+    KSPROPERTY_MEMORY_TRANSPORT = 1 //Sets pin's memory transport mechanism e.g. VRAM or SYSMEM
+};
+
+#define DEFINE_KSPROPERTY_ITEM_MEMORY_TRANSPORT(SetHandler)\
+    DEFINE_KSPROPERTY_ITEM(\
+        KSPROPERTY_MEMORY_TRANSPORT,\
+        NULL,\
+        sizeof(KSPROPERTY),\
+        sizeof(BOOL),\
+        (SetHandler),\
+        NULL, 0, NULL, NULL, 0)
+
+//===========================================================================
 //
 // pins flags
 //
-#define KSALLOCATOR_REQUIREMENTF_INPLACE_MODIFIER   0x00000001
-#define KSALLOCATOR_REQUIREMENTF_SYSTEM_MEMORY      0x00000002
-#define KSALLOCATOR_REQUIREMENTF_FRAME_INTEGRITY    0x00000004
-#define KSALLOCATOR_REQUIREMENTF_MUST_ALLOCATE      0x00000008
-#define KSALLOCATOR_REQUIREMENTF_PREFERENCES_ONLY   0x80000000
+#define KSALLOCATOR_REQUIREMENTF_INPLACE_MODIFIER                       0x00000001
+#define KSALLOCATOR_REQUIREMENTF_SYSTEM_MEMORY                          0x00000002
+#define KSALLOCATOR_REQUIREMENTF_FRAME_INTEGRITY                        0x00000004
+#define KSALLOCATOR_REQUIREMENTF_MUST_ALLOCATE                          0x00000008
+#define KSALLOCATOR_REQUIREMENTF_SYSTEM_MEMORY_CUSTOM_ALLOCATION        0x00000010
+#define KSALLOCATOR_REQUIREMENTF_PREFERENCES_ONLY                       0x80000000
 
 #define KSALLOCATOR_OPTIONF_COMPATIBLE              0x00000001
 #define KSALLOCATOR_OPTIONF_SYSTEM_MEMORY           0x00000002
@@ -1491,6 +1677,7 @@ typedef enum {
 #define KSALLOCATOR_FLAG_DEVICE_SPECIFIC            0x00000020
 #define KSALLOCATOR_FLAG_CAN_ALLOCATE               0x00000040
 #define KSALLOCATOR_FLAG_INSIST_ON_FRAMESIZE_RATIO  0x00000080
+ 
 //
 // allocator pipes flags
 //
@@ -1503,6 +1690,9 @@ typedef enum {
 #define KSALLOCATOR_FLAG_INDEPENDENT_RANGES         0x00001000
 #define KSALLOCATOR_FLAG_ATTENTION_STEPPING         0x00002000
 
+
+#define KSALLOCATOR_FLAG_ENABLE_CACHED_MDL          0x00004000
+#define KSALLOCATOR_FLAG_2D_BUFFER_REQUIRED         0x00008000
 
 //
 // old Framing structure
@@ -1519,7 +1709,11 @@ typedef struct {
 #endif // !_NTDDK_
     ULONG       Frames;     // total number of allowable outstanding frames
     ULONG       FrameSize;  // total size of frame
-    ULONG       FileAlignment;
+    union {
+        ULONG       FileAlignment;
+        LONG        FramePitch; // When KSALLOCATOR_FLAG_2D_BUFFER_REQUIRED is set this field specifies the required 2d pitch for the buffer i.e. the width + stride
+    };
+
     ULONG       Reserved;
 } KSALLOCATOR_FRAMING, *PKSALLOCATOR_FRAMING;
 
@@ -1527,28 +1721,28 @@ typedef struct {
 typedef
 PVOID
 (*PFNKSDEFAULTALLOCATE)(
-    IN PVOID Context
+    _In_ PVOID Context
     );
 
 typedef
 VOID
 (*PFNKSDEFAULTFREE)(
-    IN PVOID Context,
-    IN PVOID Buffer
+    _In_ PVOID Context,
+    _In_ PVOID Buffer
     );
 
 typedef
 NTSTATUS
 (*PFNKSINITIALIZEALLOCATOR)(
-    IN PVOID InitialContext,
-    IN PKSALLOCATOR_FRAMING AllocatorFraming,
-    OUT PVOID* Context
+    _In_ PVOID InitialContext,
+    _In_ PKSALLOCATOR_FRAMING AllocatorFraming,
+    _Outptr_ PVOID* Context
     );
 
 typedef
 VOID
 (*PFNKSDELETEALLOCATOR)(
-    IN PVOID Context
+    _In_ PVOID Context
     );
 #endif // !_NTDDK_
 
@@ -1587,7 +1781,10 @@ typedef struct {
     ULONG                       BusFlags;   
     ULONG                       Flags;   
     ULONG                       Frames;              // total number of allowable outstanding frames
-    ULONG                       FileAlignment;
+    union {
+        ULONG                   FileAlignment;
+        LONG                    FramePitch; // When KSALLOCATOR_FLAG_2D_BUFFER_REQUIRED is set this field specifies the required 2d pitch for the buffer i.e. the width + stride
+        };
     ULONG                       MemoryTypeWeight;    // this memory type Weight pin-wide
     KS_FRAMING_RANGE            PhysicalRange;
     KS_FRAMING_RANGE_WEIGHTED   FramingRange; 
@@ -1818,15 +2015,15 @@ DEFINE_KSPROPERTY_TABLE(AllocatorSet) {\
 typedef
 NTSTATUS
 (*PFNALLOCATOR_ALLOCATEFRAME)(
-    IN PFILE_OBJECT FileObject,
-    PVOID *Frame
+    _In_ PFILE_OBJECT FileObject,
+    _Outptr_ PVOID *Frame
     );
 
 typedef
 VOID
 (*PFNALLOCATOR_FREEFRAME)(
-    IN PFILE_OBJECT FileObject,
-    IN PVOID Frame
+    _In_ PFILE_OBJECT FileObject,
+    _In_ PVOID Frame
     );
 
 typedef struct {
@@ -1857,6 +2054,25 @@ typedef struct {
 #define KSSTREAM_HEADER_OPTIONSF_FLUSHONPAUSE       0x00000080
 #define KSSTREAM_HEADER_OPTIONSF_DURATIONVALID      0x00000100
 #define KSSTREAM_HEADER_OPTIONSF_ENDOFSTREAM        0x00000200
+#define KSSTREAM_HEADER_OPTIONSF_BUFFEREDTRANSFER   0x00000400
+#define KSSTREAM_HEADER_OPTIONSF_VRAM_DATA_TRANSFER 0x00000800
+#define KSSTREAM_HEADER_OPTIONSF_METADATA           0x00001000
+#define KSSTREAM_HEADER_OPTIONSF_ENDOFPHOTOSEQUENCE 0x00002000
+#define KSSTREAM_HEADER_OPTIONSF_FRAMEINFO          0x00004000
+//
+//Start of MDL caching related definitions
+//
+#define KSSTREAM_HEADER_OPTIONSF_PERSIST_SAMPLE     0x00008000   
+#define KSSTREAM_HEADER_OPTIONSF_SAMPLE_PERSISTED   0x00010000
+
+//
+// This flag tells the user mode to look at frame completion numbers
+//
+#define KSSTREAM_HEADER_TRACK_COMPLETION_NUMBERS   0x00020000
+
+//
+//End of MDL caching related definitions		
+#define KSSTREAM_HEADER_OPTIONSF_SECUREBUFFERTRANSFER 0x00040000
 #define KSSTREAM_HEADER_OPTIONSF_LOOPEDDATA         0x80000000
 
 typedef struct {
@@ -1872,12 +2088,71 @@ typedef struct {
     LONGLONG    Duration;
     ULONG       FrameExtent;
     ULONG       DataUsed;
+    _Field_size_bytes_(FrameExtent)
     PVOID       Data;
     ULONG       OptionsFlags;
 #if _WIN64
     ULONG       Reserved;
 #endif
 } KSSTREAM_HEADER, *PKSSTREAM_HEADER;
+
+typedef struct {
+    ULONG       BufferSize;
+    ULONG       UsedSize;
+    _Field_size_bytes_(BufferSize)
+    PVOID       Data;    // Metadata buffer passed down by user mode (mapped to SystemVa)
+    _Field_size_bytes_(BufferSize)
+    PVOID       SystemVa;  // Metadata buffer that driver will fill metadata to
+    ULONG       Flags;
+    ULONG       Reserved;
+} KSSTREAM_METADATA_INFO, *PKSSTREAM_METADATA_INFO;
+
+typedef struct
+{
+	ULONG       PresentationTimeStamp;
+	ULONG       SourceClockReference;
+	union
+	{
+		struct
+		{
+			USHORT	Counter : 11;
+			USHORT  Reserved : 5;
+		};
+		USHORT	SCRToken;
+	};
+	USHORT      Reserved0;
+	ULONG       Reserved1;
+} KSSTREAM_UVC_METADATATYPE_TIMESTAMP, *PKSSTREAM_UVC_METADATATYPE_TIMESTAMP;
+
+typedef struct {
+    KSSTREAM_UVC_METADATATYPE_TIMESTAMP StartOfFrameTimestamp;
+    KSSTREAM_UVC_METADATATYPE_TIMESTAMP EndOfFrameTimestamp;
+} KSSTREAM_UVC_METADATA, *PKSSTREAM_UVC_METADATA;
+
+//
+// Additional space for UVC Attribute data to be stamped in the payload by the 
+// Inbox UVC driver
+//
+#define KSSTREAM_UVC_SECURE_ATTRIBUTE_SIZE (0x2000)
+
+typedef enum{
+  KSPIN_MDL_CACHING_NOTIFY_CLEANUP,
+  KSPIN_MDL_CACHING_NOTIFY_CLEANALL_WAIT,
+  KSPIN_MDL_CACHING_NOTIFY_CLEANALL_NOWAIT,
+  KSPIN_MDL_CACHING_NOTIFY_ADDSAMPLE
+}KSPIN_MDL_CACHING_EVENT;
+
+typedef struct {
+	KSPIN_MDL_CACHING_EVENT Event;
+	PVOID Buffer;
+} KSPIN_MDL_CACHING_NOTIFICATION, *PKSPIN_MDL_CACHING_NOTIFICATION;
+
+typedef struct {
+	KSPIN_MDL_CACHING_EVENT Event;
+	ULONG Buffer;
+} KSPIN_MDL_CACHING_NOTIFICATION32, *PKSPIN_MDL_CACHING_NOTIFICATION32;
+
+
 
 #define STATIC_KSPROPSETID_StreamInterface\
     0x1fdd8ee1L, 0x9cd3, 0x11d0, 0x82, 0xaa, 0x00, 0x00, 0xf8, 0x22, 0xfe, 0x8a
@@ -2015,10 +2290,34 @@ typedef enum {
         (SetHandler),\
         NULL, 0, NULL, NULL, 0)
 
+typedef enum{
+    KSPROPERTY_ALLOCATOR_CLEANUP_CACHEDMDLPAGES = 1
+}KSPPROPERTY_ALLOCATOR_MDLCACHING;
+
+
+
+#define DEFINE_KSPROPERTY_ITEM_CONNECTION_MDLCACHING(SetHandler)\
+ DEFINE_KSPROPERTY_ITEM(\
+        KSPROPERTY_ALLOCATOR_CLEANUP_CACHEDMDLPAGES,\
+        NULL,\
+        sizeof(KSPROPERTY),\
+        sizeof(KSPIN_MDL_CACHING_NOTIFICATION),\
+        (SetHandler),\
+        NULL, 0, NULL, NULL, 0)
+
+
+#define STATIC_KSPROPSETID_PinMDLCacheClearProp \
+    0xbd718a7b, 0x97fc, 0x40c7, 0x88, 0xce, 0xd3, 0xff, 0x6, 0xf5, 0x5b, 0x16	
+DEFINE_GUIDSTRUCT("BD718A7B-97FC-40C7-88CE-D3FF06F55B16", KSPROPSETID_PinMDLCacheClearProp);
+#define KSPROPSETID_PinMDLCacheClearProp DEFINE_GUIDNAMED(KSPROPSETID_PinMDLCacheClearProp)
+
+
+
 typedef struct {
     HANDLE      QualityManager;
     PVOID       Context;
 } KSQUALITY_MANAGER, *PKSQUALITY_MANAGER;
+
 
 typedef struct {
     LONGLONG    Duration;
@@ -2089,16 +2388,19 @@ typedef enum {
 
 #if defined(_NTDDK_)
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 typedef
 LONGLONG
 (FASTCALL *PFNKSCLOCK_GETTIME)(
-    IN PFILE_OBJECT FileObject
+    _In_ PFILE_OBJECT FileObject
     );
+
+_IRQL_requires_max_(PASSIVE_LEVEL)
 typedef
 LONGLONG
 (FASTCALL *PFNKSCLOCK_CORRELATEDTIME)(
-    IN PFILE_OBJECT FileObject,
-    OUT PLONGLONG SystemTime);
+    _In_ PFILE_OBJECT FileObject,
+    _Out_ PLONGLONG SystemTime);
 
 typedef struct {
     PFNKSCLOCK_GETTIME GetTime;
@@ -2107,27 +2409,33 @@ typedef struct {
     PFNKSCLOCK_CORRELATEDTIME GetCorrelatedPhysicalTime;
 } KSCLOCK_FUNCTIONTABLE, *PKSCLOCK_FUNCTIONTABLE;
 
+#if (NTDDI_VERSION >= NTDDI_WINXP)
+
+_IRQL_requires_max_(DISPATCH_LEVEL)
 typedef
 BOOLEAN
 (*PFNKSSETTIMER)(
-    IN PVOID Context,
-    IN PKTIMER Timer,
-    IN LARGE_INTEGER DueTime,
-    IN PKDPC Dpc
+    _In_ PVOID Context,
+    _In_ PKTIMER Timer,
+    _In_ LARGE_INTEGER DueTime,
+    _In_ PKDPC Dpc
     );
 
+_IRQL_requires_max_(DISPATCH_LEVEL)
 typedef
 BOOLEAN
 (*PFNKSCANCELTIMER)(
-    IN PVOID Context,
-    IN PKTIMER Timer
+    _In_ PVOID Context,
+    _In_ PKTIMER Timer
     );
 
 typedef
 LONGLONG
 (FASTCALL *PFNKSCORRELATEDTIME)(
-    IN PVOID Context,
-    OUT PLONGLONG SystemTime);
+    _In_ PVOID Context,
+    _Out_  PLONGLONG SystemTime);
+
+#endif // (NTDDI_VERSION >= NTDDI_WINXP)
 
 typedef PVOID   PKSDEFAULTCLOCK;
 
@@ -2198,7 +2506,7 @@ DEFINE_KSPROPERTY_TABLE(ClockSet) {\
     DEFINE_KSPROPERTY_ITEM_CLOCK_CORRELATEDPHYSICALTIME(PropCorrelatedPhysicalTime),\
     DEFINE_KSPROPERTY_ITEM_CLOCK_RESOLUTION(PropResolution),\
     DEFINE_KSPROPERTY_ITEM_CLOCK_STATE(PropState),\
-    DEFINE_KSPROPERTY_ITEM_CLOCK_FUNCTIONTABLE(PropFunctionTable),\
+    DEFINE_KSPROPERTY_ITEM_CLOCK_FUNCTIONTABLE(PropFunctionTable)\
 }
 
 #endif // defined(_NTDDK_)
@@ -2237,6 +2545,24 @@ typedef struct {
     ULONG       Status;
 } KSERROR, *PKSERROR;
 
+typedef enum {
+    KSDEVICE_THERMAL_STATE_LOW,
+    KSDEVICE_THERMAL_STATE_HIGH
+} KSDEVICE_THERMAL_STATE;
+
+
+#define STATIC_KSEVENTSETID_Device\
+    0x288296ec, 0x9f94, 0x41b4, 0xa1, 0x53, 0xaa, 0x31, 0xae, 0xec, 0xb3, 0x3f
+DEFINE_GUIDSTRUCT("288296EC-9F94-41b4-A153-AA31AEECB33F", KSEVENTSETID_Device);
+#define KSEVENTSETID_Device DEFINE_GUIDNAMED(KSEVENTSETID_Device)
+
+typedef enum {
+    KSEVENT_DEVICE_LOST,
+    KSEVENT_DEVICE_PREEMPTED,
+    KSEVENT_DEVICE_THERMAL_HIGH,
+    KSEVENT_DEVICE_THERMAL_LOW 	
+} KSEVENT_DEVICE;
+
 typedef KSIDENTIFIER KSDEGRADE, *PKSDEGRADE;
 
 #define STATIC_KSDEGRADESETID_Standard\
@@ -2269,38 +2595,42 @@ typedef enum {
 #define KSSTREAM_SYNCHRONOUS    0x00001000
 #define KSSTREAM_FAILUREEXCEPTION 0x00002000
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 typedef
 NTSTATUS
 (*PFNKSCONTEXT_DISPATCH)(
-    IN PVOID Context,
-    IN PIRP Irp
+    _In_ PVOID Context,
+    _In_ PIRP Irp
     );
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 typedef
 NTSTATUS
 (*PFNKSHANDLER)(
-    IN PIRP Irp,
-    IN PKSIDENTIFIER Request,
-    IN OUT PVOID Data
+    _In_ PIRP Irp,
+    _In_ PKSIDENTIFIER Request,
+    _Inout_ PVOID Data
     );
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 typedef
 BOOLEAN
 (*PFNKSFASTHANDLER)(
-    IN PFILE_OBJECT FileObject,
-    IN PKSIDENTIFIER Request,
-    IN ULONG RequestLength,
-    IN OUT PVOID Data,
-    IN ULONG DataLength,
-    OUT PIO_STATUS_BLOCK IoStatus
+    _In_ PFILE_OBJECT FileObject,
+    _In_reads_bytes_(RequestLength) PKSIDENTIFIER Request,
+    _In_ ULONG RequestLength,
+    _Inout_updates_bytes_(DataLength) PVOID Data,
+    _In_ ULONG DataLength,
+    _Out_ PIO_STATUS_BLOCK IoStatus
     );
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 typedef
 NTSTATUS
 (*PFNKSALLOCATOR)(
-    IN PIRP Irp,
-    IN ULONG BufferSize,
-    IN BOOLEAN InputOperation
+    _In_ PIRP Irp,
+    _In_ ULONG BufferSize,
+    _In_ BOOLEAN InputOperation
     );
 
 typedef struct {
@@ -2311,6 +2641,7 @@ typedef struct {
 typedef struct {
     KSIDENTIFIER                    PropTypeSet;
     ULONG                           MembersListCount;
+    _Field_size_(MembersListCount)
     const KSPROPERTY_MEMBERSLIST*   MembersList;
 } KSPROPERTY_VALUES, *PKSPROPERTY_VALUES;
 
@@ -2344,6 +2675,7 @@ typedef struct {
     };
     const KSPROPERTY_VALUES*Values;
     ULONG                   RelationsCount;
+    _Field_size_(RelationsCount)
     const KSPROPERTY*       Relations;
     PFNKSHANDLER            SupportHandler;
     ULONG                   SerializedSize;
@@ -2386,6 +2718,7 @@ typedef struct {
 typedef struct {
     const GUID*                 Set;
     ULONG                       PropertiesCount;
+    _Field_size_(PropertiesCount)
     const KSPROPERTY_ITEM*      PropertyItem;
     ULONG                       FastIoCount;
     const KSFASTPROPERTY_ITEM*  FastIoTable;
@@ -2446,9 +2779,10 @@ typedef struct {
 typedef struct {
     const GUID*             Set;
     ULONG                   MethodsCount;
+    _Field_size_(MethodsCount)
     const KSMETHOD_ITEM*    MethodItem;
     ULONG                   FastIoCount;
-    const KSFASTMETHOD_ITEM*FastIoTable;
+    _Field_size_(FastIoCount) const KSFASTMETHOD_ITEM*FastIoTable;
 } KSMETHOD_SET, *PKSMETHOD_SET;
 
 typedef struct _KSEVENT_ENTRY
@@ -2457,16 +2791,16 @@ KSEVENT_ENTRY, *PKSEVENT_ENTRY;
 typedef
 NTSTATUS
 (*PFNKSADDEVENT)(
-    IN PIRP Irp,
-    IN PKSEVENTDATA EventData,
-    IN struct _KSEVENT_ENTRY* EventEntry
+    _In_ PIRP Irp,
+    _In_ PKSEVENTDATA EventData,
+    _In_ struct _KSEVENT_ENTRY* EventEntry
     );
 
 typedef
 VOID
 (*PFNKSREMOVEEVENT)(
-    IN PFILE_OBJECT FileObject,
-    IN struct _KSEVENT_ENTRY* EventEntry
+    _In_ PFILE_OBJECT FileObject,
+    _In_ struct _KSEVENT_ENTRY* EventEntry
     );
     
 #define DEFINE_KSEVENT_TABLE(tablename)\
@@ -2505,7 +2839,7 @@ typedef struct {
 typedef struct {
     const GUID*         Set;
     ULONG               EventsCount;
-    const KSEVENT_ITEM* EventItem;
+    _Field_size_(EventsCount) const KSEVENT_ITEM* EventItem;
 } KSEVENT_SET, *PKSEVENT_SET;
 
 typedef struct {
@@ -2563,7 +2897,7 @@ typedef struct {
 typedef
 VOID
 (*PFNKSITEMFREECALLBACK)(
-    IN PKSOBJECT_CREATE_ITEM CreateItem
+    _In_ PKSOBJECT_CREATE_ITEM CreateItem
     );
 
 #define KSCREATE_ITEM_SECURITYCHANGED       0x00000001
@@ -2612,7 +2946,7 @@ VOID
 
 typedef struct {
     ULONG                    CreateItemsCount;
-    PKSOBJECT_CREATE_ITEM    CreateItemsList;
+    _Field_size_(CreateItemsCount) PKSOBJECT_CREATE_ITEM    CreateItemsList;
 } KSOBJECT_CREATE, *PKSOBJECT_CREATE;
 
 typedef struct {
@@ -2688,30 +3022,34 @@ typedef enum {
     KSTARGET_STATE_ENABLED
 } KSTARGET_STATE;
 
+_IRQL_requires_max_(DISPATCH_LEVEL)
 typedef
 NTSTATUS
 (*PFNKSIRPLISTCALLBACK)(
-    IN PIRP Irp,
-    IN PVOID Context
+    _In_ PIRP Irp,
+    _In_ PVOID Context
     );
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 typedef 
 VOID 
 (*PFNREFERENCEDEVICEOBJECT)( 
-    IN PVOID Context
+    _In_ PVOID Context
     );
     
+_IRQL_requires_max_(PASSIVE_LEVEL)
 typedef 
 VOID 
 (*PFNDEREFERENCEDEVICEOBJECT)( 
-    IN PVOID Context
+    _In_ PVOID Context
     );
     
+_IRQL_requires_max_(PASSIVE_LEVEL)
 typedef
 NTSTATUS
 (*PFNQUERYREFERENCESTRING)( 
-    IN PVOID Context,
-    IN OUT PWCHAR *String
+    _In_ PVOID Context,
+    _Inout_ PWCHAR *String
     );
 
 #define BUS_INTERFACE_REFERENCE_VERSION    0x100
@@ -2736,12 +3074,13 @@ typedef struct {
 #define STATIC_REFERENCE_BUS_INTERFACE STATIC_KSMEDIUMSETID_Standard
 #define REFERENCE_BUS_INTERFACE KSMEDIUMSETID_Standard
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 typedef
 NTSTATUS
 (*PFNQUERYMEDIUMSLIST)( 
-    IN PVOID Context,
-    OUT ULONG* MediumsCount,
-    OUT PKSPIN_MEDIUM* MediumList
+    _In_ PVOID Context,
+    _Out_ ULONG* MediumsCount,
+    _Out_writes_(MediumsCount) PKSPIN_MEDIUM* MediumList
     );
 
 typedef struct {
@@ -2785,6 +3124,8 @@ typedef struct {
     ULONG           PropertyLength;
 } KSPROPERTY_SERIAL, *PKSPROPERTY_SERIAL;
 
+#if (NTDDI_VERSION >= NTDDI_WINXP)
+
 #if defined(_NTDDK_)
 
 #define IOCTL_KS_HANDSHAKE             CTL_CODE(FILE_DEVICE_KS, 0x007, METHOD_NEITHER, FILE_ANY_ACCESS)
@@ -2805,9 +3146,10 @@ struct _KSGATE {
 
 #ifndef _NTOS_
 
+_IRQL_requires_max_(HIGH_LEVEL)
 void __inline
 KsGateTurnInputOn(
-    IN PKSGATE Gate OPTIONAL
+    _In_opt_ PKSGATE Gate
     )
 {
     while (Gate && (InterlockedIncrement(&Gate->Count) == 1)) {
@@ -2815,9 +3157,10 @@ KsGateTurnInputOn(
     }
 }
 
+_IRQL_requires_max_(HIGH_LEVEL)
 void __inline
 KsGateTurnInputOff(
-    IN PKSGATE Gate OPTIONAL
+    _In_opt_ PKSGATE Gate
     )
 {
     while (Gate && (InterlockedDecrement(&Gate->Count) == 0)) {
@@ -2825,18 +3168,20 @@ KsGateTurnInputOff(
     }
 }
 
+_IRQL_requires_max_(HIGH_LEVEL)
 BOOLEAN __inline
 KsGateGetStateUnsafe(
-    IN PKSGATE Gate
+    _In_ PKSGATE Gate
     )
 {
     ASSERT(Gate);
     return((BOOLEAN)(Gate->Count > 0));
 }
 
+_IRQL_requires_max_(HIGH_LEVEL)
 BOOLEAN __inline
 KsGateCaptureThreshold(
-    IN PKSGATE Gate
+    _In_ PKSGATE Gate
     )
 {
     BOOLEAN captured;
@@ -2859,12 +3204,13 @@ KsGateCaptureThreshold(
     return captured;
 }
 
+_IRQL_requires_max_(HIGH_LEVEL)
 void __inline
 KsGateInitialize(
-    IN PKSGATE Gate,
-    IN LONG InitialCount,
-    IN PKSGATE NextGate OPTIONAL,
-    IN BOOLEAN StateToPropagate // IN BOOLEAN NextGateIsAnOrGate
+    _In_ PKSGATE Gate,
+    _In_ LONG InitialCount,
+    _In_opt_ PKSGATE NextGate,
+    _In_ BOOLEAN StateToPropagate // _In_ BOOLEAN NextGateIsAnOrGate
     )
 {
     ASSERT(Gate);
@@ -2884,37 +3230,40 @@ KsGateInitialize(
     }
 }
 
+_IRQL_requires_max_(HIGH_LEVEL)
 void __inline
 KsGateInitializeAnd(
-    IN PKSGATE AndGate,
-    IN PKSGATE NextOrGate OPTIONAL
+    _In_ PKSGATE AndGate,
+    _In_opt_ PKSGATE NextOrGate
     )
 {
     KsGateInitialize(AndGate,1,NextOrGate,TRUE);
 }
 
+_IRQL_requires_max_(HIGH_LEVEL)
 void __inline
 KsGateInitializeOr(
-    IN PKSGATE OrGate,
-    IN PKSGATE NextAndGate OPTIONAL
+    _In_ PKSGATE OrGate,
+    _In_opt_ PKSGATE NextAndGate
     )
 {
     KsGateInitialize(OrGate,0,NextAndGate,FALSE);
 }
 
-void __inline KsGateAddOnInputToAnd(IN PKSGATE AndGate) { UNREFERENCED_PARAMETER (AndGate); }
-void __inline KsGateAddOffInputToAnd(IN PKSGATE AndGate) { KsGateTurnInputOff(AndGate); }
-void __inline KsGateRemoveOnInputFromAnd(IN PKSGATE AndGate) { UNREFERENCED_PARAMETER (AndGate); }
-void __inline KsGateRemoveOffInputFromAnd(IN PKSGATE AndGate) { KsGateTurnInputOn(AndGate); }
+_IRQL_requires_max_(HIGH_LEVEL) void __inline KsGateAddOnInputToAnd(_In_ PKSGATE AndGate) { UNREFERENCED_PARAMETER (AndGate); }
+_IRQL_requires_max_(HIGH_LEVEL) void __inline KsGateAddOffInputToAnd(_In_ PKSGATE AndGate) { KsGateTurnInputOff(AndGate); }
+_IRQL_requires_max_(HIGH_LEVEL) void __inline KsGateRemoveOnInputFromAnd(_In_ PKSGATE AndGate) { UNREFERENCED_PARAMETER (AndGate); }
+_IRQL_requires_max_(HIGH_LEVEL) void __inline KsGateRemoveOffInputFromAnd(_In_ PKSGATE AndGate) { KsGateTurnInputOn(AndGate); }
 
-void __inline KsGateAddOnInputToOr(IN PKSGATE OrGate) { KsGateTurnInputOn(OrGate); }
-void __inline KsGateAddOffInputToOr(IN PKSGATE OrGate) { UNREFERENCED_PARAMETER (OrGate); }
-void __inline KsGateRemoveOnInputFromOr(IN PKSGATE OrGate) { KsGateTurnInputOff(OrGate); }
-void __inline KsGateRemoveOffInputFromOr(IN PKSGATE OrGate) { UNREFERENCED_PARAMETER (OrGate); }
+_IRQL_requires_max_(HIGH_LEVEL) void __inline KsGateAddOnInputToOr(_In_ PKSGATE OrGate) { KsGateTurnInputOn(OrGate); }
+_IRQL_requires_max_(HIGH_LEVEL) void __inline KsGateAddOffInputToOr(_In_ PKSGATE OrGate) { UNREFERENCED_PARAMETER (OrGate); }
+_IRQL_requires_max_(HIGH_LEVEL) void __inline KsGateRemoveOnInputFromOr(_In_ PKSGATE OrGate) { KsGateTurnInputOff(OrGate); }
+_IRQL_requires_max_(HIGH_LEVEL) void __inline KsGateRemoveOffInputFromOr(_In_ PKSGATE OrGate) { UNREFERENCED_PARAMETER (OrGate); }
 
+_IRQL_requires_max_(HIGH_LEVEL)
 void __inline
 KsGateTerminateAnd(
-    IN PKSGATE AndGate
+    _In_ PKSGATE AndGate
     )
 {
     ASSERT(AndGate);
@@ -2925,9 +3274,10 @@ KsGateTerminateAnd(
     }
 }
 
+_IRQL_requires_max_(HIGH_LEVEL)
 void __inline
 KsGateTerminateOr(
-    IN PKSGATE OrGate
+    _In_ PKSGATE OrGate
     )
 {
     ASSERT(OrGate);
@@ -2942,185 +3292,211 @@ KsGateTerminateOr(
 
 typedef PVOID KSOBJECT_BAG;
 
+_IRQL_requires_max_(DISPATCH_LEVEL)
 typedef
 BOOLEAN
 (*PFNKSGENERATEEVENTCALLBACK)(
-    IN PVOID Context,
-    IN PKSEVENT_ENTRY EventEntry
+    _In_ PVOID Context,
+    _In_ PKSEVENT_ENTRY EventEntry
     );
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 typedef
 NTSTATUS
 (*PFNKSDEVICECREATE)(
-    IN PKSDEVICE Device
+    _In_ PKSDEVICE Device
     );
+_IRQL_requires_max_(PASSIVE_LEVEL)
 typedef
 NTSTATUS
 (*PFNKSDEVICEPNPSTART)(
-    IN PKSDEVICE Device,
-    IN PIRP Irp,
-    IN PCM_RESOURCE_LIST TranslatedResourceList OPTIONAL,
-    IN PCM_RESOURCE_LIST UntranslatedResourceList OPTIONAL
+    _In_ PKSDEVICE Device,
+    _In_ PIRP Irp,
+    _In_opt_ PCM_RESOURCE_LIST TranslatedResourceList,
+    _In_opt_ PCM_RESOURCE_LIST UntranslatedResourceList
     );
+_IRQL_requires_max_(PASSIVE_LEVEL)
 typedef
 NTSTATUS
 (*PFNKSDEVICE)(
-    IN PKSDEVICE Device
+    _In_ PKSDEVICE Device
     );
+_IRQL_requires_max_(PASSIVE_LEVEL)
 typedef
 NTSTATUS
 (*PFNKSDEVICEIRP)(
-    IN PKSDEVICE Device,
-    IN PIRP Irp
+    _In_ PKSDEVICE Device,
+    _In_ PIRP Irp
     );
+_IRQL_requires_max_(PASSIVE_LEVEL)
 typedef
 void
 (*PFNKSDEVICEIRPVOID)(
-    IN PKSDEVICE Device,
-    IN PIRP Irp
+    _In_ PKSDEVICE Device,
+    _In_ PIRP Irp
     );
+_IRQL_requires_max_(PASSIVE_LEVEL)
 typedef
 NTSTATUS
 (*PFNKSDEVICEQUERYCAPABILITIES)(
-    IN PKSDEVICE Device,
-    IN PIRP Irp,
-    IN OUT PDEVICE_CAPABILITIES Capabilities
+    _In_ PKSDEVICE Device,
+    _In_ PIRP Irp,
+    _Inout_ PDEVICE_CAPABILITIES Capabilities
     );
+_IRQL_requires_max_(PASSIVE_LEVEL)
 typedef
 NTSTATUS
 (*PFNKSDEVICEQUERYPOWER)(
-    IN PKSDEVICE Device,
-    IN PIRP Irp,
-    IN DEVICE_POWER_STATE DeviceTo,
-    IN DEVICE_POWER_STATE DeviceFrom,
-    IN SYSTEM_POWER_STATE SystemTo,
-    IN SYSTEM_POWER_STATE SystemFrom,
-    IN POWER_ACTION Action
+    _In_ PKSDEVICE Device,
+    _In_ PIRP Irp,
+    _In_ DEVICE_POWER_STATE DeviceTo,
+    _In_ DEVICE_POWER_STATE DeviceFrom,
+    _In_ SYSTEM_POWER_STATE SystemTo,
+    _In_ SYSTEM_POWER_STATE SystemFrom,
+    _In_ POWER_ACTION Action
     );
+_IRQL_requires_max_(PASSIVE_LEVEL)
 typedef
 void
 (*PFNKSDEVICESETPOWER)(
-    IN PKSDEVICE Device,
-    IN PIRP Irp,
-    IN DEVICE_POWER_STATE To,
-    IN DEVICE_POWER_STATE From
+    _In_ PKSDEVICE Device,
+    _In_ PIRP Irp,
+    _In_ DEVICE_POWER_STATE To,
+    _In_ DEVICE_POWER_STATE From
     );
+_IRQL_requires_max_(PASSIVE_LEVEL)
 typedef
 NTSTATUS
 (*PFNKSFILTERFACTORYVOID)(
-    IN PKSFILTERFACTORY FilterFactory
+    _In_ PKSFILTERFACTORY FilterFactory
     );
+_IRQL_requires_max_(PASSIVE_LEVEL)
 typedef
 void
 (*PFNKSFILTERFACTORYPOWER)(
-    IN PKSFILTERFACTORY FilterFactory,
-    IN DEVICE_POWER_STATE State
+    _In_ PKSFILTERFACTORY FilterFactory,
+    _In_ DEVICE_POWER_STATE State
     );
+_IRQL_requires_max_(PASSIVE_LEVEL)
 typedef
 NTSTATUS
 (*PFNKSFILTERIRP)(
-    IN PKSFILTER Filter,
-    IN PIRP Irp
+    _In_ PKSFILTER Filter,
+    _In_ PIRP Irp
     );
 typedef
 NTSTATUS
 (*PFNKSFILTERPROCESS)(
-    IN PKSFILTER Filter,
-    IN PKSPROCESSPIN_INDEXENTRY Index
+    _In_ PKSFILTER Filter,
+    _In_ PKSPROCESSPIN_INDEXENTRY Index
     );
+_IRQL_requires_max_(PASSIVE_LEVEL)
 typedef
 NTSTATUS
 (*PFNKSFILTERVOID)(
-    IN PKSFILTER Filter
+    _In_ PKSFILTER Filter
     );
+_IRQL_requires_max_(PASSIVE_LEVEL)
 typedef
 void
 (*PFNKSFILTERPOWER)(
-    IN PKSFILTER Filter,
-    IN DEVICE_POWER_STATE State
+    _In_ PKSFILTER Filter,
+    _In_ DEVICE_POWER_STATE State
     );
+_IRQL_requires_max_(PASSIVE_LEVEL)
 typedef
 NTSTATUS
 (*PFNKSPINIRP)(
-    IN PKSPIN Pin,
-    IN PIRP Irp
+    _In_ PKSPIN Pin,
+    _In_ PIRP Irp
     );
+_IRQL_requires_max_(PASSIVE_LEVEL)
 typedef
 NTSTATUS
 (*PFNKSPINSETDEVICESTATE)(
-    IN PKSPIN Pin,
-    IN KSSTATE ToState,
-    IN KSSTATE FromState
+    _In_ PKSPIN Pin,
+    _In_ KSSTATE ToState,
+    _In_ KSSTATE FromState
     );
+_IRQL_requires_max_(PASSIVE_LEVEL)
 typedef
 NTSTATUS
 (*PFNKSPINSETDATAFORMAT)(
-    IN PKSPIN Pin,
-    IN PKSDATAFORMAT OldFormat OPTIONAL,
-    IN PKSMULTIPLE_ITEM OldAttributeList OPTIONAL,
-    IN const KSDATARANGE* DataRange,
-    IN const KSATTRIBUTE_LIST* AttributeRange OPTIONAL
+    _In_ PKSPIN Pin,
+    _In_opt_ PKSDATAFORMAT OldFormat,
+    _In_opt_ PKSMULTIPLE_ITEM OldAttributeList,
+    _In_ const KSDATARANGE* DataRange,
+    _In_opt_ const KSATTRIBUTE_LIST* AttributeRange
     );
+_IRQL_requires_max_(PASSIVE_LEVEL)
 typedef
 NTSTATUS
 (*PFNKSPINHANDSHAKE)(
-    IN PKSPIN Pin,
-    IN PKSHANDSHAKE In,
-    IN PKSHANDSHAKE Out
+    _In_ PKSPIN Pin,
+    _In_ PKSHANDSHAKE In,
+    _In_ PKSHANDSHAKE Out
     );
 typedef
 NTSTATUS
 (*PFNKSPIN)(
-    IN PKSPIN Pin
+    _In_ PKSPIN Pin
     );
+_IRQL_requires_max_(PASSIVE_LEVEL)
 typedef
 void
 (*PFNKSPINVOID)(
-    IN PKSPIN Pin
+    _In_ PKSPIN Pin
     );
+_IRQL_requires_max_(PASSIVE_LEVEL)
 typedef
 void
 (*PFNKSPINPOWER)(
-    IN PKSPIN Pin,
-    IN DEVICE_POWER_STATE State
+    _In_ PKSPIN Pin,
+    _In_ DEVICE_POWER_STATE State
     );
+_IRQL_requires_max_(DISPATCH_LEVEL)
 typedef
 BOOLEAN
 (*PFNKSPINSETTIMER)(
-    IN PKSPIN Pin,
-    IN PKTIMER Timer,
-    IN LARGE_INTEGER DueTime,
-    IN PKDPC Dpc
+    _In_ PKSPIN Pin,
+    _In_ PKTIMER Timer,
+    _In_ LARGE_INTEGER DueTime,
+    _In_ PKDPC Dpc
     );
+_IRQL_requires_max_(DISPATCH_LEVEL)
 typedef
 BOOLEAN
 (*PFNKSPINCANCELTIMER)(
-    IN PKSPIN Pin,
-    IN PKTIMER Timer
+    _In_ PKSPIN Pin,
+    _In_ PKTIMER Timer
     );
+_IRQL_requires_max_(DISPATCH_LEVEL)
 typedef
 LONGLONG
 (FASTCALL *PFNKSPINCORRELATEDTIME)(
-    IN PKSPIN Pin,
-    OUT PLONGLONG SystemTime
+    _In_ PKSPIN Pin,
+    _Out_ PLONGLONG SystemTime
     );
+_IRQL_requires_max_(DISPATCH_LEVEL)
 typedef
 void
 (*PFNKSPINRESOLUTION)(
-    IN PKSPIN Pin,
-    OUT PKSRESOLUTION Resolution
+    _In_ PKSPIN Pin,
+    _Out_ PKSRESOLUTION Resolution
     );
+_IRQL_requires_max_(PASSIVE_LEVEL)
 typedef
 NTSTATUS
 (*PFNKSPININITIALIZEALLOCATOR)(
-    IN PKSPIN Pin,
-    IN PKSALLOCATOR_FRAMING AllocatorFraming,
-    OUT PVOID* Context
+    _In_ PKSPIN Pin,
+    _In_ PKSALLOCATOR_FRAMING AllocatorFraming,
+    _Out_ PVOID* Context
     );
+_IRQL_requires_max_(DISPATCH_LEVEL)
 typedef
 void
 (*PFNKSSTREAMPOINTER)(
-    IN PKSSTREAM_POINTER StreamPointer
+    _In_ PKSSTREAM_POINTER StreamPointer
     );
 
 typedef struct KSAUTOMATION_TABLE_ 
@@ -3128,13 +3504,13 @@ KSAUTOMATION_TABLE, *PKSAUTOMATION_TABLE;
 struct KSAUTOMATION_TABLE_ {
     ULONG PropertySetsCount;
     ULONG PropertyItemSize;
-    const KSPROPERTY_SET* PropertySets;
+    _Field_size_bytes_(PropertySetsCount * PropertyItemSize) const KSPROPERTY_SET* PropertySets;
     ULONG MethodSetsCount;
     ULONG MethodItemSize;
-    const KSMETHOD_SET* MethodSets;
+    _Field_size_bytes_(MethodSetsCount * MethodItemSize) const KSMETHOD_SET* MethodSets;
     ULONG EventSetsCount;
     ULONG EventItemSize;
-    const KSEVENT_SET* EventSets;
+    _Field_size_bytes_(EventSetsCount * EventItemSize) const KSEVENT_SET* EventSets;
 #if !defined(_WIN64)
     PVOID Alignment;
 #endif // !defined(_WIN64)
@@ -3226,16 +3602,52 @@ struct _KSALLOCATOR_DISPATCH {
     PFNKSDEFAULTFREE Free;
 };
 
+//
+// VERSION indicates support of the following:
+//
+//     - QueryInterface dispatch of KSDEVICE_DISPATCH
+//
 #define KSDEVICE_DESCRIPTOR_VERSION (0x100)
+
+#if (NTDDI_VERSION >= NTDDI_VISTA)
+
+//
+// VERSION_2 indicates support of the following:
+//
+//     - Flags field of KSDEVICE_DESCRIPTOR
+//           - Loading a VERSION_2 descriptor on earlier versions of AVStream
+//             will work; however, all flags will be considered to be zero.
+//           - Using an earlier version descriptor on later versions of
+//             AVStream causes no flags to be specificed.
+//
+#define KSDEVICE_DESCRIPTOR_VERSION_2 (0x110)
+
+#define MIN_DEV_VER_FOR_FLAGS (0x110)
+
+#endif // (NTDDI_VERSION >= NTDDI_VISTA)
 
 struct _KSDEVICE_DESCRIPTOR {
     const KSDEVICE_DISPATCH* Dispatch;
     ULONG FilterDescriptorsCount;
-    const KSFILTER_DESCRIPTOR*const* FilterDescriptors;
+    _Field_size_(FilterDescriptorsCount) const KSFILTER_DESCRIPTOR*const* FilterDescriptors;
     ULONG Version; // this is 0 for pre-version 100 driver
-    //#if !defined(_WIN64)
-    //PVOID Alignment;
-    //#endif //!defined(_WIN64)
+
+#if (NTDDI_VERSION >= NTDDI_VISTA)
+
+    ULONG Flags; 
+#define KSDEVICE_FLAG_ENABLE_REMOTE_WAKEUP  0x00000001
+#define KSDEVICE_FLAG_LOWPOWER_PASSTHROUGH  0x00000002
+
+#if (NTDDI_VERSION >= NTDDI_WINTHRESHOLD)
+#define KSDEVICE_FLAG_ENABLE_QUERYINTERFACE 0x00000004
+#endif
+
+#if !defined(_WIN64)
+    PVOID Alignment;
+#endif //!defined(_WIN64)
+
+#endif // (NTDDI_VERSION >= NTDDI_VISTA)
+
 };
 
 struct _KSFILTER_DESCRIPTOR {
@@ -3248,18 +3660,25 @@ struct _KSFILTER_DESCRIPTOR {
 #define KSFILTER_FLAG_CRITICAL_PROCESSING 0x00000002
 #define KSFILTER_FLAG_HYPERCRITICAL_PROCESSING 0x00000004
 #define KSFILTER_FLAG_RECEIVE_ZERO_LENGTH_SAMPLES 0x00000008
+#if (NTDDI_VERSION >= NTDDI_WINXPSP2)
 #define KSFILTER_FLAG_DENY_USERMODE_ACCESS 0x80000000
+#endif // (NTDDI_VERSION >= NTDDI_WINXPSP2)
+// This flag is added to prioritize the ReferenceGUID when creating
+// filter factory over the reference string.  All devices that publish
+// camera profiles must set this flag.
+#define KSFILTER_FLAG_PRIORITIZE_REFERENCEGUID    0x00000010
     const GUID* ReferenceGuid;
     ULONG PinDescriptorsCount;
     ULONG PinDescriptorSize;
-    const KSPIN_DESCRIPTOR_EX* PinDescriptors;
+    _Field_size_bytes_(PinDescriptorsCount * PinDescriptorSize) const KSPIN_DESCRIPTOR_EX* PinDescriptors;
     ULONG CategoriesCount;
+    _Field_size_(CategoriesCount)
     const GUID* Categories;
     ULONG NodeDescriptorsCount;
     ULONG NodeDescriptorSize;
-    const KSNODE_DESCRIPTOR* NodeDescriptors;
+    _Field_size_bytes_(NodeDescriptorsCount * NodeDescriptorSize) const KSNODE_DESCRIPTOR* NodeDescriptors;
     ULONG ConnectionsCount;
-    const KSTOPOLOGY_CONNECTION* Connections;
+    _Field_size_(ConnectionsCount) const KSTOPOLOGY_CONNECTION* Connections;
     const KSCOMPONENTID* ComponentId;
 };
 
@@ -3331,7 +3750,9 @@ struct _KSPIN_DESCRIPTOR_EX {
 #define KSPIN_FLAG_IMPLEMENT_CLOCK 0x00400000
 #define KSPIN_FLAG_SOME_FRAMES_REQUIRED_FOR_PROCESSING 0x00800000
 #define KSPIN_FLAG_PROCESS_IF_ANY_IN_RUN_STATE 0x01000000
+#if (NTDDI_VERSION >= NTDDI_WINXPSP2)
 #define KSPIN_FLAG_DENY_USERMODE_ACCESS 0x80000000
+#endif // (NTDDI_VERSION >= NTDDI_WINXPSP2)
     ULONG InstancesPossible;
     ULONG InstancesNecessary;
     const KSALLOCATOR_FRAMING_EX* AllocatorFraming;
@@ -3445,7 +3866,7 @@ struct _KSPROCESSPIN {
     PKSPROCESSPIN InPlaceCounterpart;
     PKSPROCESSPIN DelegateBranch;
     PKSPROCESSPIN CopySource;
-    PVOID Data;
+    _Field_size_bytes_(BytesAvailable) PVOID Data;
     ULONG BytesAvailable;
     ULONG BytesUsed;
     ULONG Flags;
@@ -3453,7 +3874,7 @@ struct _KSPROCESSPIN {
 };
 
 struct _KSPROCESSPIN_INDEXENTRY {
-    PKSPROCESSPIN *Pins;
+    _Field_size_(Count) PKSPROCESSPIN *Pins;
     ULONG Count;
 };
 
@@ -3467,25 +3888,26 @@ typedef enum {
 typedef
 void
 (*PFNKSFREE)(
-    IN PVOID Data
+    _In_ PVOID Data
     );
 
 typedef
 void
 (*PFNKSPINFRAMERETURN)(
-    IN PKSPIN Pin,
-    IN PVOID Data OPTIONAL,
-    IN ULONG Size OPTIONAL,
-    IN PMDL Mdl OPTIONAL,
-    IN PVOID Context OPTIONAL,
-    IN NTSTATUS Status
+    _In_ PKSPIN Pin,
+    _In_reads_bytes_opt_(Size) PVOID Data,
+    _In_ ULONG Size OPTIONAL,
+    _In_opt_ PMDL Mdl,
+    _In_opt_ PVOID Context,
+    _In_ NTSTATUS Status
     );
 
+_IRQL_requires_max_(DISPATCH_LEVEL)
 typedef
 void
 (*PFNKSPINIRPCOMPLETION)(
-    IN PKSPIN Pin,
-    IN PIRP Irp
+    _In_ PKSPIN Pin,
+    _In_ PIRP Irp
     );
 
 #if defined(_UNKNOWN_H_) || defined(__IUnknown_INTERFACE_DEFINED__)
@@ -3497,9 +3919,9 @@ typedef interface IKsControl* PIKSCONTROL;
 #if !defined(DEFINE_ABSTRACT_UNKNOWN)
 
 #define DEFINE_ABSTRACT_UNKNOWN()                               \
-    STDMETHOD_(NTSTATUS, QueryInterface)(THIS_                   \
-        REFIID InterfaceId,                                     \
-        PVOID* Interface                                        \
+    STDMETHOD_(NTSTATUS, QueryInterface)(THIS_                  \
+        _In_         REFIID InterfaceId,                        \
+        _COM_Outptr_ PVOID* Interface                           \
         ) PURE;                                                 \
     STDMETHOD_(ULONG,AddRef)(THIS) PURE;                        \
     STDMETHOD_(ULONG,Release)(THIS) PURE;
@@ -3513,25 +3935,25 @@ DECLARE_INTERFACE_(IKsControl,IUnknown)
     DEFINE_ABSTRACT_UNKNOWN() // For C
 
     STDMETHOD_(NTSTATUS, KsProperty)(THIS_
-        IN PKSPROPERTY Property,
-        IN ULONG PropertyLength,
-        IN OUT PVOID PropertyData,
-        IN ULONG DataLength,
-        OUT ULONG* BytesReturned
+        _In_reads_bytes_(PropertyLength) PKSPROPERTY Property,
+        _In_ ULONG PropertyLength,
+        _Inout_updates_bytes_(DataLength) PVOID PropertyData,
+        _In_ ULONG DataLength,
+        _Out_ ULONG* BytesReturned
         ) PURE;
     STDMETHOD_(NTSTATUS, KsMethod)(THIS_
-        IN PKSMETHOD Method,
-        IN ULONG MethodLength,
-        IN OUT PVOID MethodData,
-        IN ULONG DataLength,
-        OUT ULONG* BytesReturned
+        _In_reads_bytes_(MethodLength) PKSMETHOD Method,
+        _In_ ULONG MethodLength,
+        _Inout_updates_bytes_(DataLength) PVOID MethodData,
+        _In_ ULONG DataLength,
+        _Out_ ULONG* BytesReturned
         ) PURE;
     STDMETHOD_(NTSTATUS, KsEvent)(THIS_
-        IN PKSEVENT Event OPTIONAL,
-        IN ULONG EventLength,
-        IN OUT PVOID EventData,
-        IN ULONG DataLength,
-        OUT ULONG* BytesReturned
+        _In_reads_bytes_opt_(EventLength) PKSEVENT Event,
+        _In_ ULONG EventLength,
+        _Inout_updates_bytes_(DataLength) PVOID EventData,
+        _In_ ULONG DataLength,
+        _Out_ ULONG* BytesReturned
         ) PURE;
 };
 
@@ -3548,19 +3970,39 @@ DECLARE_INTERFACE_(IKsReferenceClock,IUnknown)
     STDMETHOD_(LONGLONG,GetPhysicalTime)(THIS
         ) PURE;
     STDMETHOD_(LONGLONG,GetCorrelatedTime)(THIS_
-        OUT PLONGLONG SystemTime
+        _Out_ PLONGLONG SystemTime
         ) PURE;
     STDMETHOD_(LONGLONG,GetCorrelatedPhysicalTime)(THIS_
-        OUT PLONGLONG SystemTime
+        _Out_ PLONGLONG SystemTime
         ) PURE;
     STDMETHOD_(NTSTATUS, GetResolution)(THIS_
-        OUT PKSRESOLUTION Resolution
+        _Out_ PKSRESOLUTION Resolution
         ) PURE;
     STDMETHOD_(NTSTATUS, GetState)(THIS_
-        OUT PKSSTATE State
+        _Out_ PKSSTATE State
         ) PURE;
 };
 #undef INTERFACE
+
+#if (NTDDI_VERSION >= NTDDI_WS03SP1)
+
+#define INTERFACE IKsDeviceFunctions
+DECLARE_INTERFACE_(IKsDeviceFunctions, IUnknown)
+{
+    DEFINE_ABSTRACT_UNKNOWN() // For C
+    
+    STDMETHOD_(NTSTATUS, RegisterAdapterObjectEx)(THIS_
+        _In_ PADAPTER_OBJECT AdapterObject,
+        _In_ PDEVICE_DESCRIPTION DeviceDescription,
+        _In_ ULONG NumberOfMapRegisters,
+        _In_ ULONG MaxMappingsByteCount,
+        _In_ ULONG MappingTableStride
+        ) PURE;
+};
+
+#undef INTERFACE
+
+#endif // (NTDDI_VERSION >= NTDDI_WS03SP1)
 
 #define STATIC_IID_IKsControl \
 0x28F54685L, 0x06FD, 0x11D2, 0xB2, 0x7A, 0x00, 0xA0, 0xC9, 0x22, 0x31, 0x96
@@ -3578,10 +4020,24 @@ DEFINE_GUID(IID_IKsFastClock,
 struct __declspec(uuid("C9902485-C180-11d2-8473-D42394459E5E")) IKsFastClock;
 #endif
 
+#if (NTDDI_VERSION >= NTDDI_WS03SP1)
+
+#define STATIC_IID_IKsDeviceFunctions \
+0xe234f2e2, 0xbd69, 0x4f8c, 0xb3, 0xf2, 0x7c, 0xd7, 0x9e, 0xd4, 0x66, 0xbd
+DEFINE_GUID(IID_IKsDeviceFunctions,
+0xe234f2e2, 0xbd69, 0x4f8c, 0xb3, 0xf2, 0x7c, 0xd7, 0x9e, 0xd4, 0x66, 0xbd);
+#if defined(__cplusplus) && _MSC_VER >= 1100
+struct __declspec(uuid("E234F2E2-BD69-4F8C-B3F2-7CD79ED466BD")) IKsDeviceFunctions;
+#endif
+
+#endif // (NTDDI_VERSION >= NTDDI_WS03SP1)
+
 #endif // !defined(_IKsControl_)
 #endif // defined(_UNKNOWN_H_) || defined(__IUnknown_INTERFACE_DEFINED__)
 
 #endif // defined(_NTDDK_)
+
+#endif // (NTDDI_VERSION >= NTDDI_WINXP)
 
 //===========================================================================
 
@@ -3601,356 +4057,444 @@ extern "C" {
 
 #if defined(_NTDDK_)
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 KSDDKAPI
 NTSTATUS
 NTAPI
 KsEnableEvent(
-    IN PIRP Irp,
-    IN ULONG EventSetsCount,
-    IN const KSEVENT_SET* EventSet,
-    IN OUT PLIST_ENTRY EventsList OPTIONAL,
-    IN KSEVENTS_LOCKTYPE EventsFlags OPTIONAL,
-    IN PVOID EventsLock OPTIONAL
+    _In_ PIRP Irp,
+    _In_ ULONG EventSetsCount,
+    _In_reads_(EventSetsCount) const KSEVENT_SET* EventSet,
+    _Inout_opt_ PLIST_ENTRY EventsList,
+    _In_opt_ KSEVENTS_LOCKTYPE EventsFlags,
+    _In_opt_ PVOID EventsLock
     );
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 KSDDKAPI
 NTSTATUS
 NTAPI
 KsEnableEventWithAllocator(
-    IN PIRP Irp,
-    IN ULONG EventSetsCount,
-    IN const KSEVENT_SET* EventSet,
-    IN OUT PLIST_ENTRY EventsList OPTIONAL,
-    IN KSEVENTS_LOCKTYPE EventsFlags OPTIONAL,
-    IN PVOID EventsLock OPTIONAL,
-    IN PFNKSALLOCATOR Allocator OPTIONAL,
-    IN ULONG EventItemSize OPTIONAL
+    _In_ PIRP Irp,
+    _In_ ULONG EventSetsCount,
+    _In_reads_(EventSetsCount) const KSEVENT_SET* EventSet,
+    _Inout_opt_ PLIST_ENTRY EventsList,
+    _In_ KSEVENTS_LOCKTYPE EventsFlags OPTIONAL,
+    _In_opt_ PVOID EventsLock,
+    _In_opt_ PFNKSALLOCATOR Allocator,
+    _In_opt_ ULONG EventItemSize
     );
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 KSDDKAPI
 NTSTATUS
 NTAPI
 KsDisableEvent(
-    IN PIRP Irp,
-    IN OUT PLIST_ENTRY EventsList,
-    IN KSEVENTS_LOCKTYPE EventsFlags,
-    IN PVOID EventsLock
+    _In_ PIRP Irp,
+    _Inout_ PLIST_ENTRY EventsList,
+    _In_ KSEVENTS_LOCKTYPE EventsFlags,
+    _In_ PVOID EventsLock
     );
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 KSDDKAPI
 VOID
 NTAPI
 KsDiscardEvent(
-    IN PKSEVENT_ENTRY EventEntry
+    _In_ PKSEVENT_ENTRY EventEntry
     );
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 KSDDKAPI
 VOID
 NTAPI
 KsFreeEventList(
-    IN PFILE_OBJECT FileObject,
-    IN OUT PLIST_ENTRY EventsList,
-    IN KSEVENTS_LOCKTYPE EventsFlags,
-    IN PVOID EventsLock
+    _In_ PFILE_OBJECT FileObject,
+    _Inout_ PLIST_ENTRY EventsList,
+    _In_ KSEVENTS_LOCKTYPE EventsFlags,
+    _In_ PVOID EventsLock
     );
 
 KSDDKAPI
 NTSTATUS
 NTAPI
 KsGenerateEvent(
-    IN PKSEVENT_ENTRY EventEntry
+    _In_ PKSEVENT_ENTRY EventEntry
     );
 
 KSDDKAPI
 NTSTATUS
 NTAPI
 KsGenerateDataEvent(
-    IN PKSEVENT_ENTRY EventEntry,
-    IN ULONG DataSize,
-    IN PVOID Data
+    _In_ PKSEVENT_ENTRY EventEntry,
+    _In_ ULONG DataSize,
+    _In_reads_bytes_(DataSize) PVOID Data
     );
 
 KSDDKAPI
 VOID
 NTAPI
 KsGenerateEventList(
-    IN GUID* Set OPTIONAL,
-    IN ULONG EventId,
-    IN PLIST_ENTRY EventsList,
-    IN KSEVENTS_LOCKTYPE EventsFlags,
-    IN PVOID EventsLock
+    _In_opt_ GUID* Set,
+    _In_ ULONG EventId,
+    _In_ PLIST_ENTRY EventsList,
+    _In_ KSEVENTS_LOCKTYPE EventsFlags,
+    _In_ PVOID EventsLock
     );
+
+
+
+
+KSDDKAPI
+NTSTATUS
+NTAPI
+KsGenerateThermalEvent(
+	_In_ PVOID                               Object,  
+	_In_ KSDEVICE_THERMAL_STATE Value 
+);
+
+//
+//Independent KS Thermal notifications..
+//
+
+
+
+_IRQL_requires_max_(PASSIVE_LEVEL)
+typedef
+void
+(* PFNKSDEVICETHERMALACTIVECOOLING)(
+_In_ PKSDEVICE KsDevice,
+_In_ BOOLEAN Engaged,
+_Out_ KSDEVICE_THERMAL_STATE* DeviceThermalState
+);
+
+_IRQL_requires_max_(PASSIVE_LEVEL)
+typedef
+void
+(*PFNKSDEVICETHERMALPASSIVECOOLING)(
+_In_ PKSDEVICE KsDevice,
+_In_ ULONG Percentage,
+_Out_ KSDEVICE_THERMAL_STATE* DeviceThermalState
+);
+
+typedef struct _KSDEVICE_THERMAL_DISPATCH {
+    PFNKSDEVICETHERMALACTIVECOOLING ActiveCooling;
+    PFNKSDEVICETHERMALPASSIVECOOLING PassiveCooling;
+} KSDEVICE_THERMAL_DISPATCH, *PKSDEVICE_THERMAL_DISPATCH;
+
+KSDDKAPI
+NTSTATUS
+NTAPI
+KsDeviceRegisterThermalDispatch(
+       _In_ PKSDEVICE KsDevice,  
+       _In_ PKSDEVICE_THERMAL_DISPATCH KsDeviceThermalDispatch
+);
+
+
 
 // property.c:
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 KSDDKAPI
 NTSTATUS
 NTAPI
 KsPropertyHandler(
-    IN PIRP Irp,
-    IN ULONG PropertySetsCount,
-    IN const KSPROPERTY_SET* PropertySet
+    _In_ PIRP Irp,
+    _In_ ULONG PropertySetsCount,
+    _In_reads_(PropertySetsCount) const KSPROPERTY_SET* PropertySet
     );
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 KSDDKAPI
 NTSTATUS
 NTAPI
 KsPropertyHandlerWithAllocator(
-    IN PIRP Irp,
-    IN ULONG PropertySetsCount,
-    IN const KSPROPERTY_SET* PropertySet,
-    IN PFNKSALLOCATOR Allocator OPTIONAL,
-    IN ULONG PropertyItemSize OPTIONAL
+    _In_ PIRP Irp,
+    _In_ ULONG PropertySetsCount,
+    _In_reads_(PropertySetsCount) const KSPROPERTY_SET* PropertySet,
+    _In_opt_ PFNKSALLOCATOR Allocator,
+    _In_ ULONG PropertyItemSize OPTIONAL
     );
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 KSDDKAPI
 BOOLEAN
 NTAPI
 KsFastPropertyHandler(
-    IN PFILE_OBJECT FileObject,
-    IN PKSPROPERTY Property,
-    IN ULONG PropertyLength,
-    IN OUT PVOID Data,
-    IN ULONG DataLength,
-    OUT PIO_STATUS_BLOCK IoStatus,
-    IN ULONG PropertySetsCount,
-    IN const KSPROPERTY_SET* PropertySet
+    _In_ PFILE_OBJECT FileObject,
+    _In_reads_bytes_(PropertyLength) PKSPROPERTY Property,
+    _In_ ULONG PropertyLength,
+    _In_reads_bytes_(DataLength)PVOID Data,
+    _In_ ULONG DataLength,
+    _Out_ PIO_STATUS_BLOCK IoStatus,
+    _In_ ULONG PropertySetsCount,
+    _In_reads_(PropertySetsCount) const KSPROPERTY_SET* PropertySet
     );
 
 // method.c:
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 KSDDKAPI
 NTSTATUS
 NTAPI
 KsMethodHandler(
-    IN PIRP Irp,
-    IN ULONG MethodSetsCount,
-    IN const KSMETHOD_SET* MethodSet
+    _In_ PIRP Irp,
+    _In_ ULONG MethodSetsCount,
+    _In_reads_(MethodSetsCount) const KSMETHOD_SET* MethodSet
     );
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 KSDDKAPI
 NTSTATUS
 NTAPI
 KsMethodHandlerWithAllocator(
-    IN PIRP Irp,
-    IN ULONG MethodSetsCount,
-    IN const KSMETHOD_SET* MethodSet,
-    IN PFNKSALLOCATOR Allocator OPTIONAL,
-    IN ULONG MethodItemSize OPTIONAL
+    _In_ PIRP Irp,
+    _In_ ULONG MethodSetsCount,
+    _In_reads_(MethodSetsCount) const KSMETHOD_SET* MethodSet,
+    _In_opt_ PFNKSALLOCATOR Allocator,
+    _In_ ULONG MethodItemSize OPTIONAL
     );
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 KSDDKAPI
 BOOLEAN
 NTAPI
 KsFastMethodHandler(
-    IN PFILE_OBJECT FileObject,
-    IN PKSMETHOD Method,
-    IN ULONG MethodLength,
-    IN OUT PVOID Data,
-    IN ULONG DataLength,
-    OUT PIO_STATUS_BLOCK IoStatus,
-    IN ULONG MethodSetsCount,
-    IN const KSMETHOD_SET* MethodSet
+    _In_ PFILE_OBJECT FileObject,
+    _In_reads_bytes_(MethodLength) PKSMETHOD Method,
+    _In_ ULONG MethodLength,
+    _Inout_updates_bytes_(DataLength) PVOID Data,
+    _In_ ULONG DataLength,
+    _Out_ PIO_STATUS_BLOCK IoStatus,
+    _In_ ULONG MethodSetsCount,
+    _In_reads_(MethodSetsCount) const KSMETHOD_SET* MethodSet
     );
 
 // alloc.c:
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 KSDDKAPI
 NTSTATUS
 NTAPI
 KsCreateDefaultAllocator(
-    IN PIRP Irp
+    _In_ PIRP Irp
     );
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 KSDDKAPI
 NTSTATUS
 NTAPI
 KsCreateDefaultAllocatorEx(
-    IN PIRP Irp,
-    IN PVOID InitializeContext OPTIONAL,
-    IN PFNKSDEFAULTALLOCATE DefaultAllocate OPTIONAL,
-    IN PFNKSDEFAULTFREE DefaultFree OPTIONAL,
-    IN PFNKSINITIALIZEALLOCATOR InitializeAllocator OPTIONAL,
-    IN PFNKSDELETEALLOCATOR DeleteAllocator OPTIONAL
+    _In_ PIRP Irp,
+    _In_opt_ PVOID InitializeContext,
+    _In_opt_ PFNKSDEFAULTALLOCATE DefaultAllocate,
+    _In_opt_ PFNKSDEFAULTFREE DefaultFree,
+    _In_opt_ PFNKSINITIALIZEALLOCATOR InitializeAllocator,
+    _In_opt_ PFNKSDELETEALLOCATOR DeleteAllocator
     );
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 KSDDKAPI
 NTSTATUS
 NTAPI
 KsCreateAllocator(
-    IN HANDLE ConnectionHandle,
-    IN PKSALLOCATOR_FRAMING AllocatorFraming,
-    OUT PHANDLE AllocatorHandle
+    _In_ HANDLE ConnectionHandle,
+    _In_ PKSALLOCATOR_FRAMING AllocatorFraming,
+    _Out_ PHANDLE AllocatorHandle
     );
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 KSDDKAPI
 NTSTATUS
 NTAPI
 KsValidateAllocatorCreateRequest(
-    IN PIRP Irp,
-    OUT PKSALLOCATOR_FRAMING* AllocatorFraming
+    _In_ PIRP Irp,
+    _Out_ PKSALLOCATOR_FRAMING* AllocatorFraming
     );
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 KSDDKAPI
 NTSTATUS
 NTAPI
 KsValidateAllocatorFramingEx(
-    IN PKSALLOCATOR_FRAMING_EX Framing,
-    IN ULONG BufferSize,
-    IN const KSALLOCATOR_FRAMING_EX *PinFraming
+    _In_ PKSALLOCATOR_FRAMING_EX Framing,
+    _In_ ULONG BufferSize,
+    _In_ const KSALLOCATOR_FRAMING_EX *PinFraming
     );
 
 // clock.c:
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 KSDDKAPI
 NTSTATUS
 NTAPI
 KsAllocateDefaultClock(
-    OUT PKSDEFAULTCLOCK* DefaultClock
+    _Out_ PKSDEFAULTCLOCK* DefaultClock
     );
 
+#if (NTDDI_VERSION >= NTDDI_WINXP)
+
+_IRQL_requires_max_(PASSIVE_LEVEL)
 KSDDKAPI
 NTSTATUS
 NTAPI
 KsAllocateDefaultClockEx(
-    OUT PKSDEFAULTCLOCK* DefaultClock,
-    IN PVOID Context OPTIONAL,
-    IN PFNKSSETTIMER SetTimer OPTIONAL,
-    IN PFNKSCANCELTIMER CancelTimer OPTIONAL,
-    IN PFNKSCORRELATEDTIME CorrelatedTime OPTIONAL,
-    IN const KSRESOLUTION* Resolution OPTIONAL,
-    IN ULONG Flags
+    _Out_ PKSDEFAULTCLOCK* DefaultClock,
+    _In_opt_ PVOID Context,
+    _In_opt_ PFNKSSETTIMER SetTimer,
+    _In_opt_ PFNKSCANCELTIMER CancelTimer,
+    _In_opt_ PFNKSCORRELATEDTIME CorrelatedTime,
+    _In_opt_ const KSRESOLUTION* Resolution,
+    _In_ ULONG Flags
     );
 
+#endif // (NTDDI_VERSION >= NTDDI_WINXP)
+
+_IRQL_requires_max_(PASSIVE_LEVEL)
 KSDDKAPI
 VOID
 NTAPI
 KsFreeDefaultClock(
-    IN PKSDEFAULTCLOCK DefaultClock
+    _In_ PKSDEFAULTCLOCK DefaultClock
     );
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 KSDDKAPI
 NTSTATUS
 NTAPI
 KsCreateDefaultClock(
-    IN PIRP Irp,
-    IN PKSDEFAULTCLOCK DefaultClock
+    _In_ PIRP Irp,
+    _In_ PKSDEFAULTCLOCK DefaultClock
     );
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 KSDDKAPI
 NTSTATUS
 NTAPI
 KsCreateClock(
-    IN HANDLE ConnectionHandle,
-    IN PKSCLOCK_CREATE ClockCreate,
-    OUT PHANDLE ClockHandle
+    _In_ HANDLE ConnectionHandle,
+    _In_ PKSCLOCK_CREATE ClockCreate,
+    _Out_ PHANDLE ClockHandle
     );
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 KSDDKAPI
 NTSTATUS
 NTAPI
 KsValidateClockCreateRequest(
-    IN PIRP Irp,
-    OUT PKSCLOCK_CREATE* ClockCreate
+    _In_ PIRP Irp,
+    _Outptr_ PKSCLOCK_CREATE* ClockCreate
     );
 
+_IRQL_requires_max_(DISPATCH_LEVEL)
 KSDDKAPI
 KSSTATE
 NTAPI
 KsGetDefaultClockState(
-    IN PKSDEFAULTCLOCK DefaultClock
+    _In_ PKSDEFAULTCLOCK DefaultClock
     );
 
+_IRQL_requires_max_(DISPATCH_LEVEL)
 KSDDKAPI
 VOID
 NTAPI
 KsSetDefaultClockState(
-    IN PKSDEFAULTCLOCK DefaultClock,
-    IN KSSTATE State
+    _In_ PKSDEFAULTCLOCK DefaultClock,
+    _In_ KSSTATE State
     );
 
+_IRQL_requires_max_(DISPATCH_LEVEL)
 KSDDKAPI
 LONGLONG
 NTAPI
 KsGetDefaultClockTime(
-    IN PKSDEFAULTCLOCK DefaultClock
+    _In_ PKSDEFAULTCLOCK DefaultClock
     );
 
+_IRQL_requires_max_(DISPATCH_LEVEL)
 KSDDKAPI
 VOID
 NTAPI
 KsSetDefaultClockTime(
-    IN PKSDEFAULTCLOCK DefaultClock,
-    IN LONGLONG Time
+    _In_ PKSDEFAULTCLOCK DefaultClock,
+    _In_ LONGLONG Time
     );
 
 // connect.c:
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 KSDDKAPI
 NTSTATUS
 NTAPI
 KsCreatePin(
-    IN HANDLE FilterHandle,
-    IN PKSPIN_CONNECT Connect,
-    IN ACCESS_MASK DesiredAccess,
-    OUT PHANDLE ConnectionHandle
+    _In_ HANDLE FilterHandle,
+    _In_ PKSPIN_CONNECT Connect,
+    _In_ ACCESS_MASK DesiredAccess,
+    _Out_ PHANDLE ConnectionHandle
     );
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 KSDDKAPI
 NTSTATUS
 NTAPI
 KsValidateConnectRequest(
-    IN PIRP Irp,
-    IN ULONG DescriptorsCount,
-    IN const KSPIN_DESCRIPTOR* Descriptor,
-    OUT PKSPIN_CONNECT* Connect
+    _In_ PIRP Irp,
+    _In_ ULONG DescriptorsCount,
+    _In_reads_(DescriptorsCount) const KSPIN_DESCRIPTOR* Descriptor,
+    _Out_ PKSPIN_CONNECT* Connect
     );
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 KSDDKAPI
 NTSTATUS
 NTAPI
 KsPinPropertyHandler(
-    IN PIRP Irp,
-    IN PKSPROPERTY Property,
-    IN OUT PVOID Data,
-    IN ULONG DescriptorsCount,
-    IN const KSPIN_DESCRIPTOR* Descriptor
+    _In_ PIRP Irp,
+    _In_ PKSPROPERTY Property,
+    _Inout_ PVOID Data,
+    _In_ ULONG DescriptorsCount,
+    _In_reads_(DescriptorsCount) const KSPIN_DESCRIPTOR* Descriptor
     );
 
+_Must_inspect_result_
+_IRQL_requires_max_(PASSIVE_LEVEL)
 KSDDKAPI
 NTSTATUS
 NTAPI
 KsPinDataIntersection(
-    IN PIRP Irp,
-    IN PKSP_PIN Pin,
-    OUT PVOID Data OPTIONAL,
-    IN ULONG DescriptorsCount,
-    IN const KSPIN_DESCRIPTOR* Descriptor,
-    IN PFNKSINTERSECTHANDLER IntersectHandler
+    _In_ PIRP Irp,
+    _In_ PKSP_PIN Pin,
+    _Out_opt_ PVOID Data,
+    _In_ ULONG DescriptorsCount,
+    _In_reads_(DescriptorsCount) const KSPIN_DESCRIPTOR* Descriptor,
+    _In_ PFNKSINTERSECTHANDLER IntersectHandler
     );
 
+_Must_inspect_result_
+_IRQL_requires_max_(PASSIVE_LEVEL)
 KSDDKAPI
 NTSTATUS
 NTAPI
 KsPinDataIntersectionEx(
-    IN PIRP Irp,
-    IN PKSP_PIN Pin,
-    OUT PVOID Data,
-    IN ULONG DescriptorsCount,
-    IN const KSPIN_DESCRIPTOR* Descriptor,
-    IN ULONG DescriptorSize,
-    IN PFNKSINTERSECTHANDLEREX IntersectHandler OPTIONAL,
-    IN PVOID HandlerContext OPTIONAL
+    _In_ PIRP Irp,
+    _In_ PKSP_PIN Pin,
+    _Out_ PVOID Data,
+    _In_ ULONG DescriptorsCount,
+    _In_reads_bytes_(DescriptorsCount * DescriptorSize) const KSPIN_DESCRIPTOR* Descriptor,
+    _In_ ULONG DescriptorSize,
+    _In_opt_ PFNKSINTERSECTHANDLEREX IntersectHandler,
+    _In_opt_ PVOID HandlerContext
     );
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 KSDDKAPI
 NTSTATUS
 NTAPI
 KsHandleSizedListQuery(
-    IN PIRP Irp,
-    IN ULONG DataItemsCount,
-    IN ULONG DataItemSize,
-    IN const VOID* DataItems
+    _In_ PIRP Irp,
+    _In_ ULONG DataItemsCount,
+    _In_ ULONG DataItemSize,
+    _In_reads_bytes_(DataItemsCount * DataItemSize) const VOID* DataItems
     );
 
 // image.c:
@@ -3964,752 +4508,821 @@ KsHandleSizedListQuery(
 #define RT_RCDATA           MAKEINTRESOURCE( 10 ) 
 #endif
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 KSDDKAPI
 NTSTATUS
 NTAPI
 KsLoadResource(
-    IN PVOID ImageBase,
-    IN POOL_TYPE PoolType,
-    IN ULONG_PTR ResourceName,
-    IN ULONG ResourceType,
-    OUT PVOID *Resource,
-    OUT PULONG ResourceSize            
+    _In_ PVOID ImageBase,
+    _In_ POOL_TYPE PoolType,
+    _In_ ULONG_PTR ResourceName,
+    _In_ ULONG ResourceType,
+    _Outptr_result_bytebuffer_(*ResourceSize) PVOID *Resource,
+    _Out_opt_ PULONG ResourceSize            
     );
     
+_IRQL_requires_max_(PASSIVE_LEVEL)
 KSDDKAPI
 NTSTATUS
 NTAPI
 KsGetImageNameAndResourceId(
-    IN HANDLE RegKey,
-    OUT PUNICODE_STRING ImageName,                
-    OUT PULONG_PTR ResourceId,
-    OUT PULONG ValueType
+    _In_ HANDLE RegKey,
+    _Out_ PUNICODE_STRING ImageName,                
+    _Out_ PULONG_PTR ResourceId,
+    _Out_ PULONG ValueType
 );
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 KSDDKAPI
 NTSTATUS
 NTAPI
 KsMapModuleName(
-    IN PDEVICE_OBJECT PhysicalDeviceObject,
-    IN PUNICODE_STRING ModuleName,
-    OUT PUNICODE_STRING ImageName,                
-    OUT PULONG_PTR ResourceId,
-    OUT PULONG ValueType
+    _In_ PDEVICE_OBJECT PhysicalDeviceObject,
+    _In_ PUNICODE_STRING ModuleName,
+    _Out_ PUNICODE_STRING ImageName,                
+    _Out_ PULONG_PTR ResourceId,
+    _Out_ PULONG ValueType
     );
     
 // irp.c:
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 KSDDKAPI
 NTSTATUS
 NTAPI
 KsReferenceBusObject(
-    IN KSDEVICE_HEADER  Header
+    _In_ KSDEVICE_HEADER  Header
     );
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 KSDDKAPI
 VOID
 NTAPI
 KsDereferenceBusObject(
-    IN KSDEVICE_HEADER  Header
+    _In_ KSDEVICE_HEADER  Header
     );
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 KSDDKAPI
 NTSTATUS
 NTAPI
 KsDispatchQuerySecurity(
-    IN PDEVICE_OBJECT DeviceObject,
-    IN PIRP Irp
+    _In_ PDEVICE_OBJECT DeviceObject,
+    _In_ PIRP Irp
     );
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 KSDDKAPI
 NTSTATUS
 NTAPI
 KsDispatchSetSecurity(
-    IN PDEVICE_OBJECT DeviceObject,
-    IN PIRP Irp
+    _In_ PDEVICE_OBJECT DeviceObject,
+    _In_ PIRP Irp
     );
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 KSDDKAPI
 NTSTATUS
 NTAPI
 KsDispatchSpecificProperty(
-    IN PIRP Irp,
-    IN PFNKSHANDLER Handler
+    _In_ PIRP Irp,
+    _In_ PFNKSHANDLER Handler
     );
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 KSDDKAPI
 NTSTATUS
 NTAPI
 KsDispatchSpecificMethod(
-    IN PIRP Irp,
-    IN PFNKSHANDLER Handler
+    _In_ PIRP Irp,
+    _In_ PFNKSHANDLER Handler
     );
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 KSDDKAPI
 NTSTATUS
 NTAPI
 KsReadFile(
-    IN PFILE_OBJECT FileObject,
-    IN PKEVENT Event OPTIONAL,
-    IN PVOID PortContext OPTIONAL,
-    OUT PIO_STATUS_BLOCK IoStatusBlock,
-    OUT PVOID Buffer,
-    IN ULONG Length,
-    IN ULONG Key OPTIONAL,
-    IN KPROCESSOR_MODE RequestorMode
+    _In_ PFILE_OBJECT FileObject,
+    _In_opt_ PKEVENT Event,
+    _In_opt_ PVOID PortContext,
+    _Out_ PIO_STATUS_BLOCK IoStatusBlock,
+    _Out_writes_bytes_(Length) PVOID Buffer,
+    _In_ ULONG Length,
+    _In_ ULONG Key OPTIONAL,
+    _In_ KPROCESSOR_MODE RequestorMode
     );
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 KSDDKAPI
 NTSTATUS
 NTAPI
 KsWriteFile(
-    IN PFILE_OBJECT FileObject,
-    IN PKEVENT Event OPTIONAL,
-    IN PVOID PortContext OPTIONAL,
-    OUT PIO_STATUS_BLOCK IoStatusBlock,
-    IN PVOID Buffer,
-    IN ULONG Length,
-    IN ULONG Key OPTIONAL,
-    IN KPROCESSOR_MODE RequestorMode
+    _In_ PFILE_OBJECT FileObject,
+    _In_opt_ PKEVENT Event,
+    _In_opt_ PVOID PortContext,
+    _Out_ PIO_STATUS_BLOCK IoStatusBlock,
+    _In_reads_bytes_(Length) PVOID Buffer,
+    _In_ ULONG Length,
+    _In_ ULONG Key OPTIONAL,
+    _In_ KPROCESSOR_MODE RequestorMode
     );
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 KSDDKAPI
 NTSTATUS
 NTAPI
 KsQueryInformationFile(
-    IN PFILE_OBJECT FileObject,
-    OUT PVOID FileInformation,
-    IN ULONG Length,
-    IN FILE_INFORMATION_CLASS FileInformationClass
+    _In_ PFILE_OBJECT FileObject,
+    _Out_writes_bytes_(Length) PVOID FileInformation,
+    _In_ ULONG Length,
+    _In_ FILE_INFORMATION_CLASS FileInformationClass
     );
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 KSDDKAPI
 NTSTATUS
 NTAPI
 KsSetInformationFile(
-    IN PFILE_OBJECT FileObject,
-    IN PVOID FileInformation,
-    IN ULONG Length,
-    IN FILE_INFORMATION_CLASS FileInformationClass
+    _In_ PFILE_OBJECT FileObject,
+    _In_reads_bytes_(Length) PVOID FileInformation,
+    _In_ ULONG Length,
+    _In_ FILE_INFORMATION_CLASS FileInformationClass
     );
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 KSDDKAPI
 NTSTATUS
 NTAPI
 KsStreamIo(
-    IN PFILE_OBJECT FileObject,
-    IN PKEVENT Event OPTIONAL,
-    IN PVOID PortContext OPTIONAL,
-    IN PIO_COMPLETION_ROUTINE CompletionRoutine OPTIONAL,
-    IN PVOID CompletionContext OPTIONAL,
-    IN KSCOMPLETION_INVOCATION CompletionInvocationFlags OPTIONAL,
-    OUT PIO_STATUS_BLOCK IoStatusBlock,
-    IN OUT PVOID StreamHeaders,
-    IN ULONG Length,
-    IN ULONG Flags,
-    IN KPROCESSOR_MODE RequestorMode
+    _In_ PFILE_OBJECT FileObject,
+    _In_opt_ PKEVENT Event,
+    _In_opt_ PVOID PortContext,
+    _In_opt_ PIO_COMPLETION_ROUTINE CompletionRoutine,
+    _In_opt_ PVOID CompletionContext,
+    _In_ KSCOMPLETION_INVOCATION CompletionInvocationFlags OPTIONAL,
+    _Out_ PIO_STATUS_BLOCK IoStatusBlock,
+    _Inout_updates_bytes_(Length) PVOID StreamHeaders,
+    _In_ ULONG Length,
+    _In_ ULONG Flags,
+    _In_ KPROCESSOR_MODE RequestorMode
     );
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 KSDDKAPI
 NTSTATUS
 NTAPI
 KsProbeStreamIrp(
-    IN OUT PIRP Irp,
-    IN ULONG ProbeFlags,
-    IN ULONG HeaderSize OPTIONAL
+    _Inout_ PIRP Irp,
+    _In_ ULONG ProbeFlags,
+    _In_ ULONG HeaderSize OPTIONAL
     );
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 KSDDKAPI
 NTSTATUS
 NTAPI
 KsAllocateExtraData(
-    IN OUT PIRP Irp,
-    IN ULONG ExtraSize,
-    OUT PVOID* ExtraBuffer
+    _Inout_ PIRP Irp,
+    _In_ ULONG ExtraSize,
+    _Out_ PVOID* ExtraBuffer
     );
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 KSDDKAPI
 VOID
 NTAPI
 KsNullDriverUnload(
-    IN PDRIVER_OBJECT DriverObject
+    _In_ PDRIVER_OBJECT DriverObject
     );
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 KSDDKAPI
 NTSTATUS
 NTAPI
 KsSetMajorFunctionHandler(
-    IN PDRIVER_OBJECT DriverObject,
-    IN ULONG MajorFunction
+    _In_ PDRIVER_OBJECT DriverObject,
+    _In_ ULONG MajorFunction
     );
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 KSDDKAPI
 NTSTATUS
 NTAPI
 KsDispatchInvalidDeviceRequest(
-    IN PDEVICE_OBJECT DeviceObject,
-    IN PIRP Irp
+    _In_ PDEVICE_OBJECT DeviceObject,
+    _In_ PIRP Irp
     );
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 KSDDKAPI
 NTSTATUS
 NTAPI
 KsDefaultDeviceIoCompletion(
-    IN PDEVICE_OBJECT DeviceObject,
-    IN PIRP Irp
+    _In_ PDEVICE_OBJECT DeviceObject,
+    _In_ PIRP Irp
     );
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 KSDDKAPI
 NTSTATUS
 NTAPI
 KsDispatchIrp(
-    IN PDEVICE_OBJECT DeviceObject,
-    IN PIRP Irp
+    _In_ PDEVICE_OBJECT DeviceObject,
+    _In_ PIRP Irp
     );
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 KSDDKAPI
 BOOLEAN
 NTAPI
 KsDispatchFastIoDeviceControlFailure(
-    IN PFILE_OBJECT FileObject,
-    IN BOOLEAN Wait,
-    IN PVOID InputBuffer OPTIONAL,
-    IN ULONG InputBufferLength,
-    OUT PVOID OutputBuffer OPTIONAL,
-    IN ULONG OutputBufferLength,
-    IN ULONG IoControlCode,
-    OUT PIO_STATUS_BLOCK IoStatus,
-    IN PDEVICE_OBJECT DeviceObject
+    _In_ PFILE_OBJECT FileObject,
+    _In_ BOOLEAN Wait,
+    _In_reads_bytes_opt_(InputBufferLength) PVOID InputBuffer,
+    _In_ ULONG InputBufferLength,
+    _Out_writes_bytes_opt_(OutputBufferLength) PVOID OutputBuffer,
+    _In_ ULONG OutputBufferLength,
+    _In_ ULONG IoControlCode,
+    _Out_ PIO_STATUS_BLOCK IoStatus,
+    _In_ PDEVICE_OBJECT DeviceObject
     );
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 KSDDKAPI
 BOOLEAN
 NTAPI
 KsDispatchFastReadFailure(
-    IN PFILE_OBJECT FileObject,
-    IN PLARGE_INTEGER FileOffset,
-    IN ULONG Length,
-    IN BOOLEAN Wait,
-    IN ULONG LockKey,
-    OUT PVOID Buffer,
-    OUT PIO_STATUS_BLOCK IoStatus,
-    IN PDEVICE_OBJECT DeviceObject
+    _In_ PFILE_OBJECT FileObject,
+    _In_ PLARGE_INTEGER FileOffset,
+    _In_ ULONG Length,
+    _In_ BOOLEAN Wait,
+    _In_ ULONG LockKey,
+    _Out_ PVOID Buffer,
+    _Out_ PIO_STATUS_BLOCK IoStatus,
+    _In_ PDEVICE_OBJECT DeviceObject
     );
 
 #define KsDispatchFastWriteFailure KsDispatchFastReadFailure
 
+_IRQL_requires_max_(DISPATCH_LEVEL)
 KSDDKAPI
-VOID
-NTAPI
-KsCancelRoutine(
-    IN PDEVICE_OBJECT DeviceObject,
-    IN PIRP Irp
-    );
+DRIVER_CANCEL KsCancelRoutine;
 
+_IRQL_requires_max_(DISPATCH_LEVEL)
 KSDDKAPI
 VOID
 NTAPI
 KsCancelIo(   
-    IN OUT PLIST_ENTRY  QueueHead,
-    IN PKSPIN_LOCK SpinLock
+    _Inout_ PLIST_ENTRY  QueueHead,
+    _In_ PKSPIN_LOCK SpinLock
     );
 
+_IRQL_requires_max_(DISPATCH_LEVEL)
 KSDDKAPI
 VOID
 NTAPI
 KsReleaseIrpOnCancelableQueue(
-    IN PIRP Irp,
-    IN PDRIVER_CANCEL DriverCancel OPTIONAL
+    _In_ PIRP Irp,
+    _In_opt_ PDRIVER_CANCEL DriverCancel
     );
 
+_IRQL_requires_max_(DISPATCH_LEVEL)
 KSDDKAPI
 PIRP
 NTAPI
 KsRemoveIrpFromCancelableQueue(
-    IN OUT PLIST_ENTRY QueueHead,
-    IN PKSPIN_LOCK SpinLock,
-    IN KSLIST_ENTRY_LOCATION ListLocation,
-    IN KSIRP_REMOVAL_OPERATION RemovalOperation
+    _Inout_ PLIST_ENTRY QueueHead,
+    _In_ PKSPIN_LOCK SpinLock,
+    _In_ KSLIST_ENTRY_LOCATION ListLocation,
+    _In_ KSIRP_REMOVAL_OPERATION RemovalOperation
     );
 
+_IRQL_requires_max_(DISPATCH_LEVEL)
 KSDDKAPI
 NTSTATUS
 NTAPI
 KsMoveIrpsOnCancelableQueue(
-    IN OUT PLIST_ENTRY SourceList,
-    IN PKSPIN_LOCK SourceLock,
-    IN OUT PLIST_ENTRY DestinationList,
-    IN PKSPIN_LOCK DestinationLock OPTIONAL,
-    IN KSLIST_ENTRY_LOCATION ListLocation,
-    IN PFNKSIRPLISTCALLBACK ListCallback,
-    IN PVOID Context
+    _Inout_ PLIST_ENTRY SourceList,
+    _In_ PKSPIN_LOCK SourceLock,
+    _Inout_ PLIST_ENTRY DestinationList,
+    _In_opt_ PKSPIN_LOCK DestinationLock,
+    _In_ KSLIST_ENTRY_LOCATION ListLocation,
+    _In_ PFNKSIRPLISTCALLBACK ListCallback,
+    _In_ PVOID Context
     );
 
+_IRQL_requires_max_(DISPATCH_LEVEL)
 KSDDKAPI
 VOID
 NTAPI
 KsRemoveSpecificIrpFromCancelableQueue(
-    IN PIRP Irp
+    _In_ PIRP Irp
     );
 
+_IRQL_requires_max_(DISPATCH_LEVEL)
 KSDDKAPI
 VOID
 NTAPI
 KsAddIrpToCancelableQueue(
-    IN OUT PLIST_ENTRY QueueHead,
-    IN PKSPIN_LOCK SpinLock,
-    IN PIRP Irp,
-    IN KSLIST_ENTRY_LOCATION ListLocation,
-    IN PDRIVER_CANCEL DriverCancel OPTIONAL
+    _Inout_ PLIST_ENTRY QueueHead,
+    _In_ PKSPIN_LOCK SpinLock,
+    _In_ PIRP Irp,
+    _In_ KSLIST_ENTRY_LOCATION ListLocation,
+    _In_opt_ PDRIVER_CANCEL DriverCancel
     );
 
 // api.c:
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 KSDDKAPI
 NTSTATUS
 NTAPI
 KsAcquireResetValue(
-    IN PIRP Irp,
-    OUT KSRESET* ResetValue
+    _In_ PIRP Irp,
+    _Out_ KSRESET* ResetValue
     );
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 KSDDKAPI
 NTSTATUS
 NTAPI
 KsTopologyPropertyHandler(
-    IN PIRP Irp,
-    IN PKSPROPERTY Property,
-    IN OUT PVOID Data,
-    IN const KSTOPOLOGY* Topology
+    _In_ PIRP Irp,
+    _In_ PKSPROPERTY Property,
+    _Inout_ PVOID Data,
+    _In_ const KSTOPOLOGY* Topology
     );
 
+_IRQL_requires_max_(APC_LEVEL)
 KSDDKAPI
 VOID
 NTAPI
 KsAcquireDeviceSecurityLock(
-    IN KSDEVICE_HEADER Header,
-    IN BOOLEAN Exclusive
+    _In_ KSDEVICE_HEADER Header,
+    _In_ BOOLEAN Exclusive
     );
 
+_IRQL_requires_max_(APC_LEVEL)
 KSDDKAPI
 VOID
 NTAPI
 KsReleaseDeviceSecurityLock(
-    IN KSDEVICE_HEADER Header
+    _In_ KSDEVICE_HEADER Header
     );
     
 KSDDKAPI
-NTSTATUS
-NTAPI
-KsDefaultDispatchPnp(
-    IN PDEVICE_OBJECT DeviceObject,
-    IN PIRP Irp
-    );
+_Dispatch_type_(IRP_MJ_PNP) DRIVER_DISPATCH KsDefaultDispatchPnp;
 
 KSDDKAPI
-NTSTATUS
-NTAPI
-KsDefaultDispatchPower(
-    IN PDEVICE_OBJECT DeviceObject,
-    IN PIRP Irp
-    );
+_Dispatch_type_(IRP_MJ_POWER) DRIVER_DISPATCH KsDefaultDispatchPower;
     
 KSDDKAPI
-NTSTATUS
-NTAPI
-KsDefaultForwardIrp(
-    IN PDEVICE_OBJECT DeviceObject,
-    IN PIRP Irp
-    );
+_Dispatch_type_(IRP_MJ_SYSTEM_CONTROL) 
+_Dispatch_type_(IRP_MJ_DEVICE_CONTROL)
+DRIVER_DISPATCH KsDefaultForwardIrp;
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 KSDDKAPI
 VOID
 NTAPI
 KsSetDevicePnpAndBaseObject(
-    IN KSDEVICE_HEADER Header,
-    IN PDEVICE_OBJECT PnpDeviceObject,
-    IN PDEVICE_OBJECT BaseObject
+    _In_ KSDEVICE_HEADER Header,
+    _In_ PDEVICE_OBJECT PnpDeviceObject,
+    _In_ PDEVICE_OBJECT BaseObject
     );
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 KSDDKAPI
 PDEVICE_OBJECT
 NTAPI
 KsQueryDevicePnpObject(
-    IN KSDEVICE_HEADER Header
+    _In_ KSDEVICE_HEADER Header
     );
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 KSDDKAPI
 ACCESS_MASK
 NTAPI
 KsQueryObjectAccessMask(
-    IN KSOBJECT_HEADER Header
+    _In_ KSOBJECT_HEADER Header
     );
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 KSDDKAPI
 VOID
 NTAPI
 KsRecalculateStackDepth(
-    IN KSDEVICE_HEADER Header,
-    IN BOOLEAN ReuseStackLocation
+    _In_ KSDEVICE_HEADER Header,
+    _In_ BOOLEAN ReuseStackLocation
     );
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 KSDDKAPI
 VOID
 NTAPI
 KsSetTargetState(
-    IN KSOBJECT_HEADER Header,
-    IN KSTARGET_STATE TargetState
+    _In_ KSOBJECT_HEADER Header,
+    _In_ KSTARGET_STATE TargetState
     );
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 KSDDKAPI
 VOID
 NTAPI
 KsSetTargetDeviceObject(
-    IN KSOBJECT_HEADER Header,
-    IN PDEVICE_OBJECT TargetDevice OPTIONAL
+    _In_ KSOBJECT_HEADER Header,
+    _In_opt_ PDEVICE_OBJECT TargetDevice
     );
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 KSDDKAPI
 VOID
 NTAPI
 KsSetPowerDispatch(
-    IN KSOBJECT_HEADER Header,
-    IN PFNKSCONTEXT_DISPATCH PowerDispatch OPTIONAL,
-    IN PVOID PowerContext OPTIONAL
+    _In_ KSOBJECT_HEADER Header,
+    _In_opt_ PFNKSCONTEXT_DISPATCH PowerDispatch,
+    _In_opt_ PVOID PowerContext
     );
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 KSDDKAPI
 PKSOBJECT_CREATE_ITEM
 NTAPI
 KsQueryObjectCreateItem(
-    IN KSOBJECT_HEADER Header
+    _In_ KSOBJECT_HEADER Header
     );
 
+_IRQL_requires_max_(APC_LEVEL)
 KSDDKAPI
 NTSTATUS
 NTAPI
 KsAllocateDeviceHeader(
-    OUT KSDEVICE_HEADER* Header,
-    IN ULONG ItemsCount,
-    IN PKSOBJECT_CREATE_ITEM ItemsList OPTIONAL
+    _Out_ KSDEVICE_HEADER* Header,
+    _In_ ULONG ItemsCount,
+    _In_reads_opt_(ItemsCount) PKSOBJECT_CREATE_ITEM ItemsList
     );
 
+_IRQL_requires_max_(APC_LEVEL)
 KSDDKAPI
 VOID
 NTAPI
 KsFreeDeviceHeader(
-    IN KSDEVICE_HEADER Header
+    _In_ KSDEVICE_HEADER Header
     );
 
+_IRQL_requires_max_(APC_LEVEL)
 KSDDKAPI
 NTSTATUS
 NTAPI
 KsAllocateObjectHeader(
-    OUT KSOBJECT_HEADER* Header,
-    IN ULONG ItemsCount,
-    IN PKSOBJECT_CREATE_ITEM ItemsList OPTIONAL,
-    IN PIRP Irp,
-    IN const KSDISPATCH_TABLE* Table
+    _Out_ KSOBJECT_HEADER* Header,
+    _In_ ULONG ItemsCount,
+    _In_reads_opt_(ItemsCount) PKSOBJECT_CREATE_ITEM ItemsList,
+    _In_ PIRP Irp,
+    _In_ const KSDISPATCH_TABLE* Table
     );
 
+_IRQL_requires_max_(APC_LEVEL)
 KSDDKAPI
 VOID
 NTAPI
 KsFreeObjectHeader(
-    IN KSOBJECT_HEADER Header
+    _In_ KSOBJECT_HEADER Header
     );
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 KSDDKAPI
 NTSTATUS
 NTAPI
 KsAddObjectCreateItemToDeviceHeader(
-    IN KSDEVICE_HEADER Header,
-    IN PDRIVER_DISPATCH Create,
-    IN PVOID Context,
-    IN PWCHAR ObjectClass,
-    IN PSECURITY_DESCRIPTOR SecurityDescriptor OPTIONAL
+    _In_ KSDEVICE_HEADER Header,
+    _In_ PDRIVER_DISPATCH Create,
+    _In_ PVOID Context,
+    _In_ PWSTR ObjectClass,
+    _In_opt_ PSECURITY_DESCRIPTOR SecurityDescriptor
     );
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 KSDDKAPI
 NTSTATUS
 NTAPI
 KsAddObjectCreateItemToObjectHeader(
-    IN KSOBJECT_HEADER Header,
-    IN PDRIVER_DISPATCH Create,
-    IN PVOID Context,
-    IN PWCHAR ObjectClass,
-    IN PSECURITY_DESCRIPTOR SecurityDescriptor OPTIONAL
+    _In_ KSOBJECT_HEADER Header,
+    _In_ PDRIVER_DISPATCH Create,
+    _In_ PVOID Context,
+    _In_ PWSTR ObjectClass,
+    _In_opt_ PSECURITY_DESCRIPTOR SecurityDescriptor
     );
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 KSDDKAPI
 NTSTATUS
 NTAPI
 KsAllocateObjectCreateItem(
-    IN KSDEVICE_HEADER Header,
-    IN PKSOBJECT_CREATE_ITEM CreateItem,
-    IN BOOLEAN AllocateEntry,
-    IN PFNKSITEMFREECALLBACK ItemFreeCallback OPTIONAL
+    _In_ KSDEVICE_HEADER Header,
+    _In_ PKSOBJECT_CREATE_ITEM CreateItem,
+    _In_ BOOLEAN AllocateEntry,
+    _In_opt_ PFNKSITEMFREECALLBACK ItemFreeCallback
     );
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 KSDDKAPI
 NTSTATUS
 NTAPI
 KsFreeObjectCreateItem(
-    IN KSDEVICE_HEADER Header,
-    IN PUNICODE_STRING CreateItem
+    _In_ KSDEVICE_HEADER Header,
+    _In_ PUNICODE_STRING CreateItem
     );
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 KSDDKAPI
 NTSTATUS
 NTAPI
 KsFreeObjectCreateItemsByContext(
-    IN KSDEVICE_HEADER Header,
-    IN PVOID Context
+    _In_ KSDEVICE_HEADER Header,
+    _In_ PVOID Context
     );
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 KSDDKAPI
 NTSTATUS
 NTAPI
 KsCreateDefaultSecurity(
-    IN PSECURITY_DESCRIPTOR ParentSecurity OPTIONAL,
-    OUT PSECURITY_DESCRIPTOR* DefaultSecurity
+    _In_opt_ PSECURITY_DESCRIPTOR ParentSecurity,
+    _Out_ PSECURITY_DESCRIPTOR* DefaultSecurity
     );
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 KSDDKAPI
 NTSTATUS
 NTAPI
 KsForwardIrp(
-    IN PIRP Irp,
-    IN PFILE_OBJECT FileObject,
-    IN BOOLEAN ReuseStackLocation
+    _In_ PIRP Irp,
+    _In_ PFILE_OBJECT FileObject,
+    _In_ BOOLEAN ReuseStackLocation
     );
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 KSDDKAPI
 NTSTATUS
 NTAPI
 KsForwardAndCatchIrp(
-    IN PDEVICE_OBJECT DeviceObject,
-    IN PIRP Irp,
-    IN PFILE_OBJECT FileObject,
-    IN KSSTACK_USE StackUse
+    _In_ PDEVICE_OBJECT DeviceObject,
+    _In_ PIRP Irp,
+    _In_ PFILE_OBJECT FileObject,
+    _In_ KSSTACK_USE StackUse
     );
 
+_Must_inspect_result_
+_IRQL_requires_max_(PASSIVE_LEVEL)
 KSDDKAPI
 NTSTATUS
 NTAPI
 KsSynchronousIoControlDevice(
-    IN PFILE_OBJECT FileObject,
-    IN KPROCESSOR_MODE RequestorMode,
-    IN ULONG IoControl,
-    IN PVOID InBuffer,
-    IN ULONG InSize,
-    OUT PVOID OutBuffer,
-    IN ULONG OutSize,
-    OUT PULONG BytesReturned
+    _In_ PFILE_OBJECT FileObject,
+    _In_ KPROCESSOR_MODE RequestorMode,
+    _In_ ULONG IoControl,
+    _In_reads_bytes_(InSize) PVOID InBuffer,
+    _In_ ULONG InSize,
+    _Out_writes_bytes_to_(OutSize, *BytesReturned) PVOID OutBuffer,
+    _In_ ULONG OutSize,
+    _Out_ PULONG BytesReturned
     );
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 KSDDKAPI
 NTSTATUS
 NTAPI
 KsUnserializeObjectPropertiesFromRegistry(
-    IN PFILE_OBJECT FileObject,
-    IN HANDLE ParentKey OPTIONAL,
-    IN PUNICODE_STRING RegistryPath OPTIONAL
+    _In_ PFILE_OBJECT FileObject,
+    _In_opt_ HANDLE ParentKey,
+    _In_opt_ PUNICODE_STRING RegistryPath
     );
 
+#if (NTDDI_VERSION >= NTDDI_WINXP)
+
+_IRQL_requires_max_(PASSIVE_LEVEL)
 KSDDKAPI
 NTSTATUS
 NTAPI
 KsCacheMedium(
-    IN PUNICODE_STRING SymbolicLink,
-    IN PKSPIN_MEDIUM Medium,
-    IN ULONG PinDirection
+    _In_ PUNICODE_STRING SymbolicLink,
+    _In_ PKSPIN_MEDIUM Medium,
+    _In_ ULONG PinDirection
     );
+
+#endif // (NTDDI_VERSION >= NTDDI_WINXP)
 
 // thread.c:
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 KSDDKAPI
 NTSTATUS
 NTAPI
 KsRegisterWorker(
-    IN WORK_QUEUE_TYPE WorkQueueType,
-    OUT PKSWORKER* Worker
+    _In_ WORK_QUEUE_TYPE WorkQueueType,
+    _Out_ PKSWORKER* Worker
     );
+_IRQL_requires_max_(PASSIVE_LEVEL)
 KSDDKAPI
 NTSTATUS
 NTAPI
 KsRegisterCountedWorker(
-    IN WORK_QUEUE_TYPE WorkQueueType,
-    IN PWORK_QUEUE_ITEM CountedWorkItem,
-    OUT PKSWORKER* Worker
+    _In_ WORK_QUEUE_TYPE WorkQueueType,
+    _Inout_ PWORK_QUEUE_ITEM CountedWorkItem,
+    _Out_ PKSWORKER* Worker
     );
+_IRQL_requires_max_(PASSIVE_LEVEL)
 KSDDKAPI
 VOID
 NTAPI
 KsUnregisterWorker(
-    IN PKSWORKER Worker
+    _Inout_ PKSWORKER Worker
     );
+_IRQL_requires_max_(DISPATCH_LEVEL)
 KSDDKAPI
 NTSTATUS
 NTAPI
 KsQueueWorkItem(
-    IN PKSWORKER Worker,
-    IN PWORK_QUEUE_ITEM WorkItem
+    _Inout_ PKSWORKER Worker,
+    _Inout_ PWORK_QUEUE_ITEM WorkItem
     );
+_IRQL_requires_max_(DISPATCH_LEVEL)
 KSDDKAPI
 ULONG
 NTAPI
 KsIncrementCountedWorker(
-    IN PKSWORKER Worker
+    _Inout_ PKSWORKER Worker
     );
+_IRQL_requires_max_(DISPATCH_LEVEL)
 KSDDKAPI
 ULONG
 NTAPI
 KsDecrementCountedWorker(
-    IN PKSWORKER Worker
+    _Inout_ PKSWORKER Worker
     );
 
 // topology.c:
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 KSDDKAPI
 NTSTATUS
 NTAPI
 KsCreateTopologyNode(
-    IN HANDLE ParentHandle,
-    IN PKSNODE_CREATE NodeCreate,
-    IN ACCESS_MASK DesiredAccess,
-    OUT PHANDLE NodeHandle
+    _In_ HANDLE ParentHandle,
+    _In_ PKSNODE_CREATE NodeCreate,
+    _In_ ACCESS_MASK DesiredAccess,
+    _Out_ PHANDLE NodeHandle
     );
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 KSDDKAPI
 NTSTATUS
 NTAPI
 KsValidateTopologyNodeCreateRequest(
-    IN PIRP Irp,
-    IN PKSTOPOLOGY Topology,
-    OUT PKSNODE_CREATE* NodeCreate
+    _In_ PIRP Irp,
+    _In_ PKSTOPOLOGY Topology,
+    _Out_ PKSNODE_CREATE* NodeCreate
     );
 
+#if (NTDDI_VERSION >= NTDDI_WINXP)
+
+_IRQL_requires_max_(PASSIVE_LEVEL)
 KSDDKAPI
 NTSTATUS
 NTAPI
 KsMergeAutomationTables(
-    OUT PKSAUTOMATION_TABLE* AutomationTableAB,
-    IN PKSAUTOMATION_TABLE AutomationTableA OPTIONAL,
-    IN PKSAUTOMATION_TABLE AutomationTableB OPTIONAL,
-    IN KSOBJECT_BAG Bag OPTIONAL
+    _Out_ PKSAUTOMATION_TABLE* AutomationTableAB,
+    _In_opt_ PKSAUTOMATION_TABLE AutomationTableA,
+    _In_opt_ PKSAUTOMATION_TABLE AutomationTableB,
+    _In_opt_ KSOBJECT_BAG Bag
     );
 
+_Must_inspect_result_
+_IRQL_requires_max_(PASSIVE_LEVEL)
 KSDDKAPI
 NTSTATUS
 NTAPI
 KsInitializeDriver(
-    IN PDRIVER_OBJECT DriverObject,
-    IN PUNICODE_STRING RegistryPathName,
-    IN const KSDEVICE_DESCRIPTOR* Descriptor OPTIONAL
+    _In_ PDRIVER_OBJECT DriverObject,
+    _In_ PUNICODE_STRING RegistryPathName,
+    _In_opt_ const KSDEVICE_DESCRIPTOR* Descriptor
     );
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 KSDDKAPI
 NTSTATUS
 NTAPI
 KsAddDevice(
-    IN PDRIVER_OBJECT DriverObject,
-    IN PDEVICE_OBJECT PhysicalDeviceObject
+    _In_ PDRIVER_OBJECT DriverObject,
+    _In_ PDEVICE_OBJECT PhysicalDeviceObject
     );
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 KSDDKAPI
 NTSTATUS
 NTAPI
 KsCreateDevice(
-    IN PDRIVER_OBJECT DriverObject,
-    IN PDEVICE_OBJECT PhysicalDeviceObject,
-    IN const KSDEVICE_DESCRIPTOR* Descriptor OPTIONAL,
-    IN ULONG ExtensionSize OPTIONAL,
-    OUT PKSDEVICE* Device OPTIONAL
+    _In_ PDRIVER_OBJECT DriverObject,
+    _In_ PDEVICE_OBJECT PhysicalDeviceObject,
+    _In_opt_ const KSDEVICE_DESCRIPTOR* Descriptor,
+    _In_ ULONG ExtensionSize,
+    _Out_opt_ PKSDEVICE* Device
     );
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 KSDDKAPI
 NTSTATUS
 NTAPI
 KsInitializeDevice(
-    IN PDEVICE_OBJECT FunctionalDeviceObject,
-    IN PDEVICE_OBJECT PhysicalDeviceObject,
-    IN PDEVICE_OBJECT NextDeviceObject,
-    IN const KSDEVICE_DESCRIPTOR* Descriptor OPTIONAL
+    _In_ PDEVICE_OBJECT FunctionalDeviceObject,
+    _In_ PDEVICE_OBJECT PhysicalDeviceObject,
+    _In_ PDEVICE_OBJECT NextDeviceObject,
+    _In_opt_ const KSDEVICE_DESCRIPTOR* Descriptor
     );
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 KSDDKAPI
 void
 NTAPI
 KsTerminateDevice(
-    IN PDEVICE_OBJECT DeviceObject
+    _In_ PDEVICE_OBJECT DeviceObject
     );
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 KSDDKAPI
 PKSDEVICE
 NTAPI
 KsGetDeviceForDeviceObject(
-    IN PDEVICE_OBJECT FunctionalDeviceObject
+    _In_ PDEVICE_OBJECT FunctionalDeviceObject
     );
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 KSDDKAPI
 void
 NTAPI
 KsAcquireDevice(
-    IN PKSDEVICE Device
+    _In_ PKSDEVICE Device
     );
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 KSDDKAPI
 void
 NTAPI
 KsReleaseDevice(
-    IN PKSDEVICE Device
+    _In_ PKSDEVICE Device
     );
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 KSDDKAPI
 void
 NTAPI
 KsDeviceRegisterAdapterObject(
-    IN PKSDEVICE Device,
-    IN PADAPTER_OBJECT AdapterObject,
-    IN ULONG MaxMappingsByteCount,
-    IN ULONG MappingTableStride
+    _In_ PKSDEVICE Device,
+    _In_ PADAPTER_OBJECT AdapterObject,
+    _In_ ULONG MaxMappingsByteCount,
+    _In_ ULONG MappingTableStride
     );
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 KSDDKAPI
 ULONG
 NTAPI
 KsDeviceGetBusData(
-    IN PKSDEVICE Device,
-    IN ULONG DataType,
-    IN PVOID Buffer,
-    IN ULONG Offset,
-    IN ULONG Length
+    _In_ PKSDEVICE Device,
+    _In_ ULONG DataType,
+    _In_reads_bytes_(Length) PVOID Buffer,
+    _In_ ULONG Offset,
+    _In_ ULONG Length
     );
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 KSDDKAPI
 ULONG
 NTAPI
 KsDeviceSetBusData(
-    IN PKSDEVICE Device,
-    IN ULONG DataType,
-    IN PVOID Buffer,
-    IN ULONG Offset,
-    IN ULONG Length
+    _In_ PKSDEVICE Device,
+    _In_ ULONG DataType,
+    _In_reads_bytes_(Length) PVOID Buffer,
+    _In_ ULONG Offset,
+    _In_ ULONG Length
     );
 
+_Must_inspect_result_
+_IRQL_requires_max_(PASSIVE_LEVEL)
 KSDDKAPI
 NTSTATUS
 NTAPI
 KsCreateFilterFactory(
-    IN PDEVICE_OBJECT DeviceObject,
-    IN const KSFILTER_DESCRIPTOR* Descriptor,
-    IN PWCHAR RefString OPTIONAL,
-    IN PSECURITY_DESCRIPTOR SecurityDescriptor OPTIONAL,
-    IN ULONG CreateItemFlags,
-    IN PFNKSFILTERFACTORYPOWER SleepCallback OPTIONAL,
-    IN PFNKSFILTERFACTORYPOWER WakeCallback OPTIONAL,
-    OUT PKSFILTERFACTORY* FilterFactory OPTIONAL
+    _In_ PDEVICE_OBJECT DeviceObject,
+    _In_ const KSFILTER_DESCRIPTOR *Descriptor,
+    _In_opt_ PWSTR RefString,
+    _In_opt_ PSECURITY_DESCRIPTOR SecurityDescriptor,
+    _In_ ULONG CreateItemFlags,
+    _In_opt_ PFNKSFILTERFACTORYPOWER SleepCallback,
+    _In_opt_ PFNKSFILTERFACTORYPOWER WakeCallback,
+    _Out_opt_ PKSFILTERFACTORY *FilterFactory
     );
 
 #define KsDeleteFilterFactory(FilterFactory) \
@@ -4719,96 +5332,140 @@ KsCreateFilterFactory(
                 DeviceExtension),\
         FilterFactory)
 
+_Must_inspect_result_
+_IRQL_requires_max_(PASSIVE_LEVEL)
 KSDDKAPI
 NTSTATUS
 NTAPI
 KsFilterFactoryUpdateCacheData(
-    IN PKSFILTERFACTORY FilterFactory,
-    IN const KSFILTER_DESCRIPTOR *FilterDescriptor OPTIONAL
+    _In_ PKSFILTERFACTORY FilterFactory,
+    _In_opt_ const KSFILTER_DESCRIPTOR *FilterDescriptor
     );
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 KSDDKAPI
 NTSTATUS
 NTAPI
 KsFilterFactoryAddCreateItem(
-    IN PKSFILTERFACTORY FilterFactory,
-    IN PWCHAR RefString,
-    IN PSECURITY_DESCRIPTOR SecurityDescriptor OPTIONAL,
-    IN ULONG CreateItemFlags
+    _In_ PKSFILTERFACTORY FilterFactory,
+    _In_ PWSTR RefString,
+    _In_opt_ PSECURITY_DESCRIPTOR SecurityDescriptor,
+    _In_ ULONG CreateItemFlags
     );
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 KSDDKAPI
 NTSTATUS
 NTAPI
 KsFilterFactorySetDeviceClassesState(
-    IN PKSFILTERFACTORY FilterFactory,
-    IN BOOLEAN NewState
+    _In_ PKSFILTERFACTORY FilterFactory,
+    _In_ BOOLEAN NewState
     );
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 KSDDKAPI
 PUNICODE_STRING
 NTAPI
 KsFilterFactoryGetSymbolicLink(
-    IN PKSFILTERFACTORY FilterFactory
+    _In_ PKSFILTERFACTORY FilterFactory
     );
 
+#if (NTDDI_VERSION >= NTDDI_WINTHRESHOLD)
+
+// Forward decl.
+typedef struct _KSDEVICE_PROFILE_INFO
+KSDEVICE_PROFILE_INFO, *PKSDEVICE_PROFILE_INFO;
+
+__drv_maxIRQL(PASSIVE_LEVEL)
+KSDDKAPI
+NTSTATUS
+NTAPI
+KsInitializeDeviceProfile(
+    _In_ PKSFILTERFACTORY FilterFactory
+    );
+
+__drv_maxIRQL(PASSIVE_LEVEL)
+KSDDKAPI
+NTSTATUS
+NTAPI
+KsPublishDeviceProfile(
+    _In_ PKSFILTERFACTORY FilterFactory,
+    _In_ PKSDEVICE_PROFILE_INFO Profile
+    );
+
+__drv_maxIRQL(PASSIVE_LEVEL)
+KSDDKAPI
+NTSTATUS
+NTAPI
+KsPersistDeviceProfile(
+    _In_ PKSFILTERFACTORY FilterFactory
+    );
+
+#endif // NTDDI_WINTHRESHOLD
+
+_IRQL_requires_max_(PASSIVE_LEVEL)
 KSDDKAPI
 void
 NTAPI
 KsAddEvent(
-    IN PVOID Object,
-    IN PKSEVENT_ENTRY EventEntry
+    _In_ PVOID Object,
+    _In_ PKSEVENT_ENTRY EventEntry
     );
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 void _inline
 KsFilterAddEvent(
-    IN PKSFILTER Filter,
-    IN PKSEVENT_ENTRY EventEntry
+    _In_ PKSFILTER Filter,
+    _In_ PKSEVENT_ENTRY EventEntry
     )
 {
     KsAddEvent(Filter,EventEntry);
 }
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 void _inline
 KsPinAddEvent(
-    IN PKSPIN Pin,
-    IN PKSEVENT_ENTRY EventEntry
+    _In_ PKSPIN Pin,
+    _In_ PKSEVENT_ENTRY EventEntry
     )
 {
     KsAddEvent(Pin,EventEntry);
 }
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 KSDDKAPI
 NTSTATUS    
 NTAPI
 KsDefaultAddEventHandler(
-    IN PIRP Irp,
-    IN PKSEVENTDATA EventData,
-    IN OUT PKSEVENT_ENTRY EventEntry
+    _In_ PIRP Irp,
+    _In_ PKSEVENTDATA EventData,
+    _Inout_ PKSEVENT_ENTRY EventEntry
     );
 
+_IRQL_requires_max_(DISPATCH_LEVEL)
 KSDDKAPI
 void
 NTAPI
 KsGenerateEvents(
-    IN PVOID Object,
-    IN const GUID* EventSet OPTIONAL,
-    IN ULONG EventId,
-    IN ULONG DataSize,
-    IN PVOID Data OPTIONAL,
-    IN PFNKSGENERATEEVENTCALLBACK CallBack OPTIONAL,
-    IN PVOID CallBackContext OPTIONAL
+    _In_ PVOID Object,
+    _In_opt_ const GUID* EventSet,
+    _In_ ULONG EventId,
+    _In_ ULONG DataSize,
+    _In_reads_bytes_opt_(DataSize) PVOID Data,
+    _In_opt_ PFNKSGENERATEEVENTCALLBACK CallBack,
+    _In_opt_ PVOID CallBackContext
     );
 
+_IRQL_requires_max_(DISPATCH_LEVEL)
 void _inline
 KsFilterGenerateEvents(
-    IN PKSFILTER Filter,
-    IN const GUID* EventSet OPTIONAL,
-    IN ULONG EventId,
-    IN ULONG DataSize,
-    IN PVOID Data OPTIONAL,
-    IN PFNKSGENERATEEVENTCALLBACK CallBack OPTIONAL,
-    IN PVOID CallBackContext OPTIONAL
+    _In_ PKSFILTER Filter,
+    _In_opt_ const GUID* EventSet,
+    _In_ ULONG EventId,
+    _In_ ULONG DataSize,
+    _In_reads_bytes_(DataSize) PVOID Data,
+    _In_opt_ PFNKSGENERATEEVENTCALLBACK CallBack,
+    _In_opt_ PVOID CallBackContext
     )
 {
     KsGenerateEvents(
@@ -4821,15 +5478,16 @@ KsFilterGenerateEvents(
         CallBackContext);
 }
 
+_IRQL_requires_max_(DISPATCH_LEVEL)
 void _inline
 KsPinGenerateEvents(
-    IN PKSPIN Pin,
-    IN const GUID* EventSet OPTIONAL,
-    IN ULONG EventId,
-    IN ULONG DataSize,
-    IN PVOID Data OPTIONAL,
-    IN PFNKSGENERATEEVENTCALLBACK CallBack OPTIONAL,
-    IN PVOID CallBackContext OPTIONAL
+    _In_ PKSPIN Pin,
+    _In_opt_ const GUID* EventSet,
+    _In_ ULONG EventId,
+    _In_ ULONG DataSize,
+    _In_reads_bytes_opt_(DataSize) PVOID Data,
+    _In_opt_ PFNKSGENERATEEVENTCALLBACK CallBack,
+    _In_opt_ PVOID CallBackContext
     )
 {
     KsGenerateEvents(
@@ -4847,501 +5505,572 @@ typedef enum {
     KSSTREAM_POINTER_STATE_LOCKED
 } KSSTREAM_POINTER_STATE;
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 KSDDKAPI
 NTSTATUS
 NTAPI
 KsPinGetAvailableByteCount(
-    IN PKSPIN Pin,
-    OUT PLONG InputDataBytes OPTIONAL,
-    OUT PLONG OutputBufferBytes OPTIONAL
+    _In_ PKSPIN Pin,
+    _Out_opt_ PLONG InputDataBytes,
+    _Out_opt_ PLONG OutputBufferBytes
     );
 
+_Must_inspect_result_
+_IRQL_requires_max_(DISPATCH_LEVEL)
 KSDDKAPI
 PKSSTREAM_POINTER
 NTAPI
 KsPinGetLeadingEdgeStreamPointer(
-    IN PKSPIN Pin,
-    IN KSSTREAM_POINTER_STATE State
+    _In_ PKSPIN Pin,
+    _In_ KSSTREAM_POINTER_STATE State
     );
 
+
+_Must_inspect_result_
+_IRQL_requires_max_(DISPATCH_LEVEL)
 KSDDKAPI
 PKSSTREAM_POINTER
 NTAPI
 KsPinGetTrailingEdgeStreamPointer(
-    IN PKSPIN Pin,
-    IN KSSTREAM_POINTER_STATE State
+    _In_ PKSPIN Pin,
+    _In_ KSSTREAM_POINTER_STATE State
     );
 
+_IRQL_requires_max_(DISPATCH_LEVEL)
 KSDDKAPI
 NTSTATUS
 NTAPI
 KsStreamPointerSetStatusCode(
-    IN PKSSTREAM_POINTER StreamPointer,
-    IN NTSTATUS Status
+    _In_ PKSSTREAM_POINTER StreamPointer,
+    _In_ NTSTATUS Status
     );
 
+_IRQL_requires_max_(DISPATCH_LEVEL)
 KSDDKAPI
 NTSTATUS
 NTAPI
 KsStreamPointerLock(
-    IN PKSSTREAM_POINTER StreamPointer
+    _In_ PKSSTREAM_POINTER StreamPointer
     );
 
+_IRQL_requires_max_(DISPATCH_LEVEL)
 KSDDKAPI
 void
 NTAPI
 KsStreamPointerUnlock(
-    IN PKSSTREAM_POINTER StreamPointer,
-    IN BOOLEAN Eject
+    _In_ PKSSTREAM_POINTER StreamPointer,
+    _In_ BOOLEAN Eject
     );
 
+_IRQL_requires_max_(DISPATCH_LEVEL)
 KSDDKAPI
 void
 NTAPI
 KsStreamPointerAdvanceOffsetsAndUnlock(
-    IN PKSSTREAM_POINTER StreamPointer,
-    IN ULONG InUsed,
-    IN ULONG OutUsed,
-    IN BOOLEAN Eject
+    _In_ PKSSTREAM_POINTER StreamPointer,
+    _In_ ULONG InUsed,
+    _In_ ULONG OutUsed,
+    _In_ BOOLEAN Eject
     );
 
+_IRQL_requires_max_(DISPATCH_LEVEL)
 KSDDKAPI
 void
 NTAPI
 KsStreamPointerDelete(
-    IN PKSSTREAM_POINTER StreamPointer
+    _In_ PKSSTREAM_POINTER StreamPointer
     );
 
+_Must_inspect_result_
+_IRQL_requires_max_(DISPATCH_LEVEL)
 KSDDKAPI
 NTSTATUS
 NTAPI
 KsStreamPointerClone(
-    IN PKSSTREAM_POINTER StreamPointer,
-    IN PFNKSSTREAMPOINTER CancelCallback OPTIONAL,
-    IN ULONG ContextSize,
-    OUT PKSSTREAM_POINTER* CloneStreamPointer
+    _In_ PKSSTREAM_POINTER StreamPointer,
+    _In_opt_ PFNKSSTREAMPOINTER CancelCallback,
+    _In_ ULONG ContextSize,
+    _Out_ PKSSTREAM_POINTER* CloneStreamPointer
     );
 
+_Must_inspect_result_
+_IRQL_requires_max_(DISPATCH_LEVEL)
 KSDDKAPI
 NTSTATUS
 NTAPI
 KsStreamPointerAdvanceOffsets(
-    IN PKSSTREAM_POINTER StreamPointer,
-    IN ULONG InUsed,
-    IN ULONG OutUsed,
-    IN BOOLEAN Eject
+    _In_ PKSSTREAM_POINTER StreamPointer,
+    _In_ ULONG InUsed,
+    _In_ ULONG OutUsed,
+    _In_ BOOLEAN Eject
     );
 
+_Must_inspect_result_
+_IRQL_requires_max_(DISPATCH_LEVEL)
 KSDDKAPI
 NTSTATUS
 NTAPI
 KsStreamPointerAdvance(
-    IN PKSSTREAM_POINTER StreamPointer
+    _In_ PKSSTREAM_POINTER StreamPointer
     );
 
+_IRQL_requires_max_(DISPATCH_LEVEL)
 KSDDKAPI
 PMDL
 NTAPI
 KsStreamPointerGetMdl(
-    IN PKSSTREAM_POINTER StreamPointer
+    _In_ PKSSTREAM_POINTER StreamPointer
     );
 
+_IRQL_requires_max_(DISPATCH_LEVEL)
 KSDDKAPI
 PIRP
 NTAPI
 KsStreamPointerGetIrp(
-    IN PKSSTREAM_POINTER StreamPointer,
-    OUT PBOOLEAN FirstFrameInIrp OPTIONAL,
-    OUT PBOOLEAN LastFrameInIrp OPTIONAL
+    _In_ PKSSTREAM_POINTER StreamPointer,
+    _Out_opt_ PBOOLEAN FirstFrameInIrp,
+    _Out_opt_ PBOOLEAN LastFrameInIrp
     );
 
+_IRQL_requires_max_(DISPATCH_LEVEL)
 KSDDKAPI
 void
 NTAPI
 KsStreamPointerScheduleTimeout(
-    IN PKSSTREAM_POINTER StreamPointer,
-    IN PFNKSSTREAMPOINTER Callback,
-    IN ULONGLONG Interval
+    _In_ PKSSTREAM_POINTER StreamPointer,
+    _In_ PFNKSSTREAMPOINTER Callback,
+    _In_ ULONGLONG Interval
     );
 
+_IRQL_requires_max_(DISPATCH_LEVEL)
 KSDDKAPI
 void
 NTAPI
 KsStreamPointerCancelTimeout(
-    IN PKSSTREAM_POINTER StreamPointer
+    _In_ PKSSTREAM_POINTER StreamPointer
     );
 
+_IRQL_requires_max_(DISPATCH_LEVEL)
 KSDDKAPI
 PKSSTREAM_POINTER
 NTAPI
 KsPinGetFirstCloneStreamPointer(
-    IN PKSPIN Pin
+    _In_ PKSPIN Pin
     );
 
+_IRQL_requires_max_(DISPATCH_LEVEL)
 KSDDKAPI
 PKSSTREAM_POINTER
 NTAPI
 KsStreamPointerGetNextClone(
-    IN PKSSTREAM_POINTER StreamPointer
+    _In_ PKSSTREAM_POINTER StreamPointer
     );
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 KSDDKAPI
 NTSTATUS
 NTAPI
 KsPinHandshake(
-    IN PKSPIN Pin,
-    IN PKSHANDSHAKE In,
-    OUT PKSHANDSHAKE Out
+    _In_ PKSPIN Pin,
+    _In_ PKSHANDSHAKE In,
+    _Out_ PKSHANDSHAKE Out
     );
 
+_IRQL_requires_max_(DISPATCH_LEVEL)
 KSDDKAPI
 void
 NTAPI
 KsCompletePendingRequest(
-    IN PIRP Irp
+    _In_ PIRP Irp
     );
 
+_IRQL_requires_max_(DISPATCH_LEVEL)
 KSDDKAPI
 KSOBJECTTYPE
 NTAPI
 KsGetObjectTypeFromIrp(
-    IN PIRP Irp
+    _In_ PIRP Irp
     );
 
+_IRQL_requires_max_(DISPATCH_LEVEL)
 KSDDKAPI
 PVOID
 NTAPI
 KsGetObjectFromFileObject(
-    IN PFILE_OBJECT FileObject
+    _In_ PFILE_OBJECT FileObject
     );
 
+_IRQL_requires_max_(DISPATCH_LEVEL)
 KSDDKAPI
 KSOBJECTTYPE
 NTAPI
 KsGetObjectTypeFromFileObject(
-    IN PFILE_OBJECT FileObject
+    _In_ PFILE_OBJECT FileObject
     );
 
+_IRQL_requires_max_(DISPATCH_LEVEL)
 PKSFILTER __inline
 KsGetFilterFromFileObject(
-    IN PFILE_OBJECT FileObject
+    _In_ PFILE_OBJECT FileObject
     )
 {
     return (PKSFILTER) KsGetObjectFromFileObject(FileObject);
 }
 
+_IRQL_requires_max_(DISPATCH_LEVEL)
 PKSPIN __inline
 KsGetPinFromFileObject(
-    IN PFILE_OBJECT FileObject
+    _In_ PFILE_OBJECT FileObject
     )
 {
     return (PKSPIN) KsGetObjectFromFileObject(FileObject);
 }    
 
+_IRQL_requires_max_(DISPATCH_LEVEL)
 KSDDKAPI
 PKSGATE
 NTAPI
 KsFilterGetAndGate(
-    IN PKSFILTER Filter
+    _In_ PKSFILTER Filter
     );
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 KSDDKAPI
 void
 NTAPI
 KsFilterAcquireProcessingMutex(
-    IN PKSFILTER Filter
+    _In_ PKSFILTER Filter
     );
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 KSDDKAPI
 void
 NTAPI
 KsFilterReleaseProcessingMutex(
-    IN PKSFILTER Filter
+    _In_ PKSFILTER Filter
     );
 
+_IRQL_requires_max_(DISPATCH_LEVEL)
 KSDDKAPI
 void
 NTAPI
 KsFilterAttemptProcessing(
-    IN PKSFILTER Filter,
-    IN BOOLEAN Asynchronous
+    _In_ PKSFILTER Filter,
+    _In_ BOOLEAN Asynchronous
     );
 
+_IRQL_requires_max_(DISPATCH_LEVEL)
 KSDDKAPI
 PKSGATE
 NTAPI
 KsPinGetAndGate(
-    IN PKSPIN Pin
+    _In_ PKSPIN Pin
     );
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 KSDDKAPI
 void
 NTAPI
 KsPinAttachAndGate(
-    IN PKSPIN Pin,
-    IN PKSGATE AndGate OPTIONAL
+    _In_ PKSPIN Pin,
+    _In_opt_ PKSGATE AndGate
     );
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 KSDDKAPI
 void
 NTAPI
 KsPinAttachOrGate(
-    IN PKSPIN Pin,
-    IN PKSGATE OrGate OPTIONAL
+    _In_ PKSPIN Pin,
+    _In_opt_ PKSGATE OrGate
     );
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 KSDDKAPI
 void
 NTAPI
 KsPinAcquireProcessingMutex(
-    IN PKSPIN Pin
+    _In_ PKSPIN Pin
     );
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 KSDDKAPI
 void
 NTAPI
 KsPinReleaseProcessingMutex(
-    IN PKSPIN Pin
+    _In_ PKSPIN Pin
     );
 
+_IRQL_requires_max_(DISPATCH_LEVEL)
 KSDDKAPI
 BOOLEAN
 NTAPI
 KsProcessPinUpdate(
-    IN PKSPROCESSPIN ProcessPin
+    _In_ PKSPROCESSPIN ProcessPin
     );
 
+_IRQL_requires_max_(DISPATCH_LEVEL)
 KSDDKAPI
 void
 NTAPI
 KsPinGetCopyRelationships(
-    IN PKSPIN Pin,
-    OUT PKSPIN* CopySource,
-    OUT PKSPIN* DelegateBranch
+    _In_ PKSPIN Pin,
+    _Out_ PKSPIN* CopySource,
+    _Out_ PKSPIN* DelegateBranch
     );
 
+_IRQL_requires_max_(DISPATCH_LEVEL)
 KSDDKAPI
 void
 NTAPI
 KsPinAttemptProcessing(
-    IN PKSPIN Pin,
-    IN BOOLEAN Asynchronous
+    _In_ PKSPIN Pin,
+    _In_ BOOLEAN Asynchronous
     );
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 KSDDKAPI
 PVOID
 NTAPI
 KsGetParent(
-    IN PVOID Object
+    _In_ PVOID Object
     );
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 PKSDEVICE __inline
 KsFilterFactoryGetParentDevice(
-    IN PKSFILTERFACTORY FilterFactory
+    _In_ PKSFILTERFACTORY FilterFactory
     )
 {
     return (PKSDEVICE) KsGetParent((PVOID) FilterFactory);
 }
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 PKSFILTERFACTORY __inline
 KsFilterGetParentFilterFactory(
-    IN PKSFILTER Filter
+    _In_ PKSFILTER Filter
     )
 {
     return (PKSFILTERFACTORY) KsGetParent((PVOID) Filter);
 }
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 KSDDKAPI
 PKSFILTER 
 NTAPI
 KsPinGetParentFilter(
-    IN PKSPIN Pin
+    _In_ PKSPIN Pin
     );
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 KSDDKAPI
 PVOID
 NTAPI
 KsGetFirstChild(
-    IN PVOID Object
+    _In_ PVOID Object
     );
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 PKSFILTERFACTORY __inline
 KsDeviceGetFirstChildFilterFactory(
-    IN PKSDEVICE Device
+    _In_ PKSDEVICE Device
     )
 {
     return (PKSFILTERFACTORY) KsGetFirstChild((PVOID) Device);
 }
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 PKSFILTER __inline
 KsFilterFactoryGetFirstChildFilter(
-    IN PKSFILTERFACTORY FilterFactory
+    _In_ PKSFILTERFACTORY FilterFactory
     )
 {
     return (PKSFILTER) KsGetFirstChild((PVOID) FilterFactory);
 }
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 KSDDKAPI
 ULONG
 NTAPI
 KsFilterGetChildPinCount(
-    IN PKSFILTER Filter,
-    IN ULONG PinId
+    _In_ PKSFILTER Filter,
+    _In_ ULONG PinId
     );
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 KSDDKAPI
 PKSPIN
 NTAPI
 KsFilterGetFirstChildPin(
-    IN PKSFILTER Filter,
-    IN ULONG PinId
+    _In_ PKSFILTER Filter,
+    _In_ ULONG PinId
     );
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 KSDDKAPI
 PVOID
 NTAPI
 KsGetNextSibling(
-    IN PVOID Object
+    _In_ PVOID Object
     );
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 KSDDKAPI
 PKSPIN 
 NTAPI
 KsPinGetNextSiblingPin(
-    IN PKSPIN Pin
+    _In_ PKSPIN Pin
     );
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 PKSFILTERFACTORY __inline
 KsFilterFactoryGetNextSiblingFilterFactory(
-    IN PKSFILTERFACTORY FilterFactory
+    _In_ PKSFILTERFACTORY FilterFactory
     )
 {
     return (PKSFILTERFACTORY) KsGetNextSibling((PVOID) FilterFactory);
 }
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 PKSFILTER __inline
 KsFilterGetNextSiblingFilter(
-    IN PKSFILTER Filter
+    _In_ PKSFILTER Filter
     )
 {
     return (PKSFILTER) KsGetNextSibling((PVOID) Filter);
 }
 
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 KSDDKAPI
 PKSDEVICE
 NTAPI
 KsGetDevice(
-    IN PVOID Object
+    _In_ PVOID Object
     );
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 PKSDEVICE __inline
 KsFilterFactoryGetDevice(
-    IN PKSFILTERFACTORY FilterFactory
+    _In_ PKSFILTERFACTORY FilterFactory
     )
 {
     return KsGetDevice((PVOID) FilterFactory);
 }
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 PKSDEVICE __inline
 KsFilterGetDevice(
-    IN PKSFILTER Filter
+    _In_ PKSFILTER Filter
     )
 {
     return KsGetDevice((PVOID) Filter);
 }
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 PKSDEVICE __inline
 KsPinGetDevice(
-    IN PKSPIN Pin
+    _In_ PKSPIN Pin
     )
 {
     return KsGetDevice((PVOID) Pin);
 }
 
+_IRQL_requires_max_(DISPATCH_LEVEL)
 KSDDKAPI
 PKSFILTER
 NTAPI
 KsGetFilterFromIrp(
-    IN PIRP Irp
+    _In_ PIRP Irp
     );
 
+_IRQL_requires_max_(DISPATCH_LEVEL)
 KSDDKAPI
 PKSPIN
 NTAPI
 KsGetPinFromIrp(
-    IN PIRP Irp
+    _In_ PIRP Irp
     );
 
+_IRQL_requires_max_(DISPATCH_LEVEL)
 KSDDKAPI
 ULONG
 NTAPI
 KsGetNodeIdFromIrp(
-    IN PIRP Irp
+    _In_ PIRP Irp
     );
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 KSDDKAPI
 void
 NTAPI
 KsAcquireControl(
-    IN PVOID Object
+    _In_ PVOID Object
     );
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 KSDDKAPI
 void
 NTAPI
 KsReleaseControl(
-    IN PVOID Object
+    _In_ PVOID Object
     );
 
+_IRQL_requires_max_(PASSIVE_LEVEL) 
 void __inline
 KsFilterAcquireControl(
-    IN PKSFILTER Filter
+    _In_ PKSFILTER Filter
     )
 {
     KsAcquireControl((PVOID) Filter);
 }
 
+_IRQL_requires_max_(PASSIVE_LEVEL) 
 void __inline
 KsFilterReleaseControl(
-    IN PKSFILTER Filter
+    _In_ PKSFILTER Filter
     )
 {
     KsReleaseControl((PVOID) Filter);
 }
 
+_IRQL_requires_max_(PASSIVE_LEVEL) 
 void __inline
 KsPinAcquireControl(
-    IN PKSPIN Pin
+    _In_ PKSPIN Pin
     )
 {
     KsAcquireControl((PVOID) Pin);
 }
 
+_IRQL_requires_max_(PASSIVE_LEVEL) 
 void __inline
 KsPinReleaseControl(
-    IN PKSPIN Pin
+    _In_ PKSPIN Pin
     )
 {
     KsReleaseControl((PVOID) Pin);
 }
 
+_Must_inspect_result_
+_IRQL_requires_max_(PASSIVE_LEVEL)
 KSDDKAPI
 NTSTATUS
 NTAPI
 KsAddItemToObjectBag(
-    IN KSOBJECT_BAG ObjectBag,
-    IN PVOID Item,
-    IN PFNKSFREE Free OPTIONAL
+    _In_ KSOBJECT_BAG ObjectBag,
+    _In_ __drv_aliasesMem PVOID Item,
+    _In_opt_ PFNKSFREE Free
     );
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 KSDDKAPI
 ULONG
 NTAPI
 KsRemoveItemFromObjectBag(
-    IN KSOBJECT_BAG ObjectBag,
-    IN PVOID Item,
-    IN BOOLEAN Free
+    _In_ KSOBJECT_BAG ObjectBag,
+    _In_ PVOID Item,
+    _In_ BOOLEAN Free
     );
 
 #define KsDiscard(Object,Pointer)\
@@ -5350,38 +6079,43 @@ KsRemoveItemFromObjectBag(
         (PVOID)(Pointer),\
         TRUE)
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 KSDDKAPI
 NTSTATUS
 NTAPI
 KsAllocateObjectBag(
-    IN PKSDEVICE Device,
-    OUT KSOBJECT_BAG* ObjectBag
+    _In_ PKSDEVICE Device,
+    _Out_ KSOBJECT_BAG* ObjectBag
     );
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 KSDDKAPI
 void
 NTAPI
 KsFreeObjectBag(
-    IN KSOBJECT_BAG ObjectBag
+    _In_ KSOBJECT_BAG ObjectBag
     );
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 KSDDKAPI
 NTSTATUS
 NTAPI
 KsCopyObjectBagItems(
-    IN KSOBJECT_BAG ObjectBagDestination,
-    IN KSOBJECT_BAG ObjectBagSource
+    _In_ KSOBJECT_BAG ObjectBagDestination,
+    _In_ KSOBJECT_BAG ObjectBagSource
     );
 
+_Must_inspect_result_
+_IRQL_requires_max_(PASSIVE_LEVEL)
 KSDDKAPI
 NTSTATUS
 NTAPI
 _KsEdit(
-    IN KSOBJECT_BAG ObjectBag,
-    IN OUT PVOID* PointerToPointerToItem,
-    IN ULONG NewSize,
-    IN ULONG OldSize,
-    IN ULONG Tag
+    _In_ KSOBJECT_BAG ObjectBag,
+    _At_(*PointerToPointerToItem, _Pre_maybenull_  _Pre_readable_byte_size_(OldSize)) _Outptr_result_bytebuffer_(NewSize) PVOID* PointerToPointerToItem,
+    _In_ ULONG NewSize,
+    _In_ ULONG OldSize,
+    _In_ ULONG Tag
     );
 
 #define KsEdit(Object,PointerToPointer,Tag)\
@@ -5394,240 +6128,267 @@ _KsEdit(
 #define KsEditSized(Object,PointerToPointer,NewSize,OldSize,Tag)\
     _KsEdit((Object)->Bag,(PVOID*)(PointerToPointer),(NewSize),(OldSize),(Tag))
 
+_Must_inspect_result_
+_IRQL_requires_max_(PASSIVE_LEVEL)
 KSDDKAPI
 NTSTATUS
 NTAPI
 KsRegisterFilterWithNoKSPins(
-                                      IN PDEVICE_OBJECT DeviceObject,
-                                      IN const GUID * InterfaceClassGUID,
-                                      IN ULONG PinCount,
-                                      IN BOOL * PinDirection,
-                                      IN KSPIN_MEDIUM * MediumList,
-                                      IN OPTIONAL GUID * CategoryList
+                                      _In_ PDEVICE_OBJECT DeviceObject,
+                                      _In_ const GUID * InterfaceClassGUID,
+                                      _In_ ULONG PinCount,
+                                      _In_reads_(PinCount) BOOL * PinDirection,
+                                      _In_reads_(PinCount) KSPIN_MEDIUM * MediumList,
+                                      _In_reads_opt_(PinCount) GUID * CategoryList
 );
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 KSDDKAPI
 NTSTATUS
 NTAPI
 KsFilterCreatePinFactory (
-    IN PKSFILTER Filter,
-    IN const KSPIN_DESCRIPTOR_EX *const PinDescriptor,
-    OUT PULONG PinID
+    _In_ PKSFILTER Filter,
+    _In_ const KSPIN_DESCRIPTOR_EX *const PinDescriptor,
+    _Out_ PULONG PinID
     );
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 KSDDKAPI
 NTSTATUS
 NTAPI
 KsFilterCreateNode (
-    IN PKSFILTER Filter,
-    IN const KSNODE_DESCRIPTOR *const NodeDescriptor,
-    OUT PULONG NodeID
+    _In_ PKSFILTER Filter,
+    _In_ const KSNODE_DESCRIPTOR *const NodeDescriptor,
+    _Out_ PULONG NodeID
     );
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 KSDDKAPI
 NTSTATUS
 NTAPI
 KsFilterAddTopologyConnections (
-    IN PKSFILTER Filter,
-    IN ULONG NewConnectionsCount,
-    IN const KSTOPOLOGY_CONNECTION *const NewTopologyConnections
+    _In_ PKSFILTER Filter,
+    _In_ ULONG NewConnectionsCount,
+    _In_reads_(NewConnectionsCount) const KSTOPOLOGY_CONNECTION *const NewTopologyConnections
     );
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 KSDDKAPI
 NTSTATUS
 NTAPI
 KsPinGetConnectedPinInterface(
-    IN PKSPIN Pin,
-    IN const GUID* InterfaceId,
-    OUT PVOID* Interface
+    _In_ PKSPIN Pin,
+    _In_ const GUID* InterfaceId,
+    _Out_ PVOID* Interface
     );
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 KSDDKAPI
 PFILE_OBJECT
 NTAPI
 KsPinGetConnectedPinFileObject(
-    IN PKSPIN Pin
+    _In_ PKSPIN Pin
     );
 
 KSDDKAPI
 PDEVICE_OBJECT
 NTAPI
 KsPinGetConnectedPinDeviceObject(
-    IN PKSPIN Pin
+    _In_ PKSPIN Pin
     );
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 KSDDKAPI
 NTSTATUS
 NTAPI
 KsPinGetConnectedFilterInterface(
-    IN PKSPIN Pin,
-    IN const GUID* InterfaceId,
-    OUT PVOID* Interface
+    _In_ PKSPIN Pin,
+    _In_ const GUID* InterfaceId,
+    _Out_ PVOID* Interface
     );
 
 #if defined(_UNKNOWN_H_) || defined(__IUnknown_INTERFACE_DEFINED__)
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 KSDDKAPI
 NTSTATUS
 NTAPI
 KsPinGetReferenceClockInterface(
-    IN PKSPIN Pin,
-    OUT PIKSREFERENCECLOCK* Interface
+    _In_ PKSPIN Pin,
+    _Out_ PIKSREFERENCECLOCK* Interface
     );
 
 #endif //defined(_UNKNOWN_H_) || defined(__IUnknown_INTERFACE_DEFINED__)
 
+_IRQL_requires_max_(DISPATCH_LEVEL)
 KSDDKAPI
 VOID
 NTAPI
 KsPinSetPinClockTime(
-    IN PKSPIN Pin,
-    IN LONGLONG Time
+    _In_ PKSPIN Pin,
+    _In_ LONGLONG Time
     );
 
+_IRQL_requires_max_(DISPATCH_LEVEL)
 KSDDKAPI
 NTSTATUS
 NTAPI
 KsPinSubmitFrame(
-    IN PKSPIN Pin,
-    IN PVOID Data OPTIONAL,
-    IN ULONG Size OPTIONAL,
-    IN PKSSTREAM_HEADER StreamHeader OPTIONAL,
-    IN PVOID Context OPTIONAL
+    _In_ PKSPIN Pin,
+    _In_reads_bytes_opt_(Size) PVOID Data,
+    _In_ ULONG Size OPTIONAL,
+    _In_opt_ PKSSTREAM_HEADER StreamHeader,
+    _In_opt_ PVOID Context
     );
 
+_IRQL_requires_max_(DISPATCH_LEVEL)
 KSDDKAPI
 NTSTATUS
 NTAPI
 KsPinSubmitFrameMdl(
-    IN PKSPIN Pin,
-    IN PMDL Mdl OPTIONAL,
-    IN PKSSTREAM_HEADER StreamHeader OPTIONAL,
-    IN PVOID Context OPTIONAL
+    _In_ PKSPIN Pin,
+    _In_opt_ PMDL Mdl,
+    _In_opt_ PKSSTREAM_HEADER StreamHeader,
+    _In_opt_ PVOID Context
     );
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 KSDDKAPI
 void
 NTAPI
 KsPinRegisterFrameReturnCallback(
-    IN PKSPIN Pin,
-    IN PFNKSPINFRAMERETURN FrameReturn
+    _In_ PKSPIN Pin,
+    _In_ PFNKSPINFRAMERETURN FrameReturn
     );
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 KSDDKAPI
 void
 NTAPI
 KsPinRegisterIrpCompletionCallback(
-    IN PKSPIN Pin,
-    IN PFNKSPINIRPCOMPLETION IrpCompletion
+    _In_ PKSPIN Pin,
+    _In_ PFNKSPINIRPCOMPLETION IrpCompletion
     );
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 KSDDKAPI
 void
 NTAPI
 KsPinRegisterHandshakeCallback(
-    IN PKSPIN Pin,
-    IN PFNKSPINHANDSHAKE Handshake
+    _In_ PKSPIN Pin,
+    _In_ PFNKSPINHANDSHAKE Handshake
     );
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 KSDDKAPI
 void
 NTAPI
 KsFilterRegisterPowerCallbacks(
-    IN PKSFILTER Filter,
-    IN PFNKSFILTERPOWER Sleep OPTIONAL,
-    IN PFNKSFILTERPOWER Wake OPTIONAL
+    _In_ PKSFILTER Filter,
+    _In_opt_ PFNKSFILTERPOWER Sleep,
+    _In_opt_ PFNKSFILTERPOWER Wake
     );
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 KSDDKAPI
 void
 NTAPI
 KsPinRegisterPowerCallbacks(
-    IN PKSPIN Pin,
-    IN PFNKSPINPOWER Sleep OPTIONAL,
-    IN PFNKSPINPOWER Wake OPTIONAL
+    _In_ PKSPIN Pin,
+    _In_opt_ PFNKSPINPOWER Sleep,
+    _In_opt_ PFNKSPINPOWER Wake
     );
 
 #if defined(_UNKNOWN_H_) || defined(__IUnknown_INTERFACE_DEFINED__)
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 KSDDKAPI
 PUNKNOWN
 NTAPI
 KsRegisterAggregatedClientUnknown(
-    IN PVOID Object,
-    IN PUNKNOWN ClientUnknown 
+    _In_ PVOID Object,
+    _In_ PUNKNOWN ClientUnknown 
     );
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 KSDDKAPI
 PUNKNOWN
 NTAPI
 KsGetOuterUnknown(
-    IN PVOID Object
+    _In_ PVOID Object
     );
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 PUNKNOWN __inline
 KsDeviceRegisterAggregatedClientUnknown(
-    IN PKSDEVICE Device,
-    IN PUNKNOWN ClientUnknown 
+    _In_ PKSDEVICE Device,
+    _In_ PUNKNOWN ClientUnknown 
     )
 {
     return KsRegisterAggregatedClientUnknown((PVOID) Device,ClientUnknown);
 }
 
+_IRQL_requires_max_(PASSIVE_LEVEL) 
 PUNKNOWN __inline
 KsDeviceGetOuterUnknown(
-    IN PKSDEVICE Device
+    _In_ PKSDEVICE Device
     )
 {
     return KsGetOuterUnknown((PVOID) Device);
 }
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 PUNKNOWN __inline
 KsFilterFactoryRegisterAggregatedClientUnknown(
-    IN PKSFILTERFACTORY FilterFactory,
-    IN PUNKNOWN ClientUnknown 
+    _In_ PKSFILTERFACTORY FilterFactory,
+    _In_ PUNKNOWN ClientUnknown 
     )
 {
     return KsRegisterAggregatedClientUnknown((PVOID) FilterFactory,ClientUnknown);
 }
 
+_IRQL_requires_max_(PASSIVE_LEVEL) 
 PUNKNOWN __inline
 KsFilterFactoryGetOuterUnknown(
-    IN PKSFILTERFACTORY FilterFactory
+    _In_ PKSFILTERFACTORY FilterFactory
     )
 {
     return KsGetOuterUnknown((PVOID) FilterFactory);
 }
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 PUNKNOWN __inline
 KsFilterRegisterAggregatedClientUnknown(
-    IN PKSFILTER Filter,
-    IN PUNKNOWN ClientUnknown 
+    _In_ PKSFILTER Filter,
+    _In_ PUNKNOWN ClientUnknown 
     )
 {
     return KsRegisterAggregatedClientUnknown((PVOID) Filter,ClientUnknown);
 }
 
+_IRQL_requires_max_(PASSIVE_LEVEL) 
 PUNKNOWN __inline
 KsFilterGetOuterUnknown(
-    IN PKSFILTER Filter
+    _In_ PKSFILTER Filter
     )
 {
     return KsGetOuterUnknown((PVOID) Filter);
 }
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 PUNKNOWN __inline
 KsPinRegisterAggregatedClientUnknown(
-    IN PKSPIN Pin,
-    IN PUNKNOWN ClientUnknown 
+    _In_ PKSPIN Pin,
+    _In_ PUNKNOWN ClientUnknown 
     )
 {
     return KsRegisterAggregatedClientUnknown((PVOID) Pin,ClientUnknown);
 }
 
+_IRQL_requires_max_(PASSIVE_LEVEL) 
 PUNKNOWN __inline
 KsPinGetOuterUnknown(
-    IN PKSPIN Pin
+    _In_ PKSPIN Pin
     )
 {
     return KsGetOuterUnknown((PVOID) Pin);
@@ -5635,46 +6396,97 @@ KsPinGetOuterUnknown(
 
 #endif // defined(_UNKNOWN_H_) || defined(__IUnknown_INTERFACE_DEFINED__)
 
+#endif // (NTDDI_VERSION >= NTDDI_WINXP)
+
 #else // !defined(_NTDDK_)
 
 #if !defined( KS_NO_CREATE_FUNCTIONS )
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 KSDDKAPI
 DWORD
 WINAPI
 KsCreateAllocator(
-    IN HANDLE ConnectionHandle,
-    IN PKSALLOCATOR_FRAMING AllocatorFraming,
-    OUT PHANDLE AllocatorHandle
+    _In_ HANDLE ConnectionHandle,
+    _In_ PKSALLOCATOR_FRAMING AllocatorFraming,
+    _Out_ PHANDLE AllocatorHandle
     );
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 KSDDKAPI
 DWORD
 NTAPI
 KsCreateClock(
-    IN HANDLE ConnectionHandle,
-    IN PKSCLOCK_CREATE ClockCreate,
-    OUT PHANDLE ClockHandle
+    _In_ HANDLE ConnectionHandle,
+    _In_ PKSCLOCK_CREATE ClockCreate,
+    _Out_ PHANDLE ClockHandle
     );
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 KSDDKAPI
 DWORD
 WINAPI
 KsCreatePin(
-    IN HANDLE FilterHandle,
-    IN PKSPIN_CONNECT Connect,
-    IN ACCESS_MASK DesiredAccess,
-    OUT PHANDLE ConnectionHandle
+    _In_ HANDLE FilterHandle,
+    _In_ PKSPIN_CONNECT Connect,
+    _In_ ACCESS_MASK DesiredAccess,
+    _Out_ PHANDLE ConnectionHandle
     );
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 KSDDKAPI
 DWORD
 WINAPI
 KsCreateTopologyNode(
-    IN HANDLE ParentHandle,
-    IN PKSNODE_CREATE NodeCreate,
-    IN ACCESS_MASK DesiredAccess,
-    OUT PHANDLE NodeHandle
+    _In_ HANDLE ParentHandle,
+    _In_ PKSNODE_CREATE NodeCreate,
+    _In_ ACCESS_MASK DesiredAccess,
+    _Out_ PHANDLE NodeHandle
+    );
+
+//
+// KS create function that needs to be called after initializing COM
+//
+_IRQL_requires_max_(PASSIVE_LEVEL)
+KSDDKAPI
+HRESULT
+WINAPI
+KsCreateAllocator2(
+    _In_ HANDLE ConnectionHandle,
+    _In_ PKSALLOCATOR_FRAMING AllocatorFraming,
+    _Out_ PHANDLE AllocatorHandle
+    );
+
+_IRQL_requires_max_(PASSIVE_LEVEL)
+KSDDKAPI
+HRESULT
+NTAPI
+KsCreateClock2(
+    _In_ HANDLE ConnectionHandle,
+    _In_ PKSCLOCK_CREATE ClockCreate,
+    _Out_ PHANDLE ClockHandle
+    );
+
+_IRQL_requires_max_(PASSIVE_LEVEL)
+KSDDKAPI
+HRESULT
+WINAPI
+KsCreatePin2(
+    _In_ HANDLE FilterHandle,
+    _In_ PKSPIN_CONNECT Connect,
+    _In_ ACCESS_MASK DesiredAccess,
+    _Out_ PHANDLE ConnectionHandle
+    );
+
+_IRQL_requires_max_(PASSIVE_LEVEL)
+KSDDKAPI
+HRESULT
+WINAPI
+KsCreateTopologyNode2(
+    _In_ HANDLE ParentHandle,
+    _In_ PKSNODE_CREATE NodeCreate,
+    _In_ ACCESS_MASK DesiredAccess,
+    _Out_ PHANDLE NodeHandle
     );
     
 #endif
@@ -5684,6 +6496,87 @@ KsCreateTopologyNode(
 #if defined(__cplusplus)
 }
 #endif // defined(__cplusplus)
+
+//
+//Start of MDL caching related decisions
+//
+
+
+#if defined(__cplusplus)
+extern "C" {
+#endif // defined(__cplusplus)
+
+    //
+    //MDL sharing related definitions
+    //
+    typedef union _MF_MDL_SHARED_PAYLOAD_KEY{
+        struct {
+            ULONG pHandle;   /* The Handle which represents the user mode Pin Handle  */
+	    ULONG fHandle;	
+            ULONG64 uPayload; /* The PayLoad from Sample, which is the Buffer attached */
+        }combined;
+        GUID GMDLHandle;
+    }MF_MDL_SHARED_PAYLOAD_KEY, *PMF_MDL_SHARED_PAYLOAD_KEY;
+    //
+    //We need the handle and upayload to be ULONG64
+    //to adjust for 64 bit systems and 32 bit systems
+    //
+#define MF_SET_SHARED_MDLHANDLE(a,b,c,d){\
+    d.combined.phandle = (ULONG32)a;\
+    d.combined.fhandle = (ULONG32)b;\
+    d.combined.upayload = (ULONG64)c;\
+}
+
+
+
+
+
+#if defined(_NTDDK_)
+
+    _IRQL_requires_max_(DISPATCH_LEVEL)
+        typedef
+        VOID
+        (*PFNKSCANCELPINNEDMDL)(
+        _In_ GUID,
+        _In_ PVOID,
+	_In_ PVOID
+        );
+
+
+_Must_inspect_result_
+_IRQL_requires_max_(PASSIVE_LEVEL)
+KSDDKAPI
+NTSTATUS
+WINAPI
+KsAcquireCachedMdl(
+_In_  PIRP                 Irp,
+_In_  REFGUID              Guid,
+_In_  PFNKSCANCELPINNEDMDL CancelRoutine,
+_In_  PVOID                CancelContext,
+_Outptr_result_maybenull_ PMDL   *MdlAddr,
+_Outptr_result_maybenull_ PVOID*  ReleaseContext
+);
+
+_Must_inspect_result_
+_IRQL_requires_max_(PASSIVE_LEVEL)
+KSDDKAPI
+NTSTATUS
+WINAPI
+KsReleaseCachedMdl(
+_In_     REFGUID                Guid,
+_In_     PMDL                   MdlAddr,
+_In_     HANDLE                 ReleaseContext
+);
+
+#endif
+
+#if defined(__cplusplus)
+}
+#endif // defined(__cplusplus)
+
+//
+//End of MDL sharing related definitions
+//
 
 
 #define DENY_USERMODE_ACCESS( pIrp, CompleteRequest ) \
@@ -5695,4 +6588,10 @@ if ( pIrp->RequestorMode != KernelMode ) { \
 }
 
 
+
+#endif /* WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP) */
+#pragma endregion
+
 #endif // !_KS_
+
+

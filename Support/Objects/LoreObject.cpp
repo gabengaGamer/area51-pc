@@ -689,7 +689,7 @@ void lore_object::OnRenderTransparent( void )
 
             WH.Scale( BracketSize );
 
-            draw_Begin( DRAW_SPRITES, DRAW_2D|DRAW_USE_ALPHA|DRAW_TEXTURED | DRAW_NO_ZWRITE );
+            draw_Begin( DRAW_SPRITES, DRAW_2D|DRAW_UI_RTARGET|DRAW_USE_ALPHA|DRAW_TEXTURED | DRAW_NO_ZWRITE  );
             draw_SetTexture( *pBitmap );
 
             vector3 Displacement = m_AnimState * CornerOffset * (-RightOne + UpOne);

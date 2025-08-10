@@ -3,12 +3,17 @@
 //
 // Desc: MPEG system stream compound type definition
 //
-// Copyright (c) 1996-2001, Microsoft Corporation.  All rights reserved.
+// Copyright (c) 1996 - 2001, Microsoft Corporation.  All rights reserved.
 //------------------------------------------------------------------------------
 
 
 #ifndef __MPEGTYPE__
 #define __MPEGTYPE__
+#include <winapifamily.h>
+
+#pragma region Desktop Family
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
+
 
 #ifdef __cplusplus
 extern "C" {
@@ -61,7 +66,7 @@ typedef struct tagAM_MPEGSYSTEMTYPE
 DECLARE_INTERFACE_(IMpegAudioDecoder, IUnknown) {
 
     STDMETHOD(get_FrequencyDivider) (THIS_
-                           unsigned long *pDivider   /* [out] */
+                           _Out_ unsigned long *pDivider   /* [out] */
                            ) PURE;
 
     STDMETHOD(put_FrequencyDivider) (THIS_
@@ -69,7 +74,7 @@ DECLARE_INTERFACE_(IMpegAudioDecoder, IUnknown) {
                            ) PURE;
 
     STDMETHOD(get_DecoderAccuracy) (THIS_
-                           unsigned long *pAccuracy  /* [out] */
+                           _Out_ unsigned long *pAccuracy  /* [out] */
                            ) PURE;
 
     STDMETHOD(put_DecoderAccuracy) (THIS_
@@ -77,7 +82,7 @@ DECLARE_INTERFACE_(IMpegAudioDecoder, IUnknown) {
                            ) PURE;
 
     STDMETHOD(get_Stereo) (THIS_
-                           unsigned long *pStereo    /* [out] */
+                           _Out_ unsigned long *pStereo    /* [out] */
                            ) PURE;
 
     STDMETHOD(put_Stereo) (THIS_
@@ -85,7 +90,7 @@ DECLARE_INTERFACE_(IMpegAudioDecoder, IUnknown) {
                            ) PURE;
 
     STDMETHOD(get_DecoderWordSize) (THIS_
-                           unsigned long *pWordSize  /* [out] */
+                           _Out_ unsigned long *pWordSize  /* [out] */
                            ) PURE;
 
     STDMETHOD(put_DecoderWordSize) (THIS_
@@ -93,7 +98,7 @@ DECLARE_INTERFACE_(IMpegAudioDecoder, IUnknown) {
                            ) PURE;
 
     STDMETHOD(get_IntegerDecode) (THIS_
-                           unsigned long *pIntDecode /* [out] */
+                           _Out_ unsigned long *pIntDecode /* [out] */
                            ) PURE;
 
     STDMETHOD(put_IntegerDecode) (THIS_
@@ -109,11 +114,15 @@ DECLARE_INTERFACE_(IMpegAudioDecoder, IUnknown) {
                            ) PURE;
 
     STDMETHOD(get_AudioFormat) (THIS_
-                           MPEG1WAVEFORMAT *lpFmt    /* [out] */
+                           _Out_ MPEG1WAVEFORMAT *lpFmt    /* [out] */
                            ) PURE;
 };
 
 #ifdef __cplusplus
 }
 #endif // __cplusplus
+
+#endif /* WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP) */
+#pragma endregion
+
 #endif // __MPEGTYPE__

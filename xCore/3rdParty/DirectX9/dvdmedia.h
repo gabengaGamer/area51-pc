@@ -14,6 +14,11 @@
 
 #ifndef __DVDMEDIA_H__
 #define __DVDMEDIA_H__
+#include <winapifamily.h>
+
+#pragma region Desktop Family
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
+
 
 #ifdef __cplusplus
 extern "C" {
@@ -131,7 +136,11 @@ typedef BOOL AM_PROPERTY_COMPOSIT_ON, *PAM_PROPERTY_COMPOSIT_ON;
 // the exact point in a stream after which to start applying a new CSS key.
 // This is typically sent on an empty media sample just before attempting
 // to renegotiate a CSS key.
-#define AM_UseNewCSSKey    0x1
+#define AM_UseNewCSSKey       0x1
+
+#define AM_ReverseBlockStart  0x2
+#define AM_ReverseBlockEnd    0x4
+
 
 //
 // AM_KSPROPSETID_CopyProt property set definitions
@@ -144,8 +153,19 @@ typedef enum {
     AM_PROPERTY_COPY_MACROVISION = 0x05,
     AM_PROPERTY_DVDCOPY_REGION = 0x06,
     AM_PROPERTY_DVDCOPY_SET_COPY_STATE = 0x07,
+    AM_PROPERTY_COPY_ANALOG_COMPONENT = 0x08, // GetOnly property, return data is a BOOL
+    AM_PROPERTY_COPY_DIGITAL_CP =   0x09, 
+    AM_PROPERTY_COPY_DVD_SRM =          0x0a,
+    AM_PROPERTY_DVDCOPY_SUPPORTS_NEW_KEYCOUNT = 0x0b,    // read only, BOOL
+    // gap
     AM_PROPERTY_DVDCOPY_DISC_KEY = 0x80
 } AM_PROPERTY_DVDCOPYPROT;
+
+typedef enum _AM_DIGITAL_CP {
+    AM_DIGITAL_CP_OFF = 0,
+    AM_DIGITAL_CP_ON = 1,
+    AM_DIGITAL_CP_DVD_COMPLIANT = 2
+} AM_DIGITAL_CP;
 
 typedef struct _AM_DVDCOPY_CHLGKEY {
     BYTE ChlgKey[10];
@@ -198,7 +218,7 @@ typedef struct _DVD_REGION {
     UCHAR CopySystem;
     UCHAR RegionData;
     UCHAR SystemRegion;
-    UCHAR Reserved;
+    UCHAR ResetCount;
 } DVD_REGION, *PDVD_REGION;
 
 //
@@ -282,6 +302,7 @@ enum AM_MPEG2Profile {
                                                 // If rejected, then you cannot use the AMCONTROL flags (send 0 for dwReserved1)
 #define AMCONTROL_PAD_TO_4x3        0x00000002 // if set means display the image in a 4x3 area
 #define AMCONTROL_PAD_TO_16x9       0x00000004 // if set means display the image in a 16x9 area
+#define AMCONTROL_COLORINFO_PRESENT 0x00000080 // if set, indicates DXVA color info is present in the upper (24) bits of the dwControlFlags
 
 typedef struct tagVIDEOINFOHEADER2 {
     RECT                rcSource;
@@ -369,7 +390,10 @@ typedef enum {
     AM_RATE_UseRateVersion   = 5,       //  w, use WORD
     AM_RATE_QueryFullFrameRate =6,      //  r, use AM_QueryRate
     AM_RATE_QueryLastRateSegPTS =7,     //  r, use REFERENCE_TIME
-    AM_RATE_CorrectTS        = 8     // w,  use LONG
+    AM_RATE_CorrectTS        = 8,    // w,  use LONG
+    AM_RATE_ReverseMaxFullDataRate = 9,    // r,  use AM_MaxFullDataRate
+    AM_RATE_ResetOnTimeDisc = 10,    // rw, use DWORD - indicates supports new 'timeline reset on time discontinuity' sample
+    AM_RATE_QueryMapping    = 11
 } AM_PROPERTY_TS_RATE_CHANGE;
 
 // -------------------------------------------------------------------
@@ -424,4 +448,8 @@ typedef enum {
 #ifdef __cplusplus
 }
 #endif // __cplusplus
+
+#endif /* WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP) */
+#pragma endregion
+
 #endif // __DVDMEDIA_H__

@@ -164,7 +164,7 @@ void hud_vote::OnRender( player* pPlayer )
         Color = g_HudColor;
         Color.A = Opacity;
 
-        draw_Begin( DRAW_SPRITES, DRAW_TEXTURED | DRAW_2D | DRAW_USE_ALPHA | DRAW_NO_ZBUFFER );
+        draw_Begin( DRAW_SPRITES, DRAW_TEXTURED | DRAW_2D | DRAW_UI_RTARGET | DRAW_USE_ALPHA | DRAW_NO_ZBUFFER   );
         draw_SetTexture( *pBitmap );
         draw_DisableBilinear();
 
@@ -200,7 +200,7 @@ void hud_vote::OnRender( player* pPlayer )
 
             xcolor Color = g_HudColor;
 
-            draw_Begin( DRAW_SPRITES, DRAW_TEXTURED|DRAW_2D|DRAW_USE_ALPHA|DRAW_NO_ZBUFFER );
+            draw_Begin( DRAW_SPRITES, DRAW_TEXTURED|DRAW_2D|DRAW_UI_RTARGET|DRAW_USE_ALPHA|DRAW_NO_ZBUFFER );
             draw_SetTexture( *pBitmap );
 
             draw_DisableBilinear();
@@ -216,7 +216,7 @@ void hud_vote::OnRender( player* pPlayer )
             draw_End();
 
             {
-                draw_Begin( DRAW_QUADS, DRAW_USE_ALPHA|DRAW_2D|DRAW_NO_ZBUFFER);
+                draw_Begin( DRAW_QUADS, DRAW_USE_ALPHA|DRAW_2D|DRAW_UI_RTARGET|DRAW_NO_ZBUFFER);
 
                 f32 Near = 0.001f;
                 draw_Color( YesColor );
@@ -267,7 +267,7 @@ void hud_vote::OnRender( player* pPlayer )
             {
                 f32 PassPoint = m_TopMargin + (m_BottomMargin - m_TopMargin) * (1.0f - m_PercentNeeded);
               
-                draw_Begin( DRAW_LINES, DRAW_2D|DRAW_NO_ZBUFFER );
+                draw_Begin( DRAW_LINES, DRAW_2D|DRAW_UI_RTARGET|DRAW_NO_ZBUFFER );
                 draw_Color( XCOLOR_YELLOW );
                 draw_Vertex(  m_LeftMargin , PassPoint, 0.0f );
                 draw_Vertex(  m_RightMargin, PassPoint, 0.0f );

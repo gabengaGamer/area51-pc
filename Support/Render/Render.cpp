@@ -12,9 +12,7 @@
 #undef RENDER_PRIVATE
 
 //=============================================================================
-//=============================================================================
 // Structures and types
-//=============================================================================
 //=============================================================================
 
 struct distortion_info
@@ -24,9 +22,7 @@ struct distortion_info
                         // completely overriding the material settings
 };
 
-//=============================================================================
-
-#define ENABLE_RENDER_XTIMERS   0
+//-----------------------------------------------------------------------------
 
 enum
 {
@@ -42,6 +38,8 @@ enum
     ORDER_DISTORTION    = 7
 };
 
+//-----------------------------------------------------------------------------
+
 union sortkey
 {
     struct
@@ -54,6 +52,8 @@ union sortkey
     };
     u32         Bits;
 };
+
+//-----------------------------------------------------------------------------
 
 union shad_sortkey
 {
@@ -68,13 +68,15 @@ union shad_sortkey
     u32     Bits;
 };
 
-//=============================================================================
+//-----------------------------------------------------------------------------
 
 #ifdef TARGET_PC
     xbool g_bZPriming;
+#else
+#error Unknown Target!	
 #endif
 
-//=============================================================================
+//-----------------------------------------------------------------------------
 
 typedef enum geom_type
 {
@@ -83,7 +85,7 @@ typedef enum geom_type
     TYPE_UNKNOWN
 };
 
-//=============================================================================
+//-----------------------------------------------------------------------------
 
 struct rigid_data
 {
@@ -92,7 +94,7 @@ struct rigid_data
     const void*     pColInfo;
 };
 
-//=============================================================================
+//-----------------------------------------------------------------------------
 
 struct skin_data
 {
@@ -101,7 +103,7 @@ struct skin_data
     u32             Pad;
 };
 
-//=============================================================================
+//-----------------------------------------------------------------------------
 
 union instance_data
 {
@@ -109,7 +111,7 @@ union instance_data
     skin_data   Skin;
 };
 
-//=============================================================================
+//-----------------------------------------------------------------------------
 
 struct render_instance
 {
@@ -133,10 +135,12 @@ struct render_instance
 
 #ifdef TARGET_PC
     xhandle         hDList;
-#endif // TARGET_PC
+#else
+#error Unknown Target!	
+#endif
 };
 
-//=============================================================================
+//-----------------------------------------------------------------------------
 
 struct sort_struct
 {
@@ -144,7 +148,7 @@ struct sort_struct
     s32 iRenderInst;
 };
 
-//=============================================================================
+//-----------------------------------------------------------------------------
 
 struct private_instance
 {
@@ -154,10 +158,12 @@ struct private_instance
 #ifdef TARGET_PC
     xarray<xhandle> RigidDList;
     xbool           IsLit;
-#endif // TARGET_PC
+#else
+#error Unknown Target!	
+#endif
 };
 
-//=============================================================================
+//-----------------------------------------------------------------------------
 
 struct private_geom
 {
@@ -167,10 +173,12 @@ struct private_geom
 
 #ifdef TARGET_PC
     xarray<xhandle> SkinDList;
-#endif // TARGET_PC
+#else
+#error Unknown Target!	
+#endif
 };
 
-//=============================================================================
+//-----------------------------------------------------------------------------
 
 struct texture_projection
 {
@@ -181,9 +189,7 @@ struct texture_projection
 };
 
 //=============================================================================
-//=============================================================================
 // Statics
-//=============================================================================
 //=============================================================================
 
 // Stats for determining how much data has been loaded
@@ -198,39 +204,31 @@ static s32 s_nGeomUVKeysLoaded    = 0;
 static s32 s_nGeomVMatsLoaded     = 0;
 #endif
 
-#if defined(TARGET_XBOX) || defined(TARGET_PC)
+#ifdef TARGET_PC
 color_info::usage color_info::m_Usage = color_info::kUse32;
-#elif defined(TARGET_PS2)
-color_info::usage color_info::m_Usage = color_info::kUse16;
 #else
+#error Unknown Target!	
 #endif
 
 //=============================================================================
 
-
-// constants
-// VERY IMPORTANT NOTE: README README README README!!!!!
-//    Some of these max numbers will get used by the sort keys, so if they need
-//    to increase, make sure the sort key still has enough bits to deal with it.
+//  VERY IMPORTANT NOTE: README README README README!!!!!
+//  Some of these max numbers will get used by the sort keys, so if they need
+//  to increase, make sure the sort key still has enough bits to deal with it.
 
 static const s32 kHashTableSize          = 769;  // 1543;   // keep this a prime number for best hashing results.
 static const s32 kMaxRegisteredGeoms     = 512;
-#if defined(X_EDITOR) || defined(CONFIG_VIEWER)
 static const s32 kMaxRegisteredInstances = 12800;
-#else
-static const s32 kMaxRegisteredInstances = 10000;
-#endif
 static const s32 kMaxRegisteredMaterials = 640; // NOTE: Don't go over what the sort key can handle!
 static const s32 kMaxTexAnims            = 2048;
 static const s32 kMaxTexAnimInstances    = 1024;
 static const s32 kMaxRegisteredTexAnims  = 1024;
 static const s32 kMaxDistortedInstances  = 16;
+
 #ifdef TARGET_PC
 static const s32 kMaxRenderedInstances   = 32768;
-#elif defined( TARGET_XBOX )
-static const s32 kMaxRenderedInstances   = 4096;
 #else
-static const s32 kMaxRenderedInstances   = 3000;
+#error Unknown Target!	
 #endif
 
 // arrays for rendering everything
@@ -254,11 +252,6 @@ static xbool s_InCustomBegin = FALSE;
 static cubemap* s_pCurrCubeMap = NULL;
 static f32      s_PulseTime;
 static s32      s_CustomStart;
-
-// stats
-#if ENABLE_RENDER_STATS
-static render::stats        s_RenderStats;
-#endif
 
 // debugging options
 #ifndef X_RETAIL
@@ -306,36 +299,15 @@ xbool IsAlphaMaterial( material_type Type )
 }
 
 //=============================================================================
-//=============================================================================
 // Platform-specific code
 //=============================================================================
-//=============================================================================
-
-#ifdef TARGET_XBOX
-#   include "LightMgr.hpp"
-#   include "platform_Render.hpp"
-#   include "Entropy/XBox/xbox_private.hpp"
-#   include <XGraphics.h>
-#   include "XBOX/xbox_render.hpp"
-#   include "XBOX/xbox_post.inl"
-#   include "XBOX/xbox_platform.inl"
-shader_mgr  * g_pShaderMgr = NULL;
-pipeline_mgr* g_pPipeline  = NULL;
-#endif
-
-#ifdef TARGET_PS2
-#include "PS2/ps2_post.cpp"
-#include "PS2/ps2_Render.cpp"
-#endif
 
 #ifdef TARGET_PC
 #include "LightMgr.hpp"
 #include "platform_Render.hpp"
-#include "PC/pc_render.hpp"
-#include "PC/pc_post.inl"
+#include "Entropy/D3DEngine/d3deng_private.hpp"
+#include "Entropy/D3DEngine/d3deng_shader.hpp"
 #include "PC/pc_platform.inl"
-shader_mgr  * g_pShaderMgr = NULL;
-pipeline_mgr* g_pPipeline  = NULL;
 #endif
 
 //=============================================================================
@@ -378,23 +350,15 @@ static void                 CalcVMatOffsets         ( s32* VMatOffsets,
                                                       const geom* pGeom,
                                                       u32 VTextureMask )            X_SECTION( render_infrequent );
 
-
 //=============================================================================
 
 color_info::color_info( fileio& File )
 {
     (void)File;
-
-#if defined(TARGET_XBOX)
-    m_hColors = g_VertFactory.Create( "Vertex colours",m_nColors*sizeof(u32),m_pVoid );
-    m_pColor32 = (u32*)m_hColors->m_Ptr;
-#endif
 }
 
 //=============================================================================
-//=============================================================================
 // Internal functions
-//=============================================================================
 //=============================================================================
 
 static
@@ -476,19 +440,6 @@ render_instance& AddToHashHybrid( u32 SortKey )
             CurrLink = TestInst.Next;
         }
     }
-
-
-/*
-    ASSERT( s_LoHashMark < s_HiHashMark );
-    s_lRenderInst[s_LoHashMark].SortKey   = SortKey;
-    s_lRenderInst[s_LoHashMark].Next      = -1;
-    s_lRenderInst[s_LoHashMark].Brother   = -1;
-    s_lSortData[s_LoHashMark].iRenderInst = s_LoHashMark;
-    s_lSortData[s_LoHashMark].SortKey     = SortKey;
-    s_LoHashMark++;
-
-    return s_lRenderInst[s_LoHashMark-1];
-    */
 }
 
 //=============================================================================
@@ -658,7 +609,7 @@ void RegisterGeom( geom& Geom )
     // register the materials this geometry uses
     RegisterMaterials( Geom );
 
-#ifndef X_RETAIL
+    #ifndef X_RETAIL
     s_nGeomsLoaded         += 1;
     s_nGeomBonesLoaded     += Geom.m_nBones;
     s_nGeomMeshesLoaded    += Geom.m_nMeshes;
@@ -667,7 +618,7 @@ void RegisterGeom( geom& Geom )
     s_nGeomTexturesLoaded  += Geom.m_nTextures;
     s_nGeomUVKeysLoaded    += Geom.m_nUVKeys;
     s_nGeomVMatsLoaded     += Geom.m_nVirtualMaterials;
-#endif
+    #endif
 }
 
 //=============================================================================
@@ -739,7 +690,7 @@ void UnregisterGeom( geom& Geom )
     s_lRegisteredGeoms.DeleteByHandle( Geom.m_hGeom );
     Geom.m_hGeom = HNULL;
 
-#ifndef X_RETAIL
+    #ifndef X_RETAIL
     s_nGeomsLoaded         -= 1;
     s_nGeomBonesLoaded     -= Geom.m_nBones;
     s_nGeomMeshesLoaded    -= Geom.m_nMeshes;
@@ -748,7 +699,7 @@ void UnregisterGeom( geom& Geom )
     s_nGeomTexturesLoaded  -= Geom.m_nTextures;
     s_nGeomUVKeysLoaded    -= Geom.m_nUVKeys;
     s_nGeomVMatsLoaded     -= Geom.m_nVirtualMaterials;
-#endif
+    #endif
 }
 
 //=============================================================================
@@ -939,28 +890,6 @@ xbool CanHaveProjTexture( const geom::material& Mat )
 
 //=============================================================================
 
-#ifdef X_DEBUG
-static
-void SortSanityCheck( void )
-{
-    #if 0
-    {
-        u32 LastSortKey = 0;
-        s32 i;
-        for ( i = 0; i < s_LoHashMark; i++ )
-        {
-            render_instance& Inst = s_lRenderInst[s_lSortData[i].iRenderInst];
-            ASSERT( Inst.SortKey == s_lSortData[i].SortKey );
-            ASSERT( Inst.SortKey >= LastSortKey );
-            LastSortKey = Inst.SortKey;
-        }
-    }
-    #endif
-}
-#endif
-
-//=============================================================================
-
 static
 void CalcVMatOffsets( s32* VMatOffsets, const geom* pGeom, u32 VTextureMask )
 {
@@ -985,10 +914,6 @@ void CalcVMatOffsets( s32* VMatOffsets, const geom* pGeom, u32 VTextureMask )
     }
 }
 
-//=============================================================================
-//=============================================================================
-// Implementation of "public" functions
-//=============================================================================
 //=============================================================================
 
 s32 render::GetHardwareBufferSize( void )
@@ -1089,7 +1014,6 @@ void render::Render3dSprites( s32            nSprites,
                               const u32*     pColors )
 {
     ASSERT( s_InRawBegin );
-
     platform_Render3dSprites( nSprites, UniScale, pL2W, pPositions, pRotScales, pColors );
 }
 
@@ -1103,7 +1027,6 @@ void render::RenderHeatHazeSprites( s32             nSprites,
                                     const u32*      pColors )
 {
     ASSERT( s_InRawBegin );
-
     platform_RenderHeatHazeSprites( nSprites, UniScale, pL2W, pPositions, pRotScales, pColors );
 }
 
@@ -1118,7 +1041,6 @@ void render::RenderVelocitySprites( s32             nSprites,
                                     const u32*      pColors  )
 {
     ASSERT( s_InRawBegin );
-
     platform_RenderVelocitySprites( nSprites, UniScale, pL2W, pVelMatrix, pPositions, pVelocities, pColors );
 }
 
@@ -1353,427 +1275,9 @@ void render::BeginNormalRender( void )
 
 //=============================================================================
 
-#ifdef TARGET_PC
-namespace render
-{
-    void PrimeZBuffer( void )
-    {
-        // First of all we prime the Z-buffer *********************************
-
-        DWORD CullMode;
-        g_pd3dDevice->GetRenderState( D3DRS_CULLMODE,&CullMode );
-        g_pd3dDevice->SetRenderState( D3DRS_COLORWRITEENABLE,0 );
-        g_pd3dDevice->SetRenderState( D3DRS_CULLMODE,D3DCULL_NONE );
-        g_pd3dDevice->SetRenderState( D3DRS_ZWRITEENABLE,TRUE );
-        g_pd3dDevice->SetRenderState( D3DRS_ZENABLE,TRUE );
-
-        g_bZPriming = TRUE;
-        {
-            // loop through all of the render instances and render those bad boys
-            sortkey   CurrentSortData;
-            CurrentSortData.Bits          = 0xffffffff;
-            geom*     pCurrentGeom        = NULL;
-            geom_type CurrentType         = TYPE_UNKNOWN;
-            for ( s32 iUniqueInst = 0; iUniqueInst < s_LoHashMark; iUniqueInst++ )
-            {
-                render_instance& Inst = s_lRenderInst[s_lSortData[iUniqueInst].iRenderInst];
-                
-                // If this is the start of the custom distortion and alpha instances,
-                // the bail out of this loop. They'll come later
-                if ( Inst.SortKey.RenderOrder >= ORDER_CUSTOM_START )
-                {
-                    // distortion meshes have to be done separately
-                    s_CustomStart = iUniqueInst;
-                    break;
-                }
-
-                // activate the material if necessary
-                if ( CurrentSortData.MatIndex  != Inst.SortKey.MatIndex )
-                {
-                    if ( pCurrentGeom != NULL )
-                    {
-                        ASSERT( CurrentType != TYPE_UNKNOWN );
-                        if ( CurrentType == TYPE_RIGID )    platform_EndRigidGeom();
-                        else                                platform_EndSkinGeom ();
-                        pCurrentGeom = NULL;
-                    }
-
-                    #if ENABLE_RENDER_XTIMERS
-                    StatsTimer.Reset();
-                    StatsTimer.Start();
-                    #endif
-
-                    material& Mat = s_lRegisteredMaterials[Inst.SortKey.MatIndex];
-                    ASSERT( (Mat.m_Type != Material_Distortion) &&
-                            (Mat.m_Type != Material_Distortion_PerPolyEnv) );
-
-                    #if ENABLE_RENDER_XTIMERS
-                    s_RenderStats.m_MaterialActivateTime += StatsTimer.Stop();
-                    #endif
-
-                    CurrentSortData.MatIndex  = Inst.SortKey.MatIndex;
-
-                    // update the stats
-                    #if ENABLE_RENDER_STATS
-                    s_RenderStats.m_nMaterialsRendered++;
-                    #endif
-                }
-
-                // start a new instance batch if necessary (geometry sorting should already
-                // be built into the sort key)
-                if ( (Inst.SortKey.GeomType == 0) &&
-                    ((pCurrentGeom != Inst.Data.Rigid.pGeom) || (CurrentSortData.GeomSubMesh != Inst.SortKey.GeomSubMesh)) )
-                {
-                    if ( pCurrentGeom != NULL )
-                    {
-                        ASSERT( CurrentType != TYPE_UNKNOWN );
-                        if ( CurrentType == TYPE_RIGID )    platform_EndRigidGeom();
-                        else                                platform_EndSkinGeom ();
-                    }
-
-                    pCurrentGeom                = Inst.Data.Rigid.pGeom;
-                    CurrentType                 = TYPE_RIGID;
-                    CurrentSortData.GeomSubMesh = Inst.SortKey.GeomSubMesh;
-                    platform_BeginRigidGeom( pCurrentGeom, Inst.SortKey.GeomSubMesh );
-                }
-                else
-                if ( Inst.SortKey.GeomType &&
-                    ((pCurrentGeom != Inst.Data.Skin.pGeom) || (CurrentSortData.GeomSubMesh != Inst.SortKey.GeomSubMesh)) )
-                {
-                    if ( pCurrentGeom != NULL )
-                    {
-                        ASSERT( CurrentType != TYPE_UNKNOWN );
-                        if ( CurrentType == TYPE_RIGID )    platform_EndRigidGeom();
-                        else                                platform_EndSkinGeom ();
-                    }
-
-                    pCurrentGeom                = Inst.Data.Skin.pGeom;
-                    CurrentType                 = TYPE_SKIN;
-                    CurrentSortData.GeomSubMesh = Inst.SortKey.GeomSubMesh;
-                    platform_BeginSkinGeom( pCurrentGeom, Inst.SortKey.GeomSubMesh );
-                }
-
-                // let the platform run its render code on the instances
-                s32 iInstToRender = s_lSortData[iUniqueInst].iRenderInst;
-                if ( Inst.SortKey.GeomType == 0 )
-                {
-                    while ( iInstToRender != -1 )
-                    {
-                    #ifndef X_RETAIL
-                        if( g_RenderDebug.RenderClippedOnly && !(s_lRenderInst[iInstToRender].Flags & render::CLIPPED) )
-                        {
-                            iInstToRender = s_lRenderInst[iInstToRender].Brother;
-                            continue;
-                        }
-
-                        if( g_RenderDebug.RenderShadowedOnly &&
-                            !(s_lRenderInst[iInstToRender].Flags & (render::INSTFLAG_PROJ_SHADOW_1 | render::INSTFLAG_PROJ_SHADOW_2 | render::SHADOW_PASS)))
-                        {
-                            iInstToRender = s_lRenderInst[iInstToRender].Brother;
-                            continue;
-                        }
-                    #endif
-
-                        ASSERT( s_lRenderInst[iInstToRender].SortKey.Bits == Inst.SortKey.Bits );
-                        platform_RenderRigidInstance( s_lRenderInst[iInstToRender] );
-                        iInstToRender = s_lRenderInst[iInstToRender].Brother;
-                    };
-                }
-                else
-                {
-                    while ( iInstToRender != -1 )
-                    {
-                    #ifndef X_RETAIL
-                        if( g_RenderDebug.RenderClippedOnly && !(s_lRenderInst[iInstToRender].Flags & render::CLIPPED) )
-                        {
-                            iInstToRender = s_lRenderInst[iInstToRender].Brother;
-                            continue;
-                        }
-
-                        if( g_RenderDebug.RenderShadowedOnly &&
-                            !(s_lRenderInst[iInstToRender].Flags & (render::INSTFLAG_PROJ_SHADOW_1 | render::INSTFLAG_PROJ_SHADOW_2 | render::SHADOW_PASS)))
-                        {
-                            iInstToRender = s_lRenderInst[iInstToRender].Brother;
-                            continue;
-                        }
-                    #endif
-
-                        ASSERT( s_lRenderInst[iInstToRender].SortKey.Bits == Inst.SortKey.Bits );
-                        platform_RenderSkinInstance ( s_lRenderInst[iInstToRender] );
-                        iInstToRender = s_lRenderInst[iInstToRender].Brother;
-                    };
-                }
-            }
-
-            // finish up any pending tasks
-            if ( pCurrentGeom != NULL )
-            {
-                ASSERT( CurrentType != TYPE_UNKNOWN );
-                if ( CurrentType == TYPE_RIGID )    platform_EndRigidGeom();
-                else                                platform_EndSkinGeom ();
-            }
-        }
-        g_bZPriming = FALSE;
-
-        g_pd3dDevice->SetRenderState(
-            D3DRS_COLORWRITEENABLE,
-            D3DCOLORWRITEENABLE_ALPHA
-                |   D3DCOLORWRITEENABLE_RED
-                |   D3DCOLORWRITEENABLE_GREEN
-                |   D3DCOLORWRITEENABLE_BLUE
-        );
-        g_pd3dDevice->SetRenderState( D3DRS_CULLMODE,CullMode );
-    }
-}
-#endif
-
-//=============================================================================
-
-#ifdef TARGET_XBOX
-void render::ZPrimeRenderTarget( void )
-{
-    platform_BeginZPrime();
-    {
-        // loop through all of the render instances and render
-
-        sortkey   CurrentSortData;
-        CurrentSortData.Bits          = 0xffffffff;
-        geom*     pCurrentGeom        = NULL;
-        geom_type CurrentType         = TYPE_UNKNOWN;
-        for ( s32 iUniqueInst = 0; iUniqueInst < s_LoHashMark; iUniqueInst++ )
-        {
-            render_instance& Inst = s_lRenderInst[s_lSortData[iUniqueInst].iRenderInst];
-            
-            // If this is the start of the custom distortion and alpha instances,
-            // the bail out of this loop. They'll come later
-            if ( Inst.SortKey.RenderOrder >= ORDER_CUSTOM_START )
-            {
-                // distortion meshes have to be done separately
-                s_CustomStart = iUniqueInst;
-                break;
-            }
-
-            // activate the material if necessary
-            if ( CurrentSortData.MatIndex  != Inst.SortKey.MatIndex )
-            {
-                if ( pCurrentGeom != NULL )
-                {
-                    ASSERT( CurrentType != TYPE_UNKNOWN );
-                    if ( CurrentType == TYPE_RIGID )    platform_EndRigidGeom();
-                    else                                platform_EndSkinGeom ();
-                    pCurrentGeom = NULL;
-                }
-
-                #if ENABLE_RENDER_XTIMERS
-                StatsTimer.Reset();
-                StatsTimer.Start();
-                #endif
-
-                material& Mat = s_lRegisteredMaterials[Inst.SortKey.MatIndex];
-                ASSERT( (Mat.m_Type != Material_Distortion) &&
-                        (Mat.m_Type != Material_Distortion_PerPolyEnv) );
-
-                if( !g_pPipeline->SetZMaterial( Mat ))
-                    continue;
-
-                #if ENABLE_RENDER_XTIMERS
-                s_RenderStats.m_MaterialActivateTime += StatsTimer.Stop();
-                #endif
-                
-                CurrentSortData.MatIndex  = Inst.SortKey.MatIndex;
-
-                // update the stats
-                #if ENABLE_RENDER_STATS
-                s_RenderStats.m_nMaterialsRendered++;
-                #endif
-            }
-
-            // start a new instance batch if necessary (geometry sorting should already
-            // be built into the sort key)
-            if ( (Inst.SortKey.GeomType == 0) &&
-                ((pCurrentGeom != Inst.Data.Rigid.pGeom) || (CurrentSortData.GeomSubMesh != Inst.SortKey.GeomSubMesh)) )
-            {
-                if ( pCurrentGeom != NULL )
-                {
-                    ASSERT( CurrentType != TYPE_UNKNOWN );
-                    if ( CurrentType == TYPE_RIGID )    platform_EndRigidGeom();
-                    else                                platform_EndSkinGeom ();
-                }
-
-                pCurrentGeom                = Inst.Data.Rigid.pGeom;
-                CurrentType                 = TYPE_RIGID;
-                CurrentSortData.GeomSubMesh = Inst.SortKey.GeomSubMesh;
-                platform_BeginRigidGeom( pCurrentGeom, Inst.SortKey.GeomSubMesh );
-            }
-            else
-            if ( Inst.SortKey.GeomType &&
-                ((pCurrentGeom != Inst.Data.Skin.pGeom) || (CurrentSortData.GeomSubMesh != Inst.SortKey.GeomSubMesh)) )
-            {
-                if ( pCurrentGeom != NULL )
-                {
-                    ASSERT( CurrentType != TYPE_UNKNOWN );
-                    if ( CurrentType == TYPE_RIGID )    platform_EndRigidGeom();
-                    else                                platform_EndSkinGeom ();
-                }
-
-                pCurrentGeom                = Inst.Data.Skin.pGeom;
-                CurrentType                 = TYPE_SKIN;
-                CurrentSortData.GeomSubMesh = Inst.SortKey.GeomSubMesh;
-                platform_BeginSkinGeom( pCurrentGeom, Inst.SortKey.GeomSubMesh );
-            }
-
-            // let the platform run its render code on the instances
-            s32 iInstToRender = s_lSortData[iUniqueInst].iRenderInst;
-            if ( Inst.SortKey.GeomType == 0 )
-            {
-                while ( iInstToRender != -1 )
-                {
-                    ASSERT( s_lRenderInst[iInstToRender].SortKey.Bits == Inst.SortKey.Bits );
-                    platform_RenderRigidZInstance( s_lRenderInst[iInstToRender] );
-                    iInstToRender = s_lRenderInst[iInstToRender].Brother;
-                };
-            }
-            else
-            {
-                while ( iInstToRender != -1 )
-                {
-                    ASSERT( s_lRenderInst[iInstToRender].SortKey.Bits == Inst.SortKey.Bits );
-                    platform_RenderSkinZInstance( s_lRenderInst[iInstToRender] );
-                    iInstToRender = s_lRenderInst[iInstToRender].Brother;
-                };
-            }
-        }
-
-        // finish up any pending tasks
-        if ( pCurrentGeom != NULL )
-        {
-            ASSERT( CurrentType != TYPE_UNKNOWN );
-            if ( CurrentType == TYPE_RIGID )    platform_EndRigidGeom();
-            else                                platform_EndSkinGeom ();
-        }
-    }
-    platform_EndZPrime();
-}
-#endif
-
-//=============================================================================
-
-#ifdef TARGET_XBOX
-void render::RenderLightMap( void )
-{
-    if( g_pPipeline->m_bPipActive )
-        return;
-    //if( !s_TotalDynLights ) // should be && "no shadows"
-    //    return;
-
-    if( SWITCH_PER_PIXEL_LIGHTING )
-    {
-        platform_BeginLightMap();
-        {
-            // loop through all of the render instances and render
-
-            sortkey   CurrentSortData;
-            CurrentSortData.Bits          = 0xffffffff;
-            geom*     pCurrentGeom        = NULL;
-            for ( s32 iUniqueInst = 0; iUniqueInst < s_LoHashMark; iUniqueInst++ )
-            {
-                render_instance& Inst = s_lRenderInst[s_lSortData[iUniqueInst].iRenderInst];
-                
-                // If this is the start of the custom distortion and alpha instances,
-                // the bail out of this loop. They'll come later
-                if ( Inst.SortKey.RenderOrder >= ORDER_CUSTOM_START )
-                {
-                    // distortion meshes have to be done separately
-                    s_CustomStart = iUniqueInst;
-                    break;
-                }
-
-                // Only rigid geoms go to the light map
-                if( Inst.SortKey.GeomType )
-                    continue;
-
-                // activate the material if necessary
-                if ( CurrentSortData.MatIndex  != Inst.SortKey.MatIndex )
-                {
-                    if ( pCurrentGeom != NULL )
-                    {
-                        platform_EndRigidGeom();
-                        pCurrentGeom = NULL;
-                    }
-
-                    #if ENABLE_RENDER_XTIMERS
-                    StatsTimer.Reset();
-                    StatsTimer.Start();
-                    #endif
-
-                    material& Mat = s_lRegisteredMaterials[Inst.SortKey.MatIndex];
-                    ASSERT( (Mat.m_Type != Material_Distortion) &&
-                            (Mat.m_Type != Material_Distortion_PerPolyEnv) );
-
-                    if( IsAlphaMaterial( (material_type)Mat.m_Type ))
-                        continue;
-
-                    // Xbox only platform call
-                    platform_ActivateLitMaterial( Mat );
-
-                    #if ENABLE_RENDER_XTIMERS
-                    s_RenderStats.m_MaterialActivateTime += StatsTimer.Stop();
-                    #endif
-                    
-                    CurrentSortData.MatIndex  = Inst.SortKey.MatIndex;
-
-                    // update the stats
-                    #if ENABLE_RENDER_STATS
-                    s_RenderStats.m_nMaterialsRendered++;
-                    #endif
-                }
-
-                // start a new instance batch if necessary (geometry sorting should already
-                // be built into the sort key)
-                if ( ((pCurrentGeom != Inst.Data.Rigid.pGeom) ||
-                     (CurrentSortData.GeomSubMesh != Inst.SortKey.GeomSubMesh)) )
-                {
-                    if ( pCurrentGeom != NULL )
-                    {
-                        platform_EndRigidGeom();
-                    }
-
-                    pCurrentGeom                = Inst.Data.Rigid.pGeom;
-                    CurrentSortData.GeomSubMesh = Inst.SortKey.GeomSubMesh;
-                    platform_BeginRigidGeom( pCurrentGeom, Inst.SortKey.GeomSubMesh );
-                }
-
-                // let the platform run its render code on the instances
-                s32 iInstToRender = s_lSortData[iUniqueInst].iRenderInst;
-                while ( iInstToRender != -1 )
-                {
-                    ASSERT( s_lRenderInst[iInstToRender].SortKey.Bits == Inst.SortKey.Bits );
-                    platform_RenderLitRigidInstance( s_lRenderInst[iInstToRender] );
-                    iInstToRender = s_lRenderInst[iInstToRender].Brother;
-                }
-            }
-
-            // finish up any pending tasks
-            if ( pCurrentGeom != NULL )
-            {
-                platform_EndRigidGeom();
-            }
-        }
-        platform_EndLightMap();
-    }
-}
-#endif
-
-//=============================================================================
-
 void render::EndNormalRender( void )
 {
     CONTEXT( "render::End" );
-
-    #if ENABLE_RENDER_XTIMERS
-    xtimer TotalEndTime;
-    TotalEndTime.Start();
-    #endif
 
     // mark that we have no distortion or alpha meshes to render during the custom phase
     s_CustomStart = s_LoHashMark;
@@ -1786,16 +1290,8 @@ void render::EndNormalRender( void )
     // bail out early if there are no instances to render
     if ( s_LoHashMark == 0 )
     {
-        #if ENABLE_RENDER_XTIMERS
-        s_RenderStats.m_TotalEndRenderTime += TotalEndTime.Stop();
-        #endif
         return;
     }
-
-    // update the stats
-    #if ENABLE_RENDER_STATS
-    s_RenderStats.m_nSubMeshesRendered += s_LoHashMark + (kMaxRenderedInstances-1-s_HiHashMark);
-    #endif
 
     // set up the "cube" environment texture
     platform_CreateEnvTexture();
@@ -1811,33 +1307,8 @@ void render::EndNormalRender( void )
     platform_BeginShaders();
 
     // sort the render instances (by material and sort key)
-    #if ENABLE_RENDER_XTIMERS
-    xtimer StatsTimer;
-    StatsTimer.Start();
-    #endif
     x_qsort( s_lSortData.GetPtr(), s_LoHashMark, sizeof(sort_struct), InstanceCompareFn );
-    #if ENABLE_RENDER_XTIMERS
-    s_RenderStats.m_InstanceSortTime += StatsTimer.Stop();
-    #endif
 
-#ifdef X_DEBUG
-    // sanity check
-    SortSanityCheck();
-#endif
-
-#ifdef TARGET_PC
-    //BeginNormalRender();
-    //render::PrimeZBuffer();
-#endif
-
-#ifdef TARGET_XBOX
-    // Clear all buffers; nestle tightly against priming and lightmap
-    g_pPipeline->BeginNormalRender();
-    render::ZPrimeRenderTarget();
-    render::RenderLightMap();
-
-    bool bLightmapApplied = false;
-#endif
 {
     // loop through all of the render instances and render those bad boys
     sortkey   CurrentSortData;
@@ -1868,27 +1339,13 @@ void render::EndNormalRender( void )
                 pCurrentGeom = NULL;
             }
 
-            #if ENABLE_RENDER_XTIMERS
-            StatsTimer.Reset();
-            StatsTimer.Start();
-            #endif
-
             material& Mat = s_lRegisteredMaterials[Inst.SortKey.MatIndex];
             ASSERT( (Mat.m_Type != Material_Distortion) &&
                     (Mat.m_Type != Material_Distortion_PerPolyEnv) );
 
             platform_ActivateMaterial( Mat );
             
-            #if ENABLE_RENDER_XTIMERS
-            s_RenderStats.m_MaterialActivateTime += StatsTimer.Stop();
-            #endif
-            
             CurrentSortData.MatIndex  = Inst.SortKey.MatIndex;
-
-            // update the stats
-            #if ENABLE_RENDER_STATS
-            s_RenderStats.m_nMaterialsRendered++;
-            #endif
         }
 
         // start a new instance batch if necessary (geometry sorting should already
@@ -1931,7 +1388,7 @@ void render::EndNormalRender( void )
         {
             while ( iInstToRender != -1 )
             {
-#ifndef X_RETAIL
+                #ifndef X_RETAIL
                 if( g_RenderDebug.RenderClippedOnly && !(s_lRenderInst[iInstToRender].Flags & render::CLIPPED) )
                 {
                     iInstToRender = s_lRenderInst[iInstToRender].Brother;
@@ -1944,8 +1401,7 @@ void render::EndNormalRender( void )
                     iInstToRender = s_lRenderInst[iInstToRender].Brother;
                     continue;
                 }
-#endif
-
+                #endif
                 ASSERT( s_lRenderInst[iInstToRender].SortKey.Bits == Inst.SortKey.Bits );
                 platform_RenderRigidInstance( s_lRenderInst[iInstToRender] );
                 iInstToRender = s_lRenderInst[iInstToRender].Brother;
@@ -1955,7 +1411,7 @@ void render::EndNormalRender( void )
         {
             while ( iInstToRender != -1 )
             {
-#ifndef X_RETAIL
+                #ifndef X_RETAIL
                 if( g_RenderDebug.RenderClippedOnly && !(s_lRenderInst[iInstToRender].Flags & render::CLIPPED) )
                 {
                     iInstToRender = s_lRenderInst[iInstToRender].Brother;
@@ -1968,7 +1424,7 @@ void render::EndNormalRender( void )
                     iInstToRender = s_lRenderInst[iInstToRender].Brother;
                     continue;
                 }
-#endif
+                #endif
 
                 ASSERT( s_lRenderInst[iInstToRender].SortKey.Bits == Inst.SortKey.Bits );
                 platform_RenderSkinInstance ( s_lRenderInst[iInstToRender] );
@@ -1989,11 +1445,6 @@ void render::EndNormalRender( void )
     // let the microcode or whatever finish up
     platform_EndShaders();
     platform_EndNormalRender();
-
-    // stats update
-    #if ENABLE_RENDER_XTIMERS
-    s_RenderStats.m_TotalEndRenderTime += TotalEndTime.Stop();
-    #endif
 }
 
 //=============================================================================
@@ -2010,11 +1461,6 @@ void render::BeginCustomRender( void )
 
 void render::EndCustomRender( void )
 {
-    #if ENABLE_RENDER_XTIMERS
-    xtimer TotalEndTime;
-    TotalEndTime.Start();
-    #endif
-
     // safety check
     ASSERT( eng_InBeginEnd() );
     ASSERT( s_InCustomBegin );
@@ -2077,20 +1523,9 @@ void render::EndCustomRender( void )
                 else                                platform_EndSkinGeom ();
                 pCurrentGeom = NULL;
             }
-
-            #if ENABLE_RENDER_XTIMERS
-            StatsTimer.Reset();
-            StatsTimer.Start();
-            #endif
             material& Mat = s_lRegisteredMaterials[Inst.SortKey.MatIndex];
             platform_ActivateMaterial( Mat );
             CurrentSortData.MatIndex  = Inst.SortKey.MatIndex;
-            #if ENABLE_RENDER_XTIMERS
-            s_RenderStats.m_MaterialActivateTime += StatsTimer.Stop();
-            #endif
-            #if ENABLE_RENDER_STATS
-            s_RenderStats.m_nMaterialsRendered++;
-            #endif
         }
         else
         if ( (CurrentSortData.RenderOrder == ORDER_DISTORTION) &&
@@ -2104,10 +1539,6 @@ void render::EndCustomRender( void )
                 pCurrentGeom = NULL;
             }
 
-            #if ENABLE_RENDER_XTIMERS
-            StatsTimer.Reset();
-            StatsTimer.Start();
-            #endif
             if ( Inst.OverrideMat )
             {
                 const distortion_info& DistortInfo = s_lDistortionInfo[(s32)Inst.SortKey.MatIndex];
@@ -2128,12 +1559,6 @@ void render::EndCustomRender( void )
             }
             
             CurrentSortData.MatIndex  = Inst.SortKey.MatIndex;
-            #if ENABLE_RENDER_XTIMERS
-            s_RenderStats.m_MaterialActivateTime += StatsTimer.Stop();
-            #endif
-            #if ENABLE_RENDER_STATS
-            s_RenderStats.m_nMaterialsRendered++;
-            #endif
         }
 
         // start a new instance batch if necessary (geometry sorting should already
@@ -2176,7 +1601,7 @@ void render::EndCustomRender( void )
         {
             while ( iInstToRender != -1 )
             {
-#ifndef X_RETAIL
+                #ifndef X_RETAIL
                 if( g_RenderDebug.RenderClippedOnly && !(s_lRenderInst[iInstToRender].Flags & render::CLIPPED) )
                 {
                     iInstToRender = s_lRenderInst[iInstToRender].Brother;
@@ -2189,7 +1614,7 @@ void render::EndCustomRender( void )
                     iInstToRender = s_lRenderInst[iInstToRender].Brother;
                     continue;
                 }
-#endif
+                #endif
 
                 ASSERT( s_lRenderInst[iInstToRender].SortKey.Bits == Inst.SortKey.Bits );
                 platform_RenderRigidInstance( s_lRenderInst[iInstToRender] );
@@ -2200,7 +1625,7 @@ void render::EndCustomRender( void )
         {
             while ( iInstToRender != -1 )
             {
-#ifndef X_RETAIL
+                #ifndef X_RETAIL
                 if( g_RenderDebug.RenderClippedOnly && !(s_lRenderInst[iInstToRender].Flags & render::CLIPPED) )
                 {
                     iInstToRender = s_lRenderInst[iInstToRender].Brother;
@@ -2213,8 +1638,7 @@ void render::EndCustomRender( void )
                     iInstToRender = s_lRenderInst[iInstToRender].Brother;
                     continue;
                 }
-#endif
-
+                #endif
                 ASSERT( s_lRenderInst[iInstToRender].SortKey.Bits == Inst.SortKey.Bits );
                 platform_RenderSkinInstance ( s_lRenderInst[iInstToRender] );
                 iInstToRender = s_lRenderInst[iInstToRender].Brother;
@@ -2236,11 +1660,6 @@ void render::EndCustomRender( void )
 
     // let the microcode or whatever finish up
     platform_EndShaders();
-
-    // stats update
-    #if ENABLE_RENDER_XTIMERS
-    s_RenderStats.m_TotalEndRenderTime += TotalEndTime.Stop();
-    #endif
 }
 
 //=============================================================================
@@ -2260,22 +1679,15 @@ void render::AddRigidInstanceSimple( hgeom_inst     hInst,
                                      const bbox&    WorldBBox,
                                      u32            Flags )
 {
-#ifndef X_RETAIL
+    #ifndef X_RETAIL
     if( g_RenderDebug.RenderSkinOnly )
         return;
-#endif
-
-    #if ENABLE_RENDER_XTIMERS
-    xtimer AddTime;
-    AddTime.Start();
     #endif
 
     // safety check
     ASSERT( s_InRenderBegin );
     ASSERT( pL2W->IsValid() );
-#ifdef TARGET_PS2
-    ASSERT( ((u32)pCol & 0xf) == 0 );
-#endif
+
     // grab the useful pointers out
     private_instance& RegisteredInst = s_lRegisteredInst( hInst );
     ASSERT( RegisteredInst.Type == TYPE_RIGID );
@@ -2311,29 +1723,10 @@ void render::AddRigidInstanceSimple( hgeom_inst     hInst,
             ASSERT( (hMat>=0) && (hMat<kMaxRegisteredMaterials) );
 
             // set the color pointer
-			#if defined(TARGET_XBOX) || defined(TARGET_PC)
-                const u32* pInstCol=( u32* )pCol;
-            #elif defined(TARGET_PS2)
-                const u16* pInstCol=( u16* )pCol;
+			#ifdef TARGET_PC
+            const u32* pInstCol=( u32* )pCol;
             #else
-            #endif
-
-            #ifdef TARGET_XBOX
-            rigid_geom::dlist_xbox& DList = pGeom->m_System.pXbox[SubMesh.iDList];
-            ASSERT( DList.iColor <= pGeom->m_nVertices );
-            if( pInstCol )
-                pInstCol += DList.iColor;
-            #endif
-
-            #ifdef TARGET_PS2
-            rigid_geom::dlist_ps2& DList = pGeom->m_System.pPS2[SubMesh.iDList];
-            if( pInstCol )
-                pInstCol += DList.iColor;
-            #endif
-
-            // make sure we're aligned for dma purposes
-            #ifdef TARGET_PS2
-            ASSERT( ALIGN_16(pL2W) == (s32)pL2W );
+			#error Unknown Target!	
             #endif
 
             // figure out the sort key
@@ -2367,20 +1760,11 @@ void render::AddRigidInstanceSimple( hgeom_inst     hInst,
 
             #ifdef TARGET_PC
             Inst.hDList = RegisteredInst.RigidDList[(s32)SubMesh.iDList];
-            #endif // TARGET_PC
+            #else
+            #error Unknown Target!	
+            #endif
         }
     }
-
-    // stats update
-    #if ENABLE_RENDER_STATS
-    s_RenderStats.m_nInstancesRendered++;
-    s_RenderStats.m_nTrisRendered     += pGeom->m_nFaces;
-    s_RenderStats.m_nVerticesRendered += pGeom->m_nVertices;
-    #endif
-
-    #if ENABLE_RENDER_XTIMERS
-    s_RenderStats.m_InstanceAddTime   += AddTime.Stop();
-    #endif
 }
 
 //=============================================================================
@@ -2392,29 +1776,16 @@ void render::AddRigidInstance( hgeom_inst     hInst,
                                u32            Flags,
                                s32            Alpha )
 {
-#ifndef X_RETAIL
+    #ifndef X_RETAIL
     if( g_RenderDebug.RenderSkinOnly )
         return;
-#endif
+    #endif
 
     CONTEXT( "render::AddRigidInstance" );
-
-    #if ENABLE_RENDER_XTIMERS
-    xtimer AddTime;
-    AddTime.Start();
-    #endif
 
     // safety check
     ASSERT( s_InRenderBegin );
     ASSERT( pL2W->IsValid() );
-#ifdef TARGET_PS2
-    ASSERT( ((u32)pCol & 0xf) == 0 );
-#endif
-
-    // stats update
-    #if ENABLE_RENDER_STATS
-    s_RenderStats.m_nInstancesRendered++;
-    #endif
 
     // grab the useful pointers out
     private_instance& RegisteredInst = s_lRegisteredInst( hInst );
@@ -2473,34 +1844,15 @@ void render::AddRigidInstance( hgeom_inst     hInst,
             // figure out the bone we should render with
             #ifdef TARGET_PC
             s32 iBone = pGeom->m_System.pPC  [SubMesh.iDList].iBone;
-            #elif defined(TARGET_XBOX)
-            s32 iBone = pGeom->m_System.pXbox[SubMesh.iDList].iBone;
-            #elif defined(TARGET_PS2)
-            s32 iBone = pGeom->m_System.pPS2 [SubMesh.iDList].iBone;
             #else
-            s32 iBone = 0;
-            #error unknown target
+            #error Unknown Target!	
             #endif
 
             // set the color pointer
-			#if defined(TARGET_XBOX) || defined(TARGET_PC)
-                const u32* pInstCol=( u32* )pCol;
-            #elif defined(TARGET_PS2)
-                const u16* pInstCol=( u16* )pCol;
+			#ifdef TARGET_PC
+            const u32* pInstCol=( u32* )pCol;
             #else
-            #endif
-
-            #ifdef TARGET_XBOX
-            rigid_geom::dlist_xbox& DList = pGeom->m_System.pXbox[SubMesh.iDList];
-            ASSERT( DList.iColor <= pGeom->m_nVertices );
-            if( pInstCol )
-                pInstCol += DList.iColor;
-            #endif
-
-            #ifdef TARGET_PS2
-            rigid_geom::dlist_ps2& DList = pGeom->m_System.pPS2[SubMesh.iDList];
-            if( pInstCol )
-                pInstCol += DList.iColor;
+			#error Unknown Target!	
             #endif
 
             // build the sort key
@@ -2516,22 +1868,6 @@ void render::AddRigidInstance( hgeom_inst     hInst,
 
             // make a copy of the l2w in smem that we can ref to
             matrix4* pMat = (matrix4*)smem_BufferAlloc(sizeof(matrix4));
-            #ifdef TARGET_PS2
-            if ( ((u32)pL2W & 0xf) == 0 )
-            {
-                ASSERT( ((u32)pMat & 0xf) == 0 );
-                ASSERT( ALIGN_16(pMat) == (s32)pMat );
-                ASSERT( ALIGN_16(pL2W) == (s32)pL2W );
-
-                u_long128* pSrc = (u_long128*)(pL2W + iBone);
-                u_long128* pDst = (u_long128*)pMat;
-                pDst[0] = pSrc[0];
-                pDst[1] = pSrc[1];
-                pDst[2] = pSrc[2];
-                pDst[3] = pSrc[3];
-            }
-            else
-            #endif
             {
                 *pMat = *(pL2W + iBone);
                 ASSERT( pMat->IsValid() );
@@ -2564,7 +1900,9 @@ void render::AddRigidInstance( hgeom_inst     hInst,
 
             #ifdef TARGET_PC
             Inst.hDList = RegisteredInst.RigidDList[(s32)SubMesh.iDList];
-            #endif // TARGET_PC
+			#else
+            #error Unknown Target!	
+            #endif
 
             // handle fading geometry
             if ( Flags & render::FADING_ALPHA )
@@ -2585,25 +1923,16 @@ void render::AddRigidInstance( hgeom_inst     hInst,
                 ZPrimeInst.OverrideMat      = 1;
                 #ifdef TARGET_PC
                 ZPrimeInst.hDList           = Inst.hDList;
+                #else
+                #error Unknown Target!	
                 #endif
             }
         }
-
-        // update the stats
-        #if ENABLE_RENDER_STATS
-        s_RenderStats.m_nVerticesRendered += pMesh->nVertices;
-        s_RenderStats.m_nTrisRendered     += pMesh->nFaces;
-        #endif
-
         // next mesh
         iMesh++;
         pMesh++;
         Mask >>= 1;
     }
-
-    #if ENABLE_RENDER_XTIMERS
-    s_RenderStats.m_InstanceAddTime += AddTime.Stop();
-    #endif
 }
 
 //=============================================================================
@@ -2616,29 +1945,16 @@ void render::AddRigidInstance( hgeom_inst        hInst,
                                u32               Flags,
                                s32               Alpha )
 {
-#ifndef X_RETAIL
+    #ifndef X_RETAIL
     if( g_RenderDebug.RenderSkinOnly )
         return;
-#endif
+    #endif
 
     CONTEXT( "render::AddRigidInstance" );
-
-#if ENABLE_RENDER_XTIMERS
-    xtimer AddTime;
-    AddTime.Start();
-#endif
 
     // safety check
     ASSERT( s_InRenderBegin );
     ASSERT( pL2W->IsValid() );
-#ifdef TARGET_PS2
-    ASSERT( ((u32)pCol & 0xf) == 0 );
-#endif
-
-    // stats update
-#if ENABLE_RENDER_STATS
-    s_RenderStats.m_nInstancesRendered++;
-#endif
 
     // grab the useful pointers out
     private_instance& RegisteredInst = s_lRegisteredInst( hInst );
@@ -2701,34 +2017,15 @@ void render::AddRigidInstance( hgeom_inst        hInst,
             // figure out the bone we should render with
             #ifdef TARGET_PC
             s32 iBone = pGeom->m_System.pPC  [SubMesh.iDList].iBone;
-            #elif defined(TARGET_XBOX)
-            s32 iBone = pGeom->m_System.pXbox[SubMesh.iDList].iBone;
-            #elif defined(TARGET_PS2)
-            s32 iBone = pGeom->m_System.pPS2 [SubMesh.iDList].iBone;
             #else
-            s32 iBone = 0;
-            #error unknown target
+            #error Unknown Target!
             #endif
 
             // set the color pointer
-            #if defined(TARGET_XBOX) || defined(TARGET_PC)
+            #ifdef TARGET_PC
             const u32* pInstCol=( u32* )pCol;
-            #elif defined(TARGET_PS2)
-            const u16* pInstCol=( u16* )pCol;
             #else
-            #endif
-
-            #ifdef TARGET_XBOX
-            rigid_geom::dlist_xbox& DList = pGeom->m_System.pXbox[SubMesh.iDList];
-            ASSERT( DList.iColor <= pGeom->m_nVertices );
-            if( pInstCol )
-                pInstCol += DList.iColor;
-            #endif
-		    
-            #ifdef TARGET_PS2
-            rigid_geom::dlist_ps2& DList = pGeom->m_System.pPS2[SubMesh.iDList];
-            if( pInstCol )
-                pInstCol += DList.iColor;
+			#error Unknown Target!	
             #endif
 
             // build the sort key
@@ -2744,22 +2041,6 @@ void render::AddRigidInstance( hgeom_inst        hInst,
 
             // make a copy of the l2w in smem that we can ref to
             matrix4* pMat = (matrix4*)smem_BufferAlloc(sizeof(matrix4));
-            #ifdef TARGET_PS2
-            if ( ((u32)pL2W & 0xf) == 0 )
-            {
-                ASSERT( ((u32)pMat & 0xf) == 0 );
-                ASSERT( ALIGN_16(pMat) == (s32)pMat );
-                ASSERT( ALIGN_16(pL2W) == (s32)pL2W );
-
-                u_long128* pSrc = (u_long128*)(pL2W + iBone);
-                u_long128* pDst = (u_long128*)pMat;
-                pDst[0] = pSrc[0];
-                pDst[1] = pSrc[1];
-                pDst[2] = pSrc[2];
-                pDst[3] = pSrc[3];
-            }
-            else
-            #endif
             {
                 *pMat = *(pL2W + iBone);
                 ASSERT( pMat->IsValid() );
@@ -2792,7 +2073,9 @@ void render::AddRigidInstance( hgeom_inst        hInst,
 
             #ifdef TARGET_PC
             Inst.hDList = RegisteredInst.RigidDList[(s32)SubMesh.iDList];
-            #endif // TARGET_PC
+            #else
+            #error Unknown Target!	
+            #endif
 
             // handle fading geometry
             if ( Flags & render::FADING_ALPHA )
@@ -2813,25 +2096,16 @@ void render::AddRigidInstance( hgeom_inst        hInst,
                 ZPrimeInst.OverrideMat      = 1;
                 #ifdef TARGET_PC
                 ZPrimeInst.hDList           = Inst.hDList;
+                #else
+                #error Unknown Target!	
                 #endif
             }
         }
-
-        // update the stats
-        #if ENABLE_RENDER_STATS
-        s_RenderStats.m_nVerticesRendered += pMesh->nVertices;
-        s_RenderStats.m_nTrisRendered     += pMesh->nFaces;
-        #endif
-
         // next mesh
         iMesh++;
         pMesh++;
         Mask >>= 1;
     }
-
-    #if ENABLE_RENDER_XTIMERS
-    s_RenderStats.m_InstanceAddTime += AddTime.Stop();
-    #endif
 }
 
 //=============================================================================
@@ -2843,25 +2117,15 @@ void render::AddSkinInstance( hgeom_inst     hInst,
                               u32            Flags,
                               const xcolor&  Ambient )
 {
-#ifndef X_RETAIL
+    #ifndef X_RETAIL
     if( g_RenderDebug.RenderRigidOnly )
         return;
-#endif
+    #endif
 
     CONTEXT( "render::AddSkinInstance" );
 
-    #if ENABLE_RENDER_XTIMERS
-    xtimer AddTime;
-    AddTime.Start();
-    #endif
-
     // safety check
     ASSERT( s_InRenderBegin );
-
-    // stats update
-    #if ENABLE_RENDER_STATS
-    s_RenderStats.m_nInstancesRendered++;
-    #endif
 
     // grab the useful pointers out
     private_instance& RegisteredInst = s_lRegisteredInst( hInst );
@@ -2950,6 +2214,8 @@ void render::AddSkinInstance( hgeom_inst     hInst,
             #ifdef TARGET_PC
             private_geom& PrivateGeom = s_lRegisteredGeoms(pGeom->m_hGeom);
             Inst.hDList               = PrivateGeom.SkinDList[(s32)SubMesh.iDList];
+            #else
+            #error Unknown Target!	
             #endif
 
             // handle fading geometry
@@ -2971,19 +2237,12 @@ void render::AddSkinInstance( hgeom_inst     hInst,
                 ZPrimeInst.OverrideMat      = 1;
                 #ifdef TARGET_PC
                 ZPrimeInst.hDList           = Inst.hDList;
+                #else
+                #error Unknown Target!	
                 #endif
             }
         }
-
-        #if ENABLE_RENDER_STATS
-        s_RenderStats.m_nTrisRendered     += Mesh.nFaces;
-        s_RenderStats.m_nVerticesRendered += Mesh.nVertices;
-        #endif
     }
-
-    #if ENABLE_RENDER_XTIMERS
-    s_RenderStats.m_InstanceAddTime += AddTime.Stop();
-    #endif
 }
 
 //=============================================================================
@@ -2995,25 +2254,15 @@ void render::AddSkinInstanceDistorted( hgeom_inst        hInst,
                                        const radian3&    NormalRot,
                                        xcolor            Ambient )
 {
-#ifndef X_RETAIL
+    #ifndef X_RETAIL
     if( g_RenderDebug.RenderRigidOnly )
         return;
-#endif
+    #endif
 
     CONTEXT( "render::AddSkinInstance" );
 
-    #if ENABLE_RENDER_XTIMERS
-    xtimer AddTime;
-    AddTime.Start();
-    #endif
-
     // safety check
     ASSERT( s_InRenderBegin );
-
-    // stats update
-    #if ENABLE_RENDER_STATS
-    s_RenderStats.m_nInstancesRendered++;
-    #endif
 
     // grab the useful pointers out
     private_instance& RegisteredInst = s_lRegisteredInst( hInst );
@@ -3023,7 +2272,6 @@ void render::AddSkinInstanceDistorted( hgeom_inst        hInst,
     // calculate lighting
     // TODO: Ignore dynamic lights for "cloaked" objects
     void* pLighting = platform_CalculateSkinLighting( Flags, pBone[0], pGeom->m_BBox, Ambient );
-//    void* pLighting = platform_CalculateDistortionLighting( pBone[0], pGeom->m_BBox, Ambient );
     Flags |= INSTFLAG_DYNAMICLIGHT;
 
     // generate a default distortion info struct for handling this guy
@@ -3100,35 +2348,24 @@ void render::AddSkinInstanceDistorted( hgeom_inst        hInst,
             #ifdef TARGET_PC
             private_geom& PrivateGeom = s_lRegisteredGeoms(pGeom->m_hGeom);
             Inst.hDList               = PrivateGeom.SkinDList[(s32)SubMesh.iDList];
+            #else
+            #error Unknown Target!	
             #endif
         }
-
-        #if ENABLE_RENDER_STATS
-        s_RenderStats.m_nTrisRendered     += Mesh.nFaces;
-        s_RenderStats.m_nVerticesRendered += Mesh.nVertices;
-        #endif
     }
-
-    #if ENABLE_RENDER_XTIMERS
-    s_RenderStats.m_InstanceAddTime += AddTime.Stop();
-    #endif
 }
 
 //=============================================================================
 
-void render::BeginMidPostEffects( void )
+void render::BeginMidPostEffects( void ) //Deprecated ?
 {
-    // DS: Do we really need separate functions for the "mid" post-effects?
-    // Perhaps for the x-box...need to check with Bryon...
     platform_BeginPostEffects();
 }
 
 //=============================================================================
 
-void render::EndMidPostEffects( void )
+void render::EndMidPostEffects( void ) //Deprecated ?
 {
-    // DS: Do we really need separate functions for the "mid" post-effects?
-    // Perhaps for the x-box...need to check with Bryon...
     platform_EndPostEffects();
 }
 
@@ -3237,36 +2474,6 @@ void render::EndPostEffects( void )
 
 //=============================================================================
 
-#ifdef TARGET_PC
-void* render::LockRigidDListVertex( render::hgeom_inst hInst, s32 iSubMesh )
-{
-    return platform_LockRigidDListVertex( hInst, iSubMesh );
-}
-
-//=============================================================================
-
-void render::UnlockRigidDListVertex( render::hgeom_inst hInst, s32 iSubMesh )
-{
-    platform_UnlockRigidDListVertex( hInst, iSubMesh );
-}
-
-//=============================================================================
-
-void* render::LockRigidDListIndex( render::hgeom_inst hInst, s32 iSubMesh,  s32& VertexOffset )
-{
-    return platform_LockRigidDListIndex( hInst, iSubMesh, VertexOffset );
-}
-
-//=============================================================================
-
-void render::UnlockRigidDListIndex( render::hgeom_inst hInst, s32 iSubMesh )
-{
-    platform_UnlockRigidDListIndex( hInst, iSubMesh );
-}
-#endif
-
-//=============================================================================
-
 material& render::GetMaterial( hgeom_inst hInst, s32 iSubMesh )
 {
     // grab the useful pointers out
@@ -3329,8 +2536,6 @@ void render::SetAreaCubeMap( const cubemap::handle&  CubeMap )
 }
 
 //=============================================================================
-// Filter lighting functions
-//=============================================================================
 
 void render::EnableFilterLight( xbool  bEnable )
 {
@@ -3359,148 +2564,6 @@ xcolor render::GetFilterLightColor( void )
 }
 
 //=============================================================================
-//=============================================================================
-
-#if ENABLE_RENDER_STATS
-
-render::stats::stats( void )
-{
-    ClearAllStats();
-}
-
-//=============================================================================
-
-render::stats::~stats( void )
-{
-}
-
-//=============================================================================
-
-void render::stats::Begin( void )
-{
-    m_nMaterialsRendered   = 0;
-    m_nInstancesRendered   = 0;
-    m_nSubMeshesRendered   = 0;
-    m_nVerticesRendered    = 0;
-    m_nTrisRendered        = 0;
-    m_InstanceSortTime     = 0;
-    m_MaterialActivateTime = 0;
-    m_InstanceAddTime      = 0;
-    m_TotalEndRenderTime   = 0;
-}
-
-//=============================================================================
-
-void render::stats::End( void )
-{
-    m_MaxMaterialsRendered    = MAX( m_MaxMaterialsRendered,    m_nMaterialsRendered   );
-    m_MaxInstancesRendered    = MAX( m_MaxInstancesRendered,    m_nInstancesRendered   );
-    m_MaxSubMeshesRendered    = MAX( m_MaxSubMeshesRendered,    m_nSubMeshesRendered   );
-    m_MaxVerticesRendered     = MAX( m_MaxVerticesRendered,     m_nVerticesRendered    );
-    m_MaxTrisRendered         = MAX( m_MaxTrisRendered,         m_nTrisRendered        );
-    m_MaxInstanceSortTime     = MAX( m_MaxInstanceSortTime,     m_InstanceSortTime     );
-    m_MaxMaterialActivateTime = MAX( m_MaxMaterialActivateTime, m_MaterialActivateTime );
-    m_MaxInstanceAddTime      = MAX( m_MaxInstanceAddTime,      m_InstanceAddTime      );
-    m_MaxTotalEndRenderTime   = MAX( m_MaxTotalEndRenderTime,   m_TotalEndRenderTime   );
-}
-
-//=============================================================================
-
-void render::stats::Print( s32 Mode, s32 Flags )
-{
-    // this is kinda dangerous! make sure this array is big enough to hold all
-    // of the stats and all of the text associated with each one!
-    char Text[20][64];
-    s32  Line = 0;
-
-    #ifdef TARGET_PS2
-    x_sprintf( Text[Line++], "Estimated FPS = %.1f\n", eng_GetFPS() );
-    #endif
-
-    x_sprintf( Text[Line++], "NMaterialsRendered = %d\n",     m_nMaterialsRendered                );
-    x_sprintf( Text[Line++], "NInstancesRendered = %d\n",     m_nInstancesRendered                );
-    x_sprintf( Text[Line++], "NSubMeshesRendered = %d\n",     m_nSubMeshesRendered                );
-    x_sprintf( Text[Line++], "NVerticesRendered  = %d\n",     m_nVerticesRendered                 );
-    x_sprintf( Text[Line++], "NTrisRendered      = %d\n",     m_nTrisRendered                     );
-    x_sprintf( Text[Line++], "InstanceSortTime   = %.3fms\n", x_TicksToMs(m_InstanceSortTime)     );
-    x_sprintf( Text[Line++], "MatActivateTime    = %.3fms\n", x_TicksToMs(m_MaterialActivateTime) );
-    x_sprintf( Text[Line++], "InstanceAddTime    = %.3fms\n", x_TicksToMs(m_InstanceAddTime)      );
-    x_sprintf( Text[Line++], "TotalEndRenderTime = %.3fms\n", x_TicksToMs(m_TotalEndRenderTime)   );
-
-    if ( Flags & FLAG_VERBOSE )
-    {
-        x_sprintf( Text[Line++], "MaxMaterialsRendered  = %d\n",     m_MaxMaterialsRendered                 );
-        x_sprintf( Text[Line++], "MaxInstancesRendered  = %d\n",     m_MaxInstancesRendered                 );
-        x_sprintf( Text[Line++], "MaxSubMeshesRendered  = %d\n",     m_MaxSubMeshesRendered                 );
-        x_sprintf( Text[Line++], "MaxVerticesRendered   = %d\n",     m_MaxVerticesRendered                  );
-        x_sprintf( Text[Line++], "MaxTrisRendered       = %d\n",     m_MaxTrisRendered                      );
-        x_sprintf( Text[Line++], "MaxInstanceSortTime   = %.3fms\n", x_TicksToMs(m_MaxInstanceSortTime)     );
-        x_sprintf( Text[Line++], "MaxMatActivateTime    = %.3fms\n", x_TicksToMs(m_MaxMaterialActivateTime) );
-        x_sprintf( Text[Line++], "MaxInstanceAddTime    = %.3fms\n", x_TicksToMs(m_MaxInstanceAddTime)      );
-        x_sprintf( Text[Line++], "MaxTotalEndRenderTime = %.3fms\n", x_TicksToMs(m_MaxTotalEndRenderTime)   );
-    }
-
-    switch ( Mode )
-    {
-    case OUTPUT_TO_DEBUG:
-        {
-            x_DebugMsg( "======= Render Stats =======\n" );
-            for ( s32 i = 0; i < Line; i++ )
-            {
-                x_DebugMsg( Text[Line] );
-            }
-        }
-        break;
-
-    case OUTPUT_TO_SCREEN:
-        {
-            for ( s32 i = 0; i < Line; i++ )
-            {
-                x_printfxy( 1, 3+i, Text[i] );
-            }
-        }
-        break;
-
-    case OUTPUT_TO_FILE:
-        ASSERT( "Not implemented" );
-        break;
-    }
-}
-
-//=============================================================================
-
-void render::stats::ClearAllStats( void )
-{
-    m_nMaterialsRendered      = 0;
-    m_nInstancesRendered      = 0;
-    m_nSubMeshesRendered      = 0;
-    m_nVerticesRendered       = 0;
-    m_nTrisRendered           = 0;
-    m_InstanceSortTime        = 0;
-    m_MaterialActivateTime    = 0;
-    m_InstanceAddTime         = 0;
-    m_TotalEndRenderTime      = 0;
-    m_MaxMaterialsRendered    = 0;
-    m_MaxInstancesRendered    = 0;
-    m_MaxSubMeshesRendered    = 0;
-    m_MaxVerticesRendered     = 0;
-    m_MaxTrisRendered         = 0;
-    m_MaxInstanceSortTime     = 0;
-    m_MaxMaterialActivateTime = 0;
-    m_MaxInstanceAddTime      = 0;
-    m_MaxTotalEndRenderTime   = 0;
-}
-
-//=============================================================================
-
-render::stats& render::GetStats( void )
-{
-    return s_RenderStats;
-}
-
-#endif //ENABLE_RENDER_STATS
-
-//=============================================================================
 
 void render::BeginShadowCreation( void )
 {
@@ -3524,39 +2587,17 @@ void render::EndShadowCreation( void )
 {
     CONTEXT( "render::EndShadowCreation" );
 
-    #if ENABLE_RENDER_XTIMERS
-    xtimer TotalEndTime;
-    TotalEndTime.Start();
-    #endif
-
     // safety check
     ASSERT( eng_InBeginEnd() );
     ASSERT( s_InShadowBegin );
     s_InShadowBegin = FALSE;
-
-    // update the stats
-    #if ENABLE_RENDER_STATS
-    s_RenderStats.m_nSubMeshesRendered += s_LoHashMark + (kMaxRenderedInstances-1-s_HiHashMark);
-    #endif
 
     // let the platform-specific shaders get initialized (whether its d3d vert/pixel
     // shaders, vu0/vu1 microcode, or gamecube passes)
     platform_BeginShadowShaders();
 
     // sort the render instances (by material and sort key)
-    #if ENABLE_RENDER_XTIMERS
-    xtimer StatsTimer;
-    StatsTimer.Start();
-    #endif
     x_qsort( s_lSortData.GetPtr(), s_LoHashMark, sizeof(sort_struct), InstanceCompareFn );
-    #if ENABLE_RENDER_XTIMERS
-    s_RenderStats.m_InstanceSortTime += StatsTimer.Stop();
-    #endif
-
-#ifdef X_DEBUG
-    // sanity check
-    SortSanityCheck();
-#endif
 
     // we start by casting shadows
     platform_StartShadowCast();
@@ -3729,11 +2770,6 @@ void render::EndShadowCreation( void )
     // completely done
     platform_EndShadowReceive();
     platform_EndShadowShaders();
-
-    // stats update
-    #if ENABLE_RENDER_XTIMERS
-    s_RenderStats.m_TotalEndRenderTime += TotalEndTime.Stop();
-    #endif
 }
 
 //=============================================================================
@@ -3746,17 +2782,6 @@ void render::AddPointShadowProjection( const matrix4&         L2W,
     ASSERT( s_InShadowBegin );
     platform_AddPointShadowProjection( L2W, FOV, NearZ, FarZ );
     s_nDynamicShadows++;
-
-#if 0
-    ASSERT( s_InShadowBegin );
-    // TODO:
-    //ASSERT( FALSE );
-    (void)L2W;
-    (void)FOV;
-    (void)NearZ;
-    (void)FarZ;
-    (void)Texture;
-#endif
 }
 
 //=============================================================================
@@ -3770,42 +2795,6 @@ void render::AddDirShadowProjection( const matrix4&         L2W,
     ASSERT( s_InShadowBegin );
     platform_AddDirShadowProjection( L2W, Width, Height, NearZ, FarZ );
     s_nDynamicShadows++;
-
-#if 0
-    shadow_projection& Proj = s_ShadowProjectors.Append();
-
-    // build the matrix that will map world coordinates into our projected
-    // texture
-    matrix4 W2Proj = L2W;
-    W2Proj.InvertRT();
-
-    // Note that this is following the d3d standard for Z, which is [0,1] after
-    // transform, but since we never clip, it shouldn't really matter for the ps2.
-    matrix4 Proj2Clip;
-    Proj2Clip.Identity();
-    Proj2Clip(0,0) = 2.0f / Width;
-    Proj2Clip(1,1) = 2.0f / Height;
-    Proj2Clip(2,2) = 1.0f / (FarZ-NearZ);
-    Proj2Clip(3,2) = NearZ / (FarZ-NearZ);
-
-    // figure out the final matrices for creating the shadow texture
-    Proj.W2TextureCast    = Proj2Clip * W2Proj;
-    Proj.W2TextureReceive = Proj.W2TextureCast;
-
-    #ifdef TARGET_PS2
-    Proj.W2TextureCast.Scale(vector3(kShadowTexSize*0.5f,kShadowTexSize*0.5f,1.0f));
-    Proj.W2TextureCast.Translate(vector3(kShadowTexSize*0.5f,kShadowTexSize*0.5f,0.0f));
-    Proj.W2TextureCast.Translate(vector3(2048.0f-256.0f, 2048.0f-224.0f,0.0f));
-    Proj.W2TextureReceive.Scale(vector3(0.5f,0.5f,1.0f));
-    Proj.W2TextureReceive.Translate(vector3(0.5f,0.5f,0.0f));
-    #endif
-
-    #if defined(TARGET_XBOX) || defined(TARGET_PC)
-    //#warning "the scales need to be set up correctly for these platforms"
-    #endif
-
-    Proj.Type = shadow_projection::SHAD_TYPE_DIRECTIONAL;
-#endif
 }
 
 //=============================================================================
@@ -3815,7 +2804,6 @@ void render::AddRigidCasterSimple( render::hgeom_inst hInst,
                                    u64                ProjMask )
 {
     ASSERT( s_InShadowBegin );
-    // TODO:
     ASSERT( FALSE );
     (void)hInst;
     (void)pL2W;
@@ -3830,8 +2818,6 @@ void render::AddRigidCaster( render::hgeom_inst hInst,
                              u64                ProjMask )
 {
     ASSERT( s_InShadowBegin );
-    // TODO:
-    //ASSERT( FALSE );
     (void)hInst;
     (void)pL2W;
     (void)Mask;
@@ -3845,25 +2831,15 @@ void render::AddSkinCaster( render::hgeom_inst hInst,
                             u64                Mask,
                             u64                ProjMask )
 {
-#ifndef X_RETAIL
+    #ifndef X_RETAIL
     if( g_RenderDebug.RenderRigidOnly )
         return;
-#endif
+    #endif
 
     CONTEXT( "render::AddSkinCaster" );
 
-    #if ENABLE_RENDER_XTIMERS
-    xtimer AddTime;
-    AddTime.Start();
-    #endif
-
     // safety check
     ASSERT( s_InShadowBegin );
-
-    // stats update
-    #if ENABLE_RENDER_STATS
-    s_RenderStats.m_nInstancesRendered++;
-    #endif
 
     // grab the useful pointers out
     private_instance& RegisteredInst = s_lRegisteredInst( hInst );
@@ -3923,19 +2899,12 @@ void render::AddSkinCaster( render::hgeom_inst hInst,
                 #ifdef TARGET_PC
                 private_geom&  PrivateGeom = s_lRegisteredGeoms(pGeom->m_hGeom);
                 Inst.hDList                = PrivateGeom.SkinDList[(s32)SubMesh.iDList];
+                #else
+                #error Unknown Target!	
                 #endif
             }
-
-            #if ENABLE_RENDER_STATS
-            s_RenderStats.m_nTrisRendered     += Mesh.nFaces;
-            s_RenderStats.m_nVerticesRendered += Mesh.nVertices;
-            #endif
         }
     }
-
-    #if ENABLE_RENDER_XTIMERS
-    s_RenderStats.m_InstanceAddTime += AddTime.Stop();
-    #endif
 }
 
 //=============================================================================
@@ -3945,14 +2914,9 @@ void render::AddRigidReceiverSimple( render::hgeom_inst hInst,
                                      u32                Flags,
                                      u64                ProjMask )
 {
-#ifndef X_RETAIL
+    #ifndef X_RETAIL
     if( g_RenderDebug.RenderSkinOnly )
         return;
-#endif
-
-#if ENABLE_RENDER_XTIMERS
-    xtimer AddTime;
-    AddTime.Start();
     #endif
 
     // safety check
@@ -4010,20 +2974,11 @@ void render::AddRigidReceiverSimple( render::hgeom_inst hInst,
 
             #ifdef TARGET_PC
             Inst.hDList = RegisteredInst.RigidDList[(s32)SubMesh.iDList];
+            #else
+            #error Unknown Target!	
             #endif
         }
-
-        // stats update
-        #if ENABLE_RENDER_STATS
-        s_RenderStats.m_nInstancesRendered++;
-        s_RenderStats.m_nTrisRendered     += pGeom->m_nFaces;
-        s_RenderStats.m_nVerticesRendered += pGeom->m_nVertices;
-        #endif
     }
-
-    #if ENABLE_RENDER_XTIMERS
-    s_RenderStats.m_InstanceAddTiem += AddTime.Stop();
-    #endif
 }
 
 //=============================================================================
@@ -4035,8 +2990,6 @@ void render::AddRigidReceiver( render::hgeom_inst hInst,
                                u64                ProjMask )
 {
     ASSERT( s_InShadowBegin );
-    // TODO:
-    //ASSERT( FALSE );
     (void)hInst;
     (void)pL2W;
     (void)Flags;
@@ -4053,8 +3006,6 @@ void render::AddSkinReceiver( render::hgeom_inst hInst,
                               u64                ProjMask )
 {
     ASSERT( s_InShadowBegin );
-    // TODO:
-    //ASSERT( FALSE );
     (void)hInst;
     (void)pBone;
     (void)Flags;
@@ -4069,9 +3020,9 @@ void render::BeginSession( u32 nPlayers )
     platform_BeginSession( nPlayers );
 }
 
+//=============================================================================
+
 void render::EndSession( void )
 {
     platform_EndSession( );
 }
-
-// EOF

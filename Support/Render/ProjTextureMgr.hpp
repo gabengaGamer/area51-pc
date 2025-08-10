@@ -1,44 +1,58 @@
+//==============================================================================
+//  
+//  ProjTextureMgr.hpp  
+//
+//==============================================================================
+
 #ifndef PROJTEXTUREMGR_HPP
 #define PROJTEXTUREMGR_HPP
+
+//==============================================================================
+//  INCLUDES
+//==============================================================================
 
 #include "x_math.hpp"
 #include "e_View.hpp"
 #include "Texture.hpp"
 
+//==============================================================================
+//  PROJ TEXTURE MANAGER CLASS
+//==============================================================================
+
 class proj_texture_mgr
 {
-/*
 public:
-             proj_texture_mgr( void );
-    virtual ~proj_texture_mgr( void );
-
-    void    SetProjLight    ( const matrix4& L2W, radian FOV, f32 Length, texture::handle Texture );
-    void    SetProjShadow   ( const matrix4& L2W, radian FOV, f32 Length, texture::handle Texture );
-
-    void    BeginShadowAccumulation ( void );
-    void    AccumulateCharShadow    
-    */
-
-public:
-    enum
-    {
-        MAX_PROJ_LIGHTS = 10,
-        MAX_PROJ_SHADOWS = 10,
-    };
-
+    enum    { MAX_PROJ_LIGHTS  = 10 };
+    enum    { MAX_PROJ_SHADOWS = 10 };
 
              proj_texture_mgr( void );
     virtual ~proj_texture_mgr( void );
 
+    // Functions for adding projective textures to the manager. You should probably do this once
+    // per frame. You clear the projection list first, and then for each projective light or shadow
+    // that is visible re-add it to the manager.
     void    ClearProjTextures       ( void );
-    void    AddProjLight            ( const matrix4& L2W, radian FOV, f32 Length, texture::handle Texture );
-    void    AddProjShadow           ( const matrix4& L2W, radian FOV, f32 Length, texture::handle Texture );
+    void    AddProjLight            ( const matrix4&  L2W,
+                                      radian          FOV,
+                                      f32             Length,
+                                      texture::handle Texture );
+    void    AddProjShadow           ( const matrix4&  L2W,
+                                      radian          FOV,
+                                      f32             Length,
+                                      texture::handle Texture );
     
-    s32     CollectLights           ( const matrix4& L2W, const bbox& B, s32 MaxLightCount = 1 );
-    void    GetCollectedLight       ( matrix4& LightMatrix, xbitmap*& pBitmap );
+    // Functions for getting projections that actually hit an object.
+    s32     CollectLights           ( const matrix4& L2W,
+                                      const bbox&    B,
+                                      s32            MaxLightCount = 1 );
+    void    GetCollectedLight       ( matrix4&       LightMatrix,
+                                      xbitmap*&      pBitmap );
 
-    s32     CollectShadows          ( const matrix4& L2W, const bbox& B, s32 MaxShadowCount = 1 );
-    void    GetCollectedShadow      ( matrix4& ShadMatrix, xbitmap*& pBitmap );
+    s32     CollectShadows          ( const matrix4& L2W,
+                                      const bbox&    B,
+                                      s32            MaxShadowCount = 1 );
+    void    GetCollectedShadow      ( matrix4&       ShadMatrix,
+                                      xbitmap*&      pBitmap );
 
 protected:
     struct projection
@@ -48,18 +62,37 @@ protected:
         texture::handle ProjTexture;
     };
 
-    void        SetupProjection ( projection&     Dest,
-                                  const matrix4&  L2W,
-                                  radian          FOV,
-                                  f32             Length,
-                                  texture::handle Texture );
+    // internal helper routines
+    void        SetupProjection     ( projection&     Dest,
+                                      const matrix4&  L2W,
+                                      radian          FOV,
+                                      f32             Length,
+                                      texture::handle Texture );
 
+    // list of projective lights and shadows
     s32         m_NLightProjections;
     s32         m_NShadowProjections;
     projection  m_LightProjections[MAX_PROJ_LIGHTS];
     projection  m_ShadowProjections[MAX_PROJ_SHADOWS];
 };
 
+//==============================================================================
+//  GLOBAL INSTANCE
+//==============================================================================
+
 extern proj_texture_mgr    g_ProjTextureMgr;
 
+//==============================================================================
+//  INLINE FUNCTIONS
+//==============================================================================
+
+inline
+void proj_texture_mgr::ClearProjTextures( void )
+{
+    m_NLightProjections    = 0;
+    m_NShadowProjections   = 0;
+}
+
+//==============================================================================
 #endif // PROJTEXTUREMGR_HPP
+//==============================================================================

@@ -2,10 +2,12 @@
 #include "x_array.hpp"
 #include "e_VRAM.hpp"
 
-#if !( defined(TARGET_PS2) && defined(CONFIG_RETAIL) )
-xbool      g_OutputTGA  = FALSE;
+//#define texdebug
+
+#ifdef texdebug
+xbool      g_OutputTGA  = TRUE;
 static s32 s_Count      = 0;
-#endif // !( defined(TARGET_PS2) && defined(CONFIG_RETAIL) )
+#endif // texdebug
 
 static s32 s_nTexture   = 0;
 static s32 s_TextureMem = 0;
@@ -31,32 +33,6 @@ static struct texture_loader : public rsc_loader
         // sanity check
         switch ( pTexture->m_Bitmap.GetFormat() )
         {
-        #ifdef TARGET_XBOX
-        case xbitmap::FMT_P8_RGBA_8888:
-        case xbitmap::FMT_32_ARGB_8888:
-        case xbitmap::FMT_32_URGB_8888:
-        case xbitmap::FMT_16_ARGB_4444:
-        case xbitmap::FMT_16_ARGB_1555:
-        case xbitmap::FMT_16_URGB_1555:
-        case xbitmap::FMT_16_RGB_565:
-        case xbitmap::FMT_DXT1:
-        case xbitmap::FMT_DXT3:
-        case xbitmap::FMT_DXT5:
-        case xbitmap::FMT_A8:
-            break;
-        #endif
-
-        #ifdef TARGET_PS2
-        case xbitmap::FMT_32_ABGR_8888:
-        case xbitmap::FMT_32_UBGR_8888:
-        case xbitmap::FMT_16_ABGR_1555:
-        case xbitmap::FMT_16_UBGR_1555:
-        case xbitmap::FMT_P8_ABGR_8888:
-        case xbitmap::FMT_P8_UBGR_8888:
-        case xbitmap::FMT_P4_ABGR_8888:
-        case xbitmap::FMT_P4_UBGR_8888:
-            break;
-        #endif
 
         #ifdef TARGET_PC
         case xbitmap::FMT_32_ARGB_8888:
@@ -88,18 +64,20 @@ static struct texture_loader : public rsc_loader
     virtual void* Resolve( void* pData ) 
     {
         texture* pTexture = (texture*)pData;
-
-        vram_Register( pTexture->m_Bitmap );
-
-#if !( defined(TARGET_PS2) && defined(CONFIG_RETAIL) )
-
+    
+        s32 vramID = vram_Register( pTexture->m_Bitmap );
+	#ifdef texdebug
+        x_DebugMsg( "texture_loader::Resolve: Registered bitmap %dx%d, VRAM_ID = %d\n", 
+                    pTexture->m_Bitmap.GetWidth(), pTexture->m_Bitmap.GetHeight(), vramID );
+	#endif			
+    
+    #ifdef texdebug
         if( g_OutputTGA == TRUE )
         {
             pTexture->m_Bitmap.SaveTGA( xfs( "C:\\GameData\\A51\\Test\\%03d.tga", s_Count++ ) );
         }
-
-#endif // !( defined(TARGET_PS2) && defined(CONFIG_RETAIL) )
-
+    #endif
+    
         return( pTexture );
     }
 
@@ -108,12 +86,18 @@ static struct texture_loader : public rsc_loader
     virtual void Unload( void* pData )
     {
         texture* pTexture = (texture*)pData;
-
+    
         s_TextureMem -= pTexture->m_Bitmap.GetDataSize();
         s_nTexture--;
-
+    
+	#ifdef texdebug
+        x_DebugMsg( "texture_loader::Unload: Unregistering bitmap %dx%d, VRAM_ID = %d\n", 
+                    pTexture->m_Bitmap.GetWidth(), pTexture->m_Bitmap.GetHeight(), 
+                    pTexture->m_Bitmap.GetVRAMID() );
+	#endif				
+    
         vram_Unregister( pTexture->m_Bitmap );
-
+    
         delete pTexture;
     }
 
@@ -148,32 +132,8 @@ static struct cubemap_loader : public rsc_loader
     {
         cubemap* pCubemap = (cubemap*)pData;
 
-        #ifdef TARGET_XBOX
-        {
-            D3DFORMAT Format;
-            switch( pCubemap->m_Bitmap[0].GetFormat( ))
-            {
-                case xbitmap::FMT_32_ARGB_8888: Format = D3DFMT_A8R8G8B8; break;
-                case xbitmap::FMT_32_URGB_8888: Format = D3DFMT_X8R8G8B8; break;
-                case xbitmap::FMT_16_ARGB_4444: Format = D3DFMT_A4R4G4B4; break;
-                case xbitmap::FMT_16_ARGB_1555: Format = D3DFMT_A1R5G5B5; break;
-                case xbitmap::FMT_16_URGB_1555: Format = D3DFMT_X1R5G5B5; break;
-                case xbitmap::FMT_16_RGB_565  : Format = D3DFMT_R5G6B5  ; break;
-                case xbitmap::FMT_DXT1        : Format = D3DFMT_DXT1    ; break;
-                case xbitmap::FMT_DXT3        : Format = D3DFMT_DXT3    ; break;
-                case xbitmap::FMT_DXT5        : Format = D3DFMT_DXT5    ; break;
-                case xbitmap::FMT_A8          : Format = D3DFMT_A8      ; break;
-
-                default:
-                    ASSERT(0);
-                    break;
-            }
-            pCubemap->m_hTexture = g_TextureFactory.CreateCubeMap( m_pFileName,Format,pCubemap->m_Bitmap );
-        }
-        #else
         for ( s32 i = 0; i < 6; i++ )
             vram_Register( pCubemap->m_Bitmap[i] );
-        #endif
 
         return( pCubemap );
     }
@@ -184,9 +144,6 @@ static struct cubemap_loader : public rsc_loader
     {
         cubemap* pCubemap = (cubemap*)pData;
 
-        #ifdef TARGET_XBOX
-        delete pCubemap->m_hTexture;
-        #else
         for ( s32 i = 0; i < 6; i++ )
         {
             s_TextureMem -= pCubemap->m_Bitmap[i].GetDataSize();
@@ -194,7 +151,6 @@ static struct cubemap_loader : public rsc_loader
 
             vram_Unregister( pCubemap->m_Bitmap[i] );
         }
-        #endif
 
         delete pCubemap;
     }

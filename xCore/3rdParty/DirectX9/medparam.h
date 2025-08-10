@@ -1,24 +1,21 @@
 
-#pragma warning( disable: 4049 )  /* more than 64k source lines */
 
 /* this ALWAYS GENERATED file contains the definitions for the interfaces */
 
 
- /* File created by MIDL compiler version 6.00.0357 */
-/* Compiler settings for medparam.idl:
-    Oicf, W1, Zp8, env=Win32 (32b run)
-    protocol : dce , ms_ext, c_ext, robust
-    error checks: allocation ref bounds_check enum stub_data 
-    VC __declspec() decoration level: 
-         __declspec(uuid()), __declspec(selectany), __declspec(novtable)
-         DECLSPEC_UUID(), MIDL_INTERFACE()
-*/
-//@@MIDL_FILE_HEADING(  )
+ /* File created by MIDL compiler version 8.01.0628 */
+/* @@MIDL_FILE_HEADING(  ) */
+
 
 
 /* verify that the <rpcndr.h> version is high enough to compile this file*/
 #ifndef __REQUIRED_RPCNDR_H_VERSION__
-#define __REQUIRED_RPCNDR_H_VERSION__ 475
+#define __REQUIRED_RPCNDR_H_VERSION__ 501
+#endif
+
+/* verify that the <rpcsal.h> version is high enough to compile this file*/
+#ifndef __REQUIRED_RPCSAL_H_VERSION__
+#define __REQUIRED_RPCSAL_H_VERSION__ 100
 #endif
 
 #include "rpc.h"
@@ -26,7 +23,7 @@
 
 #ifndef __RPCNDR_H_VERSION__
 #error this stub requires an updated version of <rpcndr.h>
-#endif // __RPCNDR_H_VERSION__
+#endif /* __RPCNDR_H_VERSION__ */
 
 #ifndef COM_NO_WINDOWS_H
 #include "windows.h"
@@ -40,17 +37,27 @@
 #pragma once
 #endif
 
+#ifndef DECLSPEC_XFGVIRT
+#if defined(_CONTROL_FLOW_GUARD_XFG)
+#define DECLSPEC_XFGVIRT(base, func) __declspec(xfg_virtual(base, func))
+#else
+#define DECLSPEC_XFGVIRT(base, func)
+#endif
+#endif
+
 /* Forward Declarations */ 
 
 #ifndef __IMediaParamInfo_FWD_DEFINED__
 #define __IMediaParamInfo_FWD_DEFINED__
 typedef interface IMediaParamInfo IMediaParamInfo;
+
 #endif 	/* __IMediaParamInfo_FWD_DEFINED__ */
 
 
 #ifndef __IMediaParams_FWD_DEFINED__
 #define __IMediaParams_FWD_DEFINED__
 typedef interface IMediaParams IMediaParams;
+
 #endif 	/* __IMediaParams_FWD_DEFINED__ */
 
 
@@ -63,21 +70,23 @@ typedef interface IMediaParams IMediaParams;
 extern "C"{
 #endif 
 
-void * __RPC_USER MIDL_user_allocate(size_t);
-void __RPC_USER MIDL_user_free( void * ); 
 
-/* interface __MIDL_itf_medparam_0000 */
+/* interface __MIDL_itf_medparam_0000_0000 */
 /* [local] */ 
 
+#include <winapifamily.h>
+#pragma region Desktop Family
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
 typedef float MP_DATA;
 
 typedef 
 enum _MP_Type
-    {	MPT_INT	= 0,
-	MPT_FLOAT	= MPT_INT + 1,
-	MPT_BOOL	= MPT_FLOAT + 1,
-	MPT_ENUM	= MPT_BOOL + 1,
-	MPT_MAX	= MPT_ENUM + 1
+    {
+        MPT_INT	= 0,
+        MPT_FLOAT	= ( MPT_INT + 1 ) ,
+        MPT_BOOL	= ( MPT_FLOAT + 1 ) ,
+        MPT_ENUM	= ( MPT_BOOL + 1 ) ,
+        MPT_MAX	= ( MPT_ENUM + 1 ) 
     } 	MP_TYPE;
 
 #define	MPBOOL_TRUE	( 1 )
@@ -86,11 +95,12 @@ enum _MP_Type
 
 typedef 
 enum _MP_CURVE_TYPE
-    {	MP_CURVE_JUMP	= 0x1,
-	MP_CURVE_LINEAR	= 0x2,
-	MP_CURVE_SQUARE	= 0x4,
-	MP_CURVE_INVSQUARE	= 0x8,
-	MP_CURVE_SINE	= 0x10
+    {
+        MP_CURVE_JUMP	= 0x1,
+        MP_CURVE_LINEAR	= 0x2,
+        MP_CURVE_SQUARE	= 0x4,
+        MP_CURVE_INVSQUARE	= 0x8,
+        MP_CURVE_SINE	= 0x10
     } 	MP_CURVE_TYPE;
 
 typedef DWORD MP_CAPS;
@@ -154,8 +164,8 @@ typedef struct _MP_ENVELOPE_SEGMENT
 
 
 
-extern RPC_IF_HANDLE __MIDL_itf_medparam_0000_v0_0_c_ifspec;
-extern RPC_IF_HANDLE __MIDL_itf_medparam_0000_v0_0_s_ifspec;
+extern RPC_IF_HANDLE __MIDL_itf_medparam_0000_0000_v0_0_c_ifspec;
+extern RPC_IF_HANDLE __MIDL_itf_medparam_0000_0000_v0_0_s_ifspec;
 
 #ifndef __IMediaParamInfo_INTERFACE_DEFINED__
 #define __IMediaParamInfo_INTERFACE_DEFINED__
@@ -173,28 +183,29 @@ EXTERN_C const IID IID_IMediaParamInfo;
     {
     public:
         virtual HRESULT STDMETHODCALLTYPE GetParamCount( 
-            /* [out] */ DWORD *pdwParams) = 0;
+            /* [out] */ __RPC__out DWORD *pdwParams) = 0;
         
         virtual HRESULT STDMETHODCALLTYPE GetParamInfo( 
             /* [in] */ DWORD dwParamIndex,
-            /* [out] */ MP_PARAMINFO *pInfo) = 0;
+            /* [out] */ __RPC__out MP_PARAMINFO *pInfo) = 0;
         
         virtual HRESULT STDMETHODCALLTYPE GetParamText( 
             /* [in] */ DWORD dwParamIndex,
-            /* [out] */ WCHAR **ppwchText) = 0;
+            /* [out] */ __RPC__deref_out_opt WCHAR **ppwchText) = 0;
         
         virtual HRESULT STDMETHODCALLTYPE GetNumTimeFormats( 
-            /* [out] */ DWORD *pdwNumTimeFormats) = 0;
+            /* [out] */ __RPC__out DWORD *pdwNumTimeFormats) = 0;
         
         virtual HRESULT STDMETHODCALLTYPE GetSupportedTimeFormat( 
             /* [in] */ DWORD dwFormatIndex,
-            /* [out] */ GUID *pguidTimeFormat) = 0;
+            /* [out] */ __RPC__out GUID *pguidTimeFormat) = 0;
         
         virtual HRESULT STDMETHODCALLTYPE GetCurrentTimeFormat( 
-            /* [out] */ GUID *pguidTimeFormat,
-            /* [out] */ MP_TIMEDATA *pTimeData) = 0;
+            /* [out] */ __RPC__out GUID *pguidTimeFormat,
+            /* [out] */ __RPC__out MP_TIMEDATA *pTimeData) = 0;
         
     };
+    
     
 #else 	/* C style interface */
 
@@ -202,44 +213,54 @@ EXTERN_C const IID IID_IMediaParamInfo;
     {
         BEGIN_INTERFACE
         
+        DECLSPEC_XFGVIRT(IUnknown, QueryInterface)
         HRESULT ( STDMETHODCALLTYPE *QueryInterface )( 
-            IMediaParamInfo * This,
-            /* [in] */ REFIID riid,
-            /* [iid_is][out] */ void **ppvObject);
+            __RPC__in IMediaParamInfo * This,
+            /* [in] */ __RPC__in REFIID riid,
+            /* [annotation][iid_is][out] */ 
+            _COM_Outptr_  void **ppvObject);
         
+        DECLSPEC_XFGVIRT(IUnknown, AddRef)
         ULONG ( STDMETHODCALLTYPE *AddRef )( 
-            IMediaParamInfo * This);
+            __RPC__in IMediaParamInfo * This);
         
+        DECLSPEC_XFGVIRT(IUnknown, Release)
         ULONG ( STDMETHODCALLTYPE *Release )( 
-            IMediaParamInfo * This);
+            __RPC__in IMediaParamInfo * This);
         
+        DECLSPEC_XFGVIRT(IMediaParamInfo, GetParamCount)
         HRESULT ( STDMETHODCALLTYPE *GetParamCount )( 
-            IMediaParamInfo * This,
-            /* [out] */ DWORD *pdwParams);
+            __RPC__in IMediaParamInfo * This,
+            /* [out] */ __RPC__out DWORD *pdwParams);
         
+        DECLSPEC_XFGVIRT(IMediaParamInfo, GetParamInfo)
         HRESULT ( STDMETHODCALLTYPE *GetParamInfo )( 
-            IMediaParamInfo * This,
+            __RPC__in IMediaParamInfo * This,
             /* [in] */ DWORD dwParamIndex,
-            /* [out] */ MP_PARAMINFO *pInfo);
+            /* [out] */ __RPC__out MP_PARAMINFO *pInfo);
         
+        DECLSPEC_XFGVIRT(IMediaParamInfo, GetParamText)
         HRESULT ( STDMETHODCALLTYPE *GetParamText )( 
-            IMediaParamInfo * This,
+            __RPC__in IMediaParamInfo * This,
             /* [in] */ DWORD dwParamIndex,
-            /* [out] */ WCHAR **ppwchText);
+            /* [out] */ __RPC__deref_out_opt WCHAR **ppwchText);
         
+        DECLSPEC_XFGVIRT(IMediaParamInfo, GetNumTimeFormats)
         HRESULT ( STDMETHODCALLTYPE *GetNumTimeFormats )( 
-            IMediaParamInfo * This,
-            /* [out] */ DWORD *pdwNumTimeFormats);
+            __RPC__in IMediaParamInfo * This,
+            /* [out] */ __RPC__out DWORD *pdwNumTimeFormats);
         
+        DECLSPEC_XFGVIRT(IMediaParamInfo, GetSupportedTimeFormat)
         HRESULT ( STDMETHODCALLTYPE *GetSupportedTimeFormat )( 
-            IMediaParamInfo * This,
+            __RPC__in IMediaParamInfo * This,
             /* [in] */ DWORD dwFormatIndex,
-            /* [out] */ GUID *pguidTimeFormat);
+            /* [out] */ __RPC__out GUID *pguidTimeFormat);
         
+        DECLSPEC_XFGVIRT(IMediaParamInfo, GetCurrentTimeFormat)
         HRESULT ( STDMETHODCALLTYPE *GetCurrentTimeFormat )( 
-            IMediaParamInfo * This,
-            /* [out] */ GUID *pguidTimeFormat,
-            /* [out] */ MP_TIMEDATA *pTimeData);
+            __RPC__in IMediaParamInfo * This,
+            /* [out] */ __RPC__out GUID *pguidTimeFormat,
+            /* [out] */ __RPC__out MP_TIMEDATA *pTimeData);
         
         END_INTERFACE
     } IMediaParamInfoVtbl;
@@ -255,114 +276,38 @@ EXTERN_C const IID IID_IMediaParamInfo;
 
 
 #define IMediaParamInfo_QueryInterface(This,riid,ppvObject)	\
-    (This)->lpVtbl -> QueryInterface(This,riid,ppvObject)
+    ( (This)->lpVtbl -> QueryInterface(This,riid,ppvObject) ) 
 
 #define IMediaParamInfo_AddRef(This)	\
-    (This)->lpVtbl -> AddRef(This)
+    ( (This)->lpVtbl -> AddRef(This) ) 
 
 #define IMediaParamInfo_Release(This)	\
-    (This)->lpVtbl -> Release(This)
+    ( (This)->lpVtbl -> Release(This) ) 
 
 
 #define IMediaParamInfo_GetParamCount(This,pdwParams)	\
-    (This)->lpVtbl -> GetParamCount(This,pdwParams)
+    ( (This)->lpVtbl -> GetParamCount(This,pdwParams) ) 
 
 #define IMediaParamInfo_GetParamInfo(This,dwParamIndex,pInfo)	\
-    (This)->lpVtbl -> GetParamInfo(This,dwParamIndex,pInfo)
+    ( (This)->lpVtbl -> GetParamInfo(This,dwParamIndex,pInfo) ) 
 
 #define IMediaParamInfo_GetParamText(This,dwParamIndex,ppwchText)	\
-    (This)->lpVtbl -> GetParamText(This,dwParamIndex,ppwchText)
+    ( (This)->lpVtbl -> GetParamText(This,dwParamIndex,ppwchText) ) 
 
 #define IMediaParamInfo_GetNumTimeFormats(This,pdwNumTimeFormats)	\
-    (This)->lpVtbl -> GetNumTimeFormats(This,pdwNumTimeFormats)
+    ( (This)->lpVtbl -> GetNumTimeFormats(This,pdwNumTimeFormats) ) 
 
 #define IMediaParamInfo_GetSupportedTimeFormat(This,dwFormatIndex,pguidTimeFormat)	\
-    (This)->lpVtbl -> GetSupportedTimeFormat(This,dwFormatIndex,pguidTimeFormat)
+    ( (This)->lpVtbl -> GetSupportedTimeFormat(This,dwFormatIndex,pguidTimeFormat) ) 
 
 #define IMediaParamInfo_GetCurrentTimeFormat(This,pguidTimeFormat,pTimeData)	\
-    (This)->lpVtbl -> GetCurrentTimeFormat(This,pguidTimeFormat,pTimeData)
+    ( (This)->lpVtbl -> GetCurrentTimeFormat(This,pguidTimeFormat,pTimeData) ) 
 
 #endif /* COBJMACROS */
 
 
 #endif 	/* C style interface */
 
-
-
-HRESULT STDMETHODCALLTYPE IMediaParamInfo_GetParamCount_Proxy( 
-    IMediaParamInfo * This,
-    /* [out] */ DWORD *pdwParams);
-
-
-void __RPC_STUB IMediaParamInfo_GetParamCount_Stub(
-    IRpcStubBuffer *This,
-    IRpcChannelBuffer *_pRpcChannelBuffer,
-    PRPC_MESSAGE _pRpcMessage,
-    DWORD *_pdwStubPhase);
-
-
-HRESULT STDMETHODCALLTYPE IMediaParamInfo_GetParamInfo_Proxy( 
-    IMediaParamInfo * This,
-    /* [in] */ DWORD dwParamIndex,
-    /* [out] */ MP_PARAMINFO *pInfo);
-
-
-void __RPC_STUB IMediaParamInfo_GetParamInfo_Stub(
-    IRpcStubBuffer *This,
-    IRpcChannelBuffer *_pRpcChannelBuffer,
-    PRPC_MESSAGE _pRpcMessage,
-    DWORD *_pdwStubPhase);
-
-
-HRESULT STDMETHODCALLTYPE IMediaParamInfo_GetParamText_Proxy( 
-    IMediaParamInfo * This,
-    /* [in] */ DWORD dwParamIndex,
-    /* [out] */ WCHAR **ppwchText);
-
-
-void __RPC_STUB IMediaParamInfo_GetParamText_Stub(
-    IRpcStubBuffer *This,
-    IRpcChannelBuffer *_pRpcChannelBuffer,
-    PRPC_MESSAGE _pRpcMessage,
-    DWORD *_pdwStubPhase);
-
-
-HRESULT STDMETHODCALLTYPE IMediaParamInfo_GetNumTimeFormats_Proxy( 
-    IMediaParamInfo * This,
-    /* [out] */ DWORD *pdwNumTimeFormats);
-
-
-void __RPC_STUB IMediaParamInfo_GetNumTimeFormats_Stub(
-    IRpcStubBuffer *This,
-    IRpcChannelBuffer *_pRpcChannelBuffer,
-    PRPC_MESSAGE _pRpcMessage,
-    DWORD *_pdwStubPhase);
-
-
-HRESULT STDMETHODCALLTYPE IMediaParamInfo_GetSupportedTimeFormat_Proxy( 
-    IMediaParamInfo * This,
-    /* [in] */ DWORD dwFormatIndex,
-    /* [out] */ GUID *pguidTimeFormat);
-
-
-void __RPC_STUB IMediaParamInfo_GetSupportedTimeFormat_Stub(
-    IRpcStubBuffer *This,
-    IRpcChannelBuffer *_pRpcChannelBuffer,
-    PRPC_MESSAGE _pRpcMessage,
-    DWORD *_pdwStubPhase);
-
-
-HRESULT STDMETHODCALLTYPE IMediaParamInfo_GetCurrentTimeFormat_Proxy( 
-    IMediaParamInfo * This,
-    /* [out] */ GUID *pguidTimeFormat,
-    /* [out] */ MP_TIMEDATA *pTimeData);
-
-
-void __RPC_STUB IMediaParamInfo_GetCurrentTimeFormat_Stub(
-    IRpcStubBuffer *This,
-    IRpcChannelBuffer *_pRpcChannelBuffer,
-    PRPC_MESSAGE _pRpcMessage,
-    DWORD *_pdwStubPhase);
 
 
 
@@ -386,7 +331,7 @@ EXTERN_C const IID IID_IMediaParams;
     public:
         virtual HRESULT STDMETHODCALLTYPE GetParam( 
             /* [in] */ DWORD dwParamIndex,
-            /* [out] */ MP_DATA *pValue) = 0;
+            /* [out] */ __RPC__out MP_DATA *pValue) = 0;
         
         virtual HRESULT STDMETHODCALLTYPE SetParam( 
             /* [in] */ DWORD dwParamIndex,
@@ -395,7 +340,7 @@ EXTERN_C const IID IID_IMediaParams;
         virtual HRESULT STDMETHODCALLTYPE AddEnvelope( 
             /* [in] */ DWORD dwParamIndex,
             /* [in] */ DWORD cSegments,
-            /* [in] */ MP_ENVELOPE_SEGMENT *pEnvelopeSegments) = 0;
+            /* [in] */ __RPC__in MP_ENVELOPE_SEGMENT *pEnvelopeSegments) = 0;
         
         virtual HRESULT STDMETHODCALLTYPE FlushEnvelope( 
             /* [in] */ DWORD dwParamIndex,
@@ -408,47 +353,57 @@ EXTERN_C const IID IID_IMediaParams;
         
     };
     
+    
 #else 	/* C style interface */
 
     typedef struct IMediaParamsVtbl
     {
         BEGIN_INTERFACE
         
+        DECLSPEC_XFGVIRT(IUnknown, QueryInterface)
         HRESULT ( STDMETHODCALLTYPE *QueryInterface )( 
-            IMediaParams * This,
-            /* [in] */ REFIID riid,
-            /* [iid_is][out] */ void **ppvObject);
+            __RPC__in IMediaParams * This,
+            /* [in] */ __RPC__in REFIID riid,
+            /* [annotation][iid_is][out] */ 
+            _COM_Outptr_  void **ppvObject);
         
+        DECLSPEC_XFGVIRT(IUnknown, AddRef)
         ULONG ( STDMETHODCALLTYPE *AddRef )( 
-            IMediaParams * This);
+            __RPC__in IMediaParams * This);
         
+        DECLSPEC_XFGVIRT(IUnknown, Release)
         ULONG ( STDMETHODCALLTYPE *Release )( 
-            IMediaParams * This);
+            __RPC__in IMediaParams * This);
         
+        DECLSPEC_XFGVIRT(IMediaParams, GetParam)
         HRESULT ( STDMETHODCALLTYPE *GetParam )( 
-            IMediaParams * This,
+            __RPC__in IMediaParams * This,
             /* [in] */ DWORD dwParamIndex,
-            /* [out] */ MP_DATA *pValue);
+            /* [out] */ __RPC__out MP_DATA *pValue);
         
+        DECLSPEC_XFGVIRT(IMediaParams, SetParam)
         HRESULT ( STDMETHODCALLTYPE *SetParam )( 
-            IMediaParams * This,
+            __RPC__in IMediaParams * This,
             /* [in] */ DWORD dwParamIndex,
             /* [in] */ MP_DATA value);
         
+        DECLSPEC_XFGVIRT(IMediaParams, AddEnvelope)
         HRESULT ( STDMETHODCALLTYPE *AddEnvelope )( 
-            IMediaParams * This,
+            __RPC__in IMediaParams * This,
             /* [in] */ DWORD dwParamIndex,
             /* [in] */ DWORD cSegments,
-            /* [in] */ MP_ENVELOPE_SEGMENT *pEnvelopeSegments);
+            /* [in] */ __RPC__in MP_ENVELOPE_SEGMENT *pEnvelopeSegments);
         
+        DECLSPEC_XFGVIRT(IMediaParams, FlushEnvelope)
         HRESULT ( STDMETHODCALLTYPE *FlushEnvelope )( 
-            IMediaParams * This,
+            __RPC__in IMediaParams * This,
             /* [in] */ DWORD dwParamIndex,
             /* [in] */ REFERENCE_TIME refTimeStart,
             /* [in] */ REFERENCE_TIME refTimeEnd);
         
+        DECLSPEC_XFGVIRT(IMediaParams, SetTimeFormat)
         HRESULT ( STDMETHODCALLTYPE *SetTimeFormat )( 
-            IMediaParams * This,
+            __RPC__in IMediaParams * This,
             /* [in] */ GUID guidTimeFormat,
             /* [in] */ MP_TIMEDATA mpTimeData);
         
@@ -466,29 +421,29 @@ EXTERN_C const IID IID_IMediaParams;
 
 
 #define IMediaParams_QueryInterface(This,riid,ppvObject)	\
-    (This)->lpVtbl -> QueryInterface(This,riid,ppvObject)
+    ( (This)->lpVtbl -> QueryInterface(This,riid,ppvObject) ) 
 
 #define IMediaParams_AddRef(This)	\
-    (This)->lpVtbl -> AddRef(This)
+    ( (This)->lpVtbl -> AddRef(This) ) 
 
 #define IMediaParams_Release(This)	\
-    (This)->lpVtbl -> Release(This)
+    ( (This)->lpVtbl -> Release(This) ) 
 
 
 #define IMediaParams_GetParam(This,dwParamIndex,pValue)	\
-    (This)->lpVtbl -> GetParam(This,dwParamIndex,pValue)
+    ( (This)->lpVtbl -> GetParam(This,dwParamIndex,pValue) ) 
 
 #define IMediaParams_SetParam(This,dwParamIndex,value)	\
-    (This)->lpVtbl -> SetParam(This,dwParamIndex,value)
+    ( (This)->lpVtbl -> SetParam(This,dwParamIndex,value) ) 
 
 #define IMediaParams_AddEnvelope(This,dwParamIndex,cSegments,pEnvelopeSegments)	\
-    (This)->lpVtbl -> AddEnvelope(This,dwParamIndex,cSegments,pEnvelopeSegments)
+    ( (This)->lpVtbl -> AddEnvelope(This,dwParamIndex,cSegments,pEnvelopeSegments) ) 
 
 #define IMediaParams_FlushEnvelope(This,dwParamIndex,refTimeStart,refTimeEnd)	\
-    (This)->lpVtbl -> FlushEnvelope(This,dwParamIndex,refTimeStart,refTimeEnd)
+    ( (This)->lpVtbl -> FlushEnvelope(This,dwParamIndex,refTimeStart,refTimeEnd) ) 
 
 #define IMediaParams_SetTimeFormat(This,guidTimeFormat,mpTimeData)	\
-    (This)->lpVtbl -> SetTimeFormat(This,guidTimeFormat,mpTimeData)
+    ( (This)->lpVtbl -> SetTimeFormat(This,guidTimeFormat,mpTimeData) ) 
 
 #endif /* COBJMACROS */
 
@@ -497,76 +452,19 @@ EXTERN_C const IID IID_IMediaParams;
 
 
 
-HRESULT STDMETHODCALLTYPE IMediaParams_GetParam_Proxy( 
-    IMediaParams * This,
-    /* [in] */ DWORD dwParamIndex,
-    /* [out] */ MP_DATA *pValue);
-
-
-void __RPC_STUB IMediaParams_GetParam_Stub(
-    IRpcStubBuffer *This,
-    IRpcChannelBuffer *_pRpcChannelBuffer,
-    PRPC_MESSAGE _pRpcMessage,
-    DWORD *_pdwStubPhase);
-
-
-HRESULT STDMETHODCALLTYPE IMediaParams_SetParam_Proxy( 
-    IMediaParams * This,
-    /* [in] */ DWORD dwParamIndex,
-    /* [in] */ MP_DATA value);
-
-
-void __RPC_STUB IMediaParams_SetParam_Stub(
-    IRpcStubBuffer *This,
-    IRpcChannelBuffer *_pRpcChannelBuffer,
-    PRPC_MESSAGE _pRpcMessage,
-    DWORD *_pdwStubPhase);
-
-
-HRESULT STDMETHODCALLTYPE IMediaParams_AddEnvelope_Proxy( 
-    IMediaParams * This,
-    /* [in] */ DWORD dwParamIndex,
-    /* [in] */ DWORD cSegments,
-    /* [in] */ MP_ENVELOPE_SEGMENT *pEnvelopeSegments);
-
-
-void __RPC_STUB IMediaParams_AddEnvelope_Stub(
-    IRpcStubBuffer *This,
-    IRpcChannelBuffer *_pRpcChannelBuffer,
-    PRPC_MESSAGE _pRpcMessage,
-    DWORD *_pdwStubPhase);
-
-
-HRESULT STDMETHODCALLTYPE IMediaParams_FlushEnvelope_Proxy( 
-    IMediaParams * This,
-    /* [in] */ DWORD dwParamIndex,
-    /* [in] */ REFERENCE_TIME refTimeStart,
-    /* [in] */ REFERENCE_TIME refTimeEnd);
-
-
-void __RPC_STUB IMediaParams_FlushEnvelope_Stub(
-    IRpcStubBuffer *This,
-    IRpcChannelBuffer *_pRpcChannelBuffer,
-    PRPC_MESSAGE _pRpcMessage,
-    DWORD *_pdwStubPhase);
-
-
-HRESULT STDMETHODCALLTYPE IMediaParams_SetTimeFormat_Proxy( 
-    IMediaParams * This,
-    /* [in] */ GUID guidTimeFormat,
-    /* [in] */ MP_TIMEDATA mpTimeData);
-
-
-void __RPC_STUB IMediaParams_SetTimeFormat_Stub(
-    IRpcStubBuffer *This,
-    IRpcChannelBuffer *_pRpcChannelBuffer,
-    PRPC_MESSAGE _pRpcMessage,
-    DWORD *_pdwStubPhase);
-
-
 
 #endif 	/* __IMediaParams_INTERFACE_DEFINED__ */
 
+
+/* interface __MIDL_itf_medparam_0000_0002 */
+/* [local] */ 
+
+#endif /* WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP) */
+#pragma endregion
+
+
+extern RPC_IF_HANDLE __MIDL_itf_medparam_0000_0002_v0_0_c_ifspec;
+extern RPC_IF_HANDLE __MIDL_itf_medparam_0000_0002_v0_0_s_ifspec;
 
 /* Additional Prototypes for ALL interfaces */
 

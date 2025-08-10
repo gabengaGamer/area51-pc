@@ -8,6 +8,11 @@
 
 #ifndef _DMDLS_
 #define _DMDLS_
+#include <winapifamily.h>
+
+#pragma region Desktop Family
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
+
 
 #include "dls1.h"
 
@@ -18,8 +23,9 @@ typedef long PERCENT;   /* Per.. cent! */
 
 typedef LONGLONG REFERENCE_TIME;
 typedef REFERENCE_TIME *LPREFERENCE_TIME;
+typedef long            MUSIC_TIME;
 
-#ifndef MAKE_FOURCC
+#ifndef MAKEFOURCC
 #define MAKEFOURCC(ch0, ch1, ch2, ch3)                              \
                 ((DWORD)(BYTE)(ch0) | ((DWORD)(BYTE)(ch1) << 8) |   \
                 ((DWORD)(BYTE)(ch2) << 16) | ((DWORD)(BYTE)(ch3) << 24 ))
@@ -40,16 +46,19 @@ typedef struct _DMUS_DOWNLOADINFO
 #define DMUS_DOWNLOADINFO_WAVE              2
 #define DMUS_DOWNLOADINFO_INSTRUMENT2       3   /* New version for better DLS2 support. */
 
-/* Support for oneshot and streaming wave data 
- */
+#if (NTDDI_VERSION >= NTDDI_WINXP) /* Windows XP or greater */
+
+/* Support for oneshot and streaming wave data */
 #define DMUS_DOWNLOADINFO_WAVEARTICULATION  4   /* Wave articulation data */
 #define DMUS_DOWNLOADINFO_STREAMINGWAVE     5   /* One chunk of a streaming */
 #define DMUS_DOWNLOADINFO_ONESHOTWAVE       6
 
+#endif
+
 #define DMUS_DEFAULT_SIZE_OFFSETTABLE   1
 
 /* Flags for DMUS_INSTRUMENT's ulFlags member */
- 
+
 #define DMUS_INSTRUMENT_GM_INSTRUMENT   (1 << 0)
 
 typedef struct _DMUS_OFFSETTABLE
@@ -60,11 +69,11 @@ typedef struct _DMUS_OFFSETTABLE
 typedef struct _DMUS_INSTRUMENT
 {
     ULONG           ulPatch;
-    ULONG           ulFirstRegionIdx;             
+    ULONG           ulFirstRegionIdx;
     ULONG           ulGlobalArtIdx;         /* If zero the instrument does not have an articulation */
     ULONG           ulFirstExtCkIdx;        /* If zero no 3rd party entenstion chunks associated with the instrument */
     ULONG           ulCopyrightIdx;         /* If zero no Copyright information associated with the instrument */
-    ULONG           ulFlags;                        
+    ULONG           ulFlags;
 } DMUS_INSTRUMENT;
 
 typedef struct _DMUS_REGION
@@ -138,14 +147,14 @@ typedef struct _DMUS_ARTICULATION2          /* Articulation chunk for DMUS_DOWNL
     ULONG           ulNextArtIdx;           /* Additional articulation chunks */
 } DMUS_ARTICULATION2;
 
-#define DMUS_MIN_DATA_SIZE 4       
+#define DMUS_MIN_DATA_SIZE 4
 /*  The actual number is determined by cbSize of struct _DMUS_EXTENSIONCHUNK */
 
 typedef struct _DMUS_EXTENSIONCHUNK
 {
     ULONG           cbSize;                      /*  Size of extension chunk  */
     ULONG           ulNextExtCkIdx;              /*  If zero no more 3rd party entenstion chunks */
-    FOURCC          ExtCkID;                                      
+    FOURCC          ExtCkID;
     BYTE            byExtCk[DMUS_MIN_DATA_SIZE]; /*  The actual number that follows is determined by cbSize */
 } DMUS_EXTENSIONCHUNK;
 
@@ -160,7 +169,7 @@ typedef struct _DMUS_COPYRIGHT
 typedef struct _DMUS_WAVEDATA
 {
     ULONG           cbSize;
-    BYTE            byData[DMUS_MIN_DATA_SIZE]; 
+    BYTE            byData[DMUS_MIN_DATA_SIZE];
 } DMUS_WAVEDATA;
 
 typedef struct _DMUS_WAVE
@@ -168,7 +177,7 @@ typedef struct _DMUS_WAVE
     ULONG           ulFirstExtCkIdx;    /* If zero no 3rd party entenstion chunks associated with the wave */
     ULONG           ulCopyrightIdx;     /* If zero no Copyright information associated with the wave */
     ULONG           ulWaveDataIdx;      /* Location of actual wave data. */
-    WAVEFORMATEX    WaveformatEx;       
+    WAVEFORMATEX    WaveformatEx;
 } DMUS_WAVE;
 
 typedef struct _DMUS_NOTERANGE *LPDMUS_NOTERANGE;
@@ -178,12 +187,14 @@ typedef struct _DMUS_NOTERANGE
     DWORD           dwHighNote; /* Sets the high note for the range of MIDI note events to which the instrument responds.*/
 } DMUS_NOTERANGE;
 
+#if (NTDDI_VERSION >= NTDDI_WINXP) /* Windows XP or greater */
+
 typedef struct _DMUS_WAVEARTDL
 {
     ULONG               ulDownloadIdIdx;    /* Download ID's of each buffer */
     ULONG               ulBus;              /* Playback bus */
     ULONG               ulBuffers;          /* Buffers */
-    ULONG               ulMasterDLId;       /* Download ID of master voice of slave group */
+    ULONG               ulMasterDLId;       /* Download ID of master voice of subordinate group */
     USHORT              usOptions;          /* Same as DLS2 region options */
 }   DMUS_WAVEARTDL,
     *LPDMUS_WAVEARTDL;
@@ -194,6 +205,10 @@ typedef struct _DMUS_WAVEDL
 }   DMUS_WAVEDL,
     *LPDMUS_WAVEDL;
 
-#endif 
+#endif /* NTDDI_VERSION >= NTDDI_WINXP */
 
 
+#endif /* WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP) */
+#pragma endregion
+
+#endif /* _DMDLS_ */

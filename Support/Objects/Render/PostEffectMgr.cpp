@@ -146,6 +146,8 @@ void post_effect_mgr::Render( void )
     // start doing post-effects
     render::BeginPostEffects();
     
+	render::NoiseFilter( xcolor(255, 200, 150, 200) );
+	
     // do the self-illum glows
     if ( g_RenderContext.m_bIsMutated )
     {

@@ -684,7 +684,9 @@ xcolor xbitmap::GetPixelColor( s32 X, s32 Y, s32 Mip ) const
     switch( m_Format )
     {
         case FMT_DXT1:
+		case FMT_DXT2:
         case FMT_DXT3:
+		case FMT_DXT4:
         case FMT_DXT5:
             return ReadDXTCPixel( this,X,Y,Mip );
     }

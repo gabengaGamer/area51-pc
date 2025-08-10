@@ -1,3 +1,5 @@
+
+
 /*==========================================================================;
 //
 //  dls1.h
@@ -13,8 +15,18 @@
 //
 //=========================================================================*/
 
+//--------------------------------------------------------------------------
+// The file dls1.h was reviewed by LCA in June 2011 and per license is
+// acceptable for Microsoft use under Dealpoint ID 109444
+//--------------------------------------------------------------------------
+
 #ifndef _INC_DLS1
 #define _INC_DLS1
+
+#include <winapifamily.h>
+
+#pragma region Desktop Family
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
 
 /*//////////////////////////////////////////////////////////////////////////
 //
@@ -31,7 +43,7 @@
 //               LIST [] 'ins ' [dlid,insh,RGNLIST,ARTLIST,INFOLIST]
 //
 // RGNLIST
-// LIST [] 'lrgn' 
+// LIST [] 'lrgn'
 //               LIST [] 'rgn '  [rgnh,wsmp,wlnk,ARTLIST]
 //               LIST [] 'rgn '  [rgnh,wsmp,wlnk,ARTLIST]
 //               LIST [] 'rgn '  [rgnh,wsmp,wlnk,ARTLIST]
@@ -43,7 +55,7 @@
 //         '3rd1' Possible 3rd party articulation structure 1
 //         '3rd2' Possible 3rd party articulation structure 2 .... and so on
 //
-// WAVEPOOL 
+// WAVEPOOL
 // ptbl [] [pool table]
 // LIST [] 'wvpl'
 //               [path],
@@ -55,9 +67,9 @@
 //               LIST [] 'wave' [dlid,RIFFWAVE]
 //
 // INFOLIST
-// LIST [] 'INFO' 
-//               'icmt' 'One of those crazy comments.'
-//               'icop' 'Copyright (C) 1996 Sonic Foundry'
+// LIST [] 'INFO'
+//               'icmt' 'Comment.'
+//               'icop' 'Copyright (C) Someone'
 //
 /////////////////////////////////////////////////////////////////////////*/
 
@@ -86,7 +98,7 @@
 #define FOURCC_VERS  mmioFOURCC('v','e','r','s')
 
 /*/////////////////////////////////////////////////////////////////////////
-// Articulation connection graph definitions 
+// Articulation connection graph definitions
 /////////////////////////////////////////////////////////////////////////*/
 
 /* Generic Sources */
@@ -140,7 +152,7 @@ typedef struct _DLSVERSION {
   DWORD    dwVersionMS;
   DWORD    dwVersionLS;
 }DLSVERSION, FAR *LPDLSVERSION;
-                   
+
 
 typedef struct _CONNECTION {
   USHORT   usSource;
@@ -223,7 +235,7 @@ typedef struct _WAVELINK { /* any paths or links are stored right after struct *
 
 #define POOL_CUE_NULL  0xffffffffl
 
-typedef struct _POOLCUE { 
+typedef struct _POOLCUE {
   ULONG    ulOffset;       /* Offset to the entry in the list */
 }POOLCUE, FAR *LPPOOLCUE;
 
@@ -263,5 +275,10 @@ typedef struct _rloop {
   ULONG ulLength;            /* Length of loop in samples */
 } WLOOP, FAR *LPWLOOP;
 
+
+#endif /* WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP) */
+#pragma endregion
+
 #endif /*_INC_DLS1 */
+
 

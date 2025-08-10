@@ -237,7 +237,7 @@ void notepad_object::OnRender ( void )
     // draw bounding box
     //
     {
-        draw_Begin( DRAW_QUADS, DRAW_2D|DRAW_USE_ALPHA );
+        draw_Begin( DRAW_QUADS, DRAW_2D|DRAW_UI_RTARGET|DRAW_USE_ALPHA );
         {
             s32 nX = (XWidth/2) + 4;
             s32 nY = (YHeight/2) + 4;

@@ -8,15 +8,19 @@
 
 #ifndef _DMERROR_
 #define _DMERROR_
+#include <winapifamily.h>
 
-#define FACILITY_DIRECTMUSIC      0x878       /* Shared with DirectSound */
+#pragma region Desktop Family
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
+
+
 #define DMUS_ERRBASE              0x1000      /* Make error codes human readable in hex */
 
 #ifndef MAKE_HRESULT
 #define MAKE_HRESULT(sev,fac,code) \
     ((HRESULT) (((unsigned long)(sev)<<31) | ((unsigned long)(fac)<<16) | ((unsigned long)(code))) )
 #endif
-    
+
 #define MAKE_DMHRESULTSUCCESS(code)     MAKE_HRESULT(0, FACILITY_DIRECTMUSIC, (DMUS_ERRBASE + (code)))
 #define MAKE_DMHRESULTERROR(code)       MAKE_HRESULT(1, FACILITY_DIRECTMUSIC, (DMUS_ERRBASE + (code)))
 
@@ -75,8 +79,8 @@
 
 /* DMUS_S_OVER_CHORD
  *
- * Returned from IDirectMusicPerformance::MusicToMIDI(), this indicates 
- * that no note has been calculated because the music value has the note 
+ * Returned from IDirectMusicPerformance::MusicToMIDI(), this indicates
+ * that no note has been calculated because the music value has the note
  * at a position higher than the top note of the chord. This applies only
  * to DMUS_PLAYMODE_NORMALCHORD play mode. This success code indicates
  * that the caller should not do anything with the note. It is not meant
@@ -87,10 +91,10 @@
 /* DMUS_S_UP_OCTAVE
  *
  * Returned from IDirectMusicPerformance::MIDIToMusic(),  and
- * IDirectMusicPerformance::MusicToMIDI(), this indicates 
- * that the note conversion generated a note value that is below 0, 
+ * IDirectMusicPerformance::MusicToMIDI(), this indicates
+ * that the note conversion generated a note value that is below 0,
  * so it has been bumped up one or more octaves to be in the proper
- * MIDI range of 0 through 127. 
+ * MIDI range of 0 through 127.
  * Note that this is valid for MIDIToMusic() when using play modes
  * DMUS_PLAYMODE_FIXEDTOCHORD and DMUS_PLAYMODE_FIXEDTOKEY, both of
  * which store MIDI values in wMusicValue. With MusicToMIDI(), it is
@@ -102,10 +106,10 @@
 /* DMUS_S_DOWN_OCTAVE
  *
  * Returned from IDirectMusicPerformance::MIDIToMusic(),  and
- * IDirectMusicPerformance::MusicToMIDI(), this indicates 
- * that the note conversion generated a note value that is above 127, 
+ * IDirectMusicPerformance::MusicToMIDI(), this indicates
+ * that the note conversion generated a note value that is above 127,
  * so it has been bumped down one or more octaves to be in the proper
- * MIDI range of 0 through 127. 
+ * MIDI range of 0 through 127.
  * Note that this is valid for MIDIToMusic() when using play modes
  * DMUS_PLAYMODE_FIXEDTOCHORD and DMUS_PLAYMODE_FIXEDTOKEY, both of
  * which store MIDI values in wMusicValue. With MusicToMIDI(), it is
@@ -123,12 +127,16 @@
  */
 #define DMUS_S_NOBUFFERCONTROL          MAKE_DMHRESULTSUCCESS(0x215)
 
+#if (NTDDI_VERSION >= NTDDI_WINXP) /* Windows XP or greater */
+
 /* DMUS_S_GARBAGE_COLLECTED
  *
  * The requested operation was not performed because during CollectGarbage
  * the loader determined that the object had been released.
  */
 #define DMUS_S_GARBAGE_COLLECTED        MAKE_DMHRESULTSUCCESS(0x216)
+
+#endif
 
 /* DMUS_E_DRIVER_FAILED
  *
@@ -139,7 +147,7 @@
 
 /* DMUS_E_PORTS_OPEN
  *
- * The requested operation cannot be performed while there are 
+ * The requested operation cannot be performed while there are
  * instantiated ports in any process in the system.
  */
 #define DMUS_E_PORTS_OPEN               MAKE_DMHRESULTERROR(0x0102)
@@ -183,7 +191,7 @@
 
 /* DMUS_E_ALREADY_LOADED
  *
- * Second attempt to load a DLS collection that is currently open. 
+ * Second attempt to load a DLS collection that is currently open.
  */
 #define DMUS_E_ALREADY_LOADED           MAKE_DMHRESULTERROR(0x0111)
 
@@ -250,7 +258,7 @@
 /* DMUS_E_GET_UNSUPPORTED
  *
  * The specified property item may not be retrieved from the target object.
- */ 
+ */
 #define DMUS_E_GET_UNSUPPORTED          MAKE_DMHRESULTERROR(0x0124)
 
 /* DMUS_E_NOTMONO
@@ -285,7 +293,7 @@
 
 /* DMUS_E_NOTPCM
  *
- * Downoaded DLS wave is not in PCM format. 
+ * Downoaded DLS wave is not in PCM format.
 */
 #define DMUS_E_NOTPCM                   MAKE_DMHRESULTERROR(0x012A)
 
@@ -297,7 +305,7 @@
 
 /* DMUS_E_BADOFFSETTABLE
  *
- * Offset Table for download buffer has errors. 
+ * Offset Table for download buffer has errors.
  */
 #define DMUS_E_BADOFFSETTABLE           MAKE_DMHRESULTERROR(0x012C)
 
@@ -316,7 +324,7 @@
 
 /* DMUS_E_ALREADYOPEN
  *
- * An attempt was made to open the software synthesizer while it was already 
+ * An attempt was made to open the software synthesizer while it was already
  * open.
  * ASSERT?
  */
@@ -324,7 +332,7 @@
 
 /* DMUS_E_ALREADYCLOSE
  *
- * An attempt was made to close the software synthesizer while it was already 
+ * An attempt was made to close the software synthesizer while it was already
  * open.
  * ASSERT?
  */
@@ -332,7 +340,7 @@
 
 /* DMUS_E_SYNTHNOTCONFIGURED
  *
- * The operation could not be completed because the software synth has not 
+ * The operation could not be completed because the software synth has not
  * yet been fully configured.
  * ASSERT?
  */
@@ -353,7 +361,7 @@
 /* DMUS_E_DMUSIC_RELEASED
  *
  * The operation cannot be performed because the final instance of the
- * DirectMusic object was released. Ports cannot be used after final 
+ * DirectMusic object was released. Ports cannot be used after final
  * release of the DirectMusic object.
  */
 #define DMUS_E_DMUSIC_RELEASED          MAKE_DMHRESULTERROR(0x0134)
@@ -400,7 +408,7 @@
 
 /* DMUS_E_INVALIDBUFFER
  *
- * Invalid DirectSound buffer was handed to port. 
+ * Invalid DirectSound buffer was handed to port.
  */
 #define DMUS_E_INVALIDBUFFER            MAKE_DMHRESULTERROR(0x013B)
 
@@ -530,12 +538,16 @@
  */
 #define DMUS_E_TRACK_NOT_FOUND			MAKE_DMHRESULTERROR(0x0166)
 
+#if (NTDDI_VERSION >= NTDDI_WINXP) /* Windows XP or greater */
+
 /* DMUS_E_TRACK_NO_CLOCKTIME_SUPPORT
  *
  * The track does not support clock time playback or getparam.
  */
 #define DMUS_E_TRACK_NO_CLOCKTIME_SUPPORT   MAKE_DMHRESULTERROR(0x0167)
- 
+
+#endif
+
 /* DMUS_E_NO_MASTER_CLOCK
  *
  * There is no master clock in the performance. Be sure to call
@@ -642,11 +654,14 @@
 #define DMUS_E_CONNOT_CONVERT           DMUS_E_CANNOT_CONVERT
 
 /* DMUS_E_DESCEND_CHUNK_FAIL
- * 
- * DMUS_E_DESCEND_CHUNK_FAIL is returned when the end of the file 
+ *
+ * DMUS_E_DESCEND_CHUNK_FAIL is returned when the end of the file
  * was reached before the desired chunk was found.
  */
 #define DMUS_E_DESCEND_CHUNK_FAIL       MAKE_DMHRESULTERROR(0x0210)
+
+
+#if (NTDDI_VERSION >= NTDDI_WINXP) /* Windows XP or greater */
 
 /* DMUS_E_NOT_LOADED
  *
@@ -778,23 +793,23 @@
 
 /* DMUS_E_AUDIOPATHS_NOT_VALID
  *
- * The Performance has set up some PChannels using the AssignPChannel command, which 
+ * The Performance has set up some PChannels using the AssignPChannel command, which
  * makes it not capable of supporting audio paths.
  */
 #define DMUS_E_AUDIOPATHS_NOT_VALID     MAKE_DMHRESULTERROR(0x0226)
 
 /* DMUS_E_AUDIOPATHS_IN_USE
  *
- * This is the inverse of the previous error. 
+ * This is the inverse of the previous error.
  * The Performance has set up some audio paths, which makes is incompatible
- * with the calls to allocate pchannels, etc. 
+ * with the calls to allocate pchannels, etc.
  */
 #define DMUS_E_AUDIOPATHS_IN_USE     MAKE_DMHRESULTERROR(0x0227)
 
 /* DMUS_E_NO_AUDIOPATH_CONFIG
  *
  * A segment was asked for its embedded audio path configuration,
- * but there isn't any. 
+ * but there isn't any.
  */
 #define DMUS_E_NO_AUDIOPATH_CONFIG     MAKE_DMHRESULTERROR(0x0228)
 
@@ -840,4 +855,10 @@
  */
 #define DMUS_E_INVALID_CONTAINER_OBJECT    MAKE_DMHRESULTERROR(0x022F)
 
-#endif
+#endif /* NTDDI_VERSION >= NTDDI_WINXP */
+
+
+#endif /* WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP) */
+#pragma endregion
+
+#endif /* _DMERROR_ */

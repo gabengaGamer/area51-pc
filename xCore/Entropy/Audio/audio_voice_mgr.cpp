@@ -22,13 +22,8 @@ extern f32      g_DebugTime;
 //------------------------------------------------------------------------------
 // Defines.
 
-#if defined(TARGET_XBOX)
-#define MAX_VOICES    (64)
+#define MAX_VOICES    (48) //(64)
 #define MAX_ELEMENTS  (MAX_VOICES * 3)
-#else
-#define MAX_VOICES    (48)
-#define MAX_ELEMENTS  (MAX_VOICES * 3)
-#endif
 
 #if defined(X_DEBUG)
 #define ELEMENT_EXPIRE_DELAY    (0.250f)
@@ -794,49 +789,6 @@ xbool audio_voice_mgr::GetIsReady( voice* pVoice )
     return FALSE;
 }
 
-//------------------------------------------------------------------------------
-/*
-void audio_voice_mgr::ReleaseVoiceLoop( voice* pVoice )
-{
-    // Error check.
-    ASSERT( s_IsInitialized );
-
-    // Snag the mutex.
-    Lock();
-
-    // Only if its valid.
-    if( pVoice )
-    {
-        element* pElement;
-        element* pHead;
-
-        // Only if its running or paused
-        if( (pVoice->State == STATE_RUNNING) || (pVoice->State == STATE_PAUSED) )
-        {
-            // Error check.
-            ASSERT( VALID_VOICE(pVoice) );
-
-            // Get start of element list.
-            pHead    = (element*)&pVoice->Elements;
-            pElement = pHead->Link.pNext;
-
-            // Only if it has elements...
-            if( pElement != pHead && pElement->pChannel )
-            {
-                //g_AudioHardware.ReleaseLoop( pElement->pChannel );
-                pElement = pElement->Link.pNext;
-            }
-        }
-    }
-    else
-    {
-        // TODO: Warning message.
-    }
-
-    // Release it.
-    Unlock();
-}
-*/
 //------------------------------------------------------------------------------
 
 void audio_voice_mgr::ReleaseVoice( voice* pVoice, f32 Time )

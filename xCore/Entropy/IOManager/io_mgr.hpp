@@ -6,11 +6,6 @@
 #include "io_device.hpp"
 
 //==============================================================================
-#if defined(TARGET_XBOX) && defined(X_DEBUG) && defined(bwatson)
-//#define ENABLE_NETFS
-#endif
-
-//==============================================================================
 
 enum devices
 {
@@ -67,12 +62,6 @@ public:
 
 extern io_mgr g_IoMgr;
 
-
 //==============================================================================
-
-#ifdef TARGET_XBOX
-    void InitXboxIoMgr( void );
-    void KillXboxIoMgr( void );
-#endif
 
 #endif // #ifndef __IO_MGR_HPP__

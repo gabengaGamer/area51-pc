@@ -183,7 +183,7 @@ void hud_sniper::OnRender( player* pPlayer )
         //
         // Draw the stencil to punch out the far the z and fill the alpha.
         //
-        draw_Begin( DRAW_SPRITES,DRAW_USE_ALPHA|DRAW_TEXTURED|DRAW_2D|DRAW_UV_CLAMP|DRAW_NO_ZBUFFER|DRAW_XBOX_NO_BEGIN );
+        draw_Begin( DRAW_SPRITES,DRAW_USE_ALPHA|DRAW_TEXTURED|DRAW_2D|DRAW_UI_RTARGET|DRAW_UV_CLAMP|DRAW_NO_ZBUFFER|DRAW_XBOX_NO_BEGIN );
 
             g_RenderState.Set( D3DRS_BLENDCOLOR, D3DCOLOR_RGBA( 0,0,0,32 ));
             g_RenderState.Set( D3DRS_DESTBLEND,D3DBLEND_INVCONSTANTALPHA );
@@ -218,7 +218,7 @@ void hud_sniper::OnRender( player* pPlayer )
         //
         // Render the dark green part
         //
-        draw_Begin( DRAW_SPRITES, DRAW_USE_ALPHA|DRAW_TEXTURED|DRAW_2D|DRAW_NO_ZBUFFER );
+        draw_Begin( DRAW_SPRITES, DRAW_USE_ALPHA|DRAW_TEXTURED|DRAW_2D|DRAW_UI_RTARGET|DRAW_NO_ZBUFFER );
         draw_DisableBilinear();
         //
         // Render the scan lines.
@@ -300,7 +300,7 @@ void hud_sniper::OnRender( player* pPlayer )
         //
         // Draw the stencil to punch out the far the z and fill the alpha.
         //
-        draw_Begin( DRAW_SPRITES, DRAW_USE_ALPHA|DRAW_TEXTURED|DRAW_2D|DRAW_UV_CLAMP| DRAW_2D_KEEP_Z );
+        draw_Begin( DRAW_SPRITES, DRAW_USE_ALPHA|DRAW_TEXTURED|DRAW_2D|DRAW_UI_RTARGET|DRAW_UV_CLAMP| DRAW_2D_KEEP_Z );
 
         gsreg_Begin( 2 );
             gsreg_SetFBMASK( ALPHA_CHANNEL_MASK );
@@ -381,7 +381,7 @@ void hud_sniper::OnRender( player* pPlayer )
         //
         // Render the dark green part
         //
-        draw_Begin( DRAW_SPRITES, DRAW_USE_ALPHA|DRAW_TEXTURED|DRAW_2D|DRAW_2D_KEEP_Z );
+        draw_Begin( DRAW_SPRITES, DRAW_USE_ALPHA|DRAW_TEXTURED|DRAW_2D|DRAW_UI_RTARGET|DRAW_2D_KEEP_Z );
         //draw_Color( g_SniperStencilHudColor );
         draw_DisableBilinear();
     
@@ -430,7 +430,7 @@ void hud_sniper::OnRender( player* pPlayer )
         if( !pMainBmp || !pStencilBmp )
             return;
 
-        draw_Begin( DRAW_SPRITES, DRAW_USE_ALPHA|DRAW_TEXTURED|DRAW_2D|DRAW_NO_ZBUFFER|DRAW_UV_CLAMP|DRAW_BLEND_ADD );
+        draw_Begin( DRAW_SPRITES, DRAW_USE_ALPHA|DRAW_TEXTURED|DRAW_2D|DRAW_UI_RTARGET|DRAW_NO_ZBUFFER|DRAW_UV_CLAMP|DRAW_BLEND_ADD );
 
         f32 ScaleX  = ((pMainBmp->GetWidth()*2.0f) < m_ViewDimensions.GetWidth() ) ? 
                       1.0f : (m_ViewDimensions.GetWidth()/(pMainBmp->GetWidth()*2.0f));

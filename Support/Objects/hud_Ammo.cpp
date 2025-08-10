@@ -229,7 +229,7 @@ void hud_ammo::RenderNades( player* pPlayer, inven_item NadType )
         return;
 
     // BEGIN DRAW
-    draw_Begin( DRAW_SPRITES, DRAW_USE_ALPHA|DRAW_TEXTURED|DRAW_2D|DRAW_NO_ZBUFFER|DRAW_UV_CLAMP );
+    draw_Begin( DRAW_SPRITES, DRAW_USE_ALPHA|DRAW_TEXTURED|DRAW_2D|DRAW_UI_RTARGET|DRAW_NO_ZBUFFER|DRAW_UV_CLAMP );
     draw_SetTexture( *pGrnBitmap );
     vector2 WH( (f32)pGrnBitmap->GetWidth(), (f32)pGrnBitmap->GetHeight() );
     vector3 Pos(0,0,0.01f);
@@ -273,7 +273,7 @@ void hud_ammo::RenderAmmoBar( player* pPlayer )
         return;
 
     // BEGIN DRAW
-    draw_Begin( DRAW_SPRITES, DRAW_TEXTURED | DRAW_2D | DRAW_USE_ALPHA | DRAW_NO_ZBUFFER );
+    draw_Begin( DRAW_SPRITES, DRAW_TEXTURED | DRAW_2D | DRAW_UI_RTARGET | DRAW_USE_ALPHA | DRAW_NO_ZBUFFER  );
 
     s32 BitmapWidth  = m_AmmoBoxBMP.GetPointer()->GetWidth();
     s32 BitmapHeight = m_AmmoBoxBMP.GetPointer()->GetHeight();

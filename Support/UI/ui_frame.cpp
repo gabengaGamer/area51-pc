@@ -210,7 +210,7 @@ void ui_frame::RenderNewFrame( irect& Position )
     if( Position.GetHeight() != 0 ) ScaleY = TRUE;
 
     // Being drawing
-    draw_Begin( DRAW_SPRITES, DRAW_2D|DRAW_TEXTURED|DRAW_USE_ALPHA|DRAW_NO_ZBUFFER );
+    draw_Begin( DRAW_SPRITES, DRAW_2D|DRAW_UI_RTARGET|DRAW_TEXTURED|DRAW_USE_ALPHA|DRAW_NO_ZBUFFER	);
     draw_SetTexture( *pBitmap );
 
 #ifdef TARGET_PS2

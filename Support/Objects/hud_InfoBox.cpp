@@ -395,7 +395,7 @@ void hud_info_box::OnRenderCTF_Flag( vector3& Pos )
             xcolor FlagColor = xcolor(200,0,0,255);
             FlagColor.A = (u8)(255.0f*m_CTFFlagAlpha);
             FlagColor.A = MIN( FlagColor.A, hud_object::m_PulseAlpha );
-            draw_Begin( DRAW_SPRITES, DRAW_TEXTURED | DRAW_USE_ALPHA | DRAW_2D | DRAW_NO_ZBUFFER );
+            draw_Begin( DRAW_SPRITES, DRAW_TEXTURED | DRAW_USE_ALPHA | DRAW_2D | DRAW_UI_RTARGET | DRAW_NO_ZBUFFER  );
             draw_SetTexture(*pCTFBitmap);
             draw_DisableBilinear();                            
             draw_Sprite( 
@@ -411,7 +411,7 @@ void hud_info_box::OnRenderCTF_Flag( vector3& Pos )
         {
             xcolor FlagColor = g_HudColor;
             FlagColor.A = (u8)(255.0f*m_CTFFlagAlpha);
-            draw_Begin( DRAW_SPRITES, DRAW_TEXTURED | DRAW_USE_ALPHA | DRAW_2D | DRAW_NO_ZBUFFER );
+            draw_Begin( DRAW_SPRITES, DRAW_TEXTURED | DRAW_USE_ALPHA | DRAW_2D | DRAW_UI_RTARGET | DRAW_NO_ZBUFFER  );
             draw_SetTexture(*pCTFRingBitmap);
             draw_DisableBilinear();                            
             draw_Sprite( 

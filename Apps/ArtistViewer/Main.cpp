@@ -1776,7 +1776,7 @@ void AppRender( void )
 
         // Draw quad
         eng_Begin("Pic") ;
-        draw_Begin(DRAW_SPRITES, DRAW_2D | DRAW_TEXTURED | DRAW_NO_ZBUFFER | DRAW_NO_ZWRITE | DRAW_USE_ALPHA) ;
+        draw_Begin(DRAW_SPRITES, DRAW_2D | DRAW_TEXTURED | DRAW_NO_ZBUFFER | DRAW_NO_ZWRITE | DRAW_USE_ALPHA | DRAW_UI_RTARGET) ;
         draw_SetTexture(g_PicBitmap) ;
         draw_SpriteUV(Pos, Size, UV0, UV1, XCOLOR_WHITE) ;
         draw_End();

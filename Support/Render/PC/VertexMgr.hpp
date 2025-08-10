@@ -1,5 +1,17 @@
+//=========================================================================
+//  
+//  Vertex Manager for PC
+//  
+//=========================================================================
+
 #ifndef VERTEX_MANAGER_HPP
 #define VERTEX_MANAGER_HPP
+
+//=========================================================================
+//  PLATFORM CHECK
+//=========================================================================
+
+#include "x_types.hpp"
 
 #if !defined(TARGET_PC)
 #error "This is only for the PC target platform. Please check build exclusion rules"
@@ -8,8 +20,10 @@
 //=========================================================================
 // INCLUDES
 //=========================================================================
+
 #include "Entropy.hpp"
 #include "x_array.hpp"
+#include "MaterialMgr.hpp"
 
 //=========================================================================
 // CLASS
@@ -17,22 +31,26 @@
 
 class vertex_mgr
 {    
+
 //=========================================================================
+
 public:
 
-    void        Init                ( DWORD FVF, s32 VStride );
+    void        Init                ( s32 VStride );
     void        Kill                ( void );
     xhandle     AddDList            ( void* pVertex, s32 nVertices, u16* pIndex, s32 nIndices, s32 nPrims );
     void        DelDList            ( xhandle hDList );
     void        BeginRender         ( void );
-    void        DrawDList           ( xhandle hDList, D3DPRIMITIVETYPE PrimType );
+    void        DrawDList           ( xhandle hDList, const matrix4* pWorld = NULL, const d3d_rigid_lighting* pLighting = NULL );
     void*       LockDListVerts      ( xhandle hDList );
     void        UnlockDListVerts    ( xhandle hDList );
     void*       LockDListIndices    ( xhandle hDList, s32& Index );
     void        UnlockDListIndices  ( xhandle hDList );
     void        InvalidateCache     ( void );
+    void        ApplyLightmapColors ( xhandle hDList, const u32* pColors, s32 nColors, s32 colorOffset = 0 );
 
 //=========================================================================
+
 protected:
 
     enum
@@ -63,13 +81,12 @@ protected:
 
     struct index_pool : public pool
     {
-        IDirect3DIndexBuffer9*      pIndex;           // Pointer to the buffer 
+        ID3D11Buffer*               pBuffer;          // DX11 index buffer
     };
 
     struct vertex_pool : public pool
     {
-        IDirect3DVertexBuffer9*     pVertex;          // Pointer to the buffer 
-        DWORD                       FVF;              // Description of the type of vertices
+        ID3D11Buffer*               pBuffer;          // DX11 vertex buffer
     };
 
     struct node
@@ -86,12 +103,13 @@ protected:
     };
 
 //=========================================================================
+
 protected:
 
     xhandle AllocIndexSet           ( s32 nIndices );
-    xhandle AllocVertexSet          ( s32 nVertices, s32 Stride, DWORD FVF );
+    xhandle AllocVertexSet          ( s32 nVertices, s32 Stride );
 
-    xhandle AllocNode               ( s32 nItems, xbool bVertex, s32 Stride=0, DWORD FVF=0 );
+    xhandle AllocNode               ( s32 nItems, xbool bVertex, s32 Stride=0 );
     void    FreeNode                ( xhandle hNode, xbool bVertex );
     s32     NextLog2                ( u32 n );
     s32     GetHashEntry            ( s32 nIndices, xbool bVertex );
@@ -100,8 +118,8 @@ protected:
 
     void    ActivateStreams         ( xhandle hDList );
 
-
 //=========================================================================
+
 protected:
 
     xharray<node>           m_lNode;                          // List of allocated/Free nodes for vertices
@@ -113,12 +131,17 @@ protected:
     xhandle                 m_VertHash [ NUM_HASH_ENTRIES ];  // Hash entri containing empty nodes
     xhandle                 m_IndexHash[ NUM_HASH_ENTRIES ];  // Hash entri containing empty nodes
 
-    s32                     m_Stride;                         // This is temporary
-    DWORD                   m_FVF;                            // This is temporary
+    s32                     m_Stride;                         // Vertex stride
 
     xhandle                 m_LastVertexPool;
     xhandle                 m_LastIndexPool;
 };
+
+//==============================================================================
+//  GLOBAL INSTANCE
+//==============================================================================
+
+extern vertex_mgr g_RigidVertMgr;
 
 //=========================================================================
 // END

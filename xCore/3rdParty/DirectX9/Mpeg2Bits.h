@@ -15,6 +15,11 @@
 /////////////////////////////////////////////////////////////////////////////
 
 #pragma once
+#include <winapifamily.h>
+
+#pragma region Desktop Family
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
+
 
 #pragma pack(push)
 #pragma pack(1)
@@ -93,3 +98,7 @@ typedef struct
 
 
 #pragma pack(pop)
+
+#endif /* WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP) */
+#pragma endregion
+

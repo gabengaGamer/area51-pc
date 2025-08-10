@@ -15,7 +15,8 @@
 static 
 struct font_locals
 {
-    LPD3DXFONT  pFont;
+    //LPD3DXFONT  pFont;
+	void*       pFont;
     xcolor      TextColor;
     xbool       bFontInitialized;
 
@@ -30,6 +31,7 @@ struct font_locals
 static 
 void CreateFont( void )
 {
+/*
     if( !g_pd3dDevice )
         return;
 
@@ -45,6 +47,7 @@ void CreateFont( void )
                                    TEXT("Lucida Console"), 
                                    &s_FontMgr.pFont );
     ASSERT( Error == 0 );
+*/
 }
 
 //=========================================================================
@@ -52,6 +55,7 @@ void CreateFont( void )
 static 
 void DestroyFont( void )
 {
+/*
     if( s_FontMgr.pFont )
     {
         try
@@ -64,12 +68,14 @@ void DestroyFont( void )
         }
         s_FontMgr.pFont = NULL;
     }
+*/
 }
 
 //=========================================================================
 
 void font_Init( void )
 {
+/*
     if( s_FontMgr.bFontInitialized )
         return;
 
@@ -79,45 +85,54 @@ void font_Init( void )
     s_FontMgr.TextColor = xcolor(255, 255, 255, 255);
 
     CreateFont();
+*/
 }
 
 //=========================================================================
 
 void font_Kill( void )
 {
+/*
 	// Free the font if it was created
     if( !s_FontMgr.bFontInitialized )
         return;
 
     DestroyFont();
     s_FontMgr.bFontInitialized = FALSE;
+*/
 }
 
 //=========================================================================
 
 void font_OnDeviceLost( void )
 {
+/*
     // Font will be automatically lost with device
     // Just clear our pointer
     s_FontMgr.pFont = NULL;
+*/
 }
 
 //=========================================================================
 
 void font_OnDeviceReset( void )
 {
+/*
     // Recreate font after device reset
     if( s_FontMgr.bFontInitialized )
     {
         CreateFont();
     }
+*/
 }
 
 //=========================================================================
 
 void font_SetColor( const xcolor& Color )
 {
+/*
     s_FontMgr.TextColor = Color;
+*/
 }
 
 //=========================================================================
@@ -126,6 +141,7 @@ void font_SetColor( const xcolor& Color )
 
 void text_BeginRender( void )
 {
+/*
     // Make sure that the direct 3d has started
     if( !eng_InBeginEnd() )
     {
@@ -134,12 +150,14 @@ void text_BeginRender( void )
             eng_End();
         }
     }
+*/
 }
 
 //=========================================================================
 
 void text_RenderStr( char* pStr, s32 NChars, xcolor Color, s32 PixelX, s32 PixelY )
 {
+/*
     if( !g_pd3dDevice || !s_FontMgr.pFont )
         return;
 
@@ -152,6 +170,7 @@ void text_RenderStr( char* pStr, s32 NChars, xcolor Color, s32 PixelX, s32 Pixel
     HRESULT Error = s_FontMgr.pFont->DrawText( NULL, pStr, NChars, &Rect, 
                                               DT_NOCLIP, Color );
     ASSERT( SUCCEEDED( Error ) );
+*/
 }
 
 //=========================================================================

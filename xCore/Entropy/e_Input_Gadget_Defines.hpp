@@ -52,64 +52,6 @@ BEGIN_GADGETS
 
 
     DEFINE_GADGET ( INPUT_QRY__END )
-/*
-    //=====================================================================
-    // PS2 Pad gadgets begins
-    //=====================================================================
-    DEFINE_GADGET ( INPUT_PS2__BEGIN )            
-                                
-    //---------------------------------------------------------------------
-    // PS2 QUERYS
-    //---------------------------------------------------------------------
-
-    DEFINE_GADGET ( INPUT_PS2_PAD_PRESENT )         
-    DEFINE_GADGET ( INPUT_PS2_MEM_CARD_PRESENT )           
-
-    //---------------------------------------------------------------------
-    // PS2 DIGITAL GADGETS
-    //---------------------------------------------------------------------
-    DEFINE_GADGET ( INPUT_PS2__DIGITAL )
-
-    DEFINE_GADGET ( INPUT_PS2_BTN_ANALOG_MODE )                
-
-    DEFINE_GADGET ( INPUT_PS2_BTN_SELECT )                 
-    DEFINE_GADGET ( INPUT_PS2_BTN_START )                  
-                      
-    DEFINE_GADGET ( INPUT_PS2_BTN_L_STICK )                
-    DEFINE_GADGET ( INPUT_PS2_BTN_R_STICK )                
-
-    //---------------------------------------------------------------------
-    // PS2 ANALOG GADGETS
-    //---------------------------------------------------------------------
-    DEFINE_GADGET ( INPUT_PS2__ANALOG )
-
-    DEFINE_GADGET ( INPUT_PS2_BTN_L_UP )                   
-    DEFINE_GADGET ( INPUT_PS2_BTN_L_LEFT )                 
-    DEFINE_GADGET ( INPUT_PS2_BTN_L_RIGHT )                
-    DEFINE_GADGET ( INPUT_PS2_BTN_L_DOWN )                 
-                                
-    DEFINE_GADGET ( INPUT_PS2_BTN_R_UP )                   
-    DEFINE_GADGET ( INPUT_PS2_BTN_R_LEFT )                 
-    DEFINE_GADGET ( INPUT_PS2_BTN_R_RIGHT )                
-    DEFINE_GADGET ( INPUT_PS2_BTN_R_DOWN )                 
-
-    DEFINE_GADGET ( INPUT_PS2_BTN_L1 )                     
-    DEFINE_GADGET ( INPUT_PS2_BTN_L2 )                     
-    DEFINE_GADGET ( INPUT_PS2_BTN_R1 )                     
-    DEFINE_GADGET ( INPUT_PS2_BTN_R2 )                     
-                                
-    DEFINE_GADGET ( INPUT_PS2_BTN_TRIANGLE )               
-    DEFINE_GADGET ( INPUT_PS2_BTN_SQUARE )                 
-    DEFINE_GADGET ( INPUT_PS2_BTN_CIRCLE )                 
-    DEFINE_GADGET ( INPUT_PS2_BTN_CROSS )                  
-
-    DEFINE_GADGET ( INPUT_PS2_STICK_LEFT_X )               
-    DEFINE_GADGET ( INPUT_PS2_STICK_LEFT_Y )               
-    DEFINE_GADGET ( INPUT_PS2_STICK_RIGHT_X )              
-    DEFINE_GADGET ( INPUT_PS2_STICK_RIGHT_Y )              
-    
-    DEFINE_GADGET ( INPUT_PS2__END )              
-*/
 
     DEFINE_GADGET ( INPUT_PS2__BEGIN )
 
@@ -444,15 +386,10 @@ BEGIN_GADGETS
     
 END_GADGETS
 
-
-//==============================================================================
-// END THE GADGETS LIST
-//==============================================================================
-
-
 //==============================================================================
 //  MAKE SURE THE MACROS ARE CLEARED SO THEY CAN BE USED AGAIN
 //==============================================================================
+
 #undef BEGIN_GADGETS
 #undef DEFINE_GADGET
 #undef DEFINE_GADGET_VALUE

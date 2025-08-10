@@ -8,13 +8,6 @@
 #include "audio_debug.hpp"
 #include "e_audio.hpp"
 
-#ifdef TARGET_GCN
-extern "C" { void WriteARAMSynchronous( void* MRAM, u32 ARAM, s32 Length ); }
-#endif
-
-#if defined(TARGET_PS2)
-#include "hardware/audio_hardware_ps2_private.hpp"
-#endif
 s32 N_ARAM_USED = 0; // 512*1024;
 
 #define LOG_AUDIO_PACKAGE_LOAD "audio_package::Init"
@@ -47,32 +40,8 @@ u32 audio_package::LoadHotSample( X_FILE* f, hot_sample* pHotSample, u32 Aram )
 {
     CONTEXT("audio_package::LoadHotSample");
 
-#ifdef TARGET_PS2
-	io_request Request;
-#endif
-
     switch( pHotSample->CompressionType )
     {
-#ifdef TARGET_GCN
-        case ADPCM:
-        {
-		    // Seek to sample offset within the file
-		    x_fseek( f, pHotSample->WaveformOffset, X_SEEK_SET );
-
-            // Read the sample waveform
-            void* TempBuffer = x_malloc( pHotSample->WaveformLength );
-            x_fread( TempBuffer, pHotSample->WaveformLength, 1, f );
-
-            // TODO: Make this asyncronus.
-            // Send it to the audio ram.
-            WriteARAMSynchronous( TempBuffer, Aram, pHotSample->WaveformLength );
-
-            // Done.
-            x_free( TempBuffer );
-            return pHotSample->WaveformLength;
-        }
-#endif
-
 #ifdef TARGET_PC
         case ADPCM:
         case MP3:
@@ -85,70 +54,6 @@ u32 audio_package::LoadHotSample( X_FILE* f, hot_sample* pHotSample, u32 Aram )
 
             // Done.
             return pHotSample->WaveformLength;
-        }
-#endif
-
-#ifdef TARGET_XBOX
-        case ADPCM:
-        case   PCM:
-        {
-			// Seek to sample offset within the file
-			x_fseek( f, pHotSample->WaveformOffset, X_SEEK_SET );
-            // Read the sample waveform
-            x_fread( (void*)Aram, pHotSample->WaveformLength, 1, f );
-
-            return pHotSample->WaveformLength;
-        }
-#endif
-
-
-#ifdef TARGET_PS2
-		case ADPCM:
-        {
-            byte* TempBuffer = (byte*)x_malloc( pHotSample->WaveformLength );
-            {
-                CONTEXT("HotSampleRead");
-
-		        // Seek to sample offset within the file
-		        x_fseek( f, pHotSample->WaveformOffset, X_SEEK_SET );
-
-			    // Set up an io manager read request but going to the audio ram address space
-
-                x_fread( TempBuffer, pHotSample->WaveformLength, 1, f );
-
-            }
-            {
-                CONTEXT("HotSampleTransfer");
-                xmesgq reply(1);
-                // TODO: Make this asyncronus.
-                // Send it to the audio ram.
-                s32 Length = pHotSample->WaveformLength;
-                byte* ptr = TempBuffer;
-                while ( Length > (128 * 1024) )
-                {
-                    s32 BlockSize;
-                    BlockSize = MIN((128*1024),Length);
-                    s_ChannelManager.PushData(ptr,(void*)Aram,BlockSize,NULL);
-                    ptr+=BlockSize;
-                    Aram+=BlockSize;
-                    Length-=BlockSize;
-                }
-
-                s_ChannelManager.PushData(ptr,(void*)Aram,Length,&reply);
-                reply.Recv(MQ_BLOCK);
-            }
-
-            // Done.
-            //****BW**** HACK ALERT HACK ALERT HACK ALERT
-            // 
-            // For some reason, the reply above was being received PRIOR to the package
-            // transfer having completed. So if we then free'd and filled this buffer
-            // with garbage prior to the transfer completing, we will get some crap
-            // transferred to audio memory. The delay is to allow the system sufficient
-            // time to complete all the transfers.
-            //****BW**** END HACK ALERT END HACK ALERT
-            x_free( TempBuffer );
-			return pHotSample->WaveformLength;
         }
 #endif
         default:
@@ -454,15 +359,7 @@ xbool audio_package::Init( const char* pFilename )
         // Close the file.
         x_fclose( f );
     }
-
-    /*
-    //*BW* - If the system ran out of audio memory, during the loading, we need to nuke the entire package.
-    if( Result == FALSE )
-    {
-        // Kill should do all the cleanup required.
-        Kill();
-    }
-    */
+	
     if( Result == FALSE )
     {
         vm_Free(m_IdentifierStringTable);   m_IdentifierStringTable = NULL;

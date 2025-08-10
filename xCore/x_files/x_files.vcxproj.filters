@@ -99,13 +99,13 @@
     <ClCompile Include="Implementation\x_time.cpp">
       <Filter>Implementation</Filter>
     </ClCompile>
-    <ClCompile Include="Implementation\x_vsprintf.cpp">
-      <Filter>Implementation</Filter>
-    </ClCompile>
     <ClCompile Include="Implementation\x_flare.cpp">
       <Filter>Under Construction</Filter>
     </ClCompile>
     <ClCompile Include="Implementation\x_tool.cpp">
+      <Filter>Implementation</Filter>
+    </ClCompile>
+    <ClCompile Include="Implementation\x_deltatime.cpp">
       <Filter>Implementation</Filter>
     </ClCompile>
   </ItemGroup>
@@ -160,5 +160,7 @@
     <ClInclude Include="Implementation\x_tool_private.hpp">
       <Filter>Implementation\Private</Filter>
     </ClInclude>
+    <ClInclude Include="x_deltatime.hpp" />
+    <ClInclude Include="Implementation\x_time_inline.hpp" />
   </ItemGroup>
 </Project>

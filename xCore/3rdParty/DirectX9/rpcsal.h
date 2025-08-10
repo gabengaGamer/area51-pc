@@ -152,348 +152,179 @@
 extern "C" {
 #endif  // #ifdef __cplusplus
 
-#if (_MSC_VER >= 1000) && !defined(__midl) && defined(_PREFAST_)
 
+#ifndef _SAL1_2_Source_
+#define _SAL1_2_Source_(Name, args, annotes) _SA_annotes3(SAL_name, #Name, "", "1.2") _Group_(annotes _SAL_nop_impl_)
+#endif // _SAL1_2_Source_
 
 // [in]
-#define __RPC__in                                   __pre __valid
-#define __RPC__in_string                            __RPC__in   __pre __nullterminated
-#define __RPC__in_ecount(size)                      __RPC__in __pre __elem_readableTo(size)
-#define __RPC__in_ecount_full(size)                 __RPC__in_ecount(size)
-#define __RPC__in_ecount_full_string(size)          __RPC__in_ecount_full(size) __pre __nullterminated
-#define __RPC__in_ecount_part(size, length)         __RPC__in_ecount(length) __pre __elem_writableTo(size)
-#define __RPC__in_ecount_full_opt(size)             __RPC__in_ecount_full(size) __pre __exceptthat  __maybenull
-#define __RPC__in_ecount_full_opt_string(size)      __RPC__in_ecount_full_opt(size) __pre __nullterminated
-#define __RPC__in_ecount_part_opt(size, length)     __RPC__in_ecount_part(size, length) __pre __exceptthat __maybenull
-#define __RPC__in_xcount(size)                      __RPC__in __pre __elem_readableTo(size)
-#define __RPC__in_xcount_full(size)                 __RPC__in_ecount(size)
-#define __RPC__in_xcount_full_string(size)          __RPC__in_ecount_full(size) __pre __nullterminated
-#define __RPC__in_xcount_part(size, length)         __RPC__in_ecount(length) __pre __elem_writableTo(size)
-#define __RPC__in_xcount_full_opt(size)             __RPC__in_ecount_full(size) __pre __exceptthat  __maybenull
-#define __RPC__in_xcount_full_opt_string(size)      __RPC__in_ecount_full_opt(size) __pre __nullterminated
-#define __RPC__in_xcount_part_opt(size, length)     __RPC__in_ecount_part(size, length) __pre __exceptthat __maybenull
+#define __RPC__in                                    _SAL1_2_Source_(__RPC__in, (), _Pre_ _Notref_ _Notnull_ _Pre_ _Valid_)
+#define __RPC__in_string                             _SAL1_2_Source_(__RPC__in_string, (), __RPC__in _Pre_ _Null_terminated_)
+#define __RPC__in_ecount(size)                       _SAL1_2_Source_(__RPC__in_ecount, (size), __RPC__in _Pre_readable_size_(size))
+#define __RPC__in_ecount_full(size)                  _SAL1_2_Source_(__RPC__in_ecount_full, (size), __RPC__in_ecount(size))
+#define __RPC__in_ecount_full_string(size)           _SAL1_2_Source_(__RPC__in_ecount_full_string, (size), __RPC__in_ecount_full(size) _Pre_ _Null_terminated_)
+#define __RPC__in_ecount_part(size, length)          _SAL1_2_Source_(__RPC__in_ecount_part, (size,length), __RPC__in_ecount(length) _Pre_writable_size_(size))
+#define __RPC__in_xcount(size)                       _SAL1_2_Source_(__RPC__in_xcount, (size), __RPC__in _Pre_readable_size_(size))
+#define __RPC__in_xcount_full(size)                  _SAL1_2_Source_(__RPC__in_xcount_full, (size), __RPC__in_ecount(size))
+#define __RPC__in_xcount_full_string(size)           _SAL1_2_Source_(__RPC__in_xcount_full_string, (size), __RPC__in_ecount_full(size) _Pre_ _Null_terminated_)
+#define __RPC__in_xcount_part(size, length)          _SAL1_2_Source_(__RPC__in_xcount_part, (size,length), __RPC__in_ecount(length) _Pre_writable_size_(size))
 
 
-#define __RPC__deref_in                             __RPC__in __deref __notnull 
-#define __RPC__deref_in_string                      __RPC__in   __pre __deref __nullterminated
-#define __RPC__deref_in_opt                         __RPC__deref_in __deref __exceptthat __maybenull
-#define __RPC__deref_in_opt_string                  __RPC__deref_in_opt __pre __deref __nullterminated
-#define __RPC__deref_opt_in                         __RPC__in __exceptthat __maybenull 
-#define __RPC__deref_opt_in_string                  __RPC__deref_opt_in __pre __deref __nullterminated 
-#define __RPC__deref_opt_in_opt                     __RPC__deref_opt_in  __pre __deref __exceptthat __maybenull
-#define __RPC__deref_opt_in_opt_string              __RPC__deref_opt_in_opt  __pre __deref __nullterminated
-#define __RPC__deref_in_ecount(size)                __RPC__in __pre __deref __elem_readableTo(size)
-#define __RPC__deref_in_ecount_part(size, length)   __RPC__deref_in_ecount(size)  __pre __deref __elem_readableTo(length)
-#define __RPC__deref_in_ecount_full(size)           __RPC__deref_in_ecount_part(size, size)
-#define __RPC__deref_in_ecount_full_opt(size)       __RPC__deref_in_ecount_full(size) __pre __deref __exceptthat __maybenull
-#define __RPC__deref_in_ecount_full_opt_string(size) __RPC__deref_in_ecount_full_opt(size) __pre __deref __nullterminated
-#define __RPC__deref_in_ecount_full_string(size)    __RPC__deref_in_ecount_full(size) __pre __deref __nullterminated
-#define __RPC__deref_in_ecount_opt(size)            __RPC__deref_in_ecount(size) __pre __deref __exceptthat __maybenull
-#define __RPC__deref_in_ecount_opt_string(size)     __RPC__deref_in_ecount_opt(size) __pre __deref __nullterminated
-#define __RPC__deref_in_ecount_part_opt(size, length) __RPC__deref_in_ecount_opt(size) __pre __deref __elem_readableTo(length)
-#define __RPC__deref_in_xcount(size)                __RPC__in __pre __deref __elem_readableTo(size)
-#define __RPC__deref_in_xcount_part(size, length)   __RPC__deref_in_ecount(size)  __pre __deref __elem_readableTo(length)
-#define __RPC__deref_in_xcount_full(size)           __RPC__deref_in_ecount_part(size, size)
-#define __RPC__deref_in_xcount_full_opt(size)       __RPC__deref_in_ecount_full(size) __pre __deref __exceptthat __maybenull
-#define __RPC__deref_in_xcount_full_opt_string(size) __RPC__deref_in_ecount_full_opt(size) __pre __deref __nullterminated
-#define __RPC__deref_in_xcount_full_string(size)    __RPC__deref_in_ecount_full(size) __pre __deref __nullterminated
-#define __RPC__deref_in_xcount_opt(size)            __RPC__deref_in_ecount(size) __pre __deref __exceptthat __maybenull
-#define __RPC__deref_in_xcount_opt_string(size)     __RPC__deref_in_ecount_opt(size) __pre __deref __nullterminated
-#define __RPC__deref_in_xcount_part_opt(size, length) __RPC__deref_in_ecount_opt(size) __pre __deref __elem_readableTo(length)
+#define __RPC__deref_in                              _SAL1_2_Source_(__RPC__deref_in, (), __RPC__in _At_(*_Curr_, _Pre_ _Notnull_))
+#define __RPC__deref_in_string                       _SAL1_2_Source_(__RPC__deref_in_string, (), __RPC__deref_in _At_(*_Curr_, _Pre_ _Null_terminated_))
+#define __RPC__deref_in_opt                          _SAL1_2_Source_(__RPC__deref_in_opt, (), __RPC__in _At_(*_Curr_, _Pre_ _Maybenull_))
+#define __RPC__deref_in_opt_string                   _SAL1_2_Source_(__RPC__deref_in_opt_string, (), __RPC__deref_in_opt _At_(*_Curr_, _Pre_ _Null_terminated_))
+#define __RPC__deref_opt_in                          _SAL1_2_Source_(__RPC__deref_opt_in, (), __RPC__in_opt _At_(*_Curr_, _Pre_ _Notnull_))
+#define __RPC__deref_opt_in_string                   _SAL1_2_Source_(__RPC__deref_opt_in_string, (), __RPC__deref_opt_in _At_(*_Curr_, _Pre_ _Null_terminated_))
+#define __RPC__deref_opt_in_opt                      _SAL1_2_Source_(__RPC__deref_opt_in_opt, (), __RPC__in_opt _At_(*_Curr_, _Pre_ _Maybenull_))
+#define __RPC__deref_opt_in_opt_string               _SAL1_2_Source_(__RPC__deref_opt_in_opt_string, (), __RPC__deref_opt_in_opt _At_(*_Curr_, _Pre_ _Null_terminated_))
+#define __RPC__deref_in_ecount(size)                 _SAL1_2_Source_(__RPC__deref_in_ecount, (size), __RPC__in _At_(*_Curr_, _Pre_ _Notnull_ _Pre_readable_size_(size)))
+#define __RPC__deref_in_ecount_part(size, length)    _SAL1_2_Source_(__RPC__deref_in_ecount_part, (size,length), __RPC__deref_in_ecount(size)  _At_(*_Curr_, _Pre_readable_size_(length)))
+#define __RPC__deref_in_ecount_full(size)            _SAL1_2_Source_(__RPC__deref_in_ecount_full, (size), __RPC__deref_in_ecount_part(size, size))
+#define __RPC__deref_in_ecount_full_opt(size)        _SAL1_2_Source_(__RPC__deref_in_ecount_full_opt, (size), __RPC__deref_in_ecount_part_opt(size, size))
+#define __RPC__deref_in_ecount_full_opt_string(size)  _SAL1_2_Source_(__RPC__deref_in_ecount_full_opt_string, (size), __RPC__deref_in_ecount_full_opt(size) _At_(*_Curr_, _Pre_ _Null_terminated_))
+#define __RPC__deref_in_ecount_full_string(size)     _SAL1_2_Source_(__RPC__deref_in_ecount_full_string, (size), __RPC__deref_in_ecount_full(size) _At_(*_Curr_, _Pre_ _Null_terminated_))
+#define __RPC__deref_in_ecount_opt(size)             _SAL1_2_Source_(__RPC__deref_in_ecount_opt, (size), __RPC__in _At_(*_Curr_, _Pre_ _Maybenull_ _Pre_readable_size_(size)))
+#define __RPC__deref_in_ecount_opt_string(size)      _SAL1_2_Source_(__RPC__deref_in_ecount_opt_string, (size), __RPC__deref_in_ecount_opt(size) _At_(*_Curr_, _Pre_ _Null_terminated_))
+#define __RPC__deref_in_ecount_part_opt(size, length)  _SAL1_2_Source_(__RPC__deref_in_ecount_part_opt, (size,length), __RPC__deref_in_ecount_opt(size) _At_(*_Curr_, _Pre_readable_size_(length)))
+#define __RPC__deref_in_xcount(size)                 _SAL1_2_Source_(__RPC__deref_in_xcount, (size), __RPC__deref_in_ecount(size))
+#define __RPC__deref_in_xcount_part(size, length)    _SAL1_2_Source_(__RPC__deref_in_xcount_part, (size,length), __RPC__deref_in_ecount_part(size, length))
+#define __RPC__deref_in_xcount_full(size)            _SAL1_2_Source_(__RPC__deref_in_xcount_full, (size), __RPC__deref_in_ecount_part(size, size))
+#define __RPC__deref_in_xcount_full_opt(size)        _SAL1_2_Source_(__RPC__deref_in_xcount_full_opt, (size), __RPC__deref_in_ecount_full_opt(size))
+#define __RPC__deref_in_xcount_full_opt_string(size)  _SAL1_2_Source_(__RPC__deref_in_xcount_full_opt_string, (size), __RPC__deref_in_ecount_full_opt_string(size))
+#define __RPC__deref_in_xcount_full_string(size)     _SAL1_2_Source_(__RPC__deref_in_xcount_full_string, (size), __RPC__deref_in_ecount_full_string(size))
+#define __RPC__deref_in_xcount_opt(size)             _SAL1_2_Source_(__RPC__deref_in_xcount_opt, (size), __RPC__deref_in_ecount_opt(size))
+#define __RPC__deref_in_xcount_opt_string(size)      _SAL1_2_Source_(__RPC__deref_in_xcount_opt_string, (size), __RPC__deref_in_ecount_opt_string(size))
+#define __RPC__deref_in_xcount_part_opt(size, length)  _SAL1_2_Source_(__RPC__deref_in_xcount_part_opt, (size,length), __RPC__deref_in_ecount_part_opt(size))
 
 // [out]
-#define __RPC__out                                  __out
-#define __RPC__out_ecount(size)                     __out_ecount(size)  __post  __elem_writableTo(size)
-#define __RPC__out_ecount_string(size)              __RPC__out_ecount(size) __post __nullterminated
-#define __RPC__out_ecount_part(size, length)        __RPC__out_ecount(size)  __post  __elem_readableTo(length)
-#define __RPC__out_ecount_full(size)                __RPC__out_ecount_part(size, size)
-#define __RPC__out_ecount_full_string(size)         __RPC__out_ecount_full(size) __post  __nullterminated
-#define __RPC__out_xcount(size)                     __out
-#define __RPC__out_xcount_string(size)              __RPC__out __post __nullterminated
-#define __RPC__out_xcount_part(size, length)        __RPC__out
-#define __RPC__out_xcount_full(size)                __RPC__out
-#define __RPC__out_xcount_full_string(size)         __RPC__out __post __nullterminated
+#define __RPC__out                                   _SAL1_2_Source_(__RPC__out, (), _Out_)
+#define __RPC__out_ecount(size)                      _SAL1_2_Source_(__RPC__out_ecount, (size), _Out_writes_(size)  _Post_writable_size_(size))
+#define __RPC__out_ecount_string(size)               _SAL1_2_Source_(__RPC__out_ecount_string, (size), __RPC__out_ecount(size) _Post_ _Null_terminated_)
+#define __RPC__out_ecount_part(size, length)         _SAL1_2_Source_(__RPC__out_ecount_part, (size,length), __RPC__out_ecount(size) _Post_readable_size_(length))
+#define __RPC__out_ecount_full(size)                 _SAL1_2_Source_(__RPC__out_ecount_full, (size), __RPC__out_ecount_part(size, size))
+#define __RPC__out_ecount_full_string(size)          _SAL1_2_Source_(__RPC__out_ecount_full_string, (size), __RPC__out_ecount_full(size) _Post_ _Null_terminated_)
+#define __RPC__out_xcount(size)                      _SAL1_2_Source_(__RPC__out_xcount, (size), _Out_)
+#define __RPC__out_xcount_string(size)               _SAL1_2_Source_(__RPC__out_xcount_string, (size), __RPC__out _Post_ _Null_terminated_)
+#define __RPC__out_xcount_part(size, length)         _SAL1_2_Source_(__RPC__out_xcount_part, (size,length), __RPC__out)
+#define __RPC__out_xcount_full(size)                 _SAL1_2_Source_(__RPC__out_xcount_full, (size), __RPC__out)
+#define __RPC__out_xcount_full_string(size)          _SAL1_2_Source_(__RPC__out_xcount_full_string, (size), __RPC__out _Post_ _Null_terminated_)
 
 // [in,out] 
-#define __RPC__inout                                __inout
-#define __RPC__inout_string                         __RPC__inout  __pre __nullterminated __post __nullterminated
-#define __RPC__inout_ecount(size)                   __inout_ecount(size)
-#define __RPC__inout_ecount_part(size, length)      __inout_ecount_part(size, length)
-#define __RPC__inout_ecount_full(size)              __RPC__inout_ecount_part(size, size)
-#define __RPC__inout_ecount_full_string(size)       __RPC__inout_ecount_full(size) __pre __nullterminated __post __nullterminated
-#define __RPC__inout_xcount(size)                   __inout
-#define __RPC__inout_xcount_part(size, length)      __inout
-#define __RPC__inout_xcount_full(size)              __RPC__inout
-#define __RPC__inout_xcount_full_string(size)       __RPC__inout __pre __nullterminated __post __nullterminated
+#define __RPC__inout                                 _SAL1_2_Source_(__RPC__inout, (), _Inout_)
+#define __RPC__inout_string                          _SAL1_2_Source_(__RPC__inout_string, (), __RPC__inout  _Pre_ _Null_terminated_ _Post_ _Null_terminated_)
+#define __RPC__inout_ecount(size)                    _SAL1_2_Source_(__RPC__inout_ecount, (size), _Inout_updates_(size))
+#define __RPC__inout_ecount_part(size, length)       _SAL1_2_Source_(__RPC__inout_ecount_part, (size,length), _Inout_updates_to_(size, length))
+#define __RPC__inout_ecount_full(size)               _SAL1_2_Source_(__RPC__inout_ecount_full, (size), __RPC__inout_ecount_part(size, size))
+#define __RPC__inout_ecount_full_string(size)        _SAL1_2_Source_(__RPC__inout_ecount_full_string, (size), __RPC__inout_ecount_full(size) _Pre_ _Null_terminated_ _Post_ _Null_terminated_)
+#define __RPC__inout_xcount(size)                    _SAL1_2_Source_(__RPC__inout_xcount, (size), _Inout_)
+#define __RPC__inout_xcount_part(size, length)       _SAL1_2_Source_(__RPC__inout_xcount_part, (size,length), _Inout_)
+#define __RPC__inout_xcount_full(size)               _SAL1_2_Source_(__RPC__inout_xcount_full, (size), __RPC__inout)
+#define __RPC__inout_xcount_full_string(size)        _SAL1_2_Source_(__RPC__inout_xcount_full_string, (size), __RPC__inout _Pre_ _Null_terminated_ _Post_ _Null_terminated_)
 
 // [in,unique] 
-#define __RPC__in_opt                               __RPC__in __pre __exceptthat __maybenull
-#define __RPC__in_opt_string                        __RPC__in_opt   __pre __nullterminated
-#define __RPC__in_ecount_opt(size)                  __RPC__in_ecount(size) __pre __exceptthat __maybenull
-#define __RPC__in_ecount_opt_string(size)           __RPC__in_ecount_opt(size) __pre __nullterminated
-#define __RPC__in_xcount_opt(size)                  __RPC__in_ecount(size) __pre __exceptthat __maybenull
-#define __RPC__in_xcount_opt_string(size)           __RPC__in_ecount_opt(size) __pre __nullterminated
+#define __RPC__in_opt                                _SAL1_2_Source_(__RPC__in_opt, (), _Pre_ _Notref_ _Maybenull_ _Pre_ _Valid_)
+#define __RPC__in_opt_string                         _SAL1_2_Source_(__RPC__in_opt_string, (), __RPC__in_opt  _Pre_ _Null_terminated_)
+#define __RPC__in_ecount_opt(size)                   _SAL1_2_Source_(__RPC__in_ecount_opt, (size), __RPC__in_opt  _Pre_readable_size_(size))
+#define __RPC__in_ecount_opt_string(size)            _SAL1_2_Source_(__RPC__in_ecount_opt_string, (size), __RPC__in_ecount_opt(size) _Pre_ _Null_terminated_)
+#define __RPC__in_ecount_full_opt(size)              _SAL1_2_Source_(__RPC__in_ecount_full_opt, (size), __RPC__in_ecount_opt(size))
+#define __RPC__in_ecount_full_opt_string(size)       _SAL1_2_Source_(__RPC__in_ecount_full_opt_string, (size), __RPC__in_ecount_full_opt(size) _Pre_ _Null_terminated_)
+#define __RPC__in_ecount_part_opt(size, length)      _SAL1_2_Source_(__RPC__in_ecount_part_opt, (size,length), __RPC__in_ecount_opt(length) _Pre_writable_size_(size))
+#define __RPC__in_xcount_full_opt(size)              _SAL1_2_Source_(__RPC__in_xcount_full_opt, (size), __RPC__in_ecount_opt(size))
+#define __RPC__in_xcount_full_opt_string(size)       _SAL1_2_Source_(__RPC__in_xcount_full_opt_string, (size), __RPC__in_ecount_full_opt(size) _Pre_ _Null_terminated_)
+#define __RPC__in_xcount_part_opt(size, length)      _SAL1_2_Source_(__RPC__in_xcount_part_opt, (size,length), __RPC__in_ecount_part_opt(size, length))
+#define __RPC__in_xcount_opt(size)                   _SAL1_2_Source_(__RPC__in_xcount_opt, (size), __RPC__in_ecount_opt(size))
+#define __RPC__in_xcount_opt_string(size)            _SAL1_2_Source_(__RPC__in_xcount_opt_string, (size), __RPC__in_ecount_opt(size) _Pre_ _Null_terminated_)
 
 // [in,out,unique] 
-#define __RPC__inout_opt                            __inout_opt
-#define __RPC__inout_opt_string                     __RPC__inout_opt  __pre __nullterminated
-#define __RPC__inout_ecount_opt(size)               __inout_ecount_opt(size)
-#define __RPC__inout_ecount_part_opt(size, length)  __inout_ecount_part_opt(size, length)
-#define __RPC__inout_ecount_full_opt(size)          __RPC__inout_ecount_part_opt(size, size)
-#define __RPC__inout_ecount_full_opt_string(size)   __RPC__inout_ecount_full_opt(size)  __pre __nullterminated __post __nullterminated
-#define __RPC__inout_xcount_opt(size)               __inout_opt
-#define __RPC__inout_xcount_part_opt(size, length)  __inout_opt
-#define __RPC__inout_xcount_full_opt(size)          __RPC__inout_opt
-#define __RPC__inout_xcount_full_opt_string(size)   __RPC__inout_opt __pre __nullterminated __post __nullterminated
+#define __RPC__inout_opt                             _SAL1_2_Source_(__RPC__inout_opt, (), _Inout_opt_)
+#define __RPC__inout_opt_string                      _SAL1_2_Source_(__RPC__inout_opt_string, (), __RPC__inout_opt  _Pre_ _Null_terminated_)
+#define __RPC__inout_ecount_opt(size)                _SAL1_2_Source_(__RPC__inout_ecount_opt, (size), _Inout_updates_opt_(size))
+#define __RPC__inout_ecount_part_opt(size, length)   _SAL1_2_Source_(__RPC__inout_ecount_part_opt, (size,length), _Inout_updates_to_opt_(size, length))
+#define __RPC__inout_ecount_full_opt(size)           _SAL1_2_Source_(__RPC__inout_ecount_full_opt, (size), __RPC__inout_ecount_part_opt(size, size))
+#define __RPC__inout_ecount_full_opt_string(size)    _SAL1_2_Source_(__RPC__inout_ecount_full_opt_string, (size), __RPC__inout_ecount_full_opt(size)  _Pre_ _Null_terminated_ _Post_ _Null_terminated_)
+#define __RPC__inout_xcount_opt(size)                _SAL1_2_Source_(__RPC__inout_xcount_opt, (size), _Inout_opt_)
+#define __RPC__inout_xcount_part_opt(size, length)   _SAL1_2_Source_(__RPC__inout_xcount_part_opt, (size,length), _Inout_opt_)
+#define __RPC__inout_xcount_full_opt(size)           _SAL1_2_Source_(__RPC__inout_xcount_full_opt, (size), __RPC__inout_opt)
+#define __RPC__inout_xcount_full_opt_string(size)    _SAL1_2_Source_(__RPC__inout_xcount_full_opt_string, (size), __RPC__inout_opt _Pre_ _Null_terminated_ _Post_ _Null_terminated_)
 
 // [out] **
-#define __RPC__deref_out                            __deref_out
-#define __RPC__deref_out_string                     __RPC__deref_out    __post __deref __nullterminated
-// Removed "__post __deref __exceptthat __maybenull" so return values from QueryInterface and the like can be trusted without an explicit NULL check.
-// This is a temporary fix until midl.exe can be rev'd to produce more accurate annotations.
-#define __RPC__deref_out_opt                        __RPC__deref_out
-#define __RPC__deref_out_opt_string                 __RPC__deref_out_opt  __post __deref __nullterminated __pre __deref __null
-#define __RPC__deref_out_ecount(size)               __deref_out_ecount(size) __post __deref __elem_writableTo(size)
-#define __RPC__deref_out_ecount_part(size, length)  __RPC__deref_out_ecount(size) __post __deref __elem_readableTo(length)
-#define __RPC__deref_out_ecount_full(size)          __RPC__deref_out_ecount_part(size,size)
-#define __RPC__deref_out_ecount_full_string(size)   __RPC__deref_out_ecount_full(size) __post __deref __nullterminated
-#define __RPC__deref_out_xcount(size)               __deref_out __post __deref
-#define __RPC__deref_out_xcount_part(size, length)  __RPC__deref_out __post __deref
-#define __RPC__deref_out_xcount_full(size)          __RPC__deref_out
-#define __RPC__deref_out_xcount_full_string(size)   __RPC__deref_out __post __deref __nullterminated
+#define __RPC__deref_out                             _SAL1_2_Source_(__RPC__deref_out, (), _Outptr_)
+#define __RPC__deref_out_string                      _SAL1_2_Source_(__RPC__deref_out_string, (), _Outptr_result_z_)
+#define __RPC__deref_out_opt                        _SAL1_2_Source_(__RPC__deref_out_opt, (), __RPC__deref_out)
+#define __RPC__deref_out_opt_string                  _SAL1_2_Source_(__RPC__deref_out_opt_string, (), _Outptr_result_maybenull_z_  _At_(*_Curr_, _Pre_opt_z_))
+#define __RPC__deref_out_ecount(size)                _SAL1_2_Source_(__RPC__deref_out_ecount, (size), _Outptr_result_buffer_(size))
+#define __RPC__deref_out_ecount_part(size, length)   _SAL1_2_Source_(__RPC__deref_out_ecount_part, (size,length), _Outptr_result_buffer_to_(size, length))
+#define __RPC__deref_out_ecount_full(size)           _SAL1_2_Source_(__RPC__deref_out_ecount_full, (size), __RPC__deref_out_ecount_part(size,size))
+#define __RPC__deref_out_ecount_full_string(size)    _SAL1_2_Source_(__RPC__deref_out_ecount_full_string, (size), __RPC__deref_out_ecount_full(size) _At_(*_Curr_, _Post_ _Null_terminated_))
+#define __RPC__deref_out_xcount(size)                _SAL1_2_Source_(__RPC__deref_out_xcount, (size), _Outptr_)
+#define __RPC__deref_out_xcount_part(size, length)   _SAL1_2_Source_(__RPC__deref_out_xcount_part, (size,length), __RPC__deref_out)
+#define __RPC__deref_out_xcount_full(size)           _SAL1_2_Source_(__RPC__deref_out_xcount_full, (size), __RPC__deref_out)
+#define __RPC__deref_out_xcount_full_string(size)    _SAL1_2_Source_(__RPC__deref_out_xcount_full_string, (size), __RPC__deref_out _At_(*_Curr_, _Post_ _Null_terminated_))
 
 // [in,out] **, second pointer decoration. 
-#define __RPC__deref_inout                          __deref_inout
-#define __RPC__deref_inout_string                   __RPC__deref_inout __pre __deref __nullterminated __post __deref __nullterminated
-#define __RPC__deref_inout_opt                      __deref_inout_opt
-#define __RPC__deref_inout_opt_string               __RPC__deref_inout_opt __deref __nullterminated 
-#define __RPC__deref_inout_ecount_opt(size)         __deref_inout_ecount_opt(size)
-#define __RPC__deref_inout_ecount_part_opt(size, length) __deref_inout_ecount_part_opt(size , length)
-#define __RPC__deref_inout_ecount_full_opt(size)    __RPC__deref_inout_ecount_part_opt(size, size)
-#define __RPC__deref_inout_ecount_full(size)        __deref_inout_ecount_full(size)
-#define __RPC__deref_inout_ecount_full_string(size) __RPC__deref_inout_ecount_full(size) __post __deref __nullterminated
-#define __RPC__deref_inout_ecount_full_opt_string(size) __RPC__deref_inout_ecount_full_opt(size) __pre __deref __nullterminated __post __deref __nullterminated
-#define __RPC__deref_inout_xcount_opt(size)         __deref_inout_opt
-#define __RPC__deref_inout_xcount_part_opt(size, length) __deref_inout_opt
-#define __RPC__deref_inout_xcount_full_opt(size)    __RPC__deref_inout_opt
-#define __RPC__deref_inout_xcount_full(size)        __deref_inout
-#define __RPC__deref_inout_xcount_full_string(size) __RPC__deref_inout __post __deref __nullterminated
-#define __RPC__deref_inout_xcount_full_opt_string(size) __RPC__deref_inout_opt __pre __deref __nullterminated __post __deref __nullterminated
+#define __RPC__deref_inout                           _SAL1_2_Source_(__RPC__deref_inout, (), _Inout_ _At_(*_Curr_, _Pre_ _Notnull_ _Post_ _Notnull_))
+#define __RPC__deref_inout_string                    _SAL1_2_Source_(__RPC__deref_inout_string, (), __RPC__deref_inout _At_(*_Curr_, _Pre_ _Null_terminated_ _Post_ _Null_terminated_))
+#define __RPC__deref_inout_opt                       _SAL1_2_Source_(__RPC__deref_inout_opt, (), _Inout_ _At_(*_Curr_, _Pre_ _Maybenull_ _Post_ _Maybenull_))
+#define __RPC__deref_inout_opt_string                _SAL1_2_Source_(__RPC__deref_inout_opt_string, (), __RPC__deref_inout_opt _At_(*_Curr_, _Pre_ _Null_terminated_ _Post_ _Null_terminated_))
+#define __RPC__deref_inout_ecount_opt(size)          _SAL1_2_Source_(__RPC__deref_inout_ecount_opt, (size), __RPC__deref_inout_opt _At_(*_Curr_, _Pre_writable_size_(size) _Post_writable_size_(size)))
+#define __RPC__deref_inout_ecount_part_opt(size, length)  _SAL1_2_Source_(__RPC__deref_inout_ecount_part_opt, (size,length), __RPC__deref_inout_ecount_opt(size) _At_(*_Curr_, _Pre_readable_size_(length) _Post_readable_size_(length)))
+#define __RPC__deref_inout_ecount_full_opt(size)     _SAL1_2_Source_(__RPC__deref_inout_ecount_full_opt, (size), __RPC__deref_inout_ecount_part_opt(size, size))
+#define __RPC__deref_inout_ecount_full(size)         _SAL1_2_Source_(__RPC__deref_inout_ecount_full, (size), __RPC__deref_inout _At_(*_Curr_, _Pre_readable_size_(size) _Post_readable_size_(size)))
+#define __RPC__deref_inout_ecount_full_string(size)  _SAL1_2_Source_(__RPC__deref_inout_ecount_full_string, (size), __RPC__deref_inout_ecount_full(size) _At_(*_Curr_, _Post_ _Null_terminated_))
+#define __RPC__deref_inout_ecount_full_opt_string(size)  _SAL1_2_Source_(__RPC__deref_inout_ecount_full_opt_string, (size), __RPC__deref_inout_ecount_full_opt(size) _At_(*_Curr_, _Pre_ _Null_terminated_ _Post_ _Null_terminated_))
+#define __RPC__deref_inout_xcount_opt(size)          _SAL1_2_Source_(__RPC__deref_inout_xcount_opt, (size), __RPC__deref_inout_opt)
+#define __RPC__deref_inout_xcount_part_opt(size, length)  _SAL1_2_Source_(__RPC__deref_inout_xcount_part_opt, (size,length), __RPC__deref_inout_opt)
+#define __RPC__deref_inout_xcount_full_opt(size)     _SAL1_2_Source_(__RPC__deref_inout_xcount_full_opt, (size), __RPC__deref_inout_opt)
+#define __RPC__deref_inout_xcount_full(size)         _SAL1_2_Source_(__RPC__deref_inout_xcount_full, (size), __RPC__deref_inout)
+#define __RPC__deref_inout_xcount_full_string(size)  _SAL1_2_Source_(__RPC__deref_inout_xcount_full_string, (size), __RPC__deref_inout _At_(*_Curr_, _Post_ _Null_terminated_))
+#define __RPC__deref_inout_xcount_full_opt_string(size)  _SAL1_2_Source_(__RPC__deref_inout_xcount_full_opt_string, (size), __RPC__deref_inout_opt _At_(*_Curr_, _Pre_ _Null_terminated_ _Post_ _Null_terminated_))
 
 
 // #define __RPC_out_opt    out_opt is not allowed in rpc
 
 // [in,out,unique] 
-#define __RPC__deref_opt_inout                          __deref_opt_inout
-#define __RPC__deref_opt_inout_ecount(size)             __deref_opt_inout_ecount(size)
-#define __RPC__deref_opt_inout_string                   __RPC__deref_opt_inout __pre __deref __nullterminated __post __deref __nullterminated
-#define __RPC__deref_opt_inout_ecount_part(size, length) __deref_opt_inout_ecount_part(size, length)
-#define __RPC__deref_opt_inout_ecount_full(size)        __deref_opt_inout_ecount_full(size)
-#define __RPC__deref_opt_inout_ecount_full_string(size)  __RPC__deref_opt_inout_ecount_full(size) __pre __deref __nullterminated __post __deref __nullterminated
-#define __RPC__deref_opt_inout_xcount_part(size, length) __deref_opt_inout
-#define __RPC__deref_opt_inout_xcount_full(size)        __deref_opt_inout
-#define __RPC__deref_opt_inout_xcount_full_string(size)  __RPC__deref_opt_inout __pre __deref __nullterminated __post __deref __nullterminated
+#define __RPC__deref_opt_inout                           _SAL1_2_Source_(__RPC__deref_opt_inout, (), _Inout_opt_ _At_(*_Curr_, _Pre_ _Notnull_ _Post_ _Notnull_))
+#define __RPC__deref_opt_inout_ecount(size)              _SAL1_2_Source_(__RPC__deref_opt_inout_ecount, (size), __RPC__deref_opt_inout _At_(*_Curr_, _Pre_writable_size_(size) _Post_writable_size_(size)))
+#define __RPC__deref_opt_inout_string                    _SAL1_2_Source_(__RPC__deref_opt_inout_string, (), __RPC__deref_opt_inout _At_(*_Curr_, _Pre_ _Null_terminated_ _Post_ _Null_terminated_))
+#define __RPC__deref_opt_inout_ecount_part(size, length)  _SAL1_2_Source_(__RPC__deref_opt_inout_ecount_part, (size,length), __RPC__deref_opt_inout_ecount(size) _At_(*_Curr_, _Pre_readable_size_(length) _Post_readable_size_(length)))
+#define __RPC__deref_opt_inout_ecount_full(size)         _SAL1_2_Source_(__RPC__deref_opt_inout_ecount_full, (size), __RPC__deref_opt_inout_ecount_part(size, size))
+#define __RPC__deref_opt_inout_ecount_full_string(size)   _SAL1_2_Source_(__RPC__deref_opt_inout_ecount_full_string, (size), __RPC__deref_opt_inout_ecount_full(size) _At_(*_Curr_, _Pre_ _Null_terminated_ _Post_ _Null_terminated_))
+#define __RPC__deref_opt_inout_xcount_part(size, length)  _SAL1_2_Source_(__RPC__deref_opt_inout_xcount_part, (size,length), __RPC__deref_opt_inout)
+#define __RPC__deref_opt_inout_xcount_full(size)         _SAL1_2_Source_(__RPC__deref_opt_inout_xcount_full, (size), __RPC__deref_opt_inout)
+#define __RPC__deref_opt_inout_xcount_full_string(size)  _SAL1_2_Source_(__RPC__deref_opt_inout_xcount_full_string, (size), __RPC__deref_opt_inout_string)
 
 
-// We don't need to specify __pre __deref __exceptthat __maybenull : this is default behavior. While this might not hold in SAL 1.1 syntax, SAL team 
-// believes it's OK. We can revisit if SAL 1.1 can survive. 
-#define __RPC__deref_out_ecount_opt(size)               __RPC__out_ecount(size) __post __deref __exceptthat __maybenull __pre __deref __null 
-#define __RPC__deref_out_ecount_part_opt(size, length)  __RPC__deref_out_ecount_part(size, length) __post __deref __exceptthat __maybenull __pre __deref __null
-#define __RPC__deref_out_ecount_full_opt(size)          __RPC__deref_out_ecount_part_opt(size, size) __pre __deref __null
-#define __RPC__deref_out_ecount_full_opt_string(size)   __RPC__deref_out_ecount_part_opt(size, size) __post __deref __nullterminated __pre __deref __null
-#define __RPC__deref_out_xcount_opt(size)               __RPC__out __post __deref __exceptthat __maybenull __pre __deref __null 
-#define __RPC__deref_out_xcount_part_opt(size, length)  __RPC__deref_out __post __deref __exceptthat __maybenull __pre __deref __null
-#define __RPC__deref_out_xcount_full_opt(size)          __RPC__deref_out_opt __pre __deref __null
-#define __RPC__deref_out_xcount_full_opt_string(size)   __RPC__deref_out_opt __post __deref __nullterminated __pre __deref __null
+#define __RPC__deref_out_ecount_opt(size)                _SAL1_2_Source_(__RPC__deref_out_ecount_opt, (size), _Outptr_result_buffer_maybenull_(size) _At_(*_Curr_, _Pre_maybenull_))
+#define __RPC__deref_out_ecount_part_opt(size, length)   _SAL1_2_Source_(__RPC__deref_out_ecount_part_opt, (size,length), _Outptr_result_buffer_to_maybenull_(size, length) _At_(*_Curr_, _Pre_maybenull_))
+#define __RPC__deref_out_ecount_full_opt(size)           _SAL1_2_Source_(__RPC__deref_out_ecount_full_opt, (size), __RPC__deref_out_ecount_part_opt(size, size))
+#define __RPC__deref_out_ecount_full_opt_string(size)    _SAL1_2_Source_(__RPC__deref_out_ecount_full_opt_string, (size), __RPC__deref_out_ecount_part_opt(size, size) _At_(*_Curr_, _Post_ _Null_terminated_))
+#define __RPC__deref_out_xcount_opt(size)                _SAL1_2_Source_(__RPC__deref_out_xcount_opt, (size), __RPC__out _At_(*_Curr_, _Pre_maybenull_ _Pre_writable_size_(_Inexpressible_(size)) _Post_ _Maybenull_))
+#define __RPC__deref_out_xcount_part_opt(size, length)   _SAL1_2_Source_(__RPC__deref_out_xcount_part_opt, (size,length), __RPC__deref_out _At_(*_Curr_, _Pre_maybenull_ _Pre_writable_size_(_Inexpressible_(size)) _Post_ _Maybenull_))
+#define __RPC__deref_out_xcount_full_opt(size)           _SAL1_2_Source_(__RPC__deref_out_xcount_full_opt, (size), __RPC__deref_out_opt _At_(*_Curr_, _Pre_maybenull_ _Pre_writable_size_(_Inexpressible_(size))))
+#define __RPC__deref_out_xcount_full_opt_string(size)    _SAL1_2_Source_(__RPC__deref_out_xcount_full_opt_string, (size), __RPC__deref_out_opt _At_(*_Curr_, _Pre_maybenull_ _Pre_writable_size_(_Inexpressible_(size)) _Post_ _Null_terminated_))
 
-#define __RPC__deref_opt_inout_opt                      __deref_opt_inout_opt
-#define __RPC__deref_opt_inout_opt_string               __RPC__deref_opt_inout_opt __pre __deref __nullterminated  __post __deref __nullterminated
-#define __RPC__deref_opt_inout_ecount_opt(size)         __deref_opt_inout_ecount_opt(size)  
-#define __RPC__deref_opt_inout_ecount_part_opt(size, length) __deref_opt_inout_ecount_part_opt(size, length)
-#define __RPC__deref_opt_inout_ecount_full_opt(size)    __RPC__deref_opt_inout_ecount_part_opt(size, size)
-#define __RPC__deref_opt_inout_ecount_full_opt_string(size)  __RPC__deref_opt_inout_ecount_full_opt(size) __pre __deref __nullterminated __post __deref __nullterminated
-#define __RPC__deref_opt_inout_xcount_opt(size)         __deref_opt_inout_opt  
-#define __RPC__deref_opt_inout_xcount_part_opt(size, length) __deref_opt_inout_opt
-#define __RPC__deref_opt_inout_xcount_full_opt(size)    __RPC__deref_opt_inout_opt
-#define __RPC__deref_opt_inout_xcount_full_opt_string(size)  __RPC__deref_opt_inout_opt __pre __deref __nullterminated __post __deref __nullterminated
+#define __RPC__deref_opt_inout_opt                       _SAL1_2_Source_(__RPC__deref_opt_inout_opt, (), _Inout_opt_ _At_(*_Curr_, _Pre_ _Maybenull_ _Post_ _Maybenull_))
+#define __RPC__deref_opt_inout_opt_string                _SAL1_2_Source_(__RPC__deref_opt_inout_opt_string, (), __RPC__deref_opt_inout_opt _At_(*_Curr_, _Pre_ _Null_terminated_ _Post_ _Null_terminated_))
+#define __RPC__deref_opt_inout_ecount_opt(size)          _SAL1_2_Source_(__RPC__deref_opt_inout_ecount_opt, (size), _Inout_opt_ _At_(*_Curr_, _Pre_ _Maybenull_ _Pre_writable_size_(size) _Post_ _Maybenull_ _Post_writable_size_(size)))
+#define __RPC__deref_opt_inout_ecount_part_opt(size, length)  _SAL1_2_Source_(__RPC__deref_opt_inout_ecount_part_opt, (size,length), __RPC__deref_opt_inout_ecount_opt(size) _At_(*_Curr_, _Pre_readable_size_(length) _Post_readable_size_(length)))
+#define __RPC__deref_opt_inout_ecount_full_opt(size)     _SAL1_2_Source_(__RPC__deref_opt_inout_ecount_full_opt, (size), __RPC__deref_opt_inout_ecount_part_opt(size, size))
+#define __RPC__deref_opt_inout_ecount_full_opt_string(size)   _SAL1_2_Source_(__RPC__deref_opt_inout_ecount_full_opt_string, (size), __RPC__deref_opt_inout_ecount_full_opt(size) _At_(*_Curr_, _Pre_ _Null_terminated_ _Post_ _Null_terminated_))
+#define __RPC__deref_opt_inout_xcount_opt(size)          _SAL1_2_Source_(__RPC__deref_opt_inout_xcount_opt, (size), __RPC__deref_opt_inout_opt)
+#define __RPC__deref_opt_inout_xcount_part_opt(size, length)  _SAL1_2_Source_(__RPC__deref_opt_inout_xcount_part_opt, (size,length), __RPC__deref_opt_inout_opt)
+#define __RPC__deref_opt_inout_xcount_full_opt(size)     _SAL1_2_Source_(__RPC__deref_opt_inout_xcount_full_opt, (size), __RPC__deref_opt_inout_opt)
+#define __RPC__deref_opt_inout_xcount_full_opt_string(size)   _SAL1_2_Source_(__RPC__deref_opt_inout_xcount_full_opt_string, (size), __RPC__deref_opt_inout_opt_string)
 
-#define __RPC_full_pointer                              __maybenull 
-#define __RPC_unique_pointer                            __maybenull
-#define __RPC_ref_pointer                               __notnull
-#define __RPC_string                                    __nullterminated
+#define __RPC_full_pointer                               _SAL1_2_Source_(__RPC_full_pointer, (), _Maybenull_)
+#define __RPC_unique_pointer                             _SAL1_2_Source_(__RPC_unique_pointer, (), _Maybenull_)
+#define __RPC_ref_pointer                                _SAL1_2_Source_(__RPC_ref_pointer, (), _Notnull_)
+#define __RPC_string                                     _SAL1_2_Source_(__RPC_string, (), _Null_terminated_)
 
-#define __RPC__range(min,max)                           __range(min,max)
-#define __RPC__in_range(min,max)                        __in_range(min,max)
+#define __RPC__range(min,max)                            _SAL1_2_Source_(__RPC__range, (min,max), __range(min,max))
+#define __RPC__in_range(min,max)                         _SAL1_2_Source_(__RPC__in_range, (min,max), _In_range_(min,max))
 
-#else   // not prefast
-
-#define __RPC__range(min,max)
-#define __RPC__in_range(min,max)
-
-#define __RPC__in           
-#define __RPC__in_string
-#define __RPC__in_opt_string
-#define __RPC__in_ecount(size) 
-#define __RPC__in_ecount_full(size)
-#define __RPC__in_ecount_full_string(size)
-#define __RPC__in_ecount_part(size, length)
-#define __RPC__in_ecount_full_opt(size)
-#define __RPC__in_ecount_full_opt_string(size)
-#define __RPC__inout_ecount_full_opt_string(size)
-#define __RPC__in_ecount_part_opt(size, length)
-#define __RPC__in_xcount(size) 
-#define __RPC__in_xcount_full(size)
-#define __RPC__in_xcount_full_string(size)
-#define __RPC__in_xcount_part(size, length)
-#define __RPC__in_xcount_full_opt(size)
-#define __RPC__in_xcount_full_opt_string(size)
-#define __RPC__inout_xcount_full_opt_string(size)
-#define __RPC__in_xcount_part_opt(size, length)
-
-#define __RPC__deref_in 
-#define __RPC__deref_in_string
-#define __RPC__deref_in_opt
-#define __RPC__deref_in_opt_string
-#define __RPC__deref_opt_in
-#define __RPC__deref_opt_in_string
-#define __RPC__deref_opt_in_opt
-#define __RPC__deref_opt_in_opt_string
-#define __RPC__deref_in_ecount(size) 
-#define __RPC__deref_in_ecount_part(size, length) 
-#define __RPC__deref_in_ecount_full(size) 
-#define __RPC__deref_in_ecount_full_opt(size)
-#define __RPC__deref_in_ecount_full_string(size)
-#define __RPC__deref_in_ecount_full_opt_string(size)
-#define __RPC__deref_in_ecount_opt(size) 
-#define __RPC__deref_in_ecount_opt_string(size)
-#define __RPC__deref_in_ecount_part_opt(size, length) 
-#define __RPC__deref_in_xcount(size) 
-#define __RPC__deref_in_xcount_part(size, length) 
-#define __RPC__deref_in_xcount_full(size) 
-#define __RPC__deref_in_xcount_full_opt(size)
-#define __RPC__deref_in_xcount_full_string(size)
-#define __RPC__deref_in_xcount_full_opt_string(size)
-#define __RPC__deref_in_xcount_opt(size) 
-#define __RPC__deref_in_xcount_opt_string(size)
-#define __RPC__deref_in_xcount_part_opt(size, length) 
-
-// [out]
-#define __RPC__out     
-#define __RPC__out_ecount(size) 
-#define __RPC__out_ecount_part(size, length) 
-#define __RPC__out_ecount_full(size)
-#define __RPC__out_ecount_full_string(size)
-#define __RPC__out_xcount(size) 
-#define __RPC__out_xcount_part(size, length) 
-#define __RPC__out_xcount_full(size)
-#define __RPC__out_xcount_full_string(size)
-
-// [in,out] 
-#define __RPC__inout                                   
-#define __RPC__inout_string
-#define __RPC__opt_inout
-#define __RPC__inout_ecount(size)                     
-#define __RPC__inout_ecount_part(size, length)    
-#define __RPC__inout_ecount_full(size)          
-#define __RPC__inout_ecount_full_string(size)          
-#define __RPC__inout_xcount(size)                     
-#define __RPC__inout_xcount_part(size, length)    
-#define __RPC__inout_xcount_full(size)          
-#define __RPC__inout_xcount_full_string(size)          
-
-// [in,unique] 
-#define __RPC__in_opt       
-#define __RPC__in_ecount_opt(size)   
-#define __RPC__in_xcount_opt(size)   
-
-
-// [in,out,unique] 
-#define __RPC__inout_opt    
-#define __RPC__inout_opt_string    
-#define __RPC__inout_ecount_opt(size)  
-#define __RPC__inout_ecount_part_opt(size, length) 
-#define __RPC__inout_ecount_full_opt(size)     
-#define __RPC__inout_ecount_full_string(size)
-#define __RPC__inout_xcount_opt(size)  
-#define __RPC__inout_xcount_part_opt(size, length) 
-#define __RPC__inout_xcount_full_opt(size)     
-#define __RPC__inout_xcount_full_string(size)
-
-// [out] **
-#define __RPC__deref_out   
-#define __RPC__deref_out_string
-#define __RPC__deref_out_opt 
-#define __RPC__deref_out_opt_string
-#define __RPC__deref_out_ecount(size) 
-#define __RPC__deref_out_ecount_part(size, length) 
-#define __RPC__deref_out_ecount_full(size)  
-#define __RPC__deref_out_ecount_full_string(size)
-#define __RPC__deref_out_xcount(size) 
-#define __RPC__deref_out_xcount_part(size, length) 
-#define __RPC__deref_out_xcount_full(size)  
-#define __RPC__deref_out_xcount_full_string(size)
-
-
-// [in,out] **, second pointer decoration. 
-#define __RPC__deref_inout    
-#define __RPC__deref_inout_string
-#define __RPC__deref_inout_opt 
-#define __RPC__deref_inout_opt_string
-#define __RPC__deref_inout_ecount_full(size)
-#define __RPC__deref_inout_ecount_full_string(size)
-#define __RPC__deref_inout_ecount_opt(size) 
-#define __RPC__deref_inout_ecount_part_opt(size, length) 
-#define __RPC__deref_inout_ecount_full_opt(size) 
-#define __RPC__deref_inout_ecount_full_opt_string(size) 
-#define __RPC__deref_inout_xcount_full(size)
-#define __RPC__deref_inout_xcount_full_string(size)
-#define __RPC__deref_inout_xcount_opt(size) 
-#define __RPC__deref_inout_xcount_part_opt(size, length) 
-#define __RPC__deref_inout_xcount_full_opt(size) 
-#define __RPC__deref_inout_xcount_full_opt_string(size) 
-
-// #define __RPC_out_opt    out_opt is not allowed in rpc
-
-// [in,out,unique] 
-#define __RPC__deref_opt_inout  
-#define __RPC__deref_opt_inout_string
-#define __RPC__deref_opt_inout_ecount(size)     
-#define __RPC__deref_opt_inout_ecount_part(size, length) 
-#define __RPC__deref_opt_inout_ecount_full(size) 
-#define __RPC__deref_opt_inout_ecount_full_string(size)
-#define __RPC__deref_opt_inout_xcount(size)     
-#define __RPC__deref_opt_inout_xcount_part(size, length) 
-#define __RPC__deref_opt_inout_xcount_full(size) 
-#define __RPC__deref_opt_inout_xcount_full_string(size)
-
-#define __RPC__deref_out_ecount_opt(size) 
-#define __RPC__deref_out_ecount_part_opt(size, length) 
-#define __RPC__deref_out_ecount_full_opt(size) 
-#define __RPC__deref_out_ecount_full_opt_string(size)
-#define __RPC__deref_out_xcount_opt(size) 
-#define __RPC__deref_out_xcount_part_opt(size, length) 
-#define __RPC__deref_out_xcount_full_opt(size) 
-#define __RPC__deref_out_xcount_full_opt_string(size)
-
-#define __RPC__deref_opt_inout_opt      
-#define __RPC__deref_opt_inout_opt_string
-#define __RPC__deref_opt_inout_ecount_opt(size)   
-#define __RPC__deref_opt_inout_ecount_part_opt(size, length) 
-#define __RPC__deref_opt_inout_ecount_full_opt(size) 
-#define __RPC__deref_opt_inout_ecount_full_opt_string(size) 
-#define __RPC__deref_opt_inout_xcount_opt(size)   
-#define __RPC__deref_opt_inout_xcount_part_opt(size, length) 
-#define __RPC__deref_opt_inout_xcount_full_opt(size) 
-#define __RPC__deref_opt_inout_xcount_full_opt_string(size) 
-
-#define __RPC_full_pointer  
-#define __RPC_unique_pointer
-#define __RPC_ref_pointer
-#define __RPC_string                               
-
-
-#endif
 
 #ifdef  __cplusplus
 }
 #endif
+

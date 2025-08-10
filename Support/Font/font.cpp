@@ -552,7 +552,7 @@ void font::RenderText( const irect&  Rect,
 //        f32     BmHeight = 1.0f / (f32)m_BmHeight;
 
         // Prepare to draw characters.
-        draw_Begin( DRAW_SPRITES, DRAW_USE_ALPHA | DRAW_TEXTURED | DRAW_2D | DRAW_NO_ZBUFFER );
+        draw_Begin( DRAW_SPRITES, DRAW_USE_ALPHA | DRAW_TEXTURED | DRAW_2D | DRAW_UI_RTARGET | DRAW_NO_ZBUFFER  );
         draw_SetTexture( *pBitmap );
 
         // Turn off BILINEAR.
@@ -683,7 +683,7 @@ void font::RenderText( const irect&  Rect,
                         continue;
                     }
                     //draw_End();
-                    //draw_Begin( DRAW_SPRITES, DRAW_TEXTURED | DRAW_2D | DRAW_USE_ALPHA | DRAW_NO_ZBUFFER );
+                    //draw_Begin( DRAW_SPRITES, DRAW_TEXTURED | DRAW_2D | DRAW_UI_RTARGET | DRAW_USE_ALPHA | DRAW_NO_ZBUFFER  );
                     
                     //xbitmap* button = g_UiMgr->GetButtonTexture( buttonCode );
         		    //draw_SetTexture( *button );
@@ -700,7 +700,7 @@ void font::RenderText( const irect&  Rect,
                     
                     NumButtons++;
 
-                    //draw_Begin( DRAW_SPRITES, DRAW_TEXTURED | DRAW_2D | DRAW_USE_ALPHA | DRAW_NO_ZBUFFER );
+                    //draw_Begin( DRAW_SPRITES, DRAW_TEXTURED | DRAW_2D | DRAW_UI_RTARGET | DRAW_USE_ALPHA | DRAW_NO_ZBUFFER  );
 		            
                     //xbitmap* pBitmap = m_Bitmap.GetPointer();
                     //draw_SetTexture( *pBitmap );
@@ -822,7 +822,7 @@ void font::RenderText( const irect&  Rect,
     if( NumButtons > 0 && UseGradient )
     {
         // now draw the buttons
-        draw_Begin( DRAW_SPRITES, DRAW_TEXTURED | DRAW_2D | DRAW_USE_ALPHA | DRAW_NO_ZBUFFER );
+        draw_Begin( DRAW_SPRITES, DRAW_TEXTURED | DRAW_2D | DRAW_UI_RTARGET | DRAW_USE_ALPHA | DRAW_NO_ZBUFFER  );
 
         s32 i;
         for( i = 0; i < NumButtons; i++ )

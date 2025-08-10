@@ -155,9 +155,6 @@
     <Filter Include="TriggerEx\Meta">
       <UniqueIdentifier>{02586e48-3fe2-4fed-b60e-fadc7e38ba48}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Havok">
-      <UniqueIdentifier>{452842ba-5781-4e51-a16c-90a1c647e6e1}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Tracers">
       <UniqueIdentifier>{f54ac9d3-526c-493a-9f28-7083411e6956}</UniqueIdentifier>
     </Filter>
@@ -1225,9 +1222,6 @@
     <ClCompile Include="..\TriggerEx\Meta\trigger_meta_label.cpp">
       <Filter>TriggerEx\Meta</Filter>
     </ClCompile>
-    <ClCompile Include="..\Havok\Havok.cpp">
-      <Filter>Havok</Filter>
-    </ClCompile>
     <ClCompile Include="..\Tracers\TracerMgr.cpp">
       <Filter>Tracers</Filter>
     </ClCompile>
@@ -1489,9 +1483,6 @@
     <ClCompile Include="..\MoviePlayer\MoviePlayer.cpp">
       <Filter>MoviePlayer</Filter>
     </ClCompile>
-    <ClCompile Include="..\MoviePlayer\MoviePlayer_bink.cpp">
-      <Filter>MoviePlayer</Filter>
-    </ClCompile>
     <ClCompile Include="..\MusicStateMgr\MusicStateMgr.cpp">
       <Filter>MusicStateMgr</Filter>
     </ClCompile>
@@ -1534,11 +1525,8 @@
     <ClCompile Include="LevelLoader.cpp" />
     <ClCompile Include="Link.cpp" />
     <ClCompile Include="RenderContext.cpp" />
-    <ClCompile Include="..\Characters\God.hpp">
-      <Filter>Actor\Characters</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Havok\Havok.hpp">
-      <Filter>Havok</Filter>
+    <ClCompile Include="..\MoviePlayer\MoviePlayer_FFmpeg.cpp">
+      <Filter>MoviePlayer</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -2754,9 +2742,6 @@
     <ClInclude Include="..\MoviePlayer\MoviePlayer.hpp">
       <Filter>MoviePlayer</Filter>
     </ClInclude>
-    <ClInclude Include="..\MoviePlayer\MoviePlayer_bink.hpp">
-      <Filter>MoviePlayer</Filter>
-    </ClInclude>
     <ClInclude Include="..\MusicStateMgr\MusicStateMgr.hpp">
       <Filter>MusicStateMgr</Filter>
     </ClInclude>
@@ -2809,6 +2794,11 @@
     <ClInclude Include="Link.hpp" />
     <ClInclude Include="RenderContext.hpp" />
     <ClInclude Include="..\SpatialDBase\SpatialDBase.hpp" />
+    <ClInclude Include="..\Characters\God.hpp" />
+    <ClInclude Include="..\Havok\Havok.hpp" />
+    <ClInclude Include="..\MoviePlayer\MoviePlayer_FFmpeg.hpp">
+      <Filter>MoviePlayer</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="..\Objects\Vehicles\CarObject.hpp">

@@ -1789,7 +1789,7 @@ void car_object::RenderShockHistory( void )
     xcolor SHOCK_SPEED_COLOR(128,0,0);  // RED
     xcolor TRACTION_COLOR(0,0,128);     // BLUE
 
-    draw_Begin( DRAW_LINES, DRAW_2D );
+    draw_Begin( DRAW_LINES, DRAW_2D, DRAW_UI_RTARGET );
 
     for( i=0; i<4; i++ )
     {

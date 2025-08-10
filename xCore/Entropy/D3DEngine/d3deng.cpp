@@ -1,14 +1,32 @@
+//==============================================================================
+//  
+//  d3deng.cpp
+//  
+//==============================================================================
+
+//==============================================================================
+//  PLATFORM CHECK
+//==============================================================================
+
+#include "x_target.hpp"
+
+#ifndef TARGET_PC
+#error This file should only be compiled for PC platform. Please check your exclusions on your project spec.
+#endif
+
 //=========================================================================
 // INCLUDES 
 //=========================================================================
 
-#include <stdio.h>
+#include "x_stdio.hpp"
 #include "e_Engine.hpp"
 #include "x_threads.hpp"
-#include "d3deng_font.hpp"
-#include "d3deng_video.hpp"
 
-//#define TEST_KILL_D3D
+#include "d3deng_font.hpp"
+#include "d3deng_shader.hpp"
+#include "d3deng_state.hpp"
+#include "d3deng_rtarget.hpp"
+#include "d3deng_composite.hpp"
 
 //=========================================================================
 // INCLUDE ADITIONAL LIBRARIES
@@ -16,46 +34,10 @@
 
 #pragma comment( lib, "winmm" )
 
-// Auto include DirectX libs in a .NET build
-#if _MSC_VER >= 1300
-#ifdef CONFIG_DEBUG
-#pragma comment( lib, "dsound.lib" )
-#pragma comment( lib, "d3dx9.lib" )
-#pragma comment( lib, "d3d9.lib" )
-#pragma comment( lib, "dxguid.lib" )
-#pragma comment( lib, "dinput8.lib" )
-#else
-#pragma comment( lib, "dsound.lib" )
-#pragma comment( lib, "d3dx9.lib" )
-#pragma comment( lib, "d3d9.lib" )
-#pragma comment( lib, "dxguid.lib" )
-#pragma comment( lib, "dinput8.lib" )
-#endif
-#endif
-
-//=========================================================================
-// MAKE SUER THAT WE HAVE THE RIGHT VERSION
-//=========================================================================
-
-#ifndef DIRECT3D_VERSION
-#error ------- COMPILING VERSION ? OF D3D ------- 
-#endif
-
-#if(DIRECT3D_VERSION < 0x0600)
-#error ------- COMPILING VERSION 5 OF D3D ------- 
-#endif
-
-#if(DIRECT3D_VERSION < 0x0700)
-#error ------- COMPILING VERSION 6 OF D3D ------- 
-#endif
-
-#if(DIRECT3D_VERSION < 0x0800)
-#error ------- COMPILING VERSION 7 OF D3D ------- 
-#endif
-
-#if(DIRECT3D_VERSION < 0x0900)
-#error ------- COMPILING VERSION 8 OF D3D ------- 
-#endif
+// Auto include DirectX libs
+#pragma comment( lib, "d3d11.lib" )
+#pragma comment( lib, "dxgi.lib" )
+#pragma comment( lib, "d3dcompiler.lib" )
 
 //=========================================================================
 // DEFINES
@@ -78,20 +60,14 @@ void  smem_Kill         ( void );
 void  draw_Init         ( void );
 void  draw_Kill         ( void );
 
-void  video_Init        ( void );
-void  video_Kill        ( void );
-
 //=========================================================================
 // GLOBAL VARIABLES
 //=========================================================================
 
-IDirect3DDevice9*       g_pd3dDevice = NULL;
-D3DPRESENT_PARAMETERS   g_d3dpp; 
-IDirect3D9*             g_pD3D = NULL;
-
-s32 rstct;
-
-bool g_bDeviceLost = false;
+ID3D11Device*           g_pd3dDevice = NULL;
+ID3D11DeviceContext*    g_pd3dContext = NULL;
+IDXGISwapChain*         g_pSwapChain = NULL;
+DXGI_SWAP_CHAIN_DESC    g_SwapChainDesc; 
 
 //=========================================================================
 // LOCAL VARIABLES
@@ -108,11 +84,10 @@ static struct eng_locals
     HWND            Wnd;  
     HWND            WndParent;     
     HWND            WndDisplay;  
-    IDirect3D9*     pD3D;
     u32             Mode;
     xcolor          BackColor;
     xbool           bBeginScene;
-    xbool           bD3DBeginScene;
+	xbool           bD3DBeginScene;
 
     //
     // View variables
@@ -133,7 +108,6 @@ static struct eng_locals
     // Input related variables
     //
     MSG             Msg;
-    s32             LastPressedKey;
     f32             ABSMouseX;
     f32             ABSMouseY;
     f32             MouseX;
@@ -235,39 +209,76 @@ const char* eng_GetProductKey(void)
 
 //=========================================================================
 
-void eng_Kill( void ) //Legacy func.
+void eng_Kill( void ) //Deprecated, but i still prefer to maintenance this func
 {
+    x_DebugMsg( "=== ENGINE SHUTDOWN START ===\n" );
+
     //
-    // Free sub modules
+    // Free sub modules (in reverse order of initialization)
     //
-    draw_Kill();
-    vram_Kill();
-    smem_Kill();
-    text_Kill();
+	
+	draw_Kill();
+    x_DebugMsg( "Engine: Draw system shutdown\n" );
+	
+	smem_Kill();
+    x_DebugMsg( "Engine: Scratch memory shutdown\n" );
+	
+	vram_Kill();
+    x_DebugMsg( "Engine: VRAM system shutdown\n" );
+	
 	font_Kill();
-	video_Kill();
+    x_DebugMsg( "Engine: Font system shutdown\n" );
+	
+	text_Kill();
+    x_DebugMsg( "Engine: Text system shutdown\n" );
+	
+	shader_Kill();
+    x_DebugMsg( "Engine: Shader system shutdown\n" );
+	
+	state_Kill();
+	x_DebugMsg( "Engine: Render state system shutdown\n" );   
+
+	composite_Kill();
+	x_DebugMsg( "Engine: Composite system shutdown\n" );
+
+    rtarget_Kill();
+    x_DebugMsg( "Engine: Render target system shutdown\n" );
 
     //
     // Stop the d3d engine
     //
-    if( g_pd3dDevice != NULL) 
-        g_pd3dDevice->Release();
-
-    if( s.pD3D != NULL)
+    if( g_pSwapChain != NULL )
     {
-        s.pD3D->Release();
-        g_pD3D = NULL;
+        g_pSwapChain->Release();
+        g_pSwapChain = NULL;
+        x_DebugMsg( "Engine: Swap chain released\n" );
+    }
+    
+    if( g_pd3dContext != NULL )
+    {
+        g_pd3dContext->Release();
+        g_pd3dContext = NULL;
+        x_DebugMsg( "Engine: Device context released\n" );
+    }
+    
+    if( g_pd3dDevice != NULL )
+    {
+        g_pd3dDevice->Release();
+        g_pd3dDevice = NULL;
+        x_DebugMsg( "Engine: Device released\n" );
     }
 
     UnregisterClass( "Render Window", s.hInst );
+    x_DebugMsg( "Engine: Window class unregistered\n" );
+
+    x_DebugMsg( "=== ENGINE SHUTDOWN COMPLETE ===\n" );
 }
 
 //=========================================================================
 
 s32 d3deng_ExitPoint( void )
 {
-//  eng_Kill();
-
+	//eng_Kill();
     x_Kill();
     return 0;
 }
@@ -319,38 +330,12 @@ f32 eng_GetFPS( void )
 //=========================================================================
 
 static 
-xbool d3deng_CreateD3DInterface( void )
-{
-    // Create the D3D object, which is needed to create the D3DDevice
-    g_pD3D = s.pD3D = Direct3DCreate9( D3D_SDK_VERSION );
-    return ( s.pD3D != NULL );
-}
-
-//=========================================================================
-
-static 
 void d3deng_SetupDepthStencilParams( void )
 {
     if( (s.Mode & ENG_ACT_STENCILOFF) == 0 )
     {
         ASSERT( (s.Mode & ENG_ACT_16_BPP) == 0 );
-        g_d3dpp.EnableAutoDepthStencil = TRUE;
-        g_d3dpp.AutoDepthStencilFormat = D3DFMT_D24S8;
     }
-}
-
-//=========================================================================
-
-static 
-D3DFORMAT d3deng_GetAlphaFormat( D3DFORMAT OriginalFormat )
-{
-    // Convert non-alpha formats to alpha formats
-    if( OriginalFormat == D3DFMT_X8R8G8B8 )
-        return D3DFMT_A8R8G8B8;
-    else if( OriginalFormat == D3DFMT_X4R4G4B4 )
-        return D3DFMT_A4R4G4B4;
-    
-    return OriginalFormat;
 }
 
 //=========================================================================
@@ -358,27 +343,14 @@ D3DFORMAT d3deng_GetAlphaFormat( D3DFORMAT OriginalFormat )
 static 
 xbool d3deng_SetupWindowedParams( void )
 {
-    dxerr           Error;
-    D3DDISPLAYMODE  d3ddm;
-
-    // TODO: We really need to enumerate adapters and choose appropriate one
-    
-    // Get desktop display mode, this will fail on Remote Desktop
-    Error = s.pD3D->GetAdapterDisplayMode( D3DADAPTER_DEFAULT, &d3ddm );
-    if( Error != 0 )
-        return FALSE;
-
-    // Convert to alpha format
-    d3ddm.Format = d3deng_GetAlphaFormat( d3ddm.Format );
-
-    // Setup windowed presentation parameters
-    g_d3dpp.Windowed             = TRUE;
-    g_d3dpp.SwapEffect           = D3DSWAPEFFECT_COPY;
-    g_d3dpp.BackBufferFormat     = d3ddm.Format;
-    g_d3dpp.BackBufferCount      = 1;
-    g_d3dpp.PresentationInterval = D3DPRESENT_INTERVAL_DEFAULT;
-    g_d3dpp.BackBufferWidth      = s.MaxXRes;
-    g_d3dpp.BackBufferHeight     = s.MaxYRes;
+    g_SwapChainDesc.Windowed               = TRUE;
+    g_SwapChainDesc.SwapEffect             = DXGI_SWAP_EFFECT_DISCARD;
+    g_SwapChainDesc.BufferDesc.Format      = DXGI_FORMAT_R8G8B8A8_UNORM;
+    g_SwapChainDesc.BufferCount            = 1;
+    g_SwapChainDesc.BufferDesc.Width       = s.MaxXRes;
+    g_SwapChainDesc.BufferDesc.Height      = s.MaxYRes;
+    g_SwapChainDesc.BufferDesc.RefreshRate.Numerator   = 60;
+    g_SwapChainDesc.BufferDesc.RefreshRate.Denominator = 1;
 
     return TRUE;
 }
@@ -388,11 +360,13 @@ xbool d3deng_SetupWindowedParams( void )
 static 
 void d3deng_SetupFullscreenParams( s32 XRes, s32 YRes )
 {
-    g_d3dpp.Windowed         = FALSE;
-    g_d3dpp.BackBufferWidth  = s.MaxXRes = XRes;
-    g_d3dpp.BackBufferHeight = s.MaxYRes = YRes;
-    g_d3dpp.BackBufferFormat = (s.Mode & ENG_ACT_16_BPP) ? D3DFMT_X1R5G5B5 : D3DFMT_A8R8G8B8;
-    g_d3dpp.SwapEffect       = D3DSWAPEFFECT_COPY;
+    g_SwapChainDesc.Windowed                = FALSE;
+    g_SwapChainDesc.BufferDesc.Width        = s.MaxXRes = XRes;
+    g_SwapChainDesc.BufferDesc.Height       = s.MaxYRes = YRes;
+    g_SwapChainDesc.BufferDesc.Format       = (s.Mode & ENG_ACT_16_BPP) ? DXGI_FORMAT_B5G5R5A1_UNORM : DXGI_FORMAT_R8G8B8A8_UNORM;
+    g_SwapChainDesc.SwapEffect              = DXGI_SWAP_EFFECT_DISCARD;
+    g_SwapChainDesc.BufferDesc.RefreshRate.Numerator   = 60;
+    g_SwapChainDesc.BufferDesc.RefreshRate.Denominator = 1;
 }
 
 //=========================================================================
@@ -400,8 +374,13 @@ void d3deng_SetupFullscreenParams( s32 XRes, s32 YRes )
 static 
 xbool d3deng_SetupPresentationParams( s32 XRes, s32 YRes )
 {
+    char buffer[256];
+    
     // Clear presentation parameters
-    ZeroMemory( &g_d3dpp, sizeof(g_d3dpp) );
+    ZeroMemory( &g_SwapChainDesc, sizeof(g_SwapChainDesc) );
+
+    x_sprintf( buffer, "Engine: Setting up presentation params %dx%d\n", XRes, YRes );
+    x_DebugMsg( buffer );
 
     // Setup depth/stencil
     d3deng_SetupDepthStencilParams();
@@ -409,23 +388,28 @@ xbool d3deng_SetupPresentationParams( s32 XRes, s32 YRes )
     // Determine windowed/fullscreen mode
     s.bWindowed = (s.Mode & ENG_ACT_FULLSCREEN) != ENG_ACT_FULLSCREEN;
     
+    x_sprintf( buffer, "Engine: Mode = %s\n", s.bWindowed ? "Windowed" : "Fullscreen" );
+    x_DebugMsg( buffer );
+    
     if( s.bWindowed )
     {
         if( !d3deng_SetupWindowedParams() )
+        {
+            x_DebugMsg( "Engine: ERROR - Failed to setup windowed params\n" );
             return FALSE;
+        }
     }
     else
     {
         d3deng_SetupFullscreenParams( XRes, YRes );
     }
 
-    // Setup backbuffer locking if needed
-    s.Mode |= ENG_ACT_BACKBUFFER_LOCK;
-    if( s.Mode & ENG_ACT_BACKBUFFER_LOCK )
-    {
-        g_d3dpp.Flags = D3DPRESENTFLAG_LOCKABLE_BACKBUFFER;
-    }
+    // Setup common parameters
+    g_SwapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+    g_SwapChainDesc.SampleDesc.Count = 1;
+    g_SwapChainDesc.SampleDesc.Quality = 0;
 
+    x_DebugMsg( "Engine: Presentation params setup complete\n" );
     return TRUE;
 }
 
@@ -434,31 +418,47 @@ xbool d3deng_SetupPresentationParams( s32 XRes, s32 YRes )
 static 
 void d3deng_CheckDeviceCaps( void )
 {
-    dxerr    Error;
-    D3DCAPS9 Caps;
+    char buffer[256];
+    
+    D3D_FEATURE_LEVEL featureLevel = g_pd3dDevice->GetFeatureLevel();
 
-    // Get device capabilities
-    Error = s.pD3D->GetDeviceCaps( D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, &Caps );
-    ASSERT( Error == 0 );
+    x_sprintf( buffer, "Engine: Checking device capabilities (Feature Level %d.%d)\n", 
+             (featureLevel >> 12) & 0xF, (featureLevel >> 8) & 0xF );
+    x_DebugMsg( buffer );
 
-    // Force software shaders if we can't do at least 1.1 vertex shader
-    if( (Caps.VertexShaderVersion & 0xFFFF) < 0x0101 )
+    // GS: In DX11, software vertex processing doesn't exist, all is done via shaders on GPU
+    // I keep the flag for compatibility but it doesn't affect device creation
+    if( featureLevel < D3D_FEATURE_LEVEL_10_0 )
+    {
         s.Mode |= ENG_ACT_SHADERS_IN_SOFTWARE;
+        x_DebugMsg( "Engine: WARNING - Feature level below 10.0, marking shaders as software\n" );
+    }
 
-    // Force software shaders if using software device
     if( s.Mode & ENG_ACT_SOFTWARE )
+    {
         s.Mode |= ENG_ACT_SHADERS_IN_SOFTWARE;
+        x_DebugMsg( "Engine: Software mode requested, marking shaders as software\n" );
+    }
+
+    x_sprintf( buffer, "Engine: Mode flags = 0x%08X\n", s.Mode );
+    x_DebugMsg( buffer );
 }
 
 //=========================================================================
 
 static 
-DWORD d3deng_GetVertexProcessingFlags( void )
+UINT d3deng_GetDeviceCreationFlags( void )
 {
-    if( s.Mode & ENG_ACT_SHADERS_IN_SOFTWARE )
-        return D3DCREATE_SOFTWARE_VERTEXPROCESSING;
-    else
-        return D3DCREATE_HARDWARE_VERTEXPROCESSING;
+    UINT createDeviceFlags = 0;
+
+#ifdef _DEBUG
+    createDeviceFlags |= D3D11_CREATE_DEVICE_DEBUG;
+#endif
+
+    // GS: DX11 doesn't have software vertex processing concept,
+    // i keep this code for compatibility.
+
+    return createDeviceFlags;
 }
 
 //=========================================================================
@@ -466,31 +466,79 @@ DWORD d3deng_GetVertexProcessingFlags( void )
 static 
 xbool d3deng_CreateD3DDevice( HWND hWnd )
 {
-    dxerr Error;
-    DWORD dwFlags = d3deng_GetVertexProcessingFlags();
+    HRESULT Error;
+    UINT    dwFlags = d3deng_GetDeviceCreationFlags();
 
-    // Create the D3D device
-    Error = s.pD3D->CreateDevice( 
-        D3DADAPTER_DEFAULT,    
-        D3DDEVTYPE_HAL, 
-        hWnd,
-        dwFlags,
-        &g_d3dpp,
-        &g_pd3dDevice );
+    x_DebugMsg( "Engine: Creating D3D device (flags=0x%08X)\n", dwFlags );
 
-#ifdef TEST_KILL_D3D
-    g_pd3dDevice = NULL;
-#endif
+    // Feature levels to try
+    D3D_FEATURE_LEVEL featureLevels[] = {
+        D3D_FEATURE_LEVEL_11_0,
+        D3D_FEATURE_LEVEL_10_1,
+        D3D_FEATURE_LEVEL_10_0,
+    };
+    UINT numFeatureLevels = ARRAYSIZE(featureLevels);
+
+    D3D_FEATURE_LEVEL featureLevel;
+    g_SwapChainDesc.OutputWindow = hWnd;
+
+    // Determine driver type
+    D3D_DRIVER_TYPE driverType = D3D_DRIVER_TYPE_HARDWARE;
+    if( s.Mode & ENG_ACT_SOFTWARE )
+    {
+        driverType = D3D_DRIVER_TYPE_WARP;
+        x_DebugMsg( "Engine: Using WARP software renderer\n" );
+    }
+    else
+    {
+        x_DebugMsg( "Engine: Using hardware renderer\n" );
+    }
+
+    // Create the D3D device and swap chain
+    Error = D3D11CreateDeviceAndSwapChain(
+        NULL,                       // Use default adapter
+        driverType,                 // Hardware or WARP for software
+        NULL,                       // No software device
+        dwFlags,                    // Device creation flags
+        featureLevels,              // Feature levels array
+        numFeatureLevels,           // Number of feature levels
+        D3D11_SDK_VERSION,          // SDK version
+        &g_SwapChainDesc,           // Swap chain description
+        &g_pSwapChain,              // Output swap chain
+        &g_pd3dDevice,              // Output device
+        &featureLevel,              // Output feature level
+        &g_pd3dContext              // Output device context
+    );
 
     // Handle creation errors
-    if( Error != 0 )
+    if( Error != S_OK )
     {
+        x_DebugMsg( "Engine: ERROR - Failed to create device (HRESULT=0x%08X)\n", Error );
+        
+        // Cleanup any partial creation
+        if( g_pd3dContext ) { g_pd3dContext->Release(); g_pd3dContext = NULL; }
+        if( g_pd3dDevice )  { g_pd3dDevice->Release();  g_pd3dDevice = NULL; }
+        if( g_pSwapChain )  { g_pSwapChain->Release();  g_pSwapChain = NULL; }
+        
         MessageBox( d3deng_GetWindowHandle(), 
                    xfs("Error creating device: %d", Error), 
                    "Device Error", MB_OK );
-        g_pd3dDevice = NULL;
         return FALSE;
     }
+
+    // Log success and feature level
+    const char* featureLevelStr = "Unknown";
+    switch( featureLevel )
+    {
+        case D3D_FEATURE_LEVEL_11_0: featureLevelStr = "11.0"; break;
+        case D3D_FEATURE_LEVEL_10_1: featureLevelStr = "10.1"; break;
+        case D3D_FEATURE_LEVEL_10_0: featureLevelStr = "10.0"; break;
+        case D3D_FEATURE_LEVEL_9_3:  featureLevelStr = "9.3";  break;
+        case D3D_FEATURE_LEVEL_9_2:  featureLevelStr = "9.2";  break;
+        case D3D_FEATURE_LEVEL_9_1:  featureLevelStr = "9.1";  break;
+    }
+    
+    x_DebugMsg( "Engine: Device created successfully (Feature Level %s)\n", featureLevelStr );
 
     return TRUE;
 }
@@ -498,16 +546,15 @@ xbool d3deng_CreateD3DDevice( HWND hWnd )
 //=========================================================================
 
 static 
-void d3deng_SetupDeviceStates( void )
+xbool d3deng_CreateRenderTargets( void )
 {
-    if( !g_pd3dDevice )
-        return;
+    x_DebugMsg( "Engine: Creating render targets\n" );
 
-    // Enable software vertex processing if needed
-    if( s.Mode & ENG_ACT_SHADERS_IN_SOFTWARE )
-        g_pd3dDevice->SetSoftwareVertexProcessing( TRUE );
+    // Set back buffer as active
+    rtarget_SetBackBuffer();
 
-    //TODO: INITIALIZE SHADERS HERE!
+    x_DebugMsg( "Engine: Render targets initialized successfully\n" );
+    return TRUE;
 }
 
 //=========================================================================
@@ -515,8 +562,14 @@ void d3deng_SetupDeviceStates( void )
 static 
 void d3deng_SetupWindowedViewport( HWND hWnd, s32 XRes, s32 YRes )
 {
-    D3DVIEWPORT9 vp = { 0, 0, XRes, YRes, 0.0f, 1.0f };
-    g_pd3dDevice->SetViewport( &vp );
+    D3D11_VIEWPORT vp;
+    vp.TopLeftX = 0.0f;
+    vp.TopLeftY = 0.0f;
+    vp.Width = (f32)XRes;
+    vp.Height = (f32)YRes;
+    vp.MinDepth = 0.0f;
+    vp.MaxDepth = 1.0f;
+    g_pd3dContext->RSSetViewports( 1, &vp );
 
     // Calculate proper window size
     RECT Window;
@@ -543,8 +596,6 @@ void d3deng_PostDeviceSetup( HWND hWnd, s32 XRes, s32 YRes )
     if( !g_pd3dDevice )
         return;
 
-    d3deng_SetupDeviceStates();
-
     // Setup viewport for windowed mode
     if( s.bWindowed )
     {
@@ -552,31 +603,49 @@ void d3deng_PostDeviceSetup( HWND hWnd, s32 XRes, s32 YRes )
     }
 }
 
-//=========================================================================
+//==============================================================================
 
 static 
 void InitializeD3D( HWND hWnd, s32 XRes, s32 YRes )
 {
-    // Create D3D interface
-    if( !d3deng_CreateD3DInterface() )
-    {
-        ASSERT( FALSE && "Failed to create D3D interface" );
-        return;
-    }
+    char buffer[256];
+    
+    x_sprintf( buffer, "Engine: Initializing DirectX 11 (%dx%d)\n", XRes, YRes );
+    x_DebugMsg( buffer );
 
     // Setup presentation parameters
     if( !d3deng_SetupPresentationParams( XRes, YRes ) )
+    {
+        x_DebugMsg( "Engine: ERROR - Failed to setup presentation parameters\n" );
         return;
+    }
+
+    // Create D3D device
+    if( !d3deng_CreateD3DDevice( hWnd ) )
+    {
+        x_DebugMsg( "Engine: ERROR - Failed to create D3D device\n" );
+        return;
+    }
+
+    // Initialize render target system
+    rtarget_Init();
+    x_DebugMsg( "Engine: Render target system initialized\n" );
+
+    // Create render targets
+    if( !d3deng_CreateRenderTargets() )
+    {
+        x_DebugMsg( "Engine: ERROR - Failed to create render targets\n" );
+        ASSERT( FALSE && "Failed to create render targets" );
+        return;
+    }
 
     // Check device capabilities
     d3deng_CheckDeviceCaps();
 
-    // Create D3D device
-    if( !d3deng_CreateD3DDevice( hWnd ) )
-        return;
-
     // Post-creation setup
     d3deng_PostDeviceSetup( hWnd, XRes, YRes );
+
+    x_DebugMsg( "Engine: DirectX 11 initialization complete\n" );
 }
 
 //=========================================================================
@@ -595,9 +664,16 @@ void d3deng_UpdateDisplayWindow( HWND hWindow )
     dwRenderWidth  = MIN( (DWORD)s.MaxXRes, dwRenderWidth );
     dwRenderHeight = MIN( (DWORD)s.MaxYRes, dwRenderHeight );
 
-    D3DVIEWPORT9 vp = { 0, 0, dwRenderWidth, dwRenderHeight, 0.0f, 1.0f };
-    if( g_pd3dDevice )
-        g_pd3dDevice->SetViewport( &vp );
+    D3D11_VIEWPORT vp;
+    vp.TopLeftX = 0.0f;
+    vp.TopLeftY = 0.0f;
+    vp.Width = (f32)dwRenderWidth;
+    vp.Height = (f32)dwRenderHeight;
+    vp.MinDepth = 0.0f;
+    vp.MaxDepth = 1.0f;
+    
+    if( g_pd3dContext )
+        g_pd3dContext->RSSetViewports( 1, &vp );
 }
 
 //=============================================================================
@@ -611,12 +687,6 @@ LRESULT CALLBACK eng_D3DWndProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
                 xbool bWasActive = s.bActive;
                 s.bActive = LOWORD(wParam) != WA_INACTIVE;
                 
-                // If we're becoming active and device was lost, try to recover
-                if( s.bActive && !bWasActive && g_bDeviceLost )
-                {
-                    // Let the main loop handle device recovery
-                }
-                
                 if( s.bActive )
                 {
                     d3deng_ComputeMousePos();
@@ -628,17 +698,6 @@ LRESULT CALLBACK eng_D3DWndProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 		case WM_ACTIVATEAPP:
             {
                 s.bActive = (BOOL)wParam;
-                
-                // If we're losing application focus, prepare for possible device loss
-                if( !s.bActive )
-                {
-                    // End any active scene
-                    if( s.bD3DBeginScene && g_pd3dDevice )
-                    {
-                        g_pd3dDevice->EndScene();
-                        s.bD3DBeginScene = FALSE;
-                    }
-                }
             }
             break;
 
@@ -649,12 +708,6 @@ LRESULT CALLBACK eng_D3DWndProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
                 s.bActive = FALSE;
             else s.bActive = TRUE;
 
-            // A new window size will require a new backbuffer size. The
-            // easiest way to achieve this is to release and re-create
-            // everything. Note: if the window gets too big, we may run out
-            // of video memory and need to exit. This simple app exits
-            // without displaying error messages, but a real app would behave
-            // itself much better.
             if( s.bActive && s.bReady )
             {
                 d3deng_UpdateDisplayWindow( hWnd );
@@ -794,54 +847,16 @@ void d3deng_SetResolution( s32 Width,  s32 Height )
 
 void d3deng_SetDefaultStates( void )
 {
-    if( g_pd3dDevice )
+    if( g_pd3dContext )
     {
-        // Set dither in case the use selects 16bits
-        g_pd3dDevice->SetRenderState( D3DRS_DITHERENABLE, TRUE );
-
-        // Make sure that we are dealing with the Z buffer
-        g_pd3dDevice->SetRenderState( D3DRS_ZENABLE, TRUE );
-        g_pd3dDevice->SetRenderState( D3DRS_ZFUNC, D3DCMP_LESSEQUAL );
-
-        // Set some color conbiner functions
-        g_pd3dDevice->SetRenderState( D3DRS_SHADEMODE, D3DSHADE_GOURAUD );
-
-        // Right handed mode
-        g_pd3dDevice->SetRenderState( D3DRS_CULLMODE, D3DCULL_CW );
-
-        // We can do alpha from the begining
-        g_pd3dDevice->SetRenderState( D3DRS_ALPHABLENDENABLE, TRUE );
-        g_pd3dDevice->SetRenderState( D3DRS_SRCBLEND, D3DBLEND_SRCALPHA );
-        g_pd3dDevice->SetRenderState( D3DRS_DESTBLEND, D3DBLEND_INVSRCALPHA );
-
-        // Turn off the stupid specular lighting
-        g_pd3dDevice->SetRenderState( D3DRS_SPECULARENABLE, TRUE );
-
-        // Set bilinear mode
-        g_pd3dDevice->SetSamplerState( 0, D3DSAMP_MINFILTER, D3DTEXF_LINEAR  );
-        g_pd3dDevice->SetSamplerState( 0, D3DSAMP_MAGFILTER, D3DTEXF_LINEAR  );
-
-        g_pd3dDevice->SetSamplerState( 1, D3DSAMP_MINFILTER, D3DTEXF_LINEAR  );
-        g_pd3dDevice->SetSamplerState( 1, D3DSAMP_MAGFILTER, D3DTEXF_LINEAR  );
-
-        g_pd3dDevice->SetSamplerState( 2, D3DSAMP_MINFILTER, D3DTEXF_LINEAR  );
-        g_pd3dDevice->SetSamplerState( 2, D3DSAMP_MAGFILTER, D3DTEXF_LINEAR  );
-
-        g_pd3dDevice->SetSamplerState( 3, D3DSAMP_MINFILTER, D3DTEXF_LINEAR  );
-        g_pd3dDevice->SetSamplerState( 3, D3DSAMP_MAGFILTER, D3DTEXF_LINEAR  );
-
-        // Turn on the trilinear blending
-        g_pd3dDevice->SetSamplerState( 0, D3DSAMP_MIPFILTER, D3DTEXF_LINEAR  );
-
-        // Set the Initial wraping behavier
-        g_pd3dDevice->SetSamplerState( 0, D3DSAMP_ADDRESSU, D3DTADDRESS_WRAP );
-        g_pd3dDevice->SetSamplerState( 0, D3DSAMP_ADDRESSV, D3DTADDRESS_WRAP );
-
-        // Set the ambient light
-        d3deng_SetAmbientLight( xcolor( 0xfff8f8f8 ) );
-
-        // Make sure that we turng off the lighting as the default
-        g_pd3dDevice->SetRenderState( D3DRS_LIGHTING, FALSE );
+        // Use rtarget system for clearing
+        f32 clearColor[4] = { s.BackColor.R/255.0f, s.BackColor.G/255.0f, 
+                              s.BackColor.B/255.0f, s.BackColor.A/255.0f };
+        
+        rtarget_Clear( RTARGET_CLEAR_ALL, clearColor, 1.0f, 0 );
+											 
+        // Set default blend state
+        state_SetState( STATE_TYPE_BLEND, STATE_BLEND_ALPHA );
     }
 }
 
@@ -849,36 +864,63 @@ void d3deng_SetDefaultStates( void )
 
 void eng_Init( void )
 {
+    char buffer[256];
+    
+    x_DebugMsg( "=== ENGINE INITIALIZATION START ===\n" );
+
     if( s.MaxXRes == 0 )
     {
-        // Use desktop resolution as default, will be set by video system
+        // Use desktop resolution as default
         s.MaxXRes = 1024;
         s.MaxYRes = 768;
+        x_DebugMsg( "Engine: Using default resolution 1024x768\n" );
+    }
+    else
+    {
+        x_sprintf( buffer, "Engine: Using resolution %dx%d\n", s.MaxXRes, s.MaxYRes );
+        x_DebugMsg( buffer );
     }
 
     // Initialize the engine
     if( s.Wnd == 0 )
+    {
         s.Wnd = CreateWin( s.MaxXRes, s.MaxYRes );
+        x_DebugMsg( "Engine: Created main window\n" );
+    }
+    else
+    {
+        x_DebugMsg( "Engine: Using external window\n" );
+    }
 
     // The default window to display will be the current window
     s.WndDisplay = s.Wnd;
 
-    // Init D3D
+    // Init D3D and render target system
     InitializeD3D( s.Wnd, s.MaxXRes, s.MaxYRes );
 
     // Show the window
     ShowWindow( s.Wnd, SW_SHOWDEFAULT );
     UpdateWindow( s.Wnd );
+    x_DebugMsg( "Engine: Window shown\n" );
 
-    // Init text
+    composite_Init();
+    x_DebugMsg( "Engine: Composite system initialized\n" );
+
+	state_Init();
+    x_DebugMsg( "Engine: Render state system initialized\n" );
+
+    shader_Init();
+    x_DebugMsg( "Engine: Shader system initialized\n" );
+
     text_Init();
     text_SetParams( s.MaxXRes, s.MaxYRes, 0, 0,
                     ENG_FONT_SIZEX, ENG_FONT_SIZEY,
                     8 );
     text_ClearBuffers();
+    x_DebugMsg( "Engine: Text system initialized\n" );
 
-    // load the font
     font_Init();
+    x_DebugMsg( "Engine: Font system initialized\n" );
 
     // Initialize dinput
     if( s.WndParent )
@@ -889,40 +931,34 @@ void eng_Init( void )
     {
         VERIFY( d3deng_InitInput( s.Wnd ) == TRUE );
     }
+    x_DebugMsg( "Engine: Input system initialized\n" );
 
     // Initialize vram
     vram_Init();
+    x_DebugMsg( "Engine: VRAM system initialized\n" );
 
     // Set the scrach memory
     smem_Init(SCRACH_MEM_SIZE);
+    x_sprintf( buffer, "Engine: Scratch memory initialized (%d bytes)\n", SCRACH_MEM_SIZE );
+    x_DebugMsg( buffer );
 
-    // Initialize draw
     draw_Init();
-	
-	// Initialize video module (this will enumerate display modes)
-    video_Init();
-    
-    // Update resolution to desktop if not specified
-    if( s.MaxXRes == 1024 && s.MaxYRes == 768 )
-    {
-        s32 desktopW, desktopH;
-        video_GetDesktopResolution( desktopW, desktopH );
-        if( desktopW > 0 && desktopH > 0 )
-        {
-            s.MaxXRes = desktopW;
-            s.MaxYRes = desktopH;
-        }
-    }
+    x_DebugMsg( "Engine: Draw system initialized\n" );
 	
     // Indicate the engine is ready
     s.bReady = TRUE;
 
     // Set default modes
     d3deng_SetDefaultStates();
+
+    x_DebugMsg( "=== ENGINE INITIALIZATION COMPLETE ===\n" );
 }
 
-
 //=============================================================================
+
+// TODO: TOO BAD, SHOUD BE REMOVED IN FUTURE.
+extern const rtarget* draw_GetUITarget( void );
+extern xbool draw_HasValidUITarget( void );
 
 static const char* pPrevName = NULL;
 
@@ -931,51 +967,39 @@ xbool eng_Begin( const char* pTaskName )
     ASSERT( s.bBeginScene == FALSE );
     pPrevName = pTaskName;
 
-    // Exit if no device
     if( !g_pd3dDevice )
         return FALSE;
 
     if( s.bD3DBeginScene == FALSE )
     {
-        // Check the cooperative level before rendering
-        if( FAILED( g_pd3dDevice->TestCooperativeLevel() ) )
-            return FALSE;
+        // Use rtarget system for clearing and setting targets
+        f32 clearColor[4] = { s.BackColor.R/255.0f, s.BackColor.G/255.0f, 
+                              s.BackColor.B/255.0f, s.BackColor.A/255.0f };
 
-        if( FAILED( g_pd3dDevice->BeginScene() ) ) 
-            return FALSE;
-
-        // the user may have set the viewport before beginning rendering. in that
-        // case we need to save the original viewport out
-        dxerr Error;
-        D3DVIEWPORT9 OldVP;
-        Error = g_pd3dDevice->GetViewport( &OldVP );
-        ASSERT( Error == 0 );
-
-        // Clear the backgournd
-        // This must be here rather than in the page flip because of editors.
-        // Plus it should be allot faster as well. Right thing to do. 
-        s32 Width  = MIN( s.MaxXRes, s.rcWindowRect.right-s.rcWindowRect.left );
-        s32 Height = MIN( s.MaxYRes, s.rcWindowRect.bottom-s.rcWindowRect.top );
-        D3DVIEWPORT9 vp = { 0, 0, Width, Height, 0.0f, 1.0f };
-        Error = g_pd3dDevice->SetViewport( &vp );
-
-        // Clear the back-ground
-        Error = g_pd3dDevice->Clear( 0, NULL, D3DCLEAR_STENCIL | D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, s.BackColor, 1.0f, 0L ); 
-        ASSERT( Error == 0 );
-
-        // Restore the original viewport
-        Error = g_pd3dDevice->SetViewport( &OldVP );
-        ASSERT( Error == 0 );
+        rtarget_SetBackBuffer();
+        rtarget_Clear( RTARGET_CLEAR_ALL, clearColor, 1.0f, 0 );
+		
+        // Clear UI target if available
+        if( draw_HasValidUITarget() )
+        {
+            const rtarget* pUITarget = draw_GetUITarget();
+            if( pUITarget )
+            {
+                rtarget_PushTargets();
+                rtarget_SetTargets( pUITarget, 1, NULL );
+                
+                f32 uiClearColor[4] = { 0.0f, 0.0f, 0.0f, 0.0f }; // Transparent
+                rtarget_Clear( RTARGET_CLEAR_COLOR, uiClearColor, 1.0f, 0 );
+                
+                rtarget_PopTargets(); // Return to back buffer
+            }
+        }
+        
+        s.bD3DBeginScene = TRUE;
     }
 
-    // Mark the d3dbeginscene as active
-    s.bD3DBeginScene = TRUE;
     s.bBeginScene = TRUE;
-
-    // Clear draw's L2W
     draw_ClearL2W();
-
-    // Begun!
     return TRUE;
 }
 
@@ -983,7 +1007,6 @@ xbool eng_Begin( const char* pTaskName )
 
 void eng_End( void )
 {
-//  ASSERT( s.bBeginScene );
     s.bBeginScene = FALSE;
 }
 
@@ -1004,195 +1027,12 @@ void eng_PrintStats( void )
 //=========================================================================
 
 static 
-xbool d3deng_ResetDevice( void )
-{
-    HRESULT hr;
-    
-    // Make sure we're not in a scene
-    if( s.bD3DBeginScene )
-    {
-        g_pd3dDevice->EndScene();
-        s.bD3DBeginScene = FALSE;
-    }
-    
-    // Pre-reset cleanup
-    extern void pc_PreResetCubeMap( void );
-    pc_PreResetCubeMap();
-
-    // Release font safely
-    font_OnDeviceLost();
-	
-	// Release video resources
-    video_OnDeviceLost();
-    
-	// Release all texture buffers in vram system
-	extern void vram_OnDeviceLost( void );
-	vram_OnDeviceLost();
-	
-    // Release all vertex buffers in draw system
-    extern void draw_OnDeviceLost( void );
-    draw_OnDeviceLost();
-	
-	// Release movie player resources
-    extern void movie_OnDeviceLost( void );
-    movie_OnDeviceLost();
-
-    // Reset the device
-    hr = g_pd3dDevice->Reset( &g_d3dpp );
-    if( FAILED( hr ) )
-    {
-        // Reset failed, device still lost
-        return FALSE;
-    }   
-    return TRUE;
-}
-
-//=========================================================================
-
-static 
-void d3deng_RestoreDeviceStates( void )
-{
-    // Get our default states back
-    d3deng_SetDefaultStates();
-
-    // Restore cube map texture
-    extern void pc_PostResetCubeMap( void );
-    pc_PostResetCubeMap();
-
-    // Post-reset restoration
-    extern void draw_OnDeviceReset( void );
-    draw_OnDeviceReset();
-	
-	// Restore vram textures.
-    extern void vram_OnDeviceReset( void );
-    vram_OnDeviceReset();
-	
-	// Restore movie player resources
-    extern void movie_OnDeviceReset( void );
-    movie_OnDeviceReset();
-
-    // Recreate font if needed
-    font_OnDeviceReset();
-	
-	// Restore video resources
-    video_OnDeviceReset();
-}
-
-//=========================================================================
-
-xbool d3deng_InternalChangeResolution( s32 NewWidth, s32 NewHeight, xbool bFullscreen )
-{
-    if( !g_pd3dDevice )
-        return FALSE;
-
-    // Store old settings for rollback
-    s32 OldWidth = s.MaxXRes;
-    s32 OldHeight = s.MaxYRes;
-    xbool bOldWindowed = s.bWindowed;
-    u32 OldMode = s.Mode;
-
-    // Update settings
-    s.MaxXRes = NewWidth;
-    s.MaxYRes = NewHeight;
-    s.bWindowed = !bFullscreen;
-    
-    if( bFullscreen )
-        s.Mode |= ENG_ACT_FULLSCREEN;
-    else
-        s.Mode &= ~ENG_ACT_FULLSCREEN;
-
-    // Setup new presentation parameters
-    if( d3deng_SetupPresentationParams( NewWidth, NewHeight ) )
-    {
-        // Reset device
-        if( d3deng_ResetDevice() )
-        {
-            // Success - restore device states
-            d3deng_RestoreDeviceStates();
-            
-            // Update window for windowed mode
-            if( s.bWindowed )
-            {
-                d3deng_SetupWindowedViewport( s.Wnd, NewWidth, NewHeight );
-            }
-            
-            return TRUE;
-        }
-    }
-
-    // Rollback on failure
-    s.MaxXRes = OldWidth;
-    s.MaxYRes = OldHeight;
-    s.bWindowed = bOldWindowed;
-    s.Mode = OldMode;
-    
-    // Try to restore old mode
-    d3deng_SetupPresentationParams( OldWidth, OldHeight );
-    d3deng_ResetDevice();
-    d3deng_RestoreDeviceStates();
-    
-    return FALSE;
-}
-
-//=========================================================================
-
-static 
-xbool d3deng_HandleDeviceLost( void )
-{
-    HRESULT hr;
-    
-    if( g_bDeviceLost == false )
-        return TRUE;
-
-    // Force a redraw of the D3D window
-    InvalidateRect( s.WndDisplay, NULL, FALSE );
-
-    // Yield some CPU time to other processes
-    Sleep( 100 );
-
-    // Test the cooperative level to see if it's okay to render
-    hr = g_pd3dDevice->TestCooperativeLevel();
-    if( FAILED( hr ) )
-    {
-        // Device lost but cannot be reset at this time
-        if( hr == D3DERR_DEVICELOST )
-        {
-            // Clear the scene flag to prevent rendering attempts
-            s.bD3DBeginScene = FALSE;
-            return FALSE;
-        }
-
-        // Device lost but can be reset now
-        if( hr == D3DERR_DEVICENOTRESET )
-        {
-            if( !d3deng_ResetDevice() )
-            {
-                // Reset failed, try again next frame
-                return FALSE;
-            }
-        }
-        else
-        {
-            return FALSE;
-        }
-    }
-
-    // Device recovered
-    g_bDeviceLost = false;
-    d3deng_RestoreDeviceStates();
-    
-    return TRUE;
-}
-
-//=========================================================================
-
-static 
 void d3deng_EnsureSceneBegun( void )
 {
     // If the user hasn't called eng_Begin then force a call
-    if( s.bD3DBeginScene == FALSE )
+    if( s.bBeginScene == FALSE )
     {
-        if( eng_Begin() )
+        if( eng_Begin( NULL ) )
         {
             eng_End();
         }
@@ -1204,7 +1044,7 @@ void d3deng_EnsureSceneBegun( void )
 static 
 void d3deng_RenderBufferedText( void )
 {
-    // Check if we have a valid font before rendering text
+    // Check if we have a valid device before rendering text
     if( g_pd3dDevice )
     {
         text_Render();
@@ -1216,59 +1056,39 @@ void d3deng_RenderBufferedText( void )
 //=========================================================================
 
 static 
-void d3deng_EndScene( void )
-{
-    if( g_pd3dDevice && s.bD3DBeginScene )
-    {
-        g_pd3dDevice->EndScene();
-        s.bD3DBeginScene = FALSE;
-    }
-}
-
-//=========================================================================
-
-static 
 xbool d3deng_PresentFrame( void )
 {
-    HRESULT hr;
+    HRESULT Error;
+    static s32 frameCount = 0;
+    static s32 errorCount = 0;
+    char buffer[256];
     
-    if( !g_pd3dDevice )
+    if( !g_pSwapChain )
+    {
+        x_DebugMsg( "Engine: WARNING - No swap chain available for present\n" );
         return TRUE;
-
-    // Skip presentation if device is lost
-    if( g_bDeviceLost )
-        return FALSE;
-
-    if( s.bWindowed )
-    {
-        RECT SrcRect;
-        SrcRect.top    = 0;
-        SrcRect.left   = 0;
-        SrcRect.right  = s.rcWindowRect.right  - s.rcWindowRect.left;
-        SrcRect.bottom = s.rcWindowRect.bottom - s.rcWindowRect.top;
-
-        SrcRect.right  = MIN( s.MaxXRes, SrcRect.right  );
-        SrcRect.bottom = MIN( s.MaxYRes, SrcRect.bottom );
-
-        hr = g_pd3dDevice->Present( &SrcRect, NULL, s.WndDisplay, NULL );
-    }
-    else        
-    {
-        hr = g_pd3dDevice->Present( NULL, NULL, NULL, NULL );
     }
 
-    if( hr == D3DERR_DEVICELOST )
-    {
-        g_bDeviceLost = true;
-        s.bD3DBeginScene = FALSE; // Important: clear scene flag
-        return FALSE;
-    }
+    // Ensure rendering to back buffer before present
+    rtarget_SetBackBuffer();
+
+    Error = g_pSwapChain->Present( 1, 0 );  // 0 = immediate present, VSYNC
     
-    // Handle other present errors
-    if( FAILED( hr ) && hr != D3DERR_DEVICELOST )
+    frameCount++;
+    
+    if( Error != S_OK )
     {
-        // Log or handle other errors as needed
+        errorCount++;
+        x_sprintf( buffer, "Engine: ERROR - Present failed (HRESULT=0x%08X) [Frame %d, Errors %d]\n", 
+                 Error, frameCount, errorCount );
+        x_DebugMsg( buffer );
         return FALSE;
+    }
+
+    if( (frameCount % 1024) == 0 )
+    {
+        x_sprintf( buffer, "Engine: Frame %d presented successfully (Errors: %d)\n", frameCount, errorCount );
+        x_DebugMsg( buffer );
     }
 
     return TRUE;
@@ -1302,43 +1122,35 @@ void d3deng_TickleScreensaver( void )
 }
 
 //=========================================================================
+
 void eng_PageFlip( void )
 {
     CONTEXT( "eng_PageFlip" );
 
     d3deng_TickleScreensaver();
-
-    // Handle device lost scenario
-    if( !d3deng_HandleDeviceLost() )
-        return;
-
-    // Timing setup
     xtimer InternalTime;
     InternalTime.Start();
 
-    // Ensure we have at least one begin/end pair
     d3deng_EnsureSceneBegun();
-
-    // Render buffered text
     d3deng_RenderBufferedText();
 
-    // Optional FPS display
-    const xbool bPrintFPS = FALSE;
-    if( bPrintFPS ) 
-        x_printfxy( 0, 0, "FPS: %4.2f", eng_GetFPS() );
+    // TODO: GS: This is also another bad solution,
+    // Need to come up with something better and more good for the correct composition 
 
-    if( video_IsEnabled() )
+    // Composite UI if available
+    if( draw_HasValidUITarget() )
     {
-        video_ApplyPostEffect();
+        const rtarget* pUITarget = draw_GetUITarget();
+        if( pUITarget )
+        {
+            rtarget_SetBackBuffer();
+            composite_Blit( *pUITarget, COMPOSITE_BLEND_ALPHA );
+        }
     }
 
-    // End the D3D scene
-    d3deng_EndScene();
-
-    // Present the frame
     d3deng_PresentFrame();
+    s.bD3DBeginScene = FALSE;
 
-    // Update timing and cleanup
     InternalTime.Stop();
     s.IMS = InternalTime.ReadMs();
     d3deng_UpdateTimers();
@@ -1350,18 +1162,7 @@ void eng_ResetAfterException( void )
 {
     // Clear the in scene flag
     s.bBeginScene = FALSE;
-
-    if( s.bD3DBeginScene )
-    {
-        if( g_pd3dDevice )
-        {
-            ASSERT( s.bD3DBeginScene );
-            g_pd3dDevice->EndScene();
-            s.bD3DBeginScene = FALSE;
-        }
-
-        smem_ResetAfterException();
-    }
+    smem_ResetAfterException();
 }
 
 //=============================================================================
@@ -1394,14 +1195,13 @@ void eng_SetBackColor( xcolor Color )
 
 //=============================================================================
 
-void eng_SetView ( const view& View )
+void eng_SetView( const view& View )
 {
     s.View = View;
 
-    if( g_pd3dDevice )
+    if( g_pd3dContext )
     {
-        g_pd3dDevice->SetTransform( D3DTS_VIEW,       (D3DMATRIX*)&s.View.GetW2V() );
-        g_pd3dDevice->SetTransform( D3DTS_PROJECTION, (D3DMATRIX*)&s.View.GetV2C() );
+        eng_SetViewport( View );
     }
 }
 
@@ -1457,27 +1257,31 @@ void DebugMessage( const char* FormatStr, ... )
 
 void eng_SetViewport( const view& View )
 {
-    if( !g_pd3dDevice || g_bDeviceLost )
+    if( !g_pd3dContext )
         return;
 
-    dxerr           Error;
-    D3DVIEWPORT9    vp;
-    s32             L, T, R, B;
-
+    D3D11_VIEWPORT vp;
+    s32 L, T, R, B;
+	
     View.GetViewport( L, T, R, B );
 
-    vp.X      = L;
-    vp.Y      = T;
-    vp.Width  = R-L-1;
-    vp.Height = B-T-1;
-    vp.MinZ   = 0.0f;
-    vp.MaxZ   = 1.0f;
+    vp.TopLeftX = L;
+    vp.TopLeftY = T;
+    vp.Width    = R-L; //R-L-1;
+    vp.Height   = B-T; //B-T-1;
+    vp.MinDepth = 0.0f;
+    vp.MaxDepth = 1.0f;
+
+    if( vp.Width <= 0.0f || vp.Height <= 0.0f )
+    {
+        x_DebugMsg( "Engine: WARNING - Invalid viewport dimensions!\n" );
+        return;
+    }
 
     vp.Width  = MIN( (u32)s.MaxXRes, vp.Width );
     vp.Height = MIN( (u32)s.MaxYRes, vp.Height );
 
-    Error = g_pd3dDevice->SetViewport( &vp );
-    ASSERT( Error == 0 );
+    g_pd3dContext->RSSetViewports( 1, &vp );
 }
 
 //=========================================================================
@@ -1491,7 +1295,6 @@ void  d3deng_SetMouseMode( mouse_mode Mode )
 
 void d3deng_ComputeMousePos( void )
 {
-    xbool CheckMouse = FALSE;
     static xbool WasActive = FALSE;
     xbool  LastTimeActive;
     s.MouseX = 0;
@@ -1512,9 +1315,7 @@ void d3deng_ComputeMousePos( void )
             return;
     }
 
-    
     WasActive = TRUE;
-
 
     RECT    Rect;
     POINT   MousePos;
@@ -1543,20 +1344,6 @@ void d3deng_ComputeMousePos( void )
     }
 }
 
-//=========================================================================
-
-f32 d3deng_GetABSMouseX( void ) //Legacy code, used ONLY on ArtistViewer.
-{
-    return s.ABSMouseX;
-}
-
-//=========================================================================
-
-f32 d3deng_GetABSMouseY( void )  //Legacy code, used ONLY on ArtistViewer.
-{
-    return s.ABSMouseY;
-}
-
 //=============================================================================
 
 HINSTANCE d3deng_GetInstace( void )
@@ -1565,90 +1352,10 @@ HINSTANCE d3deng_GetInstace( void )
 }
 
 //=============================================================================
+
 HWND d3deng_GetWindowHandle( void )
 {
     return s.Wnd;
-}
-
-//=============================================================================
-
-void d3deng_SetLight( s32 LightID, vector3& Dir, xcolor& Color )
-{
-    D3DLIGHT9 Light;
-
-    // Here we fill up the structure for D3D. The first thing we say 
-    // is the type of light that we want. In this case DIRECTIONAL. 
-    // Which basically means that it doesn't have an origin. The 
-    // second thing that we fill is the diffuse lighting. Basically 
-    // is the color of the light. Finally we fill up the Direction. 
-    // Note how we negate to compensate for the D3D way of thinking.
-
-    ZeroMemory( &Light, sizeof(Light) );   // Clear the hold structure
-    Light.Type = D3DLIGHT_DIRECTIONAL;
-
-    Color.GetfRGBA(  Light.Diffuse.r, 
-                     Light.Diffuse.g,
-                     Light.Diffuse.b,
-                     Light.Diffuse.a );
-
-    Light.Specular = Light.Diffuse;
-
-    Light.Direction.x = -Dir.GetX();   // Set the direction of
-    Light.Direction.y = -Dir.GetY();   // the light and compensate
-    Light.Direction.z = -Dir.GetZ();   // for DX way of thinking.
-
-    // Here we set the light number zero to be the light which we just
-    // describe. What is light 0? Light 0 is one of the register that 
-    // D3D have for lighting. You can overwrite registers at any time. 
-    // Only lights that are set in registers are use in the rendering 
-    // of the scene.
-    g_pd3dDevice->SetLight( LightID, &Light );
-
-    // Here we enable out register LightID. That way what ever we render 
-    // from now on it will use register LightID. The other registers are by 
-    // default turn off.
-    g_pd3dDevice->LightEnable( LightID, TRUE );
-}
-
-//=============================================================================
-
-void d3deng_SetAmbientLight( xcolor& Color )
-{
-    D3DMATERIAL9 mtrl;
-
-    // What we do here is to create a material that will be use for 
-    // all the render objects. why we need to do this? We need to do 
-    // this to describe to D3D how we want the light to reflected 
-    // from our objects. Here you can fin more info about materials. 
-    // We set the color base of the material in this case just white. 
-    // Then we set the contribution for the ambient lighting, in this 
-    // case 0.3f. 
-    ZeroMemory( &mtrl, sizeof(mtrl) );
-
-    // Color of the material
-    mtrl.Diffuse.r  = mtrl.Diffuse.g  = mtrl.Diffuse.b  = 1.0f; 
-    mtrl.Specular.r = mtrl.Specular.g = mtrl.Specular.b = 0.5f;
-    mtrl.Power      = 50;
-
-
-    // ambient light
-    Color.GetfRGBA ( mtrl.Ambient.r,
-                     mtrl.Ambient.g,
-                     mtrl.Ambient.b,
-                     mtrl.Ambient.a );
-
-    if( g_pd3dDevice )
-    {
-        // Finally we activate the material
-        g_pd3dDevice->SetMaterial( &mtrl );
-
-        // This function will set the ambient color. In this case white.
-        // R=G=B=A=255. which is like saying 0xffffffff. Because the color
-        // is describe in 32bits. One each of the bytes in those 32bits
-        // describe a color component. You can also use a macro provided 
-        // by d3d to build the color.
-        g_pd3dDevice->SetRenderState( D3DRS_AMBIENT, Color );
-    }
 }
 
 //=============================================================================

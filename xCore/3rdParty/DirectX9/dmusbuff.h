@@ -10,6 +10,13 @@
 #ifndef _DMusBuff_
 #define _DMusBuff_
 
+#include <winapifamily.h>
+
+#pragma region Desktop Family
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
+
+#include "dmdls.h"
+
 /* Format of DirectMusic events in a buffer
  *
  * A buffer contains 1 or more events, each with the following header.
@@ -36,6 +43,8 @@ typedef struct _DMUS_EVENTHEADER
 #define DMUS_EVENT_SIZE(cb) QWORD_ALIGN(sizeof(DMUS_EVENTHEADER) + cb)
 
 
+
+#endif /* WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP) */
+#pragma endregion
+
 #endif /* _DMusBuff_ */
-
-

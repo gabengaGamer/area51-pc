@@ -21,27 +21,6 @@ dfs_header* dfs_InitHeaderFromRawPtr( void* pRawHeaderData, s32 Length )
     (void)Length;
     dfs_header* pHeader = (dfs_header*)pRawHeaderData;
 
-#if defined(TARGET_XBOX)
-    extern void OnIOErrorCallback( void );
-
-    // Test the checksum.
-    u8* pData        = (u8*)pRawHeaderData;
-    s32 Checksum     = 0;
-    s32 OrigChecksum = pHeader->Checksum;
-    pHeader->Checksum = 0;
-    while( Length-- )
-    {
-        Checksum = crc16ApplyByte( *pData, Checksum );
-        pData++;
-    }
-    //ASSERT( Checksum == OrigChecksum );
-    if( Checksum != OrigChecksum )
-    {
-        OnIOErrorCallback();
-    }
-
-#endif
-
     // Endian swap the header...
     pHeader->Magic          = LITTLE_ENDIAN_32( pHeader->Magic          );
     pHeader->Version        = LITTLE_ENDIAN_32( pHeader->Version        );

@@ -4,7 +4,7 @@
  |~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~|
  |PROJECT: XAPO                         MODEL:   Unmanaged User-mode        |
  |VERSION: 1.0                          EXCEPT:  No Exceptions              |
- |CLASS:   N / A                        MINREQ:  WinXP, Xbox360             |
+ |CLASS:   N / A                        MINREQ:  Win8, Xbox One             |
  |BASE:    N / A                        DIALECT: MSC++ 14.00                |
  |>------------------------------------------------------------------------<|
  | DUTY: Cross-platform Audio Processing Object interfaces                  |
@@ -27,6 +27,7 @@
 
             Frame: A block of samples, one per channel,
                    to be played simultaneously.
+                   E.g. a mono stream has one sample per frame.
 
             In-Place: Processing such that the input buffer equals the
                       output buffer (i.e. input data modified directly).
@@ -80,23 +81,38 @@
         implementation for most of the interface methods defined below.     */
 
 #pragma once
+
+#include <sdkddkver.h>
+
+#if(_WIN32_WINNT < _WIN32_WINNT_WIN8)
+#error "This version of XAudio2 is available only in Windows 8 or later. Use the XAudio2 headers and libraries from the DirectX SDK with applications that target Windows 7 and earlier versions."
+#endif // (_WIN32_WINNT < _WIN32_WINNT_WIN8)
+
+#include <winapifamily.h>
+
+#pragma region Application Family
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_APP | WINAPI_PARTITION_TV_APP | WINAPI_PARTITION_TV_TITLE | WINAPI_PARTITION_GAMES)
+
 //--------------<D-E-F-I-N-I-T-I-O-N-S>-------------------------------------//
-#include "comdecl.h" // for DEFINE_IID
+
+#include <basetyps.h>
 
 // XAPO interface IDs
-DEFINE_IID(IXAPO,           A90BC001, E897, E897, 55, E4, 9E, 47, 00, 00, 00, 00);
-DEFINE_IID(IXAPOParameters, A90BC001, E897, E897, 55, E4, 9E, 47, 00, 00, 00, 01);
+#ifdef __cplusplus
+interface __declspec(uuid("A410B984-9839-4819-A0BE-2856AE6B3ADB")) IXAPO;
+EXTERN_C const GUID DECLSPEC_SELECTANY IID_IXAPO = __uuidof(IXAPO);
 
+interface __declspec(uuid("26D95C66-80F2-499A-AD54-5AE7F01C6D98")) IXAPOParameters;
+EXTERN_C const GUID DECLSPEC_SELECTANY IID_IXAPOParameters = __uuidof(IXAPOParameters);
+#else
+DEFINE_GUID(IID_IXAPO, 0xA410B984, 0x9839, 0x4819, 0xA0, 0xBE, 0x28, 0x56, 0xAE, 0x6B, 0x3A, 0xDB);
+DEFINE_GUID(IID_IXAPOParameters, 0x26D95C66, 0x80F2, 0x499A, 0xAD, 0x54, 0x5A, 0xE7, 0xF0, 0x1C, 0x6D, 0x98);
+#endif // #ifdef __cplusplus
 
 #if !defined(GUID_DEFS_ONLY) // ignore rest if only GUID definitions requested
-    #if defined(_XBOX)       // general windows and COM declarations
-        #include <xtl.h>
-        #include <xobjbase.h>
-    #else
-        #include <windows.h>
-        #include <objbase.h>
-    #endif
-    #include "audiodefs.h"   // for WAVEFORMATEX etc.
+    #include <windows.h>
+    #include <objbase.h>
+    #include <mmreg.h>       // for WAVEFORMATEX etc.
 
     // XAPO error codes
     #define FACILITY_XAPO 0x897
@@ -248,24 +264,8 @@ DEFINE_IID(IXAPOParameters, A90BC001, E897, E897, 55, E4, 9E, 47, 00, 00, 00, 01
     //
     // Used by IXAPO methods that must allocate arbitrary sized structures
     // such as WAVEFORMATEX that are subsequently returned to the application.
-    #if defined(_XBOX)
-        #define XAPO_ALLOC_ATTRIBUTES MAKE_XALLOC_ATTRIBUTES (      \
-            0,                           /* ObjectType */           \
-            FALSE,                       /* HeapTracksAttributes */ \
-            FALSE,                       /* MustSucceed */          \
-            FALSE,                       /* FixedSize */            \
-            eXALLOCAllocatorId_XAUDIO2,  /* AllocatorId */          \
-            XALLOC_ALIGNMENT_DEFAULT,    /* Alignment */            \
-            XALLOC_MEMPROTECT_READWRITE, /* MemoryProtect */        \
-            FALSE,                       /* ZeroInitialize */       \
-            XALLOC_MEMTYPE_HEAP          /* MemoryType */           \
-        )
-        #define XAPOAlloc(size) XMemAlloc(size, XAPO_ALLOC_ATTRIBUTES)
-        #define XAPOFree(p)     XMemFree(p, XAPO_ALLOC_ATTRIBUTES)
-    #else
-        #define XAPOAlloc(size) CoTaskMemAlloc(size)
-        #define XAPOFree(p)     CoTaskMemFree(p)
-    #endif
+    #define XAPOAlloc(size) CoTaskMemAlloc(size)
+    #define XAPOFree(p)     CoTaskMemFree(p)
 
 
 //--------------<I-N-T-E-R-F-A-C-E-S>---------------------------------------//
@@ -285,7 +285,7 @@ DEFINE_IID(IXAPOParameters, A90BC001, E897, E897, 55, E4, 9E, 47, 00, 00, 00, 01
           // RETURN VALUE:
           //  COM error code
           ////
-        STDMETHOD(GetRegistrationProperties) (THIS_ __deref_out XAPO_REGISTRATION_PROPERTIES** ppRegistrationProperties) PURE;
+        STDMETHOD(GetRegistrationProperties) (THIS_ _Outptr_ XAPO_REGISTRATION_PROPERTIES** ppRegistrationProperties) PURE;
 
           ////
           // DESCRIPTION:
@@ -314,7 +314,7 @@ DEFINE_IID(IXAPOParameters, A90BC001, E897, E897, 55, E4, 9E, 47, 00, 00, 00, 01
           //    XAPO_E_FORMAT_UNSUPPORTED - input/output configuration unsupported, ppSupportedInputFormat receives pointer to nearest input format supported if not NULL
           //    E_INVALIDARG              - either audio format invalid, ppSupportedInputFormat left untouched
           ////
-        STDMETHOD(IsInputFormatSupported) (THIS_ const WAVEFORMATEX* pOutputFormat, const WAVEFORMATEX* pRequestedInputFormat, __deref_opt_out WAVEFORMATEX** ppSupportedInputFormat) PURE;
+        STDMETHOD(IsInputFormatSupported) (THIS_ const WAVEFORMATEX* pOutputFormat, const WAVEFORMATEX* pRequestedInputFormat, _Outptr_opt_ WAVEFORMATEX** ppSupportedInputFormat) PURE;
 
           ////
           // DESCRIPTION:
@@ -343,7 +343,7 @@ DEFINE_IID(IXAPOParameters, A90BC001, E897, E897, 55, E4, 9E, 47, 00, 00, 00, 01
           //    XAPO_E_FORMAT_UNSUPPORTED - input/output configuration unsupported, ppSupportedOutputFormat receives pointer to nearest output format supported if not NULL
           //    E_INVALIDARG              - either audio format invalid, ppSupportedOutputFormat left untouched
           ////
-        STDMETHOD(IsOutputFormatSupported) (THIS_ const WAVEFORMATEX* pInputFormat, const WAVEFORMATEX* pRequestedOutputFormat, __deref_opt_out WAVEFORMATEX** ppSupportedOutputFormat) PURE;
+        STDMETHOD(IsOutputFormatSupported) (THIS_ const WAVEFORMATEX* pInputFormat, const WAVEFORMATEX* pRequestedOutputFormat, _Outptr_opt_ WAVEFORMATEX** ppSupportedOutputFormat) PURE;
 
           ////
           // DESCRIPTION:
@@ -357,16 +357,16 @@ DEFINE_IID(IXAPOParameters, A90BC001, E897, E897, 55, E4, 9E, 47, 00, 00, 00, 01
           //
           //  An XAPO should be initialized before passing it to XAudio2
           //  as part of an effect chain.  XAudio2 will not call this method;
-          //  it exists for future content-driven initialization by XACT.
+          //  it exists for future content-driven initialization.
           //
           // PARAMETERS:
           //  pData        - [in] effect-specific initialization parameters, may be NULL if DataByteSize == 0
-          //  DataByteSize - [in] size of pData in bytes, may be 0 if DataByteSize is NULL
+          //  DataByteSize - [in] size of pData in bytes, may be 0 if pData is NULL
           //
           // RETURN VALUE:
           //  COM error code
           ////
-        STDMETHOD(Initialize) (THIS_ __in_bcount_opt(DataByteSize) const void* pData, UINT32 DataByteSize) PURE;
+        STDMETHOD(Initialize) (THIS_ _In_reads_bytes_opt_(DataByteSize) const void* pData, UINT32 DataByteSize) PURE;
 
           ////
           // DESCRIPTION:
@@ -423,7 +423,7 @@ DEFINE_IID(IXAPOParameters, A90BC001, E897, E897, 55, E4, 9E, 47, 00, 00, 00, 01
           // RETURN VALUE:
           //  COM error code
           ////
-        STDMETHOD(LockForProcess) (THIS_ UINT32 InputLockedParameterCount, __in_ecount_opt(InputLockedParameterCount) const XAPO_LOCKFORPROCESS_BUFFER_PARAMETERS* pInputLockedParameters, UINT32 OutputLockedParameterCount, __in_ecount_opt(OutputLockedParameterCount) const XAPO_LOCKFORPROCESS_BUFFER_PARAMETERS* pOutputLockedParameters) PURE;
+        STDMETHOD(LockForProcess) (THIS_ UINT32 InputLockedParameterCount, _In_reads_opt_(InputLockedParameterCount) const XAPO_LOCKFORPROCESS_PARAMETERS* pInputLockedParameters, UINT32 OutputLockedParameterCount, _In_reads_opt_(OutputLockedParameterCount) const XAPO_LOCKFORPROCESS_PARAMETERS* pOutputLockedParameters) PURE;
 
           ////
           // DESCRIPTION:
@@ -483,7 +483,7 @@ DEFINE_IID(IXAPOParameters, A90BC001, E897, E897, 55, E4, 9E, 47, 00, 00, 00, 01
           // RETURN VALUE:
           //  void
           ////
-        STDMETHOD_(void, Process) (THIS_ UINT32 InputProcessParameterCount, __in_ecount_opt(InputProcessParameterCount) const XAPO_PROCESS_BUFFER_PARAMETERS* pInputProcessParameters, UINT32 OutputProcessParameterCount, __inout_ecount_opt(OutputProcessParameterCount) XAPO_PROCESS_BUFFER_PARAMETERS* pOutputProcessParameters, BOOL IsEnabled) PURE;
+        STDMETHOD_(void, Process) (THIS_ UINT32 InputProcessParameterCount, _In_reads_opt_(InputProcessParameterCount) const XAPO_PROCESS_BUFFER_PARAMETERS* pInputProcessParameters, UINT32 OutputProcessParameterCount, _Inout_updates_opt_(OutputProcessParameterCount) XAPO_PROCESS_BUFFER_PARAMETERS* pOutputProcessParameters, BOOL IsEnabled) PURE;
 
           ////
           // DESCRIPTION:
@@ -556,7 +556,7 @@ DEFINE_IID(IXAPOParameters, A90BC001, E897, E897, 55, E4, 9E, 47, 00, 00, 00, 01
           // RETURN VALUE:
           //  void
           ////
-        STDMETHOD_(void, SetParameters) (THIS_ __in_bcount(ParameterByteSize) const void* pParameters, UINT32 ParameterByteSize) PURE;
+        STDMETHOD_(void, SetParameters) (THIS_ _In_reads_bytes_(ParameterByteSize) const void* pParameters, UINT32 ParameterByteSize) PURE;
 
           ////
           // DESCRIPTION:
@@ -574,7 +574,7 @@ DEFINE_IID(IXAPOParameters, A90BC001, E897, E897, 55, E4, 9E, 47, 00, 00, 00, 01
           // RETURN VALUE:
           //  void
           ////
-        STDMETHOD_(void, GetParameters) (THIS_ __out_bcount(ParameterByteSize) void* pParameters, UINT32 ParameterByteSize) PURE;
+        STDMETHOD_(void, GetParameters) (THIS_ _Out_writes_bytes_(ParameterByteSize) void* pParameters, UINT32 ParameterByteSize) PURE;
     };
 
 
@@ -642,4 +642,7 @@ DEFINE_IID(IXAPOParameters, A90BC001, E897, E897, 55, E4, 9E, 47, 00, 00, 00, 01
 
     #pragma pack(pop) // revert packing alignment
 #endif // !defined(GUID_DEFS_ONLY)
+
+#endif /* WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_APP | WINAPI_PARTITION_TV_APP | WINAPI_PARTITION_TV_TITLE | WINAPI_PARTITION_GAMES) */
+#pragma endregion
 //---------------------------------<-EOF->----------------------------------//

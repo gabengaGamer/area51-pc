@@ -14,6 +14,11 @@
 
 #ifndef _DMKSCTRL_
 #define _DMKSCTRL_
+#include <winapifamily.h>
+
+#pragma region Desktop Family
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
+
 
 #if _MSC_VER >= 1200
 #pragma warning(push)
@@ -116,27 +121,27 @@ DECLARE_INTERFACE_(IKsControl, IUnknown)
     /*IKsControl*/
     STDMETHOD(KsProperty)(
         THIS_
-        IN PKSPROPERTY Property,
-        IN ULONG PropertyLength,
-        IN OUT LPVOID PropertyData,
-        IN ULONG DataLength,
-        OUT ULONG* BytesReturned
+        _In_reads_bytes_(PropertyLength) PKSPROPERTY Property,
+        _In_ ULONG PropertyLength,
+        _Inout_updates_bytes_(DataLength) LPVOID PropertyData,
+        _In_ ULONG DataLength,
+        _Out_ ULONG* BytesReturned
     ) PURE;
     STDMETHOD(KsMethod)(
         THIS_
-        IN PKSMETHOD Method,
-        IN ULONG MethodLength,
-        IN OUT LPVOID MethodData,
-        IN ULONG DataLength,
-        OUT ULONG* BytesReturned
+        _In_reads_bytes_(MethodLength) PKSMETHOD Method,
+        _In_ ULONG MethodLength,
+        _Inout_updates_bytes_(DataLength)  LPVOID MethodData,
+        _In_ ULONG DataLength,
+        _Out_ ULONG* BytesReturned
     ) PURE;
     STDMETHOD(KsEvent)(
         THIS_
-        IN PKSEVENT Event OPTIONAL,
-        IN ULONG EventLength,
-        IN OUT LPVOID EventData,
-        IN ULONG DataLength,
-        OUT ULONG* BytesReturned
+        _In_reads_bytes_(EventLength) PKSEVENT Event OPTIONAL,
+        _In_ ULONG EventLength,
+        _Inout_updates_bytes_(DataLength) LPVOID EventData,
+        _In_ ULONG DataLength,
+        _Out_ ULONG* BytesReturned
     ) PURE;
 };
 
@@ -159,6 +164,10 @@ DEFINE_GUID(KSDATAFORMAT_SUBTYPE_DIRECTMUSIC, 0x1a82f8bc,  0x3f8b, 0x11d2, 0xb7,
 #if _MSC_VER >= 1200
 #pragma warning(pop)
 #endif
+
+
+#endif /* WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP) */
+#pragma endregion
 
 #endif /* _DMKSCTRL */
 

@@ -19,6 +19,51 @@ Revision History:
 #ifndef _BASETSD_H_
 #define _BASETSD_H_
 
+#if _MSC_VER >= 1200
+#pragma warning(push)
+#pragma warning(disable:4668) // #if not_defined treated as #if 0
+#endif
+
+#if !defined(_MAC) && (defined(_M_MRX000) || defined(_WIN64)) && (_MSC_VER >= 1100) && !(defined(MIDL_PASS) || defined(RC_INVOKED))
+ #define POINTER_64 __ptr64
+ typedef unsigned __int64 POINTER_64_INT;
+ #if defined(_WIN64)
+  #define POINTER_32 __ptr32
+ #else
+  #define POINTER_32
+ #endif
+#else
+ #if defined(_MAC) && defined(_MAC_INT_64)
+  #define POINTER_64 __ptr64
+  typedef unsigned __int64 POINTER_64_INT;
+ #else
+  #if (_MSC_VER >= 1300) && !(defined(MIDL_PASS) || defined(RC_INVOKED))
+   #define POINTER_64 __ptr64
+  #else
+   #define POINTER_64
+  #endif
+  typedef unsigned long POINTER_64_INT;
+ #endif
+ #define POINTER_32
+#endif
+
+#if defined(_WIN64)
+#define FIRMWARE_PTR
+#else
+#define FIRMWARE_PTR POINTER_32
+#endif
+
+#if (_MSC_FULL_VER >= 140041204) && !defined(MIDL_PASS) && !defined(RC_INVOKED)
+#define POINTER_SIGNED __sptr
+#define POINTER_UNSIGNED __uptr
+#else
+#define POINTER_SIGNED
+#define POINTER_UNSIGNED
+#endif
+
+#define SPOINTER_32 POINTER_SIGNED POINTER_32
+#define UPOINTER_32 POINTER_UNSIGNED POINTER_32
+
 #if _MSC_VER > 1000
 #pragma once
 #endif
@@ -50,7 +95,7 @@ typedef unsigned int ULONG32, *PULONG32;
 typedef unsigned int DWORD32, *PDWORD32;
 
 #if !defined(_W64)
-#if !defined(__midl) && (defined(_X86_) || defined(_M_IX86)) && _MSC_VER >= 1300
+#if !defined(__midl) && (defined(_X86_) || defined(_M_IX86) || defined(_ARM_) || defined(_M_ARM)) && _MSC_VER >= 1300
 #define _W64 __w64
 #else
 #define _W64
@@ -65,7 +110,7 @@ typedef unsigned int DWORD32, *PDWORD32;
 //
 // __int3264 is intrinsic to 64b MIDL but not to old MIDL or to C compiler.
 //
-#if ( 501 < __midl )
+#if ( defined(__midl) && (501 < __midl) )
 
     typedef [public] __int3264 INT_PTR, *PINT_PTR;
     typedef [public] unsigned __int3264 UINT_PTR, *PUINT_PTR;
@@ -98,8 +143,22 @@ typedef unsigned int DWORD32, *PDWORD32;
 #endif // midl64
 
 //
+// HANDLE64 uses 64 bits in both WIN32 and WIN64 platforms. This along with
+// HandleToHandle64 and Handle64ToHandle conversion macros, help simplify WOW
+// support while user mode and kernel mode communicate with a shared memory or
+// when we prefer to use fixed size types in both WIN32 and WIN64 for other
+// reasons.
+//
+
+#ifndef __HANDLE64_DEFINED__
+#define __HANDLE64_DEFINED__
+typedef void* POINTER_64 HANDLE64;
+typedef HANDLE64 *PHANDLE64;
+#endif
+
+//
 // HALF_PTR is half the size of a pointer it intended for use with
-// within strcuture which contain a pointer and two small fields.
+// within structures which contain a pointer and two small fields.
 // UHALF_PTR is the unsigned variation.
 //
 
@@ -245,6 +304,40 @@ ULongToPtr(
     return( (void *)(ULONG_PTR)ul );
 }
 
+#define PtrToPtr64( p )         ((void * POINTER_64) p)
+#define Ptr64ToPtr( p )         ((void *) p)
+#define HandleToHandle64( h )   (PtrToPtr64( h ))
+#define Handle64ToHandle( h )   (Ptr64ToPtr( h ))
+
+__inline
+void *
+Ptr32ToPtr(
+    const void * POINTER_32 p
+    )
+{
+    return((void *) (ULONG_PTR) (unsigned long) p);
+}
+
+__inline
+void *
+Handle32ToHandle(
+    const void * POINTER_32 h
+    )
+{
+    return((void *) (LONG_PTR) (long) h);
+}
+
+__inline
+void * POINTER_32
+PtrToPtr32(
+    const void *p
+    )
+{
+    return((void * POINTER_32) (unsigned long) (ULONG_PTR) p);
+}
+
+#define HandleToHandle32( h )       (PtrToPtr32( h ))
+
 #endif // !_midl
 
 #else  // !_WIN64
@@ -270,6 +363,49 @@ typedef _W64 unsigned long HANDLE_PTR;
 #define UIntToPtr( ui )  ((VOID *)(UINT_PTR)((unsigned int)ui))
 #define LongToPtr( l )   ((VOID *)(LONG_PTR)((long)l))
 #define ULongToPtr( ul ) ((VOID *)(ULONG_PTR)((unsigned long)ul))
+
+#if !defined(__midl)
+__inline
+void * POINTER_64
+PtrToPtr64(
+    const void *p
+    )
+{
+    return((void * POINTER_64) (unsigned __int64) (ULONG_PTR) p );
+}
+
+__inline
+void *
+Ptr64ToPtr(
+    const void * POINTER_64 p
+    )
+{
+    return((void *) (ULONG_PTR) (unsigned __int64) p);
+}
+
+__inline
+HANDLE64
+HandleToHandle64(
+    const void * h
+    )
+{
+    return((HANDLE64) (__int64) (LONG_PTR) h );
+}
+
+__inline
+void *
+Handle64ToHandle(
+    const HANDLE64 h
+    )
+{
+    return((void *) (ULONG_PTR) (unsigned __int64) h );
+}
+#endif
+
+#define Ptr32ToPtr( p )         ((void *) p)
+#define Handle32ToHandle( h )   (Ptr32ToPtr( h ))
+#define PtrToPtr32( p )         ((void * POINTER_32) p)
+#define HandleToHandle32( h )   (PtrToPtr32( h ))
 
 #endif // !_WIN64
 
@@ -298,6 +434,48 @@ typedef _W64 unsigned long HANDLE_PTR;
 typedef ULONG_PTR SIZE_T, *PSIZE_T;
 typedef LONG_PTR SSIZE_T, *PSSIZE_T;
 
+#if _WIN32_WINNT >= 0x0600 || (defined(__cplusplus) && defined(WINDOWS_ENABLE_CPLUSPLUS))
+
+#define MAXUINT8    ((UINT8)~((UINT8)0))
+#define MAXINT8     ((INT8)(MAXUINT8 >> 1))
+#define MININT8     ((INT8)~MAXINT8)
+
+#define MAXUINT16   ((UINT16)~((UINT16)0))
+#define MAXINT16    ((INT16)(MAXUINT16 >> 1))
+#define MININT16    ((INT16)~MAXINT16)
+
+#define MAXUINT32   ((UINT32)~((UINT32)0))
+#define MAXINT32    ((INT32)(MAXUINT32 >> 1))
+#define MININT32    ((INT32)~MAXINT32)
+
+#define MAXUINT64   ((UINT64)~((UINT64)0))
+#define MAXINT64    ((INT64)(MAXUINT64 >> 1))
+#define MININT64    ((INT64)~MAXINT64)
+
+#define MAXULONG32  ((ULONG32)~((ULONG32)0))
+#define MAXLONG32   ((LONG32)(MAXULONG32 >> 1))
+#define MINLONG32   ((LONG32)~MAXLONG32)
+
+#define MAXULONG64  ((ULONG64)~((ULONG64)0))
+#define MAXLONG64   ((LONG64)(MAXULONG64 >> 1))
+#define MINLONG64   ((LONG64)~MAXLONG64)
+
+#define MAXULONGLONG ((ULONGLONG)~((ULONGLONG)0))
+#define MINLONGLONG ((LONGLONG)~MAXLONGLONG)
+
+#define MAXSIZE_T   ((SIZE_T)~((SIZE_T)0))
+#define MAXSSIZE_T  ((SSIZE_T)(MAXSIZE_T >> 1))
+#define MINSSIZE_T  ((SSIZE_T)~MAXSSIZE_T)
+
+#define MAXUINT     ((UINT)~((UINT)0))
+#define MAXINT      ((INT)(MAXUINT >> 1))
+#define MININT      ((INT)~MAXINT)
+
+#define MAXDWORD32  ((DWORD32)~((DWORD32)0))
+#define MAXDWORD64  ((DWORD64)~((DWORD64)0))
+
+#endif // _WIN32_WINNT >= 0x0600
+
 //
 // Add Windows flavor DWORD_PTR types
 //
@@ -318,15 +496,23 @@ typedef __int64 LONG64, *PLONG64;
 typedef unsigned __int64 ULONG64, *PULONG64;
 typedef unsigned __int64 DWORD64, *PDWORD64;
 
+// begin_wudfpwdm
+
 //
-// Thread affinity.
+// Legacy thread affinity.
 //
 
 typedef ULONG_PTR KAFFINITY;
 typedef KAFFINITY *PKAFFINITY;
 
+// end_wudfpwdm
+
 #ifdef __cplusplus
 }
+#endif
+
+#if _MSC_VER >= 1200
+#pragma warning(pop)
 #endif
 
 #endif // _BASETSD_H_

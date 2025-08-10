@@ -65,7 +65,7 @@ void hud_damage::OnRender( player* pPlayer )
     if( pBitmap == NULL )
         return;
 
-    draw_Begin( DRAW_SPRITES, DRAW_USE_ALPHA|DRAW_BLEND_ADD|DRAW_TEXTURED|DRAW_2D|DRAW_NO_ZBUFFER|DRAW_UV_CLAMP );
+    draw_Begin( DRAW_SPRITES, DRAW_USE_ALPHA|DRAW_BLEND_ADD|DRAW_TEXTURED|DRAW_2D|DRAW_UI_RTARGET|DRAW_NO_ZBUFFER|DRAW_UV_CLAMP );
     draw_SetTexture( *pBitmap );
 
     for( s32 iPain = 0; iPain < MAX_PAIN_EVENTS; iPain++ )
