@@ -49,7 +49,13 @@
 #define DRAW_BLEND_SUB         ( 1 <<  8 )     // Default: Multiplicative (alpha) ADD and SUB mutually exclusive
 #define DRAW_U_CLAMP           ( 1 <<  9 )     // Default: WRAP
 #define DRAW_V_CLAMP           ( 1 << 10 )     // Default: WRAP
-#define DRAW_KEEP_STATES	   ( 1 << 11 )	   // Default: Off (doesn't set any render/texture-stage states)
+
+//------------------------------------------------------------------------------
+// DEPRECATED.
+//------------------------------------------------------------------------------
+
+// Use centralized d3deng_state system instead of manual state management.
+#define DRAW_KEEP_STATES	   ( 1 << 11 ) // Default: Off (doesn't set any render/texture-stage states)
 
 //------------------------------------------------------------------------------
 // Use custom shaders for rendering.
