@@ -131,11 +131,9 @@ public:
 
     // Rigid material management
     void        SetRigidMaterial    ( const matrix4* pL2W, const d3d_rigid_lighting* pLighting, const material* pMaterial );
-    void        ActivateRigidShader ( void );
 
     // Skin material management  
     void        SetSkinMaterial     ( const d3d_skin_lighting* pLighting );
-    void        ActivateSkinShader  ( void );
 
     // General material functions
     void        SetBitmap           ( const xbitmap* pBitmap, texture_slot slot );

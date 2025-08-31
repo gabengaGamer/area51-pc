@@ -239,7 +239,17 @@ void material_mgr::SetRigidMaterial( const matrix4* pL2W, const d3d_rigid_lighti
     if( !g_pd3dDevice || !g_pd3dContext )
         return;
 
-    ActivateRigidShader();
+    // Set rigid shader pipeline
+    g_pd3dContext->IASetInputLayout( m_pRigidInputLayout );
+    g_pd3dContext->VSSetShader( m_pRigidVertexShader, NULL, 0 );
+    g_pd3dContext->PSSetShader( m_pRigidPixelShader, NULL, 0 );
+
+    // Set default render states
+    state_SetState( STATE_TYPE_BLEND, STATE_BLEND_NONE );
+    state_SetState( STATE_TYPE_DEPTH, STATE_DEPTH_NORMAL );
+    state_SetState( STATE_TYPE_RASTERIZER, STATE_RASTER_SOLID );
+    state_SetState( STATE_TYPE_SAMPLER, STATE_SAMPLER_LINEAR_WRAP );
+    g_pd3dContext->IASetPrimitiveTopology( D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST );
     
     if( !UpdateRigidConstants( pL2W, pMaterial ) )
     {
@@ -255,7 +265,17 @@ void material_mgr::SetSkinMaterial( const d3d_skin_lighting* pLighting )
     if( !g_pd3dDevice || !g_pd3dContext || !pLighting )
         return;
 
-    ActivateSkinShader();
+    // Set skin shader pipeline  
+    g_pd3dContext->IASetInputLayout( m_pSkinInputLayout );
+    g_pd3dContext->VSSetShader( m_pSkinVertexShader, NULL, 0 );
+    g_pd3dContext->PSSetShader( m_pSkinPixelShader, NULL, 0 );
+
+    // Set default render states
+    state_SetState( STATE_TYPE_BLEND, STATE_BLEND_NONE );
+    state_SetState( STATE_TYPE_DEPTH, STATE_DEPTH_NORMAL );
+    state_SetState( STATE_TYPE_RASTERIZER, STATE_RASTER_SOLID );
+    state_SetState( STATE_TYPE_SAMPLER, STATE_SAMPLER_LINEAR_WRAP );
+    g_pd3dContext->IASetPrimitiveTopology( D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST );
     
     if( !UpdateSkinConstants( pLighting ) )
     {
@@ -268,7 +288,7 @@ void material_mgr::SetSkinMaterial( const d3d_skin_lighting* pLighting )
 
 xbool material_mgr::UpdateRigidConstants( const matrix4* pL2W, const material* pMaterial )
 {
-    if( !m_pRigidConstantBuffer )
+    if( !m_pRigidConstantBuffer || !g_pd3dDevice || !g_pd3dContext )
         return FALSE;
 
     const view* pView = eng_GetView();
@@ -384,7 +404,7 @@ xbool material_mgr::UpdateRigidConstants( const matrix4* pL2W, const material* p
 
 xbool material_mgr::UpdateSkinConstants( const d3d_skin_lighting* pLighting )
 {
-    if( !m_pSkinVSConstBuffer || !pLighting )
+    if( !m_pSkinVSConstBuffer || !pLighting || !g_pd3dDevice || !g_pd3dContext )
         return FALSE;
 
     const view* pView = eng_GetView();
@@ -425,42 +445,6 @@ xbool material_mgr::UpdateSkinConstants( const d3d_skin_lighting* pLighting )
     }
     
     return TRUE;
-}
-
-//==============================================================================
-
-void material_mgr::ActivateRigidShader( void )
-{
-    if( !g_pd3dContext )
-        return;
-
-    g_pd3dContext->IASetInputLayout( m_pRigidInputLayout );
-    g_pd3dContext->VSSetShader( m_pRigidVertexShader, NULL, 0 );
-    g_pd3dContext->PSSetShader( m_pRigidPixelShader, NULL, 0 );
-
-    state_SetState( STATE_TYPE_BLEND, STATE_BLEND_NONE );
-    state_SetState( STATE_TYPE_DEPTH, STATE_DEPTH_NORMAL ); 
-    state_SetState( STATE_TYPE_RASTERIZER, STATE_RASTER_SOLID );
-    state_SetState( STATE_TYPE_SAMPLER, STATE_SAMPLER_LINEAR_WRAP );
-    g_pd3dContext->IASetPrimitiveTopology( D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST );
-}
-
-//==============================================================================
-
-void material_mgr::ActivateSkinShader( void )
-{
-    if( !g_pd3dContext )
-        return;
-
-    g_pd3dContext->IASetInputLayout( m_pSkinInputLayout );
-    g_pd3dContext->VSSetShader( m_pSkinVertexShader, NULL, 0 );
-    g_pd3dContext->PSSetShader( m_pSkinPixelShader, NULL, 0 );
-
-    state_SetState( STATE_TYPE_BLEND, STATE_BLEND_NONE );
-    state_SetState( STATE_TYPE_DEPTH, STATE_DEPTH_NORMAL ); 
-    state_SetState( STATE_TYPE_RASTERIZER, STATE_RASTER_SOLID );
-    state_SetState( STATE_TYPE_SAMPLER, STATE_SAMPLER_LINEAR_WRAP );
-    g_pd3dContext->IASetPrimitiveTopology( D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST );
 }
 
 //==============================================================================
