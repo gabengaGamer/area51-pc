@@ -458,20 +458,18 @@ void platform_RenderRawStrips( s32               nVerts,
     if( nVerts < 3 )
         return;
 
-    // Ensure we're using the same depth buffer as geometry
-    const rtarget* pDepthTarget = g_GBufferMgr.GetGBufferTarget( GBUFFER_DEPTH );
-    if( pDepthTarget && g_pd3dContext )
+    const rtarget* pGBufferDepth = g_GBufferMgr.GetGBufferTarget( GBUFFER_DEPTH );
+    const rtarget* pBackBuffer = rtarget_GetBackBuffer();
+    
+    if( pGBufferDepth && pBackBuffer )
     {
-        const rtarget* pBackBuffer = rtarget_GetBackBuffer();
-        if( pBackBuffer )
-        {
-            rtarget_SetTargets( pBackBuffer, 1, pDepthTarget );
-        }
-        state_SetState( STATE_TYPE_DEPTH, STATE_DEPTH_NORMAL );
+        // Make sure we're using the same depth target as geometry
+        rtarget_SetTargets( pBackBuffer, 1, pGBufferDepth );
     }
 
     // fill in the l2w...note we have to reset draw to do this
-    draw_Begin( DRAW_TRIANGLES, DRAW_TEXTURED | DRAW_USE_ALPHA | DRAW_CULL_NONE );
+    // NOTE: DRAW_NO_ZWRITE because we don't need spoil the depth buffer
+    draw_Begin( DRAW_TRIANGLES, DRAW_TEXTURED | DRAW_USE_ALPHA | DRAW_CULL_NONE | DRAW_NO_ZWRITE );
     draw_SetTexture( *s_pDrawBitmap );
     draw_SetL2W( L2W );
 
@@ -536,21 +534,14 @@ void platform_Render3dSprites( s32               nSprites,
     ASSERTS( s_pDrawBitmap, "You must set a material first!" );
     if( nSprites == 0 )
         return;
-
-    // Ensure we're using the correct depth buffer from G-Buffer
-    const rtarget* pDepthTarget = g_GBufferMgr.GetGBufferTarget( GBUFFER_DEPTH );
-    if( pDepthTarget && g_pd3dContext )
+	
+    const rtarget* pGBufferDepth = g_GBufferMgr.GetGBufferTarget( GBUFFER_DEPTH );
+    const rtarget* pBackBuffer = rtarget_GetBackBuffer();
+    
+    if( pGBufferDepth && pBackBuffer )
     {
         // Make sure we're using the same depth target as geometry
-        const rtarget* pBackBuffer = rtarget_GetBackBuffer();
-        if( pBackBuffer )
-        {
-            rtarget_SetTargets( pBackBuffer, 1, pDepthTarget );
-        }
-        
-        // Enable proper depth testing
-        state_SetState( STATE_TYPE_DEPTH, STATE_DEPTH_NORMAL );
-        x_DebugMsg( "Platform: Using G-Buffer depth for sprites\n" );
+        rtarget_SetTargets( pBackBuffer, 1, pGBufferDepth );
     }
 
     // start up draw
@@ -562,7 +553,9 @@ void platform_Render3dSprites( s32               nSprites,
     else
         S2V = W2V;
     draw_ClearL2W();
-    draw_Begin( DRAW_TRIANGLES, DRAW_TEXTURED | DRAW_USE_ALPHA | DRAW_CULL_NONE );
+    
+    // NOTE: DRAW_NO_ZWRITE because we don't need spoil the depth buffer
+    draw_Begin( DRAW_TRIANGLES, DRAW_TEXTURED | DRAW_USE_ALPHA | DRAW_CULL_NONE | DRAW_NO_ZWRITE );
     draw_SetTexture( *s_pDrawBitmap );
     draw_SetL2W( V2W );
 
@@ -640,21 +633,19 @@ void platform_RenderVelocitySprites( s32            nSprites,
     if( nSprites == 0 )
         return;
 
-    // Ensure we're using the same depth buffer as geometry
-    const rtarget* pDepthTarget = g_GBufferMgr.GetGBufferTarget( GBUFFER_DEPTH );
-    if( pDepthTarget && g_pd3dContext )
+    const rtarget* pGBufferDepth = g_GBufferMgr.GetGBufferTarget( GBUFFER_DEPTH );
+    const rtarget* pBackBuffer = rtarget_GetBackBuffer();
+    
+    if( pGBufferDepth && pBackBuffer )
     {
-        const rtarget* pBackBuffer = rtarget_GetBackBuffer();
-        if( pBackBuffer )
-        {
-            rtarget_SetTargets( pBackBuffer, 1, pDepthTarget );
-        }
-        state_SetState( STATE_TYPE_DEPTH, STATE_DEPTH_NORMAL );
+        // Make sure we're using the same depth target as geometry
+        rtarget_SetTargets( pBackBuffer, 1, pGBufferDepth );
     }
 
     // start up draw
     draw_ClearL2W();
-    draw_Begin( DRAW_TRIANGLES, DRAW_TEXTURED | DRAW_USE_ALPHA | DRAW_CULL_NONE );
+    // NOTE: DRAW_NO_ZWRITE because we don't need spoil the depth buffer
+    draw_Begin( DRAW_TRIANGLES, DRAW_TEXTURED | DRAW_USE_ALPHA | DRAW_CULL_NONE | DRAW_NO_ZWRITE );
     draw_SetTexture( *s_pDrawBitmap );
 
     // Grab out a l2w matrix to use. If one is not specified, then
