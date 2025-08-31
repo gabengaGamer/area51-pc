@@ -28,8 +28,9 @@ static matrix4                 s_EnvMapMatrix;
 static ID3D11Texture2D*        s_pEnvMapTexture = NULL; 
 static ID3D11DepthStencilView* s_pEnvMapZBuffer = NULL;
 static ID3D11RenderTargetView* s_pEnvMapSurface = NULL;
-static s32                     s_DrawFlags = 0;
+static s32                     s_DrawFlags   = 0;
 static const xbitmap*          s_pDrawBitmap = NULL;
+static s32                     s_BlendMode   = 0;
 
 //=============================================================================
 // SHADER TESTBED
@@ -48,9 +49,9 @@ static const xbitmap*          s_pDrawBitmap = NULL;
 static
 void platform_Init( void )
 {
-	g_GBufferMgr.Init();
-	g_MaterialMgr.Init();
-	g_PostMgr.Init(); 
+    g_GBufferMgr.Init();
+    g_MaterialMgr.Init();
+    g_PostMgr.Init(); 
     g_RigidVertMgr.Init( sizeof( rigid_geom::vertex_pc ) );
     g_SkinVertMgr.Init(); //vertex_mgr::Init( sizeof( skin_geom::vertex_pc ) );
 }
@@ -60,9 +61,9 @@ void platform_Init( void )
 static
 void platform_Kill( void )
 {
-	g_GBufferMgr.Kill();
-	g_MaterialMgr.Kill();
-	g_PostMgr.Kill();
+    g_GBufferMgr.Kill();
+    g_MaterialMgr.Kill();
+    g_PostMgr.Kill();
     g_RigidVertMgr.Kill();
     g_SkinVertMgr.Kill();
 }
@@ -99,21 +100,21 @@ void platform_ActivateMaterial( const material& Material )
     // Get diffuse texture
     texture* pDiffuse = Material.m_DiffuseMap.GetPointer();
     const xbitmap* pDiffuseMap = pDiffuse ? &pDiffuse->m_Bitmap : NULL;
-	
-	// Get detail texture
-	texture* pDetail = Material.m_DetailMap.GetPointer();
+    
+    // Get detail texture
+    texture* pDetail = Material.m_DetailMap.GetPointer();
     const xbitmap* pDetailMap = pDetail ? &pDetail->m_Bitmap : NULL;
-	
-	// Get env texture
-	texture* pEnvironment = Material.m_EnvironmentMap.GetPointer();
-	const xbitmap* pEnvironmentMap = pEnvironment ? &pEnvironment->m_Bitmap : NULL;
+    
+    // Get env texture
+    texture* pEnvironment = Material.m_EnvironmentMap.GetPointer();
+    const xbitmap* pEnvironmentMap = pEnvironment ? &pEnvironment->m_Bitmap : NULL;
 
     // TODO: GS: Make proj tex
 
     // Set primary textures through MaterialMgr
     g_MaterialMgr.SetBitmap( pDiffuseMap, TEXTURE_SLOT_DIFFUSE );
-	g_MaterialMgr.SetBitmap( pDetailMap, TEXTURE_SLOT_DETAIL  );
-	g_MaterialMgr.SetBitmap( pEnvironmentMap, TEXTURE_SLOT_ENVIRONMENT );
+    g_MaterialMgr.SetBitmap( pDetailMap, TEXTURE_SLOT_DETAIL  );
+    g_MaterialMgr.SetBitmap( pEnvironmentMap, TEXTURE_SLOT_ENVIRONMENT );
 
     x_catch_display;
 }
@@ -145,7 +146,7 @@ void platform_BeginRigidGeom( geom* pGeom, s32 iSubMesh )
     ASSERT( s_pRigidGeom == NULL );
     s_pRigidGeom = (rigid_geom*)pGeom;
     g_RigidVertMgr.BeginRender();
-	g_MaterialMgr.InvalidateCache();
+    g_MaterialMgr.InvalidateCache();
 }
 
 //=============================================================================
@@ -166,7 +167,7 @@ void platform_BeginSkinGeom( geom* pGeom, s32 iSubMesh )
     ASSERT( s_pSkinGeom == NULL );
     s_pSkinGeom = (skin_geom*)pGeom;
     g_SkinVertMgr.BeginRender();
-	g_MaterialMgr.InvalidateCache();
+    g_MaterialMgr.InvalidateCache();
 }
 
 //=============================================================================
@@ -224,16 +225,16 @@ void platform_RenderRigidInstance( render_instance& Inst )
         //pc_SetTexture( nStages, &s_ShadowProjections[0].Texture.GetPointer()->m_Bitmap );
         //pc_SetTextureColorStage( nStages, D3DTA_TEXTURE, D3DTOP_MODULATE2X, D3DTA_CURRENT );
         //pc_SetTextureAlphaStage( nStages, D3DTA_CURRENT, D3DTOP_SELECTARG1, D3DTA_NOTUSED );
-		//
+        //
         //// set up the uv transform
         //g_pd3dDevice->SetTransform( s_TextureType[nStages], (D3DXMATRIX*)&s_ShadowProjectionMatrices[0] );
         //g_pd3dDevice->SetTextureStageState( nStages, D3DTSS_TEXCOORDINDEX, D3DTSS_TCI_CAMERASPACEPOSITION );
         //g_pd3dDevice->SetTextureStageState( nStages, D3DTSS_TEXTURETRANSFORMFLAGS, D3DTTFF_COUNT3| D3DTTFF_PROJECTED );
-		//
+        //
         //// set up the wrapping
         //g_pd3dDevice->SetSamplerState( nStages, D3DSAMP_ADDRESSU, D3DTADDRESS_CLAMP     );
         //g_pd3dDevice->SetSamplerState( nStages, D3DSAMP_ADDRESSV, D3DTADDRESS_CLAMP     );
-		//
+        //
         //// we have one more stage now
         //nStages++;
     }
@@ -245,16 +246,16 @@ void platform_RenderRigidInstance( render_instance& Inst )
        //pc_SetTexture( nStages, &s_ShadowProjections[1].Texture.GetPointer()->m_Bitmap );
        //pc_SetTextureColorStage( nStages, D3DTA_TEXTURE, D3DTOP_MODULATE2X, D3DTA_CURRENT );
        //pc_SetTextureAlphaStage( nStages, D3DTA_CURRENT, D3DTOP_SELECTARG1, D3DTA_NOTUSED );
-	   //
+       //
        //// set up the uv transform
        //g_pd3dDevice->SetTransform( s_TextureType[nStages], (D3DXMATRIX*)&s_ShadowProjectionMatrices[1] );
        //g_pd3dDevice->SetTextureStageState( nStages, D3DTSS_TEXCOORDINDEX, D3DTSS_TCI_CAMERASPACEPOSITION );
        //g_pd3dDevice->SetTextureStageState( nStages, D3DTSS_TEXTURETRANSFORMFLAGS, D3DTTFF_COUNT3| D3DTTFF_PROJECTED );
-	   //
+       //
        //// set up the wrapping
        //g_pd3dDevice->SetSamplerState( nStages, D3DSAMP_ADDRESSU, D3DTADDRESS_CLAMP     );
        //g_pd3dDevice->SetSamplerState( nStages, D3DSAMP_ADDRESSV, D3DTADDRESS_CLAMP     );
-	   //
+       //
        //// we have one more stage now
        //nStages++;
     }
@@ -279,7 +280,7 @@ void platform_RenderRigidInstance( render_instance& Inst )
         //pc_SetTextureFactor( xcolor( 255, 0, 0, I ) );
         //pc_SetZBias( 1 );
         //pc_SetWireframe( TRUE );
-		g_RigidVertMgr.DrawDList( Inst.hDList, Inst.Data.Rigid.pL2W, NULL );
+        g_RigidVertMgr.DrawDList( Inst.hDList, Inst.Data.Rigid.pL2W, NULL );
         //pc_SetWireframe( FALSE );
     }
     
@@ -321,7 +322,7 @@ void platform_RenderSkinInstance( render_instance& Inst )
        // pc_SetBackFaceCulling( FALSE );
 
         // Render transparent geometry        
-		g_SkinVertMgr.DrawDList( Inst.hDList, Inst.Data.Skin.pBones, (d3d_skin_lighting*)Inst.pLighting );
+        g_SkinVertMgr.DrawDList( Inst.hDList, Inst.Data.Skin.pBones, (d3d_skin_lighting*)Inst.pLighting );
     }
     else
     {
@@ -469,9 +470,32 @@ void platform_RenderRawStrips( s32               nVerts,
 
     // fill in the l2w...note we have to reset draw to do this
     // NOTE: DRAW_NO_ZWRITE because we don't need spoil the depth buffer
-    draw_Begin( DRAW_TRIANGLES, DRAW_TEXTURED | DRAW_USE_ALPHA | DRAW_CULL_NONE | DRAW_NO_ZWRITE );
+    draw_Begin( DRAW_TRIANGLES, DRAW_TEXTURED | DRAW_CULL_NONE | DRAW_NO_ZWRITE );
     draw_SetTexture( *s_pDrawBitmap );
     draw_SetL2W( L2W );
+
+    // GS: Probably hack ? 
+    // Currently, render states need to be placed AFTER draw_Begin, 
+    // otherwise they will be overwritten by internal draw_Begin states. 
+    // Maybe it makes sense to add a flag for custom render states ?
+    
+    // Setup render states
+    switch( s_BlendMode )
+    {
+        case render::BLEND_MODE_ADDITIVE:
+            state_SetState( STATE_TYPE_BLEND, STATE_BLEND_ADD );
+            break;
+        case render::BLEND_MODE_SUBTRACTIVE:
+            state_SetState( STATE_TYPE_BLEND, STATE_BLEND_SUB );
+            break;
+        case render::BLEND_MODE_INTENSITY:
+            state_SetState( STATE_TYPE_BLEND, STATE_BLEND_MULTIPLY );
+            break;
+        case render::BLEND_MODE_NORMAL:
+        default:
+            state_SetState( STATE_TYPE_BLEND, STATE_BLEND_ALPHA );
+            break;
+    }
 
     // prime the loop by grabbing the data for the first two verts
     xcolor  C0( pColor[0]&0xff, (pColor[0]&0xff00)>>8, (pColor[0]&0xff0000)>>16, (pColor[0]&0xff000000)>>24 );
@@ -480,14 +504,6 @@ void platform_RenderRawStrips( s32               nVerts,
     vector2 UV1( pUV[2] * ItoFScale, pUV[3] * ItoFScale );
     vector3 Pos0( pPos[0].GetX(), pPos[0].GetY(), pPos[0].GetZ() );
     vector3 Pos1( pPos[1].GetX(), pPos[1].GetY(), pPos[1].GetZ() );
-    C0.R = (C0.R==0x80) ? 255 : (C0.R<<1);
-    C0.G = (C0.G==0x80) ? 255 : (C0.G<<1);
-    C0.B = (C0.B==0x80) ? 255 : (C0.B<<1);
-    C0.A = (C0.A==0x80) ? 255 : (C0.A<<1);
-    C1.R = (C1.R==0x80) ? 255 : (C1.R<<1);
-    C1.G = (C1.G==0x80) ? 255 : (C1.G<<1);
-    C1.B = (C1.B==0x80) ? 255 : (C1.B<<1);
-    C1.A = (C1.A==0x80) ? 255 : (C1.A<<1);
 
     // Now render the raw strips. Having 0x8000 in the w component means don't
     // kick this triangle. (Just like the ADC bit on the PS2.)
@@ -498,10 +514,6 @@ void platform_RenderRawStrips( s32               nVerts,
         xcolor  C2( pColor[i]&0xff, (pColor[i]&0xff00)>>8, (pColor[i]&0xff0000)>>16, (pColor[i]&0xff000000)>>24 );
         vector2 UV2( pUV[i*2+0] * ItoFScale, pUV[i*2+1] * ItoFScale );
         vector3 Pos2( pPos[i].GetX(), pPos[i].GetY(), pPos[i].GetZ() );
-        C2.R = (C2.R==0x80) ? 255 : (C2.R<<1);
-        C2.G = (C2.G==0x80) ? 255 : (C2.G<<1);
-        C2.B = (C2.B==0x80) ? 255 : (C2.B<<1);
-        C2.A = (C2.A==0x80) ? 255 : (C2.A<<1);
 
         // kick the triangle
         if( (pPos[i].GetIW() & 0x8000) != 0x8000 )
@@ -534,7 +546,7 @@ void platform_Render3dSprites( s32               nSprites,
     ASSERTS( s_pDrawBitmap, "You must set a material first!" );
     if( nSprites == 0 )
         return;
-	
+    
     const rtarget* pGBufferDepth = g_GBufferMgr.GetGBufferTarget( GBUFFER_DEPTH );
     const rtarget* pBackBuffer = rtarget_GetBackBuffer();
     
@@ -709,10 +721,11 @@ void platform_RenderVelocitySprites( s32            nSprites,
 static
 void platform_SetDiffuseMaterial( const xbitmap& Bitmap, s32 BlendMode, xbool ZTestEnabled )
 {
-	g_MaterialMgr.SetBitmap( &Bitmap, TEXTURE_SLOT_DIFFUSE );
+    g_MaterialMgr.SetBitmap( &Bitmap, TEXTURE_SLOT_DIFFUSE );
     //g_MaterialMgr.SetBlendMode( BlendMode );
     
     s_pDrawBitmap = &Bitmap;
+    s_BlendMode = BlendMode;
     
     // TODO: Handle ZTestEnabled through MaterialMgr
     (void)ZTestEnabled;
@@ -723,7 +736,7 @@ void platform_SetDiffuseMaterial( const xbitmap& Bitmap, s32 BlendMode, xbool ZT
 static
 void platform_SetGlowMaterial( const xbitmap& Bitmap, s32 BlendMode, xbool ZTestEnabled )
 {
-	g_MaterialMgr.SetBitmap( &Bitmap, TEXTURE_SLOT_DIFFUSE );
+    g_MaterialMgr.SetBitmap( &Bitmap, TEXTURE_SLOT_DIFFUSE );
     //g_MaterialMgr.SetBlendMode( BlendMode );
     
     // TODO: Set glow-specific parameters
@@ -735,7 +748,7 @@ void platform_SetGlowMaterial( const xbitmap& Bitmap, s32 BlendMode, xbool ZTest
 static
 void platform_SetEnvMapMaterial( const xbitmap& Bitmap, s32 BlendMode, xbool ZTestEnabled )
 {
-	g_MaterialMgr.SetBitmap( &Bitmap, TEXTURE_SLOT_DIFFUSE );
+    g_MaterialMgr.SetBitmap( &Bitmap, TEXTURE_SLOT_DIFFUSE );
     //g_MaterialMgr.SetBlendMode( BlendMode );
     
     // TODO: Set environment mapping parameters
@@ -980,7 +993,7 @@ void platform_SetCustomFogPalette( const texture::handle& Texture, xbool Immedia
 static
 xcolor platform_GetFogValue( const vector3& WorldPos, s32 PaletteIndex )
 {
-	return g_PostMgr.GetFogValue( WorldPos, PaletteIndex );
+    return g_PostMgr.GetFogValue( WorldPos, PaletteIndex );
 }
 
 //=============================================================================
@@ -1044,7 +1057,7 @@ void platform_MipFilter( s32                        nFilters,
                          f32                        Param2,
                          s32                        PaletteIndex )
 {
-	g_PostMgr.MipFilter( nFilters, Offset, Fn, Color, Param1, Param2, PaletteIndex );
+    g_PostMgr.MipFilter( nFilters, Offset, Fn, Color, Param1, Param2, PaletteIndex );
 }
 
 //=============================================================================
