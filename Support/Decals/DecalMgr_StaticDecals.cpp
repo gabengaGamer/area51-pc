@@ -28,7 +28,7 @@ static const s32    kRegInfoGrowAmount  = 256;
 // Static data used in the export process
 //==============================================================================
 
-#ifdef TARGET_PC
+#ifdef X_EDITOR
 struct export_decal
 {
     char                    PackageName[256];
@@ -139,7 +139,7 @@ void decal_mgr::static_data::FileIO( fileio& File )
 // Implementation
 //==============================================================================
 
-#ifdef TARGET_PC
+#ifdef X_EDITOR
 void decal_mgr::registration_info::GrowStaticVertListBy( s32 nVerts )
 {
     s32 AllocSize = GetAllocSize( m_nStaticVertsAlloced + nVerts );
@@ -772,7 +772,7 @@ void decal_mgr::EndStaticDecalExport( platform PlatformType )
     s_lDecalExportList.Clear();
 }
 
-#endif // TARGET_PC
+#endif // X_EDITOR
 
 //==============================================================================
 
@@ -845,7 +845,7 @@ void decal_mgr::UnloadStaticDecals( void )
 
 //==============================================================================
 
-#ifdef TARGET_PC
+#ifdef X_EDITOR
 void decal_mgr::RenderEditorStatics( registration_info& RegInfo, u32 DrawFlags )
 {
     //======================================================================
@@ -908,7 +908,7 @@ void decal_mgr::RenderEditorStatics( registration_info& RegInfo, u32 DrawFlags )
 
 void decal_mgr::RenderStaticDecals( registration_info& RegInfo )
 {
-#ifdef TARGET_PC
+#ifdef X_EDITOR
     // figure out the blend mode
     u32 DrawFlags = DRAW_USE_ALPHA | DRAW_NO_ZWRITE | DRAW_TEXTURED | DRAW_UV_CLAMP;
     switch ( RegInfo.m_BlendMode )

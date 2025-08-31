@@ -24,10 +24,6 @@
 #include "e_draw.hpp"
 #include "e_ScratchMem.hpp"
 
-#ifdef TARGET_PS2
-#include "ps2\ps2_dlist.hpp"
-#endif
-
 //==============================================================================
 // Typedefs
 //==============================================================================
@@ -93,13 +89,13 @@ decal_mgr::registration_info::registration_info( void ) :
     m_Flags             ( 0 ),
     m_FadeoutTime       ( 1.5f ),
     m_Color             ( 255, 255, 255 ),
-    #ifdef TARGET_PC
+#ifdef X_EDITOR
     m_nStaticVertsAlloced   ( 0 ),
     m_nStaticVerts          ( 0 ),
     m_pStaticPositions      ( NULL ),
     m_pStaticUVs            ( NULL ),
     m_pStaticColors         ( NULL ),
-    #endif
+#endif
     m_StaticDataOffset  ( -1 )
 {
     ForceDecalLoaderLink();
@@ -118,9 +114,6 @@ void decal_mgr::registration_info::Kill( void )
 {
     if ( m_nVertsAllocated )
     {
-#ifdef TARGET_PS2
-        *((u32*)&m_pPositions) &= ~PS2_UNCACHED_MEM;
-#endif
         x_free( m_pPositions );
     }
     m_nVertsAllocated = 0;
@@ -131,8 +124,7 @@ void decal_mgr::registration_info::Kill( void )
     m_pUVs            = NULL;
     m_pColors         = NULL;
     m_pElapsedTimes   = NULL;
-
-#ifdef TARGET_PC
+#ifdef X_EDITOR
     if ( m_nStaticVertsAlloced )
     {
         x_free( m_pStaticPositions );
@@ -143,7 +135,6 @@ void decal_mgr::registration_info::Kill( void )
     m_pStaticUVs          = NULL;
     m_pStaticColors       = NULL;
 #endif
-
     m_BlendMode        = decal_definition::DECAL_BLEND_ADD;
     m_Flags            = 0;
     m_FadeoutTime      = 1.5f;
@@ -190,27 +181,13 @@ void decal_mgr::registration_info::AllocVertList( s32 nVerts )
         }
         ASSERT( pAllocAddress == ((byte*)m_pPositions)+AllocSize );
 
-        #ifdef TARGET_PC
+        #ifdef X_EDITOR
         GrowStaticVertListBy( nVerts );
         #endif
 
         m_Start           = 0;
         m_End             = 0;
         m_Blank           = 0;
-
-        #ifdef TARGET_PS2
-        // if we're on the ps2, use uncached access so that we won't have to worry
-        // about corrupting dma's (there's a few other safety measures scattered
-        // elsewhere since we're not doing a proper double-buffer for memory
-        // reasons)
-        *((u32*)&m_pPositions) |= PS2_UNCACHED_MEM;
-        *((u32*)&m_pUVs)       |= PS2_UNCACHED_MEM;
-        *((u32*)&m_pColors)    |= PS2_UNCACHED_MEM;
-        if( m_Flags & decal_definition::DECAL_FLAG_FADE_OUT )
-        {
-            *((u32*)&m_pElapsedTimes) |= PS2_UNCACHED_MEM;
-        }
-        #endif
     }
     else
     {
@@ -473,11 +450,11 @@ void  decal_mgr::CreateBulletHole( const decal_definition& Def,
             u32*            pColor = &RegInfo.m_pColors[iDecalStart];
             f32*            pTime  = (RegInfo.m_Flags & decal_definition::DECAL_FLAG_FADE_OUT) ? &RegInfo.m_pElapsedTimes[iDecalStart] : NULL;
 
-            #if defined TARGET_PS2 || defined TARGET_XBOX
-            u32 Color = (RegInfo.m_Color.R<< 0) | (RegInfo.m_Color.G<< 8) |
-                        (RegInfo.m_Color.B<<16) | (RegInfo.m_Color.A<<24);
-            #else
+            #ifdef X_EDITOR
             u32 Color = RegInfo.m_Color;
+            #else
+		    u32 Color = (RegInfo.m_Color.R<< 0) | (RegInfo.m_Color.G<< 8) |
+                        (RegInfo.m_Color.B<<16) | (RegInfo.m_Color.A<<24);
             #endif
 
             pPos[0].Pos     = Pos[0];
@@ -548,12 +525,6 @@ xhandle decal_mgr::RegisterDefinition( decal_definition& Def )
     RegInfo.m_BlendMode = Def.m_BlendMode;
     RegInfo.m_Flags     = Def.m_Flags;
     RegInfo.m_Color     = Def.m_Color;
-    #ifdef TARGET_PS2
-    RegInfo.m_Color.R   = (u8)(128.0f*(f32)(Def.m_Color.R/255.0f));
-    RegInfo.m_Color.G   = (u8)(128.0f*(f32)(Def.m_Color.G/255.0f));
-    RegInfo.m_Color.B   = (u8)(128.0f*(f32)(Def.m_Color.B/255.0f));
-    RegInfo.m_Color.A   = 0x80;
-    #endif
     RegInfo.m_FadeoutTime = Def.m_FadeTime;
 
     // No paths allowed!
@@ -987,7 +958,7 @@ void decal_mgr::CalcDecalVertsFromVolume( const bbox&    WorldBBox,
     WD.nVerts = 0;
 
     // collect all of the rigid surface triangles we could possibly clip against
-    #ifdef TARGET_PC
+    #ifdef X_EDITOR
 
     // for the editor, we need to walk the play surface objects
     g_ObjMgr.SelectBBox( object::ATTR_COLLIDABLE, WorldBBox, object::TYPE_PLAY_SURFACE );
@@ -1741,13 +1712,7 @@ xbool decal_mgr::GetCoplanarPolyVerts( working_data& WD )
         }
 
         if ( WD.nCoplanarPolyVerts < 3 )
-        {
-            // Not sure what causes this...probably some rounding errors in
-            // the clipping led to some weird things.
-            #ifdef dstewart
-            //ASSERT( FALSE );
-            #endif
-            
+        {            
             return FALSE;
         }
 
@@ -1919,10 +1884,6 @@ xbool decal_mgr::IsAnEar( working_data&     WorkingData,
             
             if ( ++SafetyCount >= 200 )
             {
-                #ifdef dstewart
-                ASSERTS( FALSE, "Internal decal error." );
-                #endif
-                
                 break;
             }
 
@@ -2024,78 +1985,6 @@ xbool decal_mgr::IsConvex( working_data&     WD,
 void decal_mgr::Triangulate( working_data&  WD,
                              const plane&   PolyPlane )
 {
-    // The basic idea for this triangulation algorithm comes from
-    // "The Graham Scan Triangulates Simple Polygons" by Xianshu Kong,
-    // Hazel Everett, and Godfried Toussaint. The paper is available here:
-    // http://citeseer.nj.nec.com/kong91graham.html. Beyond the paper the
-    // algorithm is extended to create strips. It does this in a very simplistic
-    // way that should handle the convex cases perfectly, and the concave cases
-    // it will probably do a pretty good job, although I'm sure it could be done
-    // better.
-
-    // Here is how the algorithm works:
-    // Start with a list of points in clockwise order. Then let an ear be defined
-    // as a triangle that does not enclose or use any convex points. Then if we
-    // pick a starting point, work our way around the polygon cutting ears (which
-    // will remove vertices from further consideration) until we are done. Check
-    // out this example:
-    //
-    //    1 ________2  5__6
-    //     |        |  |  |
-    //     | 10__9  |  |  |
-    //     |  |  |  |  |  |
-    //     |  |  |  |3_|4 |
-    //     |  |  |        |
-    //    0|__|  |8_______|7
-    //        11   
-    //
-    // Start with vertex 2. (1,2,3) does not form an ear because 9 is in the middle.
-    // Vertices 3 and 4 can't be ears because they are concave. Vertex 5 forms our
-    // first ear, so we cut it out by creating a triangle with (4,5,6). Now repeat
-    // the test starting with vertex 4. It's still concave so we move to 6 and can
-    // cut it, forming a triangle 4,6,7. Again we try with vertex 4, and this time
-    // we can cut it using the triangle 3,4,7. Because we cut vertex 4, backup to
-    // vertex 3 and try some more. Can't cut 3, so we move to 7, which can be cut
-    // forming the triangle 3,7,8. Then we can cut 3 and get 2,3,8. We can't cut
-    // 2, but can cut 8, forming 2,8,9. Now we can cut 2 and get 1,2,9. We can't
-    // cut 1, but we can cut 9 and get 1,9,10. Now we can cut 1 and get 0,1,10.
-    // We're left with just a triangle 10,0,11 now.
-    //
-    // So the order vertices get cut is: 5,6,4,7,3,8,2,9,1,10
-    // which will form the triangles (4,5,6), (4,6,7), (3,4,7), (3,7,8), (2,3,8),
-    // (2,8,9), (1,2,9), (1,9,10), (0,1,10), and (11,0,10).
-    //
-    // Now the super-simple stripping approach...notice that each of the triangles
-    // has a common edge as we work our way around? Start the strip off by rotating
-    // the triangle CW triangle's start index one slot, so (4,5,6) becomes (5,6,4).
-    // When we get to the next triangle find a rotation that uses the last two verts
-    // of the previous triangle and reverse them (because every other triangle is
-    // CCW), so our strip is now (5,6,4),(6,4,7). Again find the rotation that
-    // will work and we get (4,7,3), then (7,3,8). Repeat ad nauseum, and our final
-    // strip will look like (5,6,4,7,3,8,2,9,1,10,0,11)
-
-    // The original algorithm (sans stripping) taken directly from the paper
-    // mentioned above:
-    //
-    // Let P be the set of all points (stored as a doubly-linked list in the paper).
-    // Then SUCC(Pi) is the next clockwise point from Pi, and PRED(Pi) is the prev
-    // clockwise point from Pi. The set D is all diagonals created by chopping off
-    // ears. R is the set of concave vertices of P.
-    //   
-    // i = 2;
-    // while ( i != 0 )
-    //   if ( IsAnEar(P,R,PRED(i)) and P is not a triangle )    // PRED(i) is an ear
-    //     D = D union (PRED(PRED(i)), i)                       // store the diagonal
-    //     P = P - PRED(i)                                      // cut the ear
-    //     if ( (Pi is in R) && (Pi is convex) )                // the chop made Pi convex
-    //       R = R - Pi                                         // remove Pi from the concave list
-    //     if ( (PRED(i) is in R) && (PRED(i) is convex) )      // the chop made PRED(i) convex
-    //       R = R - PRED(Pi)                                   // remove PRED(i) from the concave list
-    //     if ( PRED(i) == 0 )                                  // SUCC(0) was cut
-    //       i = SUCC(i)                                        // advance the scan
-    //   else                                                   // PRED(i) is not an ear (or it's a tri)
-    //     i = SUCC(i)                                          // advance the scan
-
     // build the initial set of verts to be triangulated
     triangulate_link   VertPool[MAX_VERTS_PER_DECAL];
     s32                PoolStart    = 0;
@@ -2259,22 +2148,6 @@ void decal_mgr::Triangulate( working_data&  WD,
 void decal_mgr::CombineCoplanarPolys( working_data& WD )
 {
     CONTEXT( "decal_mgr::CombineCoplanarPolys" );
-
-    // Description of the algorithm we're about to use...the algorithm was
-    // chosen from a paper on the net, and should do pretty well, and may even
-    // be fast enough to use at run-time. For reference, the paper this is
-    // loosely based on is "Geometric Optimization" by Paul Hinker and Charles
-    // Hansen, published in 1993.
-    // (http://www.ccs.lanl.gov/ccs1/projects/Viz/pdfs/93-vis.pdf)
-
-    // the algorithm is this:
-    // 1) construct coplanar polygon sets
-    // 2) create segment list and sort it
-    // 3) nuke internal/duplicate segments
-    // 4) *optional* delete co-linear vertices
-    // 5) re-create polygons
-    // 6) detect polygon holes and cut them out again
-    // 7) triangulate new polygons
 
     // build a list of unique vertices, and a way to remap them
     CreateIndexedVertPool( WD );
@@ -2593,13 +2466,13 @@ void decal_mgr::AddDecal( xhandle                 RegInfoHandle,
             RegInfo.m_pPositions[DecalStart+i].Pos   = L2W * DecalVerts[i].Pos;
             RegInfo.m_pUVs[DecalStart+i].U           = (s16)(DecalVerts[i].UV.X*4096.0f);
             RegInfo.m_pUVs[DecalStart+i].V           = (s16)(DecalVerts[i].UV.Y*4096.0f);
-            #if defined TARGET_PS2 || defined TARGET_XBOX
+            #ifdef X_EDITOR
+			RegInfo.m_pColors[DecalStart+i]          = RegInfo.m_Color;
+            #else
             RegInfo.m_pColors[DecalStart+i]          = (RegInfo.m_Color.R<<0)  +
                                                        (RegInfo.m_Color.G<<8)  +
                                                        (RegInfo.m_Color.B<<16) +
                                                        (RegInfo.m_Color.A<<24);
-            #else
-            RegInfo.m_pColors[DecalStart+i]          = RegInfo.m_Color;
             #endif
             if( RegInfo.m_Flags & decal_definition::DECAL_FLAG_FADE_OUT )
             {
@@ -2646,19 +2519,7 @@ void decal_mgr::AddClippedToQueue( const decal_definition& DecalDef,
 
 void decal_mgr::RenderVerts( s32 nVerts, position_data* pPos, uv_data* pUV, u32* pColor )
 {
-#ifdef TARGET_PS2
-    render::RenderRawStrips( nVerts,
-                             s_IdentityL2W,
-                             (vector4*)((u32)pPos & 0x0fffffff),    // because we've used uncached access
-                             (s16*)((u32)pUV & 0x0fffffff),         // because we've used uncached access
-                             (u32*)((u32)pColor & 0x0fffffff) );    // because we've used uncached access
-#elif defined(TARGET_XBOX)
-    render::RenderRawStrips( nVerts,
-        s_IdentityL2W,
-        (vector4*)pPos,
-        (s16*)pUV,
-        pColor );
-#else
+#ifdef X_EDITOR
     static const f32 ItoFScale = 1.0f/4096.0f;
     
     xbool WindingCW = TRUE;
@@ -2705,6 +2566,12 @@ void decal_mgr::RenderVerts( s32 nVerts, position_data* pPos, uv_data* pUV, u32*
 
         WindingCW = !WindingCW;
     }
+#else
+    render::RenderRawStrips( nVerts,
+        s_IdentityL2W,
+        (vector4*)pPos,
+        (s16*)pUV,
+        pColor );	
 #endif
 }
 
@@ -2792,7 +2659,7 @@ void decal_mgr::OnRender( void )
     }
     eng_SetView( DecalView );
 
-#ifndef TARGET_PC
+#ifndef X_EDITOR
     render::StartRawDataMode();
 #endif
 
@@ -2803,7 +2670,7 @@ void decal_mgr::OnRender( void )
 
         // if this definition doesn't have any decals, just skip over it
         if ( (RegInfo.m_Blank == 0) &&
-#ifdef TARGET_PC
+#ifdef X_EDITOR
              (RegInfo.m_nStaticVerts == 0) &&
 #endif
              (RegInfo.m_StaticDataOffset == -1) )
@@ -2815,7 +2682,7 @@ void decal_mgr::OnRender( void )
             continue;
 
         // draw the decals
-#ifdef TARGET_PC
+#ifdef X_EDITOR
         // set up the texture and l2w
         draw_SetTexture( pTexture->m_Bitmap );
         draw_ClearL2W();
@@ -2865,12 +2732,12 @@ void decal_mgr::OnRender( void )
         RenderDynamicDecals( RegInfo );
         RenderStaticDecals( RegInfo );
 
-#ifdef TARGET_PC
+#ifdef X_EDITOR
         draw_End();
 #endif
     }
 
-#ifndef TARGET_PC
+#ifndef X_EDITOR
     render::EndRawDataMode();
 #endif
 
@@ -2890,13 +2757,8 @@ void decal_mgr::UpdateAlphaFade( f32 DeltaTime, f32 FadeTime, s32 nVerts, u32* p
         f32 T = 1.0f - (pTimeElapsed[i] / FadeTime);
         T = MIN( T, 1.0f );
         T = MAX( T, 0.0f );
-#ifdef TARGET_PS2
-        pColor[i] &= 0x00ffffff;
-        pColor[i] |= ((u8)(T*128.0f) << 24);
-#else
         pColor[i] &= 0x00ffffff;
         pColor[i] |= ((u8)(T*255.0f) << 24);
-#endif
     }
 }
 

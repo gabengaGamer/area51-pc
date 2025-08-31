@@ -374,7 +374,7 @@ protected:
         f32                 m_FadeoutTime;
         xcolor              m_Color;
 
-        #ifdef TARGET_PC
+        #ifdef X_EDITOR
         s32                 m_nStaticVertsAlloced;
         s32                 m_nStaticVerts;
         position_data*      m_pStaticPositions;

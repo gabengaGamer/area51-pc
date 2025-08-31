@@ -478,8 +478,8 @@ void platform_RenderRawStrips( s32               nVerts,
     xcolor  C1( pColor[1]&0xff, (pColor[1]&0xff00)>>8, (pColor[1]&0xff0000)>>16, (pColor[1]&0xff000000)>>24 );
     vector2 UV0( pUV[0] * ItoFScale, pUV[1] * ItoFScale );
     vector2 UV1( pUV[2] * ItoFScale, pUV[3] * ItoFScale );
-    vector3 Pos0( pPos[0].GetX(), pPos[0].GetX(), pPos[0].GetZ() );
-    vector3 Pos1( pPos[1].GetX(), pPos[1].GetX(), pPos[1].GetZ() );
+    vector3 Pos0( pPos[0].GetX(), pPos[0].GetY(), pPos[0].GetZ() );
+    vector3 Pos1( pPos[1].GetX(), pPos[1].GetY(), pPos[1].GetZ() );
     C0.R = (C0.R==0x80) ? 255 : (C0.R<<1);
     C0.G = (C0.G==0x80) ? 255 : (C0.G<<1);
     C0.B = (C0.B==0x80) ? 255 : (C0.B<<1);
@@ -497,7 +497,7 @@ void platform_RenderRawStrips( s32               nVerts,
         // grab the next vert
         xcolor  C2( pColor[i]&0xff, (pColor[i]&0xff00)>>8, (pColor[i]&0xff0000)>>16, (pColor[i]&0xff000000)>>24 );
         vector2 UV2( pUV[i*2+0] * ItoFScale, pUV[i*2+1] * ItoFScale );
-        vector3 Pos2( pPos[i].GetX(), pPos[i].GetX(), pPos[i].GetZ() );
+        vector3 Pos2( pPos[i].GetX(), pPos[i].GetY(), pPos[i].GetZ() );
         C2.R = (C2.R==0x80) ? 255 : (C2.R<<1);
         C2.G = (C2.G==0x80) ? 255 : (C2.G<<1);
         C2.B = (C2.B==0x80) ? 255 : (C2.B<<1);
