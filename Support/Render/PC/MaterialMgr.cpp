@@ -23,6 +23,7 @@
 #include "MaterialMgr.hpp"
 #include "VertexMgr.hpp"
 #include "SoftVertexMgr.hpp"
+#include "../Render.hpp"
 
 //==============================================================================
 //  EXTERNAL VARIABLES
@@ -63,7 +64,7 @@ void material_mgr::Init( void )
     m_CurrentMaterialType   = MATERIAL_TYPE_COUNT;
     m_pCurrentTexture       = NULL;
     m_pCurrentDetailTexture = NULL;
-    m_CurrentBlendMode      = BLEND_MODE_NORMAL;
+    m_CurrentBlendMode      = render::BLEND_MODE_NORMAL;
     
     m_bRigidMatricesDirty   = TRUE;
     m_bSkinConstsDirty      = TRUE;
@@ -446,7 +447,11 @@ void material_mgr::ActivateRigidShader( void )
     g_pd3dContext->VSSetShader( m_pRigidVertexShader, NULL, 0 );
     g_pd3dContext->PSSetShader( m_pRigidPixelShader, NULL, 0 );
 
-    SetRenderStates();
+    state_SetState( STATE_TYPE_BLEND, STATE_BLEND_NONE );
+    state_SetState( STATE_TYPE_DEPTH, STATE_DEPTH_NORMAL ); 
+    state_SetState( STATE_TYPE_RASTERIZER, STATE_RASTER_SOLID );
+    state_SetState( STATE_TYPE_SAMPLER, STATE_SAMPLER_LINEAR_WRAP );
+    g_pd3dContext->IASetPrimitiveTopology( D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST );
 }
 
 //==============================================================================
@@ -463,41 +468,10 @@ void material_mgr::ActivateSkinShader( void )
     g_pd3dContext->VSSetShader( m_pSkinVertexShader, NULL, 0 );
     g_pd3dContext->PSSetShader( m_pSkinPixelShader, NULL, 0 );
 
-    SetRenderStates();
-}
-
-//==============================================================================
-
-void material_mgr::SetRenderStates( void )
-{
-    if( !g_pd3dDevice || !g_pd3dContext )
-        return;
-
-    // Set blend mode based on current setting
-    switch( m_CurrentBlendMode )
-    {
-        case BLEND_MODE_NORMAL:
-            state_SetState( STATE_TYPE_BLEND, STATE_BLEND_NONE );
-            break;
-        case BLEND_MODE_ADDITIVE:
-            state_SetState( STATE_TYPE_BLEND, STATE_BLEND_ADD );
-            break;
-        case BLEND_MODE_SUBTRACTIVE:
-            state_SetState( STATE_TYPE_BLEND, STATE_BLEND_SUB );
-            break;
-        case BLEND_MODE_ALPHA_BLEND:
-            state_SetState( STATE_TYPE_BLEND, STATE_BLEND_ALPHA );
-            break;
-        default:
-            state_SetState( STATE_TYPE_BLEND, STATE_BLEND_NONE );
-            break;
-    }
-
-    state_SetState( STATE_TYPE_RASTERIZER, STATE_RASTER_SOLID );  // Note: uses CULL_FRONT by default
-    state_SetState( STATE_TYPE_DEPTH, STATE_DEPTH_NORMAL );
+    state_SetState( STATE_TYPE_BLEND, STATE_BLEND_NONE );
+    state_SetState( STATE_TYPE_DEPTH, STATE_DEPTH_NORMAL ); 
+    state_SetState( STATE_TYPE_RASTERIZER, STATE_RASTER_SOLID );
     state_SetState( STATE_TYPE_SAMPLER, STATE_SAMPLER_LINEAR_WRAP );
-
-    // Set primitive topology
     g_pd3dContext->IASetPrimitiveTopology( D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST );
 }
 
@@ -549,29 +523,32 @@ void material_mgr::SetBitmap( const xbitmap* pBitmap, texture_slot slot )
 
 //==============================================================================
 
-void material_mgr::SetBlendMode( blend_mode BlendMode )
+void material_mgr::SetBlendMode( s32 BlendMode )
 {
     if( m_CurrentBlendMode == BlendMode )
         return;
 
     m_CurrentBlendMode = BlendMode;
 
+    if( !g_pd3dContext )
+        return;
+
     // Update blend state immediately if we have active shaders
-    if( m_CurrentMaterialType != MATERIAL_TYPE_COUNT && g_pd3dContext )
+    if( m_CurrentMaterialType != MATERIAL_TYPE_COUNT )
     {
         switch( BlendMode )
         {
-            case BLEND_MODE_NORMAL:
+            case render::BLEND_MODE_NORMAL:
                 state_SetState( STATE_TYPE_BLEND, STATE_BLEND_NONE );
                 break;
-            case BLEND_MODE_ADDITIVE:
+            case render::BLEND_MODE_ADDITIVE:
                 state_SetState( STATE_TYPE_BLEND, STATE_BLEND_ADD );
                 break;
-            case BLEND_MODE_SUBTRACTIVE:
+            case render::BLEND_MODE_SUBTRACTIVE:
                 state_SetState( STATE_TYPE_BLEND, STATE_BLEND_SUB );
                 break;
-            case BLEND_MODE_ALPHA_BLEND:
-                state_SetState( STATE_TYPE_BLEND, STATE_BLEND_ALPHA );
+            case render::BLEND_MODE_INTENSITY:
+                state_SetState( STATE_TYPE_BLEND, STATE_BLEND_INTENSITY );
                 break;
             default:
                 state_SetState( STATE_TYPE_BLEND, STATE_BLEND_NONE );
@@ -582,27 +559,31 @@ void material_mgr::SetBlendMode( blend_mode BlendMode )
 
 //==============================================================================
 
+void material_mgr::SetDepthTestEnabled( xbool ZTestEnabled )
+{
+    if( !g_pd3dContext )
+        return;
+        
+    if( !ZTestEnabled )
+    {
+        state_SetState( STATE_TYPE_DEPTH, STATE_DEPTH_DISABLED );
+    }
+    else
+    {
+        state_SetState( STATE_TYPE_DEPTH, STATE_DEPTH_NO_WRITE );
+    }
+}
+
+//==============================================================================
+
 void material_mgr::InvalidateCache( void )
 {
     m_CurrentMaterialType = MATERIAL_TYPE_COUNT;
     m_pCurrentTexture = NULL;
     m_pCurrentDetailTexture = NULL;
-    m_CurrentBlendMode = BLEND_MODE_NORMAL;
+    m_CurrentBlendMode = render::BLEND_MODE_NORMAL;
     m_bRigidMatricesDirty = TRUE;
     m_bSkinConstsDirty = TRUE;
-}
-
-//==============================================================================
-
-void material_mgr::ClearRenderStates( void )
-{
-    if( !g_pd3dContext )
-        return;
-
-    // Reset to default states
-    state_SetState( STATE_TYPE_BLEND, STATE_BLEND_ALPHA );
-    state_SetState( STATE_TYPE_RASTERIZER, STATE_RASTER_SOLID );
-    state_SetState( STATE_TYPE_DEPTH, STATE_DEPTH_NORMAL );
 }
 
 //==============================================================================

@@ -72,8 +72,9 @@ const char* state_GetModeName( state_type Type, s32 Mode )
         {
             static const char* s_BlendModeNames[STATE_BLEND_COUNT] = 
             {
-                "NONE", "ALPHA", "ADD", "SUB", "PREMULT_ALPHA", "PREMULT_ADD", "PREMULT_SUB"
+                "NONE", "ALPHA", "ADD", "SUB", "PREMULT_ALPHA", "PREMULT_ADD", "PREMULT_SUB", "MULTIPLY", "INTENSITY"
             };
+            ASSERT(Mode >= 0 && Mode < STATE_BLEND_COUNT);
             return (Mode < STATE_BLEND_COUNT) ? s_BlendModeNames[Mode] : "UNKNOWN";
         }
         
@@ -83,6 +84,7 @@ const char* state_GetModeName( state_type Type, s32 Mode )
             {
                 "SOLID", "WIRE", "SOLID_NO_CULL", "WIRE_NO_CULL"
             };
+            ASSERT(Mode >= 0 && Mode < STATE_RASTER_COUNT);
             return (Mode < STATE_RASTER_COUNT) ? s_RasterModeNames[Mode] : "UNKNOWN";
         }
         
@@ -92,6 +94,7 @@ const char* state_GetModeName( state_type Type, s32 Mode )
             {
                 "NORMAL", "NO_WRITE", "DISABLED", "DISABLED_NO_WRITE"
             };
+            ASSERT(Mode >= 0 && Mode < STATE_DEPTH_COUNT);
             return (Mode < STATE_DEPTH_COUNT) ? s_DepthModeNames[Mode] : "UNKNOWN";
         }
         
@@ -101,29 +104,31 @@ const char* state_GetModeName( state_type Type, s32 Mode )
             {
                 "LINEAR_WRAP", "LINEAR_CLAMP", "POINT_WRAP", "POINT_CLAMP"
             };
+            ASSERT(Mode >= 0 && Mode < STATE_SAMPLER_COUNT);
             return (Mode < STATE_SAMPLER_COUNT) ? s_SamplerModeNames[Mode] : "UNKNOWN";
         }
         
         default:
+            ASSERT(FALSE);
             return "UNKNOWN";
     }
 }
 
 //==============================================================================
-//  BLEND STATE CREATION
+//  STATE CREATION
 //==============================================================================
 
+//------------------------------------------------------------------------------------
 // NOTE: GS: Yes, I know that in fact in many places of states i duplicate settings, 
-// however I would rather spend a couple of lines, but at least avoid possible state leakage.
+// however I would rather spend a couple of lines, 
+// but at least avoid possible state leakage.
+//------------------------------------------------------------------------------------
 
 static 
 void state_CreateBlendStates( void )
 {
-    if( !g_pd3dDevice )
-    {
-        x_DebugMsg( "StateMgr: No D3D device available for blend state creation\n" );
+	if( !g_pd3dDevice )
         return;
-    }
 
     D3D11_BLEND_DESC bd;
     
@@ -239,24 +244,30 @@ void state_CreateBlendStates( void )
     bd.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
     g_pd3dDevice->CreateBlendState( &bd, &s_pBlendStates[STATE_BLEND_MULTIPLY] );
 
-    x_DebugMsg( "StateMgr: Blend states created successfully\n" );
+    // Intensity blending - uses source alpha to modulate destination color
+    ZeroMemory( &bd, sizeof(bd) );
+    bd.AlphaToCoverageEnable = FALSE;
+    bd.IndependentBlendEnable = FALSE;
+    bd.RenderTarget[0].BlendEnable = TRUE;
+    bd.RenderTarget[0].SrcBlend = D3D11_BLEND_ZERO;
+    bd.RenderTarget[0].DestBlend = D3D11_BLEND_SRC_ALPHA;
+    bd.RenderTarget[0].BlendOp = D3D11_BLEND_OP_ADD;
+    bd.RenderTarget[0].SrcBlendAlpha = D3D11_BLEND_ZERO;
+    bd.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_SRC_ALPHA;
+    bd.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_ADD;
+    bd.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
+    g_pd3dDevice->CreateBlendState( &bd, &s_pBlendStates[STATE_BLEND_INTENSITY] );
+
+    x_DebugMsg( "RStateMgr: Blend states created successfully\n" );
 }
 
 //==============================================================================
-//  STATE CREATION
-//==============================================================================
-
-// NOTE: GS: Yes, I know that in fact in many places of states i duplicate settings,
-// however I would rather spend a couple of lines, but at least avoid possible state leakage.
 
 static 
 void state_CreateRasterizerStates( void )
 {
-    if( !g_pd3dDevice )
-    {
-        x_DebugMsg( "StateMgr: No D3D device available for rasterizer state creation\n" );
+	if( !g_pd3dDevice )
         return;
-    }
 
     D3D11_RASTERIZER_DESC rd;
 
@@ -316,22 +327,16 @@ void state_CreateRasterizerStates( void )
     rd.AntialiasedLineEnable = FALSE;
     g_pd3dDevice->CreateRasterizerState( &rd, &s_pRasterStates[STATE_RASTER_WIRE_NO_CULL] );
 
-    x_DebugMsg( "StateMgr: Rasterizer states created successfully\n" );
+    x_DebugMsg( "RStateMgr: Rasterizer states created successfully\n" );
 }
 
 //==============================================================================
 
-// NOTE: GS: Yes, I know that in fact in many places of states i duplicate settings,
-// however I would rather spend a couple of lines, but at least avoid possible state leakage.
-
 static 
 void state_CreateDepthStencilStates( void )
 {
-    if( !g_pd3dDevice )
-    {
-        x_DebugMsg( "StateMgr: No D3D device available for depth stencil state creation\n" );
+	if( !g_pd3dDevice )
         return;
-    }
 
     D3D11_DEPTH_STENCIL_DESC dd;
     
@@ -367,22 +372,16 @@ void state_CreateDepthStencilStates( void )
 	dd.StencilEnable = FALSE;
     g_pd3dDevice->CreateDepthStencilState( &dd, &s_pDepthStates[STATE_DEPTH_DISABLED_NO_WRITE] );
 
-    x_DebugMsg( "StateMgr: Depth stencil states created successfully\n" );
+    x_DebugMsg( "RStateMgr: Depth stencil states created successfully\n" );
 }
 
 //==============================================================================
 
-// NOTE: GS: Yes, I know that in fact in many places of states i duplicate settings, 
-// however I would rather spend a couple of lines, but at least avoid possible state leakage.
-
 static 
 void state_CreateSamplerStates( void )
 {
-    if( !g_pd3dDevice )
-    {
-        x_DebugMsg( "StateMgr: No D3D device available for sampler state creation\n" );
+	if( !g_pd3dDevice )
         return;
-    }
 
     D3D11_SAMPLER_DESC sd;
     
@@ -430,7 +429,7 @@ void state_CreateSamplerStates( void )
     sd.AddressU = sd.AddressV = sd.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
     g_pd3dDevice->CreateSamplerState( &sd, &s_pSamplerStates[STATE_SAMPLER_POINT_CLAMP] );
 
-    x_DebugMsg( "StateMgr: Sampler states created successfully\n" );
+    x_DebugMsg( "RStateMgr: Sampler states created successfully\n" );
 }
 
 //==============================================================================
@@ -441,11 +440,12 @@ void state_Init( void )
 {
     if( s_StateCache.bInitialized )
     {
-        x_DebugMsg( "StateMgr: WARNING - Already initialized\n" );
+        x_DebugMsg( "RStateMgr: Already initialized\n" );
+		ASSERT(FALSE);
         return;
     }
 
-    x_DebugMsg( "StateMgr: Initializing render state management system\n" );
+    x_DebugMsg( "RStateMgr: Initializing render state management system\n" );
 
     // Clear all state pointers
     s32 i;
@@ -468,7 +468,7 @@ void state_Init( void )
     state_FlushCache();
     
     s_StateCache.bInitialized = TRUE;
-    x_DebugMsg( "StateMgr: Initialization complete\n" );
+    x_DebugMsg( "RStateMgr: Initialization complete\n" );
 }
 
 //==============================================================================
@@ -477,11 +477,12 @@ void state_Kill( void )
 {
     if( !s_StateCache.bInitialized )
     {
-        x_DebugMsg( "StateMgr: WARNING - Not initialized\n" );
+        x_DebugMsg( "RStateMgr: Not initialized\n" );
+		ASSERT(FALSE);
         return;
     }
 
-    x_DebugMsg( "StateMgr: Shutting down render state management system\n" );
+    x_DebugMsg( "RStateMgr: Shutting down render state management system\n" );
 
     // Release all blend states
     s32 i;
@@ -525,7 +526,7 @@ void state_Kill( void )
     }
 
     s_StateCache.bInitialized = FALSE;
-    x_DebugMsg( "StateMgr: Shutdown complete\n" );
+    x_DebugMsg( "RStateMgr: Shutdown complete\n" );
 }
 
 //==============================================================================
@@ -536,15 +537,13 @@ xbool state_SetState( state_type Type, s32 Mode )
 {
     if( !s_StateCache.bInitialized )
     {
-        x_DebugMsg( "StateMgr: ERROR - Not initialized\n" );
+        x_DebugMsg( "RStateMgr: Not initialized\n" );
+		ASSERT(FALSE);
         return FALSE;
     }
 
     if( !g_pd3dContext )
-    {
-        x_DebugMsg( "StateMgr: ERROR - No D3D context available\n" );
-        return FALSE;
-    }
+        return;
 
     switch( Type )
     {
@@ -552,7 +551,8 @@ xbool state_SetState( state_type Type, s32 Mode )
         {
             if( Mode >= STATE_BLEND_COUNT )
             {
-                x_DebugMsg( "StateMgr: ERROR - Invalid blend mode %d\n", Mode );
+                x_DebugMsg( "RStateMgr: Invalid blend mode %d\n", Mode );
+				ASSERT(FALSE);
                 return FALSE;
             }
 
@@ -562,7 +562,7 @@ xbool state_SetState( state_type Type, s32 Mode )
             if( s_StateCache.CurrentBlendMode == BlendMode )
             {
 				#ifdef STATE_VERBOSE_MODE
-                x_DebugMsg( "StateMgr: Blend %s CACHED\n", state_GetModeName(STATE_TYPE_BLEND, Mode) );
+                x_DebugMsg( "RStateMgr: Blend %s CACHED\n", state_GetModeName(STATE_TYPE_BLEND, Mode) );
 				#endif
                 return FALSE;
             }
@@ -570,7 +570,8 @@ xbool state_SetState( state_type Type, s32 Mode )
 
             if( !s_pBlendStates[Mode] )
             {
-                x_DebugMsg( "StateMgr: ERROR - Blend state %s not created\n", state_GetModeName(STATE_TYPE_BLEND, Mode) );
+                x_DebugMsg( "RStateMgr: Blend state %s not created\n", state_GetModeName(STATE_TYPE_BLEND, Mode) );
+				ASSERT(FALSE);
                 return FALSE;
             }
 
@@ -579,7 +580,7 @@ xbool state_SetState( state_type Type, s32 Mode )
             s_StateCache.CurrentBlendMode = BlendMode;
 
             #ifdef STATE_VERBOSE_MODE
-            x_DebugMsg( "StateMgr: Blend mode set to %s\n", state_GetModeName(STATE_TYPE_BLEND, Mode) );
+            x_DebugMsg( "RStateMgr: Blend mode set to %s\n", state_GetModeName(STATE_TYPE_BLEND, Mode) );
 			#endif
             return TRUE;
         }
@@ -588,7 +589,8 @@ xbool state_SetState( state_type Type, s32 Mode )
         {
             if( Mode >= STATE_RASTER_COUNT )
             {
-                x_DebugMsg( "StateMgr: ERROR - Invalid rasterizer mode %d\n", Mode );
+                x_DebugMsg( "RStateMgr: Invalid rasterizer mode %d\n", Mode );
+				ASSERT(FALSE);
                 return FALSE;
             }
 
@@ -598,14 +600,15 @@ xbool state_SetState( state_type Type, s32 Mode )
             if( s_StateCache.CurrentRasterMode == RasterMode )
             {
 				#ifdef STATE_VERBOSE_MODE
-                x_DebugMsg( "StateMgr: Rasterizer %s CACHED\n", state_GetModeName(STATE_TYPE_RASTERIZER, Mode) );
+                x_DebugMsg( "RStateMgr: Rasterizer %s CACHED\n", state_GetModeName(STATE_TYPE_RASTERIZER, Mode) );
 				#endif
                 return FALSE;
             }
 
             if( !s_pRasterStates[Mode] )
             {
-                x_DebugMsg( "StateMgr: ERROR - Rasterizer state %s not created\n", state_GetModeName(STATE_TYPE_RASTERIZER, Mode) );
+                x_DebugMsg( "RStateMgr: Rasterizer state %s not created\n", state_GetModeName(STATE_TYPE_RASTERIZER, Mode) );
+				ASSERT(FALSE);
                 return FALSE;
             }
 
@@ -614,7 +617,7 @@ xbool state_SetState( state_type Type, s32 Mode )
             s_StateCache.CurrentRasterMode = RasterMode;
 
             #ifdef STATE_VERBOSE_MODE
-            x_DebugMsg( "StateMgr: Rasterizer mode set to %s\n", state_GetModeName(STATE_TYPE_RASTERIZER, Mode) );
+            x_DebugMsg( "RStateMgr: Rasterizer mode set to %s\n", state_GetModeName(STATE_TYPE_RASTERIZER, Mode) );
 			#endif
             return TRUE;
         }
@@ -623,7 +626,8 @@ xbool state_SetState( state_type Type, s32 Mode )
         {
             if( Mode >= STATE_DEPTH_COUNT )
             {
-                x_DebugMsg( "StateMgr: ERROR - Invalid depth mode %d\n", Mode );
+                x_DebugMsg( "RStateMgr: Invalid depth mode %d\n", Mode );
+				ASSERT(FALSE);
                 return FALSE;
             }
 
@@ -633,14 +637,15 @@ xbool state_SetState( state_type Type, s32 Mode )
             if( s_StateCache.CurrentDepthMode == DepthMode )
             {
 				#ifdef STATE_VERBOSE_MODE
-                x_DebugMsg( "StateMgr: Depth %s CACHED\n", state_GetModeName(STATE_TYPE_DEPTH, Mode) );
+                x_DebugMsg( "RStateMgr: Depth %s CACHED\n", state_GetModeName(STATE_TYPE_DEPTH, Mode) );
 				#endif
                 return FALSE;
             }
 
             if( !s_pDepthStates[Mode] )
             {
-                x_DebugMsg( "StateMgr: ERROR - Depth state %s not created\n", state_GetModeName(STATE_TYPE_DEPTH, Mode) );
+                x_DebugMsg( "RStateMgr: Depth state %s not created\n", state_GetModeName(STATE_TYPE_DEPTH, Mode) );
+				ASSERT(FALSE);
                 return FALSE;
             }
 
@@ -649,7 +654,7 @@ xbool state_SetState( state_type Type, s32 Mode )
             s_StateCache.CurrentDepthMode = DepthMode;
 
             #ifdef STATE_VERBOSE_MODE
-            x_DebugMsg( "StateMgr: Depth mode set to %s\n", state_GetModeName(STATE_TYPE_DEPTH, Mode) );
+            x_DebugMsg( "RStateMgr: Depth mode set to %s\n", state_GetModeName(STATE_TYPE_DEPTH, Mode) );
 			#endif
             return TRUE;
         }
@@ -658,7 +663,8 @@ xbool state_SetState( state_type Type, s32 Mode )
         {
             if( Mode >= STATE_SAMPLER_COUNT )
             {
-                x_DebugMsg( "StateMgr: ERROR - Invalid sampler mode %d\n", Mode );
+                x_DebugMsg( "RStateMgr: Invalid sampler mode %d\n", Mode );
+				ASSERT(FALSE);
                 return FALSE;
             }
 
@@ -668,14 +674,15 @@ xbool state_SetState( state_type Type, s32 Mode )
             if( s_StateCache.CurrentSamplerMode == SamplerMode )
             {
 				#ifdef STATE_VERBOSE_MODE
-                x_DebugMsg( "StateMgr: Sampler %s CACHED\n", state_GetModeName(STATE_TYPE_SAMPLER, Mode) );
+                x_DebugMsg( "RStateMgr: Sampler %s CACHED\n", state_GetModeName(STATE_TYPE_SAMPLER, Mode) );
 				#endif
                 return FALSE;
             }
 
             if( !s_pSamplerStates[Mode] )
             {
-                x_DebugMsg( "StateMgr: ERROR - Sampler state %s not created\n", state_GetModeName(STATE_TYPE_SAMPLER, Mode) );
+                x_DebugMsg( "RStateMgr: Sampler state %s not created\n", state_GetModeName(STATE_TYPE_SAMPLER, Mode) );
+				ASSERT(FALSE);
                 return FALSE;
             }
 
@@ -684,13 +691,14 @@ xbool state_SetState( state_type Type, s32 Mode )
             s_StateCache.CurrentSamplerMode = SamplerMode;
 
             #ifdef STATE_VERBOSE_MODE
-            x_DebugMsg( "StateMgr: Sampler mode set to %s\n", state_GetModeName(STATE_TYPE_SAMPLER, Mode) );
+            x_DebugMsg( "RStateMgr: Sampler mode set to %s\n", state_GetModeName(STATE_TYPE_SAMPLER, Mode) );
 			#endif
             return TRUE;
         }
 
         default:
-            x_DebugMsg( "StateMgr: ERROR - Invalid state type %d\n", Type );
+            x_DebugMsg( "RStateMgr: Invalid state type %d\n", Type );
+			ASSERT(FALSE);
             return FALSE;
     }
 }
@@ -701,7 +709,7 @@ xbool state_SetState( state_type Type, s32 Mode )
 
 void state_FlushCache( void )
 {
-    x_DebugMsg( "StateMgr: Flushing state cache\n" );
+    x_DebugMsg( "RStateMgr: Flushing state cache\n" );
     
     // Force all states to be invalid so they get reapplied
     s_StateCache.CurrentBlendMode   = (state_blend_mode)0xFF;
@@ -716,7 +724,8 @@ s32 state_GetState( state_type Type )
 {
     if( !s_StateCache.bInitialized )
     {
-        x_DebugMsg( "StateMgr: ERROR - Not initialized\n" );
+        x_DebugMsg( "RStateMgr: Not initialized\n" );
+		ASSERT(FALSE);
         return -1;
     }
 
@@ -727,7 +736,8 @@ s32 state_GetState( state_type Type )
         case STATE_TYPE_DEPTH:      return (s32)s_StateCache.CurrentDepthMode;
         case STATE_TYPE_SAMPLER:    return (s32)s_StateCache.CurrentSamplerMode;
         default:
-            x_DebugMsg( "StateMgr: ERROR - Invalid state type %d\n", Type );
+            x_DebugMsg( "RStateMgr: Invalid state type %d\n", Type );
+			ASSERT(FALSE);
             return -1;
     }
 }
@@ -738,7 +748,8 @@ xbool state_IsState( state_type Type, s32 Mode )
 {
     if( !s_StateCache.bInitialized )
     {
-        x_DebugMsg( "StateMgr: ERROR - Not initialized\n" );
+        x_DebugMsg( "RStateMgr: Not initialized\n" );
+		ASSERT(FALSE);
         return FALSE;
     }
 
@@ -749,7 +760,8 @@ xbool state_IsState( state_type Type, s32 Mode )
         case STATE_TYPE_DEPTH:      return (s_StateCache.CurrentDepthMode   == (state_depth_mode)Mode);
         case STATE_TYPE_SAMPLER:    return (s_StateCache.CurrentSamplerMode == (state_sampler_mode)Mode);
         default:
-            x_DebugMsg( "StateMgr: ERROR - Invalid state type %d\n", Type );
+            x_DebugMsg( "RStateMgr: Invalid state type %d\n", Type );
+			ASSERT(FALSE);
             return FALSE;
     }
 }

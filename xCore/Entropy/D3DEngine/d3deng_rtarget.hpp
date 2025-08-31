@@ -139,11 +139,6 @@ xbool               rtarget_PopTargets          ( void );
 // Clear functions
 void                rtarget_Clear               ( u32 ClearFlags, const f32* pColor = NULL, f32 Depth = 1.0f, u8 Stencil = 0 );
 
-
-//Хуйня
-
-xbool rtarget_CopyDepth( const rtarget& Source, const rtarget& Destination );
-
 //==============================================================================
 #endif // D3DENG_RTARGET_HPP
 //==============================================================================

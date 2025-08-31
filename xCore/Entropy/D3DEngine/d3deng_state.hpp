@@ -52,6 +52,7 @@ enum state_blend_mode
 	STATE_BLEND_PREMULT_ADD,
     STATE_BLEND_PREMULT_SUB,
 	STATE_BLEND_MULTIPLY,
+	STATE_BLEND_INTENSITY,
     STATE_BLEND_COUNT
 };
 
@@ -100,7 +101,7 @@ void                state_Kill                 ( void );
 //  STATE MANAGEMENT FUNCTIONS
 //==============================================================================
 
-// Universal state setter
+// State setter
 xbool               state_SetState             ( state_type Type, s32 Mode );
 
 //==============================================================================
@@ -110,7 +111,7 @@ xbool               state_SetState             ( state_type Type, s32 Mode );
 // Force all states to be reapplied
 void                state_FlushCache           ( void );
 
-// Universal state query functions
+// State query functions
 s32                 state_GetState             ( state_type Type );
 xbool               state_IsState              ( state_type Type, s32 Mode );
 

@@ -53,16 +53,8 @@ enum material_flags
     MATERIAL_FLAG_PERPOLY_ILLUM     = (1<<8),
     MATERIAL_FLAG_PERPIXEL_ENV      = (1<<9),
     MATERIAL_FLAG_PERPOLY_ENV       = (1<<10),
-	MATERIAL_FLAG_HAS_DETAIL        = (1<<11),
-	MATERIAL_FLAG_HAS_ENVIRONMENT   = (1<<12),  
-};
-
-enum blend_mode
-{
-    BLEND_MODE_NORMAL       = 0,
-    BLEND_MODE_ADDITIVE     = 1,
-    BLEND_MODE_SUBTRACTIVE  = 2,
-    BLEND_MODE_ALPHA_BLEND  = 3,
+    MATERIAL_FLAG_HAS_DETAIL        = (1<<11),
+    MATERIAL_FLAG_HAS_ENVIRONMENT   = (1<<12),  
 };
 
 //==============================================================================
@@ -154,7 +146,8 @@ public:
 
     // General material functions
     void        SetBitmap           ( const xbitmap* pBitmap, texture_slot slot );
-    void        SetBlendMode        ( blend_mode BlendMode );
+    void        SetBlendMode        ( s32 BlendMode );
+    void        SetDepthTestEnabled ( xbool ZTestEnabled );
     void        InvalidateCache     ( void );
 
     // Resource access for vertex managers
@@ -166,10 +159,6 @@ protected:
     xbool       InitRigidShaders    ( void );
     xbool       InitSkinShaders     ( void );
     void        KillShaders         ( void );
-
-    // State management
-    void        SetRenderStates     ( void );
-    void        ClearRenderStates   ( void );
 
     // Internal helpers
     xbool       UpdateRigidConstants( const matrix4* pL2W, const material* pMaterial );
@@ -193,13 +182,12 @@ protected:
     ID3D11Buffer*           m_pSkinVSConstBuffer;
     ID3D11Buffer*           m_pSkinBoneBuffer;
 
-    // Note: Sampler states handled by d3deng_state system
-
     // Current state tracking for caching
     material_type_new       m_CurrentMaterialType;
     const xbitmap*          m_pCurrentTexture;
     const xbitmap*          m_pCurrentDetailTexture;
-    blend_mode              m_CurrentBlendMode;
+    s32                     m_CurrentBlendMode;
+    xbool                   m_bZTestEnabled;
     
     // Cached constant buffer data to avoid redundant updates
     rigid_vert_matrices     m_CachedRigidMatrices;

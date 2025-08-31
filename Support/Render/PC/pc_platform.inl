@@ -722,13 +722,11 @@ static
 void platform_SetDiffuseMaterial( const xbitmap& Bitmap, s32 BlendMode, xbool ZTestEnabled )
 {
     g_MaterialMgr.SetBitmap( &Bitmap, TEXTURE_SLOT_DIFFUSE );
-    //g_MaterialMgr.SetBlendMode( BlendMode );
+    g_MaterialMgr.SetBlendMode( BlendMode );
+	g_MaterialMgr.SetDepthTestEnabled( ZTestEnabled );
     
     s_pDrawBitmap = &Bitmap;
     s_BlendMode = BlendMode;
-    
-    // TODO: Handle ZTestEnabled through MaterialMgr
-    (void)ZTestEnabled;
 }
 
 //=============================================================================
@@ -737,10 +735,8 @@ static
 void platform_SetGlowMaterial( const xbitmap& Bitmap, s32 BlendMode, xbool ZTestEnabled )
 {
     g_MaterialMgr.SetBitmap( &Bitmap, TEXTURE_SLOT_DIFFUSE );
-    //g_MaterialMgr.SetBlendMode( BlendMode );
-    
-    // TODO: Set glow-specific parameters
-    (void)ZTestEnabled;
+    g_MaterialMgr.SetBlendMode( BlendMode );
+	g_MaterialMgr.SetDepthTestEnabled( ZTestEnabled );
 }
 
 //=============================================================================
@@ -749,10 +745,8 @@ static
 void platform_SetEnvMapMaterial( const xbitmap& Bitmap, s32 BlendMode, xbool ZTestEnabled )
 {
     g_MaterialMgr.SetBitmap( &Bitmap, TEXTURE_SLOT_DIFFUSE );
-    //g_MaterialMgr.SetBlendMode( BlendMode );
-    
-    // TODO: Set environment mapping parameters
-    (void)ZTestEnabled;
+    g_MaterialMgr.SetBlendMode( BlendMode );
+	g_MaterialMgr.SetDepthTestEnabled( ZTestEnabled );
 }
 
 //=============================================================================
@@ -760,10 +754,8 @@ void platform_SetEnvMapMaterial( const xbitmap& Bitmap, s32 BlendMode, xbool ZTe
 static
 void platform_SetDistortionMaterial( s32 BlendMode, xbool ZTestEnabled )
 {
-    //g_MaterialMgr.SetBlendMode( BlendMode );
-    
-    // TODO: Set distortion-specific parameters
-    (void)ZTestEnabled;
+    g_MaterialMgr.SetBlendMode( BlendMode );
+	g_MaterialMgr.SetDepthTestEnabled( ZTestEnabled );
 }
 
 //=============================================================================
@@ -923,10 +915,20 @@ void platform_SetProjectedTexture( texture::handle Texture )
 static
 void platform_ComputeProjTextureMatrix( matrix4& Matrix, view& View, const texture_projection& Projection )
 {
-    (void)Matrix;
-    (void)View;
-    (void)Projection;
-    // TODO:
+    f32 ZNear = 1.0f;
+    f32 ZFar  = Projection.Length;
+
+    const xbitmap& Bitmap = Projection.Texture.GetPointer()->m_Bitmap;
+    View.SetXFOV( Projection.FOV );
+    View.SetZLimits( ZNear, ZFar );
+    View.SetViewport( 0, 0, Bitmap.GetWidth(), Bitmap.GetHeight() );
+    View.SetV2W( Projection.L2W );
+
+    Matrix  = View.GetV2C();
+    Matrix *= View.GetW2V();
+    Matrix *= eng_GetView()->GetV2W();
+    Matrix.Scale(vector3( 0.5f, -0.5f, 1.0f) );
+    Matrix.Translate(vector3( 0.5f, 0.5f, 0.0f) );
 }
 
 //=============================================================================
@@ -960,12 +962,26 @@ void platform_SetProjectedShadowTexture( s32 Index, texture::handle Texture )
 //=============================================================================
 
 static
-void platform_ComputeProjShadowMatrix( matrix4& Matrix, view& View, const texture_projection& Projection )
+void platform_ComputeProjShadowMatrix( matrix4& Matrix, view& View, const texture_projection& Projection  )
 {
-    (void)Matrix;
-    (void)View;
-    (void)Projection;
-    // TODO:
+    // set up the view based on the projection parameters
+    f32 ZNear = 1.0f;
+    f32 ZFar  = Projection.Length ;
+    const xbitmap& Bitmap = Projection.Texture.GetPointer()->m_Bitmap;
+    View.SetPixelScale( 1.0f );
+    View.SetXFOV( Projection.FOV );
+    View.SetZLimits( ZNear, ZFar );
+    View.SetViewport( 0, 0, Bitmap.GetWidth(), Bitmap.GetHeight() );
+    View.SetV2W( Projection.L2W );
+
+    // Now the texture matrix will take a point from camera space to world space
+    // then to projector space, then to projector clip space, then scaled and
+    // translated into projector UV space.
+    Matrix  = View.GetV2C();
+    Matrix *= View.GetW2V();
+    Matrix *= eng_GetView()->GetV2W();
+    Matrix.Scale( vector3( 0.5f, -0.5f, 1.0f ) );
+    Matrix.Translate( vector3( 0.5f, 0.5f, 0.0f ) );
 }
 
 //=============================================================================
