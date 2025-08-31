@@ -480,22 +480,8 @@ void platform_RenderRawStrips( s32               nVerts,
     // Maybe it makes sense to add a flag for custom render states ?
     
     // Setup render states
-    switch( s_BlendMode )
-    {
-        case render::BLEND_MODE_ADDITIVE:
-            state_SetState( STATE_TYPE_BLEND, STATE_BLEND_ADD );
-            break;
-        case render::BLEND_MODE_SUBTRACTIVE:
-            state_SetState( STATE_TYPE_BLEND, STATE_BLEND_SUB );
-            break;
-        case render::BLEND_MODE_INTENSITY:
-            state_SetState( STATE_TYPE_BLEND, STATE_BLEND_MULTIPLY );
-            break;
-        case render::BLEND_MODE_NORMAL:
-        default:
-            state_SetState( STATE_TYPE_BLEND, STATE_BLEND_ALPHA );
-            break;
-    }
+	
+	g_MaterialMgr.SetBlendMode( s_BlendMode );
 
     // prime the loop by grabbing the data for the first two verts
     xcolor  C0( pColor[0]&0xff, (pColor[0]&0xff00)>>8, (pColor[0]&0xff0000)>>16, (pColor[0]&0xff000000)>>24 );

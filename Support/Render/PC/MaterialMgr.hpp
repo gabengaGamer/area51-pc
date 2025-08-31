@@ -111,13 +111,6 @@ struct cb_skin_bone
 //  MATERIAL TYPES
 //==============================================================================
 
-enum material_type_new //"new" is temp.
-{
-    MATERIAL_TYPE_RIGID = 0,
-    MATERIAL_TYPE_SKIN,
-    MATERIAL_TYPE_COUNT
-};
-
 enum texture_slot
 {
     TEXTURE_SLOT_DIFFUSE     = 0,
@@ -183,10 +176,8 @@ protected:
     ID3D11Buffer*           m_pSkinBoneBuffer;
 
     // Current state tracking for caching
-    material_type_new       m_CurrentMaterialType;
     const xbitmap*          m_pCurrentTexture;
     const xbitmap*          m_pCurrentDetailTexture;
-    s32                     m_CurrentBlendMode;
     xbool                   m_bZTestEnabled;
     
     // Cached constant buffer data to avoid redundant updates

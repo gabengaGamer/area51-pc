@@ -61,10 +61,8 @@ void material_mgr::Init( void )
     m_pSkinVSConstBuffer    = NULL;
     m_pSkinBoneBuffer       = NULL;
 
-    m_CurrentMaterialType   = MATERIAL_TYPE_COUNT;
     m_pCurrentTexture       = NULL;
     m_pCurrentDetailTexture = NULL;
-    m_CurrentBlendMode      = render::BLEND_MODE_NORMAL;
     
     m_bRigidMatricesDirty   = TRUE;
     m_bSkinConstsDirty      = TRUE;
@@ -248,8 +246,6 @@ void material_mgr::SetRigidMaterial( const matrix4* pL2W, const d3d_rigid_lighti
         x_DebugMsg( "MaterialMgr: Failed to update rigid constants\n" );
         return;
     }
-
-    m_CurrentMaterialType = MATERIAL_TYPE_RIGID;
 }
 
 //==============================================================================
@@ -266,8 +262,6 @@ void material_mgr::SetSkinMaterial( const d3d_skin_lighting* pLighting )
         x_DebugMsg( "MaterialMgr: Failed to update skin constants\n" );
         return;
     }
-
-    m_CurrentMaterialType = MATERIAL_TYPE_SKIN;
 }
 
 //==============================================================================
@@ -440,9 +434,6 @@ void material_mgr::ActivateRigidShader( void )
     if( !g_pd3dContext )
         return;
 
-    if( m_CurrentMaterialType == MATERIAL_TYPE_RIGID )
-        return;
-
     g_pd3dContext->IASetInputLayout( m_pRigidInputLayout );
     g_pd3dContext->VSSetShader( m_pRigidVertexShader, NULL, 0 );
     g_pd3dContext->PSSetShader( m_pRigidPixelShader, NULL, 0 );
@@ -459,9 +450,6 @@ void material_mgr::ActivateRigidShader( void )
 void material_mgr::ActivateSkinShader( void )
 {
     if( !g_pd3dContext )
-        return;
-
-    if( m_CurrentMaterialType == MATERIAL_TYPE_SKIN )
         return;
 
     g_pd3dContext->IASetInputLayout( m_pSkinInputLayout );
@@ -525,45 +513,30 @@ void material_mgr::SetBitmap( const xbitmap* pBitmap, texture_slot slot )
 
 void material_mgr::SetBlendMode( s32 BlendMode )
 {
-    if( m_CurrentBlendMode == BlendMode )
-        return;
-
-    m_CurrentBlendMode = BlendMode;
-
-    if( !g_pd3dContext )
-        return;
-
-    // Update blend state immediately if we have active shaders
-    if( m_CurrentMaterialType != MATERIAL_TYPE_COUNT )
+    switch( BlendMode )
     {
-        switch( BlendMode )
-        {
-            case render::BLEND_MODE_NORMAL:
-                state_SetState( STATE_TYPE_BLEND, STATE_BLEND_NONE );
-                break;
-            case render::BLEND_MODE_ADDITIVE:
-                state_SetState( STATE_TYPE_BLEND, STATE_BLEND_ADD );
-                break;
-            case render::BLEND_MODE_SUBTRACTIVE:
-                state_SetState( STATE_TYPE_BLEND, STATE_BLEND_SUB );
-                break;
-            case render::BLEND_MODE_INTENSITY:
-                state_SetState( STATE_TYPE_BLEND, STATE_BLEND_INTENSITY );
-                break;
-            default:
-                state_SetState( STATE_TYPE_BLEND, STATE_BLEND_NONE );
-                break;
-        }
+        case render::BLEND_MODE_NORMAL:
+            state_SetState( STATE_TYPE_BLEND, STATE_BLEND_NONE );
+            break;
+        case render::BLEND_MODE_ADDITIVE:
+            state_SetState( STATE_TYPE_BLEND, STATE_BLEND_ADD );
+            break;
+        case render::BLEND_MODE_SUBTRACTIVE:
+            state_SetState( STATE_TYPE_BLEND, STATE_BLEND_SUB );
+            break;
+        case render::BLEND_MODE_INTENSITY:
+            state_SetState( STATE_TYPE_BLEND, STATE_BLEND_INTENSITY );
+            break;
+        default:
+            ASSERT(FALSE);
+            break;
     }
 }
 
 //==============================================================================
 
 void material_mgr::SetDepthTestEnabled( xbool ZTestEnabled )
-{
-    if( !g_pd3dContext )
-        return;
-        
+{       
     if( !ZTestEnabled )
     {
         state_SetState( STATE_TYPE_DEPTH, STATE_DEPTH_DISABLED );
@@ -578,10 +551,8 @@ void material_mgr::SetDepthTestEnabled( xbool ZTestEnabled )
 
 void material_mgr::InvalidateCache( void )
 {
-    m_CurrentMaterialType = MATERIAL_TYPE_COUNT;
     m_pCurrentTexture = NULL;
     m_pCurrentDetailTexture = NULL;
-    m_CurrentBlendMode = render::BLEND_MODE_NORMAL;
     m_bRigidMatricesDirty = TRUE;
     m_bSkinConstsDirty = TRUE;
 }
