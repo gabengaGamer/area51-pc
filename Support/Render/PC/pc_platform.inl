@@ -12,23 +12,13 @@
 #include "GBufferMgr.hpp"
 #include "Entropy/D3DEngine/d3deng_rtarget.hpp"
 
-//#include "pc_post.inl" //TODO: do it later.
-
 //=============================================================================
 // Static data specific to the pc-implementation
 //=============================================================================
 
-static const material*         s_pMaterial = NULL;
-static s32                     s_NStages = 0;
-static s32                     s_TextureAlphaFactor = 255;
-static rigid_geom*             s_pRigidGeom = NULL;
-static skin_geom*              s_pSkinGeom = NULL;
-static matrix4                 s_CustomEnvMapMatrix;
-static matrix4                 s_EnvMapMatrix;
-static ID3D11Texture2D*        s_pEnvMapTexture = NULL; 
-static ID3D11DepthStencilView* s_pEnvMapZBuffer = NULL;
-static ID3D11RenderTargetView* s_pEnvMapSurface = NULL;
-static s32                     s_DrawFlags   = 0;
+static const material*         s_pMaterial   = NULL;
+static rigid_geom*             s_pRigidGeom  = NULL;
+static skin_geom*              s_pSkinGeom   = NULL;
 static const xbitmap*          s_pDrawBitmap = NULL;
 static s32                     s_BlendMode   = 0;
 
@@ -51,6 +41,7 @@ void platform_Init( void )
 {
     g_GBufferMgr.Init();
     g_MaterialMgr.Init();
+    //g_ProjTextureMgr.Init();
     g_PostMgr.Init(); 
     g_RigidVertMgr.Init( sizeof( rigid_geom::vertex_pc ) );
     g_SkinVertMgr.Init(); //vertex_mgr::Init( sizeof( skin_geom::vertex_pc ) );
@@ -63,6 +54,7 @@ void platform_Kill( void )
 {
     g_GBufferMgr.Kill();
     g_MaterialMgr.Kill();
+    //g_ProjTextureMgr.Kill();
     g_PostMgr.Kill();
     g_RigidVertMgr.Kill();
     g_SkinVertMgr.Kill();
@@ -217,7 +209,7 @@ void platform_RenderRigidInstance( render_instance& Inst )
     }
 
     // handle projected shadows
-    s32 nStages = s_NStages;
+    //s32 nStages = s_NStages;
     if( (Inst.Flags & render::INSTFLAG_PROJ_SHADOW_1) &&
         s_ShadowProjections[0].Texture.GetPointer() )
     {
@@ -480,8 +472,8 @@ void platform_RenderRawStrips( s32               nVerts,
     // Maybe it makes sense to add a flag for custom render states ?
     
     // Setup render states
-	
-	g_MaterialMgr.SetBlendMode( s_BlendMode );
+    
+    g_MaterialMgr.SetBlendMode( s_BlendMode );
 
     // prime the loop by grabbing the data for the first two verts
     xcolor  C0( pColor[0]&0xff, (pColor[0]&0xff00)>>8, (pColor[0]&0xff0000)>>16, (pColor[0]&0xff000000)>>24 );
@@ -709,7 +701,7 @@ void platform_SetDiffuseMaterial( const xbitmap& Bitmap, s32 BlendMode, xbool ZT
 {
     g_MaterialMgr.SetBitmap( &Bitmap, TEXTURE_SLOT_DIFFUSE );
     g_MaterialMgr.SetBlendMode( BlendMode );
-	g_MaterialMgr.SetDepthTestEnabled( ZTestEnabled );
+    g_MaterialMgr.SetDepthTestEnabled( ZTestEnabled );
     
     s_pDrawBitmap = &Bitmap;
     s_BlendMode = BlendMode;
@@ -722,7 +714,7 @@ void platform_SetGlowMaterial( const xbitmap& Bitmap, s32 BlendMode, xbool ZTest
 {
     g_MaterialMgr.SetBitmap( &Bitmap, TEXTURE_SLOT_DIFFUSE );
     g_MaterialMgr.SetBlendMode( BlendMode );
-	g_MaterialMgr.SetDepthTestEnabled( ZTestEnabled );
+    g_MaterialMgr.SetDepthTestEnabled( ZTestEnabled );
 }
 
 //=============================================================================
@@ -732,7 +724,7 @@ void platform_SetEnvMapMaterial( const xbitmap& Bitmap, s32 BlendMode, xbool ZTe
 {
     g_MaterialMgr.SetBitmap( &Bitmap, TEXTURE_SLOT_DIFFUSE );
     g_MaterialMgr.SetBlendMode( BlendMode );
-	g_MaterialMgr.SetDepthTestEnabled( ZTestEnabled );
+    g_MaterialMgr.SetDepthTestEnabled( ZTestEnabled );
 }
 
 //=============================================================================
@@ -741,7 +733,7 @@ static
 void platform_SetDistortionMaterial( s32 BlendMode, xbool ZTestEnabled )
 {
     g_MaterialMgr.SetBlendMode( BlendMode );
-	g_MaterialMgr.SetDepthTestEnabled( ZTestEnabled );
+    g_MaterialMgr.SetDepthTestEnabled( ZTestEnabled );
 }
 
 //=============================================================================
@@ -867,7 +859,6 @@ void platform_UnlockRigidDListIndex( render::hgeom_inst hInst, s32 iSubMesh ) //
 static
 void platform_BeginShaders( void )
 {
-    s_CustomEnvMapMatrix.Identity();
     // TODO:
 }
 
