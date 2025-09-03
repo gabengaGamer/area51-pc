@@ -1,6 +1,6 @@
 //==============================================================================
-//  
-//  ProjTextureMgr.cpp  
+//
+//  ProjTextureMgr.cpp
 //
 //==============================================================================
 
@@ -22,7 +22,11 @@ proj_texture_mgr    g_ProjTextureMgr;
 
 proj_texture_mgr::proj_texture_mgr( void ) :
     m_NLightProjections     ( 0 ),
-    m_NShadowProjections    ( 0 )
+    m_NShadowProjections    ( 0 ),
+    m_NCollectedLights      ( 0 ),
+    m_NCollectedShadows     ( 0 ),
+    m_CurrCollectedLight    ( 0 ),
+    m_CurrCollectedShadow   ( 0 )
 {
 }
 
@@ -60,42 +64,92 @@ void proj_texture_mgr::AddProjShadow( const matrix4&  L2W,
 
 s32 proj_texture_mgr::CollectLights( const matrix4& L2W, const bbox& B, s32 MaxLightCount )
 {
-    (void)L2W;
-    (void)B;
-    (void)MaxLightCount;
-    //#### TODO: Finish this function
+    bbox WorldBBox = B;
+    WorldBBox.Transform( L2W );
 
-    return 0;
+    m_NCollectedLights   = 0;
+    m_CurrCollectedLight = 0;
+
+    if( MaxLightCount > MAX_PROJ_LIGHTS )
+    {
+        x_DebugMsg( "CollectLights: MaxLightCount (%d) exceeds MAX_PROJ_LIGHTS (%d)\n", MaxLightCount, MAX_PROJ_LIGHTS );
+        MaxLightCount = MAX_PROJ_LIGHTS;
+    }
+
+    for( s32 i = 0; (i < m_NLightProjections) && (m_NCollectedLights < MaxLightCount); i++ )
+    {
+        if( m_LightProjections[i].ProjView.BBoxInView( WorldBBox ) )
+        {
+            m_CollectedLights[m_NCollectedLights++] = i;
+        }
+    }
+
+    if( (m_NCollectedLights == MaxLightCount) && (m_NCollectedLights < m_NLightProjections) )
+    {
+        x_DebugMsg( "CollectLights: more lights intersect than allowed\n" );
+    }
+
+    return m_NCollectedLights;
 }
 
 //=========================================================================
 
 void proj_texture_mgr::GetCollectedLight( matrix4& LightMatrix, xbitmap*& pBitmap )
 {
-    (void)LightMatrix;
-    (void)pBitmap;
-    //#### TODO: Finish this function
+    ASSERT( m_CurrCollectedLight < m_NCollectedLights );
+
+    const projection& Proj = m_LightProjections[m_CollectedLights[m_CurrCollectedLight++]];
+
+    LightMatrix = Proj.ProjMatrix;
+
+    texture* pTex = Proj.ProjTexture.GetPointer();
+    pBitmap = pTex ? &pTex->m_Bitmap : NULL;
 }
 
 //=========================================================================
 
-s32 proj_texture_mgr::CollectShadows( const matrix4& L2W, const bbox& B, s32 MaxLightCount )
+s32 proj_texture_mgr::CollectShadows( const matrix4& L2W, const bbox& B, s32 MaxShadowCount )
 {
-    (void)L2W;
-    (void)B;
-    (void)MaxLightCount;
-    //#### TODO: Finish this function
+    bbox WorldBBox = B;
+    WorldBBox.Transform( L2W );
 
-    return 0;
+    m_NCollectedShadows    = 0;
+    m_CurrCollectedShadow  = 0;
+
+    if( MaxShadowCount > MAX_PROJ_SHADOWS )
+    {
+        x_DebugMsg( "CollectShadows: MaxShadowCount (%d) exceeds MAX_PROJ_SHADOWS (%d)\n", MaxShadowCount, MAX_PROJ_SHADOWS );
+        MaxShadowCount = MAX_PROJ_SHADOWS;
+    }
+
+    for( s32 i = 0; (i < m_NShadowProjections) && (m_NCollectedShadows < MaxShadowCount); i++ )
+    {
+        if( m_ShadowProjections[i].ProjView.BBoxInView( WorldBBox ) )
+        {
+            m_CollectedShadows[m_NCollectedShadows++] = i;
+        }
+    }
+
+    if( (m_NCollectedShadows == MaxShadowCount) && (m_NCollectedShadows < m_NShadowProjections) )
+    {
+        x_DebugMsg( "CollectShadows: more shadows intersect than allowed\n" );
+    }
+
+    return m_NCollectedShadows;
 }
 
 //=========================================================================
 
 void proj_texture_mgr::GetCollectedShadow( matrix4& ShadMatrix, xbitmap*& pBitmap )
 {
-    (void)ShadMatrix;
-    (void)pBitmap;
-    //#### TODO: Finish this function
+    ASSERT( m_CurrCollectedShadow < m_NCollectedShadows );
+
+    const projection& Proj = m_ShadowProjections[m_CollectedShadows[m_CurrCollectedShadow++]];
+
+    ShadMatrix = Proj.ProjMatrix;
+
+    texture* pTex = Proj.ProjTexture.GetPointer();
+    pBitmap = pTex ? &pTex->m_Bitmap : NULL;
 }
 
 //=========================================================================
@@ -108,7 +162,7 @@ void proj_texture_mgr::SetupProjection ( projection&     Dest,
 {
     // set up the bitmap
     Dest.ProjTexture = Texture;
-    
+
     // set up the view
     texture* pProjTexture = Texture.GetPointer();
     ASSERT( pProjTexture );

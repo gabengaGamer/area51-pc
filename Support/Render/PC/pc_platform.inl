@@ -6,6 +6,7 @@
 
 #include "..\LightMgr.hpp"
 #include "..\platform_Render.hpp"
+#include "..\ProjTextureMgr.hpp"
 #include "VertexMgr.hpp"
 #include "SoftVertexMgr.hpp"
 #include "PostMgr.hpp"
@@ -31,7 +32,6 @@ void platform_Init( void )
 {
     g_GBufferMgr.Init();
     g_MaterialMgr.Init();
-    //g_ProjTextureMgr.Init();
     g_PostMgr.Init(); 
     g_RigidVertMgr.Init( sizeof( rigid_geom::vertex_pc ) );
     g_SkinVertMgr.Init(); //vertex_mgr::Init( sizeof( skin_geom::vertex_pc ) );
@@ -44,10 +44,9 @@ void platform_Kill( void )
 {
     g_GBufferMgr.Kill();
     g_MaterialMgr.Kill();
-    //g_ProjTextureMgr.Kill();
     g_PostMgr.Kill();
     g_RigidVertMgr.Kill();
-    g_SkinVertMgr.Kill();
+    g_SkinVertMgr.Kill();	
 }
 
 //=============================================================================
@@ -169,7 +168,10 @@ void platform_RenderRigidInstance( render_instance& Inst )
     if( !g_pd3dDevice )
         return;
 
-    g_MaterialMgr.SetRigidMaterial( Inst.Data.Rigid.pL2W, (d3d_rigid_lighting*)Inst.pLighting, s_pMaterial );
+    g_MaterialMgr.SetRigidMaterial( Inst.Data.Rigid.pL2W,
+                                    &Inst.Data.Rigid.pGeom->m_BBox,
+                                    (d3d_rigid_lighting*)Inst.pLighting,
+                                    s_pMaterial );
 
     // TODO: GS: At the moment we use a lightmap every call to platform_RenderRigidInstance. 
     // In theory, this is not the best solution, should definitely come up with something else
@@ -194,95 +196,37 @@ void platform_RenderRigidInstance( render_instance& Inst )
             }
             
             // Apply lightmap colors
-            g_RigidVertMgr.ApplyLightmapColors( Inst.hDList, (const u32*)Inst.Data.Rigid.pColInfo, DList.nVerts, colorOffset );
+            g_RigidVertMgr.ApplyLightmapColors( Inst.hDList,
+                                                (const u32*)Inst.Data.Rigid.pColInfo,
+                                                DList.nVerts,
+                                                colorOffset );
         }
     }
-
-    // handle projected shadows
-    //s32 nStages = s_NStages;
-    if( (Inst.Flags & render::INSTFLAG_PROJ_SHADOW_1) &&
-        s_ShadowProjections[0].Texture.GetPointer() )
-    {
-        //// set up the texture
-        //pc_SetTexture( nStages, &s_ShadowProjections[0].Texture.GetPointer()->m_Bitmap );
-        //pc_SetTextureColorStage( nStages, D3DTA_TEXTURE, D3DTOP_MODULATE2X, D3DTA_CURRENT );
-        //pc_SetTextureAlphaStage( nStages, D3DTA_CURRENT, D3DTOP_SELECTARG1, D3DTA_NOTUSED );
-        //
-        //// set up the uv transform
-        //g_pd3dDevice->SetTransform( s_TextureType[nStages], (D3DXMATRIX*)&s_ShadowProjectionMatrices[0] );
-        //g_pd3dDevice->SetTextureStageState( nStages, D3DTSS_TEXCOORDINDEX, D3DTSS_TCI_CAMERASPACEPOSITION );
-        //g_pd3dDevice->SetTextureStageState( nStages, D3DTSS_TEXTURETRANSFORMFLAGS, D3DTTFF_COUNT3| D3DTTFF_PROJECTED );
-        //
-        //// set up the wrapping
-        //g_pd3dDevice->SetSamplerState( nStages, D3DSAMP_ADDRESSU, D3DTADDRESS_CLAMP     );
-        //g_pd3dDevice->SetSamplerState( nStages, D3DSAMP_ADDRESSV, D3DTADDRESS_CLAMP     );
-        //
-        //// we have one more stage now
-        //nStages++;
-    }
-
-    if( (Inst.Flags & render::INSTFLAG_PROJ_SHADOW_2) &&
-        s_ShadowProjections[1].Texture.GetPointer() )
-    {
-       //// set up the texture
-       //pc_SetTexture( nStages, &s_ShadowProjections[1].Texture.GetPointer()->m_Bitmap );
-       //pc_SetTextureColorStage( nStages, D3DTA_TEXTURE, D3DTOP_MODULATE2X, D3DTA_CURRENT );
-       //pc_SetTextureAlphaStage( nStages, D3DTA_CURRENT, D3DTOP_SELECTARG1, D3DTA_NOTUSED );
-       //
-       //// set up the uv transform
-       //g_pd3dDevice->SetTransform( s_TextureType[nStages], (D3DXMATRIX*)&s_ShadowProjectionMatrices[1] );
-       //g_pd3dDevice->SetTextureStageState( nStages, D3DTSS_TEXCOORDINDEX, D3DTSS_TCI_CAMERASPACEPOSITION );
-       //g_pd3dDevice->SetTextureStageState( nStages, D3DTSS_TEXTURETRANSFORMFLAGS, D3DTTFF_COUNT3| D3DTTFF_PROJECTED );
-       //
-       //// set up the wrapping
-       //g_pd3dDevice->SetSamplerState( nStages, D3DSAMP_ADDRESSU, D3DTADDRESS_CLAMP     );
-       //g_pd3dDevice->SetSamplerState( nStages, D3DSAMP_ADDRESSV, D3DTADDRESS_CLAMP     );
-       //
-       //// we have one more stage now
-       //nStages++;
-    }
-
-    // terminate the stages
-    //pc_SetTexture( nStages, NULL );
-    //pc_SetTextureColorStage ( nStages, D3DTA_NOTUSED, D3DTOP_DISABLE,    D3DTA_NOTUSED );
-    //pc_SetTextureAlphaStage ( nStages, D3DTA_NOTUSED, D3DTOP_DISABLE,    D3DTA_NOTUSED );
 
     // render the instance
     if( !(Inst.Flags & render::PULSED) )
     {
-        //pc_SetTextureFactor( xcolor( 255, 255, 255, s_TextureAlphaFactor ) );
-        //pc_SetZBias( 0 );
         g_RigidVertMgr.DrawDList( Inst.hDList, Inst.Data.Rigid.pL2W, NULL );
     }
 
     if( Inst.Flags & render::PULSED )
     {
         s32 I = (s32)( 128.0f + (80.0f * x_sin( x_fmod( s_PulseTime * 4, PI*2.0f ) )) );
-    
-        //pc_SetTextureFactor( xcolor( 255, 0, 0, I ) );
-        //pc_SetZBias( 1 );
-        //pc_SetWireframe( TRUE );
+
         g_RigidVertMgr.DrawDList( Inst.hDList, Inst.Data.Rigid.pL2W, NULL );
-        //pc_SetWireframe( FALSE );
     }
     
     if( Inst.Flags & render::WIREFRAME )
     {
-        //pc_SetTextureFactor( xcolor( 255, 0, 0 ) );
-        //pc_SetZBias( 1 );
-        //pc_SetWireframe( TRUE );
         g_RigidVertMgr.DrawDList( Inst.hDList, Inst.Data.Rigid.pL2W, NULL );
-        //pc_SetWireframe( FALSE );
     }
 
     if( Inst.Flags & render::WIREFRAME2 )
     {
-        //pc_SetTextureFactor( xcolor( 0, 255, 0 ) );
-        //pc_SetZBias( 1 );
-        //pc_SetWireframe( TRUE );
         g_RigidVertMgr.DrawDList( Inst.hDList, Inst.Data.Rigid.pL2W, NULL );
-        //pc_SetWireframe( FALSE );
     }
+	
+    g_MaterialMgr.ResetProjTextures();	
 }
 
 //=============================================================================
@@ -293,26 +237,22 @@ void platform_RenderSkinInstance( render_instance& Inst )
     if( !g_pd3dDevice )
         return;
 
-    g_MaterialMgr.SetSkinMaterial( (d3d_skin_lighting*)Inst.pLighting );
+    g_MaterialMgr.SetSkinMaterial( &Inst.Data.Skin.pBones[0],
+                                   &Inst.Data.Skin.pGeom->m_BBox,
+                                   (d3d_skin_lighting*)Inst.pLighting );
 
     if( Inst.Flags & render::FADING_ALPHA )
     {
-        // Z buffer has already been primed.
-        // Just need to turn Alpha Blending ON and Z-Buffer writes OFF
-        //pc_SetAlphaBlending  ( PC_BLEND_NORMAL );
-       // pc_SetZBufferWrite   ( FALSE );
-       // pc_SetBackFaceCulling( FALSE );
-
-        // Render transparent geometry        
+        // TODO: Render transparent geometry        
         g_SkinVertMgr.DrawDList( Inst.hDList, Inst.Data.Skin.pBones, (d3d_skin_lighting*)Inst.pLighting );
     }
     else
     {
         // Normal render
-        //pc_SetTextureFactor( XCOLOR_WHITE );
-        //pc_SetZBias( 0 );
         g_SkinVertMgr.DrawDList( Inst.hDList, Inst.Data.Skin.pBones, (d3d_skin_lighting*)Inst.pLighting );
     }
+	
+    g_MaterialMgr.ResetProjTextures();
 }
 
 //=============================================================================
@@ -869,12 +809,13 @@ void platform_CreateEnvTexture( void )
 }
 
 //=============================================================================
+// DEPRECATED - START
+//=============================================================================
 
 static
 void platform_SetProjectedTexture( texture::handle Texture )
 {
-    (void)Texture;
-    // TODO:
+    // DEAD
 }
 
 //=============================================================================
@@ -882,20 +823,7 @@ void platform_SetProjectedTexture( texture::handle Texture )
 static
 void platform_ComputeProjTextureMatrix( matrix4& Matrix, view& View, const texture_projection& Projection )
 {
-    f32 ZNear = 1.0f;
-    f32 ZFar  = Projection.Length;
-
-    const xbitmap& Bitmap = Projection.Texture.GetPointer()->m_Bitmap;
-    View.SetXFOV( Projection.FOV );
-    View.SetZLimits( ZNear, ZFar );
-    View.SetViewport( 0, 0, Bitmap.GetWidth(), Bitmap.GetHeight() );
-    View.SetV2W( Projection.L2W );
-
-    Matrix  = View.GetV2C();
-    Matrix *= View.GetW2V();
-    Matrix *= eng_GetView()->GetV2W();
-    Matrix.Scale(vector3( 0.5f, -0.5f, 1.0f) );
-    Matrix.Translate(vector3( 0.5f, 0.5f, 0.0f) );
+   // DEAD
 }
 
 //=============================================================================
@@ -903,8 +831,7 @@ void platform_ComputeProjTextureMatrix( matrix4& Matrix, view& View, const textu
 static
 void platform_SetTextureProjection( const texture_projection& Projection )
 {
-    (void)Projection;
-    // TODO:
+    // DEAD
 }
 
 //=============================================================================
@@ -912,8 +839,7 @@ void platform_SetTextureProjection( const texture_projection& Projection )
 static
 void platform_SetTextureProjectionMatrix( const matrix4& Matrix )
 {
-    (void)Matrix;
-    // TODO:
+    // DEAD
 }
 
 //=============================================================================
@@ -921,9 +847,7 @@ void platform_SetTextureProjectionMatrix( const matrix4& Matrix )
 static
 void platform_SetProjectedShadowTexture( s32 Index, texture::handle Texture )
 {
-    (void)Index;
-    (void)Texture;
-    // TODO:
+    // DEAD
 }
 
 //=============================================================================
@@ -931,24 +855,7 @@ void platform_SetProjectedShadowTexture( s32 Index, texture::handle Texture )
 static
 void platform_ComputeProjShadowMatrix( matrix4& Matrix, view& View, const texture_projection& Projection  )
 {
-    // set up the view based on the projection parameters
-    f32 ZNear = 1.0f;
-    f32 ZFar  = Projection.Length ;
-    const xbitmap& Bitmap = Projection.Texture.GetPointer()->m_Bitmap;
-    View.SetPixelScale( 1.0f );
-    View.SetXFOV( Projection.FOV );
-    View.SetZLimits( ZNear, ZFar );
-    View.SetViewport( 0, 0, Bitmap.GetWidth(), Bitmap.GetHeight() );
-    View.SetV2W( Projection.L2W );
-
-    // Now the texture matrix will take a point from camera space to world space
-    // then to projector space, then to projector clip space, then scaled and
-    // translated into projector UV space.
-    Matrix  = View.GetV2C();
-    Matrix *= View.GetW2V();
-    Matrix *= eng_GetView()->GetV2W();
-    Matrix.Scale( vector3( 0.5f, -0.5f, 1.0f ) );
-    Matrix.Translate( vector3( 0.5f, 0.5f, 0.0f ) );
+    // DEAD
 }
 
 //=============================================================================
@@ -956,11 +863,11 @@ void platform_ComputeProjShadowMatrix( matrix4& Matrix, view& View, const textur
 static
 void platform_SetShadowProjectionMatrix( s32 Index, const matrix4& Matrix )
 {
-    (void)Index;
-    (void)Matrix;
-    // TODO:
+    // DEAD
 }
 
+//=============================================================================
+// DEPRECATED - END
 //=============================================================================
 
 static
@@ -1321,6 +1228,8 @@ void platform_BeginNormalRender( void )
         g_GBufferMgr.SetGBufferTargets();
         g_GBufferMgr.ClearGBuffer();
     }
+	
+	g_ProjTextureMgr.ClearProjTextures();
 }
 
 //=============================================================================
@@ -1331,8 +1240,6 @@ void platform_EndNormalRender( void )
     g_GBufferMgr.SetBackBufferTarget();
 }
 
-//=============================================================================
-// Deprecated functions
 //=============================================================================
 
 static

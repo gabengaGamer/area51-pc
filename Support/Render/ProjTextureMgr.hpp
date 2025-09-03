@@ -1,6 +1,6 @@
 //==============================================================================
-//  
-//  ProjTextureMgr.hpp  
+//
+//  ProjTextureMgr.hpp
 //
 //==============================================================================
 
@@ -40,7 +40,7 @@ public:
                                       radian          FOV,
                                       f32             Length,
                                       texture::handle Texture );
-    
+
     // Functions for getting projections that actually hit an object.
     s32     CollectLights           ( const matrix4& L2W,
                                       const bbox&    B,
@@ -74,6 +74,14 @@ protected:
     s32         m_NShadowProjections;
     projection  m_LightProjections[MAX_PROJ_LIGHTS];
     projection  m_ShadowProjections[MAX_PROJ_SHADOWS];
+
+    // collected projections for current query
+    s32         m_NCollectedLights;
+    s32         m_NCollectedShadows;
+    s32         m_CurrCollectedLight;
+    s32         m_CurrCollectedShadow;
+    s32         m_CollectedLights[MAX_PROJ_LIGHTS];
+    s32         m_CollectedShadows[MAX_PROJ_SHADOWS];
 };
 
 //==============================================================================
@@ -91,6 +99,10 @@ void proj_texture_mgr::ClearProjTextures( void )
 {
     m_NLightProjections    = 0;
     m_NShadowProjections   = 0;
+    m_NCollectedLights     = 0;
+    m_NCollectedShadows    = 0;
+    m_CurrCollectedLight   = 0;
+    m_CurrCollectedShadow  = 0;
 }
 
 //==============================================================================

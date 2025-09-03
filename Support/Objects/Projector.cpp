@@ -3,7 +3,7 @@
 #include "Entropy.hpp"
 #include "CollisionMgr\CollisionMgr.hpp"
 #include "Render\Editor\editor_icons.hpp"
-#include "Render\Render.hpp"
+#include "Render\ProjTextureMgr.hpp"
 
 //=========================================================================
 // OBJECT DESCRIPTION
@@ -67,7 +67,7 @@ projector_obj::projector_obj( void ) :
     m_bIsActive     ( TRUE    ),
     m_bIsFlashlight ( FALSE   ),
     m_FOV           ( R_30    ),
-    m_Length        ( 1000.0f ),
+    m_Length        ( 2048.0f ),
     m_hTexture      (         )
 {
 }
@@ -131,9 +131,9 @@ void projector_obj::OnRender( void )
     if ( IsActive() )
     {
         if( IsShadow() )
-            render::SetShadowProjection( GetL2W(), GetFOV(), GetLength(), GetTexture() );
+		    g_ProjTextureMgr.AddProjShadow( GetL2W(), GetFOV(), GetLength(), GetTexture() );
         else
-            render::SetTextureProjection( GetL2W(), GetFOV(), GetLength(), GetTexture() );
+		    g_ProjTextureMgr.AddProjLight( GetL2W(), GetFOV(), GetLength(), GetTexture() );
     }
 }
 

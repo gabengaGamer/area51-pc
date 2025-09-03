@@ -24,6 +24,7 @@
 //==============================================================================
 
 #include "../Texture.hpp"
+#include "../ProjTextureMgr.hpp"
 #include "../Material_Prefs.hpp"
 #include "../Material.hpp"
 #include "Entropy/D3DEngine/d3deng_shader.hpp"
@@ -53,8 +54,10 @@ enum material_flags
     MATERIAL_FLAG_PERPOLY_ILLUM     = (1<<8),
     MATERIAL_FLAG_PERPIXEL_ENV      = (1<<9),
     MATERIAL_FLAG_PERPOLY_ENV       = (1<<10),
-    MATERIAL_FLAG_HAS_DETAIL        = (1<<11),
-    MATERIAL_FLAG_HAS_ENVIRONMENT   = (1<<12),  
+    MATERIAL_FLAG_HAS_DETAIL        = (1<<11), 
+    MATERIAL_FLAG_HAS_ENVIRONMENT   = (1<<12),
+    MATERIAL_FLAG_PROJ_LIGHT        = (1<<13),
+    MATERIAL_FLAG_PROJ_SHADOW       = (1<<14), 
 };
 
 //==============================================================================
@@ -79,6 +82,16 @@ struct rigid_vert_matrices
     vector3 CameraPosition;
     f32     Padding1;
     f32     Padding2;
+};
+
+struct cb_proj_textures
+{
+    matrix4 ProjLightMatrix[proj_texture_mgr::MAX_PROJ_LIGHTS];
+    matrix4 ProjShadowMatrix[proj_texture_mgr::MAX_PROJ_SHADOWS];
+    u32     ProjLightCount;
+    u32     ProjShadowCount;
+    f32     EdgeSize;
+    f32     Padding[3];
 };
 
 struct d3d_skin_lighting
@@ -130,10 +143,12 @@ public:
     void        Kill                ( void );
 
     // Rigid material management
-    void        SetRigidMaterial    ( const matrix4* pL2W, const d3d_rigid_lighting* pLighting, const material* pMaterial );
+    void        SetRigidMaterial    ( const matrix4* pL2W, const bbox* pBBox, const d3d_rigid_lighting* pLighting, const material* pMaterial );
 
     // Skin material management  
-    void        SetSkinMaterial     ( const d3d_skin_lighting* pLighting );
+    void        SetSkinMaterial     ( const matrix4* pL2W, const bbox* pBBox, const d3d_skin_lighting* pLighting );
+
+    void        ResetProjTextures   ( void );
 
     // General material functions
     void        SetBitmap           ( const xbitmap* pBitmap, texture_slot slot );
@@ -154,6 +169,7 @@ protected:
     // Internal helpers
     xbool       UpdateRigidConstants( const matrix4* pL2W, const material* pMaterial );
     xbool       UpdateSkinConstants ( const d3d_skin_lighting* pLighting );
+	xbool       UpdateProjTextures  ( const matrix4& L2W, const bbox& B, u32 Slot );
 
 protected:
 
@@ -165,6 +181,9 @@ protected:
     ID3D11PixelShader*      m_pRigidPixelShader;
     ID3D11InputLayout*      m_pRigidInputLayout;
     ID3D11Buffer*           m_pRigidConstantBuffer;
+	
+	// Proj textures resources
+	ID3D11Buffer*           m_pProjTextureBuffer;
 
     // Skin geometry resources
     ID3D11VertexShader*     m_pSkinVertexShader;
@@ -181,6 +200,8 @@ protected:
     // Cached constant buffer data to avoid redundant updates
     rigid_vert_matrices     m_CachedRigidMatrices;
     cb_skin_vs_consts       m_CachedSkinConsts;
+	u32                     m_LastProjLightCount;
+    u32                     m_LastProjShadowCount;
     xbool                   m_bRigidMatricesDirty;
     xbool                   m_bSkinConstsDirty;
 };

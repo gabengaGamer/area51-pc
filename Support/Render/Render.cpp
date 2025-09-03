@@ -262,16 +262,6 @@ render::debug_options       g_RenderDebug = { FALSE, FALSE, FALSE, FALSE };
 static s32    s_bFilterLight = FALSE;
 static xcolor s_FilterLightColor(xcolor(30,0,0,255));
 
-// texture and shadow projection
-static texture_projection   s_TextureProjection;
-static texture_projection   s_ShadowProjections[render::MAX_SHADOW_PROJECTORS];
-static xbool                s_bDoTextureProjection;
-static s32                  s_nShadowProjections;
-static view                 s_TextureProjectionView;
-static view                 s_ShadowProjectionViews[render::MAX_SHADOW_PROJECTORS];
-static matrix4              s_TextureProjectionMatrix;
-static matrix4              s_ShadowProjectionMatrices[render::MAX_SHADOW_PROJECTORS];
-
 // projected shadows that are generated dynamically
 static s32                  s_nDynamicShadows;
 
@@ -339,13 +329,6 @@ static void                 GetUVOffset             ( u8& UOffset,
                                                       material& Mat )               X_SECTION( render_add );
 static xbool                IntersectsView          ( const view& V,
                                                       const bbox& BBox )            X_SECTION( render_add );
-static xbool                IntersectsProjTexture   ( const bbox& BBox )            X_SECTION( render_add );
-static xbool                IntersectsShadowTexture ( s32 Index,
-                                                      const bbox& BBox )            X_SECTION( render_add );
-static u32                  CollectProjectionInfo   ( u32 RenderFlags,
-                                                      const bbox& BBox )            X_SECTION( render_add );
-static xbool                CanHaveProjTexture      ( const geom::material& Mat )   X_SECTION( render_add );
-
 static void                 CalcVMatOffsets         ( s32* VMatOffsets,
                                                       const geom* pGeom,
                                                       u32 VTextureMask )            X_SECTION( render_infrequent );
@@ -813,84 +796,6 @@ xbool IntersectsView( const view& V, const bbox& BBox )
 //=============================================================================
 
 static
-xbool IntersectsProjTexture( const bbox& BBox )
-{
-    return IntersectsView( s_TextureProjectionView, BBox );
-}
-
-//=============================================================================
-
-static
-xbool IntersectsShadowTexture( s32 Index, const bbox& BBox )
-{
-    return IntersectsView( s_ShadowProjectionViews[Index], BBox );
-}
-
-//=============================================================================
-
-static
-u32 CollectProjectionInfo( u32 RenderFlags, const bbox& BBox )
-{
-    u32 RetFlags = 0;
-
-    // do we even have a texture projection we can use?
-    if( !s_bDoTextureProjection && !s_nShadowProjections )
-    {
-        return RetFlags;
-    }
-
-    // check the spotlight
-    if( s_bDoTextureProjection &&
-        !(RenderFlags & render::DISABLE_SPOTLIGHT) &&
-        IntersectsProjTexture( BBox ) )
-    {
-        RetFlags |= render::INSTFLAG_SPOTLIGHT;
-    }
-
-    // check any projected shadows
-    if( s_nShadowProjections &&
-        !(RenderFlags & render::DISABLE_PROJ_SHADOWS) &&
-        IntersectsShadowTexture( 0, BBox ) )
-    {
-        RetFlags |= render::INSTFLAG_PROJ_SHADOW_1;
-    }
-
-    if( (s_nShadowProjections>1) &&
-        !(RenderFlags & render::DISABLE_PROJ_SHADOWS) &&
-        IntersectsShadowTexture( 1, BBox ) )
-    {
-        RetFlags |= render::INSTFLAG_PROJ_SHADOW_2;
-    }
-
-    return RetFlags;
-}
-
-//=============================================================================
-
-static
-xbool CanHaveProjTexture( const geom::material& Mat )
-{
-    // Opaque materials can always accept projected textures.
-    if( !IsAlphaMaterial((material_type)Mat.Type) )
-        return TRUE;
-
-    // They must have the zfill flag on to accept a projected texture.
-    if( !(Mat.Flags & geom::material::FLAG_FORCE_ZFILL) )
-        return FALSE;
-
-    // Now it just comes down to whether or not they are subtractive.
-    // Subtractive materials don't like doing flashlights at all, because
-    // the flashlight area is rendered with a regular diffuse blend.
-    if( Mat.Flags & geom::material::FLAG_IS_SUBTRACTIVE )
-        return FALSE;
-
-    // Yes, this alpha material can receive a projected texture.
-    return TRUE;
-}
-
-//=============================================================================
-
-static
 void CalcVMatOffsets( s32* VMatOffsets, const geom* pGeom, u32 VTextureMask )
 {
     x_memset( VMatOffsets, 0, sizeof(s32)*32 );
@@ -1173,63 +1078,6 @@ const geom* render::GetGeom( hgeom_inst hInst )
 
 //=============================================================================
 
-void render::SetTextureProjection( const matrix4&         L2W,
-                                   radian                 FOV,
-                                   f32                    Length,
-                                   const texture::handle& Texture )
-{
-    if ( Texture.GetPointer() != NULL )
-    {
-        // Test if the projection is too perpendicular to the view, and turn it
-        // off if it is. This can cause too many artifacts where the projection
-        // would be clipped (we can't do clipping for performance reasons). We
-        // may still see the occasional artifact, but hopefully this will keep it
-        // to an absolute minimum.
-        const view*    pView   = eng_GetView();
-        const matrix4& V2W     = pView->GetV2W();
-        vector3 V0, V1, ViewDir, ProjDir;
-        V2W.GetColumns( V0, V1, ViewDir );
-        L2W.GetColumns( V0, V1, ProjDir );
-        if ( ViewDir.Dot( ProjDir ) > 0.8660f )
-        {
-            s_bDoTextureProjection      = TRUE;
-            s_TextureProjection.L2W     = L2W;
-            s_TextureProjection.FOV     = FOV;
-            s_TextureProjection.Length  = Length;
-            s_TextureProjection.Texture = Texture;
-
-            platform_SetProjectedTexture     ( Texture );
-            platform_ComputeProjTextureMatrix( s_TextureProjectionMatrix, s_TextureProjectionView, s_TextureProjection );
-            platform_SetTextureProjection    ( s_TextureProjection );
-        }
-    }
-}
-
-//=============================================================================
-
-void render::SetShadowProjection( const matrix4&         L2W,
-                                  radian                 FOV,
-                                  f32                    Length,
-                                  const texture::handle& Texture )
-{
-    if( (Texture.GetPointer() != NULL) && (s_nShadowProjections < 2) )
-    {
-        s_ShadowProjections[s_nShadowProjections].L2W     = L2W;
-        s_ShadowProjections[s_nShadowProjections].FOV     = FOV;
-        s_ShadowProjections[s_nShadowProjections].Length  = Length;
-        s_ShadowProjections[s_nShadowProjections].Texture = Texture;
-        
-        platform_SetProjectedShadowTexture( s_nShadowProjections, Texture );
-        platform_ComputeProjShadowMatrix( s_ShadowProjectionMatrices[s_nShadowProjections],
-                                          s_ShadowProjectionViews[s_nShadowProjections],
-                                          s_ShadowProjections[s_nShadowProjections] );
-
-        s_nShadowProjections++;
-    }
-}
-
-//=============================================================================
-
 void render::SetCustomFogPalette( const texture::handle& Texture, xbool ImmediateSwitch, s32 PaletteIndex )
 {
     platform_SetCustomFogPalette( Texture, ImmediateSwitch, PaletteIndex );
@@ -1264,12 +1112,6 @@ void render::BeginNormalRender( void )
     s_HiHashMark = kMaxRenderedInstances - 1;
     x_memset( s_HashTable, 0xff, sizeof(s16)*kMaxRenderedInstances );
 
-    // clear out texture and shadow projections
-    s_bDoTextureProjection = FALSE;
-    s_nShadowProjections   = 0;
-    texture::handle Handle;
-    platform_SetProjectedTexture( Handle );
-
     platform_BeginNormalRender();
 }
 
@@ -1295,12 +1137,6 @@ void render::EndNormalRender( void )
 
     // set up the "cube" environment texture
     platform_CreateEnvTexture();
-
-    // set the projected texture matrices
-    platform_SetTextureProjectionMatrix( s_TextureProjectionMatrix );
-    platform_SetShadowProjectionMatrix( 0, s_ShadowProjectionMatrices[0] );
-    platform_SetShadowProjectionMatrix( 1, s_ShadowProjectionMatrices[1] );
-    // render the light map from the same
 
     // let the platform-specific shaders get initialized (whether its d3d vert/pixel
     // shaders, vu0/vu1 microcode, or gamecube passes)
@@ -1702,9 +1538,6 @@ void render::AddRigidInstanceSimple( hgeom_inst     hInst,
             Flags |= INSTFLAG_DYNAMICLIGHT;
     }
 
-    // collect texture projections
-    u32 ProjFlags = CollectProjectionInfo( Flags, WorldBBox );
-
     // Use filter light?
     if ( ( s_bFilterLight ) && ( (Flags & DISABLE_FILTERLIGHT) == 0 ) )
         Flags |= INSTFLAG_FILTERLIGHT;
@@ -1751,13 +1584,6 @@ void render::AddRigidInstanceSimple( hgeom_inst     hInst,
             // fill in the lighting
             Inst.pLighting = pLighting;
 
-            // do texture projections
-            if( (Inst.SortKey.RenderOrder < ORDER_ZPRIME) &&
-                CanHaveProjTexture( Material ) )
-            {
-                Inst.Flags |= ProjFlags;
-            }
-
             #ifdef TARGET_PC
             Inst.hDList = RegisteredInst.RigidDList[(s32)SubMesh.iDList];
             #else
@@ -1798,9 +1624,6 @@ void render::AddRigidInstance( hgeom_inst     hInst,
     void* pLighting = platform_CalculateRigidLighting( *pL2W, WorldBBox );
     if ( pLighting )
         Flags |= INSTFLAG_DYNAMICLIGHT;
-
-    // collect texture projections
-    u32 ProjFlags = CollectProjectionInfo( Flags, WorldBBox );
 
     // Use filter light?
     if ( ( s_bFilterLight ) && ( (Flags & DISABLE_FILTERLIGHT) == 0 ) )
@@ -1891,13 +1714,6 @@ void render::AddRigidInstance( hgeom_inst     hInst,
             // fill in the lighting
             Inst.pLighting = pLighting;
 
-            // do texture projections
-            if( (Inst.SortKey.RenderOrder < ORDER_ZPRIME) &&
-                CanHaveProjTexture( Material ) )
-            {
-                Inst.Flags |= ProjFlags;
-            }
-
             #ifdef TARGET_PC
             Inst.hDList = RegisteredInst.RigidDList[(s32)SubMesh.iDList];
 			#else
@@ -1967,9 +1783,6 @@ void render::AddRigidInstance( hgeom_inst        hInst,
     void* pLighting = platform_CalculateRigidLighting( *pL2W, WorldBBox );
     if ( pLighting )
         Flags |= INSTFLAG_DYNAMICLIGHT;
-
-    // collect texture projections
-    u32 ProjFlags = CollectProjectionInfo( Flags, WorldBBox );
 
     // Use filter light?
     if ( ( s_bFilterLight ) && ( (Flags & DISABLE_FILTERLIGHT) == 0 ) )
@@ -2064,13 +1877,6 @@ void render::AddRigidInstance( hgeom_inst        hInst,
             // fill in the lighting
             Inst.pLighting = pLighting;
 
-            // do texture projections
-            if( (Inst.SortKey.RenderOrder < ORDER_ZPRIME) &&
-                CanHaveProjTexture( Material ) )
-            {
-                Inst.Flags |= ProjFlags;
-            }
-
             #ifdef TARGET_PC
             Inst.hDList = RegisteredInst.RigidDList[(s32)SubMesh.iDList];
             #else
@@ -2136,11 +1942,6 @@ void render::AddSkinInstance( hgeom_inst     hInst,
     void* pLighting = platform_CalculateSkinLighting( Flags, pBone[0], pGeom->m_BBox, Ambient );
     Flags |= INSTFLAG_DYNAMICLIGHT;
 
-    // collect texture projections
-    bbox WorldBBox( pGeom->m_BBox );
-    WorldBBox.Transform( pBone[0] );
-    u32 ProjFlags = CollectProjectionInfo( Flags, WorldBBox );
-
     // calculate the virtual mesh offsets
     s32 VMatOffsets[32];
     CalcVMatOffsets( VMatOffsets, pGeom, VTextureMask );
@@ -2203,13 +2004,6 @@ void render::AddSkinInstance( hgeom_inst     hInst,
 
             // fill in the lighting
             Inst.pLighting = pLighting;
-
-            // do texture projections
-            if( (Inst.SortKey.RenderOrder < ORDER_ZPRIME) &&
-                CanHaveProjTexture( Material ) )
-            {
-                Inst.Flags |= ProjFlags;
-            }
 
             #ifdef TARGET_PC
             private_geom& PrivateGeom = s_lRegisteredGeoms(pGeom->m_hGeom);

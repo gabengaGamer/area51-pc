@@ -25,6 +25,9 @@
 #include "SoftVertexMgr.hpp"
 #include "../Render.hpp"
 
+static const s32 PROJ_LIGHT_TEX_SLOT  = 3;
+static const s32 PROJ_SHADOW_TEX_SLOT = PROJ_LIGHT_TEX_SLOT + proj_texture_mgr::MAX_PROJ_LIGHTS;
+
 //==============================================================================
 //  EXTERNAL VARIABLES
 //==============================================================================
@@ -55,6 +58,8 @@ void material_mgr::Init( void )
     m_pRigidInputLayout     = NULL;
     m_pRigidConstantBuffer  = NULL;
 
+    m_pProjTextureBuffer    = NULL;
+
     m_pSkinVertexShader     = NULL;
     m_pSkinPixelShader      = NULL;
     m_pSkinInputLayout      = NULL;
@@ -66,10 +71,15 @@ void material_mgr::Init( void )
     
     m_bRigidMatricesDirty   = TRUE;
     m_bSkinConstsDirty      = TRUE;
+	
+	m_LastProjLightCount    = 0;
+    m_LastProjShadowCount   = 0;
 
     // Initialize shaders and resources
     InitRigidShaders();
     InitSkinShaders();
+	
+	m_pProjTextureBuffer = shader_CreateConstantBuffer( sizeof(cb_proj_textures) );
 
     m_bInitialized = TRUE;
     x_DebugMsg( "MaterialMgr: Material manager initialized successfully\n" );
@@ -229,12 +239,18 @@ void material_mgr::KillShaders( void )
         m_pSkinBoneBuffer = NULL;
     }
 
+    if( m_pProjTextureBuffer )
+    {
+        m_pProjTextureBuffer->Release();
+        m_pProjTextureBuffer = NULL;
+    }
+
     x_DebugMsg( "MaterialMgr: All shaders released\n" );
 }
 
 //==============================================================================
 
-void material_mgr::SetRigidMaterial( const matrix4* pL2W, const d3d_rigid_lighting* pLighting, const material* pMaterial )
+void material_mgr::SetRigidMaterial( const matrix4* pL2W, const bbox* pBBox, const d3d_rigid_lighting* pLighting, const material* pMaterial )
 {
     if( !g_pd3dDevice || !g_pd3dContext )
         return;
@@ -256,11 +272,14 @@ void material_mgr::SetRigidMaterial( const matrix4* pL2W, const d3d_rigid_lighti
         x_DebugMsg( "MaterialMgr: Failed to update rigid constants\n" );
         return;
     }
+
+    if( pL2W && pBBox )
+        UpdateProjTextures( *pL2W, *pBBox, 1 );
 }
 
 //==============================================================================
 
-void material_mgr::SetSkinMaterial( const d3d_skin_lighting* pLighting )
+void material_mgr::SetSkinMaterial( const matrix4* pL2W, const bbox* pBBox, const d3d_skin_lighting* pLighting )
 {
     if( !g_pd3dDevice || !g_pd3dContext || !pLighting )
         return;
@@ -282,6 +301,104 @@ void material_mgr::SetSkinMaterial( const d3d_skin_lighting* pLighting )
         x_DebugMsg( "MaterialMgr: Failed to update skin constants\n" );
         return;
     }
+
+    if( pL2W && pBBox )
+        UpdateProjTextures( *pL2W, *pBBox, 2 );
+}
+
+//==============================================================================
+
+void material_mgr::ResetProjTextures( void )
+{
+    if( !g_pd3dContext )
+        return;
+
+    if( m_LastProjLightCount )
+    {
+        ID3D11ShaderResourceView* nullSRV[proj_texture_mgr::MAX_PROJ_LIGHTS] = { NULL };
+        g_pd3dContext->PSSetShaderResources( PROJ_LIGHT_TEX_SLOT, m_LastProjLightCount, nullSRV );
+        m_LastProjLightCount = 0;
+    }
+
+    if( m_LastProjShadowCount )
+    {
+        ID3D11ShaderResourceView* nullSRV[proj_texture_mgr::MAX_PROJ_SHADOWS] = { NULL };
+        g_pd3dContext->PSSetShaderResources( PROJ_SHADOW_TEX_SLOT, m_LastProjShadowCount, nullSRV );
+        m_LastProjShadowCount = 0;
+    }
+}
+
+//==============================================================================
+
+xbool material_mgr::UpdateProjTextures( const matrix4& L2W, const bbox& B, u32 Slot )
+{
+    if( !m_pProjTextureBuffer || !g_pd3dContext )
+        return FALSE;
+
+    cb_proj_textures cb;
+    x_memset( &cb, 0, sizeof(cb) );
+    ID3D11ShaderResourceView* lightSRV[proj_texture_mgr::MAX_PROJ_LIGHTS] = { NULL };
+    ID3D11ShaderResourceView* shadSRV [proj_texture_mgr::MAX_PROJ_SHADOWS] = { NULL };
+
+    s32 nProjLights = g_ProjTextureMgr.CollectLights( L2W, B );
+    s32 nAppliedLights = 0;
+    for( s32 i = 0; i < nProjLights; i++ )
+    {
+        matrix4  ProjMtx;
+        xbitmap* pBMP = NULL;
+        g_ProjTextureMgr.GetCollectedLight( ProjMtx, pBMP );
+        if( pBMP )
+        {
+            ID3D11ShaderResourceView* pSRV = vram_GetSRV( *pBMP );
+            if( pSRV )
+            {
+                cb.ProjLightMatrix[nAppliedLights] = ProjMtx;
+                lightSRV[nAppliedLights] = pSRV;
+                nAppliedLights++;
+            }
+        }
+    }
+
+    s32 nProjShadows = g_ProjTextureMgr.CollectShadows( L2W, B, 2 );
+    s32 nAppliedShadows = 0;
+    for( s32 i = 0; i < nProjShadows; i++ )
+    {
+        matrix4  ShadMtx;
+        xbitmap* pBMP = NULL;
+        g_ProjTextureMgr.GetCollectedShadow( ShadMtx, pBMP );
+        if( pBMP )
+        {
+            ID3D11ShaderResourceView* pSRV = vram_GetSRV( *pBMP );
+            if( pSRV )
+            {
+                cb.ProjShadowMatrix[nAppliedShadows] = ShadMtx;
+                shadSRV[nAppliedShadows] = pSRV;
+                nAppliedShadows++;
+            }
+        }
+    }
+
+    cb.ProjLightCount  = nAppliedLights;
+    cb.ProjShadowCount = nAppliedShadows;
+    cb.EdgeSize        = 0.05f;
+
+    D3D11_MAPPED_SUBRESOURCE Mapped;
+    if( SUCCEEDED( g_pd3dContext->Map( m_pProjTextureBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &Mapped ) ) )
+    {
+        x_memcpy( Mapped.pData, &cb, sizeof(cb_proj_textures) );
+        g_pd3dContext->Unmap( m_pProjTextureBuffer, 0 );
+        g_pd3dContext->VSSetConstantBuffers( Slot, 1, &m_pProjTextureBuffer );
+        g_pd3dContext->PSSetConstantBuffers( Slot, 1, &m_pProjTextureBuffer );
+    }
+
+    if( nAppliedLights )
+        g_pd3dContext->PSSetShaderResources( PROJ_LIGHT_TEX_SLOT, nAppliedLights, lightSRV );
+    if( nAppliedShadows )
+        g_pd3dContext->PSSetShaderResources( PROJ_SHADOW_TEX_SLOT, nAppliedShadows, shadSRV );
+
+    m_LastProjLightCount  = nAppliedLights;
+    m_LastProjShadowCount = nAppliedShadows;
+    return TRUE;
 }
 
 //==============================================================================
@@ -370,6 +487,10 @@ xbool material_mgr::UpdateRigidConstants( const matrix4* pL2W, const material* p
         
         // Always use vertex color for now
         newMatrices.MaterialFlags |= MATERIAL_FLAG_VERTEX_COLOR;
+		
+		// Always use proj textures for now
+		newMatrices.MaterialFlags |= MATERIAL_FLAG_PROJ_LIGHT;
+		newMatrices.MaterialFlags |= MATERIAL_FLAG_PROJ_SHADOW;
     }
     
     newMatrices.Padding1 = 0.0f;

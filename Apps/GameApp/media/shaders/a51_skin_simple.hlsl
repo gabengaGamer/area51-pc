@@ -6,6 +6,12 @@
 //
 //==============================================================================
 
+#define MATERIAL_FLAG_PROJ_LIGHT  (1u<<13)
+#define MATERIAL_FLAG_PROJ_SHADOW (1u<<14)
+
+#define MAX_PROJ_LIGHTS 10
+#define MAX_PROJ_SHADOWS 10
+
 //==============================================================================
 //  CONSTANT BUFFERS
 //==============================================================================
@@ -34,11 +40,23 @@ cbuffer cbBones : register(b1)
     Bone Bones[96];
 };
 
+cbuffer cbProjTextures : register(b2)
+{
+    float4x4 ProjLightMatrix[MAX_PROJ_LIGHTS];
+    float4x4 ProjShadowMatrix[MAX_PROJ_SHADOWS];
+    uint     ProjLightCount;
+    uint     ProjShadowCount;
+    float    EdgeSize;
+    float3   ProjPadding;
+};
+
 //==============================================================================
 //  TEXTURES AND SAMPLERS
 //==============================================================================
 
 Texture2D txDiffuse : register(t0);
+Texture2D txProjLight[MAX_PROJ_LIGHTS]   : register(t3);
+Texture2D txProjShadow[MAX_PROJ_SHADOWS] : register(t13);
 SamplerState samLinear : register(s0);
 
 //==============================================================================
@@ -127,6 +145,48 @@ PS_OUTPUT PSMain(PS_INPUT input)
     // Apply vertex lighting
     float4 litColor = texColor * input.Color;
     
+	//if( MaterialFlags & MATERIAL_FLAG_PROJ_LIGHT )
+    //{
+        for( uint i = 0; i < ProjLightCount; i++ )
+        {
+            float4 projPos = mul( ProjLightMatrix[i], float4( input.WorldPos, 1.0 ) );
+            float3 projUVW = projPos.xyz / projPos.w;
+            if( projUVW.x >= 0.0 && projUVW.x <= 1.0 &&
+                projUVW.y >= 0.0 && projUVW.y <= 1.0 &&
+                projUVW.z >= 0.0 && projUVW.z <= 1.0 )
+            {
+                float fade = smoothstep( 0.0f, EdgeSize,
+                                         min( min( projUVW.x, 1.0 - projUVW.x ),
+                                              min( projUVW.y, 1.0 - projUVW.y ) ) );
+                float4 projCol = txProjLight[i].Sample( samLinear, projUVW.xy );
+                float  blend   = fade * projCol.a;
+                float3 lit     = litColor.rgb * projCol.rgb;
+                litColor.rgb   = lerp( litColor.rgb, lit, blend );
+            }
+        }
+	//}
+
+    //if( MaterialFlags & MATERIAL_FLAG_PROJ_SHADOW )
+    //{
+        for( uint i = 0; i < ProjShadowCount; i++ )
+        {
+            float4 projPos = mul( ProjShadowMatrix[i], float4( input.WorldPos, 1.0 ) );
+            float3 projUVW = projPos.xyz / projPos.w;
+            if( projUVW.x >= 0.0 && projUVW.x <= 1.0 &&
+                projUVW.y >= 0.0 && projUVW.y <= 1.0 &&
+                projUVW.z >= 0.0 && projUVW.z <= 1.0 )
+            {
+                float fade = smoothstep( 0.0f, EdgeSize,
+                                         min( min( projUVW.x, 1.0 - projUVW.x ),
+                                              min( projUVW.y, 1.0 - projUVW.y ) ) );
+                float4 shadCol = txProjShadow[i].Sample( samLinear, projUVW.xy );
+                float  sBlend  = fade * shadCol.a;
+                float3 shaded  = litColor.rgb * shadCol.rgb;
+                litColor.rgb   = lerp( litColor.rgb, shaded, sBlend );
+            }
+        }
+	//}
+	
     // Fill G-Buffer outputs
     output.FinalColor = litColor;
     output.Albedo = texColor;

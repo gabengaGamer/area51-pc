@@ -93,20 +93,6 @@ namespace render
     void        UnregisterSkinInstance  ( hgeom_inst    hInst ) X_SECTION( init );
     const geom* GetGeom                 ( hgeom_inst    hInst ) X_SECTION( init );
 
-    // functions for setting a projected texture (only one allowed--use it for
-    // a flashlight!)
-    void        SetTextureProjection        ( const matrix4&         L2W,
-                                              radian                 FOV,
-                                              f32                    Length,
-                                              const texture::handle& Texture ) X_SECTION( render_infrequent );
-
-    // projected shadows that cast onto both players and the world
-    enum { MAX_SHADOW_PROJECTORS = 2 };
-    void        SetShadowProjection         ( const matrix4&         L2W,
-                                              radian                 FOV,
-                                              f32                    Length,
-                                              const texture::handle& Texture ) X_SECTION( render_infrequent );
-
     // send these flags to describe how the object should be rendered.
     // most of the time you should just be using 0 and possibly CLIPPED,
     // as the other flags are not guaranteed to work on all platforms (they
