@@ -36,9 +36,8 @@ float3 ApplyProjShadows(float3 color, float3 worldPos)
            uvw.y >= 0.0 && uvw.y <= 1.0 &&
            uvw.z >= 0.0 && uvw.z <= 1.0)
         {
-            float4 proj = txProjShadow[i].Sample(samLinear, uvw.xy);
-            float shade = proj.b * 2.0;
-            color = lerp(color, color * shade, proj.a);
+            float shade = txProjShadow[i].Sample(samLinear, uvw.xy).b;
+            color *= shade * 2.0;
         }
     }
     return color;
