@@ -161,11 +161,11 @@ PS_OUTPUT PSMain(PS_INPUT input)
     {
         finalColor.rgb = ApplyProjShadows( finalColor.rgb, input.WorldPos );
     }
-	
-	//---------------------------------------------------------------------------------------
-	
-	// DEBUG
-	
+    
+    //---------------------------------------------------------------------------------------
+    
+    // DEBUG
+    
     //if (MaterialFlags & MATERIAL_FLAG_DISTORTION)
     //{
     //    output.FinalColor = float4(0.5, 0.8, 1.0, 1.0);  // BrightBlue
@@ -174,7 +174,7 @@ PS_OUTPUT PSMain(PS_INPUT input)
     //    output.DepthInfo = float4(input.Pos.z / input.Pos.w, input.LinearDepth, 0.0, 1.0);
     //    return output;
     //}
-	//
+    //
     //if (MaterialFlags & MATERIAL_FLAG_PERPIXEL_ENV)
     //{
     //    output.FinalColor = float4(0.0, 1.0, 0.0, 1.0);  // Green
@@ -228,8 +228,8 @@ PS_OUTPUT PSMain(PS_INPUT input)
     //    output.DepthInfo = float4(input.Pos.z / input.Pos.w, input.LinearDepth, 0.0, 1.0);
     //    return output;
     //}
-	
-	//---------------------------------------------------------------------------------------
+    
+    //---------------------------------------------------------------------------------------
     
     // Special material handling for per-pixel illumination
     if (MaterialFlags & MATERIAL_FLAG_PERPIXEL_ILLUM)

@@ -11,6 +11,7 @@
 
 #define MAX_PROJ_LIGHTS 10
 #define MAX_PROJ_SHADOWS 10
+#define MAX_SKIN_LIGHTS 4
 
 //==============================================================================
 //  CONSTANT BUFFERS
@@ -23,16 +24,16 @@ cbuffer cbSkinConsts : register(b0)
     float    One;
     float    MinusOne;
     float    Fog;
-    float4   LightDirCol;
+    float4   LightDir[MAX_SKIN_LIGHTS];
+    float4   LightCol[MAX_SKIN_LIGHTS];
     float4   LightAmbCol;
-    float2   Padding;
+    uint     LightCount;
+    float3   Padding;
 };
 
 struct Bone
 {
     row_major float4x4 L2W;
-    float3   LightDir;
-    float    Padding;
 };
 
 cbuffer cbBones : register(b1)
@@ -75,7 +76,6 @@ struct VS_INPUT
 struct PS_INPUT
 {
     float4 Pos        : SV_POSITION;
-    float4 Color      : COLOR;
     float2 UV         : TEXCOORD;
     float3 WorldPos   : TEXCOORD1;
     float3 Normal     : TEXCOORD2;
@@ -109,17 +109,7 @@ PS_INPUT VSMain(VS_INPUT input)
     
     // Calculate linear depth for distance-based effects
     output.LinearDepth = clipPos.w;
-    
-    // Calculate vertex lighting using blended bone light directions
-    float3 lightDir1 = Bones[index1].LightDir;
-    float3 lightDir2 = Bones[index2].LightDir;
-    float3 blendedLightDir = normalize(lightDir1 * weight1 + lightDir2 * weight2);
-    
-    float NdotL = saturate(dot(output.Normal, -blendedLightDir));
-    float3 diffuse = LightDirCol.rgb * NdotL;
-    float3 ambient = LightAmbCol.rgb;
-    
-    output.Color = float4(diffuse + ambient, 1.0);
+        
     output.UV = input.UVWeights.xy;
     
     return output;
@@ -144,19 +134,58 @@ PS_OUTPUT PSMain(PS_INPUT input)
     // Sample diffuse texture
     float4 texColor = txDiffuse.Sample(samLinear, input.UV);
     
-    // Apply vertex lighting
-    float4 litColor = texColor * input.Color;
+    // Apply Per-pixel lighting
+    float3 diffuse = float3(0.0, 0.0, 0.0);
+    for(uint i=0;i<LightCount;i++)
+    {
+        float NdotL = saturate(dot(input.Normal, -LightDir[i].xyz));
+        diffuse += LightCol[i].rgb * NdotL;
+    }
+    float3 ambient = LightAmbCol.rgb;
+    float4 litColor = float4(diffuse + ambient, 1.0) * texColor;    
     
-	//if( MaterialFlags & MATERIAL_FLAG_PROJ_LIGHT )
+    //if( MaterialFlags & MATERIAL_FLAG_PROJ_LIGHT )
     //{
-        litColor.rgb = ApplyProjLights( litColor.rgb, input.WorldPos );
-	//}
+        for( uint i = 0; i < ProjLightCount; i++ )
+        {
+            float4 projPos = mul( ProjLightMatrix[i], float4( input.WorldPos, 1.0 ) );
+            float3 projUVW = projPos.xyz / projPos.w;
+            if( projUVW.x >= 0.0 && projUVW.x <= 1.0 &&
+                projUVW.y >= 0.0 && projUVW.y <= 1.0 &&
+                projUVW.z >= 0.0 && projUVW.z <= 1.0 )
+            {
+                float fade = smoothstep( 0.0f, EdgeSize,
+                                         min( min( projUVW.x, 1.0 - projUVW.x ),
+                                              min( projUVW.y, 1.0 - projUVW.y ) ) );
+                float4 projCol = txProjLight[i].Sample( samLinear, projUVW.xy );
+                float  blend   = fade * projCol.a;
+                float3 lit     = litColor.rgb * projCol.rgb;
+                litColor.rgb   = lerp( litColor.rgb, lit, blend );
+            }
+        }
+    //}
 
     //if( MaterialFlags & MATERIAL_FLAG_PROJ_SHADOW )
     //{
-        litColor.rgb = ApplyProjShadows( litColor.rgb, input.WorldPos );
-	//}
-	
+        for( uint i = 0; i < ProjShadowCount; i++ )
+        {
+            float4 projPos = mul( ProjShadowMatrix[i], float4( input.WorldPos, 1.0 ) );
+            float3 projUVW = projPos.xyz / projPos.w;
+            if( projUVW.x >= 0.0 && projUVW.x <= 1.0 &&
+                projUVW.y >= 0.0 && projUVW.y <= 1.0 &&
+                projUVW.z >= 0.0 && projUVW.z <= 1.0 )
+            {
+                float fade = smoothstep( 0.0f, EdgeSize,
+                                         min( min( projUVW.x, 1.0 - projUVW.x ),
+                                              min( projUVW.y, 1.0 - projUVW.y ) ) );
+                float4 shadCol = txProjShadow[i].Sample( samLinear, projUVW.xy );
+                float  sBlend  = fade * shadCol.a;
+                float3 shaded  = litColor.rgb * shadCol.rgb;
+                litColor.rgb   = lerp( litColor.rgb, shaded, sBlend );
+            }
+        }
+    //}
+    
     // Fill G-Buffer outputs
     output.FinalColor = litColor;
     output.Albedo = texColor;

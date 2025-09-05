@@ -538,10 +538,24 @@ xbool material_mgr::UpdateSkinConstants( const d3d_skin_lighting* pLighting )
     newConsts.One          = 1.0f;
     newConsts.MinusOne     = -1.0f;
     newConsts.Fog          = 0.0f;
-    newConsts.LightDirCol  = pLighting->DirCol * 0.5f;
+    for( s32 i=0; i<MAX_SKIN_LIGHTS; i++ )
+    {
+        if( i < pLighting->LightCount )
+        {
+            newConsts.LightDir[i].Set( pLighting->Dir[i].GetX(), pLighting->Dir[i].GetY(), pLighting->Dir[i].GetZ(), 0.0f );
+            newConsts.LightCol[i] = pLighting->DirCol[i] * 0.5f;
+        }
+        else
+        {
+            newConsts.LightDir[i].Set( 0.0f, 0.0f, 0.0f, 0.0f );
+            newConsts.LightCol[i].Set( 0.0f, 0.0f, 0.0f, 0.0f );
+        }
+    }
     newConsts.LightAmbCol  = pLighting->AmbCol * 0.5f;
+	newConsts.LightCount   = pLighting->LightCount;
     newConsts.Padding[0]   = 0.0f;
     newConsts.Padding[1]   = 0.0f;
+    newConsts.Padding[2]   = 0.0f;
 
     // Only update if data changed
     if( m_bSkinConstsDirty || x_memcmp( &m_CachedSkinConsts, &newConsts, sizeof(cb_skin_vs_consts) ) != 0 )
@@ -563,6 +577,7 @@ xbool material_mgr::UpdateSkinConstants( const d3d_skin_lighting* pLighting )
 
         g_pd3dContext->VSSetConstantBuffers( 0, 1, &m_pSkinVSConstBuffer );
         g_pd3dContext->VSSetConstantBuffers( 1, 1, &m_pSkinBoneBuffer );
+		g_pd3dContext->PSSetConstantBuffers( 0, 1, &m_pSkinVSConstBuffer );
     }
     
     return TRUE;

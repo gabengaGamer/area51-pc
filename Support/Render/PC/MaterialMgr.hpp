@@ -36,6 +36,7 @@
 //==============================================================================
 
 #define MAX_SKIN_BONES 96
+#define MAX_SKIN_LIGHTS 4
 
 //==============================================================================
 //  MATERIAL FLAGS
@@ -96,28 +97,29 @@ struct cb_proj_textures
 
 struct d3d_skin_lighting
 {
-    vector3 Dir;
-    vector4 DirCol;
+    s32     LightCount;
+    vector3 Dir      [MAX_SKIN_LIGHTS];
+    vector4 DirCol   [MAX_SKIN_LIGHTS];
     vector4 AmbCol;
 };
 
 struct cb_skin_vs_consts
 {
-    matrix4 W2C;               // World to clip matrix
-    f32     Zero;              // 0.0f
-    f32     One;               // 1.0f
-    f32     MinusOne;          // -1.0f
-    f32     Fog;               // Fog factor
-    vector4 LightDirCol;       // Directional light color
-    vector4 LightAmbCol;       // Ambient light color
-    f32     Padding[2];        // Padding to 16-byte alignment
+    matrix4 W2C;                          // World to clip matrix
+    f32     Zero;                         // 0.0f
+    f32     One;                          // 1.0f
+    f32     MinusOne;                     // -1.0f
+    f32     Fog;                          // Fog factor
+    vector4 LightDir[MAX_SKIN_LIGHTS];    // Directional light directions
+    vector4 LightCol[MAX_SKIN_LIGHTS];    // Directional light colors
+    vector4 LightAmbCol;                  // Ambient light color
+    u32     LightCount;                   // Number of active lights
+    f32     Padding[3];                   // Padding to 16-byte alignment
 };
 
 struct cb_skin_bone
 {
-    matrix4 L2W;               // Local to world matrix
-    vector3 LightDir;          // Light direction in bone space
-    f32     Padding;           // Padding to 16-byte alignment
+    matrix4 L2W;                               // Local to world matrix
 };
 
 //==============================================================================

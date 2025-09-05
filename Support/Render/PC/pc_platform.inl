@@ -413,6 +413,10 @@ void platform_RenderRawStrips( s32               nVerts,
     vector3 Pos0( pPos[0].GetX(), pPos[0].GetY(), pPos[0].GetZ() );
     vector3 Pos1( pPos[1].GetX(), pPos[1].GetY(), pPos[1].GetZ() );
 
+    // Intensity decals ignore vertex color and always render white
+    xbool   bIntensity = ( s_BlendMode == render::BLEND_MODE_INTENSITY );
+    xcolor  White( 255, 255, 255, 255 );
+
     // Now render the raw strips. Having 0x8000 in the w component means don't
     // kick this triangle. (Just like the ADC bit on the PS2.)
     s32 i;
@@ -426,9 +430,18 @@ void platform_RenderRawStrips( s32               nVerts,
         // kick the triangle
         if( (pPos[i].GetIW() & 0x8000) != 0x8000 )
         {
-            draw_Color( C0 );   draw_UV( UV0 ); draw_Vertex( Pos0 );
-            draw_Color( C1 );   draw_UV( UV1 ); draw_Vertex( Pos1 );
-            draw_Color( C2 );   draw_UV( UV2 ); draw_Vertex( Pos2 );
+            if( bIntensity )
+            {
+                draw_Color( White ); draw_UV( UV0 ); draw_Vertex( Pos0 );
+                draw_Color( White ); draw_UV( UV1 ); draw_Vertex( Pos1 );
+                draw_Color( White ); draw_UV( UV2 ); draw_Vertex( Pos2 );
+            }
+            else
+            {
+                draw_Color( C0 );   draw_UV( UV0 ); draw_Vertex( Pos0 );
+                draw_Color( C1 );   draw_UV( UV1 ); draw_Vertex( Pos1 );
+                draw_Color( C2 );   draw_UV( UV2 ); draw_Vertex( Pos2 );
+            }
         }
 
         // move to the next triangle
@@ -696,9 +709,15 @@ void* platform_CalculateSkinLighting( u32            Flags,
     {
         // Setup default lighting
         static d3d_skin_lighting Default ;
-        Default.Dir.Set(0,1,0) ;
-        Default.AmbCol.Set(0.3f, 0.3f, 0.3f, 1.0f) ;
-        Default.DirCol.Set(1.0f, 1.0f, 1.0f, 1.0f) ;
+        Default.LightCount = 1;
+        Default.Dir[0].Set(0.0f, 1.0f, 0.0f);
+        Default.DirCol[0].Set(1.0f, 1.0f, 1.0f, 1.0f);
+        Default.AmbCol.Set(0.3f, 0.3f, 0.3f, 1.0f);
+        for( s32 i = 1; i < MAX_SKIN_LIGHTS; i++ )
+        {
+            Default.Dir[i].Set(0.0f, 0.0f, 0.0f);
+            Default.DirCol[i].Set(0.0f, 0.0f, 0.0f, 0.0f);
+        }
 
         // Use it
         pLighting = &Default ;
@@ -712,27 +731,28 @@ void* platform_CalculateSkinLighting( u32            Flags,
                               (f32)Ambient.A * (1.0f / 255.0f) ) ;
 
         // Grab lights
-        s32 NLights = g_LightMgr.CollectCharLights( L2W, BBox, 1 );
-        if ( NLights )
+        s32 NLights = g_LightMgr.CollectCharLights( L2W, BBox, MAX_SKIN_LIGHTS );
+        pLighting->LightCount = NLights;
+		
+        for( s32 i = 0; i < NLights; i++ )
         {
-            // Just 1 light supported right now...
-            ASSERT(NLights == 1) ;
             vector3 Dir;
             xcolor  Col;
-            g_LightMgr.GetCollectedCharLight( 0, Dir, Col );
+            g_LightMgr.GetCollectedCharLight( i, Dir, Col );
 
-            // Setup skin light
-            pLighting->Dir = Dir ;
-            pLighting->DirCol.Set((f32)Col.R * (1.0f / 255.0f),
-                                  (f32)Col.G * (1.0f / 255.0f),
-                                  (f32)Col.B * (1.0f / 255.0f),
-                                  (f32)Col.A * (1.0f / 255.0f) ) ;
+            // Setup skin lights
+            pLighting->Dir[i] = Dir;
+            pLighting->DirCol[i].Set((f32)Col.R * (1.0f / 255.0f),
+                                     (f32)Col.G * (1.0f / 255.0f),
+                                     (f32)Col.B * (1.0f / 255.0f),
+                                     (f32)Col.A * (1.0f / 255.0f) );
         }
-        else
+		
+        for( s32 i = NLights; i < MAX_SKIN_LIGHTS; i++ )
         {
             // Turn off directional lighting
-            pLighting->Dir.Zero() ;
-            pLighting->DirCol.Zero() ;
+            pLighting->Dir[i].Set(0.0f, 0.0f, 0.0f);
+            pLighting->DirCol[i].Set(0.0f, 0.0f, 0.0f, 0.0f);
         }
     }
 
