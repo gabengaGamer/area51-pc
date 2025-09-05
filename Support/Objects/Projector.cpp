@@ -67,7 +67,7 @@ projector_obj::projector_obj( void ) :
     m_bIsActive     ( TRUE    ),
     m_bIsFlashlight ( FALSE   ),
     m_FOV           ( R_30    ),
-    m_Length        ( 2048.0f ),
+    m_Length        ( 1000.0f ),
     m_hTexture      (         )
 {
 }

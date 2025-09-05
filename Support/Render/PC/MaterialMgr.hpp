@@ -184,8 +184,9 @@ protected:
     ID3D11InputLayout*      m_pRigidInputLayout;
     ID3D11Buffer*           m_pRigidConstantBuffer;
 	
-	// Proj textures resources
-	ID3D11Buffer*           m_pProjTextureBuffer;
+    // Proj textures resources
+    ID3D11Buffer*           m_pProjTextureBuffer;
+    ID3D11SamplerState*     m_pProjSampler;
 
     // Skin geometry resources
     ID3D11VertexShader*     m_pSkinVertexShader;

@@ -59,6 +59,7 @@ void material_mgr::Init( void )
     m_pRigidConstantBuffer  = NULL;
 
     m_pProjTextureBuffer    = NULL;
+	m_pProjSampler          = NULL;
 
     m_pSkinVertexShader     = NULL;
     m_pSkinPixelShader      = NULL;
@@ -79,7 +80,21 @@ void material_mgr::Init( void )
     InitRigidShaders();
     InitSkinShaders();
 	
-	m_pProjTextureBuffer = shader_CreateConstantBuffer( sizeof(cb_proj_textures) );
+    m_pProjTextureBuffer = shader_CreateConstantBuffer( sizeof(cb_proj_textures) );
+
+    if( g_pd3dDevice )
+    {
+        D3D11_SAMPLER_DESC sd;
+        x_memset( &sd, 0, sizeof(sd) );
+        sd.Filter   = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+        sd.AddressU = sd.AddressV = sd.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
+        sd.MipLODBias = 0.0f;
+        sd.MaxAnisotropy = 1;
+        sd.ComparisonFunc = D3D11_COMPARISON_ALWAYS;
+        sd.MinLOD = 0;
+        sd.MaxLOD = D3D11_FLOAT32_MAX;
+        g_pd3dDevice->CreateSamplerState( &sd, &m_pProjSampler );
+    }
 
     m_bInitialized = TRUE;
     x_DebugMsg( "MaterialMgr: Material manager initialized successfully\n" );
@@ -245,6 +260,12 @@ void material_mgr::KillShaders( void )
         m_pProjTextureBuffer = NULL;
     }
 
+    if( m_pProjSampler )
+    {
+        m_pProjSampler->Release();
+        m_pProjSampler = NULL;
+    }
+
     x_DebugMsg( "MaterialMgr: All shaders released\n" );
 }
 
@@ -316,14 +337,18 @@ void material_mgr::ResetProjTextures( void )
     if( m_LastProjLightCount )
     {
         ID3D11ShaderResourceView* nullSRV[proj_texture_mgr::MAX_PROJ_LIGHTS] = { NULL };
+        ID3D11SamplerState*      nullSamp[proj_texture_mgr::MAX_PROJ_LIGHTS] = { NULL };
         g_pd3dContext->PSSetShaderResources( PROJ_LIGHT_TEX_SLOT, m_LastProjLightCount, nullSRV );
+        g_pd3dContext->PSSetSamplers( PROJ_LIGHT_TEX_SLOT, m_LastProjLightCount, nullSamp );
         m_LastProjLightCount = 0;
     }
 
     if( m_LastProjShadowCount )
     {
         ID3D11ShaderResourceView* nullSRV[proj_texture_mgr::MAX_PROJ_SHADOWS] = { NULL };
+        ID3D11SamplerState*      nullSamp[proj_texture_mgr::MAX_PROJ_SHADOWS] = { NULL };
         g_pd3dContext->PSSetShaderResources( PROJ_SHADOW_TEX_SLOT, m_LastProjShadowCount, nullSRV );
+        g_pd3dContext->PSSetSamplers( PROJ_SHADOW_TEX_SLOT, m_LastProjShadowCount, nullSamp );
         m_LastProjShadowCount = 0;
     }
 }
@@ -392,9 +417,27 @@ xbool material_mgr::UpdateProjTextures( const matrix4& L2W, const bbox& B, u32 S
     }
 
     if( nAppliedLights )
+    {
         g_pd3dContext->PSSetShaderResources( PROJ_LIGHT_TEX_SLOT, nAppliedLights, lightSRV );
+        if( m_pProjSampler )
+        {
+            ID3D11SamplerState* samp[proj_texture_mgr::MAX_PROJ_LIGHTS];
+            for( s32 i = 0; i < nAppliedLights; i++ )
+                samp[i] = m_pProjSampler;
+            g_pd3dContext->PSSetSamplers( PROJ_LIGHT_TEX_SLOT, nAppliedLights, samp );
+        }
+    }
     if( nAppliedShadows )
+    {
         g_pd3dContext->PSSetShaderResources( PROJ_SHADOW_TEX_SLOT, nAppliedShadows, shadSRV );
+        if( m_pProjSampler )
+        {
+            ID3D11SamplerState* samp[proj_texture_mgr::MAX_PROJ_SHADOWS];
+            for( s32 i = 0; i < nAppliedShadows; i++ )
+                samp[i] = m_pProjSampler;
+            g_pd3dContext->PSSetSamplers( PROJ_SHADOW_TEX_SLOT, nAppliedShadows, samp );
+        }
+    }
 
     m_LastProjLightCount  = nAppliedLights;
     m_LastProjShadowCount = nAppliedShadows;
