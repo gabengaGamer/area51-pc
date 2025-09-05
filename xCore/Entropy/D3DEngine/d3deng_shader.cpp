@@ -84,9 +84,9 @@ char* shader_LoadSourceFromFile( const char* pFileName )
 
     if( BytesRead != FileLength )
     {
-        x_DebugMsg( "ShaderMgr: Failed to read complete file '%s' (%d/%d bytes)\n", 
+        x_DebugMsg( "ShaderMgr: Failed to read complete file '%s' (%d/%d bytes)\n",
                     pFileName, BytesRead, FileLength );
-        ASSERT(FALSE);            
+        ASSERT(FALSE);
         x_free( pBuffer );
         return NULL;
     }
@@ -94,7 +94,7 @@ char* shader_LoadSourceFromFile( const char* pFileName )
     // Null terminate the string
     pBuffer[FileLength] = '\0';
 
-    x_DebugMsg( "ShaderMgr: Successfully loaded source from '%s' (%d bytes)\n", 
+    x_DebugMsg( "ShaderMgr: Successfully loaded source from '%s' (%d bytes)\n",
                 pFileName, FileLength );
     return pBuffer;
 }
@@ -141,17 +141,17 @@ xbool shader_LoadBlobFromFile( const char* pFileName, shader_blob& Blob )
 
     if( BytesRead != FileLength )
     {
-        x_DebugMsg( "ShaderMgr: Failed to read complete blob file '%s' (%d/%d bytes)\n", 
+        x_DebugMsg( "ShaderMgr: Failed to read complete blob file '%s' (%d/%d bytes)\n",
                     pFileName, BytesRead, FileLength );
-        ASSERT(FALSE);            
+        ASSERT(FALSE);
         x_free( pBuffer );
         return FALSE;
     }
 
     Blob.pData = pBuffer;
-    Blob.Size = (usize)FileLength;
+    Blob.Size  = (usize)FileLength;
 
-    x_DebugMsg( "ShaderMgr: Successfully loaded blob from '%s' (%d bytes)\n", 
+    x_DebugMsg( "ShaderMgr: Successfully loaded blob from '%s' (%d bytes)\n",
                 pFileName, FileLength );
     return TRUE;
 }
@@ -187,13 +187,13 @@ xbool shader_SaveBlobToFile( const char* pFileName, const shader_blob& Blob )
 
     if( BytesWritten != (s32)Blob.Size )
     {
-        x_DebugMsg( "ShaderMgr: Failed to write complete blob to file '%s' (%d/%d bytes)\n", 
+        x_DebugMsg( "ShaderMgr: Failed to write complete blob to file '%s' (%d/%d bytes)\n",
                     pFileName, BytesWritten, (s32)Blob.Size );
-        ASSERT(FALSE);            
+        ASSERT(FALSE);
         return FALSE;
     }
 
-    x_DebugMsg( "ShaderMgr: Successfully saved blob to '%s' (%d bytes)\n", 
+    x_DebugMsg( "ShaderMgr: Successfully saved blob to '%s' (%d bytes)\n",
                 pFileName, (s32)Blob.Size );
     return TRUE;
 }
@@ -202,35 +202,36 @@ xbool shader_SaveBlobToFile( const char* pFileName, const shader_blob& Blob )
 //  INTERNAL HELPER FUNCTIONS
 //==============================================================================
 
-static 
+static
 const char* shader_GetDefaultProfile( shader_type Type )
 {
-    static const char* s_ShaderTypeNames[] = { "vs_5_0", "ps_5_0", "gs_5_0", "cs_5_0" };  
+    static const char* s_ShaderTypeNames[] = { "vs_5_0", "ps_5_0", "gs_5_0", "cs_5_0" };
     const char* pTypeName = (Type < SHADER_TYPE_COUNT) ? s_ShaderTypeNames[Type] : "UNKNOWN";
-    
+
     x_DebugMsg( "ShaderMgr: No profile specified, using default profile for %s shader\n", pTypeName );
-    
+
     switch( Type )
     {
         case SHADER_TYPE_VERTEX:    return "vs_5_0";
         case SHADER_TYPE_PIXEL:     return "ps_5_0";
         case SHADER_TYPE_GEOMETRY:  return "gs_5_0";
         case SHADER_TYPE_COMPUTE:   return "cs_5_0";
-        default:    
+        default:
             // Um, how did this happen?
-            ASSERT(FALSE);    
-            return "undefined";            
-    }    
+            ASSERT(FALSE);
+            return "undefined";
+    }
 }
 
 //==============================================================================
 
-static 
+static
 xbool shader_CompileShaderInternal( const char* pSource,
-                                           const char* pEntryPoint,
-                                           const char* pProfile,
-                                           ID3DBlob** ppBlob,
-                                           ID3DBlob** ppErrorBlob )
+                                    const char* pSourceName,
+                                    const char* pEntryPoint,
+                                    const char* pProfile,
+                                    ID3DBlob** ppBlob,
+                                    ID3DBlob** ppErrorBlob )
 {
     if( !pSource || !pEntryPoint || !pProfile || !ppBlob )
     {
@@ -242,16 +243,16 @@ xbool shader_CompileShaderInternal( const char* pSource,
     if( !g_pd3dDevice )
         return FALSE;
 
-    HRESULT hr = D3DCompile( pSource, 
-                            strlen(pSource), 
-                            NULL, 
-                            NULL, 
-                            NULL, 
-                            pEntryPoint, 
-                            pProfile, 
-                            0, 
-                            0, 
-                            ppBlob, 
+    HRESULT hr = D3DCompile( pSource,
+                            strlen(pSource),
+                            pSourceName,
+                            NULL,
+                            D3D_COMPILE_STANDARD_FILE_INCLUDE,
+                            pEntryPoint,
+                            pProfile,
+                            0,
+                            0,
+                            ppBlob,
                             ppErrorBlob );
 
     if( FAILED(hr) )
@@ -276,9 +277,10 @@ xbool shader_CompileShaderInternal( const char* pSource,
 //  SHADER COMPILATION FROM SOURCE
 //==============================================================================
 
-ID3D11VertexShader* shader_CompileVertex( const char* pSource, 
+ID3D11VertexShader* shader_CompileVertex( const char* pSource,
                                           const char* pEntryPoint,
-                                          const char* pProfile )
+                                          const char* pProfile,
+                                          const char* pSourceName )
 {
     ID3DBlob* pBlob = NULL;
     ID3DBlob* pErrorBlob = NULL;
@@ -290,15 +292,15 @@ ID3D11VertexShader* shader_CompileVertex( const char* pSource,
     if( !pProfile )
         pProfile = shader_GetDefaultProfile( SHADER_TYPE_VERTEX );
 
-    if( !shader_CompileShaderInternal( pSource, pEntryPoint, pProfile, &pBlob, &pErrorBlob ) )
+    if( !shader_CompileShaderInternal( pSource, pSourceName, pEntryPoint, pProfile, &pBlob, &pErrorBlob ) )
     {
         if( pErrorBlob ) pErrorBlob->Release();
         return NULL;
     }
 
-    HRESULT hr = g_pd3dDevice->CreateVertexShader( pBlob->GetBufferPointer(), 
-                                                   pBlob->GetBufferSize(), 
-                                                   NULL, 
+    HRESULT hr = g_pd3dDevice->CreateVertexShader( pBlob->GetBufferPointer(),
+                                                   pBlob->GetBufferSize(),
+                                                   NULL,
                                                    &pShader );
     if( FAILED(hr) )
     {
@@ -311,7 +313,7 @@ ID3D11VertexShader* shader_CompileVertex( const char* pSource,
 
     pBlob->Release();
     if( pErrorBlob ) pErrorBlob->Release();
-    
+
     x_DebugMsg( "ShaderMgr: Vertex shader compiled successfully\n" );
     return pShader;
 }
@@ -320,7 +322,8 @@ ID3D11VertexShader* shader_CompileVertex( const char* pSource,
 
 ID3D11PixelShader* shader_CompilePixel( const char* pSource,
                                         const char* pEntryPoint,
-                                        const char* pProfile )
+                                        const char* pProfile,
+                                        const char* pSourceName )
 {
     ID3DBlob* pBlob = NULL;
     ID3DBlob* pErrorBlob = NULL;
@@ -332,15 +335,15 @@ ID3D11PixelShader* shader_CompilePixel( const char* pSource,
     if( !pProfile )
         pProfile = shader_GetDefaultProfile( SHADER_TYPE_PIXEL );
 
-    if( !shader_CompileShaderInternal( pSource, pEntryPoint, pProfile, &pBlob, &pErrorBlob ) )
+    if( !shader_CompileShaderInternal( pSource, pSourceName, pEntryPoint, pProfile, &pBlob, &pErrorBlob ) )
     {
         if( pErrorBlob ) pErrorBlob->Release();
         return NULL;
     }
 
-    HRESULT hr = g_pd3dDevice->CreatePixelShader( pBlob->GetBufferPointer(), 
-                                                  pBlob->GetBufferSize(), 
-                                                  NULL, 
+    HRESULT hr = g_pd3dDevice->CreatePixelShader( pBlob->GetBufferPointer(),
+                                                  pBlob->GetBufferSize(),
+                                                  NULL,
                                                   &pShader );
     if( FAILED(hr) )
     {
@@ -353,7 +356,7 @@ ID3D11PixelShader* shader_CompilePixel( const char* pSource,
 
     pBlob->Release();
     if( pErrorBlob ) pErrorBlob->Release();
-    
+
     x_DebugMsg( "ShaderMgr: Pixel shader compiled successfully\n" );
     return pShader;
 }
@@ -362,7 +365,8 @@ ID3D11PixelShader* shader_CompilePixel( const char* pSource,
 
 ID3D11GeometryShader* shader_CompileGeometry( const char* pSource,
                                               const char* pEntryPoint,
-                                              const char* pProfile )
+                                              const char* pProfile,
+                                              const char* pSourceName )
 {
     ID3DBlob* pBlob = NULL;
     ID3DBlob* pErrorBlob = NULL;
@@ -374,15 +378,15 @@ ID3D11GeometryShader* shader_CompileGeometry( const char* pSource,
     if( !pProfile )
         pProfile = shader_GetDefaultProfile( SHADER_TYPE_GEOMETRY );
 
-    if( !shader_CompileShaderInternal( pSource, pEntryPoint, pProfile, &pBlob, &pErrorBlob ) )
+    if( !shader_CompileShaderInternal( pSource, pSourceName, pEntryPoint, pProfile, &pBlob, &pErrorBlob ) )
     {
         if( pErrorBlob ) pErrorBlob->Release();
         return NULL;
     }
 
-    HRESULT hr = g_pd3dDevice->CreateGeometryShader( pBlob->GetBufferPointer(), 
-                                                     pBlob->GetBufferSize(), 
-                                                     NULL, 
+    HRESULT hr = g_pd3dDevice->CreateGeometryShader( pBlob->GetBufferPointer(),
+                                                     pBlob->GetBufferSize(),
+                                                     NULL,
                                                      &pShader );
     if( FAILED(hr) )
     {
@@ -395,7 +399,7 @@ ID3D11GeometryShader* shader_CompileGeometry( const char* pSource,
 
     pBlob->Release();
     if( pErrorBlob ) pErrorBlob->Release();
-    
+
     x_DebugMsg( "ShaderMgr: Geometry shader compiled successfully\n" );
     return pShader;
 }
@@ -404,7 +408,8 @@ ID3D11GeometryShader* shader_CompileGeometry( const char* pSource,
 
 ID3D11ComputeShader* shader_CompileCompute( const char* pSource,
                                             const char* pEntryPoint,
-                                            const char* pProfile )
+                                            const char* pProfile,
+                                            const char* pSourceName )
 {
     ID3DBlob* pBlob = NULL;
     ID3DBlob* pErrorBlob = NULL;
@@ -416,15 +421,15 @@ ID3D11ComputeShader* shader_CompileCompute( const char* pSource,
     if( !pProfile )
         pProfile = shader_GetDefaultProfile( SHADER_TYPE_COMPUTE );
 
-    if( !shader_CompileShaderInternal( pSource, pEntryPoint, pProfile, &pBlob, &pErrorBlob ) )
+    if( !shader_CompileShaderInternal( pSource, pSourceName, pEntryPoint, pProfile, &pBlob, &pErrorBlob ) )
     {
         if( pErrorBlob ) pErrorBlob->Release();
         return NULL;
     }
 
-    HRESULT hr = g_pd3dDevice->CreateComputeShader( pBlob->GetBufferPointer(), 
-                                                    pBlob->GetBufferSize(), 
-                                                    NULL, 
+    HRESULT hr = g_pd3dDevice->CreateComputeShader( pBlob->GetBufferPointer(),
+                                                    pBlob->GetBufferSize(),
+                                                    NULL,
                                                     &pShader );
     if( FAILED(hr) )
     {
@@ -437,11 +442,13 @@ ID3D11ComputeShader* shader_CompileCompute( const char* pSource,
 
     pBlob->Release();
     if( pErrorBlob ) pErrorBlob->Release();
-    
+
     x_DebugMsg( "ShaderMgr: Compute shader compiled successfully\n" );
     return pShader;
 }
 
+//==============================================================================
+//  Compile shader from source with layout
 //==============================================================================
 
 ID3D11VertexShader* shader_CompileVertexWithLayout( const char* pSource,
@@ -449,8 +456,16 @@ ID3D11VertexShader* shader_CompileVertexWithLayout( const char* pSource,
                                                     const D3D11_INPUT_ELEMENT_DESC* pLayoutDesc,
                                                     u32 NumElements,
                                                     const char* pEntryPoint,
-                                                    const char* pProfile )
+                                                    const char* pProfile,
+                                                    const char* pSourceName )
 {
+    if( !pSource || !ppLayout || !pLayoutDesc || NumElements == 0 )
+    {
+        x_DebugMsg( "ShaderMgr: Invalid parameters for vertex shader with layout\n" );
+        ASSERT(FALSE);
+        return NULL;
+    }
+
     ID3DBlob* pBlob = NULL;
     ID3DBlob* pErrorBlob = NULL;
     ID3D11VertexShader* pShader = NULL;
@@ -461,16 +476,15 @@ ID3D11VertexShader* shader_CompileVertexWithLayout( const char* pSource,
     if( !pProfile )
         pProfile = shader_GetDefaultProfile( SHADER_TYPE_VERTEX );
 
-    if( !shader_CompileShaderInternal( pSource, pEntryPoint, pProfile, &pBlob, &pErrorBlob ) )
+    if( !shader_CompileShaderInternal( pSource, pSourceName, pEntryPoint, pProfile, &pBlob, &pErrorBlob ) )
     {
         if( pErrorBlob ) pErrorBlob->Release();
         return NULL;
     }
 
-    // Create vertex shader
-    HRESULT hr = g_pd3dDevice->CreateVertexShader( pBlob->GetBufferPointer(), 
-                                                   pBlob->GetBufferSize(), 
-                                                   NULL, 
+    HRESULT hr = g_pd3dDevice->CreateVertexShader( pBlob->GetBufferPointer(),
+                                                   pBlob->GetBufferSize(),
+                                                   NULL,
                                                    &pShader );
     if( FAILED(hr) )
     {
@@ -481,29 +495,24 @@ ID3D11VertexShader* shader_CompileVertexWithLayout( const char* pSource,
         return NULL;
     }
 
-    // Create input layout if requested
-    if( ppLayout && pLayoutDesc )
+    hr = g_pd3dDevice->CreateInputLayout( pLayoutDesc,
+                                          NumElements,
+                                          pBlob->GetBufferPointer(),
+                                          pBlob->GetBufferSize(),
+                                          ppLayout );
+    pBlob->Release();
+
+    if( FAILED(hr) )
     {
-        hr = g_pd3dDevice->CreateInputLayout( pLayoutDesc, 
-                                             NumElements, 
-                                             pBlob->GetBufferPointer(), 
-                                             pBlob->GetBufferSize(), 
-                                             ppLayout );
-        if( FAILED(hr) )
-        {
-            x_DebugMsg( "ShaderMgr: Failed to create input layout, HRESULT 0x%08X\n", hr );
-            ASSERT(FALSE);
-            pShader->Release();
-            pBlob->Release();
-            if( pErrorBlob ) pErrorBlob->Release();
-            return NULL;
-        }
-        x_DebugMsg( "ShaderMgr: Input layout created successfully\n" );
+        x_DebugMsg( "ShaderMgr: Failed to create input layout, HRESULT 0x%08X\n", hr );
+        ASSERT(FALSE);
+        if( pShader ) pShader->Release();
+        if( pErrorBlob ) pErrorBlob->Release();
+        return NULL;
     }
 
-    pBlob->Release();
     if( pErrorBlob ) pErrorBlob->Release();
-    
+
     x_DebugMsg( "ShaderMgr: Vertex shader with layout compiled successfully\n" );
     return pShader;
 }
@@ -518,21 +527,10 @@ ID3D11VertexShader* shader_CompileVertexFromFile( const char* pFileName,
 {
     char* pSource = shader_LoadSourceFromFile( pFileName );
     if( !pSource )
-    {
         return NULL;
-    }
 
-    ID3D11VertexShader* pShader = shader_CompileVertex( pSource, pEntryPoint, pProfile );
-    if( pSource )
-    {
-        x_free( pSource );
-    }
-
-    if( pShader )
-    {
-        x_DebugMsg( "ShaderMgr: Vertex shader compiled from file '%s'\n", pFileName );
-    }
-    
+    ID3D11VertexShader* pShader = shader_CompileVertex( pSource, pEntryPoint, pProfile, pFileName );
+    x_free( pSource );
     return pShader;
 }
 
@@ -544,21 +542,10 @@ ID3D11PixelShader* shader_CompilePixelFromFile( const char* pFileName,
 {
     char* pSource = shader_LoadSourceFromFile( pFileName );
     if( !pSource )
-    {
         return NULL;
-    }
 
-    ID3D11PixelShader* pShader = shader_CompilePixel( pSource, pEntryPoint, pProfile );
-    if( pSource )
-    {
-        x_free( pSource );
-    }
-
-    if( pShader )
-    {
-        x_DebugMsg( "ShaderMgr: Pixel shader compiled from file '%s'\n", pFileName );
-    }
-    
+    ID3D11PixelShader* pShader = shader_CompilePixel( pSource, pEntryPoint, pProfile, pFileName );
+    x_free( pSource );
     return pShader;
 }
 
@@ -570,21 +557,10 @@ ID3D11GeometryShader* shader_CompileGeometryFromFile( const char* pFileName,
 {
     char* pSource = shader_LoadSourceFromFile( pFileName );
     if( !pSource )
-    {
         return NULL;
-    }
 
-    ID3D11GeometryShader* pShader = shader_CompileGeometry( pSource, pEntryPoint, pProfile );
-    if( pSource )
-    {
-        x_free( pSource );
-    }
-
-    if( pShader )
-    {
-        x_DebugMsg( "ShaderMgr: Geometry shader compiled from file '%s'\n", pFileName );
-    }
-    
+    ID3D11GeometryShader* pShader = shader_CompileGeometry( pSource, pEntryPoint, pProfile, pFileName );
+    x_free( pSource );
     return pShader;
 }
 
@@ -596,55 +572,36 @@ ID3D11ComputeShader* shader_CompileComputeFromFile( const char* pFileName,
 {
     char* pSource = shader_LoadSourceFromFile( pFileName );
     if( !pSource )
-    {
         return NULL;
-    }
 
-    ID3D11ComputeShader* pShader = shader_CompileCompute( pSource, pEntryPoint, pProfile );
-    if( pSource )
-    {
-        x_free( pSource );
-    }
-
-    if( pShader )
-    {
-        x_DebugMsg( "ShaderMgr: Compute shader compiled from file '%s'\n", pFileName );
-    }
-    
+    ID3D11ComputeShader* pShader = shader_CompileCompute( pSource, pEntryPoint, pProfile, pFileName );
+    x_free( pSource );
     return pShader;
 }
 
 //==============================================================================
+//  Compile vertex shader from file with layout
+//==============================================================================
 
 ID3D11VertexShader* shader_CompileVertexFromFileWithLayout( const char* pFileName,
-                                                           ID3D11InputLayout** ppLayout,
-                                                           const D3D11_INPUT_ELEMENT_DESC* pLayoutDesc,
-                                                           u32 NumElements,
-                                                           const char* pEntryPoint,
-                                                           const char* pProfile )
+                                                            ID3D11InputLayout** ppLayout,
+                                                            const D3D11_INPUT_ELEMENT_DESC* pLayoutDesc,
+                                                            u32 NumElements,
+                                                            const char* pEntryPoint,
+                                                            const char* pProfile )
 {
     char* pSource = shader_LoadSourceFromFile( pFileName );
     if( !pSource )
-    {
         return NULL;
-    }
 
-    ID3D11VertexShader* pShader = shader_CompileVertexWithLayout( pSource, 
-                                                                 ppLayout, 
-                                                                 pLayoutDesc, 
-                                                                 NumElements, 
-                                                                 pEntryPoint, 
-                                                                 pProfile );
-    if( pSource )
-    {
-        x_free( pSource );
-    }
-
-    if( pShader )
-    {
-        x_DebugMsg( "ShaderMgr: Vertex shader with layout compiled from file '%s'\n", pFileName );
-    }
-    
+    ID3D11VertexShader* pShader = shader_CompileVertexWithLayout( pSource,
+                                                                  ppLayout,
+                                                                  pLayoutDesc,
+                                                                  NumElements,
+                                                                  pEntryPoint,
+                                                                  pProfile,
+                                                                  pFileName );
+    x_free( pSource );
     return pShader;
 }
 
@@ -656,7 +613,8 @@ xbool shader_CompileToBlob( const char* pSource,
                             shader_type Type,
                             shader_blob& Blob,
                             const char* pEntryPoint,
-                            const char* pProfile )
+                            const char* pProfile,
+                            const char* pSourceName )
 {
     ID3DBlob* pD3DBlob = NULL;
     ID3DBlob* pErrorBlob = NULL;
@@ -667,7 +625,7 @@ xbool shader_CompileToBlob( const char* pSource,
     if( !pProfile )
         pProfile = shader_GetDefaultProfile( Type );
 
-    if( !shader_CompileShaderInternal( pSource, pEntryPoint, pProfile, &pD3DBlob, &pErrorBlob ) )
+    if( !shader_CompileShaderInternal( pSource, pSourceName, pEntryPoint, pProfile, &pD3DBlob, &pErrorBlob ) )
     {
         if( pErrorBlob ) pErrorBlob->Release();
         return FALSE;
@@ -699,7 +657,7 @@ xbool shader_CompileFileToBlob( const char* pFileName,
         return FALSE;
     }
 
-    xbool Result = shader_CompileToBlob( pSource, Type, Blob, pEntryPoint, pProfile );
+    xbool Result = shader_CompileToBlob( pSource, Type, Blob, pEntryPoint, pProfile, pFileName );
     if( pSource )
     {
         x_free( pSource );

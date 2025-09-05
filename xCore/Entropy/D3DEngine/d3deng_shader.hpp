@@ -84,21 +84,25 @@ xbool               shader_SaveBlobToFile           ( const char* pFileName, con
 //==============================================================================
 
 // Compile shaders from source
-ID3D11VertexShader* shader_CompileVertex            ( const char* pSource, 
+ID3D11VertexShader* shader_CompileVertex            ( const char* pSource,
                                                       const char* pEntryPoint,
-                                                      const char* pProfile = NULL );
+                                                      const char* pProfile = NULL,
+                                                      const char* pSourceName = NULL );
 
 ID3D11PixelShader*  shader_CompilePixel             ( const char* pSource,
-                                                      const char* pEntryPoint, 
-                                                      const char* pProfile = NULL );
+                                                      const char* pEntryPoint,
+                                                      const char* pProfile = NULL,
+                                                      const char* pSourceName = NULL );
 
 ID3D11GeometryShader* shader_CompileGeometry        ( const char* pSource,
                                                       const char* pEntryPoint,
-                                                      const char* pProfile = NULL );
+                                                      const char* pProfile = NULL,
+                                                      const char* pSourceName = NULL );
 
 ID3D11ComputeShader* shader_CompileCompute          ( const char* pSource,
                                                       const char* pEntryPoint,
-                                                      const char* pProfile = NULL );
+                                                      const char* pProfile = NULL,
+                                                      const char* pSourceName = NULL );
 
 // Compile vertex shader with input layout
 ID3D11VertexShader* shader_CompileVertexWithLayout  ( const char* pSource,
@@ -106,7 +110,8 @@ ID3D11VertexShader* shader_CompileVertexWithLayout  ( const char* pSource,
                                                       const D3D11_INPUT_ELEMENT_DESC* pLayoutDesc,
                                                       u32 NumElements,
                                                       const char* pEntryPoint,
-                                                      const char* pProfile = NULL );
+                                                      const char* pProfile = NULL,
+                                                      const char* pSourceName = NULL );
 
 //==============================================================================
 //  SHADER COMPILATION FROM FILES
@@ -146,7 +151,8 @@ xbool               shader_CompileToBlob           ( const char* pSource,
                                                      shader_type Type,
                                                      shader_blob& Blob,
                                                      const char* pEntryPoint,
-                                                     const char* pProfile = NULL );
+                                                     const char* pProfile = NULL,
+                                                     const char* pSourceName = NULL );
 
 // Compile shader from file to blob
 xbool               shader_CompileFileToBlob       ( const char* pFileName,
