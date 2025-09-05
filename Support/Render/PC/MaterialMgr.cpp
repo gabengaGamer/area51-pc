@@ -551,7 +551,7 @@ xbool material_mgr::UpdateSkinConstants( const d3d_skin_lighting* pLighting )
             newConsts.LightCol[i].Set( 0.0f, 0.0f, 0.0f, 0.0f );
         }
     }
-    vector4 BaseBrightness( 0.05f, 0.05f, 0.05f, 0.0f ); // Prevent fully black surfaces, render of this game sucks.
+    vector4 BaseBrightness( 0.025f, 0.025f, 0.025f, 0.0f ); // Prevent fully black surfaces, render of this game sucks.
     newConsts.LightAmbCol  = ( pLighting->AmbCol * 0.5f ) + BaseBrightness;
     newConsts.LightCount   = pLighting->LightCount;
     newConsts.Padding[0]   = 0.0f;

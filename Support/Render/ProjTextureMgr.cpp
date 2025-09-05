@@ -72,7 +72,7 @@ s32 proj_texture_mgr::CollectLights( const matrix4& L2W, const bbox& B, s32 MaxL
 
     if( MaxLightCount > MAX_PROJ_LIGHTS )
     {
-        x_DebugMsg( "CollectLights: MaxLightCount (%d) exceeds MAX_PROJ_LIGHTS (%d)\n", MaxLightCount, MAX_PROJ_LIGHTS );
+        x_DebugMsg( "ProjTextureMgr: MaxLightCount (%d) exceeds MAX_PROJ_LIGHTS (%d)\n", MaxLightCount, MAX_PROJ_LIGHTS );
         MaxLightCount = MAX_PROJ_LIGHTS;
     }
 
@@ -86,7 +86,7 @@ s32 proj_texture_mgr::CollectLights( const matrix4& L2W, const bbox& B, s32 MaxL
 
     if( (m_NCollectedLights == MaxLightCount) && (m_NCollectedLights < m_NLightProjections) )
     {
-        x_DebugMsg( "CollectLights: more lights intersect than allowed\n" );
+        x_DebugMsg( "ProjTextureMgr: more lights intersect than allowed\n" );
     }
 
     return m_NCollectedLights;
@@ -118,7 +118,7 @@ s32 proj_texture_mgr::CollectShadows( const matrix4& L2W, const bbox& B, s32 Max
 
     if( MaxShadowCount > MAX_PROJ_SHADOWS )
     {
-        x_DebugMsg( "CollectShadows: MaxShadowCount (%d) exceeds MAX_PROJ_SHADOWS (%d)\n", MaxShadowCount, MAX_PROJ_SHADOWS );
+        x_DebugMsg( "ProjTextureMgr: MaxShadowCount (%d) exceeds MAX_PROJ_SHADOWS (%d)\n", MaxShadowCount, MAX_PROJ_SHADOWS );
         MaxShadowCount = MAX_PROJ_SHADOWS;
     }
 
@@ -132,7 +132,7 @@ s32 proj_texture_mgr::CollectShadows( const matrix4& L2W, const bbox& B, s32 Max
 
     if( (m_NCollectedShadows == MaxShadowCount) && (m_NCollectedShadows < m_NShadowProjections) )
     {
-        x_DebugMsg( "CollectShadows: more shadows intersect than allowed\n" );
+        x_DebugMsg( "ProjTextureMgr: more shadows intersect than allowed\n" );
     }
 
     return m_NCollectedShadows;
