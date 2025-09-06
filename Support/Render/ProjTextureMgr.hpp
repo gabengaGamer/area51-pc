@@ -70,7 +70,7 @@ protected:
                                       texture::handle Texture );
 									  
     xbool       ProjectionIntersectsBBox( const projection& Proj,
-                                          const bbox&      B );
+                                          const bbox&      B );								  
 
     // list of projective lights and shadows
     s32         m_NLightProjections;
@@ -100,6 +100,16 @@ extern proj_texture_mgr    g_ProjTextureMgr;
 inline
 void proj_texture_mgr::ClearProjTextures( void )
 {
+    for( s32 i = 0; i < m_NLightProjections; i++ )
+    {
+        m_LightProjections[i].ProjTexture.Destroy();
+    }
+
+    for( s32 i = 0; i < m_NShadowProjections; i++ )
+    {
+        m_ShadowProjections[i].ProjTexture.Destroy();
+    }
+
     m_NLightProjections    = 0;
     m_NShadowProjections   = 0;
     m_NCollectedLights     = 0;

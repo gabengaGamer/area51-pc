@@ -34,8 +34,8 @@ proj_texture_mgr::proj_texture_mgr( void ) :
 
 proj_texture_mgr::~proj_texture_mgr( void )
 {
+    ClearProjTextures(); 	
 }
-
 
 //=========================================================================
 
