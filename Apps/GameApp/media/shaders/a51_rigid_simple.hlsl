@@ -73,7 +73,7 @@ struct PS_INPUT
 
 PS_INPUT VSMain(VS_INPUT input)
 {
-    PS_INPUT output = (PS_INPUT)0;
+    PS_INPUT output;
 
     // Transform position through matrices
     float4 worldPos = mul(World, float4(input.Pos, 1.0));
@@ -106,7 +106,7 @@ struct PS_OUTPUT
 
 PS_OUTPUT PSMain(PS_INPUT input)
 {
-    PS_OUTPUT output = (PS_OUTPUT)0;
+    PS_OUTPUT output;
 
     // Sample diffuse texture
     float4 diffuseColor = txDiffuse.Sample(samLinear, input.UV);
@@ -213,7 +213,7 @@ PS_OUTPUT PSMain(PS_INPUT input)
     //    return output;
     //}
     
-    //---------------------------------------------------------------------------------------
+    //---------------------------------------------------------------------------------------  
 
     // Special material handling for per-pixel illumination
     if (MaterialFlags & MATERIAL_FLAG_PERPIXEL_ILLUM)
