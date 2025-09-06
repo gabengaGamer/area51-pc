@@ -271,7 +271,11 @@ void material_mgr::KillShaders( void )
 
 //==============================================================================
 
-void material_mgr::SetRigidMaterial( const matrix4* pL2W, const bbox* pBBox, const d3d_rigid_lighting* pLighting, const material* pMaterial )
+void material_mgr::SetRigidMaterial( const matrix4* pL2W,
+                                     const bbox* pBBox,
+                                     const d3d_rigid_lighting* pLighting,
+                                     const material* pMaterial,
+                                     u32 RenderFlags )
 {
     if( !g_pd3dDevice || !g_pd3dContext )
         return;
@@ -288,19 +292,22 @@ void material_mgr::SetRigidMaterial( const matrix4* pL2W, const bbox* pBBox, con
     state_SetState( STATE_TYPE_SAMPLER, STATE_SAMPLER_LINEAR_WRAP );
     g_pd3dContext->IASetPrimitiveTopology( D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST );
     
-    if( !UpdateRigidConstants( pL2W, pMaterial ) )
+    if( !UpdateRigidConstants( pL2W, pMaterial, RenderFlags ) )
     {
         x_DebugMsg( "MaterialMgr: Failed to update rigid constants\n" );
         return;
     }
 
     if( pL2W && pBBox )
-        UpdateProjTextures( *pL2W, *pBBox, 1 );
+        UpdateProjTextures( *pL2W, *pBBox, 1, RenderFlags );
 }
 
 //==============================================================================
 
-void material_mgr::SetSkinMaterial( const matrix4* pL2W, const bbox* pBBox, const d3d_skin_lighting* pLighting )
+void material_mgr::SetSkinMaterial( const matrix4* pL2W,
+                                    const bbox* pBBox,
+                                    const d3d_skin_lighting* pLighting,
+                                    u32 RenderFlags )
 {
     if( !g_pd3dDevice || !g_pd3dContext || !pLighting )
         return;
@@ -317,14 +324,14 @@ void material_mgr::SetSkinMaterial( const matrix4* pL2W, const bbox* pBBox, cons
     state_SetState( STATE_TYPE_SAMPLER, STATE_SAMPLER_LINEAR_WRAP );
     g_pd3dContext->IASetPrimitiveTopology( D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST );
     
-    if( !UpdateSkinConstants( pLighting ) )
+    if( !UpdateSkinConstants( pLighting, RenderFlags ) )
     {
         x_DebugMsg( "MaterialMgr: Failed to update skin constants\n" );
         return;
     }
 
     if( pL2W && pBBox )
-        UpdateProjTextures( *pL2W, *pBBox, 2 );
+        UpdateProjTextures( *pL2W, *pBBox, 2, RenderFlags );
 }
 
 //==============================================================================
@@ -355,7 +362,10 @@ void material_mgr::ResetProjTextures( void )
 
 //==============================================================================
 
-xbool material_mgr::UpdateProjTextures( const matrix4& L2W, const bbox& B, u32 Slot )
+xbool material_mgr::UpdateProjTextures( const matrix4& L2W,
+                                        const bbox& B,
+                                        u32 Slot,
+                                        u32 RenderFlags )
 {
     if( !m_pProjTextureBuffer || !g_pd3dContext )
         return FALSE;
@@ -365,7 +375,10 @@ xbool material_mgr::UpdateProjTextures( const matrix4& L2W, const bbox& B, u32 S
     ID3D11ShaderResourceView* lightSRV[proj_texture_mgr::MAX_PROJ_LIGHTS] = { NULL };
     ID3D11ShaderResourceView* shadSRV [proj_texture_mgr::MAX_PROJ_SHADOWS] = { NULL };
 
-    s32 nProjLights = g_ProjTextureMgr.CollectLights( L2W, B );
+    s32 nProjLights = 0;
+    if( !(RenderFlags & render::DISABLE_SPOTLIGHT) )
+        nProjLights = g_ProjTextureMgr.CollectLights( L2W, B );
+	
     s32 nAppliedLights = 0;
     for( s32 i = 0; i < nProjLights; i++ )
     {
@@ -384,7 +397,10 @@ xbool material_mgr::UpdateProjTextures( const matrix4& L2W, const bbox& B, u32 S
         }
     }
 
-    s32 nProjShadows = g_ProjTextureMgr.CollectShadows( L2W, B, 2 );
+    s32 nProjShadows = 0;
+    if( !(RenderFlags & render::DISABLE_PROJ_SHADOWS) )
+        nProjShadows = g_ProjTextureMgr.CollectShadows( L2W, B, 2 );
+	
     s32 nAppliedShadows = 0;
     for( s32 i = 0; i < nProjShadows; i++ )
     {
@@ -446,7 +462,9 @@ xbool material_mgr::UpdateProjTextures( const matrix4& L2W, const bbox& B, u32 S
 
 //==============================================================================
 
-xbool material_mgr::UpdateRigidConstants( const matrix4* pL2W, const material* pMaterial )
+xbool material_mgr::UpdateRigidConstants( const matrix4* pL2W,
+                                         const material* pMaterial,
+                                         u32 RenderFlags )
 {
     if( !m_pRigidConstantBuffer || !g_pd3dDevice || !g_pd3dContext )
         return FALSE;
@@ -531,9 +549,10 @@ xbool material_mgr::UpdateRigidConstants( const matrix4* pL2W, const material* p
         // Always use vertex color for now
         newMatrices.MaterialFlags |= MATERIAL_FLAG_VERTEX_COLOR;
 		
-		// Always use proj textures for now
-		newMatrices.MaterialFlags |= MATERIAL_FLAG_PROJ_LIGHT;
-		newMatrices.MaterialFlags |= MATERIAL_FLAG_PROJ_SHADOW;
+        if( !(RenderFlags & render::DISABLE_SPOTLIGHT) )
+            newMatrices.MaterialFlags |= MATERIAL_FLAG_PROJ_LIGHT;
+        if( !(RenderFlags & render::DISABLE_PROJ_SHADOWS) )
+            newMatrices.MaterialFlags |= MATERIAL_FLAG_PROJ_SHADOW;
     }
     
     newMatrices.Padding1 = 0.0f;
@@ -566,7 +585,8 @@ xbool material_mgr::UpdateRigidConstants( const matrix4* pL2W, const material* p
 
 //==============================================================================
 
-xbool material_mgr::UpdateSkinConstants( const d3d_skin_lighting* pLighting )
+xbool material_mgr::UpdateSkinConstants( const d3d_skin_lighting* pLighting,
+                                         u32 RenderFlags )
 {
     if( !m_pSkinVSConstBuffer || !pLighting || !g_pd3dDevice || !g_pd3dContext )
         return FALSE;

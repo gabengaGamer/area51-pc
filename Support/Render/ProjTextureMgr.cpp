@@ -36,6 +36,29 @@ proj_texture_mgr::~proj_texture_mgr( void )
 {
 }
 
+
+//=========================================================================
+
+xbool proj_texture_mgr::ProjectionIntersectsBBox( const projection& Proj, const bbox& B )
+{
+    if( Proj.ProjView.BBoxInView( B ) == view::VISIBLE_NONE )
+        return FALSE;
+
+    f32 MinZ, MaxZ;
+    Proj.ProjView.GetMinMaxZ( B, MinZ, MaxZ );
+
+    f32 ZNear, ZFar;
+    Proj.ProjView.GetZLimits( ZNear, ZFar );
+    if( MaxZ < ZNear )
+        return FALSE;
+
+    vector3 Delta = B.GetCenter() - Proj.ProjView.GetPosition();
+    if( Proj.ProjView.GetViewZ().Dot( Delta ) <= 0.0f )
+        return FALSE;
+
+    return TRUE;
+}
+
 //=========================================================================
 
 void proj_texture_mgr::AddProjLight( const matrix4&  L2W,
@@ -43,7 +66,7 @@ void proj_texture_mgr::AddProjLight( const matrix4&  L2W,
                                      f32             Length,
                                      texture::handle Texture )
 {
-    ASSERT( m_NLightProjections < MAX_PROJ_LIGHTS );
+    ASSERT( m_NLightProjections < MAX_PROJ_LIGHTS );	
     SetupProjection( m_LightProjections[m_NLightProjections], L2W, FOV, Length, Texture );
     m_NLightProjections++;
 }
@@ -78,7 +101,7 @@ s32 proj_texture_mgr::CollectLights( const matrix4& L2W, const bbox& B, s32 MaxL
 
     for( s32 i = 0; (i < m_NLightProjections) && (m_NCollectedLights < MaxLightCount); i++ )
     {
-        if( m_LightProjections[i].ProjView.BBoxInView( WorldBBox ) )
+        if( ProjectionIntersectsBBox( m_LightProjections[i], WorldBBox ) )
         {
             m_CollectedLights[m_NCollectedLights++] = i;
         }
@@ -124,7 +147,7 @@ s32 proj_texture_mgr::CollectShadows( const matrix4& L2W, const bbox& B, s32 Max
 
     for( s32 i = 0; (i < m_NShadowProjections) && (m_NCollectedShadows < MaxShadowCount); i++ )
     {
-        if( m_ShadowProjections[i].ProjView.BBoxInView( WorldBBox ) )
+        if( ProjectionIntersectsBBox( m_ShadowProjections[i], WorldBBox ) )
         {
             m_CollectedShadows[m_NCollectedShadows++] = i;
         }

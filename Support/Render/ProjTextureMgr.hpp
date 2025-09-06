@@ -68,6 +68,9 @@ protected:
                                       radian          FOV,
                                       f32             Length,
                                       texture::handle Texture );
+									  
+    xbool       ProjectionIntersectsBBox( const projection& Proj,
+                                          const bbox&      B );
 
     // list of projective lights and shadows
     s32         m_NLightProjections;

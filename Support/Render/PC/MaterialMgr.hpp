@@ -145,10 +145,17 @@ public:
     void        Kill                ( void );
 
     // Rigid material management
-    void        SetRigidMaterial    ( const matrix4* pL2W, const bbox* pBBox, const d3d_rigid_lighting* pLighting, const material* pMaterial );
+    void        SetRigidMaterial    ( const matrix4* pL2W,
+                                      const bbox* pBBox,
+                                      const d3d_rigid_lighting* pLighting,
+                                      const material* pMaterial,
+                                      u32 RenderFlags );
 
     // Skin material management  
-    void        SetSkinMaterial     ( const matrix4* pL2W, const bbox* pBBox, const d3d_skin_lighting* pLighting );
+    void        SetSkinMaterial     ( const matrix4* pL2W,
+                                      const bbox* pBBox,
+                                      const d3d_skin_lighting* pLighting,
+                                      u32 RenderFlags );
 
     void        ResetProjTextures   ( void );
 
@@ -169,9 +176,15 @@ protected:
     void        KillShaders         ( void );
 
     // Internal helpers
-    xbool       UpdateRigidConstants( const matrix4* pL2W, const material* pMaterial );
-    xbool       UpdateSkinConstants ( const d3d_skin_lighting* pLighting );
-	xbool       UpdateProjTextures  ( const matrix4& L2W, const bbox& B, u32 Slot );
+    xbool       UpdateRigidConstants( const matrix4* pL2W,
+                                      const material* pMaterial,
+                                      u32 RenderFlags );
+    xbool       UpdateSkinConstants ( const d3d_skin_lighting* pLighting,
+                                      u32 RenderFlags );
+    xbool       UpdateProjTextures  ( const matrix4& L2W,
+                                          const bbox& B,
+                                          u32 Slot,
+                                          u32 RenderFlags );
 
 protected:
 
