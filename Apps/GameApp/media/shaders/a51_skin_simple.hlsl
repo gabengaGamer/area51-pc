@@ -85,16 +85,16 @@ PS_INPUT VSMain(VS_INPUT input)
     PS_INPUT output;
     
     // Extract bone indices and weights
-    int   index1  = (int)input.PosIndex1.w;                     
-    int   index2  = (int)input.NormIndex2.w;
-    float weight1 = input.UVWeights.z;
-    float weight2 = input.UVWeights.w;
+    //int   index1  = (int)input.PosIndex1.w;                     
+    //int   index2  = (int)input.NormIndex2.w;
+    //float weight1 = input.UVWeights.z;
+    //float weight2 = input.UVWeights.w;
 	
 	// Extract bone indices and weights (stub)
-	//int   index1  = 0;
-    //int   index2  = 0;
-    //float weight1 = 1.0;
-    //float weight2 = 0.0;
+	int   index1  = 0;
+    int   index2  = 0;
+    float weight1 = 1.0;
+    float weight2 = 0.0;
     
     // Blend positions using bone matrices
     float3 pos1 = mul(Bones[index1].L2W, float4(input.PosIndex1.xyz, 1.0)).xyz;
