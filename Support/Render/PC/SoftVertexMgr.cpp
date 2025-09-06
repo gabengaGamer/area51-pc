@@ -130,7 +130,7 @@ void soft_vertex_mgr::DrawDList( xhandle hDList, const matrix4* pBone, const d3d
     node&       DLVert    = m_lNode     ( DList.hVertexNode );
     node&       DLIndex   = m_lNode     ( DList.hIndexNode  );
 
-    ASSERT(pLighting);
+    (void)pLighting;
 
     ActivateStreams( SoftDList.hDList );
 
@@ -179,7 +179,6 @@ void soft_vertex_mgr::DrawDList( xhandle hDList, const matrix4* pBone, const d3d
 
                     cb_skin_bone& B = pBoneData[CacheID];
                     B.L2W = L2W;
-                    B.LightDir = L2W.RotateVector(pLighting->Dir);
                 }
             }
         }

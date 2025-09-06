@@ -586,7 +586,7 @@ xbool material_mgr::UpdateSkinConstants( const d3d_skin_lighting* pLighting )
         if( i < pLighting->LightCount )
         {
             newConsts.LightDir[i].Set( pLighting->Dir[i].GetX(), pLighting->Dir[i].GetY(), pLighting->Dir[i].GetZ(), 0.0f );
-            newConsts.LightCol[i] = pLighting->DirCol[i] * 0.5f;
+            newConsts.LightCol[i] = pLighting->DirCol[i];
         }
         else
         {
@@ -594,8 +594,8 @@ xbool material_mgr::UpdateSkinConstants( const d3d_skin_lighting* pLighting )
             newConsts.LightCol[i].Set( 0.0f, 0.0f, 0.0f, 0.0f );
         }
     }
-    vector4 BaseBrightness( 0.025f, 0.025f, 0.025f, 0.0f ); // Prevent fully black surfaces, render of this game sucks.
-    newConsts.LightAmbCol  = ( pLighting->AmbCol * 0.5f ) + BaseBrightness;
+    vector4 BaseBrightness( 0.05f, 0.05f, 0.05f, 0.0f ); // Prevent fully black surfaces, render of this game sucks.
+    newConsts.LightAmbCol  = ( pLighting->AmbCol ) + BaseBrightness;
     newConsts.LightCount   = pLighting->LightCount;
     newConsts.Padding[0]   = 0.0f;
     newConsts.Padding[1]   = 0.0f;
