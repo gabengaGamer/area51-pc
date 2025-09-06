@@ -596,7 +596,8 @@ xbool material_mgr::UpdateSkinConstants( const d3d_skin_lighting* pLighting,
         return FALSE;
 
     cb_skin_vs_consts newConsts;
-    newConsts.W2C          = pView->GetW2C();
+    newConsts.View         = pView->GetW2V();
+    newConsts.Projection   = pView->GetV2C();
     newConsts.Zero         = 0.0f;
     newConsts.One          = 1.0f;
     newConsts.MinusOne     = -1.0f;

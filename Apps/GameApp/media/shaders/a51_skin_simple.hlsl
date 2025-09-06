@@ -16,7 +16,8 @@
 
 cbuffer cbSkinConsts : register(b0)
 {
-    row_major float4x4 W2C;
+    float4x4 View;
+    float4x4 Projection;
     float    Zero;
     float    One;
     float    MinusOne;
@@ -30,7 +31,7 @@ cbuffer cbSkinConsts : register(b0)
 
 struct Bone
 {
-    row_major float4x4 L2W;
+    float4x4 L2W;
 };
 
 cbuffer cbBones : register(b2)
@@ -90,25 +91,26 @@ PS_INPUT VSMain(VS_INPUT input)
     float weight2 = 0.0;
     
     // Blend positions using bone matrices
-    float3 pos1 = mul(float4(input.PosIndex1.xyz, 1.0), Bones[index1].L2W).xyz;
-    float3 pos2 = mul(float4(input.PosIndex1.xyz, 1.0), Bones[index2].L2W).xyz;
-    float3 worldPos = pos1 * weight1 + pos2 * weight2;
-    output.WorldPos = worldPos;
+    float3 pos1 = mul(Bones[index1].L2W, float4(input.PosIndex1.xyz, 1.0)).xyz;
+    float3 pos2 = mul(Bones[index2].L2W, float4(input.PosIndex1.xyz, 1.0)).xyz;
+    float3 skinnedPos = pos1 * weight1 + pos2 * weight2;
     
     // Blend normals using bone matrices
-    float3 norm1 = mul(input.NormIndex2.xyz, (float3x3)Bones[index1].L2W);
-    float3 norm2 = mul(input.NormIndex2.xyz, (float3x3)Bones[index2].L2W);
-    output.Normal = normalize(norm1 * weight1 + norm2 * weight2);
+    float3 norm1 = mul((float3x3)Bones[index1].L2W, input.NormIndex2.xyz);
+    float3 norm2 = mul((float3x3)Bones[index2].L2W, input.NormIndex2.xyz);
+    float3 skinnedNorm = normalize(norm1 * weight1 + norm2 * weight2);
     
-    // Transform to clip space
-    float4 clipPos = mul(float4(worldPos, 1.0), W2C);
-    output.Pos = clipPos;
-    
-    // Calculate linear depth for distance-based effects
-    output.LinearDepth = clipPos.w;
-        
-    output.UV = input.UVWeights.xy;
-    
+    // Transform position to clip space
+    float4 worldPos = float4(skinnedPos, 1.0);
+    float4 viewPos  = mul(View, worldPos);
+    output.Pos      = mul(Projection, viewPos);
+
+    // Pass through attributes
+    output.WorldPos    = worldPos.xyz;
+    output.Normal      = skinnedNorm;
+    output.LinearDepth = length(viewPos.xyz);
+    output.UV          = input.UVWeights.xy;
+
     return output;
 }
 
@@ -129,37 +131,39 @@ PS_OUTPUT PSMain(PS_INPUT input)
     PS_OUTPUT output;
     
     // Sample diffuse texture
-    float4 texColor = txDiffuse.Sample(samLinear, input.UV);
+    float4 diffuseColor = txDiffuse.Sample(samLinear, input.UV);
     
-    // Apply Per-pixel lighting
-    float3 diffuse = float3(0.0, 0.0, 0.0);
-    for(uint i=0;i<LightCount;i++)
+    // Apply per-pixel lighting
+    float3 lighting = float3(0.0, 0.0, 0.0);
+    for( uint i = 0; i < LightCount; i++ )
     {
         float NdotL = saturate(dot(input.Normal, -LightDir[i].xyz));
-        diffuse += LightCol[i].rgb * NdotL;
+        lighting += LightCol[i].rgb * NdotL;
     }
     float3 ambient = LightAmbCol.rgb;
-    float4 litColor = float4(diffuse + ambient, 1.0) * texColor;    
+    float4 finalColor = float4(lighting + ambient, 1.0) * diffuseColor;   
     
     //if( MaterialFlags & MATERIAL_FLAG_PROJ_LIGHT )
     //{
-        litColor.rgb = ApplyProjLights( litColor.rgb, input.WorldPos );
+          finalColor.rgb = ApplyProjLights( finalColor.rgb, input.WorldPos );
     //}
 
     //if( MaterialFlags & MATERIAL_FLAG_PROJ_SHADOW )
     //{
-        litColor.rgb = ApplyProjShadows( litColor.rgb, input.WorldPos );
+          finalColor.rgb = ApplyProjShadows( finalColor.rgb, input.WorldPos );
     //}
     
+    float4 baseColor = diffuseColor;
+    
     // Fill G-Buffer outputs
-    output.FinalColor = litColor;
-    output.Albedo = texColor;
-    output.Normal = float4(input.Normal * 0.5 + 0.5, 0.0);
-    output.DepthInfo = float4(
+    output.FinalColor = finalColor;
+    output.Albedo     = baseColor;
+    output.Normal     = float4(input.Normal * 0.5 + 0.5, 0.0);
+    output.DepthInfo  = float4(
         input.Pos.z / input.Pos.w,  // NDC depth for position reconstruction
         input.LinearDepth,          // Linear depth for distance effects
         1.0,                        // Mark as skinned geometry
-        litColor.a                  // Alpha for transparency effects
+        finalColor.a                // Alpha for transparency effects
     );
     
     return output;

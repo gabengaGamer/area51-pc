@@ -105,7 +105,8 @@ struct d3d_skin_lighting
 
 struct cb_skin_vs_consts
 {
-    matrix4 W2C;                          // World to clip matrix
+    matrix4 View;                         // World to view matrix
+    matrix4 Projection;                   // View to clip matrix
     f32     Zero;                         // 0.0f
     f32     One;                          // 1.0f
     f32     MinusOne;                     // -1.0f
