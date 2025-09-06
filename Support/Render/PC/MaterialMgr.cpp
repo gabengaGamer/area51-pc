@@ -331,7 +331,7 @@ void material_mgr::SetSkinMaterial( const matrix4* pL2W,
     }
 
     if( pL2W && pBBox )
-        UpdateProjTextures( *pL2W, *pBBox, 2, RenderFlags );
+        UpdateProjTextures( *pL2W, *pBBox, 1, RenderFlags );
 }
 
 //==============================================================================
@@ -640,7 +640,7 @@ xbool material_mgr::UpdateSkinConstants( const d3d_skin_lighting* pLighting,
         m_bSkinConstsDirty = FALSE;
 
         g_pd3dContext->VSSetConstantBuffers( 0, 1, &m_pSkinVSConstBuffer );
-        g_pd3dContext->VSSetConstantBuffers( 1, 1, &m_pSkinBoneBuffer );
+        g_pd3dContext->VSSetConstantBuffers( 2, 1, &m_pSkinBoneBuffer );
 		g_pd3dContext->PSSetConstantBuffers( 0, 1, &m_pSkinVSConstBuffer );
     }
     

@@ -1,29 +1,12 @@
 //==============================================================================
-//  
+//
 //  a51_rigid_simple.hlsl
-//  
+//
 //  Simple rigidgeom shader for A51.
 //
 //==============================================================================
 
-#define MATERIAL_FLAG_ALPHA_TEST        (1u<<0)
-#define MATERIAL_FLAG_ADDITIVE          (1u<<1)
-#define MATERIAL_FLAG_SUBTRACTIVE       (1u<<2)
-#define MATERIAL_FLAG_VERTEX_COLOR      (1u<<3)
-#define MATERIAL_FLAG_TWO_SIDED         (1u<<4)
-#define MATERIAL_FLAG_ENVIRONMENT       (1u<<5)
-#define MATERIAL_FLAG_DISTORTION        (1u<<6)
-#define MATERIAL_FLAG_PERPIXEL_ILLUM    (1u<<7) 
-#define MATERIAL_FLAG_PERPOLY_ILLUM     (1u<<8) 
-#define MATERIAL_FLAG_PERPIXEL_ENV      (1u<<9) 
-#define MATERIAL_FLAG_PERPOLY_ENV       (1u<<10)
-#define MATERIAL_FLAG_HAS_DETAIL        (1u<<11)
-#define MATERIAL_FLAG_HAS_ENVIRONMENT   (1u<<12)
-#define MATERIAL_FLAG_PROJ_LIGHT        (1u<<13)
-#define MATERIAL_FLAG_PROJ_SHADOW       (1u<<14)
-
-#define MAX_PROJ_LIGHTS 10
-#define MAX_PROJ_SHADOWS 10
+#include "common/material_flags.hlsl"
 
 //==============================================================================
 //  CONSTANT BUFFERS
@@ -34,7 +17,7 @@ cbuffer cbMatrices : register(b0)
     float4x4 World;
     float4x4 View;
     float4x4 Projection;
-    
+
     uint     MaterialFlags;
     float    AlphaRef;
     float3   CameraPosition;
@@ -90,22 +73,22 @@ struct PS_INPUT
 
 PS_INPUT VSMain(VS_INPUT input)
 {
-    PS_INPUT output;
-    
+    PS_INPUT output = (PS_INPUT)0;
+
     // Transform position through matrices
     float4 worldPos = mul(World, float4(input.Pos, 1.0));
-    float4 viewPos = mul(View, worldPos);
-    output.Pos = mul(Projection, viewPos);
-    
+    float4 viewPos  = mul(View, worldPos);
+    output.Pos      = mul(Projection, viewPos);
+
     // Pass through vertex attributes
-    output.Color = input.Color;
-    output.UV = input.UV; 
+    output.Color    = input.Color;
+    output.UV       = input.UV;
     output.WorldPos = worldPos.xyz;
-    output.Normal = normalize(mul((float3x3)World, input.Normal));
-    
+    output.Normal   = normalize(mul((float3x3)World, input.Normal));
+
     // Calculate linear depth for distance-based effects
     output.LinearDepth = length(viewPos.xyz);
-    
+
     return output;
 }
 
@@ -123,9 +106,9 @@ struct PS_OUTPUT
 
 PS_OUTPUT PSMain(PS_INPUT input)
 {
-    PS_OUTPUT output;
-    
-    // Sample base diffuse texture
+    PS_OUTPUT output = (PS_OUTPUT)0;
+
+    // Sample diffuse texture
     float4 diffuseColor = txDiffuse.Sample(samLinear, input.UV);
 
     // Apply detail texture if available
@@ -134,15 +117,15 @@ PS_OUTPUT PSMain(PS_INPUT input)
         float4 detailColor = txDetail.Sample(samLinear, input.UV * 4.0);
         diffuseColor *= detailColor * 2.0;
     }
-    
+
     float4 baseColor = diffuseColor;
-    
+
     // Apply vertex color modulation
     if (MaterialFlags & MATERIAL_FLAG_VERTEX_COLOR)
     {
         diffuseColor *= input.Color;
     }
-    
+
     // Perform alpha testing
     if (MaterialFlags & MATERIAL_FLAG_ALPHA_TEST)
     {
@@ -152,6 +135,7 @@ PS_OUTPUT PSMain(PS_INPUT input)
 
     float4 finalColor = diffuseColor;
 
+    // Apply projection lights and shadows
     if( MaterialFlags & MATERIAL_FLAG_PROJ_LIGHT )
     {
         finalColor.rgb = ApplyProjLights( finalColor.rgb, input.WorldPos );
@@ -161,7 +145,7 @@ PS_OUTPUT PSMain(PS_INPUT input)
     {
         finalColor.rgb = ApplyProjShadows( finalColor.rgb, input.WorldPos );
     }
-    
+
     //---------------------------------------------------------------------------------------
     
     // DEBUG
@@ -230,28 +214,28 @@ PS_OUTPUT PSMain(PS_INPUT input)
     //}
     
     //---------------------------------------------------------------------------------------
-    
+
     // Special material handling for per-pixel illumination
     if (MaterialFlags & MATERIAL_FLAG_PERPIXEL_ILLUM)
     {
-        float4 texColor = txDiffuse.Sample(samLinear, input.UV);
+        float4 texColor    = txDiffuse.Sample(samLinear, input.UV);
         float4 vertexColor = input.Color;
 
         float3 litColor = vertexColor.rgb * texColor.rgb;
-        finalColor.rgb = lerp(litColor, texColor.rgb, texColor.a);
-        finalColor.a = texColor.a;
+        finalColor.rgb  = lerp(litColor, texColor.rgb, texColor.a);
+        finalColor.a    = texColor.a;
     }
-    
+
     // Fill G-Buffer outputs
     output.FinalColor = finalColor;
-    output.Albedo = baseColor;
-    output.Normal = float4(input.Normal * 0.5 + 0.5, 0.0);
-    output.DepthInfo = float4(
-        input.Pos.z / input.Pos.w,     // NDC depth
-        input.LinearDepth,             // Linear depth
-        0.0,                           // Reserved
-        finalColor.a                   // Alpha
+    output.Albedo     = baseColor;
+    output.Normal     = float4(input.Normal * 0.5 + 0.5, 0.0);
+    output.DepthInfo  = float4(
+        input.Pos.z / input.Pos.w,   // NDC depth for position reconstruction
+        input.LinearDepth,           // Linear depth for distance effects
+        0.0,                         // Reserved
+        finalColor.a                 // Alpha for transparency effects
     );
-    
+
     return output;
 }
