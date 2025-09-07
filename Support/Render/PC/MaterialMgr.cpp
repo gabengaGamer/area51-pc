@@ -687,14 +687,14 @@ xbool material_mgr::UpdateSkinConstants( const d3d_lighting* pLighting,
                 skinMatrices.MaterialFlags |= MATERIAL_FLAG_ALPHA_TEST | MATERIAL_FLAG_PERPIXEL_ILLUM;
                 break;
             case Material_Alpha_PerPolyIllum:
-                rigidMatrices.MaterialFlags |= MATERIAL_FLAG_ALPHA_TEST | MATERIAL_FLAG_PERPOLY_ILLUM;
-                break;
-            case Material_Diff_PerPixelEnv:
-                rigidMatrices.MaterialFlags |= MATERIAL_FLAG_PERPIXEL_ENV;
-                break; 				
-            case Material_Alpha_PerPolyIllum:
                 skinMatrices.MaterialFlags |= MATERIAL_FLAG_ALPHA_TEST | MATERIAL_FLAG_PERPOLY_ILLUM;
                 break;
+            case Material_Diff_PerPixelEnv:
+                skinMatrices.MaterialFlags |= MATERIAL_FLAG_PERPIXEL_ENV;
+                break; 	
+            case Material_Alpha_PerPolyEnv:
+                skinMatrices.MaterialFlags |= MATERIAL_FLAG_ALPHA_TEST | MATERIAL_FLAG_PERPOLY_ENV;
+                break;				
             case Material_Distortion:
                 skinMatrices.MaterialFlags |= MATERIAL_FLAG_DISTORTION;
                 break;
