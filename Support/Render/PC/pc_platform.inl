@@ -700,7 +700,7 @@ void* platform_CalculateRigidLighting( const matrix4&   L2W,
         static d3d_rigid_lighting Default;
         Default.LightCount = 0;
         Default.AmbCol.Set( 0.05f, 0.05f, 0.05f, 1.0f );
-        for( s32 i = 0; i < MAX_RIGID_LIGHTS; i++ )
+        for( s32 i = 0; i < MAX_GEOM_LIGHTS; i++ )
         {
             Default.PosRad[i].Set( 0.0f, 0.0f, 0.0f, 0.0f );
             Default.Col[i].Set( 0.0f, 0.0f, 0.0f, 0.0f );
@@ -710,7 +710,7 @@ void* platform_CalculateRigidLighting( const matrix4&   L2W,
     else
     {
         pLighting->AmbCol.Set( 0.05f, 0.05f, 0.05f, 1.0f );
-        s32 NLights = g_LightMgr.CollectLights( WorldBBox, MAX_RIGID_LIGHTS );
+        s32 NLights = g_LightMgr.CollectLights( WorldBBox, MAX_GEOM_LIGHTS );
         pLighting->LightCount = NLights;
 
         for( s32 i = 0; i < NLights; i++ )
@@ -727,7 +727,7 @@ void* platform_CalculateRigidLighting( const matrix4&   L2W,
                                    1.0f );
         }
 
-        for( s32 i = NLights; i < MAX_RIGID_LIGHTS; i++ )
+        for( s32 i = NLights; i < MAX_GEOM_LIGHTS; i++ )
         {
             pLighting->PosRad[i].Set( 0.0f, 0.0f, 0.0f, 0.0f );
             pLighting->Col[i].Set( 0.0f, 0.0f, 0.0f, 0.0f );
@@ -759,7 +759,7 @@ void* platform_CalculateSkinLighting( u32            Flags,
         Default.Dir[0].Set(0.0f, 1.0f, 0.0f);
         Default.DirCol[0].Set(1.0f, 1.0f, 1.0f, 1.0f);
         Default.AmbCol.Set(0.3f, 0.3f, 0.3f, 1.0f);
-        for( s32 i = 1; i < MAX_SKIN_LIGHTS; i++ )
+        for( s32 i = 1; i < MAX_GEOM_LIGHTS; i++ )
         {
             Default.Dir[i].Set(0.0f, 0.0f, 0.0f);
             Default.DirCol[i].Set(0.0f, 0.0f, 0.0f, 0.0f);
@@ -777,7 +777,7 @@ void* platform_CalculateSkinLighting( u32            Flags,
                               (f32)Ambient.A * (1.0f / 255.0f) ) ;
 
         // Grab lights
-        s32 NLights = g_LightMgr.CollectCharLights( L2W, BBox, MAX_SKIN_LIGHTS );
+        s32 NLights = g_LightMgr.CollectCharLights( L2W, BBox, MAX_GEOM_LIGHTS );
         pLighting->LightCount = NLights;
 		
         for( s32 i = 0; i < NLights; i++ )
@@ -794,7 +794,7 @@ void* platform_CalculateSkinLighting( u32            Flags,
                                      (f32)Col.A * (1.0f / 255.0f) );
         }
 		
-        for( s32 i = NLights; i < MAX_SKIN_LIGHTS; i++ )
+        for( s32 i = NLights; i < MAX_GEOM_LIGHTS; i++ )
         {
             // Turn off directional lighting
             pLighting->Dir[i].Set(0.0f, 0.0f, 0.0f);
