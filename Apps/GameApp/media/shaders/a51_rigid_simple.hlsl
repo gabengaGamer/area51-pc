@@ -2,7 +2,7 @@
 //
 //  a51_rigid_simple.hlsl
 //
-//  Simple rigidgeom shader for A51.
+//  Simple rigidgeom uber-shader for A51.
 //
 //==============================================================================
 
@@ -11,6 +11,8 @@
 //==============================================================================
 //  CONSTANT BUFFERS
 //==============================================================================
+
+#include "common/geom_buffers.hlsl"
 
 cbuffer cbMatrices : register(b0)
 {
@@ -23,25 +25,6 @@ cbuffer cbMatrices : register(b0)
     float3   CameraPosition;
     float    Padding1;
     float    Padding2;
-};
-
-cbuffer cbProjTextures : register(b1)
-{
-    float4x4 ProjLightMatrix[MAX_PROJ_LIGHTS];
-    float4x4 ProjShadowMatrix[MAX_PROJ_SHADOWS];
-    uint     ProjLightCount;
-    uint     ProjShadowCount;
-    float    EdgeSize;
-    float3   ProjPadding;
-};
-
-cbuffer cbLightConsts : register(b2)
-{
-    float4 LightPosRad[MAX_GEOM_LIGHTS];
-    float4 LightCol[MAX_GEOM_LIGHTS];
-    float4 LightAmbCol;
-    uint   LightCount;
-    float3 LightPadding;
 };
 
 //==============================================================================
@@ -90,14 +73,12 @@ PS_INPUT VSMain(VS_INPUT input)
     output.Pos      = mul(Projection, viewPos);
 
     // Pass through vertex attributes
-    output.Color    = input.Color;
-    output.UV       = input.UV;
-    output.WorldPos = worldPos.xyz;
-    output.Normal   = normalize(mul((float3x3)World, input.Normal));
-
-    // Calculate linear depth for distance-based effects
+    output.WorldPos    = worldPos.xyz;
+    output.Normal      = normalize(mul((float3x3)World, input.Normal));
     output.LinearDepth = length(viewPos.xyz);
-
+    output.UV          = input.UV;
+    output.Color       = input.Color;
+    
     return output;
 }
 
@@ -120,7 +101,7 @@ PS_OUTPUT PSMain(PS_INPUT input)
     // Sample diffuse texture
     float4 diffuseColor = txDiffuse.Sample(samLinear, input.UV);
 
-    // Apply detail texture if available
+    // Apply detail texture
     if (MaterialFlags & MATERIAL_FLAG_HAS_DETAIL)
     {
         float4 detailColor = txDetail.Sample(samLinear, input.UV * 4.0);
@@ -129,7 +110,7 @@ PS_OUTPUT PSMain(PS_INPUT input)
 
     float4 baseColor = diffuseColor;
 
-    // Apply vertex color modulation
+    // Apply vertex color modulation 
     if (MaterialFlags & MATERIAL_FLAG_VERTEX_COLOR)
     {
         diffuseColor.a *= input.Color.a;
@@ -142,18 +123,19 @@ PS_OUTPUT PSMain(PS_INPUT input)
             discard;
     }
 
-    float3 dynLight = float3( 0.0, 0.0, 0.0 );
+    // Apply per-pixel lighting
+    float3 PerPixelLight = float3( 0.0, 0.0, 0.0 );
     for( uint i = 0; i < LightCount; i++ )
     {
-        float3 L     = LightPosRad[i].xyz - input.WorldPos;
+        float3 L     = LightVec[i].xyz - input.WorldPos;
         float  dist  = length( L );
-        float  atten = saturate( 1.0 - dist / LightPosRad[i].w );
+        float  atten = saturate( 1.0 - dist / LightVec[i].w );
         float3 Ldir  = L / max( dist, 0.0001 );
         float  NdotL = saturate( dot( input.Normal, Ldir ) );
-        dynLight    += LightCol[i].rgb * NdotL * atten;
+        PerPixelLight    += LightCol[i].rgb * NdotL * atten;
     }
 
-    float3 totalLight = LightAmbCol.rgb + dynLight;
+    float3 totalLight = LightAmbCol.rgb + PerPixelLight;
     if( MaterialFlags & MATERIAL_FLAG_VERTEX_COLOR )
     {
         totalLight += input.Color.rgb;

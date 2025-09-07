@@ -41,7 +41,7 @@ public:
     xhandle     AddDList            ( void* pVertex, s32 nVertices, u16* pIndex, s32 nIndices, s32 nPrims );
     void        DelDList            ( xhandle hDList );
     void        BeginRender         ( void );
-    void        DrawDList           ( xhandle hDList, const matrix4* pWorld = NULL, const d3d_rigid_lighting* pLighting = NULL );
+    void        DrawDList           ( xhandle hDList, const matrix4* pWorld = NULL, const d3d_lighting* pLighting = NULL );
     void*       LockDListVerts      ( xhandle hDList );
     void        UnlockDListVerts    ( xhandle hDList );
     void*       LockDListIndices    ( xhandle hDList, s32& Index );

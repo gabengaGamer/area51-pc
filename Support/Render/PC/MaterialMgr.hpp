@@ -65,15 +65,15 @@ enum material_flags
 //  CONSTANT BUFFER STRUCTURES
 //==============================================================================
 
-struct d3d_rigid_lighting
+struct d3d_lighting
 {
     s32     LightCount;
-    vector4 PosRad  [MAX_GEOM_LIGHTS];
-    vector4 Col     [MAX_GEOM_LIGHTS];
+    vector4 LightVec[MAX_GEOM_LIGHTS];
+    vector4 LightCol[MAX_GEOM_LIGHTS];
     vector4 AmbCol;
 };
 
-struct rigid_vert_matrices
+struct cb_rigid_matrices
 {
     matrix4 World;
     matrix4 View;
@@ -82,8 +82,17 @@ struct rigid_vert_matrices
     u32     MaterialFlags;
     f32     AlphaRef;
     vector3 CameraPosition;
-    f32     Padding1;
-    f32     Padding2;
+    f32     Padding[2];
+};
+
+struct cb_skin_matrices
+{
+    matrix4 View;                         // World to view matrix
+    matrix4 Projection;                   // View to clip matrix
+    
+    u32     MaterialFlags;                // Material feature flags
+    f32     AlphaRef;                     // Alpha test reference
+    f32     Padding[2];                   // Padding for alignment
 };
 
 struct cb_proj_textures
@@ -96,36 +105,13 @@ struct cb_proj_textures
     f32     Padding[3];
 };
 
-struct cb_rigid_lighting
+struct cb_lighting
 {
-    vector4 LightPosRad[MAX_GEOM_LIGHTS];
-    vector4 LightCol   [MAX_GEOM_LIGHTS];
+    vector4 LightVec[MAX_GEOM_LIGHTS];
+    vector4 LightCol[MAX_GEOM_LIGHTS];
     vector4 LightAmbCol;
     u32     LightCount;
     f32     Padding[3];
-};
-
-struct d3d_skin_lighting
-{
-    s32     LightCount;
-    vector3 Dir      [MAX_GEOM_LIGHTS];
-    vector4 DirCol   [MAX_GEOM_LIGHTS];
-    vector4 AmbCol;
-};
-
-struct cb_skin_vs_consts
-{
-    matrix4 View;                         // World to view matrix
-    matrix4 Projection;                   // View to clip matrix
-    f32     Zero;                         // 0.0f
-    f32     One;                          // 1.0f
-    f32     MinusOne;                     // -1.0f
-    f32     Fog;                          // Fog factor
-    vector4 LightDir[MAX_GEOM_LIGHTS];    // Directional light directions
-    vector4 LightCol[MAX_GEOM_LIGHTS];    // Directional light colors
-    vector4 LightAmbCol;                  // Ambient light color
-    u32     LightCount;                   // Number of active lights
-    f32     Padding[3];                   // Padding to 16-byte alignment
 };
 
 struct cb_skin_bone
@@ -158,14 +144,14 @@ public:
     // Rigid material management
     void        SetRigidMaterial    ( const matrix4* pL2W,
                                       const bbox* pBBox,
-                                      const d3d_rigid_lighting* pLighting,
+                                      const d3d_lighting* pLighting,
                                       const material* pMaterial,
                                       u32 RenderFlags );
 
     // Skin material management  
     void        SetSkinMaterial     ( const matrix4* pL2W,
                                       const bbox* pBBox,
-                                      const d3d_skin_lighting* pLighting,
+                                      const d3d_lighting* pLighting,
                                       u32 RenderFlags );
 
     void        ResetProjTextures   ( void );
@@ -190,8 +176,8 @@ protected:
     xbool       UpdateRigidConstants( const matrix4*           pL2W,
                                       const material*         pMaterial,
                                       u32                     RenderFlags,
-                                      const d3d_rigid_lighting* pLighting );
-    xbool       UpdateSkinConstants ( const d3d_skin_lighting* pLighting,
+                                      const d3d_lighting* pLighting );
+    xbool       UpdateSkinConstants ( const d3d_lighting* pLighting,
                                       u32 RenderFlags );
     xbool       UpdateProjTextures  ( const matrix4& L2W,
                                           const bbox& B,
@@ -208,8 +194,9 @@ protected:
     ID3D11PixelShader*      m_pRigidPixelShader;
     ID3D11InputLayout*      m_pRigidInputLayout;
     ID3D11Buffer*           m_pRigidConstantBuffer;
-	ID3D11Buffer*           m_pRigidLightBuffer;
-	
+    ID3D11Buffer*           m_pSkinLightBuffer;
+    ID3D11Buffer*           m_pRigidLightBuffer;
+    
     // Proj textures resources
     ID3D11Buffer*           m_pProjTextureBuffer;
     ID3D11SamplerState*     m_pProjSampler;
@@ -227,14 +214,16 @@ protected:
     xbool                   m_bZTestEnabled;
     
     // Cached constant buffer data to avoid redundant updates
-    rigid_vert_matrices     m_CachedRigidMatrices;
-	cb_rigid_lighting       m_CachedRigidLighting;
-    cb_skin_vs_consts       m_CachedSkinConsts;
-	u32                     m_LastProjLightCount;
+    cb_rigid_matrices     m_CachedRigidMatrices;
+    cb_lighting             m_CachedRigidLighting;
+    cb_skin_matrices        m_CachedSkinMatrices;
+    cb_lighting             m_CachedSkinLighting;
+    u32                     m_LastProjLightCount;
     u32                     m_LastProjShadowCount;
     xbool                   m_bRigidMatricesDirty;
-	xbool                   m_bRigidLightingDirty;
-    xbool                   m_bSkinConstsDirty;
+    xbool                   m_bRigidLightingDirty;
+    xbool                   m_bSkinMatricesDirty;
+    xbool                   m_bSkinLightingDirty;
 };
 
 //==============================================================================

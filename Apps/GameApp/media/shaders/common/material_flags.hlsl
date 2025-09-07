@@ -24,4 +24,5 @@
 
 #define MAX_PROJ_LIGHTS  10
 #define MAX_PROJ_SHADOWS 10
+#define MAX_SKIN_BONES 96
 #define MAX_GEOM_LIGHTS 4

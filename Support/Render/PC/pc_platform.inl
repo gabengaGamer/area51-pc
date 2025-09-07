@@ -46,7 +46,7 @@ void platform_Kill( void )
     g_MaterialMgr.Kill();
     g_PostMgr.Kill();
     g_RigidVertMgr.Kill();
-    g_SkinVertMgr.Kill();	
+    g_SkinVertMgr.Kill();    
 }
 
 //=============================================================================
@@ -170,7 +170,7 @@ void platform_RenderRigidInstance( render_instance& Inst )
 
     g_MaterialMgr.SetRigidMaterial( Inst.Data.Rigid.pL2W,
                                     &Inst.Data.Rigid.pGeom->m_BBox,
-                                    (d3d_rigid_lighting*)Inst.pLighting,
+                                    (d3d_lighting*)Inst.pLighting,
                                     s_pMaterial,
                                     Inst.Flags );
 
@@ -212,11 +212,11 @@ void platform_RenderRigidInstance( render_instance& Inst )
     //{
     //    g_RigidVertMgr.DrawDList( Inst.hDList, Inst.Data.Rigid.pL2W, NULL );
     //}
-	//
+    //
     //if( Inst.Flags & render::PULSED )
     //{
     //    s32 I = (s32)( 128.0f + (80.0f * x_sin( x_fmod( s_PulseTime * 4, PI*2.0f ) )) );
-	//
+    //
     //    g_RigidVertMgr.DrawDList( Inst.hDList, Inst.Data.Rigid.pL2W, NULL );
     //}
     //
@@ -224,13 +224,13 @@ void platform_RenderRigidInstance( render_instance& Inst )
     //{
     //    g_RigidVertMgr.DrawDList( Inst.hDList, Inst.Data.Rigid.pL2W, NULL );
     //}
-	//
+    //
     //if( Inst.Flags & render::WIREFRAME2 )
     //{
     //    g_RigidVertMgr.DrawDList( Inst.hDList, Inst.Data.Rigid.pL2W, NULL );
     //}
-	
-    g_MaterialMgr.ResetProjTextures();	
+    
+    g_MaterialMgr.ResetProjTextures();    
 }
 
 //=============================================================================
@@ -243,24 +243,24 @@ void platform_RenderSkinInstance( render_instance& Inst )
 
     g_MaterialMgr.SetSkinMaterial( &Inst.Data.Skin.pBones[0],
                                    &Inst.Data.Skin.pGeom->m_BBox,
-                                   (d3d_skin_lighting*)Inst.pLighting,
+                                   (d3d_lighting*)Inst.pLighting,
                                    Inst.Flags );
 
-    g_SkinVertMgr.DrawDList( Inst.hDList, Inst.Data.Skin.pBones, (d3d_skin_lighting*)Inst.pLighting );
+    g_SkinVertMgr.DrawDList( Inst.hDList, Inst.Data.Skin.pBones, (d3d_lighting*)Inst.pLighting );
 
     // Deprecated since we already got and push render flags for material mgr.
 
     //if( Inst.Flags & render::FADING_ALPHA )
     //{
     //    // TODO: Render transparent geometry        
-    //    g_SkinVertMgr.DrawDList( Inst.hDList, Inst.Data.Skin.pBones, (d3d_skin_lighting*)Inst.pLighting );
+    //    g_SkinVertMgr.DrawDList( Inst.hDList, Inst.Data.Skin.pBones, (d3d_lighting*)Inst.pLighting );
     //}
     //else
     //{
     //    // Normal render
-    //    g_SkinVertMgr.DrawDList( Inst.hDList, Inst.Data.Skin.pBones, (d3d_skin_lighting*)Inst.pLighting );
+    //    g_SkinVertMgr.DrawDList( Inst.hDList, Inst.Data.Skin.pBones, (d3d_lighting*)Inst.pLighting );
     //}
-	
+    
     g_MaterialMgr.ResetProjTextures();
 }
 
@@ -694,16 +694,16 @@ static
 void* platform_CalculateRigidLighting( const matrix4&   L2W,
                                        const bbox&      WorldBBox )
 {
-    d3d_rigid_lighting* pLighting = (d3d_rigid_lighting*)smem_BufferAlloc( sizeof(d3d_rigid_lighting) );
+    d3d_lighting* pLighting = (d3d_lighting*)smem_BufferAlloc( sizeof(d3d_lighting) );
     if( !pLighting )
     {
-        static d3d_rigid_lighting Default;
+        static d3d_lighting Default;
         Default.LightCount = 0;
         Default.AmbCol.Set( 0.05f, 0.05f, 0.05f, 1.0f );
         for( s32 i = 0; i < MAX_GEOM_LIGHTS; i++ )
         {
-            Default.PosRad[i].Set( 0.0f, 0.0f, 0.0f, 0.0f );
-            Default.Col[i].Set( 0.0f, 0.0f, 0.0f, 0.0f );
+            Default.LightVec[i].Set( 0.0f, 0.0f, 0.0f, 0.0f );
+            Default.LightCol[i].Set( 0.0f, 0.0f, 0.0f, 0.0f );
         }
         pLighting = &Default;
     }
@@ -720,17 +720,17 @@ void* platform_CalculateRigidLighting( const matrix4&   L2W,
             xcolor  Col;
             g_LightMgr.GetCollectedLight( i, Pos, Radius, Col );
 
-            pLighting->PosRad[i].Set( Pos.GetX(), Pos.GetY(), Pos.GetZ(), Radius );
-            pLighting->Col[i].Set( (f32)Col.R * (1.0f / 255.0f),
-                                   (f32)Col.G * (1.0f / 255.0f),
-                                   (f32)Col.B * (1.0f / 255.0f),
-                                   1.0f );
+            pLighting->LightVec[i].Set( Pos.GetX(), Pos.GetY(), Pos.GetZ(), Radius );
+            pLighting->LightCol[i].Set( (f32)Col.R * (1.0f / 255.0f),
+                                        (f32)Col.G * (1.0f / 255.0f),
+                                        (f32)Col.B * (1.0f / 255.0f),
+                                        1.0f );
         }
 
         for( s32 i = NLights; i < MAX_GEOM_LIGHTS; i++ )
         {
-            pLighting->PosRad[i].Set( 0.0f, 0.0f, 0.0f, 0.0f );
-            pLighting->Col[i].Set( 0.0f, 0.0f, 0.0f, 0.0f );
+            pLighting->LightVec[i].Set( 0.0f, 0.0f, 0.0f, 0.0f );
+            pLighting->LightCol[i].Set( 0.0f, 0.0f, 0.0f, 0.0f );
         }
     }
 
@@ -750,19 +750,19 @@ void* platform_CalculateSkinLighting( u32            Flags,
     CONTEXT("platform_CalculateSkinLighting") ;
 
     // Try allocate
-    d3d_skin_lighting* pLighting = (d3d_skin_lighting*)smem_BufferAlloc( sizeof(d3d_skin_lighting) );
+    d3d_lighting* pLighting = (d3d_lighting*)smem_BufferAlloc( sizeof(d3d_lighting) );
     if (!pLighting)
     {
         // Setup default lighting
-        static d3d_skin_lighting Default ;
+        static d3d_lighting Default ;
         Default.LightCount = 1;
-        Default.Dir[0].Set(0.0f, 1.0f, 0.0f);
-        Default.DirCol[0].Set(1.0f, 1.0f, 1.0f, 1.0f);
+        Default.LightVec[0].Set(0.0f, 1.0f, 0.0f, 0.0f);
+        Default.LightCol[0].Set(1.0f, 1.0f, 1.0f, 1.0f);
         Default.AmbCol.Set(0.3f, 0.3f, 0.3f, 1.0f);
         for( s32 i = 1; i < MAX_GEOM_LIGHTS; i++ )
         {
-            Default.Dir[i].Set(0.0f, 0.0f, 0.0f);
-            Default.DirCol[i].Set(0.0f, 0.0f, 0.0f, 0.0f);
+            Default.LightVec[i].Set(0.0f, 0.0f, 0.0f, 0.0f);
+            Default.LightCol[i].Set(0.0f, 0.0f, 0.0f, 0.0f);
         }
 
         // Use it
@@ -779,7 +779,7 @@ void* platform_CalculateSkinLighting( u32            Flags,
         // Grab lights
         s32 NLights = g_LightMgr.CollectCharLights( L2W, BBox, MAX_GEOM_LIGHTS );
         pLighting->LightCount = NLights;
-		
+        
         for( s32 i = 0; i < NLights; i++ )
         {
             vector3 Dir;
@@ -787,18 +787,18 @@ void* platform_CalculateSkinLighting( u32            Flags,
             g_LightMgr.GetCollectedCharLight( i, Dir, Col );
 
             // Setup skin lights
-            pLighting->Dir[i] = Dir;
-            pLighting->DirCol[i].Set((f32)Col.R * (1.0f / 255.0f),
-                                     (f32)Col.G * (1.0f / 255.0f),
-                                     (f32)Col.B * (1.0f / 255.0f),
-                                     (f32)Col.A * (1.0f / 255.0f) );
+            pLighting->LightVec[i].Set( Dir.GetX(), Dir.GetY(), Dir.GetZ(), 0.0f );
+            pLighting->LightCol[i].Set((f32)Col.R * (1.0f / 255.0f),
+                                       (f32)Col.G * (1.0f / 255.0f),
+                                       (f32)Col.B * (1.0f / 255.0f),
+                                       (f32)Col.A * (1.0f / 255.0f) );
         }
-		
+        
         for( s32 i = NLights; i < MAX_GEOM_LIGHTS; i++ )
         {
             // Turn off directional lighting
-            pLighting->Dir[i].Set(0.0f, 0.0f, 0.0f);
-            pLighting->DirCol[i].Set(0.0f, 0.0f, 0.0f, 0.0f);
+            pLighting->LightVec[i].Set(0.0f, 0.0f, 0.0f, 0.0f);
+            pLighting->LightCol[i].Set(0.0f, 0.0f, 0.0f, 0.0f);
         }
     }
 
@@ -1294,8 +1294,8 @@ void platform_BeginNormalRender( void )
         g_GBufferMgr.SetGBufferTargets();
         g_GBufferMgr.ClearGBuffer();
     }
-	
-	g_ProjTextureMgr.ClearProjTextures();
+    
+    g_ProjTextureMgr.ClearProjTextures();
 }
 
 //=============================================================================

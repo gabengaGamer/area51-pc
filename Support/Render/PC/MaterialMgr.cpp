@@ -57,31 +57,33 @@ void material_mgr::Init( void )
     m_pRigidPixelShader     = NULL;
     m_pRigidInputLayout     = NULL;
     m_pRigidConstantBuffer  = NULL;
-	m_pRigidLightBuffer     = NULL;
+    m_pRigidLightBuffer     = NULL;
 
     m_pProjTextureBuffer    = NULL;
-	m_pProjSampler          = NULL;
+    m_pProjSampler          = NULL;
 
     m_pSkinVertexShader     = NULL;
     m_pSkinPixelShader      = NULL;
     m_pSkinInputLayout      = NULL;
     m_pSkinVSConstBuffer    = NULL;
+    m_pSkinLightBuffer      = NULL;
     m_pSkinBoneBuffer       = NULL;
 
     m_pCurrentTexture       = NULL;
     m_pCurrentDetailTexture = NULL;
     
     m_bRigidMatricesDirty   = TRUE;
-	m_bRigidLightingDirty   = TRUE;
-    m_bSkinConstsDirty      = TRUE;
-	
-	m_LastProjLightCount    = 0;
+    m_bRigidLightingDirty   = TRUE;
+    m_bSkinMatricesDirty    = TRUE;
+    m_bSkinLightingDirty    = TRUE;
+    
+    m_LastProjLightCount    = 0;
     m_LastProjShadowCount   = 0;
 
     // Initialize shaders and resources
     InitRigidShaders();
     InitSkinShaders();
-	
+    
     m_pProjTextureBuffer = shader_CreateConstantBuffer( sizeof(cb_proj_textures) );
 
     if( g_pd3dDevice )
@@ -151,8 +153,8 @@ xbool material_mgr::InitRigidShaders( void )
                                                                   "vs_5_0" );
 
     m_pRigidPixelShader = shader_CompilePixelFromFile( shaderPath, "PSMain", "ps_5_0" );
-    m_pRigidConstantBuffer = shader_CreateConstantBuffer( sizeof(rigid_vert_matrices) );
-	m_pRigidLightBuffer    = shader_CreateConstantBuffer( sizeof(cb_rigid_lighting) );
+    m_pRigidConstantBuffer = shader_CreateConstantBuffer( sizeof(cb_rigid_matrices) );
+    m_pRigidLightBuffer    = shader_CreateConstantBuffer( sizeof(cb_lighting) );
 
     x_DebugMsg( "MaterialMgr: Rigid shaders initialized successfully\n" );
     return TRUE;
@@ -190,8 +192,9 @@ xbool material_mgr::InitSkinShaders( void )
                                                                  "vs_5_0" );
 
     m_pSkinPixelShader = shader_CompilePixelFromFile( shaderPath, "PSMain", "ps_5_0" );
-    m_pSkinVSConstBuffer = shader_CreateConstantBuffer( sizeof(cb_skin_vs_consts) );
-    m_pSkinBoneBuffer = shader_CreateConstantBuffer( sizeof(cb_skin_bone) * MAX_SKIN_BONES );
+    m_pSkinVSConstBuffer = shader_CreateConstantBuffer( sizeof(cb_skin_matrices) );
+    m_pSkinLightBuffer   = shader_CreateConstantBuffer( sizeof(cb_lighting) );
+    m_pSkinBoneBuffer    = shader_CreateConstantBuffer( sizeof(cb_skin_bone) * MAX_SKIN_BONES );
 
     x_DebugMsg( "MaterialMgr: Skin shaders initialized successfully\n" );
     return TRUE;
@@ -257,6 +260,12 @@ void material_mgr::KillShaders( void )
         m_pSkinVSConstBuffer = NULL;
     }
 
+    if( m_pSkinLightBuffer )
+    {
+        m_pSkinLightBuffer->Release();
+        m_pSkinLightBuffer = NULL;
+    }
+
     if( m_pSkinBoneBuffer )
     {
         m_pSkinBoneBuffer->Release();
@@ -282,7 +291,7 @@ void material_mgr::KillShaders( void )
 
 void material_mgr::SetRigidMaterial( const matrix4* pL2W,
                                      const bbox* pBBox,
-                                     const d3d_rigid_lighting* pLighting,
+                                     const d3d_lighting* pLighting,
                                      const material* pMaterial,
                                      u32 RenderFlags )
 {
@@ -315,7 +324,7 @@ void material_mgr::SetRigidMaterial( const matrix4* pL2W,
 
 void material_mgr::SetSkinMaterial( const matrix4* pL2W,
                                     const bbox* pBBox,
-                                    const d3d_skin_lighting* pLighting,
+                                    const d3d_lighting* pLighting,
                                     u32 RenderFlags )
 {
     if( !g_pd3dDevice || !g_pd3dContext || !pLighting )
@@ -387,7 +396,7 @@ xbool material_mgr::UpdateProjTextures( const matrix4& L2W,
     s32 nProjLights = 0;
     if( !(RenderFlags & render::DISABLE_SPOTLIGHT) )
         nProjLights = g_ProjTextureMgr.CollectLights( L2W, B );
-	
+    
     s32 nAppliedLights = 0;
     for( s32 i = 0; i < nProjLights; i++ )
     {
@@ -409,7 +418,7 @@ xbool material_mgr::UpdateProjTextures( const matrix4& L2W,
     s32 nProjShadows = 0;
     if( !(RenderFlags & render::DISABLE_PROJ_SHADOWS) )
         nProjShadows = g_ProjTextureMgr.CollectShadows( L2W, B, 2 );
-	
+    
     s32 nAppliedShadows = 0;
     for( s32 i = 0; i < nProjShadows; i++ )
     {
@@ -474,7 +483,7 @@ xbool material_mgr::UpdateProjTextures( const matrix4& L2W,
 xbool material_mgr::UpdateRigidConstants( const matrix4*           pL2W,
                                          const material*         pMaterial,
                                          u32                     RenderFlags,
-                                         const d3d_rigid_lighting* pLighting )
+                                         const d3d_lighting* pLighting )
 {
     if( !m_pRigidConstantBuffer || !g_pd3dDevice || !g_pd3dContext )
         return FALSE;
@@ -483,7 +492,7 @@ xbool material_mgr::UpdateRigidConstants( const matrix4*           pL2W,
     if( !pView )
         return FALSE;
 
-    rigid_vert_matrices newMatrices;
+    cb_rigid_matrices newMatrices;
 
     if( pL2W )
         newMatrices.World = *pL2W;
@@ -536,7 +545,7 @@ xbool material_mgr::UpdateRigidConstants( const matrix4*           pL2W,
             case Material_Distortion_PerPolyEnv:
                 newMatrices.MaterialFlags |= MATERIAL_FLAG_DISTORTION | MATERIAL_FLAG_PERPOLY_ENV;
                 break;
-        }						
+        }                        
         
         // Check for detail map
         if( pMaterial->m_DetailMap.GetPointer() )
@@ -558,18 +567,18 @@ xbool material_mgr::UpdateRigidConstants( const matrix4*           pL2W,
         
         // Always use vertex color for now
         newMatrices.MaterialFlags |= MATERIAL_FLAG_VERTEX_COLOR;
-		
+        
         if( !(RenderFlags & render::DISABLE_SPOTLIGHT) )
             newMatrices.MaterialFlags |= MATERIAL_FLAG_PROJ_LIGHT;
         if( !(RenderFlags & render::DISABLE_PROJ_SHADOWS) )
             newMatrices.MaterialFlags |= MATERIAL_FLAG_PROJ_SHADOW;
     }
     
-    newMatrices.Padding1 = 0.0f;
-    newMatrices.Padding2 = 0.0f;
+    newMatrices.Padding[0] = 0.0f;
+    newMatrices.Padding[1] = 0.0f;
 
     // Only update if data changed
-    if( m_bRigidMatricesDirty || x_memcmp( &m_CachedRigidMatrices, &newMatrices, sizeof(rigid_vert_matrices) ) != 0 )
+    if( m_bRigidMatricesDirty || x_memcmp( &m_CachedRigidMatrices, &newMatrices, sizeof(cb_rigid_matrices) ) != 0 )
     {
         D3D11_MAPPED_SUBRESOURCE mappedResource;
         HRESULT hr = g_pd3dContext->Map( m_pRigidConstantBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource );
@@ -579,7 +588,7 @@ xbool material_mgr::UpdateRigidConstants( const matrix4*           pL2W,
             return FALSE;
         }
         
-        x_memcpy( mappedResource.pData, &newMatrices, sizeof(rigid_vert_matrices) );
+        x_memcpy( mappedResource.pData, &newMatrices, sizeof(cb_rigid_matrices) );
         g_pd3dContext->Unmap( m_pRigidConstantBuffer, 0 );
         
         // Cache the data
@@ -592,19 +601,19 @@ xbool material_mgr::UpdateRigidConstants( const matrix4*           pL2W,
     
     if( m_pRigidLightBuffer )
     {
-        cb_rigid_lighting newLighting;
+        cb_lighting newLighting;
         if( pLighting )
         {
             for( s32 i = 0; i < MAX_GEOM_LIGHTS; i++ )
             {
                 if( i < pLighting->LightCount )
                 {
-                    newLighting.LightPosRad[i] = pLighting->PosRad[i];
-                    newLighting.LightCol[i]    = pLighting->Col[i];
+                    newLighting.LightVec[i] = pLighting->LightVec[i];
+                    newLighting.LightCol[i] = pLighting->LightCol[i];
                 }
                 else
                 {
-                    newLighting.LightPosRad[i].Set( 0.0f, 0.0f, 0.0f, 0.0f );
+                    newLighting.LightVec[i].Set( 0.0f, 0.0f, 0.0f, 0.0f );
                     newLighting.LightCol[i].Set( 0.0f, 0.0f, 0.0f, 0.0f );
                 }
             }
@@ -617,13 +626,13 @@ xbool material_mgr::UpdateRigidConstants( const matrix4*           pL2W,
             newLighting.LightCount = 0;
             for( s32 i = 0; i < MAX_GEOM_LIGHTS; i++ )
             {
-                newLighting.LightPosRad[i].Set( 0.0f, 0.0f, 0.0f, 0.0f );
+                newLighting.LightVec[i].Set( 0.0f, 0.0f, 0.0f, 0.0f );
                 newLighting.LightCol[i].Set( 0.0f, 0.0f, 0.0f, 0.0f );
             }
         }
         newLighting.Padding[0] = newLighting.Padding[1] = newLighting.Padding[2] = 0.0f;
 
-        if( m_bRigidLightingDirty || x_memcmp( &m_CachedRigidLighting, &newLighting, sizeof(cb_rigid_lighting) ) != 0 )
+        if( m_bRigidLightingDirty || x_memcmp( &m_CachedRigidLighting, &newLighting, sizeof(cb_lighting) ) != 0 )
         {
             D3D11_MAPPED_SUBRESOURCE mappedResource;
             HRESULT hr = g_pd3dContext->Map( m_pRigidLightBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource );
@@ -633,7 +642,7 @@ xbool material_mgr::UpdateRigidConstants( const matrix4*           pL2W,
                 return FALSE;
             }
 
-            x_memcpy( mappedResource.pData, &newLighting, sizeof(cb_rigid_lighting) );
+            x_memcpy( mappedResource.pData, &newLighting, sizeof(cb_lighting) );
             g_pd3dContext->Unmap( m_pRigidLightBuffer, 0 );
 
             m_CachedRigidLighting = newLighting;
@@ -648,45 +657,56 @@ xbool material_mgr::UpdateRigidConstants( const matrix4*           pL2W,
 
 //==============================================================================
 
-xbool material_mgr::UpdateSkinConstants( const d3d_skin_lighting* pLighting,
+xbool material_mgr::UpdateSkinConstants( const d3d_lighting* pLighting,
                                          u32 RenderFlags )
 {
-    if( !m_pSkinVSConstBuffer || !pLighting || !g_pd3dDevice || !g_pd3dContext )
+    if( !m_pSkinVSConstBuffer || !m_pSkinLightBuffer || !pLighting || !g_pd3dDevice || !g_pd3dContext )
         return FALSE;
 
     const view* pView = eng_GetView();
     if( !pView )
         return FALSE;
 
-    cb_skin_vs_consts newConsts;
-    newConsts.View         = pView->GetW2V();
-    newConsts.Projection   = pView->GetV2C();
-    newConsts.Zero         = 0.0f;
-    newConsts.One          = 1.0f;
-    newConsts.MinusOne     = -1.0f;
-    newConsts.Fog          = 0.0f;
-    for( s32 i=0; i<MAX_GEOM_LIGHTS; i++ )
+    cb_skin_matrices newMatrices;
+    newMatrices.View       = pView->GetW2V();
+    newMatrices.Projection = pView->GetV2C();
+    
+    // Set material flags
+    newMatrices.MaterialFlags = 0;
+    if( !(RenderFlags & render::DISABLE_SPOTLIGHT) )
+        newMatrices.MaterialFlags |= MATERIAL_FLAG_PROJ_LIGHT;
+    if( !(RenderFlags & render::DISABLE_PROJ_SHADOWS) )
+        newMatrices.MaterialFlags |= MATERIAL_FLAG_PROJ_SHADOW;
+
+    newMatrices.AlphaRef    = 0.5f;
+    newMatrices.Padding[0]  = 0.0f;
+    newMatrices.Padding[1]  = 0.0f;
+    
+    cb_lighting newLighting;
+    
+    for( s32 i = 0; i < MAX_GEOM_LIGHTS; i++ )
     {
         if( i < pLighting->LightCount )
         {
-            newConsts.LightDir[i].Set( pLighting->Dir[i].GetX(), pLighting->Dir[i].GetY(), pLighting->Dir[i].GetZ(), 0.0f );
-            newConsts.LightCol[i] = pLighting->DirCol[i];
+            newLighting.LightVec[i] = pLighting->LightVec[i];
+            newLighting.LightCol[i] = pLighting->LightCol[i];
         }
         else
         {
-            newConsts.LightDir[i].Set( 0.0f, 0.0f, 0.0f, 0.0f );
-            newConsts.LightCol[i].Set( 0.0f, 0.0f, 0.0f, 0.0f );
+            newLighting.LightVec[i].Set( 0.0f, 0.0f, 0.0f, 0.0f );
+            newLighting.LightCol[i].Set( 0.0f, 0.0f, 0.0f, 0.0f );
         }
     }
+
     vector4 BaseBrightness( 0.05f, 0.05f, 0.05f, 0.0f ); // Prevent fully black surfaces, render of this game sucks.
-    newConsts.LightAmbCol  = ( pLighting->AmbCol ) + BaseBrightness;
-    newConsts.LightCount   = pLighting->LightCount;
-    newConsts.Padding[0]   = 0.0f;
-    newConsts.Padding[1]   = 0.0f;
-    newConsts.Padding[2]   = 0.0f;
+    newLighting.LightAmbCol = pLighting->AmbCol + BaseBrightness;
+    newLighting.LightCount  = pLighting->LightCount;
+    newLighting.Padding[0]  = 0.0f;
+    newLighting.Padding[1]  = 0.0f;
+    newLighting.Padding[2]  = 0.0f;
 
     // Only update if data changed
-    if( m_bSkinConstsDirty || x_memcmp( &m_CachedSkinConsts, &newConsts, sizeof(cb_skin_vs_consts) ) != 0 )
+    if( m_bSkinMatricesDirty || x_memcmp( &m_CachedSkinMatrices, &newMatrices, sizeof(cb_skin_matrices) ) != 0 )
     {
         D3D11_MAPPED_SUBRESOURCE mappedResource;
         HRESULT hr = g_pd3dContext->Map( m_pSkinVSConstBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource );
@@ -696,17 +716,39 @@ xbool material_mgr::UpdateSkinConstants( const d3d_skin_lighting* pLighting,
             return FALSE;
         }
 
-        x_memcpy( mappedResource.pData, &newConsts, sizeof(cb_skin_vs_consts) );
+        x_memcpy( mappedResource.pData, &newMatrices, sizeof(cb_skin_matrices) );
         g_pd3dContext->Unmap( m_pSkinVSConstBuffer, 0 );
         
         // Cache the data
-        m_CachedSkinConsts = newConsts;
-        m_bSkinConstsDirty = FALSE;
+        m_CachedSkinMatrices = newMatrices;
+        m_bSkinMatricesDirty = FALSE;
 
         g_pd3dContext->VSSetConstantBuffers( 0, 1, &m_pSkinVSConstBuffer );
         g_pd3dContext->VSSetConstantBuffers( 2, 1, &m_pSkinBoneBuffer );
-		g_pd3dContext->PSSetConstantBuffers( 0, 1, &m_pSkinVSConstBuffer );
+        g_pd3dContext->PSSetConstantBuffers( 0, 1, &m_pSkinVSConstBuffer );
     }
+    
+    if( m_pSkinLightBuffer )
+    {
+        if( m_bSkinLightingDirty || x_memcmp( &m_CachedSkinLighting, &newLighting, sizeof(cb_lighting) ) != 0 )
+        {
+            D3D11_MAPPED_SUBRESOURCE mappedResource;
+            HRESULT hr = g_pd3dContext->Map( m_pSkinLightBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource );
+            if( FAILED(hr) )
+            {
+                x_DebugMsg( "MaterialMgr: Failed to map skin light buffer, HRESULT 0x%08X\n", hr );
+                return FALSE;
+            }
+
+            x_memcpy( mappedResource.pData, &newLighting, sizeof(cb_lighting) );
+            g_pd3dContext->Unmap( m_pSkinLightBuffer, 0 );
+
+            m_CachedSkinLighting = newLighting;
+            m_bSkinLightingDirty = FALSE;
+
+            g_pd3dContext->PSSetConstantBuffers( 2, 1, &m_pSkinLightBuffer );
+        }
+    }    
     
     return TRUE;
 }
@@ -802,8 +844,9 @@ void material_mgr::InvalidateCache( void )
     m_pCurrentTexture = NULL;
     m_pCurrentDetailTexture = NULL;
     m_bRigidMatricesDirty = TRUE;
-	m_bRigidLightingDirty = TRUE;
-    m_bSkinConstsDirty = TRUE;
+    m_bRigidLightingDirty = TRUE;
+    m_bSkinMatricesDirty = TRUE;
+    m_bSkinLightingDirty = TRUE;
 }
 
 //==============================================================================

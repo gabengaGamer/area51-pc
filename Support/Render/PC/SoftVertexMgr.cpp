@@ -120,7 +120,7 @@ void soft_vertex_mgr::BeginRender( void )
 
 //=========================================================================
 
-void soft_vertex_mgr::DrawDList( xhandle hDList, const matrix4* pBone, const d3d_skin_lighting* pLighting )
+void soft_vertex_mgr::DrawDList( xhandle hDList, const matrix4* pBone, const d3d_lighting* pLighting )
 {
     if( !g_pd3dDevice || !g_pd3dContext )
         return;

@@ -2,7 +2,7 @@
 //  
 //  a51_skin_simple.hlsl
 //  
-//  Simple skindgeom shader for A51.
+//  Simple skindgeom uber-shader for A51.
 //
 //==============================================================================
 
@@ -12,19 +12,16 @@
 //  CONSTANT BUFFERS
 //==============================================================================
 
-cbuffer cbSkinConsts : register(b0)
+#include "common/geom_buffers.hlsl"
+
+cbuffer cbMatrices : register(b0)
 {
     float4x4 View;
     float4x4 Projection;
-    float    Zero;
-    float    One;
-    float    MinusOne;
-    float    Fog;
-    float4   LightDir[MAX_GEOM_LIGHTS];
-    float4   LightCol[MAX_GEOM_LIGHTS];
-    float4   LightAmbCol;
-    uint     LightCount;
-    float3   Padding;
+    
+    uint     MaterialFlags;
+    float    AlphaRef;
+    float2   Padding;
 };
 
 struct Bone
@@ -34,17 +31,7 @@ struct Bone
 
 cbuffer cbBones : register(b2)
 {
-    Bone Bones[96];
-};
-
-cbuffer cbProjTextures : register(b1)
-{
-    float4x4 ProjLightMatrix[MAX_PROJ_LIGHTS];
-    float4x4 ProjShadowMatrix[MAX_PROJ_SHADOWS];
-    uint     ProjLightCount;
-    uint     ProjShadowCount;
-    float    EdgeSize;
-    float3   ProjPadding;
+    Bone Bones[MAX_SKIN_BONES];
 };
 
 //==============================================================================
@@ -64,8 +51,8 @@ SamplerState samLinear : register(s0);
 
 struct VS_INPUT
 {
-    float4 PosIndex1  : POSITION;
-    float4 NormIndex2 : NORMAL;
+    float4 PosIndex   : POSITION;
+    float4 NormIndex  : NORMAL;
     float4 UVWeights  : TEXCOORD;
 };
 
@@ -81,35 +68,35 @@ struct PS_INPUT
 PS_INPUT VSMain(VS_INPUT input)
 {
     PS_INPUT output;
-    
-    // Extract bone indices and weights
-    int   index1  = (int)input.PosIndex1.w;                     
-    int   index2  = (int)input.NormIndex2.w;
-    float weight1 = input.UVWeights.z;
-    float weight2 = input.UVWeights.w;
-	
-	// Extract bone indices and weights (stub)
-	//int   index1  = 0;
+
+    // Extract bone indices and weights (stub)
+    //int   index1  = 0;
     //int   index2  = 0;
     //float weight1 = 1.0;
     //float weight2 = 0.0;
-    
+
+    // Extract bone indices and weights
+    int   index1  = (int)input.PosIndex.w;
+    int   index2  = (int)input.NormIndex.w;
+    float weight1 = input.UVWeights.z;
+    float weight2 = input.UVWeights.w;
+
     // Blend positions using bone matrices
-    float3 pos1 = mul(Bones[index1].L2W, float4(input.PosIndex1.xyz, 1.0)).xyz;
-    float3 pos2 = mul(Bones[index2].L2W, float4(input.PosIndex1.xyz, 1.0)).xyz;
+    float3 pos1 = mul(Bones[index1].L2W, float4(input.PosIndex.xyz, 1.0)).xyz;
+    float3 pos2 = mul(Bones[index2].L2W, float4(input.PosIndex.xyz, 1.0)).xyz;
     float3 skinnedPos = pos1 * weight1 + pos2 * weight2;
-    
+
     // Blend normals using bone matrices
-    float3 norm1 = mul((float3x3)Bones[index1].L2W, input.NormIndex2.xyz);
-    float3 norm2 = mul((float3x3)Bones[index2].L2W, input.NormIndex2.xyz);
+    float3 norm1 = mul((float3x3)Bones[index1].L2W, input.NormIndex.xyz);
+    float3 norm2 = mul((float3x3)Bones[index2].L2W, input.NormIndex.xyz);
     float3 skinnedNorm = normalize(norm1 * weight1 + norm2 * weight2);
-    
-    // Transform position to clip space
+
+    // Transform position through matrices
     float4 worldPos = float4(skinnedPos, 1.0);
     float4 viewPos  = mul(View, worldPos);
     output.Pos      = mul(Projection, viewPos);
 
-    // Pass through attributes
+    // Pass through vertex attributes
     output.WorldPos    = worldPos.xyz;
     output.Normal      = skinnedNorm;
     output.LinearDepth = length(viewPos.xyz);
@@ -133,32 +120,41 @@ struct PS_OUTPUT
 PS_OUTPUT PSMain(PS_INPUT input)
 {
     PS_OUTPUT output;
-    
+
     // Sample diffuse texture
     float4 diffuseColor = txDiffuse.Sample(samLinear, input.UV);
-    
+
+    // Perform alpha testing
+    if (MaterialFlags & MATERIAL_FLAG_ALPHA_TEST)
+    {
+        if (diffuseColor.a < AlphaRef)
+            discard;
+    }
+
     // Apply per-pixel lighting
-    float3 lighting = float3(0.0, 0.0, 0.0);
+    float3 dynLight = float3(0.0, 0.0, 0.0);
     for( uint i = 0; i < LightCount; i++ )
     {
-        float NdotL = saturate(dot(input.Normal, -LightDir[i].xyz));
-        lighting += LightCol[i].rgb * NdotL;
+        float  ndotl = saturate(dot(input.Normal, -LightVec[i].xyz));
+        dynLight    += LightCol[i].rgb * ndotl;
     }
-    float3 ambient = LightAmbCol.rgb;
-    float4 finalColor = float4(lighting + ambient, 1.0) * diffuseColor;   
-    
-    //if( MaterialFlags & MATERIAL_FLAG_PROJ_LIGHT )
-    //{
-          finalColor.rgb = ApplyProjLights( finalColor.rgb, input.WorldPos );
-    //}
+    float3 totalLight = LightAmbCol.rgb + dynLight;
 
-    //if( MaterialFlags & MATERIAL_FLAG_PROJ_SHADOW )
-    //{
-          finalColor.rgb = ApplyProjShadows( finalColor.rgb, input.WorldPos );
-    //}
+    float4 baseColor  = diffuseColor;
     
-    float4 baseColor = diffuseColor;
-    
+    float4 finalColor = float4(diffuseColor.rgb * totalLight, diffuseColor.a);
+
+    // Apply projection lights and shadows
+    if( MaterialFlags & MATERIAL_FLAG_PROJ_LIGHT )
+    {
+        finalColor.rgb = ApplyProjLights( finalColor.rgb, input.WorldPos );
+    }
+
+    if( MaterialFlags & MATERIAL_FLAG_PROJ_SHADOW )
+    {
+        finalColor.rgb = ApplyProjShadows( finalColor.rgb, input.WorldPos );
+    }
+
     // Fill G-Buffer outputs
     output.FinalColor = finalColor;
     output.Albedo     = baseColor;
@@ -169,6 +165,6 @@ PS_OUTPUT PSMain(PS_INPUT input)
         1.0,                        // Mark as skinned geometry
         finalColor.a                // Alpha for transparency effects
     );
-    
+
     return output;
 }

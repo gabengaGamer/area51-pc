@@ -610,7 +610,7 @@ void vertex_mgr::ActivateStreams( xhandle hDList )
 // TODO: GS: Now shaders and settings are set for each DList separately, am I doing it right?
 // IDK, maybe it shoud be reworked.
 
-void vertex_mgr::DrawDList( xhandle hDList, const matrix4* pWorld, const d3d_rigid_lighting* pLighting )
+void vertex_mgr::DrawDList( xhandle hDList, const matrix4* pWorld, const d3d_lighting* pLighting )
 {
     ASSERT( hDList.Handle >= 0 );
 

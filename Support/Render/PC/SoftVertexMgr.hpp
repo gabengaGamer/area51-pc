@@ -44,7 +44,7 @@ public:
 
     void        DelDList            ( xhandle hDList );
     void        BeginRender         ( void );
-    void        DrawDList           ( xhandle hDList, const matrix4* pBone, const d3d_skin_lighting* pLighting );
+    void        DrawDList           ( xhandle hDList, const matrix4* pBone, const d3d_lighting* pLighting );
     void        InvalidateCache     ( void );
 
 protected:
