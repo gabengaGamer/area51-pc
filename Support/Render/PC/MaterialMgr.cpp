@@ -289,11 +289,11 @@ void material_mgr::KillShaders( void )
 
 //==============================================================================
 
-void material_mgr::SetRigidMaterial( const matrix4* pL2W,
-                                     const bbox* pBBox,
+void material_mgr::SetRigidMaterial( const matrix4*      pL2W,
+                                     const bbox*         pBBox,
                                      const d3d_lighting* pLighting,
-                                     const material* pMaterial,
-                                     u32 RenderFlags )
+                                     const material*     pMaterial,
+                                     u32                 RenderFlags )
 {
     if( !g_pd3dDevice || !g_pd3dContext )
         return;
@@ -310,7 +310,7 @@ void material_mgr::SetRigidMaterial( const matrix4* pL2W,
     state_SetState( STATE_TYPE_SAMPLER, STATE_SAMPLER_LINEAR_WRAP );
     g_pd3dContext->IASetPrimitiveTopology( D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST );
     
-    if( !UpdateRigidConstants( pL2W, pMaterial, RenderFlags, pLighting ) )
+    if( !UpdateRigidConstants( pL2W,  pMaterial, RenderFlags, pLighting ) )
     {
         x_DebugMsg( "MaterialMgr: Failed to update rigid constants\n" );
         return;
@@ -322,12 +322,13 @@ void material_mgr::SetRigidMaterial( const matrix4* pL2W,
 
 //==============================================================================
 
-void material_mgr::SetSkinMaterial( const matrix4* pL2W,
-                                    const bbox* pBBox,
+void material_mgr::SetSkinMaterial( const matrix4*      pL2W,
+                                    const bbox*         pBBox,
                                     const d3d_lighting* pLighting,
-                                    u32 RenderFlags )
+                                    const material*     pMaterial,
+                                    u32                 RenderFlags )
 {
-    if( !g_pd3dDevice || !g_pd3dContext || !pLighting )
+    if( !g_pd3dDevice || !g_pd3dContext )
         return;
 
     // Set skin shader pipeline  
@@ -342,7 +343,7 @@ void material_mgr::SetSkinMaterial( const matrix4* pL2W,
     state_SetState( STATE_TYPE_SAMPLER, STATE_SAMPLER_LINEAR_WRAP );
     g_pd3dContext->IASetPrimitiveTopology( D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST );
     
-    if( !UpdateSkinConstants( pLighting, RenderFlags ) )
+    if( !UpdateSkinConstants( pLighting, pMaterial, RenderFlags ) )
     {
         x_DebugMsg( "MaterialMgr: Failed to update skin constants\n" );
         return;
@@ -381,9 +382,9 @@ void material_mgr::ResetProjTextures( void )
 //==============================================================================
 
 xbool material_mgr::UpdateProjTextures( const matrix4& L2W,
-                                        const bbox& B,
-                                        u32 Slot,
-                                        u32 RenderFlags )
+                                        const bbox&    B,
+                                        u32            Slot,
+                                        u32            RenderFlags )
 {
     if( !m_pProjTextureBuffer || !g_pd3dContext )
         return FALSE;
@@ -480,12 +481,12 @@ xbool material_mgr::UpdateProjTextures( const matrix4& L2W,
 
 //==============================================================================
 
-xbool material_mgr::UpdateRigidConstants( const matrix4*           pL2W,
-                                         const material*         pMaterial,
-                                         u32                     RenderFlags,
-                                         const d3d_lighting* pLighting )
+xbool material_mgr::UpdateRigidConstants( const matrix4*      pL2W,
+                                          const material*     pMaterial,
+                                          u32                 RenderFlags,
+                                          const d3d_lighting* pLighting )
 {
-    if( !m_pRigidConstantBuffer || !g_pd3dDevice || !g_pd3dContext )
+    if( !m_pRigidConstantBuffer || !pLighting || !g_pd3dDevice || !g_pd3dContext )
         return FALSE;
 
     const view* pView = eng_GetView();
@@ -499,13 +500,15 @@ xbool material_mgr::UpdateRigidConstants( const matrix4*           pL2W,
     else
         rigidMatrices.World.Identity();
     
-    rigidMatrices.View = pView->GetW2V();
-    rigidMatrices.Projection = pView->GetV2C();
+    rigidMatrices.View           = pView->GetW2V();
+    rigidMatrices.Projection     = pView->GetV2C();
     rigidMatrices.CameraPosition = pView->GetPosition();
     
     // Analyze material and set flags
     rigidMatrices.MaterialFlags = 0;
-    rigidMatrices.AlphaRef = 0.5f;
+    rigidMatrices.AlphaRef      = 0.0f;
+    rigidMatrices.Padding[0]    = 0.0f;
+    rigidMatrices.Padding[1]    = 0.0f;
 
     if( pMaterial )
     {
@@ -513,39 +516,31 @@ xbool material_mgr::UpdateRigidConstants( const matrix4*           pL2W,
         {
             case Material_Diff:
                 break;
-                
             case Material_Alpha:
                 rigidMatrices.MaterialFlags |= MATERIAL_FLAG_ALPHA_TEST;
                 break;
-                
             case Material_Diff_PerPixelIllum:
                 rigidMatrices.MaterialFlags |= MATERIAL_FLAG_PERPIXEL_ILLUM;
                 break;
-                
             case Material_Alpha_PerPixelIllum:
                 rigidMatrices.MaterialFlags |= MATERIAL_FLAG_ALPHA_TEST | MATERIAL_FLAG_PERPIXEL_ILLUM;
                 break;
-                
             case Material_Alpha_PerPolyIllum:
                 rigidMatrices.MaterialFlags |= MATERIAL_FLAG_ALPHA_TEST | MATERIAL_FLAG_PERPOLY_ILLUM;
                 break;
-                
             case Material_Diff_PerPixelEnv:
                 rigidMatrices.MaterialFlags |= MATERIAL_FLAG_PERPIXEL_ENV;
-                break;
-                
+                break;               
             case Material_Alpha_PerPolyEnv:
                 rigidMatrices.MaterialFlags |= MATERIAL_FLAG_ALPHA_TEST | MATERIAL_FLAG_PERPOLY_ENV;
-                break;
-                
+                break;				
             case Material_Distortion:
                 rigidMatrices.MaterialFlags |= MATERIAL_FLAG_DISTORTION;
                 break;
-                
             case Material_Distortion_PerPolyEnv:
                 rigidMatrices.MaterialFlags |= MATERIAL_FLAG_DISTORTION | MATERIAL_FLAG_PERPOLY_ENV;
                 break;
-        }                        
+        }                      
         
         // Check for detail map
         if( pMaterial->m_DetailMap.GetPointer() )
@@ -568,14 +563,12 @@ xbool material_mgr::UpdateRigidConstants( const matrix4*           pL2W,
         // Always use vertex color for now
         rigidMatrices.MaterialFlags |= MATERIAL_FLAG_VERTEX_COLOR;
         
+        // Check proj flags
         if( !(RenderFlags & render::DISABLE_SPOTLIGHT) )
             rigidMatrices.MaterialFlags |= MATERIAL_FLAG_PROJ_LIGHT;
         if( !(RenderFlags & render::DISABLE_PROJ_SHADOWS) )
             rigidMatrices.MaterialFlags |= MATERIAL_FLAG_PROJ_SHADOW;
     }
-    
-    rigidMatrices.Padding[0] = 0.0f;
-    rigidMatrices.Padding[1] = 0.0f;
 
     // Only update if data changed
     if( m_bRigidMatricesDirty || x_memcmp( &m_CachedRigidMatrices, &rigidMatrices, sizeof(cb_rigid_matrices) ) != 0 )
@@ -658,7 +651,8 @@ xbool material_mgr::UpdateRigidConstants( const matrix4*           pL2W,
 //==============================================================================
 
 xbool material_mgr::UpdateSkinConstants( const d3d_lighting* pLighting,
-                                         u32 RenderFlags )
+                                         const material*     pMaterial,
+                                         u32                 RenderFlags )
 {
     if( !m_pSkinVSConstBuffer || !m_pSkinLightBuffer || !pLighting || !g_pd3dDevice || !g_pd3dContext )
         return FALSE;
@@ -671,16 +665,62 @@ xbool material_mgr::UpdateSkinConstants( const d3d_lighting* pLighting,
     skinMatrices.View       = pView->GetW2V();
     skinMatrices.Projection = pView->GetV2C();
     
-    // Set material flags
+    // Analyze material and set flags
     skinMatrices.MaterialFlags = 0;
-    if( !(RenderFlags & render::DISABLE_SPOTLIGHT) )
-        skinMatrices.MaterialFlags |= MATERIAL_FLAG_PROJ_LIGHT;
-    if( !(RenderFlags & render::DISABLE_PROJ_SHADOWS) )
-        skinMatrices.MaterialFlags |= MATERIAL_FLAG_PROJ_SHADOW;
-
-    skinMatrices.AlphaRef    = 0.5f;
-    skinMatrices.Padding[0]  = 0.0f;
-    skinMatrices.Padding[1]  = 0.0f;
+    skinMatrices.AlphaRef      = 0.0f;    
+    skinMatrices.Padding[0]    = 0.0f;
+    skinMatrices.Padding[1]    = 0.0f;
+    
+    if( pMaterial )
+    {
+        switch( pMaterial->m_Type )
+        {
+            case Material_Diff:
+                break;
+            case Material_Alpha:
+                skinMatrices.MaterialFlags |= MATERIAL_FLAG_ALPHA_TEST;
+                break;
+            case Material_Diff_PerPixelIllum:
+                skinMatrices.MaterialFlags |= MATERIAL_FLAG_PERPIXEL_ILLUM;
+                break;
+            case Material_Alpha_PerPixelIllum:
+                skinMatrices.MaterialFlags |= MATERIAL_FLAG_ALPHA_TEST | MATERIAL_FLAG_PERPIXEL_ILLUM;
+                break;
+            case Material_Alpha_PerPolyIllum:
+                rigidMatrices.MaterialFlags |= MATERIAL_FLAG_ALPHA_TEST | MATERIAL_FLAG_PERPOLY_ILLUM;
+                break;
+            case Material_Diff_PerPixelEnv:
+                rigidMatrices.MaterialFlags |= MATERIAL_FLAG_PERPIXEL_ENV;
+                break; 				
+            case Material_Alpha_PerPolyIllum:
+                skinMatrices.MaterialFlags |= MATERIAL_FLAG_ALPHA_TEST | MATERIAL_FLAG_PERPOLY_ILLUM;
+                break;
+            case Material_Distortion:
+                skinMatrices.MaterialFlags |= MATERIAL_FLAG_DISTORTION;
+                break;
+            case Material_Distortion_PerPolyEnv:
+                skinMatrices.MaterialFlags |= MATERIAL_FLAG_DISTORTION | MATERIAL_FLAG_PERPOLY_ENV;
+                break;
+        }                      
+        
+        // Check for ENV map
+        if( pMaterial->m_EnvironmentMap.GetPointer() )
+        {
+            skinMatrices.MaterialFlags |= MATERIAL_FLAG_HAS_ENVIRONMENT;
+        }
+        
+        // Check blend flags
+        if( pMaterial->m_Flags & geom::material::FLAG_IS_ADDITIVE )
+            skinMatrices.MaterialFlags |= MATERIAL_FLAG_ADDITIVE;
+        else if( pMaterial->m_Flags & geom::material::FLAG_IS_SUBTRACTIVE )
+            skinMatrices.MaterialFlags |= MATERIAL_FLAG_SUBTRACTIVE;
+        
+        // Check proj flags
+        if( !(RenderFlags & render::DISABLE_SPOTLIGHT) )
+            skinMatrices.MaterialFlags |= MATERIAL_FLAG_PROJ_LIGHT;
+        if( !(RenderFlags & render::DISABLE_PROJ_SHADOWS) )
+            skinMatrices.MaterialFlags |= MATERIAL_FLAG_PROJ_SHADOW;
+    }    
     
     cb_lighting lightMatrices;
     

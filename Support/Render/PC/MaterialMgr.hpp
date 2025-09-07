@@ -142,22 +142,24 @@ public:
     void        Kill                ( void );
 
     // Rigid material management
-    void        SetRigidMaterial    ( const matrix4* pL2W,
-                                      const bbox* pBBox,
+    void        SetRigidMaterial    ( const matrix4*      pL2W,
+                                      const bbox*         pBBox,
                                       const d3d_lighting* pLighting,
-                                      const material* pMaterial,
-                                      u32 RenderFlags );
+                                      const material*     pMaterial,
+                                      u32                 RenderFlags );
 
     // Skin material management  
-    void        SetSkinMaterial     ( const matrix4* pL2W,
-                                      const bbox* pBBox,
+    void        SetSkinMaterial     ( const matrix4*      pL2W,
+                                      const bbox*         pBBox,
                                       const d3d_lighting* pLighting,
-                                      u32 RenderFlags );
+                                      const material*     pMaterial,
+                                      u32                 RenderFlags );
 
     void        ResetProjTextures   ( void );
 
     // General material functions
-    void        SetBitmap           ( const xbitmap* pBitmap, texture_slot slot );
+    void        SetBitmap           ( const xbitmap* pBitmap, 
+                                      texture_slot   slot );
     void        SetBlendMode        ( s32 BlendMode );
     void        SetDepthTestEnabled ( xbool ZTestEnabled );
     void        InvalidateCache     ( void );
@@ -173,16 +175,17 @@ protected:
     void        KillShaders         ( void );
 
     // Internal helpers
-    xbool       UpdateRigidConstants( const matrix4*           pL2W,
-                                      const material*         pMaterial,
-                                      u32                     RenderFlags,
+    xbool       UpdateRigidConstants( const matrix4*      pL2W,
+                                      const material*     pMaterial,
+                                      u32                 RenderFlags,
                                       const d3d_lighting* pLighting );
     xbool       UpdateSkinConstants ( const d3d_lighting* pLighting,
-                                      u32 RenderFlags );
+                                      const material*     pMaterial,
+                                      u32                 RenderFlags );
     xbool       UpdateProjTextures  ( const matrix4& L2W,
-                                          const bbox& B,
-                                          u32 Slot,
-                                          u32 RenderFlags );
+                                      const bbox&    B,
+                                      u32            Slot,
+                                      u32            RenderFlags );
 
 protected:
 

@@ -244,6 +244,7 @@ void platform_RenderSkinInstance( render_instance& Inst )
     g_MaterialMgr.SetSkinMaterial( &Inst.Data.Skin.pBones[0],
                                    &Inst.Data.Skin.pGeom->m_BBox,
                                    (d3d_lighting*)Inst.pLighting,
+                                   s_pMaterial,
                                    Inst.Flags );
 
     g_SkinVertMgr.DrawDList( Inst.hDList, Inst.Data.Skin.pBones, (d3d_lighting*)Inst.pLighting );
