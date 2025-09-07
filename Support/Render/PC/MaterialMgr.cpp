@@ -124,12 +124,6 @@ void material_mgr::Kill( void )
 
 xbool material_mgr::InitRigidShaders( void )
 {
-    if( !g_pd3dDevice )
-    {
-        x_DebugMsg( "MaterialMgr: No D3D device available for rigid shader creation\n" );
-        return FALSE;
-    }
-
     x_DebugMsg( "MaterialMgr: Initializing rigid shaders\n" );
 
     // Input layout for rigid vertices
@@ -164,12 +158,6 @@ xbool material_mgr::InitRigidShaders( void )
 
 xbool material_mgr::InitSkinShaders( void )
 {
-    if( !g_pd3dDevice )
-    {
-        x_DebugMsg( "MaterialMgr: No D3D device available for skin shader creation\n" );
-        return FALSE;
-    }
-
     x_DebugMsg( "MaterialMgr: Initializing skin shaders\n" );
 
     // Input layout for skinned vertices
