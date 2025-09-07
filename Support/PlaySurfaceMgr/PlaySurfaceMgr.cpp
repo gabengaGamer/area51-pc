@@ -1282,7 +1282,7 @@ void playsurface_mgr::RenderZone( zone_info& ZoneInfo, zone_mgr::zone_id Zone1, 
             #endif
 
             // clear any accumulated flags for the next frame
-            pSurface->RenderFlags &= ~(render::CLIPPED | render::SHADOW_PASS | render::DO_SIMPLE_LIGHTING);
+            pSurface->RenderFlags &= ~(render::CLIPPED | render::SHADOW_PASS);
         }
 
         // move to the next batch
@@ -1351,7 +1351,7 @@ void playsurface_mgr::MarkLitPlaySurfaces( void )
         surface* pSurface = GetNextSurface();
         while( pSurface != NULL )
         {
-            pSurface->RenderFlags |= render::DO_SIMPLE_LIGHTING;
+            pSurface->RenderFlags;
             pSurface = GetNextSurface();
         }
     }
