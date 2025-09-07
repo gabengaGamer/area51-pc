@@ -110,7 +110,6 @@ namespace render
         DISABLE_SPOTLIGHT    = 0x02000000,
         DISABLE_FILTERLIGHT  = 0x04000000,
         DISABLE_PROJ_SHADOWS = 0x08000000,
-        DO_SIMPLE_LIGHTING   = 0x10000000,  // for optimization--enables the lighting for AddRigidInstanceSimple
         PERPIXEL_POINTLIGHT  = 0x20000000,
         
         // TODO: Our flags have started clashing. For now, if we make INSTFLAG_CLIPPED

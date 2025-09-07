@@ -35,6 +35,15 @@ cbuffer cbProjTextures : register(b1)
     float3   ProjPadding;
 };
 
+cbuffer cbLightConsts : register(b2)
+{
+    float4 LightPosRad[MAX_GEOM_LIGHTS];
+    float4 LightCol[MAX_GEOM_LIGHTS];
+    float4 LightAmbCol;
+    uint   LightCount;
+    float3 LightPadding;
+};
+
 //==============================================================================
 //  TEXTURES AND SAMPLERS
 //==============================================================================
@@ -123,7 +132,7 @@ PS_OUTPUT PSMain(PS_INPUT input)
     // Apply vertex color modulation
     if (MaterialFlags & MATERIAL_FLAG_VERTEX_COLOR)
     {
-        diffuseColor *= input.Color;
+        diffuseColor.a *= input.Color.a;
     }
 
     // Perform alpha testing
@@ -133,7 +142,24 @@ PS_OUTPUT PSMain(PS_INPUT input)
             discard;
     }
 
-    float4 finalColor = diffuseColor;
+    float3 dynLight = float3( 0.0, 0.0, 0.0 );
+    for( uint i = 0; i < LightCount; i++ )
+    {
+        float3 L     = LightPosRad[i].xyz - input.WorldPos;
+        float  dist  = length( L );
+        float  atten = saturate( 1.0 - dist / LightPosRad[i].w );
+        float3 Ldir  = L / max( dist, 0.0001 );
+        float  NdotL = saturate( dot( input.Normal, Ldir ) );
+        dynLight    += LightCol[i].rgb * NdotL * atten;
+    }
+
+    float3 totalLight = LightAmbCol.rgb + dynLight;
+    if( MaterialFlags & MATERIAL_FLAG_VERTEX_COLOR )
+    {
+        totalLight += input.Color.rgb;
+    }
+
+    float4 finalColor = float4( diffuseColor.rgb * totalLight, diffuseColor.a );
 
     // Apply projection lights and shadows
     if( MaterialFlags & MATERIAL_FLAG_PROJ_LIGHT )

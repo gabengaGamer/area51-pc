@@ -1530,13 +1530,9 @@ void render::AddRigidInstanceSimple( hgeom_inst     hInst,
     rigid_geom* pGeom = (rigid_geom*)RegisteredInst.pGeom;
 
     // calculate lighting
-    void* pLighting = NULL;
-    if( Flags & DO_SIMPLE_LIGHTING )
-    {
-        pLighting = platform_CalculateRigidLighting( *pL2W, WorldBBox );
-        if ( pLighting )
-            Flags |= INSTFLAG_DYNAMICLIGHT;
-    }
+    void* pLighting = platform_CalculateRigidLighting( *pL2W, WorldBBox );
+    if( pLighting )
+        Flags |= INSTFLAG_DYNAMICLIGHT;
 
     // Use filter light?
     if ( ( s_bFilterLight ) && ( (Flags & DISABLE_FILTERLIGHT) == 0 ) )

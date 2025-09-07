@@ -694,10 +694,47 @@ static
 void* platform_CalculateRigidLighting( const matrix4&   L2W,
                                        const bbox&      WorldBBox )
 {
-    (void)L2W;
-    (void)WorldBBox;
+    d3d_rigid_lighting* pLighting = (d3d_rigid_lighting*)smem_BufferAlloc( sizeof(d3d_rigid_lighting) );
+    if( !pLighting )
+    {
+        static d3d_rigid_lighting Default;
+        Default.LightCount = 0;
+        Default.AmbCol.Set( 0.05f, 0.05f, 0.05f, 1.0f );
+        for( s32 i = 0; i < MAX_RIGID_LIGHTS; i++ )
+        {
+            Default.PosRad[i].Set( 0.0f, 0.0f, 0.0f, 0.0f );
+            Default.Col[i].Set( 0.0f, 0.0f, 0.0f, 0.0f );
+        }
+        pLighting = &Default;
+    }
+    else
+    {
+        pLighting->AmbCol.Set( 0.05f, 0.05f, 0.05f, 1.0f );
+        s32 NLights = g_LightMgr.CollectLights( WorldBBox, MAX_RIGID_LIGHTS );
+        pLighting->LightCount = NLights;
 
-    return NULL;
+        for( s32 i = 0; i < NLights; i++ )
+        {
+            vector3 Pos;
+            f32     Radius;
+            xcolor  Col;
+            g_LightMgr.GetCollectedLight( i, Pos, Radius, Col );
+
+            pLighting->PosRad[i].Set( Pos.GetX(), Pos.GetY(), Pos.GetZ(), Radius );
+            pLighting->Col[i].Set( (f32)Col.R * (1.0f / 255.0f),
+                                   (f32)Col.G * (1.0f / 255.0f),
+                                   (f32)Col.B * (1.0f / 255.0f),
+                                   1.0f );
+        }
+
+        for( s32 i = NLights; i < MAX_RIGID_LIGHTS; i++ )
+        {
+            pLighting->PosRad[i].Set( 0.0f, 0.0f, 0.0f, 0.0f );
+            pLighting->Col[i].Set( 0.0f, 0.0f, 0.0f, 0.0f );
+        }
+    }
+
+    return pLighting;
 }
 
 //=============================================================================

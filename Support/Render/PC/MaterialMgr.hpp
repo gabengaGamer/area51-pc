@@ -36,7 +36,7 @@
 //==============================================================================
 
 #define MAX_SKIN_BONES 96
-#define MAX_SKIN_LIGHTS 4
+#define MAX_GEOM_LIGHTS 4
 
 //==============================================================================
 //  MATERIAL FLAGS
@@ -67,8 +67,9 @@ enum material_flags
 
 struct d3d_rigid_lighting
 {
-    vector3 Dir;
-    vector4 DirCol;
+    s32     LightCount;
+    vector4 PosRad  [MAX_GEOM_LIGHTS];
+    vector4 Col     [MAX_GEOM_LIGHTS];
     vector4 AmbCol;
 };
 
@@ -95,11 +96,20 @@ struct cb_proj_textures
     f32     Padding[3];
 };
 
+struct cb_rigid_lighting
+{
+    vector4 LightPosRad[MAX_GEOM_LIGHTS];
+    vector4 LightCol   [MAX_GEOM_LIGHTS];
+    vector4 LightAmbCol;
+    u32     LightCount;
+    f32     Padding[3];
+};
+
 struct d3d_skin_lighting
 {
     s32     LightCount;
-    vector3 Dir      [MAX_SKIN_LIGHTS];
-    vector4 DirCol   [MAX_SKIN_LIGHTS];
+    vector3 Dir      [MAX_GEOM_LIGHTS];
+    vector4 DirCol   [MAX_GEOM_LIGHTS];
     vector4 AmbCol;
 };
 
@@ -111,8 +121,8 @@ struct cb_skin_vs_consts
     f32     One;                          // 1.0f
     f32     MinusOne;                     // -1.0f
     f32     Fog;                          // Fog factor
-    vector4 LightDir[MAX_SKIN_LIGHTS];    // Directional light directions
-    vector4 LightCol[MAX_SKIN_LIGHTS];    // Directional light colors
+    vector4 LightDir[MAX_GEOM_LIGHTS];    // Directional light directions
+    vector4 LightCol[MAX_GEOM_LIGHTS];    // Directional light colors
     vector4 LightAmbCol;                  // Ambient light color
     u32     LightCount;                   // Number of active lights
     f32     Padding[3];                   // Padding to 16-byte alignment
@@ -177,9 +187,10 @@ protected:
     void        KillShaders         ( void );
 
     // Internal helpers
-    xbool       UpdateRigidConstants( const matrix4* pL2W,
-                                      const material* pMaterial,
-                                      u32 RenderFlags );
+    xbool       UpdateRigidConstants( const matrix4*           pL2W,
+                                      const material*         pMaterial,
+                                      u32                     RenderFlags,
+                                      const d3d_rigid_lighting* pLighting );
     xbool       UpdateSkinConstants ( const d3d_skin_lighting* pLighting,
                                       u32 RenderFlags );
     xbool       UpdateProjTextures  ( const matrix4& L2W,
@@ -197,6 +208,7 @@ protected:
     ID3D11PixelShader*      m_pRigidPixelShader;
     ID3D11InputLayout*      m_pRigidInputLayout;
     ID3D11Buffer*           m_pRigidConstantBuffer;
+	ID3D11Buffer*           m_pRigidLightBuffer;
 	
     // Proj textures resources
     ID3D11Buffer*           m_pProjTextureBuffer;
@@ -216,10 +228,12 @@ protected:
     
     // Cached constant buffer data to avoid redundant updates
     rigid_vert_matrices     m_CachedRigidMatrices;
+	cb_rigid_lighting       m_CachedRigidLighting;
     cb_skin_vs_consts       m_CachedSkinConsts;
 	u32                     m_LastProjLightCount;
     u32                     m_LastProjShadowCount;
     xbool                   m_bRigidMatricesDirty;
+	xbool                   m_bRigidLightingDirty;
     xbool                   m_bSkinConstsDirty;
 };
 

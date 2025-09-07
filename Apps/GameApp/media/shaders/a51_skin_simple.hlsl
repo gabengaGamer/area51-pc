@@ -8,8 +8,6 @@
 
 #include "common/material_flags.hlsl"
 
-#define MAX_SKIN_LIGHTS 4
-
 //==============================================================================
 //  CONSTANT BUFFERS
 //==============================================================================
@@ -22,8 +20,8 @@ cbuffer cbSkinConsts : register(b0)
     float    One;
     float    MinusOne;
     float    Fog;
-    float4   LightDir[MAX_SKIN_LIGHTS];
-    float4   LightCol[MAX_SKIN_LIGHTS];
+    float4   LightDir[MAX_GEOM_LIGHTS];
+    float4   LightCol[MAX_GEOM_LIGHTS];
     float4   LightAmbCol;
     uint     LightCount;
     float3   Padding;
@@ -85,16 +83,16 @@ PS_INPUT VSMain(VS_INPUT input)
     PS_INPUT output;
     
     // Extract bone indices and weights
-    //int   index1  = (int)input.PosIndex1.w;                     
-    //int   index2  = (int)input.NormIndex2.w;
-    //float weight1 = input.UVWeights.z;
-    //float weight2 = input.UVWeights.w;
+    int   index1  = (int)input.PosIndex1.w;                     
+    int   index2  = (int)input.NormIndex2.w;
+    float weight1 = input.UVWeights.z;
+    float weight2 = input.UVWeights.w;
 	
 	// Extract bone indices and weights (stub)
-	int   index1  = 0;
-    int   index2  = 0;
-    float weight1 = 1.0;
-    float weight2 = 0.0;
+	//int   index1  = 0;
+    //int   index2  = 0;
+    //float weight1 = 1.0;
+    //float weight2 = 0.0;
     
     // Blend positions using bone matrices
     float3 pos1 = mul(Bones[index1].L2W, float4(input.PosIndex1.xyz, 1.0)).xyz;
