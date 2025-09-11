@@ -115,13 +115,20 @@ xbool ui_dialog::Create( s32                        UserID,
         m_NavGraph.Append() = 0;
 
     if( pDialogTem )
-	{
-        const xwchar* pLabel = g_StringTableMgr( "ui", pDialogTem->StringID );
-        ASSERTS(pLabel,".stringbin files might not be compiled!");
-		m_Label = pLabel;
+    {
+        if( pDialogTem->StringID )
+        {
+            const xwchar* pLabel = g_StringTableMgr( "ui", pDialogTem->StringID );
+            ASSERTS( pLabel, ".stringbin files might not be compiled!" );
+            m_Label = pLabel;
+        }
+        else
+        {
+            m_Label.Clear();
+        }
         //xwstring tempString("Test");
         //m_Label = tempString;
-	}
+    }
  
     // Save Template Pointer
     m_pDialogTem = pDialogTem;
@@ -165,13 +172,20 @@ xbool ui_dialog::Create( s32                        UserID,
             pControl->SetControlID( pControlTem->ControlID );
 
             // Configure the control
-			pControl->SetLabel( g_StringTableMgr( "ui", pControlTem->StringID ) );
-			//pControl->SetLabel( m_Label );
+            static const xwchar s_EmptyLabel[] = { 0 };
+            const xwchar* pLabel = s_EmptyLabel;
+            if( pControlTem->StringID )
+            {
+                pLabel = g_StringTableMgr( "ui", pControlTem->StringID );
+                ASSERTS( pLabel, ".stringbin files might not be compiled!" );
+            }
+            pControl->SetLabel( pLabel );
+            //pControl->SetLabel( m_Label );
 
             if( x_strcmp( pControlTem->pClass, "edit" ) == 0 )
             {
-                ui_edit*    pEdit = (ui_edit*)pControl;	
-                pEdit->SetVirtualKeyboardTitle( g_StringTableMgr( "ui", pControlTem->StringID ) );
+                ui_edit*    pEdit = (ui_edit*)pControl;
+                pEdit->SetVirtualKeyboardTitle( pLabel );
             }
 
             // Add the control to the navigation graph
