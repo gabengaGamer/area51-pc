@@ -333,15 +333,33 @@ void ui_slider::OnLBDown( ui_win* pWin )
     (void)pWin;
 
 #ifdef TARGET_PC
+    // Allow dragging when clicking anywhere on the slider bar.
+    s32 x, y;
+    m_pManager->GetCursorPos( m_UserID, x, y );
+    ScreenToLocal( x, y );
 
-    xbool       Processed = FALSE;
-    s32         dx = 0;
-    static s32  ScaleCounter = 0;
- 
-    // If the cursor is in the thumb then allow the mouse to start dragging it.
-    if( m_Thumb.PointInRect( m_MouseX, m_MouseY ) )
+    m_MouseX = x;
+    m_MouseY = y;
+    m_MouseDown = TRUE;
+
+    s32 OldValue = m_Value;
+
+    f32 Value = (f32)x / (f32)m_Position.GetWidth();
+    Value *= (f32)m_Max;
+    m_Value = (s32)Value;
+
+    if( Value > (f32)m_Value )
+        m_Value += 1;
+
+    if( m_Value <  m_Min ) m_Value = m_Min;
+    if( m_Value >= m_Max ) m_Value = m_Max;
+
+    if( (m_Value != OldValue) && m_pParent )
     {
-        m_MouseDown = TRUE;
+        if( m_Max > m_Min )
+            m_ValueParametric = (f32)(m_Value - m_Min) / (f32)(m_Max - m_Min);
+
+        m_pParent->OnNotify( m_pParent, this, WN_SLIDER_CHANGE, (void*)m_Value );
     }
 #endif
 }
@@ -378,6 +396,9 @@ void ui_slider::OnCursorMove( ui_win* pWin, s32 x, s32 y )
 
         if( (m_Value != OldValue) && m_pParent )
         {
+            if( m_Max > m_Min )
+                m_ValueParametric = (f32)(m_Value - m_Min) / (f32)(m_Max - m_Min);
+
             m_pParent->OnNotify( m_pParent, this, WN_SLIDER_CHANGE, (void*)m_Value );
 //            audio_Play( SFX_FRONTEND_CURSOR_MOVE_02,AUDFLAG_CHANNELSAVER );	//-- Jhowa
         }
