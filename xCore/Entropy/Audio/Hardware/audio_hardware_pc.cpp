@@ -419,7 +419,7 @@ void audio_hardware::InitChannel( channel* pChannel )
     {
     case PCM:
         // Init the sample
-        IAL_init_channel( hChannel, (void*)pHotSample->AudioRam, pHotSample->nSamples, IsLooped ? 1 : 0, pHotSample->LoopStart, pHotSample->LoopEnd, IAL_PCM, pHotSample->SampleRate, pChannel->Volume*pChannel->Pan3d.GetX(), pChannel->Volume*pChannel->Pan3d.GetY(), 1.0f );
+        IAL_init_channel( hChannel, (void*)pHotSample->AudioRam, pHotSample->nSamples, IsLooped ? 1 : 0, pHotSample->LoopStart, pHotSample->LoopEnd, pHotSample->SampleRate, pChannel->Volume*pChannel->Pan3d.GetX(), pChannel->Volume*pChannel->Pan3d.GetY(), 1.0f );
         break;
     case ADPCM:
         // Init the sample
@@ -486,7 +486,6 @@ void audio_hardware::InitChannelStreamed( channel* pChannel )
                       LoopEnd,
                       IsLooped ? 1 : 0,
                       LoopStart, LoopEnd,
-                      IAL_PCM,
                       pHotSample->SampleRate,
                       pChannel->Volume*pChannel->Pan3d.GetX(),
                       pChannel->Volume*pChannel->Pan3d.GetY(),

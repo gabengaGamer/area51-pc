@@ -27,13 +27,6 @@ enum ial_state
     IAL_STOP,
 };
 
-//------------------------------------------------------------------------------
-
-enum ial_format
-{
-    IAL_PCM,
-};
-
 //==============================================================================
 //  STRUCTURES
 //==============================================================================
@@ -79,7 +72,7 @@ ial_hchannel    IAL_allocate_channel    ( void );
 void            IAL_release_channel     ( ial_hchannel hChannel );
 
 void            IAL_init_channel        ( ial_hchannel hChannel, void* pData, s32 nSamples, s32 LoopCount, s32 LoopStart, s32 LoopEnd,
-                                          ial_format Format, s32 SampleRate, f32 VolumeL, f32 ValueR, f32 Pitch );
+                                          s32 SampleRate, f32 VolumeL, f32 ValueR, f32 Pitch );
 
 void            IAL_start_channel       ( ial_hchannel hChannel );
 void            IAL_stop_channel        ( ial_hchannel hChannel );

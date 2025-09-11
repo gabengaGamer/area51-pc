@@ -416,14 +416,14 @@ void IAL_release_channel ( ial_hchannel hChannel )
 //==============================================================================
 
 void IAL_init_channel( ial_hchannel hChannel, void* pData, s32 nSamples, s32 LoopCount, s32 LoopStart, s32 LoopEnd,
-                       ial_format Format, s32 SampleRate, f32 VolumeL, f32 VolumeR, f32 Pitch )
+                       s32 SampleRate, f32 VolumeL, f32 VolumeR, f32 Pitch )
 {
     s32 Index = IAL_hChannelToIndex( hChannel );
     if( Index >= IAL_MAX_CHANNELS )
         return;
 
-    CLOG_MESSAGE( LOGGING_ENABLED, "IAL", "IAL_init_channel( %d, %p, %d, %d, %d, %d, %d, %d, %f, %f, %f )", 
-	            Index, pData, nSamples, LoopCount, LoopStart, LoopEnd, Format, 
+    CLOG_MESSAGE( LOGGING_ENABLED, "IAL", "IAL_init_channel( %d, %p, %d, %d, %d, %d, %d, %f, %f, %f )", 
+	            Index, pData, nSamples, LoopCount, LoopStart, LoopEnd, 
 				SampleRate, VolumeL, VolumeR, Pitch );
 
     ial_channel& Channel = IAL_Channels[Index];
