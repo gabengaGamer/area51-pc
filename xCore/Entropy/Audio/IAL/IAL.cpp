@@ -6,6 +6,10 @@
 //
 //==============================================================================
 
+// NOTE: GS: It is interesting that after transferring IAL from DirectSound8 to XAudio 
+// the pitch changed a little, the sound became higher by 2-4% by feel. 
+// Not critical, but worth taking into account.
+
 //==============================================================================
 //  PLATFORM CHECK
 //==============================================================================
