@@ -71,8 +71,6 @@ IXAudio2MasteringVoice* s_pMasterVoice;
 IXAudio2SourceVoice*    s_pSourceVoice;
 f32                     s_SystemVolume = 1.0f;
 
-HWND        IAL_hWnd        = NULL;
-
 ial_channel IAL_Channels        [IAL_MAX_CHANNELS];
 s32         IAL_MixL            [IAL_SAMPLES_PER_FRAME];
 s32         IAL_MixR            [IAL_SAMPLES_PER_FRAME];
@@ -281,13 +279,11 @@ void IAL_MixFrame( void )
 
 //==============================================================================
 
-xbool IAL_Init( HWND hWnd )
+xbool IAL_Init( void )
 {
     ASSERT( !s_Initialized );
 
-    CLOG_MESSAGE( LOGGING_ENABLED, "IAL", "IAL_Init( 0x%08X )", hWnd );
-
-    IAL_hWnd = hWnd;
+    CLOG_MESSAGE( LOGGING_ENABLED, "IAL", "IAL_Init()" );
 
     x_memset( &IAL_Channels, 0, sizeof(IAL_Channels) );
 
@@ -426,7 +422,9 @@ void IAL_init_channel( ial_hchannel hChannel, void* pData, s32 nSamples, s32 Loo
     if( Index >= IAL_MAX_CHANNELS )
         return;
 
-    CLOG_MESSAGE( LOGGING_ENABLED, "IAL", "IAL_init_channel( %d, 0x%08x, %d, %d, %d, %d, %d, %d, %f, %f, %f )", Index, (u32)pData, nSamples, LoopCount, LoopStart, LoopEnd, Format, SampleRate, VolumeL, VolumeR, Pitch );
+    CLOG_MESSAGE( LOGGING_ENABLED, "IAL", "IAL_init_channel( %d, %p, %d, %d, %d, %d, %d, %d, %f, %f, %f )", 
+	            Index, pData, nSamples, LoopCount, LoopStart, LoopEnd, Format, 
+				SampleRate, VolumeL, VolumeR, Pitch );
 
     ial_channel& Channel = IAL_Channels[Index];
 
@@ -659,7 +657,13 @@ s32 IAL_get_output_amplitude( s32 Channel )
     ASSERT( Channel >= 0 );
     ASSERT( Channel <= 1 );
 
-    return IAL_OutputAmplitude[Channel];
+    IAL_GetMutex();
+	
+    s32 Amp = IAL_OutputAmplitude[Channel];
+	
+    IAL_ReleaseMutex();
+
+    return Amp;
 }
 
 //==============================================================================

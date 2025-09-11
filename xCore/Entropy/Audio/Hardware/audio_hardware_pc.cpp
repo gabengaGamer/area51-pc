@@ -231,7 +231,7 @@ void audio_hardware::Init( s32 MemSize )
 {
     ASSERTS( !s_IsInitialized, "Already initialized" );
 
-    IAL_Init( d3deng_GetWindowHandle() );
+    IAL_Init();
 
     (void)MemSize;
 

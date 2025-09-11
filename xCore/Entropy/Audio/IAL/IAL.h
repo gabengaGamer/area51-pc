@@ -71,7 +71,7 @@ typedef u32 ial_hchannel;
 //  FUNCTIONS
 //==============================================================================
 
-xbool IAL_Init( HWND hWnd );
+xbool IAL_Init( void );
 void  IAL_Kill( void );
 void  IAL_SetSystemVolume( f32 Volume ); // 0 -> 1
 
