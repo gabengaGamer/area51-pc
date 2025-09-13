@@ -74,9 +74,8 @@ struct rigid_geom : public geom
         s32         nVerts;
         vertex_pc*  pVert;
         
-        s32         iBone;
-        
-        u32         Pad; // GS: Unknown padding in V41.
+        s32         iBone;        
+        u32         iColor; // GS: New variable in V41 PC. 
 
         void FileIO( fileio& File );
     };

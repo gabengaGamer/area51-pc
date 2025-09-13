@@ -96,7 +96,7 @@ void rigid_geom::dlist_pc::FileIO( fileio& File )
     File.Static( nVerts );
     File.Static( pVert, nVerts );
     File.Static( iBone );
-    File.Static( Pad );
+    File.Static( iColor ); // GS: New variable in V41 PC. 
 }
 
 //=========================================================================
