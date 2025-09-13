@@ -75,7 +75,7 @@ struct rigid_geom : public geom
         vertex_pc*  pVert;
         
         s32         iBone;        
-        u32         iColor; // GS: New variable in V41 PC. 
+        s32         iColor; // GS: New variable in V41 PC. 
 
         void FileIO( fileio& File );
     };
