@@ -43,17 +43,7 @@
 //
 
 struct geom
-{
-#if   defined(TARGET_PC)
-    enum { VERSION = VERSION_PC   };
-#elif defined(TARGET_XBOX)
-    enum { VERSION = VERSION_XBOX };
-#elif defined(TARGET_PS2)
-    enum { VERSION = VERSION_PS2  };
-#else
-    #error Unknown target !
-#endif    
-    
+{   
     // Geometry bone
     struct bone
     {

@@ -1,12 +1,13 @@
 
 #include "geom.hpp"
 
+// TODO: GS: Add platform and version validation!
+
 //=========================================================================
 
 geom::geom( void )
 {    
     x_memset( this, 0, sizeof(geom) );
-    m_Version = geom::VERSION;
     m_hGeom   = HNULL;
 }
 
