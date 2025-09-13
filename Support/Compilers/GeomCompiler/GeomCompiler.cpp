@@ -1814,6 +1814,7 @@ void geom_compiler::ExportRigidGeomPS2( mesh& Mesh, rigid_geom& RigidGeom, const
     Geom.m_nTextures = 0;
     Geom.m_pTexture  = NULL;
     Geom.m_Platform  = PLATFORM_PS2;
+    Geom.m_Version   = VERSION_PS2;    
     
     // Allocate space for all the meshes in the geom
     Geom.m_nMeshes   = Mesh.SubMesh.GetCount();
@@ -2233,6 +2234,7 @@ void geom_compiler::ExportRigidGeomXbox( mesh& Mesh, rigid_geom& RigidGeom, cons
     Geom.m_nTextures = 0;
     Geom.m_pTexture  = NULL;
     Geom.m_Platform  = PLATFORM_XBOX;
+    Geom.m_Version   = VERSION_XBOX;    
     
     // Allocate space for all the meshes in the geom
     Geom.m_nMeshes   = Mesh.SubMesh.GetCount();
@@ -2411,6 +2413,7 @@ void geom_compiler::ExportRigidGeomPC( mesh& Mesh, rigid_geom& RigidGeom, const 
 
     s32 TotalVerts   = 0;
     s32 TotalIndices = 0;
+    s32 iColor = 0;
  
     // Loop through all SubMeshes
     for( iDList=i=0; i<Mesh.SubMesh.GetCount(); i++ )
@@ -2464,6 +2467,7 @@ void geom_compiler::ExportRigidGeomPC( mesh& Mesh, rigid_geom& RigidGeom, const 
             PCDList.pIndices = new u16[ nIndices ];
             PCDList.pVert    = new rigid_geom::vertex_pc[ nIndices ];    // Allocate more than we need
             PCDList.iBone    = DList.iBone;
+            PCDList.iColor   = -1;
             
             if( (PCDList.pIndices == NULL) || (PCDList.pVert == NULL) )
                 x_throw( "Out of memory" );
@@ -2522,7 +2526,10 @@ void geom_compiler::ExportRigidGeomPC( mesh& Mesh, rigid_geom& RigidGeom, const 
                 }
             }
 
+            PCDList.iColor = iColor;
             PCDList.nVerts = nVerts;
+            
+            iColor        += nVerts;
             TotalVerts    += nVerts;
 
             ASSERT( nIndex == nIndices );
@@ -2548,6 +2555,7 @@ void geom_compiler::ExportRigidGeomPC( mesh& Mesh, rigid_geom& RigidGeom, const 
     Geom.m_nTextures = 0;
     Geom.m_pTexture  = NULL;
     Geom.m_Platform  = PLATFORM_PC;
+    Geom.m_Version   = VERSION_PC;    
     
     // Allocate space for all the meshes in the geom
     Geom.m_nMeshes   = Mesh.SubMesh.GetCount();
@@ -3105,6 +3113,7 @@ void geom_compiler::ExportSkinGeomPS2( mesh& Mesh, skin_geom& SkinGeom, const ch
     Geom.m_nTextures = 0;
     Geom.m_pTexture  = NULL;
     Geom.m_Platform  = PLATFORM_PS2;
+    Geom.m_Version   = VERSION_PS2;
     
     // Allocate space for all the meshes in the geom
     Geom.m_nMeshes   = Mesh.SubMesh.GetCount();
@@ -3514,8 +3523,9 @@ void geom_compiler::ExportSkinGeomXbox( mesh& Mesh, skin_geom& SkinGeom, const c
     geom& Geom       = SkinGeom;
 
     Geom.m_nTextures = 0;
-    Geom.m_pTexture  = NULL;
+    Geom.m_pTexture  = NULL;    
     Geom.m_Platform  = PLATFORM_XBOX;
+    Geom.m_Version   = VERSION_XBOX;
     
     // Allocate space for all the meshes in the geom
     Geom.m_nMeshes   = SubMeshCount;
@@ -3758,6 +3768,7 @@ void geom_compiler::ExportSkinGeomPC( mesh& Mesh, skin_geom& SkinGeom, const cha
     Geom.m_nTextures = 0;
     Geom.m_pTexture  = NULL;
     Geom.m_Platform  = PLATFORM_PC;
+    Geom.m_Version   = VERSION_PC;    
     
     // Allocate space for all the meshes in the geom
     Geom.m_nMeshes   = Mesh.SubMesh.GetCount();
