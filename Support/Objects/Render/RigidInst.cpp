@@ -5,14 +5,8 @@
 //=============================================================================
 
 #include "Entropy.hpp"
-#include "Objects\Render\RigidInst.hpp"
-#include "ResourceMgr\ResourceMgr.hpp"
-
-//=============================================================================
-
-#ifdef TARGET_XBOX
-void xbox_Unregister ( rigid_geom* pGeom );
-#endif
+#include "Objects\\Render\\RigidInst.hpp"
+#include "ResourceMgr\\ResourceMgr.hpp"
 
 //=============================================================================
 // LOADER FOR THE RIGID GEOM RESOURCE
@@ -36,7 +30,7 @@ static struct rigid_loader : public rsc_loader
 
     //-------------------------------------------------------------------------
 
-    virtual void* Resolve ( void* pData ) 
+    virtual void* Resolve ( void* pData )
     {
         fileio      File;
         rigid_geom* pRigidGeom = NULL;
@@ -52,10 +46,6 @@ static struct rigid_loader : public rsc_loader
     {
         rigid_geom* pRigidGeom = (rigid_geom*)pData;
         ASSERT( pRigidGeom );
-
-        #ifdef TARGET_XBOX
-        xbox_Unregister( pRigidGeom );
-        #endif
 
         delete pRigidGeom;
     }
@@ -78,30 +68,48 @@ static struct rigid_color : public rsc_loader
     {
         MEMORY_OWNER( "RIGID COLOR DATA" );
         fileio File;
-        return( File.PreLoad( FP ) );
+        return File.PreLoad( FP );
     }
 
     //-------------------------------------------------------------------------
 
     virtual void* Resolve( void* pData )
     {
-        fileio              File;
-        color_info*   pRigidColor = NULL;
+        fileio      File;
+        color_info* pSrc = NULL;
 
-        File.Resolved( (fileio::resolve*)pData, pRigidColor );
-        // The XBOX uses 32 bit color and PS2 is using 16 bit.
+        File.Resolved( (fileio::resolve*)pData, pSrc );
 
-        return( pRigidColor );
+        color_info* pDst = new color_info;
+        pDst->SetCount( pSrc->GetCount() );
+
+        if( pSrc->GetCount() )
+        {
+            u32* pColor = (u32*)x_malloc( pSrc->GetCount() * sizeof(u32) );
+            ASSERT( pColor );            
+            x_memmove( pColor, (u32*)(*pSrc), pSrc->GetCount() * sizeof(u32) );
+            pDst->Set( pColor );
+        }
+        else
+        {
+            pDst->Set( (void*)NULL );
+        }
+
+        delete pSrc;
+        return pDst;
     }
+
 
     //-------------------------------------------------------------------------
 
     virtual void Unload( void* pData )
     {
-        color_info* pRigidColor=( color_info* )pData;
-    #ifdef TARGET_PC
-        //delete pRigidColor->m_hColors;
-    #endif
+        color_info* pRigidColor = (color_info*)pData;
+        
+        void* pColor = *pRigidColor;        
+        if( pColor )
+            x_free( pColor );    
+        
         delete pRigidColor;
     }
 
@@ -131,7 +139,7 @@ rigid_inst::~rigid_inst( void )
 
 //=============================================================================
 
-s32 rigid_inst::GetNumColors( void ) const 
+s32 rigid_inst::GetNumColors( void ) const
 {
     return( m_nColors );
 }
@@ -146,9 +154,9 @@ const void* rigid_inst::GetColorTable( platform PlatformType ) const
             return(( u32* )m_pRigidColor )+m_iColor;
         else if ( PlatformType == PLATFORM_PS2 )
             return(( u16* )m_pRigidColor )+m_iColor;
-		else if ( PlatformType == PLATFORM_PC )
+        else if ( PlatformType == PLATFORM_PC )
             return(( u32* )m_pRigidColor )+m_iColor;
-		else
+        else
             return(0);
     }
     return NULL;
@@ -160,13 +168,9 @@ const void* rigid_inst::GetColorTable( void ) const
 {
     if( !m_pRigidColor )
         return NULL;
-#if defined(TARGET_XBOX)
+    
     u32* pCol=( u32* )m_pRigidColor;
-#elif defined(TARGET_PS2)
-    u16* pCol=( u16* )m_pRigidColor;
-#elif defined(TARGET_PC)
-    u32* pCol=( u32* )m_pRigidColor;
-#endif
+    
     return( pCol+m_iColor );
 }
 
@@ -185,7 +189,7 @@ void rigid_inst::LoadColorTable( const char* pFileName )
 {
     rhandle<color_info> hRigidColor;
     hRigidColor.SetName( pFileName );
-    
+
     color_info* pInfo = hRigidColor.GetPointer();
     if ( pInfo )
         m_pRigidColor = *pInfo;
@@ -272,8 +276,8 @@ void rigid_inst::OnEnumProp( prop_enum& List )
 {
     // Important: The Header and External MUST be enumerated first!
     List.PropEnumHeader  ( "RenderInst", "Render Instance", 0 );
-    List.PropEnumExternal( "RenderInst\\File", "Resource\0rigidgeom", "Resource File", PROP_TYPE_MUST_ENUM );
-    
+    List.PropEnumExternal( "RenderInst\\File", "Resource\\0rigidgeom", "Resource File", PROP_TYPE_MUST_ENUM );
+
     render_inst::OnEnumProp( List );
 
     List.PropEnumInt( "RenderInst\\iColor",  "iColor",  PROP_TYPE_INT | PROP_TYPE_DONT_SHOW );
@@ -301,18 +305,18 @@ Count ++;
             // Get the FileName
             const char* pString = I.GetVarExternal();
             ASSERT( pString );
-            
+
             // Clear?
             if( x_strcmp( pString, "<null>" ) == 0 )
             {
                 SetUpRigidGeom( "" );
             }
             else if( pString[0] )
-            {   
+            {
                 // Setup
                 SetUpRigidGeom( pString );
             }
-    
+
             // if the filename has changed, this means we need to reset the vmesh mask
 #if defined(X_EDITOR)
             m_VMeshMask.nVMeshes  = 0;
@@ -324,7 +328,7 @@ Count ++;
 
     if( I.VarInt( "RenderInst\\iColor", m_iColor ) )
         return( TRUE );
-    
+
     if( I.VarInt( "RenderInst\\nColors", m_nColors ) )
         return( TRUE );
 
@@ -334,7 +338,7 @@ Count ++;
 //=============================================================================
 
 
-xbool rigid_inst::SetUpRigidGeom		( const char* pFileName )
+xbool rigid_inst::SetUpRigidGeom                ( const char* pFileName )
 {
 
     if( m_hInst.IsNonNull() )

@@ -43,7 +43,7 @@ public:
 protected:
 
     rhandle<rigid_geom>         m_hRigidGeom;       // Handle to the Rigid Geom
-    const void*                 m_pRigidColor;      // Ptr to colors
+    const void*                 m_pRigidColor;      // store pointer after resolve
 
     s32                         m_nColors;          // Number of colours used by instance
     s32                         m_iColor;           // Index into colour table

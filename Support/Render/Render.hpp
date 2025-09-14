@@ -415,11 +415,6 @@ private:
         u16 *       m_pColor16;   // 16-bit color
         void*       m_pVoid;
     };
-	
-#ifdef TARGET_XBOX
-public:
-    vert_factory::handle m_hColors;
-#endif	
 };
 
 //=========================================================================
@@ -432,7 +427,6 @@ inline void color_info::FileIO( fileio& File )
     {
         case kUse32:
             File.Static( m_pColor32,m_nColors );
-			//File.Dynamic( m_pColor32,m_nColors );
             break;
 
         case kUse16:
@@ -449,12 +443,7 @@ inline void color_info::FileIO( fileio& File )
 
 inline void color_info::Init( void )
 {
-#ifdef TARGET_PC
-    //m_hColors = 0;
     m_Usage   = kUse32;
-#else
-    m_Usage   = kUnknown;
-#endif
     m_nColors = 0;
     m_pVoid   = 0;
 }

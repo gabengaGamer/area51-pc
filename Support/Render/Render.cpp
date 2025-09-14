@@ -204,11 +204,7 @@ static s32 s_nGeomUVKeysLoaded    = 0;
 static s32 s_nGeomVMatsLoaded     = 0;
 #endif
 
-#ifdef TARGET_PC
 color_info::usage color_info::m_Usage = color_info::kUse32;
-#else
-#error Unknown Target!	
-#endif
 
 //=============================================================================
 
@@ -1558,6 +1554,13 @@ void render::AddRigidInstanceSimple( hgeom_inst     hInst,
 			#error Unknown Target!	
             #endif
 
+            //	#ifdef TARGET_PC
+            //	rigid_geom::dlist_pc& DList = pGeom->m_System.pPC[SubMesh.iDList];
+            //	ASSERT( DList.iColor <= pGeom->m_nVertices );
+            //	if( pInstCol )
+            //	    pInstCol += DList.iColor;
+            //	#endif
+
             // figure out the sort key
             sortkey SortKey;
             SortKey.Bits     = SubMesh.BaseSortKey;
@@ -1673,6 +1676,13 @@ void render::AddRigidInstance( hgeom_inst     hInst,
             #else
 			#error Unknown Target!	
             #endif
+
+            //#ifdef TARGET_PC
+            //rigid_geom::dlist_pc& DList = pGeom->m_System.pPC[SubMesh.iDList];
+            //ASSERT( DList.iColor <= pGeom->m_nVertices );
+            //if( pInstCol )
+            //    pInstCol += DList.iColor;
+            //#endif
 
             // build the sort key
             sortkey SortKey;
@@ -1836,6 +1846,13 @@ void render::AddRigidInstance( hgeom_inst        hInst,
             #else
 			#error Unknown Target!	
             #endif
+
+            //#ifdef TARGET_PC
+            //rigid_geom::dlist_pc& DList = pGeom->m_System.pPC[SubMesh.iDList];
+            //ASSERT( DList.iColor <= pGeom->m_nVertices );
+            //if( pInstCol )
+            //    pInstCol += DList.iColor;
+            //#endif
 
             // build the sort key
             sortkey SortKey;

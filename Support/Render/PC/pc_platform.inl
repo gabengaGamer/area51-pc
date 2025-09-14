@@ -187,20 +187,11 @@ void platform_RenderRigidInstance( render_instance& Inst )
             geom::submesh& SubMesh = pGeom->m_pSubMesh[Inst.SortKey.GeomSubMesh];
             rigid_geom::dlist_pc& DList = pGeom->m_System.pPC[SubMesh.iDList];
             
-            // Calculate color offset for this specific submesh
-            s32 colorOffset = 0;
-            for( s32 i = 0; i < Inst.SortKey.GeomSubMesh; i++ )
-            {
-                geom::submesh& PrevSubMesh = pGeom->m_pSubMesh[i];
-                rigid_geom::dlist_pc& PrevDList = pGeom->m_System.pPC[PrevSubMesh.iDList];
-                colorOffset += PrevDList.nVerts;
-            }
-            
             // Apply lightmap colors
             g_RigidVertMgr.ApplyLightmapColors( Inst.hDList,
                                                 (const u32*)Inst.Data.Rigid.pColInfo,
                                                 DList.nVerts,
-                                                colorOffset );
+                                                DList.iColor );
         }
     }
 

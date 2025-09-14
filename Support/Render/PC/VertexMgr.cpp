@@ -631,15 +631,17 @@ void vertex_mgr::DrawDList( xhandle hDList, const matrix4* pWorld, const d3d_lig
 
 //=========================================================================
 
-void vertex_mgr::ApplyLightmapColors( xhandle hDList, const u32* pColors, s32 nColors, s32 colorOffset )
+void vertex_mgr::ApplyLightmapColors( xhandle hDList, const u32* pColors, s32 nColors, s32 iColor )
 {
     if( !pColors || !nColors )
         return;
-        
+       
+    //x_DebugMsg( "VertexMGR: ApplyLightmapColors: offset %d count %d\n", iColor, nColors );
+	   
     BYTE* pVertData = (BYTE*)LockDListVerts( hDList );
     if( pVertData )
     {
-        const u32* pColorData = pColors + colorOffset;
+        const u32* pColorData = pColors + iColor;
         
         for( s32 i = 0; i < nColors; i++ )
         {

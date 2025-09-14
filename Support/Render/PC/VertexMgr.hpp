@@ -47,7 +47,7 @@ public:
     void*       LockDListIndices    ( xhandle hDList, s32& Index );
     void        UnlockDListIndices  ( xhandle hDList );
     void        InvalidateCache     ( void );
-    void        ApplyLightmapColors ( xhandle hDList, const u32* pColors, s32 nColors, s32 colorOffset = 0 );
+    void        ApplyLightmapColors ( xhandle hDList, const u32* pColors, s32 nColors, s32 iColor = 0 );
 
 //=========================================================================
 
