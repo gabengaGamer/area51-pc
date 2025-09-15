@@ -14,6 +14,8 @@
 #error "This is only for the PC target platform. Please check build exclusion rules"
 #endif
 
+//#define X_BONE_DEBUG
+
 //=========================================================================
 // INCLUDES
 //=========================================================================
@@ -138,6 +140,12 @@ void soft_vertex_mgr::DrawDList( xhandle hDList, const matrix4* pBone, const d3d
     if( !pBoneBuffer )
         return;
 
+#ifdef X_BONE_DEBUG
+    skin_geom::vertex_pc* pVertData = (skin_geom::vertex_pc*)LockDListVerts( SoftDList.hDList );
+    xbool BoneLoaded[MAX_SKIN_BONES];
+    x_memset( BoneLoaded, 0, sizeof(BoneLoaded) );
+#endif
+
     s32 c = 0;
     while( c < SoftDList.nCommands )
     {
@@ -159,7 +167,10 @@ void soft_vertex_mgr::DrawDList( xhandle hDList, const matrix4* pBone, const d3d
         if( SUCCEEDED(hr) )
         {
             pBoneData = (cb_skin_bone*)mappedResource.pData;
+            for( s32 i = 0; i < MAX_SKIN_BONES; ++i )
+                pBoneData[i].L2W.Identity();
         }
+
 
         // Process bone upload commands
         for( s32 i = c; i < drawCmd; i++ )
@@ -172,6 +183,10 @@ void soft_vertex_mgr::DrawDList( xhandle hDList, const matrix4* pBone, const d3d
                 ASSERT( BoneID  >= 0 );
                 ASSERT( CacheID >= 0 );
                 ASSERT( CacheID < MAX_SKIN_BONES );
+
+#ifdef X_BONE_DEBUG
+                BoneLoaded[CacheID] = TRUE;
+#endif
 
                 if( pBoneData )
                 {
@@ -193,12 +208,41 @@ void soft_vertex_mgr::DrawDList( xhandle hDList, const matrix4* pBone, const d3d
         s16 Start = DrawCmd.Arg1;
         s16 End   = DrawCmd.Arg2;
 
-        g_pd3dContext->DrawIndexed( (End - Start) * 3, 
+#ifdef X_BONE_DEBUG
+        if( pVertData )
+        {
+            for( s32 v = Start; v < End; v++ )
+            {
+                s32 i1 = (s32)pVertData[v].Position.GetW();
+                s32 i2 = (s32)pVertData[v].Normal.GetW();
+                f32 w1 = pVertData[v].UVWeights.GetZ();
+                f32 w2 = pVertData[v].UVWeights.GetW();
+
+                if( (i1 < 0) || (i1 >= MAX_SKIN_BONES) ||
+                    (i2 < 0) || (i2 >= MAX_SKIN_BONES) ||
+                    !BoneLoaded[i1] || !BoneLoaded[i2] )
+                {
+                    x_DebugMsg( "SoftVertexMgr: invalid bones v=%d b1=%d b2=%d\n", v, i1, i2 );
+                }
+
+                if( x_abs( (w1 + w2) - 1.0f ) > 0.01f )
+                {
+                    x_DebugMsg( "SoftVertexMgr: weights != 1 v=%d w1=%f w2=%f\n", v, w1, w2 );
+                }
+            }
+        }
+#endif
+
+        g_pd3dContext->DrawIndexed( (End - Start) * 3,		
                                      DLIndex.Offset + (Start*3),
                                      0 );
 
         c = drawCmd + 1;
     }
+#ifdef X_BONE_DEBUG
+    if( pVertData )
+        UnlockDListVerts( SoftDList.hDList );
+#endif	
 }
 
 //=========================================================================
