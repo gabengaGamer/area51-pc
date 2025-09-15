@@ -494,7 +494,7 @@ xbool material_mgr::UpdateRigidConstants( const matrix4*      pL2W,
     
     // Analyze material and set flags
     rigidMatrices.MaterialFlags = 0;
-    rigidMatrices.AlphaRef      = 0.0f;
+    rigidMatrices.AlphaRef      = 0.5f;
     rigidMatrices.Padding[0]    = 0.0f;
     rigidMatrices.Padding[1]    = 0.0f;
 
@@ -523,10 +523,10 @@ xbool material_mgr::UpdateRigidConstants( const matrix4*      pL2W,
                 rigidMatrices.MaterialFlags |= MATERIAL_FLAG_ALPHA_TEST | MATERIAL_FLAG_PERPOLY_ENV;
                 break;				
             case Material_Distortion:
-                rigidMatrices.MaterialFlags |= MATERIAL_FLAG_DISTORTION;
+                rigidMatrices.MaterialFlags |= MATERIAL_FLAG_ALPHA_TEST | MATERIAL_FLAG_DISTORTION;
                 break;
             case Material_Distortion_PerPolyEnv:
-                rigidMatrices.MaterialFlags |= MATERIAL_FLAG_DISTORTION | MATERIAL_FLAG_PERPOLY_ENV;
+                rigidMatrices.MaterialFlags |= MATERIAL_FLAG_ALPHA_TEST | MATERIAL_FLAG_DISTORTION | MATERIAL_FLAG_PERPOLY_ENV;
                 break;
         }                      
         
@@ -542,6 +542,10 @@ xbool material_mgr::UpdateRigidConstants( const matrix4*      pL2W,
             rigidMatrices.MaterialFlags |= MATERIAL_FLAG_HAS_ENVIRONMENT;
         }
         
+        // Check double-sided flag
+        if( pMaterial->m_Flags & geom::material::FLAG_DOUBLE_SIDED )
+            rigidMatrices.MaterialFlags |= MATERIAL_FLAG_TWO_SIDED;		
+		
         // Check blend flags
         if( pMaterial->m_Flags & geom::material::FLAG_IS_ADDITIVE )
             rigidMatrices.MaterialFlags |= MATERIAL_FLAG_ADDITIVE;
@@ -655,7 +659,7 @@ xbool material_mgr::UpdateSkinConstants( const d3d_lighting* pLighting,
     
     // Analyze material and set flags
     skinMatrices.MaterialFlags = 0;
-    skinMatrices.AlphaRef      = 0.0f;    
+    skinMatrices.AlphaRef      = 0.5f;    
     skinMatrices.Padding[0]    = 0.0f;
     skinMatrices.Padding[1]    = 0.0f;
     
@@ -684,10 +688,10 @@ xbool material_mgr::UpdateSkinConstants( const d3d_lighting* pLighting,
                 skinMatrices.MaterialFlags |= MATERIAL_FLAG_ALPHA_TEST | MATERIAL_FLAG_PERPOLY_ENV;
                 break;				
             case Material_Distortion:
-                skinMatrices.MaterialFlags |= MATERIAL_FLAG_DISTORTION;
+                skinMatrices.MaterialFlags |= MATERIAL_FLAG_ALPHA_TEST | MATERIAL_FLAG_DISTORTION;
                 break;
             case Material_Distortion_PerPolyEnv:
-                skinMatrices.MaterialFlags |= MATERIAL_FLAG_DISTORTION | MATERIAL_FLAG_PERPOLY_ENV;
+                skinMatrices.MaterialFlags |= MATERIAL_FLAG_ALPHA_TEST | MATERIAL_FLAG_DISTORTION | MATERIAL_FLAG_PERPOLY_ENV;
                 break;
         }                      
         
@@ -697,6 +701,10 @@ xbool material_mgr::UpdateSkinConstants( const d3d_lighting* pLighting,
             skinMatrices.MaterialFlags |= MATERIAL_FLAG_HAS_ENVIRONMENT;
         }
         
+        // Check double-sided flag
+        if( pMaterial->m_Flags & geom::material::FLAG_DOUBLE_SIDED )
+            skinMatrices.MaterialFlags |= MATERIAL_FLAG_TWO_SIDED;		
+		
         // Check blend flags
         if( pMaterial->m_Flags & geom::material::FLAG_IS_ADDITIVE )
             skinMatrices.MaterialFlags |= MATERIAL_FLAG_ADDITIVE;
@@ -726,7 +734,7 @@ xbool material_mgr::UpdateSkinConstants( const d3d_lighting* pLighting,
         }
     }
 
-    vector4 BaseBrightness( 0.05f, 0.05f, 0.05f, 0.0f ); // Prevent fully black surfaces, render of this game sucks.
+    vector4 BaseBrightness( 0.16f, 0.16f, 0.16f, 0.0f ); // Prevent fully black surfaces, render of this game sucks.
     lightMatrices.LightAmbCol = pLighting->AmbCol + BaseBrightness;
     lightMatrices.LightCount  = pLighting->LightCount;
     lightMatrices.Padding[0]  = 0.0f;
