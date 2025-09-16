@@ -75,19 +75,99 @@ static struct rigid_color : public rsc_loader
 
     virtual void* Resolve( void* pData )
     {
-        fileio      File;
-        color_info* pSrc = NULL;
+        fileio::resolve* pResolve = (fileio::resolve*)pData;
+        ASSERT( pResolve );
 
-        File.Resolved( (fileio::resolve*)pData, pSrc );
+        byte*           pStatic    = pResolve->pStatic;
+        byte*           pDynamic   = pResolve->pDynamic;
+        fileio::ref*    pTable     = pResolve->pTable;
+        const s32       nPointers  = pResolve->nPointers;
+
+        struct color_info_disk
+        {
+            s32 Count;
+            s32 Pointer;
+        };
+
+        s32             nColors      = 0;
+        const byte*     pColorSrc    = NULL;
+        s32             elementSize  = 0;
+
+        if( pStatic )
+        {
+            const color_info_disk* pDisk = (const color_info_disk*)pStatic;
+            nColors = pDisk->Count;
+        }
+
+        const fileio::ref* pColorRef = NULL;
+
+        if( (nColors > 0) && pTable && (nPointers > 0) )
+        {
+            for( s32 i = 0; i < nPointers; ++i )
+            {
+                const fileio::ref& Ref = pTable[i];
+                if( Ref.Count == nColors )
+                {
+                    pColorRef = &Ref;
+                    break;
+                }
+            }
+
+            if( pColorRef )
+            {
+                switch( pColorRef->Flags )
+                {
+                case 3:
+                    pColorSrc = &pStatic[ pColorRef->PointingAT ];
+                    break;
+
+                case 1:
+                case 0:
+                    pColorSrc = &pDynamic[ pColorRef->PointingAT ];
+                    break;
+
+                default:
+                    x_DebugMsg( "RigidInst: Resolve: Unsupported pointer flags %d\n", pColorRef->Flags );
+                    break;
+                }
+
+                if( pColorSrc && (pColorRef->Flags == 3) )
+                {
+                    const byte* pColorEnd = (const byte*)pTable;
+                    s32         Available = (s32)( pColorEnd - pColorSrc );
+
+                    if( Available >= nColors * (s32)sizeof(u32) )
+                    {
+                        elementSize = sizeof(u32);
+                    }
+                    else
+                    {
+                        x_DebugMsg( "RigidInst: Resolve: Invalid color buffer (Count:%d, Bytes:%d)\n", nColors, Available );
+                        nColors = 0;
+                        pColorSrc = NULL;
+                    }
+                }
+                else if( pColorSrc )
+                {
+                    elementSize = sizeof(u32);
+                }
+            }
+            else
+            {
+                x_DebugMsg( "RigidInst: Resolve: Unable to find color table ref (Count:%d)\n", nColors );
+                nColors   = 0;
+                pColorSrc = NULL;
+            }
+        }
 
         color_info* pDst = new color_info;
-        pDst->SetCount( pSrc->GetCount() );
+        pDst->SetCount( nColors );
 
-        if( pSrc->GetCount() )
+        if( (nColors > 0) && pColorSrc )
         {
-            u32* pColor = (u32*)x_malloc( pSrc->GetCount() * sizeof(u32) );
-            ASSERT( pColor );            
-            x_memmove( pColor, (u32*)(*pSrc), pSrc->GetCount() * sizeof(u32) );
+            u32* pColor = (u32*)x_malloc( nColors * sizeof(u32) );
+            ASSERT( pColor );
+            x_memmove( pColor, (const u32*)pColorSrc, nColors * sizeof(u32) );
             pDst->Set( pColor );
         }
         else
@@ -95,10 +175,11 @@ static struct rigid_color : public rsc_loader
             pDst->Set( (void*)NULL );
         }
 
-        delete pSrc;
+        delete[] pStatic;
+        delete[] pDynamic;
+
         return pDst;
     }
-
 
     //-------------------------------------------------------------------------
 
