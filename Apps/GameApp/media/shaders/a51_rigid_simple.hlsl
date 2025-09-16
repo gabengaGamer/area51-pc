@@ -131,7 +131,7 @@ PS_OUTPUT PSMain(PS_INPUT input)
         float  dist  = length( L );
         float  atten = saturate( 1.0 - dist / LightVec[i].w );
         float3 Ldir  = L / max( dist, 0.0001 );
-        float  NdotL = saturate( dot( input.Normal, Ldir ) );
+        float  NdotL = max( dot( input.Normal, Ldir ) + 0.5f, 0.0f );
         PerPixelLight    += LightCol[i].rgb * NdotL * atten;
     }
 
@@ -223,7 +223,7 @@ PS_OUTPUT PSMain(PS_INPUT input)
     
     //---------------------------------------------------------------------------------------  
 
-    // Special material handling for per-pixel illumination
+    // Apply per-pixel illumination
     if (MaterialFlags & MATERIAL_FLAG_PERPIXEL_ILLUM)
     {
         float4 texColor    = txDiffuse.Sample(samLinear, input.UV);
