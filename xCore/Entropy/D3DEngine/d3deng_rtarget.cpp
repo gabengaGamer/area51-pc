@@ -455,7 +455,7 @@ xbool rtarget_CreateFromTexture( rtarget& Target, ID3D11Texture2D* pTexture, rta
     Target.Desc.Format = Format;
     Target.Desc.SampleCount = texDesc.SampleDesc.Count;
     Target.Desc.SampleQuality = texDesc.SampleDesc.Quality;
-    Target.Desc.bBindAsTexture = TRUE;
+    Target.Desc.bBindAsTexture = (texDesc.BindFlags & D3D11_BIND_SHADER_RESOURCE) ? TRUE : FALSE;
     
     Target.bIsDepthTarget = rtarget_IsDepthFormat( Format );
     Target.pTexture = pTexture;
@@ -505,7 +505,7 @@ xbool rtarget_CreateFromTexture( rtarget& Target, ID3D11Texture2D* pTexture, rta
             srvDesc.Texture2D.MipLevels = 1;
             srvDesc.Texture2D.MostDetailedMip = 0;
         }
-
+	
         hr = g_pd3dDevice->CreateShaderResourceView( Target.pTexture, &srvDesc, &Target.pShaderResourceView );
         if( FAILED(hr) )
         {
