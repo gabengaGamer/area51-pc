@@ -48,11 +48,11 @@ class gbuffer_mgr
 public:
     void           Init                ( void );
     void           Kill                ( void );
-				   
+                   
     xbool          InitGBuffer         ( u32 Width, u32 Height );
     void           DestroyGBuffer         ( void );
     xbool          ResizeGBuffer       ( u32 Width, u32 Height );
-				   
+                   
     xbool          SetGBufferTargets   ( void );
     void           SetBackBufferTarget ( void );
     void           ClearGBuffer        ( void );
@@ -63,7 +63,8 @@ public:
 
 private:
     xbool       m_bInitialized;
-    rtarget     m_GBufferTargets[GBUFFER_TARGET_COUNT-1];
+    rtarget     m_GBufferTarget[GBUFFER_TARGET_COUNT-1];
+    rtarget     m_GBufferTargetSet[GBUFFER_TARGET_COUNT];
     rtarget     m_GBufferDepth;
     xbool       m_bGBufferValid;
     u32         m_GBufferWidth;

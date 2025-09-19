@@ -82,21 +82,21 @@ xbool gbuffer_mgr::InitGBuffer( u32 Width, u32 Height )
     
     // Create G-Buffer targets
     desc.Format = GBUFFER_FORMAT_ALBEDO;
-    if( !rtarget_Create( m_GBufferTargets[0], desc ) )
+    if( !rtarget_Create( m_GBufferTarget[0], desc ) )
         return FALSE;
     
     desc.Format = GBUFFER_FORMAT_NORMAL;
-    if( !rtarget_Create( m_GBufferTargets[1], desc ) )
+    if( !rtarget_Create( m_GBufferTarget[1], desc ) )
     {
-        rtarget_Destroy( m_GBufferTargets[0] );
+        rtarget_Destroy( m_GBufferTarget[0] );
         return FALSE;
     }
     
     desc.Format = GBUFFER_FORMAT_DEPTH_INFO;
-    if( !rtarget_Create( m_GBufferTargets[2], desc ) )
+    if( !rtarget_Create( m_GBufferTarget[2], desc ) )
     {
-        rtarget_Destroy( m_GBufferTargets[0] );
-        rtarget_Destroy( m_GBufferTargets[1] );
+        rtarget_Destroy( m_GBufferTarget[0] );
+        rtarget_Destroy( m_GBufferTarget[1] );
         return FALSE;
     }
     
@@ -116,7 +116,7 @@ xbool gbuffer_mgr::InitGBuffer( u32 Width, u32 Height )
 void gbuffer_mgr::DestroyGBuffer( void )
 {
     for( u32 i = 0; i < (GBUFFER_TARGET_COUNT - 1); i++ )
-        rtarget_Destroy( m_GBufferTargets[i] );
+        rtarget_Destroy( m_GBufferTarget[i] );
     
     rtarget_Destroy( m_GBufferDepth );
     
@@ -147,13 +147,13 @@ xbool gbuffer_mgr::SetGBufferTargets( void )
     if( !pBackBuffer )
         return FALSE;
     
-    rtarget targets[GBUFFER_TARGET_COUNT];
-    targets[GBUFFER_FINAL_COLOR] = *pBackBuffer;
-    targets[GBUFFER_ALBEDO]      = m_GBufferTargets[0];
-    targets[GBUFFER_NORMAL]      = m_GBufferTargets[1];
-    targets[GBUFFER_DEPTH_INFO]  = m_GBufferTargets[2];
-    
-    if( rtarget_SetTargets( targets, GBUFFER_TARGET_COUNT, &m_GBufferDepth ) )
+    m_GBufferTargetSet[GBUFFER_FINAL_COLOR] = *pBackBuffer;
+    m_GBufferTargetSet[GBUFFER_ALBEDO]      = m_GBufferTarget[0];
+    m_GBufferTargetSet[GBUFFER_NORMAL]      = m_GBufferTarget[1];
+    m_GBufferTargetSet[GBUFFER_DEPTH_INFO]  = m_GBufferTarget[2];
+    m_GBufferTargetSet[GBUFFER_DEPTH]       = rtarget();
+
+    if( rtarget_SetTargets( m_GBufferTargetSet, GBUFFER_TARGET_COUNT, &m_GBufferDepth ) )
     {
         m_bGBufferTargetsActive = TRUE;
         return TRUE;
@@ -182,15 +182,15 @@ void gbuffer_mgr::ClearGBuffer( void )
 
     // Albedo
     static const f32 clearAlbedo[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
-    g_pd3dContext->ClearRenderTargetView(m_GBufferTargets[0].pRenderTargetView, clearAlbedo);
+    g_pd3dContext->ClearRenderTargetView(m_GBufferTarget[0].pRenderTargetView, clearAlbedo);
 
     // Normals
     static const f32 clearNormal[4] = { 0.5f, 0.5f, 1.0f, 0.5f };
-    g_pd3dContext->ClearRenderTargetView(m_GBufferTargets[1].pRenderTargetView, clearNormal);
+    g_pd3dContext->ClearRenderTargetView(m_GBufferTarget[1].pRenderTargetView, clearNormal);
 
     // Depth info
     static const f32 clearDepthInfo[4] = { 1.0f, 0.0f, 0.0f, 0.0f };
-    g_pd3dContext->ClearRenderTargetView(m_GBufferTargets[2].pRenderTargetView, clearDepthInfo);
+    g_pd3dContext->ClearRenderTargetView(m_GBufferTarget[2].pRenderTargetView, clearDepthInfo);
 
     // Depth-stencil
     g_pd3dContext->ClearDepthStencilView(m_GBufferDepth.pDepthStencilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
@@ -214,7 +214,7 @@ const rtarget* gbuffer_mgr::GetGBufferTarget( gbuffer_target Target ) const
         case GBUFFER_ALBEDO:
         case GBUFFER_NORMAL:
         case GBUFFER_DEPTH_INFO:
-            return &m_GBufferTargets[Target - 1];
+            return &m_GBufferTarget[Target - 1];
             
         default:
             return NULL;
