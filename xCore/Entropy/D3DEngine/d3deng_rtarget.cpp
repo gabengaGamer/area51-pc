@@ -160,13 +160,13 @@ const char* rtarget_GetFormatName( rtarget_format Format )
 
 xbool rtarget_CreateBackBufferTarget( void )
 {
-	if( !s_TargetCache.bInitialized )
+    if( !s_TargetCache.bInitialized )
     {
         x_DebugMsg( "RTargetMgr: System not initialized\n" );
-		ASSERT(FALSE);
+        ASSERT(FALSE);
         return FALSE;
     }
-	
+    
     if( !g_pSwapChain )
     {
         x_DebugMsg( "RTargetMgr: No swap chain available for back buffer creation\n" );
@@ -227,7 +227,7 @@ xbool rtarget_CreateBackBufferTarget( void )
     s_TargetCache.bBackBufferDepthValid = TRUE;
     
     x_DebugMsg( "RTargetMgr: Back buffer target created successfully with depth buffer\n" );
-	
+    
     return TRUE;
 }
 
@@ -240,7 +240,7 @@ void rtarget_Init( void )
     if( s_TargetCache.bInitialized )
     {
         x_DebugMsg( "RTargetMgr: Already initialized\n" );
-		ASSERT(FALSE);
+        ASSERT(FALSE);
         return;
     }
 
@@ -258,7 +258,7 @@ void rtarget_Init( void )
     s_StackDepth = -1;
     
     s_TargetCache.bInitialized = TRUE;
-	
+    
     x_DebugMsg( "RTargetMgr: Initialization complete\n" );
 }
 
@@ -269,7 +269,7 @@ void rtarget_Kill( void )
     if( !s_TargetCache.bInitialized )
     {
         x_DebugMsg( "RTargetMgr: Not initialized\n" );
-		ASSERT(FALSE);
+        ASSERT(FALSE);
         return;
     }
 
@@ -308,7 +308,7 @@ void rtarget_Kill( void )
     s_TargetCache.pCurrentDepthTarget = NULL;
     
     s_TargetCache.bInitialized = FALSE;
-	
+    
     x_DebugMsg( "RTargetMgr: Shutdown complete\n" );
 }
 
@@ -318,7 +318,7 @@ void rtarget_Kill( void )
 
 xbool rtarget_Create( rtarget& Target, const rtarget_desc& Desc )
 {
-	if( !g_pd3dDevice )
+    if( !g_pd3dDevice )
         return FALSE;
     
     if( Desc.Width == 0 || Desc.Height == 0 )
@@ -433,10 +433,13 @@ xbool rtarget_Create( rtarget& Target, const rtarget_desc& Desc )
 
 xbool rtarget_CreateFromTexture( rtarget& Target, ID3D11Texture2D* pTexture, rtarget_format Format )
 {
-    if( !g_pd3dDevice || !pTexture )
+    if( !g_pd3dDevice )
+        return FALSE;
+	
+	if( !pTexture )
     {
-        x_DebugMsg( "RTargetMgr: Invalid parameters for texture target creation\n" );
-		ASSERT(FALSE);
+        x_DebugMsg( "RTargetMgr: Invalid parameter for texture target creation\n" );
+        ASSERT(FALSE);
         return FALSE;
     }
     
@@ -457,8 +460,8 @@ xbool rtarget_CreateFromTexture( rtarget& Target, ID3D11Texture2D* pTexture, rta
     Target.bIsDepthTarget = rtarget_IsDepthFormat( Format );
     Target.pTexture = pTexture;
     Target.pTexture->AddRef();
-	
-	DXGI_FORMAT viewFormat = rtarget_GetDXGIFormat( Format, FALSE );
+    
+    DXGI_FORMAT viewFormat = rtarget_GetDXGIFormat( Format, FALSE );
     
     // Create appropriate view
     HRESULT hr;
@@ -490,8 +493,30 @@ xbool rtarget_CreateFromTexture( rtarget& Target, ID3D11Texture2D* pTexture, rta
         return FALSE;
     }
     
+    // Create shader resource view if requested
+    if( Target.Desc.bBindAsTexture )
+    {
+        D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc;
+        ZeroMemory( &srvDesc, sizeof(srvDesc) );
+        srvDesc.Format = rtarget_GetSRVFormat( Format );
+        srvDesc.ViewDimension = (texDesc.SampleDesc.Count > 1) ? D3D11_SRV_DIMENSION_TEXTURE2DMS : D3D11_SRV_DIMENSION_TEXTURE2D;
+        if( srvDesc.ViewDimension == D3D11_SRV_DIMENSION_TEXTURE2D )
+        {
+            srvDesc.Texture2D.MipLevels = 1;
+            srvDesc.Texture2D.MostDetailedMip = 0;
+        }
+
+        hr = g_pd3dDevice->CreateShaderResourceView( Target.pTexture, &srvDesc, &Target.pShaderResourceView );
+        if( FAILED(hr) )
+        {
+            x_DebugMsg( "RTargetMgr: Failed to create shader resource view from texture, HRESULT 0x%08X\n", hr );
+            rtarget_Destroy( Target );
+            return FALSE;
+        }
+    }
+    
     x_DebugMsg( "RTargetMgr: Created target from existing texture\n" );
-	
+    
     return TRUE;
 }
 
@@ -535,17 +560,17 @@ xbool rtarget_SetTargets( const rtarget* pTargets, u32 Count, const rtarget* pDe
     if( !s_TargetCache.bInitialized )
     {
         x_DebugMsg( "RTargetMgr: Not initialized\n" );
-		ASSERT(FALSE);
+        ASSERT(FALSE);
         return FALSE;
     }
     
     if( !g_pd3dContext )
-        return;
+        return FALSE;
     
     if( Count > RTARGET_MAX_TARGETS )
     {
         x_DebugMsg( "RTargetMgr: Too many targets requested (%d, max %d)\n", Count, RTARGET_MAX_TARGETS );
-		ASSERT(FALSE);
+        ASSERT(FALSE);
         return FALSE;
     }
     
@@ -558,7 +583,7 @@ xbool rtarget_SetTargets( const rtarget* pTargets, u32 Count, const rtarget* pDe
         if( pTargets[i].bIsDepthTarget )
         {
             x_DebugMsg( "RTargetMgr: Depth target in color target array at index %d\n", i );
-			ASSERT(FALSE);
+            ASSERT(FALSE);
             return FALSE;
         }
         pRTVs[i] = pTargets[i].pRenderTargetView;
@@ -570,7 +595,7 @@ xbool rtarget_SetTargets( const rtarget* pTargets, u32 Count, const rtarget* pDe
         if( !pDepthTarget->bIsDepthTarget )
         {
             x_DebugMsg( "RTargetMgr: Color target passed as depth target\n" );
-			ASSERT(FALSE);
+            ASSERT(FALSE);
             return FALSE;
         }
         pDSV = pDepthTarget->pDepthStencilView;
@@ -663,7 +688,7 @@ xbool rtarget_SetBackBuffer( void )
     if( !s_TargetCache.bInitialized )
     {
         x_DebugMsg( "RTargetMgr: Not initialized\n" );
-		ASSERT(FALSE);
+        ASSERT(FALSE);
         return FALSE;
     }
     
@@ -678,7 +703,7 @@ xbool rtarget_SetBackBuffer( void )
         if( !rtarget_CreateBackBufferTarget() )
         {
             x_DebugMsg( "RTargetMgr: Failed to recreate back buffer\n" );
-			ASSERT(FALSE);
+            ASSERT(FALSE);
             return FALSE;
         }
     }
@@ -693,7 +718,7 @@ const rtarget* rtarget_GetBackBuffer( void )
     if( !s_TargetCache.bInitialized )
     {
         x_DebugMsg( "RTargetMgr: Not initialized\n" );
-		ASSERT(FALSE);
+        ASSERT(FALSE);
         return NULL;
     }
     
@@ -703,7 +728,7 @@ const rtarget* rtarget_GetBackBuffer( void )
         if( !rtarget_CreateBackBufferTarget() )
         {
             x_DebugMsg( "RTargetMgr: Failed to create back buffer\n" );
-			ASSERT(FALSE);
+            ASSERT(FALSE);
             return NULL;
         }
     }
@@ -742,7 +767,7 @@ xbool rtarget_PushTargets( void )
     if( s_StackDepth >= RTARGET_STACK_DEPTH - 1 )
     {
         x_DebugMsg( "RTargetMgr: Stack overflow (depth %d)\n", s_StackDepth );
-		ASSERT(FALSE);
+        ASSERT(FALSE);
         return FALSE;
     }
     
@@ -778,7 +803,7 @@ xbool rtarget_PopTargets( void )
     if( s_StackDepth < 0 )
     {
         x_DebugMsg( "RTargetMgr: Stack underflow\n" );
-		ASSERT(FALSE);
+        ASSERT(FALSE);
         return FALSE;
     }
     
