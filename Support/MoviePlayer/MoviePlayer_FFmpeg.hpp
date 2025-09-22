@@ -236,6 +236,7 @@ private:
     XAudioVoiceCallback*    m_pVoiceCallback;
     xbool                   m_AudioInitialized;
     u8*                     m_pAudioBuffer;
+    xbool                   m_bVoiceStarted;
 
     // Thread methods
     static void             MovieThreadEntry       (s32 argc, char** argv);

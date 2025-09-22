@@ -159,6 +159,7 @@ movie_private::movie_private(void)
     m_pVoiceCallback        = NULL;
     m_AudioInitialized      = FALSE;
     m_pAudioBuffer          = NULL;
+    m_bVoiceStarted         = FALSE;
 }
 
 //==============================================================================
@@ -228,9 +229,9 @@ void movie_private::MovieThreadMain(void)
     
     while (!m_bMovieThreadExit)
     {
-		if (!m_pCommandQueue)
+        if (!m_pCommandQueue)
             break;
-		
+        
         // Process commands from main thread
         movie_command* pCmd = (movie_command*)m_pCommandQueue->Recv(MQ_NOBLOCK);
         if (pCmd)
@@ -261,10 +262,16 @@ void movie_private::ProcessVideoDecoding(void)
 {
     if (!m_MediaClock.IsRunning())
         return;
-        
+
+    if (m_VideoFPS <= 0.0f)
+        return;
+
+    const s32 MAX_FRAMES_PER_PASS = 4;
+    s32 framesProcessed = 0;
+
     f64 currentTime = m_MediaClock.GetTime();
     f64 nextVideoTime = (f64)m_VideoFrameCount / m_VideoFPS;
-    
+
     // Decode video frames that should be displayed by current time
     while (currentTime >= nextVideoTime && m_bThreadIsRunning && !m_bThreadIsFinished)
     {
@@ -272,7 +279,41 @@ void movie_private::ProcessVideoDecoding(void)
         {
             m_VideoFrameCount++;
             UpdateRenderData();
+            framesProcessed++;
+
+            currentTime = m_MediaClock.GetTime();
             nextVideoTime = (f64)m_VideoFrameCount / m_VideoFPS;
+
+            if (framesProcessed >= MAX_FRAMES_PER_PASS)
+            {
+                if (currentTime >= nextVideoTime)
+                {
+                    s32 targetFrame = (s32)(currentTime * m_VideoFPS);
+                    if (m_FrameCount > 0 && targetFrame > m_FrameCount)
+                    {
+                        targetFrame = m_FrameCount;
+                    }
+                    if (targetFrame > m_VideoFrameCount)
+                    {
+                        s32 framesToSkip = targetFrame - m_VideoFrameCount;
+                        s32 skipped = 0;
+                        while (skipped < framesToSkip && m_bThreadIsRunning && !m_bThreadIsFinished)
+                        {
+                            if (!DecodeNextVideoFrame())
+                            {
+                                break;
+                            }
+
+                            m_VideoFrameCount++;
+                            skipped++;
+                        }
+
+                        nextVideoTime = (f64)m_VideoFrameCount / m_VideoFPS;
+                    }
+                }
+
+                break;
+            }
         }
         else
         {
@@ -294,24 +335,24 @@ void movie_private::ProcessCommand(movie_command* pCmd)
     {
         case MOVIE_CMD_OPEN:
             {
-                xbool result = OpenInternal(pCmd->Data.Open.Filename, 
+                xbool result = OpenInternal(pCmd->Data.Open.Filename,
                                           pCmd->Data.Open.PlayResident,
                                           pCmd->Data.Open.IsLooped);
                 if (m_pResponseQueue)
                 {
-                    m_pResponseQueue->Send((void*)(uaddr)result, MQ_NOBLOCK);
+                    m_pResponseQueue->Send(reinterpret_cast<void*>((uaddr)result + 1), MQ_NOBLOCK);
                 }
             }
             break;
-            
+
         case MOVIE_CMD_CLOSE:
             CloseInternal();
             if (m_pResponseQueue)
             {
-                m_pResponseQueue->Send((void*)1, MQ_NOBLOCK);
+                m_pResponseQueue->Send(reinterpret_cast<void*>((uaddr)TRUE + 1), MQ_NOBLOCK);
             }
             break;
-            
+
         case MOVIE_CMD_PAUSE:
             m_bThreadIsPaused = TRUE;
             m_MediaClock.Pause();
@@ -321,36 +362,40 @@ void movie_private::ProcessCommand(movie_command* pCmd)
             }
             if (m_pResponseQueue)
             {
-                m_pResponseQueue->Send((void*)1, MQ_NOBLOCK);
+                m_pResponseQueue->Send(reinterpret_cast<void*>((uaddr)TRUE + 1), MQ_NOBLOCK);
             }
             break;
-            
+
         case MOVIE_CMD_RESUME:
             m_bThreadIsPaused = FALSE;
             m_MediaClock.Resume();
-            if (m_AudioInitialized && m_pSourceVoice)
+            if (m_AudioInitialized && m_pSourceVoice && m_bVoiceStarted)
             {
-                m_pSourceVoice->Start(0);
+                HRESULT hr = m_pSourceVoice->Start(0);
+                if (FAILED(hr))
+                {
+                    x_DebugMsg("Failed to restart source voice: 0x%08X\n", hr);
+                }
             }
             if (m_pResponseQueue)
             {
-                m_pResponseQueue->Send((void*)1, MQ_NOBLOCK);
+                m_pResponseQueue->Send(reinterpret_cast<void*>((uaddr)TRUE + 1), MQ_NOBLOCK);
             }
             break;
-            
+
         case MOVIE_CMD_SET_VOLUME:
             SetVolumeInternal(pCmd->Data.SetVolume.Volume);
             if (m_pResponseQueue)
             {
-                m_pResponseQueue->Send((void*)1, MQ_NOBLOCK);
+                m_pResponseQueue->Send(reinterpret_cast<void*>((uaddr)TRUE + 1), MQ_NOBLOCK);
             }
             break;
-            
+
         case MOVIE_CMD_SHUTDOWN:
             m_bMovieThreadExit = TRUE;
             if (m_pResponseQueue)
             {
-                m_pResponseQueue->Send((void*)1, MQ_NOBLOCK);
+                m_pResponseQueue->Send(reinterpret_cast<void*>((uaddr)TRUE + 1), MQ_NOBLOCK);
             }
             break;
             
@@ -543,8 +588,12 @@ xbool movie_private::WaitForResponse(s32 timeoutMs)
         void* pResponse = m_pResponseQueue->Recv(MQ_NOBLOCK);
         if (pResponse)
         {
-            uaddr result = (uaddr)pResponse;
-            return result != 0;
+            uaddr value = (uaddr)pResponse;
+            if (value > 0)
+            {
+                value--;
+            }
+            return value != 0;
         }
         x_DelayThread(1);
         waited++;
@@ -561,8 +610,8 @@ xbool movie_private::OpenInternal(const char* pFilename, xbool PlayResident, xbo
     m_IsLooped = IsLooped;
     
     char filepath[512];
-	const char* extensions[] = { ".webm", ".mp4", ".avi", NULL }; //You can add supported FFmpeg formats here.
-	
+    const char* extensions[] = { ".webm", ".mp4", ".avi", NULL }; //You can add supported FFmpeg formats here.
+    
     for (s32 i = 0; extensions[i] != NULL; i++)
     {
         x_sprintf(filepath, "C:\\GameData\\A51\\Release\\PC\\%s%s", pFilename, extensions[i]);
@@ -1045,8 +1094,8 @@ void movie_private::RenderVideoFrame(void)
 
 xbool movie_private::InitializeFFmpeg(void)
 {
-	// GS: Initially, this function was used as an initializer for the old version of FFmpeg. 
-	// Now it doesn't do anything, but I'll keep it for symmetry (initializer/destructor).
+    // GS: Initially, this function was used as an initializer for the old version of FFmpeg. 
+    // Now it doesn't do anything, but I'll keep it for symmetry (initializer/destructor).
     return TRUE;
 }
 
@@ -1095,12 +1144,12 @@ void movie_private::CleanupFFmpeg(void)
     
     if (m_pAudioCodecContext)
     {
-		avcodec_free_context(&m_pAudioCodecContext);
+        avcodec_free_context(&m_pAudioCodecContext);
     }
     
     if (m_pCodecContext)
     {
-		avcodec_free_context(&m_pCodecContext);
+        avcodec_free_context(&m_pCodecContext);
     }
     
     if (m_pFormatContext)
@@ -1233,16 +1282,16 @@ xbool movie_private::SetupAudioStream(void)
     wfx.nAvgBytesPerSec = wfx.nSamplesPerSec * wfx.nBlockAlign;
     
     m_pVoiceCallback = new XAudioVoiceCallback(this);
-    
+
     HRESULT hr = m_pXAudio2->CreateSourceVoice(&m_pSourceVoice, &wfx, 0, XAUDIO2_DEFAULT_FREQ_RATIO, m_pVoiceCallback);
     if (FAILED(hr))
     {
         return FALSE;
     }
-    
-    m_pSourceVoice->Start();
+
+    m_bVoiceStarted = FALSE;
     UpdateAudioVolume();
-    
+
     return TRUE;
 }
 
@@ -1280,6 +1329,18 @@ void movie_private::WriteAudioData(u8* pData, s32 size)
     {
         x_free(pAudioBuffer);
         x_DebugMsg("Failed to submit audio buffer: 0x%08X\n", hr);
+    }
+    else if (!m_bVoiceStarted)
+    {
+        hr = m_pSourceVoice->Start(0);
+        if (FAILED(hr))
+        {
+            x_DebugMsg("Failed to start source voice: 0x%08X\n", hr);
+        }
+        else
+        {
+            m_bVoiceStarted = TRUE;
+        }
     }
 }
 
