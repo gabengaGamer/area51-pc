@@ -6,10 +6,18 @@
 //
 //==============================================================================
 
-// TODO: Fix thread crush due to non found video. Thread issue.
-// TODO: Fix possible race condition.
+//-----------------------------------------------------------------------------
+//
+// GLOBAL TODO: Media clock, XAudio2 management and video decoding shoud be separated. 
+// All this modules should be moved to entripy "video" sub-module.
+//
+//-----------------------------------------------------------------------------
+
+// FIXED?: TODO: Fix thread crush due to non found video. Thread issue.
+// FIXED?: TODO: Fix possible race condition.
 // TODO: Make "Language" system. Just update StateMgr "SelectBestClip" system, lol.
-// TODO: Re-Check possible mem leaks.
+// FIXED?: TODO: Re-Check possible mem leaks.
+// TODO: Implement PlayResident from Bink ???
 
 #include "x_target.hpp"
 
@@ -158,6 +166,7 @@ movie_private::movie_private(void)
     m_pSourceVoice          = NULL;
     m_pVoiceCallback        = NULL;
     m_AudioInitialized      = FALSE;
+    m_ComInitialized        = FALSE;
     m_pAudioBuffer          = NULL;
     m_bVoiceStarted         = FALSE;
 }
@@ -760,8 +769,13 @@ xbool movie_private::OpenInternal(const char* pFilename, xbool PlayResident, xbo
 void movie_private::CloseInternal(void)
 {
     m_MediaClock.Stop();
-    CleanupFFmpeg();
+    m_bThreadIsFinished = TRUE;
+    m_bThreadIsPaused = FALSE;
     m_bThreadIsRunning = FALSE;
+    m_ThreadCurrentFrame = 0;
+    m_VideoFrameCount = 0;
+    m_FrameCount = 0;
+    CleanupFFmpeg();
 }
 
 //==============================================================================
@@ -1168,24 +1182,34 @@ void movie_private::CleanupFFmpeg(void)
 xbool movie_private::InitializeAudio(void)
 {
     HRESULT hr = CoInitializeEx(NULL, COINIT_MULTITHREADED);
-    if (FAILED(hr))
+    if (SUCCEEDED(hr))
     {
+        m_ComInitialized = TRUE;
+    }
+    else
+    {
+        m_ComInitialized = FALSE;
         return FALSE;
     }
-    
+
     hr = XAudio2Create(&m_pXAudio2, 0, XAUDIO2_DEFAULT_PROCESSOR);
     if (FAILED(hr))
     {
+        if (m_ComInitialized)
+        {
+            CoUninitialize();
+            m_ComInitialized = FALSE;
+        }
         return FALSE;
     }
-    
+
     hr = m_pXAudio2->CreateMasteringVoice(&m_pMasterVoice);
     if (FAILED(hr))
     {
         CleanupAudio();
         return FALSE;
     }
-    
+
     m_AudioInitialized = TRUE;
     return TRUE;
 }
@@ -1225,6 +1249,12 @@ void movie_private::CleanupAudio(void)
     {
         m_pXAudio2->Release();
         m_pXAudio2 = NULL;
+    }
+    
+    if (m_ComInitialized)
+    {
+        CoUninitialize();
+        m_ComInitialized = FALSE;
     }
     
     m_AudioInitialized = FALSE;
@@ -1286,6 +1316,7 @@ xbool movie_private::SetupAudioStream(void)
     HRESULT hr = m_pXAudio2->CreateSourceVoice(&m_pSourceVoice, &wfx, 0, XAUDIO2_DEFAULT_FREQ_RATIO, m_pVoiceCallback);
     if (FAILED(hr))
     {
+        CleanupAudio();
         return FALSE;
     }
 

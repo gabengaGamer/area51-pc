@@ -152,7 +152,7 @@ class movie_private
 {
 public:
                             movie_private       (void);
-                           ~movie_private       (void);							
+                           ~movie_private       (void);                            
     void                    Init                (void);
     xbool                   Open                (const char* pFilename, xbool PlayResident, xbool IsLooped);
     void                    Close               (void);
@@ -235,6 +235,7 @@ private:
     IXAudio2SourceVoice*    m_pSourceVoice;
     XAudioVoiceCallback*    m_pVoiceCallback;
     xbool                   m_AudioInitialized;
+    xbool                   m_ComInitialized;
     u8*                     m_pAudioBuffer;
     xbool                   m_bVoiceStarted;
 
