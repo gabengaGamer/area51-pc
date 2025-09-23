@@ -14,6 +14,7 @@
 #include "objects\projector.hpp"
 #include "Render\Render.hpp"
 #include "Render\LightMgr.hpp"
+#include "GameLib/RenderContext.hpp"
 #include "ManagerRegistration.hpp"
 #include "CollisionMgr\CollisionMgr.hpp"
 #include "CollisionMgr\PolyCache.hpp"
@@ -94,12 +95,7 @@ obj_mgr::obj_mgr( void ) :
     m_ShadowProjectors.SetLocked(TRUE);
     m_ShadowCasters.SetLocked(TRUE);
     m_ShadowReceivers.SetLocked(TRUE);
-
-#if defined(TARGET_PC)
     m_bRenderShadows = FALSE;
-#else
-    m_bRenderShadows = TRUE;
-#endif
 
     m_nLogicLoops = 0;
 
@@ -2291,6 +2287,11 @@ void obj_mgr::RenderSpecialObjects( void )
         return;
 #endif
 
+#if defined(TARGET_PC)
+    if( g_RenderContext.m_bIsPipRender )
+        return;
+#endif
+
     CONTEXT( "obj_mgr::RenderSpecialObjects" );
     LOG_STAT( k_stats_OtherRender );
 
@@ -2758,12 +2759,22 @@ void obj_mgr::Render3dPrep( xbool DoPortalWalk, const view& PortalView, u8 Start
         g_ZoneMgr.PortalWalk( PortalView, 0 );
     DoVisibilityTests( PortalView );
 
+#if defined(TARGET_XBOX) || defined(TARGET_PC)
+    xbool bSkipShadows = FALSE;
+#endif
+
 #ifdef TARGET_XBOX
     // For performance reasons the PIP has no shadows on Xbox
     extern xbool xbox_IsPipTarget( void );
-    if( !xbox_IsPipTarget() )
-    {
+    bSkipShadows = xbox_IsPipTarget();
+#elif defined(TARGET_PC)
+    bSkipShadows = ( g_RenderContext.m_bIsPipRender != 0 );
 #endif
+
+#if defined(TARGET_XBOX) || defined(TARGET_PC)
+    if( !bSkipShadows )
+#endif
+    {
     // clear out our projector, caster, and receivers lists. they need to be
     // recalculated at every frame
     m_ShadowProjectors.Clear();
@@ -2778,7 +2789,7 @@ void obj_mgr::Render3dPrep( xbool DoPortalWalk, const view& PortalView, u8 Start
     // finally, create the shadow map
     if ( m_bRenderShadows )
         CreateShadowMap();
-#ifdef TARGET_XBOX
+#if defined(TARGET_XBOX) || defined(TARGET_PC)
     }
 #endif
     // Clear the list of special render objects;
@@ -2923,6 +2934,21 @@ void obj_mgr::Render( xbool bDoPortalWalk, const view& PortalView, u8 StartZone 
         }
         xbox_SetPipTarget( kTARGET_MAIN,0,0 );
     }
+    #elif defined(TARGET_PC)
+    {
+        SlotID = m_ObjectType[object::TYPE_PIP].FirstType;
+        while( SlotID != SLOT_NULL )
+        {
+            pip* pPip = (pip*)g_ObjMgr.GetObjectBySlot( SlotID );
+            ASSERT( pPip );
+            if( pPip->GetState() == pip::STATE_ACTIVE )
+            {
+                pPip->RenderView();
+            }
+
+            SlotID = m_ObjectSlot[SlotID].Next;
+        }
+    }
     #endif
 
     ///////////////////////////////////////////////////////////////////////////
@@ -3027,7 +3053,7 @@ void obj_mgr::Render( xbool bDoPortalWalk, const view& PortalView, u8 StartZone 
     // Render HUD
     Render2dObjects();
 
-#if defined TARGET_PS2 || defined TARGET_XBOX
+#if defined TARGET_PS2 || defined TARGET_XBOX || defined TARGET_PC
     // Render pip hud objects
     SlotID = m_ObjectType[object::TYPE_PIP].FirstType;
     while( SlotID != SLOT_NULL )

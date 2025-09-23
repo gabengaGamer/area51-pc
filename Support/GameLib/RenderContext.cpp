@@ -31,6 +31,10 @@ void render_context::Set( s32   aLocalPlayerIndex,
     TeamBits         = aTeamBits;
     m_bIsMutated     = bIsMutated;
     m_bIsPipRender   = bIsPipRender;
+#if defined(TARGET_PC)
+    m_pActivePipTarget = NULL;
+    m_bPipTargetsActive = FALSE;
+#endif	
 }
 
 //==============================================================================
@@ -38,6 +42,45 @@ void render_context::Set( s32   aLocalPlayerIndex,
 void render_context::SetPipRender( xbool bIsPipRender )
 {
     m_bIsPipRender = bIsPipRender;
+#if defined(TARGET_PC)
+    if( bIsPipRender == FALSE )
+    {
+        m_pActivePipTarget  = NULL;
+        m_bPipTargetsActive = FALSE;
+    }
+#endif	
 }
+
+//==============================================================================
+
+#if defined(TARGET_PC)
+
+void render_context::SetActivePipTarget( pip_render_target_pc* pTarget )
+{
+    m_pActivePipTarget = pTarget;
+}
+
+//==============================================================================
+
+pip_render_target_pc* render_context::GetActivePipTarget( void ) const
+{
+    return m_pActivePipTarget;
+}
+
+//==============================================================================
+
+void render_context::MarkPipTargetsActive( xbool bActive )
+{
+    m_bPipTargetsActive = bActive;
+}
+
+//==============================================================================
+
+xbool render_context::ArePipTargetsActive( void ) const
+{
+    return m_bPipTargetsActive;
+}
+
+#endif
 
 //==============================================================================

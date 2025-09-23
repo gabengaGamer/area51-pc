@@ -10,6 +10,7 @@
 #include "Animation\AnimData.hpp"
 #include "Animation\AnimPlayer.hpp"
 
+#include "GameLib/RenderContext.hpp"
 
 //=========================================================================
 // CLASS
@@ -150,6 +151,10 @@ protected:
     guid                    m_WorldObjectGuids[MAX_WORLD_OBJECTS];  // Guid of objects to control
     texture_ref             m_TextureRefs[MAX_TEXTURE_REFS] ;       // List of texture refs
     s32                     m_nTextureRefs ;                        // # of texture refs
+	
+#if defined(TARGET_PC)
+    pip_render_target_pc    m_RenderTarget;
+#endif	
 };
 
 //=========================================================================

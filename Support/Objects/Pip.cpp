@@ -11,6 +11,10 @@
 #include "PlaySurface.hpp"
 #include "GameLib\RenderContext.hpp"
 
+#if defined(TARGET_PC)
+xbool g_bPipRenderActive = FALSE;
+#endif
+
 #ifdef TARGET_XBOX
 extern s32 xbox_GetPipTexture(void);
 #endif
@@ -206,6 +210,58 @@ void pip::OnInit( void )
     m_PipVramID   = xbox_GetPipTexture();
 #endif
 
+#if defined(TARGET_PC)
+    if( m_RenderTarget.bValid )
+    {
+        vram_Unregister( m_RenderTarget.VRAMID );
+        rtarget_Destroy( m_RenderTarget.ColorTarget );
+        rtarget_Destroy( m_RenderTarget.DepthTarget );
+        m_RenderTarget = pip_render_target_pc();
+    }
+
+    m_RenderTarget.Width  = m_Width;
+    m_RenderTarget.Height = m_Height;
+
+    rtarget_desc colorDesc;
+    x_memset( &colorDesc, 0, sizeof(colorDesc) );
+    colorDesc.Width         = (u32)m_Width;
+    colorDesc.Height        = (u32)m_Height;
+    colorDesc.Format        = RTARGET_FORMAT_RGBA8;
+    colorDesc.SampleCount   = 1;
+    colorDesc.SampleQuality = 0;
+    colorDesc.bBindAsTexture = TRUE;
+
+    if( rtarget_Create( m_RenderTarget.ColorTarget, colorDesc ) )
+    {
+        rtarget_desc depthDesc = colorDesc;
+        depthDesc.Format        = RTARGET_FORMAT_DEPTH24_STENCIL8;
+        depthDesc.bBindAsTexture = FALSE;
+
+        if( rtarget_Create( m_RenderTarget.DepthTarget, depthDesc ) )
+        {
+            m_RenderTarget.VRAMID = vram_Register( m_RenderTarget.ColorTarget.pTexture );
+            if( m_RenderTarget.VRAMID )
+            {
+                m_RenderTarget.bValid = TRUE;
+            }
+        }
+    }
+
+    if( m_RenderTarget.bValid )
+    {
+        m_PipVramID = m_RenderTarget.VRAMID;
+    }
+    else
+    {
+        if( m_RenderTarget.ColorTarget.pTexture )
+            rtarget_Destroy( m_RenderTarget.ColorTarget );
+        if( m_RenderTarget.DepthTarget.pTexture )
+            rtarget_Destroy( m_RenderTarget.DepthTarget );
+        m_RenderTarget = pip_render_target_pc();
+        m_PipVramID = 0;
+    }
+#endif
+
     // Reset state
     SetupState(STATE_INACTIVE);
 }
@@ -225,6 +281,17 @@ void pip::OnKill( void )
 
     // Turn off pip texture
     ActivatePipTexture(FALSE);
+
+#if defined(TARGET_PC)
+    if( m_RenderTarget.bValid )
+    {
+        vram_Unregister( m_PipVramID );
+        rtarget_Destroy( m_RenderTarget.ColorTarget );
+        rtarget_Destroy( m_RenderTarget.DepthTarget );
+        m_RenderTarget = pip_render_target_pc();
+        m_PipVramID = 0;
+    }
+#endif
 
     // Destroy ear?
     if (m_EarID)
@@ -377,21 +444,27 @@ void pip::RenderView( void )
         // Setup viewport
         irect Viewport;
 
-#ifdef TARGET_PC
-        Viewport.l = 256-8;
-        Viewport.t = 48;
-        Viewport.r = Viewport.l + m_Width;
-        Viewport.b = Viewport.t + m_Height;
-#else
+#if defined(TARGET_PC)
+        if( !m_RenderTarget.bValid )
+            return;
+#endif
+
         Viewport.l = 0;
         Viewport.t = 0;
         Viewport.r = m_Width;
         Viewport.b = m_Height;
-#endif
 
+#if defined(TARGET_PC)
+        g_RenderContext.SetActivePipTarget( &m_RenderTarget );
+		g_bPipRenderActive = TRUE;
+#endif
         g_RenderContext.SetPipRender( TRUE );
         pCamera->RenderView(Viewport, m_PipVramID, m_Width, m_Height);
         g_RenderContext.SetPipRender( FALSE );
+#if defined(TARGET_PC)
+        g_bPipRenderActive = FALSE;
+        g_RenderContext.SetActivePipTarget( NULL );
+#endif		
     }
 }
 
@@ -433,7 +506,7 @@ void pip::AddTextureRefs( object* pObject )
 
     // Lookup material on this submesh
     material& Material = render::GetMaterial(pRenderInst->GetInst(), iSubMesh);
-#ifndef TARGET_PC
+
     // Lookup texture handle
     texture::handle hTexture = Material.m_DiffuseMap;
 
@@ -444,18 +517,18 @@ void pip::AddTextureRefs( object* pObject )
 
     // Setup next texture ref
     ASSERT(m_nTextureRefs <= MAX_TEXTURE_REFS);
+	if( m_nTextureRefs >= MAX_TEXTURE_REFS )
+        return;
+	
     texture_ref& Ref = m_TextureRefs[m_nTextureRefs++];
     Ref.m_hTexture = hTexture;
     Ref.m_VramID   = pTexture->m_Bitmap.GetVRAMID();
-#endif
 }
 
 //=========================================================================
 
 void pip::InitTextureRefs( void )
 {
-#ifndef TARGET_PC
-
     // Clear texture ref list
     ASSERT(m_nTextureRefs == 0);
 
@@ -475,17 +548,18 @@ void pip::InitTextureRefs( void )
                 AddTextureRefs( pObject );
         }
     }
-#endif
 }
 
 //=========================================================================
 
 void pip::ActivatePipTexture( xbool bEnable )
 {
-#ifndef TARGET_PC
     // Lookup textures?
     if (m_nTextureRefs == 0)
         InitTextureRefs();
+
+    if( m_nTextureRefs == 0 )
+        return;
 
     // Update all texture refs
     for (s32 i = 0; i < m_nTextureRefs; i++)
@@ -499,11 +573,13 @@ void pip::ActivatePipTexture( xbool bEnable )
 
         // Turn on?
         if (bEnable)
-            pTexture->m_Bitmap.SetVRAMID(m_PipVramID); // Set pip
+        {
+            if( m_PipVramID )
+                pTexture->m_Bitmap.SetVRAMID(m_PipVramID); // Set pip
+        }
         else
             pTexture->m_Bitmap.SetVRAMID(Ref.m_VramID);    // Restore
     }
-#endif
 }
 
 //=========================================================================

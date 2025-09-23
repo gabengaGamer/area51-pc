@@ -31,6 +31,10 @@
 #include "Entropy\PS2\ps2_misc.hpp"
 #endif
 
+#if defined(TARGET_PC)
+#include "Entropy/D3DEngine/d3deng_rtarget.hpp"
+#endif
+
 #if !defined(X_EDITOR)
 #include "NetworkMgr/NetworkMgr.hpp"
 #include "NetworkMgr\MsgMgr.hpp"
@@ -68,6 +72,11 @@ static matrix4 WeaponMatrix;
 s32 new_weapon::m_OrigScopeVramId    = -1;
 s32 new_weapon::m_ScopeRefCount      = 0;
 s32 new_weapon::m_ScopeTextureVramId = -1;
+
+#if defined(TARGET_PC)
+static rtarget s_ScopeRenderTarget;
+static xbool   s_bScopeRenderTargetValid = FALSE;
+#endif
 
 #ifndef X_EDITOR
 extern xbool s_bDegradeAim;
@@ -311,7 +320,38 @@ new_weapon::new_weapon( void ) :
     m_LastRotation = 0;
     m_AngularSpeed = 0;
     
-#ifndef TARGET_PC
+#if defined(TARGET_PC)
+    if( m_ScopeTextureVramId == -1 )
+    {
+        rtarget_desc Desc;
+        Desc.Width          = kScopeTextureW;
+        Desc.Height         = kScopeTextureH;
+        Desc.Format         = RTARGET_FORMAT_RGBA8;
+        Desc.SampleCount    = 1;
+        Desc.SampleQuality  = 0;
+        Desc.bBindAsTexture = TRUE;
+
+        if( rtarget_Create( s_ScopeRenderTarget, Desc ) )
+        {
+            m_ScopeTextureVramId = vram_Register( s_ScopeRenderTarget.pTexture );
+            if( m_ScopeTextureVramId == 0 )
+            {
+                x_DebugMsg( "new_weapon: Failed to register scope render target\n" );
+                rtarget_Destroy( s_ScopeRenderTarget );
+                s_bScopeRenderTargetValid = FALSE;
+            }
+            else
+            {
+                s_bScopeRenderTargetValid = TRUE;
+            }
+        }
+        else
+        {
+            x_DebugMsg( "new_weapon: Failed to create scope render target\n" );
+            s_bScopeRenderTargetValid = FALSE;
+        }
+    }
+#else
     if( m_ScopeTextureVramId == -1 )
     {
         // register the custom scope texture
@@ -3373,10 +3413,8 @@ void new_weapon::InstallCustomScope( void )
     // already had
     UninstallCustomScope();
 
-#ifdef TARGET_PC
-    // sorry, no sniper scope customization on the pc
-    return;
-#endif
+    if( m_ScopeTextureVramId <= 0 )
+        return;
 
     // no geometry == no scope texture
     skin_inst& Skin  = m_Skin[ RENDER_STATE_PLAYER ];
@@ -3522,6 +3560,55 @@ void new_weapon::CreateScopeTexture( void )
     gsreg_SetScissor( L, T, R, B );
     gsreg_SetFBMASK( 0x00000000 );  // will restore the frame buffer
     gsreg_End();
+	
+#elif defined(TARGET_PC)
+
+    if( (m_ScopeTextureVramId <= 0) || (s_bScopeRenderTargetValid == FALSE) )
+        return;
+
+    if( !g_pd3dContext )
+        return;
+
+    if( !s_ScopeRenderTarget.pTexture )
+        return;
+
+    const rtarget* pBackBuffer = rtarget_GetBackBuffer();
+    if( !pBackBuffer || !pBackBuffer->pTexture )
+        return;
+
+    const view* pActiveView = eng_GetView();
+    if( !pActiveView )
+        return;
+
+    s32 L, T, R, B;
+    pActiveView->GetViewport( L, T, R, B );
+
+    s32 ViewportWidth  = R - L;
+    s32 ViewportHeight = B - T;
+    if( (ViewportWidth <= 0) || (ViewportHeight <= 0) )
+        return;
+
+    s32 SrcWidth  = MIN( kScopeTextureW, ViewportWidth );
+    s32 SrcHeight = MIN( kScopeTextureH, ViewportHeight );
+    s32 SrcLeft   = L + (ViewportWidth  - SrcWidth)  / 2;
+    s32 SrcTop    = T + (ViewportHeight - SrcHeight) / 2;
+
+    D3D11_BOX SrcBox;
+    SrcBox.left   = SrcLeft;
+    SrcBox.top    = SrcTop;
+    SrcBox.front  = 0;
+    SrcBox.right  = SrcLeft + SrcWidth;
+    SrcBox.bottom = SrcTop + SrcHeight;
+    SrcBox.back   = 1;
+
+    g_pd3dContext->CopySubresourceRegion( s_ScopeRenderTarget.pTexture,
+                                          0,
+                                          0,
+                                          0,
+                                          0,
+                                          pBackBuffer->pTexture,
+                                          0,
+                                          &SrcBox );	
 
 #elif defined(TARGET_XBOX)
 
