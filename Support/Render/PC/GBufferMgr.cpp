@@ -17,6 +17,7 @@
 //==============================================================================
 
 #include "GBufferMgr.hpp"
+#include "../../GameLib/RenderContext.hpp"
 
 //==============================================================================
 //  EXTERNAL VARIABLES
@@ -142,23 +143,37 @@ xbool gbuffer_mgr::SetGBufferTargets( void )
 {
     if( !m_bGBufferValid || !g_pd3dContext || m_bGBufferTargetsActive )
         return m_bGBufferTargetsActive;
-    
+
     const rtarget* pBackBuffer = rtarget_GetBackBuffer();
     if( !pBackBuffer )
         return FALSE;
-    
-    m_GBufferTargetSet[GBUFFER_FINAL_COLOR] = *pBackBuffer;
+
+    const rtarget* pFinalColor = pBackBuffer;
+    const rtarget* pDepthTarget = &m_GBufferDepth;
+
+    if( g_RenderContext.m_bIsPipRender && g_RenderContext.ArePipTargetsActive() )
+    {
+        pip_render_target_pc* pPipTarget = g_RenderContext.GetActivePipTarget();
+        if( pPipTarget && pPipTarget->bValid )
+        {
+            pFinalColor = &pPipTarget->ColorTarget;
+            if( pPipTarget->DepthTarget.bIsDepthTarget && pPipTarget->DepthTarget.pDepthStencilView )
+                pDepthTarget = &pPipTarget->DepthTarget;
+        }
+    }
+
+    m_GBufferTargetSet[GBUFFER_FINAL_COLOR] = *pFinalColor;
     m_GBufferTargetSet[GBUFFER_ALBEDO]      = m_GBufferTarget[0];
     m_GBufferTargetSet[GBUFFER_NORMAL]      = m_GBufferTarget[1];
     m_GBufferTargetSet[GBUFFER_DEPTH_INFO]  = m_GBufferTarget[2];
     m_GBufferTargetSet[GBUFFER_DEPTH]       = rtarget();
 
-    if( rtarget_SetTargets( m_GBufferTargetSet, GBUFFER_TARGET_COUNT, &m_GBufferDepth ) )
+    if( rtarget_SetTargets( m_GBufferTargetSet, GBUFFER_TARGET_COUNT, pDepthTarget ) )
     {
         m_bGBufferTargetsActive = TRUE;
         return TRUE;
     }
-    
+
     return FALSE;
 }
 
@@ -206,7 +221,16 @@ const rtarget* gbuffer_mgr::GetGBufferTarget( gbuffer_target Target ) const
     switch( Target )
     {
         case GBUFFER_FINAL_COLOR:
+        {
+            if( g_RenderContext.m_bIsPipRender && g_RenderContext.ArePipTargetsActive() )
+            {
+                pip_render_target_pc* pTarget = g_RenderContext.GetActivePipTarget();
+                if( pTarget && pTarget->bValid )
+                    return &pTarget->ColorTarget;
+            }
+
             return rtarget_GetBackBuffer();
+        }
             
         case GBUFFER_DEPTH:
             return &m_GBufferDepth;
