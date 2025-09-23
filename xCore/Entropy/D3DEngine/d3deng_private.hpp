@@ -179,6 +179,14 @@ struct d3dlvertex
     }
 };
 
+//------------------------------------------------------------------------------
+
+struct eng_frame_stage
+{
+    void    (*OnBeginFrame)     ( void );
+    void    (*OnBeforePresent)  ( void );
+};
+
 //==============================================================================
 //  GLOBAL VARIABLES
 //==============================================================================
@@ -195,6 +203,13 @@ void        d3deng_EntryPoint           ( s32& argc, char**& argv, HINSTANCE h1,
 s32         d3deng_ExitPoint            ( void );
 void        d3deng_SetPresets           ( u32 Mode = ENG_ACT_DEFAULT );
 u32         d3deng_GetMode              ( void );
+
+//==============================================================================
+//  RTARGET MANAGEMENT
+//==============================================================================
+
+void        d3deng_RegisterFrameStage   ( const eng_frame_stage& Stage );
+void        d3deng_UnregisterFrameStage ( const eng_frame_stage& Stage );
 
 //==============================================================================
 //  WINDOW MANAGEMENT

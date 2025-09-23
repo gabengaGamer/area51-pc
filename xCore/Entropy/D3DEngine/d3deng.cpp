@@ -133,6 +133,8 @@ static struct eng_locals
     
 } s;
 
+static xarray<const eng_frame_stage*>   s_FrameStages;
+
 //=========================================================================
 // FUNCTIONS
 //=========================================================================
@@ -207,6 +209,37 @@ const char* eng_GetProductKey(void)
     return NULL;
 }
 
+//=============================================================================
+
+void d3deng_RegisterFrameStage( const eng_frame_stage& Stage )
+{
+    const eng_frame_stage* pStage = &Stage;
+
+    for( s32 iStage = 0; iStage < s_FrameStages.GetCount(); ++iStage )
+    {
+        if( s_FrameStages[iStage] == pStage )
+            return;
+    }
+
+    s_FrameStages.Append() = pStage;
+}
+
+//=========================================================================
+
+void d3deng_UnregisterFrameStage( const eng_frame_stage& Stage )
+{
+    const eng_frame_stage* pStage = &Stage;
+
+    for( s32 iStage = 0; iStage < s_FrameStages.GetCount(); ++iStage )
+    {
+        if( s_FrameStages[iStage] == pStage )
+        {
+            s_FrameStages.Delete( iStage );
+            break;
+        }
+    }
+}
+
 //=========================================================================
 
 void eng_Kill( void ) //Deprecated, but i still prefer to maintenance this func
@@ -270,6 +303,8 @@ void eng_Kill( void ) //Deprecated, but i still prefer to maintenance this func
 
     UnregisterClass( "Render Window", s.hInst );
     x_DebugMsg( "Engine: Window class unregistered\n" );
+
+    s_FrameStages.Clear();
 
     x_DebugMsg( "=== ENGINE SHUTDOWN COMPLETE ===\n" );
 }
@@ -956,10 +991,6 @@ void eng_Init( void )
 
 //=============================================================================
 
-// TODO: TOO BAD, SHOUD BE REMOVED IN FUTURE.
-extern const rtarget* draw_GetUITarget( void );
-extern xbool draw_HasValidUITarget( void );
-
 static const char* pPrevName = NULL;
 
 xbool eng_Begin( const char* pTaskName )
@@ -978,20 +1009,18 @@ xbool eng_Begin( const char* pTaskName )
 
         rtarget_SetBackBuffer();
         rtarget_Clear( RTARGET_CLEAR_ALL, clearColor, 1.0f, 0 );
-		
-        // Clear UI target if available
-        if( draw_HasValidUITarget() )
+
+        for( s32 iStage = 0; iStage < s_FrameStages.GetCount(); )
         {
-            const rtarget* pUITarget = draw_GetUITarget();
-            if( pUITarget )
+            const eng_frame_stage* pStage = s_FrameStages[iStage];
+            if( pStage && pStage->OnBeginFrame )
             {
-                rtarget_PushTargets();
-                rtarget_SetTargets( pUITarget, 1, NULL );
-                
-                f32 uiClearColor[4] = { 0.0f, 0.0f, 0.0f, 0.0f }; // Transparent
-                rtarget_Clear( RTARGET_CLEAR_COLOR, uiClearColor, 1.0f, 0 );
-                
-                rtarget_PopTargets(); // Return to back buffer
+                pStage->OnBeginFrame();
+            }
+
+            if( (iStage < s_FrameStages.GetCount()) && (s_FrameStages[iStage] == pStage) )
+            {
+                iStage++;
             }
         }
         
@@ -1134,17 +1163,18 @@ void eng_PageFlip( void )
     d3deng_EnsureSceneBegun();
     d3deng_RenderBufferedText();
 
-    // TODO: GS: This is also another bad solution,
-    // Need to come up with something better and more good for the correct composition 
-
-    // Composite UI if available
-    if( draw_HasValidUITarget() )
+    
+    for( s32 iStage = 0; iStage < s_FrameStages.GetCount(); )
     {
-        const rtarget* pUITarget = draw_GetUITarget();
-        if( pUITarget )
+        const eng_frame_stage* pStage = s_FrameStages[iStage];
+        if( pStage && pStage->OnBeforePresent )
         {
-            rtarget_SetBackBuffer();
-            composite_Blit( *pUITarget, COMPOSITE_BLEND_ALPHA );
+            pStage->OnBeforePresent();
+        }
+
+        if( (iStage < s_FrameStages.GetCount()) && (s_FrameStages[iStage] == pStage) )
+        {
+            iStage++;
         }
     }
 

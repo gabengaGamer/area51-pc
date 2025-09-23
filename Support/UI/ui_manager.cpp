@@ -174,6 +174,50 @@ s32 g_uiLastSelectController = 0;
 static s32 s_EndDialogCount;
 
 //=========================================================================
+//  PC target manager
+//=========================================================================
+
+#ifdef TARGET_PC
+#include "Entropy/D3DEngine/d3deng_rtarget.hpp"
+#include "Entropy/D3DEngine/d3deng_composite.hpp"
+#endif
+
+#ifdef TARGET_PC
+static void UIStage_OnBeginFrame( void )
+{
+    const rtarget* pUITarget = draw_GetUITarget();
+    if( !pUITarget )
+        return;
+
+    if( !rtarget_PushTargets() )
+        return;
+
+    rtarget_SetTargets( pUITarget, 1, NULL );
+
+    f32 clearColor[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
+    rtarget_Clear( RTARGET_CLEAR_COLOR, clearColor, 1.0f, 0 );
+
+    rtarget_PopTargets();
+}
+
+static void UIStage_OnBeforePresent( void )
+{
+    const rtarget* pUITarget = draw_GetUITarget();
+    if( !pUITarget )
+        return;
+
+    rtarget_SetBackBuffer();
+    composite_Blit( *pUITarget, COMPOSITE_BLEND_ALPHA );
+}
+
+static const eng_frame_stage s_UIFrameStage =
+{
+    UIStage_OnBeginFrame,
+    UIStage_OnBeforePresent
+};
+#endif
+
+//=========================================================================
 //  Helpers
 //=========================================================================
 
@@ -458,6 +502,10 @@ s32 ui_manager::Init( void )
 
     m_GlowID = -255;
 
+#ifdef TARGET_PC
+    d3deng_RegisterFrameStage( s_UIFrameStage );
+#endif
+
     return( MemoryBudget );
 }
 
@@ -465,6 +513,10 @@ s32 ui_manager::Init( void )
 
 void ui_manager::Kill( void )
 {
+#ifdef TARGET_PC
+    d3deng_UnregisterFrameStage( s_UIFrameStage );
+#endif
+	
     //-- Destroy Strings
     g_StringTableMgr.UnloadTable( "ui" );
 
