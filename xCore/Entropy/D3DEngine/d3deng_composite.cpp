@@ -303,6 +303,38 @@ void composite_Blit( const rtarget& Source, composite_blend_mode BlendMode, f32 
         eng_SetViewport( *pView );
     }
 
+   // Limit the composite blind viewport for better working with downscaled buffers
+   if( g_pd3dContext )
+   {
+       const rtarget* pCurrentTarget = rtarget_GetCurrentTarget( 0 );
+       if( pCurrentTarget && pCurrentTarget->Desc.Width && pCurrentTarget->Desc.Height )
+       {
+           UINT viewportCount = 1;
+           D3D11_VIEWPORT viewport;
+           g_pd3dContext->RSGetViewports( &viewportCount, &viewport );
+   
+           if( viewportCount > 0 )
+           {
+               f32 maxWidth  = (f32)pCurrentTarget->Desc.Width;
+               f32 maxHeight = (f32)pCurrentTarget->Desc.Height;
+               f32 width     = MIN( viewport.Width,  maxWidth );
+               f32 height    = MIN( viewport.Height, maxHeight );
+               f32 topLeftX  = MAX( viewport.TopLeftX, 0.0f );
+               f32 topLeftY  = MAX( viewport.TopLeftY, 0.0f );
+   
+               if( (width != viewport.Width) || (height != viewport.Height) ||
+                   (topLeftX != viewport.TopLeftX) || (topLeftY != viewport.TopLeftY) )
+               {
+                   viewport.TopLeftX = topLeftX;
+                   viewport.TopLeftY = topLeftY;
+                   viewport.Width    = width;
+                   viewport.Height   = height;
+                   g_pd3dContext->RSSetViewports( 1, &viewport );
+               }
+           }
+       }
+   }
+
     // Set up for composite rendering
     state_SetState( STATE_TYPE_DEPTH, STATE_DEPTH_DISABLED_NO_WRITE );
     state_SetState( STATE_TYPE_RASTERIZER, STATE_RASTER_SOLID_NO_CULL );
