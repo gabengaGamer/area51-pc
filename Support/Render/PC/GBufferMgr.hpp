@@ -35,6 +35,7 @@ enum gbuffer_target
     GBUFFER_ALBEDO,            // RGB: Base color, A: Metallic
     GBUFFER_NORMAL,            // RGB: World Normal, A: Roughness  
     GBUFFER_DEPTH_INFO,        // R: Linear Depth, G: Material ID
+    GBUFFER_GLOW,              // RGB: Emissive color, A: Intensity mask
     GBUFFER_DEPTH,             // Hardware depth buffer
     GBUFFER_TARGET_COUNT
 };
@@ -63,7 +64,7 @@ public:
 
 private:
     xbool       m_bInitialized;
-    rtarget     m_GBufferTarget[GBUFFER_TARGET_COUNT-1];
+    rtarget     m_GBufferTarget[GBUFFER_TARGET_COUNT-2];
     rtarget     m_GBufferTargetSet[GBUFFER_TARGET_COUNT];
     rtarget     m_GBufferDepth;
     xbool       m_bGBufferValid;
@@ -85,6 +86,7 @@ extern gbuffer_mgr g_GBufferMgr;
 #define GBUFFER_FORMAT_FINAL_COLOR  RTARGET_FORMAT_RGBA8
 #define GBUFFER_FORMAT_ALBEDO       RTARGET_FORMAT_RGBA8
 #define GBUFFER_FORMAT_NORMAL       RTARGET_FORMAT_RGBA8
+#define GBUFFER_FORMAT_GLOW         RTARGET_FORMAT_RGBA16F
 #define GBUFFER_FORMAT_DEPTH_INFO   RTARGET_FORMAT_RG16F
 
 //==============================================================================

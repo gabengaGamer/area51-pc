@@ -92,6 +92,7 @@ struct PS_OUTPUT
     float4 Albedo     : SV_Target1;  // Base color for deferred lighting
     float4 Normal     : SV_Target2;  // World-space normals + material info
     float4 DepthInfo  : SV_Target3;  // NDC depth + linear depth + flags
+    float4 Glow       : SV_Target4;  // Emissive color + intensity mask
 };
 
 PS_OUTPUT PSMain(PS_INPUT input)
@@ -223,15 +224,34 @@ PS_OUTPUT PSMain(PS_INPUT input)
     
     //---------------------------------------------------------------------------------------  
 
+    output.Glow = float4(0.0, 0.0, 0.0, 0.0);
+
     // Apply per-pixel illumination
     if (MaterialFlags & MATERIAL_FLAG_PERPIXEL_ILLUM)
     {
-        float4 texColor    = txDiffuse.Sample(samLinear, input.UV);
-        float4 vertexColor = input.Color;
+        float4 texColor = txDiffuse.Sample(samLinear, input.UV);
+        float  intensity = texColor.a;
+        float3 emissive  = texColor.rgb;
+        float  emissiveStrength = max( max( emissive.r, emissive.g ), emissive.b );
+        float  glowMask         = saturate( max( intensity, emissiveStrength ) );
 
-        float3 litColor = vertexColor.rgb * texColor.rgb;
-        finalColor.rgb  = lerp(litColor, texColor.rgb, texColor.a);
-        finalColor.a    = texColor.a;
+        output.Glow.rgb += emissive;
+        output.Glow.a    = max(output.Glow.a, glowMask);
+
+        finalColor.rgb = lerp(finalColor.rgb, texColor.rgb, intensity);
+        finalColor.a   = intensity;
+    }
+
+    // Apply per-poly illumination
+    if (MaterialFlags & MATERIAL_FLAG_PERPOLY_ILLUM)
+    {
+        float  intensity = diffuseColor.a;
+        float3 emissive  = diffuseColor.rgb;
+        float  emissiveStrength = max( max( emissive.r, emissive.g ), emissive.b );
+        float  glowMask         = saturate( max( intensity, emissiveStrength ) );
+
+        output.Glow.rgb += emissive;
+        output.Glow.a    = max(output.Glow.a, glowMask);
     }
 
     // Fill G-Buffer outputs
@@ -239,10 +259,10 @@ PS_OUTPUT PSMain(PS_INPUT input)
     output.Albedo     = baseColor;
     output.Normal     = float4(input.Normal * 0.5 + 0.5, 0.0);
     output.DepthInfo  = float4(
-        input.Pos.z / input.Pos.w,   // NDC depth for position reconstruction
-        input.LinearDepth,           // Linear depth for distance effects
-        0.0,                         // Reserved
-        finalColor.a                 // Alpha for transparency effects
+        input.Pos.z / input.Pos.w,  // NDC depth for position reconstruction
+        input.LinearDepth,          // Linear depth for distance effects
+        0.0,
+        finalColor.a                // Alpha for transparency effects
     );
 
     return output;

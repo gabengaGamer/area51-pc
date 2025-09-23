@@ -115,6 +115,7 @@ struct PS_OUTPUT
     float4 Albedo     : SV_Target1;  // Base color for deferred lighting
     float4 Normal     : SV_Target2;  // World-space normals
     float4 DepthInfo  : SV_Target3;  // NDC depth + linear depth + flags
+    float4 Glow       : SV_Target4;  // Emissive color + intensity mask
 };
 
 PS_OUTPUT PSMain(PS_INPUT input)
@@ -155,6 +156,36 @@ PS_OUTPUT PSMain(PS_INPUT input)
         finalColor.rgb = ApplyProjShadows( finalColor.rgb, input.WorldPos );
     }
 
+    output.Glow = float4(0.0, 0.0, 0.0, 0.0);
+
+    // Apply per-pixel illumination
+    if (MaterialFlags & MATERIAL_FLAG_PERPIXEL_ILLUM)
+    {
+        float4 texColor = txDiffuse.Sample(samLinear, input.UV);
+        float  intensity = texColor.a;
+        float3 emissive  = texColor.rgb;
+        float  emissiveStrength = max( max( emissive.r, emissive.g ), emissive.b );
+        float  glowMask         = saturate( max( intensity, emissiveStrength ) );
+
+        output.Glow.rgb += emissive;
+        output.Glow.a    = max(output.Glow.a, glowMask);
+
+        finalColor.rgb = lerp(finalColor.rgb, texColor.rgb, intensity);
+        finalColor.a   = intensity;
+    }
+
+    // Apply per-poly illumination
+    if (MaterialFlags & MATERIAL_FLAG_PERPOLY_ILLUM)
+    {
+        float  intensity = diffuseColor.a;
+        float3 emissive  = diffuseColor.rgb;
+        float  emissiveStrength = max( max( emissive.r, emissive.g ), emissive.b );
+        float  glowMask         = saturate( max( intensity, emissiveStrength ) );
+
+        output.Glow.rgb += emissive;
+        output.Glow.a    = max(output.Glow.a, glowMask);
+    }
+
     // Fill G-Buffer outputs
     output.FinalColor = finalColor;
     output.Albedo     = baseColor;
@@ -162,7 +193,7 @@ PS_OUTPUT PSMain(PS_INPUT input)
     output.DepthInfo  = float4(
         input.Pos.z / input.Pos.w,  // NDC depth for position reconstruction
         input.LinearDepth,          // Linear depth for distance effects
-        1.0,                        // Mark as skinned geometry
+        0.0,
         finalColor.a                // Alpha for transparency effects
     );
 

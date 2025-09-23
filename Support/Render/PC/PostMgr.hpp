@@ -27,6 +27,12 @@
 #include "../render.hpp"
 #include "e_engine.hpp"
 
+#include "Entropy/D3DEngine/d3deng_rtarget.hpp"
+#include "Entropy/D3DEngine/d3deng_state.hpp"
+#include "Entropy/D3DEngine/d3deng_shader.hpp"
+#include "Entropy/D3DEngine/d3deng_composite.hpp"
+#include "GBufferMgr.hpp"
+
 //==============================================================================
 //  CONSTANTS
 //==============================================================================
@@ -174,6 +180,8 @@ public:
 
     // Utility functions
     xcolor      GetFogValue                 ( const vector3& WorldPos, s32 PaletteIndex );
+    void        OnGlowStageBeginFrame       ( void );
+    void        OnGlowStageBeforePresent    ( void );
 
 protected:
 
@@ -186,6 +194,13 @@ protected:
     void        pc_MipFilter                ( void );
     void        pc_NoiseFilter              ( void );
     void        pc_ScreenFade               ( void );
+
+    void        UpdateGlowStageBegin        ( void );
+    void        CompositePendingGlow        ( void );
+    xbool       EnsureGlowTargets           ( u32 SourceWidth, u32 SourceHeight );
+    void        ReleaseGlowTargets          ( void );
+    void        UpdateGlowConstants         ( f32 Cutoff, f32 IntensityScale, f32 MotionBlend, f32 StepX, f32 StepY );
+    
 
     // Helper functions
     void        pc_CreateFogPalette         ( render::post_falloff_fn Fn, xcolor Color, f32 Param1, f32 Param2 );
@@ -218,6 +233,24 @@ protected:
 
     // Mip filter data  
     const xbitmap*  m_pMipTexture;
+    
+    // Glow rendering resources
+    rtarget                 m_GlowDownsample;
+    rtarget                 m_GlowBlur[2];
+    rtarget                 m_GlowComposite;
+    rtarget                 m_GlowHistory;
+    const rtarget*          m_pActiveGlowResult;
+    u32                     m_GlowBufferWidth;
+    u32                     m_GlowBufferHeight;
+    xbool                   m_bGlowResourcesValid;
+    xbool                   m_bGlowPendingComposite;
+    xbool                   m_bGlowStageRegistered;
+    ID3D11PixelShader*      m_pGlowDownsamplePS;
+    ID3D11PixelShader*      m_pGlowBlurHPS;
+    ID3D11PixelShader*      m_pGlowBlurVPS;
+    ID3D11PixelShader*      m_pGlowCombinePS;
+    ID3D11PixelShader*      m_pGlowCompositePS;
+    ID3D11Buffer*           m_pGlowConstantBuffer;    
 };
 
 //==============================================================================

@@ -101,6 +101,15 @@ xbool gbuffer_mgr::InitGBuffer( u32 Width, u32 Height )
         return FALSE;
     }
     
+    desc.Format = GBUFFER_FORMAT_GLOW;
+    if( !rtarget_Create( m_GBufferTarget[3], desc ) )
+    {
+        rtarget_Destroy( m_GBufferTarget[0] );
+        rtarget_Destroy( m_GBufferTarget[1] );
+        rtarget_Destroy( m_GBufferTarget[2] );
+        return FALSE;
+    }    
+    
     desc.Format = RTARGET_FORMAT_DEPTH24_STENCIL8;
     if( !rtarget_Create( m_GBufferDepth, desc ) )
     {
@@ -116,7 +125,7 @@ xbool gbuffer_mgr::InitGBuffer( u32 Width, u32 Height )
 
 void gbuffer_mgr::DestroyGBuffer( void )
 {
-    for( u32 i = 0; i < (GBUFFER_TARGET_COUNT - 1); i++ )
+    for( u32 i = 0; i < (GBUFFER_TARGET_COUNT - 2); i++ )
         rtarget_Destroy( m_GBufferTarget[i] );
     
     rtarget_Destroy( m_GBufferDepth );
@@ -166,6 +175,7 @@ xbool gbuffer_mgr::SetGBufferTargets( void )
     m_GBufferTargetSet[GBUFFER_ALBEDO]      = m_GBufferTarget[0];
     m_GBufferTargetSet[GBUFFER_NORMAL]      = m_GBufferTarget[1];
     m_GBufferTargetSet[GBUFFER_DEPTH_INFO]  = m_GBufferTarget[2];
+    m_GBufferTargetSet[GBUFFER_GLOW]        = m_GBufferTarget[3];
     m_GBufferTargetSet[GBUFFER_DEPTH]       = rtarget();
 
     if( rtarget_SetTargets( m_GBufferTargetSet, GBUFFER_TARGET_COUNT, pDepthTarget ) )
@@ -207,6 +217,10 @@ void gbuffer_mgr::ClearGBuffer( void )
     static const f32 clearDepthInfo[4] = { 1.0f, 0.0f, 0.0f, 0.0f };
     g_pd3dContext->ClearRenderTargetView(m_GBufferTarget[2].pRenderTargetView, clearDepthInfo);
 
+    // Glow
+    static const f32 clearGlow[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
+    g_pd3dContext->ClearRenderTargetView(m_GBufferTarget[3].pRenderTargetView, clearGlow);
+
     // Depth-stencil
     g_pd3dContext->ClearDepthStencilView(m_GBufferDepth.pDepthStencilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 }
@@ -238,6 +252,7 @@ const rtarget* gbuffer_mgr::GetGBufferTarget( gbuffer_target Target ) const
         case GBUFFER_ALBEDO:
         case GBUFFER_NORMAL:
         case GBUFFER_DEPTH_INFO:
+        case GBUFFER_GLOW:
             return &m_GBufferTarget[Target - 1];
             
         default:
