@@ -521,7 +521,7 @@ xbool material_mgr::UpdateRigidConstants( const matrix4*      pL2W,
                 break;               
             case Material_Alpha_PerPolyEnv:
                 rigidMatrices.MaterialFlags |= MATERIAL_FLAG_ALPHA_TEST | MATERIAL_FLAG_PERPOLY_ENV;
-                break;				
+                break;                
             case Material_Distortion:
                 rigidMatrices.MaterialFlags |= MATERIAL_FLAG_ALPHA_TEST | MATERIAL_FLAG_DISTORTION;
                 break;
@@ -542,10 +542,14 @@ xbool material_mgr::UpdateRigidConstants( const matrix4*      pL2W,
             rigidMatrices.MaterialFlags |= MATERIAL_FLAG_HAS_ENVIRONMENT;
         }
         
+        // Check for punchthrough
+        if( pMaterial->m_Flags & geom::material::FLAG_IS_PUNCH_THRU )
+            rigidMatrices.MaterialFlags |= MATERIAL_FLAG_ALPHA_TEST;
+        
         // Check double-sided flag
         if( pMaterial->m_Flags & geom::material::FLAG_DOUBLE_SIDED )
-            rigidMatrices.MaterialFlags |= MATERIAL_FLAG_TWO_SIDED;		
-		
+            rigidMatrices.MaterialFlags |= MATERIAL_FLAG_TWO_SIDED;        
+        
         // Check blend flags
         if( pMaterial->m_Flags & geom::material::FLAG_IS_ADDITIVE )
             rigidMatrices.MaterialFlags |= MATERIAL_FLAG_ADDITIVE;
@@ -683,10 +687,10 @@ xbool material_mgr::UpdateSkinConstants( const d3d_lighting* pLighting,
                 break;
             case Material_Diff_PerPixelEnv:
                 skinMatrices.MaterialFlags |= MATERIAL_FLAG_PERPIXEL_ENV;
-                break; 	
+                break;     
             case Material_Alpha_PerPolyEnv:
                 skinMatrices.MaterialFlags |= MATERIAL_FLAG_ALPHA_TEST | MATERIAL_FLAG_PERPOLY_ENV;
-                break;				
+                break;                
             case Material_Distortion:
                 skinMatrices.MaterialFlags |= MATERIAL_FLAG_ALPHA_TEST | MATERIAL_FLAG_DISTORTION;
                 break;
@@ -701,10 +705,14 @@ xbool material_mgr::UpdateSkinConstants( const d3d_lighting* pLighting,
             skinMatrices.MaterialFlags |= MATERIAL_FLAG_HAS_ENVIRONMENT;
         }
         
+        // Check for punchthrough
+        if( pMaterial->m_Flags & geom::material::FLAG_IS_PUNCH_THRU )
+            skinMatrices.MaterialFlags |= MATERIAL_FLAG_ALPHA_TEST;    
+        
         // Check double-sided flag
         if( pMaterial->m_Flags & geom::material::FLAG_DOUBLE_SIDED )
-            skinMatrices.MaterialFlags |= MATERIAL_FLAG_TWO_SIDED;		
-		
+            skinMatrices.MaterialFlags |= MATERIAL_FLAG_TWO_SIDED;        
+        
         // Check blend flags
         if( pMaterial->m_Flags & geom::material::FLAG_IS_ADDITIVE )
             skinMatrices.MaterialFlags |= MATERIAL_FLAG_ADDITIVE;
