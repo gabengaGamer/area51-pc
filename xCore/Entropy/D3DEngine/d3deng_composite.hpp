@@ -16,6 +16,7 @@
 #include "x_types.hpp"
 #include "d3deng_private.hpp"
 #include "d3deng_rtarget.hpp"
+#include "d3deng_state.hpp"
 
 //==============================================================================
 //  TYPES
@@ -42,6 +43,7 @@ void    composite_Kill          ( void );
 void    composite_Blit          ( const rtarget&         Source,
                                   composite_blend_mode   BlendMode = COMPOSITE_BLEND_ALPHA,
                                   f32                    Alpha = 1.0f,
-                                  ID3D11PixelShader*     pCustomShader = NULL );
+                                  ID3D11PixelShader*     pCustomShader = NULL,
+                                  state_sampler_mode     SamplerMode = STATE_SAMPLER_POINT_CLAMP );
 
 #endif // D3DENG_COMPOSITE_HPP

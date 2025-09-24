@@ -180,7 +180,7 @@ public:
 
     // Utility functions
     xcolor      GetFogValue                 ( const vector3& WorldPos, s32 PaletteIndex );
-    void        OnGlowStageBeginFrame       ( void );
+	void        OnGlowStageBeginFrame       ( void );
     void        OnGlowStageBeforePresent    ( void );
 
 protected:
@@ -200,7 +200,7 @@ protected:
     xbool       EnsureGlowTargets           ( u32 SourceWidth, u32 SourceHeight );
     void        ReleaseGlowTargets          ( void );
     void        UpdateGlowConstants         ( f32 Cutoff, f32 IntensityScale, f32 MotionBlend, f32 StepX, f32 StepY );
-    
+	
 
     // Helper functions
     void        pc_CreateFogPalette         ( render::post_falloff_fn Fn, xcolor Color, f32 Param1, f32 Param2 );
@@ -233,7 +233,7 @@ protected:
 
     // Mip filter data  
     const xbitmap*  m_pMipTexture;
-    
+	
     // Glow rendering resources
     rtarget                 m_GlowDownsample;
     rtarget                 m_GlowBlur[2];
@@ -250,7 +250,7 @@ protected:
     ID3D11PixelShader*      m_pGlowBlurVPS;
     ID3D11PixelShader*      m_pGlowCombinePS;
     ID3D11PixelShader*      m_pGlowCompositePS;
-    ID3D11Buffer*           m_pGlowConstantBuffer;    
+    ID3D11Buffer*           m_pGlowConstantBuffer;	
 };
 
 //==============================================================================

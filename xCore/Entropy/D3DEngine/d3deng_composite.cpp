@@ -285,7 +285,11 @@ void composite_Kill( void )
 
 //==============================================================================
 
-void composite_Blit( const rtarget& Source, composite_blend_mode BlendMode, f32 Alpha, ID3D11PixelShader* pCustomShader )
+void composite_Blit( const rtarget& Source,
+                     composite_blend_mode BlendMode,
+                     f32 Alpha,
+                     ID3D11PixelShader* pCustomShader,
+                     state_sampler_mode SamplerMode )
 {
     if( !s.bInitialized )
     {
@@ -344,7 +348,7 @@ void composite_Blit( const rtarget& Source, composite_blend_mode BlendMode, f32 
     state_SetState( STATE_TYPE_BLEND, HardwareBlendMode );
 
     // Set sampler
-    state_SetState( STATE_TYPE_SAMPLER, STATE_SAMPLER_POINT_CLAMP );
+    state_SetState( STATE_TYPE_SAMPLER, SamplerMode );
 
     // Set vertex buffer
     UINT stride = sizeof(composite_vertex);

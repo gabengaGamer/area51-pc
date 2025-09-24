@@ -44,6 +44,8 @@ struct cb_post_glow
     vector4 Params1;
 };
 
+static const f32 kGlowIntensityScale = 1.0f;
+
 static void GlowStage_OnBeginFrame( void );
 static void GlowStage_OnBeforePresent( void );
 
@@ -522,7 +524,7 @@ void post_mgr::pc_ApplySelfIllumGlows( void )
 
     const f32 cutoff       = (m_Glow.Cutoff >= 255) ? 0.0f : (f32)m_Glow.Cutoff / 255.0f;
     const f32 motionBlend  = x_clamp( m_Glow.MotionBlurIntensity, 0.0f, 1.0f );
-    const f32 intensity    = 1.0f;
+    const f32 intensity    = kGlowIntensityScale;
     const f32 clearColor[4]= { 0.0f, 0.0f, 0.0f, 0.0f };
 
     // Downsample high-resolution glow mask to a smaller buffer
@@ -535,13 +537,13 @@ void post_mgr::pc_ApplySelfIllumGlows( void )
     rtarget_SetTargets( &m_GlowBlur[0], 1, NULL );
     rtarget_Clear( RTARGET_CLEAR_COLOR, clearColor, 1.0f, 0 );
     UpdateGlowConstants( cutoff, intensity, motionBlend, 1.0f / (f32)m_GlowBufferWidth, 0.0f );
-    composite_Blit( m_GlowDownsample, COMPOSITE_BLEND_ADDITIVE, 1.0f, m_pGlowBlurHPS );
+    composite_Blit( m_GlowDownsample, COMPOSITE_BLEND_ADDITIVE, 1.0f, m_pGlowBlurHPS, STATE_SAMPLER_LINEAR_CLAMP );
 
     // Vertical blur
     rtarget_SetTargets( &m_GlowBlur[1], 1, NULL );
     rtarget_Clear( RTARGET_CLEAR_COLOR, clearColor, 1.0f, 0 );
     UpdateGlowConstants( cutoff, intensity, motionBlend, 0.0f, 1.0f / (f32)m_GlowBufferHeight );
-    composite_Blit( m_GlowBlur[0], COMPOSITE_BLEND_ADDITIVE, 1.0f, m_pGlowBlurVPS );
+    composite_Blit( m_GlowBlur[0], COMPOSITE_BLEND_ADDITIVE, 1.0f, m_pGlowBlurVPS, STATE_SAMPLER_LINEAR_CLAMP );
 
     const rtarget* pBlurredResult = &m_GlowBlur[1];
 
@@ -554,7 +556,7 @@ void post_mgr::pc_ApplySelfIllumGlows( void )
         ID3D11ShaderResourceView* pHistorySRV = m_GlowHistory.pShaderResourceView;
         g_pd3dContext->PSSetShaderResources( 1, 1, &pHistorySRV );
 
-        composite_Blit( *pBlurredResult, COMPOSITE_BLEND_ADDITIVE, 1.0f, m_pGlowCombinePS );
+        composite_Blit( *pBlurredResult, COMPOSITE_BLEND_ADDITIVE, 1.0f, m_pGlowCombinePS, STATE_SAMPLER_LINEAR_CLAMP );
 
         ID3D11ShaderResourceView* pNullSRV = NULL;
         g_pd3dContext->PSSetShaderResources( 1, 1, &pNullSRV );
@@ -622,12 +624,12 @@ void post_mgr::CompositePendingGlow( void )
 
     if( m_pGlowCompositePS && m_pGlowConstantBuffer )
     {
-        UpdateGlowConstants( 0.0f, 1.0f, 0.0f, 0.0f, 0.0f );
-        composite_Blit( *m_pActiveGlowResult, COMPOSITE_BLEND_ADDITIVE, 1.0f, m_pGlowCompositePS );
+        UpdateGlowConstants( 0.0f, kGlowIntensityScale, 0.0f, 0.0f, 0.0f );
+        composite_Blit( *m_pActiveGlowResult, COMPOSITE_BLEND_ADDITIVE, 1.0f, m_pGlowCompositePS, STATE_SAMPLER_LINEAR_CLAMP );
     }
     else
     {
-        composite_Blit( *m_pActiveGlowResult, COMPOSITE_BLEND_ADDITIVE, 1.0f );
+        composite_Blit( *m_pActiveGlowResult, COMPOSITE_BLEND_ADDITIVE, 1.0f, NULL, STATE_SAMPLER_LINEAR_CLAMP );
     }
 
     m_bGlowPendingComposite = FALSE;
