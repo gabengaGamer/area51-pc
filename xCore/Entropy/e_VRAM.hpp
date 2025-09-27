@@ -56,6 +56,7 @@ void        vram_Kill           ( void );
 
 s32                         vram_LoadTexture    ( const char*    pFileName  );
 s32                         vram_Register       ( ID3D11Texture2D* pTexture );
+s32                         vram_RegisterCubemap( const xbitmap* pBitmaps, s32 nBitmaps );
 
 ID3D11ShaderResourceView*   vram_GetSRV         ( const xbitmap& Bitmap    );
 ID3D11ShaderResourceView*   vram_GetSRV         (       s32      VRAM_ID   );

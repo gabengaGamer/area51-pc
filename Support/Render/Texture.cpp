@@ -128,12 +128,22 @@ static struct cubemap_loader : public rsc_loader
 
     //-------------------------------------------------------------------------
 
-    virtual void* Resolve( void* pData ) 
+    virtual void* Resolve( void* pData )
     {
         cubemap* pCubemap = (cubemap*)pData;
 
-        for ( s32 i = 0; i < 6; i++ )
+    #ifdef TARGET_PC
+        s32 vramID = vram_RegisterCubemap( pCubemap->m_Bitmap, 6 );
+        if( vramID == 0 )
+        {
+            x_DebugMsg( "cubemap_loader::Resolve: Failed to register cubemap\n" );
+        }
+
+        pCubemap->m_hTexture = (void*)(uaddr)vramID;
+    #else
+        for( s32 i = 0; i < 6; i++ )
             vram_Register( pCubemap->m_Bitmap[i] );
+    #endif
 
         return( pCubemap );
     }
@@ -144,13 +154,25 @@ static struct cubemap_loader : public rsc_loader
     {
         cubemap* pCubemap = (cubemap*)pData;
 
-        for ( s32 i = 0; i < 6; i++ )
+        for( s32 i = 0; i < 6; i++ )
         {
             s_TextureMem -= pCubemap->m_Bitmap[i].GetDataSize();
             s_nTexture--;
+        }
 
+    #ifdef TARGET_PC
+        if( pCubemap->m_hTexture )
+        {
+            s32 vramID = (s32)(uaddr)pCubemap->m_hTexture;
+            vram_Unregister( vramID );
+            pCubemap->m_hTexture = NULL;
+        }
+    #else
+        for( s32 i = 0; i < 6; i++ )
+        {
             vram_Unregister( pCubemap->m_Bitmap[i] );
         }
+    #endif
 
         delete pCubemap;
     }
@@ -178,4 +200,3 @@ cubemap::cubemap( void )
 }
 
 //=============================================================================
-

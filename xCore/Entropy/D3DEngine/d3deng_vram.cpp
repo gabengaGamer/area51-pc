@@ -46,6 +46,58 @@ static d3d_tex_node s_List[ MAX_TEXTURES ];
 static s32          s_iEmpty;
 
 //=========================================================================
+// HELPER FUNCTIONS
+//=========================================================================
+
+static 
+DXGI_FORMAT GetDXGIFormat( xbitmap::format Format )
+{
+    switch( Format )
+    {
+        case xbitmap::FMT_32_ARGB_8888: return DXGI_FORMAT_B8G8R8A8_UNORM;
+        case xbitmap::FMT_32_URGB_8888: return DXGI_FORMAT_B8G8R8X8_UNORM;
+        case xbitmap::FMT_16_ARGB_4444: return DXGI_FORMAT_B4G4R4A4_UNORM;
+        case xbitmap::FMT_16_ARGB_1555: return DXGI_FORMAT_B5G5R5A1_UNORM;
+        case xbitmap::FMT_16_URGB_1555: return DXGI_FORMAT_B5G5R5A1_UNORM;
+        case xbitmap::FMT_16_RGB_565:   return DXGI_FORMAT_B5G6R5_UNORM;
+        case xbitmap::FMT_DXT1:         return DXGI_FORMAT_BC1_UNORM;
+        case xbitmap::FMT_DXT3:         return DXGI_FORMAT_BC2_UNORM;
+        case xbitmap::FMT_DXT5:         return DXGI_FORMAT_BC3_UNORM;
+        default:                        return DXGI_FORMAT_UNKNOWN;
+    }
+}
+
+//=============================================================================
+
+static 
+xbool IsCompressedFormat( DXGI_FORMAT Format )
+{
+    switch( Format )
+    {
+        case DXGI_FORMAT_BC1_UNORM:
+        case DXGI_FORMAT_BC2_UNORM:
+        case DXGI_FORMAT_BC3_UNORM:
+            return TRUE;
+        default:
+            return FALSE;
+    }
+}
+
+//=============================================================================
+
+static 
+s32 GetBlockSize( DXGI_FORMAT Format )
+{
+    switch( Format )
+    {
+        case DXGI_FORMAT_BC1_UNORM: return 8;
+        case DXGI_FORMAT_BC2_UNORM: return 16;
+        case DXGI_FORMAT_BC3_UNORM: return 16;
+        default:                    return 0;
+    }
+}
+
+//=========================================================================
 // FUNCTIONS
 //=========================================================================
 
@@ -197,21 +249,8 @@ s32 vram_Register( const xbitmap& Bitmap )
     //
     // Get the DX11 format
     //
-    switch( Bitmap.GetFormat() )
-    {
-        case xbitmap::FMT_32_ARGB_8888: Format = DXGI_FORMAT_B8G8R8A8_UNORM; break;
-        case xbitmap::FMT_32_URGB_8888: Format = DXGI_FORMAT_B8G8R8X8_UNORM; break;
-        case xbitmap::FMT_16_ARGB_4444: Format = DXGI_FORMAT_B4G4R4A4_UNORM; break;
-        case xbitmap::FMT_16_ARGB_1555: Format = DXGI_FORMAT_B5G5R5A1_UNORM; break;
-        case xbitmap::FMT_16_URGB_1555: Format = DXGI_FORMAT_B5G5R5A1_UNORM; break;
-        case xbitmap::FMT_16_RGB_565:   Format = DXGI_FORMAT_B5G6R5_UNORM;   break;
-        case xbitmap::FMT_DXT3:         Format = DXGI_FORMAT_BC2_UNORM;      break;
-        case xbitmap::FMT_DXT1:         Format = DXGI_FORMAT_BC1_UNORM;      break;
-        default:
-            {
-                ASSERT( FALSE );
-            }
-    }
+    Format = GetDXGIFormat( Bitmap.GetFormat() );
+    ASSERT( Format != DXGI_FORMAT_UNKNOWN );
 
     //
     // Create the texture
@@ -230,10 +269,12 @@ s32 vram_Register( const xbitmap& Bitmap )
     desc.CPUAccessFlags     = 0;
     desc.MiscFlags          = D3D11_RESOURCE_MISC_GENERATE_MIPS;
 
+    xbool bCompressed = IsCompressedFormat( Format );
+
     //
     // For compressed formats, don't use mipmaps
-	//
-    if( (Bitmap.GetFormat() == xbitmap::FMT_DXT1) || (Bitmap.GetFormat() == xbitmap::FMT_DXT3) )
+    //
+    if( bCompressed )
     {
         desc.MipLevels = 1;
         desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
@@ -253,7 +294,7 @@ s32 vram_Register( const xbitmap& Bitmap )
     x_memset( &srvDesc, 0, sizeof(srvDesc) );
     srvDesc.Format                    = Format;
     srvDesc.ViewDimension             = D3D11_SRV_DIMENSION_TEXTURE2D;
-    srvDesc.Texture2D.MipLevels       = -1;
+    srvDesc.Texture2D.MipLevels       = bCompressed ? 1 : (u32)-1;
     srvDesc.Texture2D.MostDetailedMip = 0;
 
     Error = g_pd3dDevice->CreateShaderResourceView( pTexture, &srvDesc, &pSRV );
@@ -272,24 +313,25 @@ s32 vram_Register( const xbitmap& Bitmap )
 
         pSrcData = (char*)Bitmap.GetPixelData();
 
-        if( (Bitmap.GetFormat() == xbitmap::FMT_DXT1) || (Bitmap.GetFormat() == xbitmap::FMT_DXT3) )
+        if( bCompressed )
         {
-            // Calculate correct pitch for compressed textures
-            s32 blockSize = (Bitmap.GetFormat() == xbitmap::FMT_DXT1) ? 8 : 16;
-            s32 rowPitch = MAX(1, ((Bitmap.GetWidth() + 3) / 4)) * blockSize;
-            
-            g_pd3dContext->UpdateSubresource( pTexture, 0, NULL, 
-                                             pSrcData, 
-                                             rowPitch, 
+            s32 blockSize = GetBlockSize( Format );
+            ASSERT( blockSize != 0 );
+
+            s32 rowPitch = MAX( 1, (Bitmap.GetWidth() + 3) / 4 ) * blockSize;
+
+            g_pd3dContext->UpdateSubresource( pTexture, 0, NULL,
+                                             pSrcData,
+                                             rowPitch,
                                              0 );
         }
         else
         {
             BitmapPitch = (Bitmap.GetPWidth() * Bitmap.GetFormatInfo().BPP)/8;
 
-            g_pd3dContext->UpdateSubresource( pTexture, 0, NULL, 
-                                             pSrcData, 
-                                             BitmapPitch, 
+            g_pd3dContext->UpdateSubresource( pTexture, 0, NULL,
+                                             pSrcData,
+                                             BitmapPitch,
                                              BitmapPitch * Bitmap.GetHeight() );
         }
     }
@@ -307,6 +349,137 @@ s32 vram_Register( const xbitmap& Bitmap )
     //
     s32 Index = AddNode( pTexture, pSRV );
     Bitmap.SetVRAMID( Index );
+    return Index;
+}
+
+//=============================================================================
+
+s32 vram_RegisterCubemap( const xbitmap* pBitmaps, s32 nBitmaps )
+{
+    if( !pBitmaps || (nBitmaps != 6) )
+    {
+        ASSERT( FALSE );
+        return 0;
+    }
+
+    if( !g_pd3dDevice || !g_pd3dContext )
+        return 0;
+
+    const xbitmap& Bitmap0 = pBitmaps[0];
+
+    ASSERT( Bitmap0.GetClutData() == NULL && "Not clut is suported" );
+
+    DXGI_FORMAT Format = GetDXGIFormat( Bitmap0.GetFormat() );
+    if( Format == DXGI_FORMAT_UNKNOWN )
+    {
+        ASSERT( FALSE );
+        return 0;
+    }
+
+    for( s32 i = 1; i < nBitmaps; ++i )
+    {
+        const xbitmap& Face = pBitmaps[i];
+        if( (Face.GetWidth()  != Bitmap0.GetWidth())  ||
+            (Face.GetHeight() != Bitmap0.GetHeight()) ||
+            (Face.GetFormat() != Bitmap0.GetFormat()) )
+        {
+            ASSERT( FALSE );
+            return 0;
+        }
+    }
+
+    xbool bCompressed = IsCompressedFormat( Format );
+
+    D3D11_TEXTURE2D_DESC desc;
+    x_memset( &desc, 0, sizeof(desc) );
+    desc.Width              = Bitmap0.GetWidth();
+    desc.Height             = Bitmap0.GetHeight();
+    desc.MipLevels          = 0;
+    desc.ArraySize          = 6;
+    desc.Format             = Format;
+    desc.SampleDesc.Count   = 1;
+    desc.SampleDesc.Quality = 0;
+    desc.Usage              = D3D11_USAGE_DEFAULT;
+    desc.BindFlags          = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET;
+    desc.CPUAccessFlags     = 0;
+    desc.MiscFlags          = D3D11_RESOURCE_MISC_TEXTURECUBE | D3D11_RESOURCE_MISC_GENERATE_MIPS;
+
+    if( bCompressed )
+    {
+        desc.MipLevels = 1;
+        desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+        desc.MiscFlags = D3D11_RESOURCE_MISC_TEXTURECUBE;
+    }
+
+    ID3D11Texture2D* pTexture = NULL;
+    HRESULT Error = g_pd3dDevice->CreateTexture2D( &desc, NULL, &pTexture );
+    if( FAILED( Error ) )
+    {
+        return 0;
+    }
+
+    D3D11_TEXTURE2D_DESC createdDesc;
+    pTexture->GetDesc( &createdDesc );
+    ASSERT( createdDesc.MipLevels > 0 );
+
+    for( s32 face = 0; face < nBitmaps; ++face )
+    {
+        const xbitmap& FaceBitmap = pBitmaps[face];
+        const byte*    pSrcData   = (const byte*)FaceBitmap.GetPixelData();
+
+        if( !pSrcData )
+        {
+            pTexture->Release();
+            ASSERT( FALSE );
+            return 0;
+        }
+
+        u32 rowPitch;
+        u32 slicePitch;
+
+        if( bCompressed )
+        {
+            s32 blockSize = GetBlockSize( Format );
+            ASSERT( blockSize != 0 );
+            rowPitch  = MAX( 1, (FaceBitmap.GetWidth()  + 3) / 4 ) * blockSize;
+            slicePitch = MAX( 1, (FaceBitmap.GetHeight() + 3) / 4 ) * blockSize;
+        }
+        else
+        {
+            rowPitch  = (FaceBitmap.GetPWidth() * FaceBitmap.GetFormatInfo().BPP) / 8;
+            slicePitch = rowPitch * FaceBitmap.GetHeight();
+        }
+
+        UINT subresource = D3D11CalcSubresource( 0, face, createdDesc.MipLevels );
+        g_pd3dContext->UpdateSubresource( pTexture,
+                                          subresource,
+                                          NULL,
+                                          pSrcData,
+                                          rowPitch,
+                                          bCompressed ? 0 : slicePitch );
+    }
+
+    ID3D11ShaderResourceView* pSRV = NULL;
+    D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc;
+    x_memset( &srvDesc, 0, sizeof(srvDesc) );
+    srvDesc.Format                        = Format;
+    srvDesc.ViewDimension                 = D3D11_SRV_DIMENSION_TEXTURECUBE;
+    srvDesc.TextureCube.MipLevels         = bCompressed ? 1 : (u32)-1;
+    srvDesc.TextureCube.MostDetailedMip   = 0;
+
+    Error = g_pd3dDevice->CreateShaderResourceView( pTexture, &srvDesc, &pSRV );
+    if( FAILED( Error ) )
+    {
+        pTexture->Release();
+        return 0;
+    }
+
+    if( (createdDesc.MiscFlags & D3D11_RESOURCE_MISC_GENERATE_MIPS) && !bCompressed )
+    {
+        g_pd3dContext->GenerateMips( pSRV );
+    }
+
+    s32 Index = AddNode( pTexture, pSRV );
     return Index;
 }
 

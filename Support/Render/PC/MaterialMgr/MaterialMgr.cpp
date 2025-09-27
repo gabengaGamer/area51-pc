@@ -122,14 +122,10 @@ material_mgr::material_constants material_mgr::BuildMaterialFlags( const materia
     }
 
     if( SupportsDetailMap && pMaterial->m_DetailMap.GetPointer() )
-    {
-        constants.Flags |= MATERIAL_FLAG_HAS_DETAIL;
-    }
+        constants.Flags |= MATERIAL_FLAG_DETAIL;
 
     if( pMaterial->m_EnvironmentMap.GetPointer() )
-    {
-        constants.Flags |= MATERIAL_FLAG_HAS_ENVIRONMENT;
-    }
+        constants.Flags |= MATERIAL_FLAG_ENVIRONMENT;
 
     if( pMaterial->m_Flags & geom::material::FLAG_IS_PUNCH_THRU )
         constants.Flags |= MATERIAL_FLAG_ALPHA_TEST;

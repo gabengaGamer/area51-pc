@@ -59,10 +59,9 @@ enum material_flags
     MATERIAL_FLAG_PERPOLY_ILLUM     = (1<<8),
     MATERIAL_FLAG_PERPIXEL_ENV      = (1<<9),
     MATERIAL_FLAG_PERPOLY_ENV       = (1<<10),
-    MATERIAL_FLAG_HAS_DETAIL        = (1<<11),
-    MATERIAL_FLAG_HAS_ENVIRONMENT   = (1<<12),
-    MATERIAL_FLAG_PROJ_LIGHT        = (1<<13),
-    MATERIAL_FLAG_PROJ_SHADOW       = (1<<14),
+    MATERIAL_FLAG_DETAIL            = (1<<11),
+    MATERIAL_FLAG_PROJ_LIGHT        = (1<<12),
+    MATERIAL_FLAG_PROJ_SHADOW       = (1<<13),
 };
 
 //==============================================================================
