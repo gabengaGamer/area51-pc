@@ -198,23 +198,23 @@ protected:
     void        KillProjTextures    ( void );
 
     // Internal helpers
-    xbool       UpdateRigidConstants( const matrix4*      pL2W,
-                                      const material*     pMaterial,
-                                      u32                 RenderFlags,
-                                      const d3d_lighting* pLighting );
-    xbool       UpdateSkinConstants ( const d3d_lighting* pLighting,
-                                      const material*     pMaterial,
-                                      u32                 RenderFlags );
-    xbool       UpdateProjTextures  ( const matrix4& L2W,
-                                      const bbox&    B,
-                                      u32            Slot,
-                                      u32            RenderFlags );
-    material_constants BuildMaterialFlags( const material* pMaterial,
-                                           u32             RenderFlags,
-                                           xbool           SupportsDetailMap,
-                                           xbool           IncludeVertexColor ) const;
-    cb_lighting        BuildLightingConstants( const d3d_lighting* pLighting,
-                                               const vector4&      AmbientBias ) const;
+    xbool               UpdateRigidConstants   ( const matrix4*      pL2W,
+                                                 const material*     pMaterial,
+                                                 u32                 RenderFlags,
+                                                 const d3d_lighting* pLighting );
+    xbool               UpdateSkinConstants    ( const d3d_lighting* pLighting,
+                                                 const material*     pMaterial,
+                                                 u32                 RenderFlags );
+    xbool               UpdateProjTextures     ( const matrix4& L2W,
+                                                 const bbox&    B,
+                                                 u32            Slot,
+                                                 u32            RenderFlags );
+    material_constants  BuildMaterialFlags     ( const material* pMaterial,
+                                                 u32             RenderFlags,
+                                                 xbool           SupportsDetailMap,
+                                                 xbool           IncludeVertexColor ) const;
+    cb_lighting         BuildLightingConstants ( const d3d_lighting* pLighting,
+                                                 const vector4&      AmbientBias ) const;
 
 protected:
 
@@ -246,7 +246,7 @@ protected:
     xbool                   m_bZTestEnabled;
 
     // Cached constant buffer data to avoid redundant updates
-    cb_rigid_matrices     m_CachedRigidMatrices;
+    cb_rigid_matrices       m_CachedRigidMatrices;
     cb_lighting             m_CachedRigidLighting;
     cb_skin_matrices        m_CachedSkinMatrices;
     cb_lighting             m_CachedSkinLighting;
