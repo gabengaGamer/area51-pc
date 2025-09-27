@@ -17,6 +17,9 @@
     <Filter Include="PC\PostMgr">
       <UniqueIdentifier>{ab60e8ec-bda8-4643-a675-fb58a517d75e}</UniqueIdentifier>
     </Filter>
+    <Filter Include="PC\MaterialMgr">
+      <UniqueIdentifier>{51aa40fc-fd6e-4c3c-a23f-e2f87e33790d}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Pc\SoftVertexMgr.cpp">
@@ -30,9 +33,6 @@
     </ClCompile>
     <ClCompile Include="Editor\editor_icons.cpp">
       <Filter>Editor</Filter>
-    </ClCompile>
-    <ClCompile Include="PC\MaterialMgr.cpp">
-      <Filter>PC</Filter>
     </ClCompile>
     <ClCompile Include="PC\GBufferMgr.cpp">
       <Filter>PC</Filter>
@@ -56,6 +56,18 @@
     <ClCompile Include="PC\PostMgr\PostMgr.cpp">
       <Filter>PC\PostMgr</Filter>
     </ClCompile>
+    <ClCompile Include="PC\MaterialMgr\MaterialMgr_ProjTex.cpp">
+      <Filter>PC\MaterialMgr</Filter>
+    </ClCompile>
+    <ClCompile Include="PC\MaterialMgr\MaterialMgr_Rigid.cpp">
+      <Filter>PC\MaterialMgr</Filter>
+    </ClCompile>
+    <ClCompile Include="PC\MaterialMgr\MaterialMgr_Skin.cpp">
+      <Filter>PC\MaterialMgr</Filter>
+    </ClCompile>
+    <ClCompile Include="PC\MaterialMgr\MaterialMgr.cpp">
+      <Filter>PC\MaterialMgr</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Pc\SoftVertexMgr.hpp">
@@ -66,9 +78,6 @@
     </ClInclude>
     <ClInclude Include="LeastSquares\LeastSquares.hpp">
       <Filter>LeastSquares</Filter>
-    </ClInclude>
-    <ClInclude Include="PC\MaterialMgr.hpp">
-      <Filter>PC</Filter>
     </ClInclude>
     <ClInclude Include="PC\GBufferMgr.hpp">
       <Filter>PC</Filter>
@@ -87,6 +96,9 @@
     <ClInclude Include="SkinGeom.hpp" />
     <ClInclude Include="PC\PostMgr\PostMgr.hpp">
       <Filter>PC\PostMgr</Filter>
+    </ClInclude>
+    <ClInclude Include="PC\MaterialMgr\MaterialMgr.hpp">
+      <Filter>PC\MaterialMgr</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

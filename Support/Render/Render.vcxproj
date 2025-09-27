@@ -222,7 +222,10 @@
     <ClCompile Include="Material.cpp" />
     <ClCompile Include="MaterialArray.cpp" />
     <ClCompile Include="PC\GBufferMgr.cpp" />
-    <ClCompile Include="PC\MaterialMgr.cpp" />
+    <ClCompile Include="PC\MaterialMgr\MaterialMgr.cpp" />
+    <ClCompile Include="PC\MaterialMgr\MaterialMgr_ProjTex.cpp" />
+    <ClCompile Include="PC\MaterialMgr\MaterialMgr_Rigid.cpp" />
+    <ClCompile Include="PC\MaterialMgr\MaterialMgr_Skin.cpp" />
     <ClCompile Include="PC\PostMgr\PostMgr.cpp" />
     <ClCompile Include="PC\PostMgr\PostMgr_Filters.cpp" />
     <ClCompile Include="PC\PostMgr\PostMgr_Glow.cpp" />
@@ -243,7 +246,7 @@
     <ClInclude Include="MaterialArray.hpp" />
     <ClInclude Include="Material_Prefs.hpp" />
     <ClInclude Include="PC\GBufferMgr.hpp" />
-    <ClInclude Include="PC\MaterialMgr.hpp" />
+    <ClInclude Include="PC\MaterialMgr\MaterialMgr.hpp" />
     <ClInclude Include="PC\PostMgr\PostMgr.hpp" />
     <ClInclude Include="Pc\SoftVertexMgr.hpp" />
     <ClInclude Include="Pc\VertexMgr.hpp" />

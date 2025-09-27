@@ -9,7 +9,7 @@
 #include "..\ProjTextureMgr.hpp"
 #include "VertexMgr.hpp"
 #include "SoftVertexMgr.hpp"
-#include "PostMgr.hpp"
+#include "PostMgr/PostMgr.hpp"
 #include "GBufferMgr.hpp"
 #include "Entropy/D3DEngine/d3deng_rtarget.hpp"
 
@@ -17,6 +17,7 @@
 // Static data specific to the pc-implementation
 //=============================================================================
 
+// KSS, remove me!
 static const material*         s_pMaterial   = NULL;
 static rigid_geom*             s_pRigidGeom  = NULL;
 static skin_geom*              s_pSkinGeom   = NULL;
@@ -34,7 +35,7 @@ void platform_Init( void )
     g_MaterialMgr.Init();
     g_PostMgr.Init(); 
     g_RigidVertMgr.Init( sizeof( rigid_geom::vertex_pc ) );
-    g_SkinVertMgr.Init(); //vertex_mgr::Init( sizeof( skin_geom::vertex_pc ) );
+    g_SkinVertMgr.Init();
 }
 
 //=============================================================================
@@ -42,11 +43,11 @@ void platform_Init( void )
 static
 void platform_Kill( void )
 {
-    g_GBufferMgr.Kill();
-    g_MaterialMgr.Kill();
-    g_PostMgr.Kill();
+    g_SkinVertMgr.Kill(); 
     g_RigidVertMgr.Kill();
-    g_SkinVertMgr.Kill();    
+    g_PostMgr.Kill();
+    g_MaterialMgr.Kill();
+    g_GBufferMgr.Kill();  
 }
 
 //=============================================================================
@@ -659,6 +660,9 @@ void platform_SetGlowMaterial( const xbitmap& Bitmap, s32 BlendMode, xbool ZTest
     g_MaterialMgr.SetBitmap( &Bitmap, TEXTURE_SLOT_DIFFUSE );
     g_MaterialMgr.SetBlendMode( BlendMode );
     g_MaterialMgr.SetDepthTestEnabled( ZTestEnabled );
+    
+    s_pDrawBitmap = &Bitmap;
+    s_BlendMode = BlendMode;    
 }
 
 //=============================================================================
@@ -669,6 +673,9 @@ void platform_SetEnvMapMaterial( const xbitmap& Bitmap, s32 BlendMode, xbool ZTe
     g_MaterialMgr.SetBitmap( &Bitmap, TEXTURE_SLOT_DIFFUSE );
     g_MaterialMgr.SetBlendMode( BlendMode );
     g_MaterialMgr.SetDepthTestEnabled( ZTestEnabled );
+    
+    s_pDrawBitmap = &Bitmap;
+    s_BlendMode = BlendMode;    
 }
 
 //=============================================================================
@@ -677,7 +684,7 @@ static
 void platform_SetDistortionMaterial( s32 BlendMode, xbool ZTestEnabled )
 {
     g_MaterialMgr.SetBlendMode( BlendMode );
-    g_MaterialMgr.SetDepthTestEnabled( ZTestEnabled );
+    g_MaterialMgr.SetDepthTestEnabled( ZTestEnabled );    
 }
 
 //=============================================================================
