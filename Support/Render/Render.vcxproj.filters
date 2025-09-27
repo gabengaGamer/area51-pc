@@ -1,21 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <Filter Include="PS2">
-      <UniqueIdentifier>{26f76584-1777-4414-a58b-e34c6b4377cf}</UniqueIdentifier>
-      <Extensions>cpp;hpp;vu</Extensions>
-    </Filter>
-    <Filter Include="PS2\vu0">
-      <UniqueIdentifier>{14345fec-3f31-4635-a98e-fe8989dd8e2c}</UniqueIdentifier>
-      <Extensions>cpp;hpp</Extensions>
-    </Filter>
-    <Filter Include="PS2\vu1">
-      <UniqueIdentifier>{6e88db9c-9c33-41ed-a989-6e4d70ecdfd8}</UniqueIdentifier>
-      <Extensions>cpp;hpp</Extensions>
-    </Filter>
-    <Filter Include="PS2\vu1\mcode">
-      <UniqueIdentifier>{ffc4e99b-57a2-4297-bcc2-bde056f78223}</UniqueIdentifier>
-    </Filter>
     <Filter Include="PC">
       <UniqueIdentifier>{8f9eb36c-f5da-4a90-94b0-c4a00acda577}</UniqueIdentifier>
       <Extensions>cpp;hpp</Extensions>
@@ -23,14 +8,14 @@
     <Filter Include="LeastSquares">
       <UniqueIdentifier>{5b4a0b8c-44b0-4876-823f-0baf8d4018e9}</UniqueIdentifier>
     </Filter>
-    <Filter Include="XBOX">
-      <UniqueIdentifier>{f76f3130-e008-4836-b90a-f472e783ec23}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Editor">
       <UniqueIdentifier>{fe1a3ca0-29cf-4322-9ea7-14c2ff615a83}</UniqueIdentifier>
     </Filter>
     <Filter Include="Editor\Icons">
       <UniqueIdentifier>{1d4c8db3-2ebb-47ba-b868-25180cf10329}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="PC\PostMgr">
+      <UniqueIdentifier>{ab60e8ec-bda8-4643-a675-fb58a517d75e}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -46,44 +31,30 @@
     <ClCompile Include="Editor\editor_icons.cpp">
       <Filter>Editor</Filter>
     </ClCompile>
-    <ClCompile Include="CollisionVolume.cpp">
-      <Filter>PS2</Filter>
-    </ClCompile>
-    <ClCompile Include="geom.cpp">
-      <Filter>PS2</Filter>
-    </ClCompile>
-    <ClCompile Include="LightMgr.cpp">
-      <Filter>PS2</Filter>
-    </ClCompile>
-    <ClCompile Include="Material.cpp">
-      <Filter>PS2</Filter>
-    </ClCompile>
-    <ClCompile Include="MaterialArray.cpp">
-      <Filter>PS2</Filter>
-    </ClCompile>
-    <ClCompile Include="ProjTextureMgr.cpp">
-      <Filter>PS2</Filter>
-    </ClCompile>
-    <ClCompile Include="Render.cpp">
-      <Filter>PS2</Filter>
-    </ClCompile>
-    <ClCompile Include="RigidGeom.cpp">
-      <Filter>PS2</Filter>
-    </ClCompile>
-    <ClCompile Include="SkinGeom.cpp">
-      <Filter>PS2</Filter>
-    </ClCompile>
-    <ClCompile Include="Texture.cpp">
-      <Filter>PS2</Filter>
-    </ClCompile>
     <ClCompile Include="PC\MaterialMgr.cpp">
-      <Filter>PC</Filter>
-    </ClCompile>
-    <ClCompile Include="PC\PostMgr.cpp">
       <Filter>PC</Filter>
     </ClCompile>
     <ClCompile Include="PC\GBufferMgr.cpp">
       <Filter>PC</Filter>
+    </ClCompile>
+    <ClCompile Include="CollisionVolume.cpp" />
+    <ClCompile Include="geom.cpp" />
+    <ClCompile Include="LightMgr.cpp" />
+    <ClCompile Include="Material.cpp" />
+    <ClCompile Include="MaterialArray.cpp" />
+    <ClCompile Include="ProjTextureMgr.cpp" />
+    <ClCompile Include="Render.cpp" />
+    <ClCompile Include="RigidGeom.cpp" />
+    <ClCompile Include="SkinGeom.cpp" />
+    <ClCompile Include="Texture.cpp" />
+    <ClCompile Include="PC\PostMgr\PostMgr_Filters.cpp">
+      <Filter>PC\PostMgr</Filter>
+    </ClCompile>
+    <ClCompile Include="PC\PostMgr\PostMgr_Glow.cpp">
+      <Filter>PC\PostMgr</Filter>
+    </ClCompile>
+    <ClCompile Include="PC\PostMgr\PostMgr.cpp">
+      <Filter>PC\PostMgr</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -96,200 +67,26 @@
     <ClInclude Include="LeastSquares\LeastSquares.hpp">
       <Filter>LeastSquares</Filter>
     </ClInclude>
-    <ClInclude Include="CollisionVolume.hpp">
-      <Filter>PS2</Filter>
-    </ClInclude>
-    <ClInclude Include="geom.hpp">
-      <Filter>PS2</Filter>
-    </ClInclude>
-    <ClInclude Include="LightMgr.hpp">
-      <Filter>PS2</Filter>
-    </ClInclude>
-    <ClInclude Include="Material.hpp">
-      <Filter>PS2</Filter>
-    </ClInclude>
-    <ClInclude Include="Material_Prefs.hpp">
-      <Filter>PS2</Filter>
-    </ClInclude>
-    <ClInclude Include="MaterialArray.hpp">
-      <Filter>PS2</Filter>
-    </ClInclude>
-    <ClInclude Include="platform_Render.hpp">
-      <Filter>PS2</Filter>
-    </ClInclude>
-    <ClInclude Include="ProjTextureMgr.hpp">
-      <Filter>PS2</Filter>
-    </ClInclude>
-    <ClInclude Include="Render.hpp">
-      <Filter>PS2</Filter>
-    </ClInclude>
-    <ClInclude Include="RigidGeom.hpp">
-      <Filter>PS2</Filter>
-    </ClInclude>
-    <ClInclude Include="SkinGeom.hpp">
-      <Filter>PS2</Filter>
-    </ClInclude>
-    <ClInclude Include="Texture.hpp">
-      <Filter>PS2</Filter>
-    </ClInclude>
-    <ClInclude Include="Editor\editor_icons.hpp">
-      <Filter>PS2\vu0</Filter>
-    </ClInclude>
-    <ClInclude Include="Editor\Icons\icon_ai_nav_con.hpp">
-      <Filter>PS2\vu0</Filter>
-    </ClInclude>
-    <ClInclude Include="Editor\Icons\icon_ai_nav_node.hpp">
-      <Filter>PS2\vu0</Filter>
-    </ClInclude>
-    <ClInclude Include="Editor\Icons\icon_alien_shield.hpp">
-      <Filter>PS2\vu0</Filter>
-    </ClInclude>
-    <ClInclude Include="Editor\Icons\icon_arrow.hpp">
-      <Filter>PS2\vu0</Filter>
-    </ClInclude>
-    <ClInclude Include="Editor\Icons\icon_bot_spawn_point.hpp">
-      <Filter>PS2\vu0</Filter>
-    </ClInclude>
-    <ClInclude Include="Editor\Icons\icon_bp_anchor.hpp">
-      <Filter>PS2\vu0</Filter>
-    </ClInclude>
-    <ClInclude Include="Editor\Icons\icon_bp_bag.hpp">
-      <Filter>PS2\vu0</Filter>
-    </ClInclude>
-    <ClInclude Include="Editor\Icons\icon_camera.hpp">
-      <Filter>PS2\vu0</Filter>
-    </ClInclude>
-    <ClInclude Include="Editor\Icons\icon_character_light.hpp">
-      <Filter>PS2\vu0</Filter>
-    </ClInclude>
-    <ClInclude Include="Editor\Icons\icon_cinema_obj.hpp">
-      <Filter>PS2\vu0</Filter>
-    </ClInclude>
-    <ClInclude Include="Editor\Icons\icon_closed_door.hpp">
-      <Filter>PS2\vu0</Filter>
-    </ClInclude>
-    <ClInclude Include="Editor\Icons\icon_controller.hpp">
-      <Filter>PS2\vu0</Filter>
-    </ClInclude>
-    <ClInclude Include="Editor\Icons\icon_coupler.hpp">
-      <Filter>PS2\vu0</Filter>
-    </ClInclude>
-    <ClInclude Include="Editor\Icons\icon_cover.hpp">
-      <Filter>PS2\vu0</Filter>
-    </ClInclude>
-    <ClInclude Include="Editor\Icons\icon_ctf_flag.hpp">
-      <Filter>PS2\vu0</Filter>
-    </ClInclude>
-    <ClInclude Include="Editor\Icons\icon_damage.hpp">
-      <Filter>PS2\vu0</Filter>
-    </ClInclude>
-    <ClInclude Include="Editor\Icons\icon_dynamic_light.hpp">
-      <Filter>PS2\vu0</Filter>
-    </ClInclude>
-    <ClInclude Include="Editor\Icons\icon_focus_obj.hpp">
-      <Filter>PS2\vu0</Filter>
-    </ClInclude>
-    <ClInclude Include="Editor\Icons\icon_gear.hpp">
-      <Filter>PS2\vu0</Filter>
-    </ClInclude>
-    <ClInclude Include="Editor\Icons\icon_group.hpp">
-      <Filter>PS2\vu0</Filter>
-    </ClInclude>
-    <ClInclude Include="Editor\Icons\icon_hud_obj.hpp">
-      <Filter>PS2\vu0</Filter>
-    </ClInclude>
-    <ClInclude Include="Editor\Icons\icon_input_settings.hpp">
-      <Filter>PS2\vu0</Filter>
-    </ClInclude>
-    <ClInclude Include="Editor\Icons\icon_jump_pad.hpp">
-      <Filter>PS2\vu0</Filter>
-    </ClInclude>
-    <ClInclude Include="Editor\Icons\icon_level_settings.hpp">
-      <Filter>PS2\vu0</Filter>
-    </ClInclude>
-    <ClInclude Include="Editor\Icons\icon_light.hpp">
-      <Filter>PS2\vu0</Filter>
-    </ClInclude>
-    <ClInclude Include="Editor\Icons\icon_loop.hpp">
-      <Filter>PS2\vu0</Filter>
-    </ClInclude>
-    <ClInclude Include="Editor\Icons\icon_marker.hpp">
-      <Filter>PS2\vu0</Filter>
-    </ClInclude>
-    <ClInclude Include="Editor\Icons\icon_mp_settings.hpp">
-      <Filter>PS2\vu0</Filter>
-    </ClInclude>
-    <ClInclude Include="Editor\Icons\icon_music_logic.hpp">
-      <Filter>PS2\vu0</Filter>
-    </ClInclude>
-    <ClInclude Include="Editor\Icons\icon_note.hpp">
-      <Filter>PS2\vu0</Filter>
-    </ClInclude>
-    <ClInclude Include="Editor\Icons\icon_open_door.hpp">
-      <Filter>PS2\vu0</Filter>
-    </ClInclude>
-    <ClInclude Include="Editor\Icons\icon_padlock.hpp">
-      <Filter>PS2\vu0</Filter>
-    </ClInclude>
-    <ClInclude Include="Editor\Icons\icon_particle_emitter.hpp">
-      <Filter>PS2\vu0</Filter>
-    </ClInclude>
-    <ClInclude Include="Editor\Icons\icon_path.hpp">
-      <Filter>PS2\vu0</Filter>
-    </ClInclude>
-    <ClInclude Include="Editor\Icons\icon_pip.hpp">
-      <Filter>PS2\vu0</Filter>
-    </ClInclude>
-    <ClInclude Include="Editor\Icons\icon_player_obj.hpp">
-      <Filter>PS2\vu0</Filter>
-    </ClInclude>
-    <ClInclude Include="Editor\Icons\icon_portal.hpp">
-      <Filter>PS2\vu0</Filter>
-    </ClInclude>
-    <ClInclude Include="Editor\Icons\icon_projector.hpp">
-      <Filter>PS2\vu0</Filter>
-    </ClInclude>
-    <ClInclude Include="Editor\Icons\icon_simple_trigger.hpp">
-      <Filter>PS2\vu0</Filter>
-    </ClInclude>
-    <ClInclude Include="Editor\Icons\icon_sound.hpp">
-      <Filter>PS2\vu0</Filter>
-    </ClInclude>
-    <ClInclude Include="Editor\Icons\icon_spacial_trigger.hpp">
-      <Filter>PS2\vu0</Filter>
-    </ClInclude>
-    <ClInclude Include="Editor\Icons\icon_spawner.hpp">
-      <Filter>PS2\vu0</Filter>
-    </ClInclude>
-    <ClInclude Include="Editor\Icons\icon_spawn_point.hpp">
-      <Filter>PS2\vu0</Filter>
-    </ClInclude>
-    <ClInclude Include="Editor\Icons\icon_sphere.hpp">
-      <Filter>PS2\vu0</Filter>
-    </ClInclude>
-    <ClInclude Include="Editor\Icons\icon_task_obj.hpp">
-      <Filter>PS2\vu0</Filter>
-    </ClInclude>
-    <ClInclude Include="Editor\Icons\icon_tracker.hpp">
-      <Filter>PS2\vu0</Filter>
-    </ClInclude>
-    <ClInclude Include="Editor\Icons\icon_trigger.hpp">
-      <Filter>PS2\vu0</Filter>
-    </ClInclude>
-    <ClInclude Include="Editor\Icons\icon_viewable_trigger.hpp">
-      <Filter>PS2\vu0</Filter>
-    </ClInclude>
-    <ClInclude Include="Editor\Icons\icon_volumetric_light.hpp">
-      <Filter>PS2\vu0</Filter>
-    </ClInclude>
     <ClInclude Include="PC\MaterialMgr.hpp">
-      <Filter>PC</Filter>
-    </ClInclude>
-    <ClInclude Include="PC\PostMgr.hpp">
       <Filter>PC</Filter>
     </ClInclude>
     <ClInclude Include="PC\GBufferMgr.hpp">
       <Filter>PC</Filter>
+    </ClInclude>
+    <ClInclude Include="Texture.hpp" />
+    <ClInclude Include="CollisionVolume.hpp" />
+    <ClInclude Include="geom.hpp" />
+    <ClInclude Include="LightMgr.hpp" />
+    <ClInclude Include="Material.hpp" />
+    <ClInclude Include="Material_Prefs.hpp" />
+    <ClInclude Include="MaterialArray.hpp" />
+    <ClInclude Include="platform_Render.hpp" />
+    <ClInclude Include="ProjTextureMgr.hpp" />
+    <ClInclude Include="Render.hpp" />
+    <ClInclude Include="RigidGeom.hpp" />
+    <ClInclude Include="SkinGeom.hpp" />
+    <ClInclude Include="PC\PostMgr\PostMgr.hpp">
+      <Filter>PC\PostMgr</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -1,9 +1,9 @@
 //==============================================================================
-//  
+// 
 //  PostMgr.hpp
-//  
-//  Post-processing Manager for PC platform
-//
+// 
+//  Post-processing manager for PC platform
+// 
 //==============================================================================
 
 #ifndef POST_MANAGER_HPP
@@ -23,15 +23,17 @@
 //  INCLUDES
 //==============================================================================
 
-#include "../Texture.hpp"
-#include "../render.hpp"
-#include "e_engine.hpp"
+#include "../../Texture.hpp"
+#include "../../Render.hpp"
+
+#include "../GBufferMgr.hpp"
 
 #include "Entropy/D3DEngine/d3deng_rtarget.hpp"
 #include "Entropy/D3DEngine/d3deng_state.hpp"
 #include "Entropy/D3DEngine/d3deng_shader.hpp"
 #include "Entropy/D3DEngine/d3deng_composite.hpp"
-#include "GBufferMgr.hpp"
+
+#include "e_engine.hpp"
 
 //==============================================================================
 //  CONSTANTS
@@ -47,25 +49,31 @@
 struct post_motion_blur_params
 {
     f32     Intensity;
-    
+
     post_motion_blur_params() : Intensity(0.0f) {}
 };
+
+//------------------------------------------------------------------------------
 
 struct post_glow_params
 {
     f32     MotionBlurIntensity;
     s32     Cutoff;
-    
+
     post_glow_params() : MotionBlurIntensity(0.0f), Cutoff(0) {}
 };
+
+//------------------------------------------------------------------------------
 
 struct post_mult_screen_params
 {
     xcolor                      Color;
     render::post_screen_blend   Blend;
-    
+
     post_mult_screen_params() : Color(255,255,255,255), Blend((render::post_screen_blend)0) {}
 };
+
+//------------------------------------------------------------------------------
 
 struct post_radial_blur_params
 {
@@ -73,9 +81,11 @@ struct post_radial_blur_params
     radian  Angle;
     f32     AlphaSub;
     f32     AlphaScale;
-    
+
     post_radial_blur_params() : Zoom(1.0f), Angle(0.0f), AlphaSub(0.0f), AlphaScale(1.0f) {}
 };
+
+//------------------------------------------------------------------------------
 
 struct post_fog_filter_params
 {
@@ -84,7 +94,7 @@ struct post_fog_filter_params
     f32                         Param1[5];
     f32                         Param2[5];
     s32                         PaletteIndex;
-    
+
     post_fog_filter_params() : PaletteIndex(-1)
     {
         for( s32 i = 0; i < 5; i++ )
@@ -97,6 +107,8 @@ struct post_fog_filter_params
     }
 };
 
+//------------------------------------------------------------------------------
+
 struct post_mip_filter_params
 {
     render::post_falloff_fn     Fn[4];
@@ -106,7 +118,7 @@ struct post_mip_filter_params
     s32                         Count[4];
     f32                         Offset[4];
     s32                         PaletteIndex;
-    
+
     post_mip_filter_params() : PaletteIndex(-1)
     {
         for( s32 i = 0; i < 4; i++ )
@@ -121,19 +133,23 @@ struct post_mip_filter_params
     }
 };
 
+//------------------------------------------------------------------------------
+
 struct post_simple_params
 {
     xcolor  NoiseColor;
     xcolor  FadeColor;
-    
+
     post_simple_params() : NoiseColor(255,255,255,255), FadeColor(0,0,0,0) {}
 };
+
+//------------------------------------------------------------------------------
 
 struct post_effect_flags
 {
     // Debug override flag
     xbool   Override        : 1;    // Set this to play around with values in the debugger
-    
+
     // Effect enable flags
     xbool   DoMotionBlur    : 1;
     xbool   DoSelfIllumGlow : 1;
@@ -145,7 +161,7 @@ struct post_effect_flags
     xbool   DoMipCustom     : 1;
     xbool   DoNoise         : 1;
     xbool   DoScreenFade    : 1;
-    
+
     post_effect_flags() { x_memset( this, 0, sizeof(post_effect_flags) ); }
 };
 
@@ -169,7 +185,7 @@ public:
     void        MotionBlur                  ( f32 Intensity );
     void        ZFogFilter                  ( render::post_falloff_fn Fn, xcolor Color, f32 Param1, f32 Param2 );
     void        ZFogFilter                  ( render::post_falloff_fn Fn, s32 PaletteIndex );
-    void        MipFilter                   ( s32 nFilters, f32 Offset, render::post_falloff_fn Fn, 
+    void        MipFilter                   ( s32 nFilters, f32 Offset, render::post_falloff_fn Fn,
                                              xcolor Color, f32 Param1, f32 Param2, s32 PaletteIndex );
     void        MipFilter                   ( s32 nFilters, f32 Offset, render::post_falloff_fn Fn,
                                              const texture::handle& Texture, s32 PaletteIndex );
@@ -180,33 +196,32 @@ public:
 
     // Utility functions
     xcolor      GetFogValue                 ( const vector3& WorldPos, s32 PaletteIndex );
-	void        OnGlowStageBeginFrame       ( void );
-    void        OnGlowStageBeforePresent    ( void );
+	
+	static void GlowStage_BeginFrameThunk   ( void );
+    static void GlowStage_BeforePresentThunk( void );
 
 protected:
 
     // Internal effect processing functions
-    void        pc_MotionBlur               ( void );
-    void        pc_ApplySelfIllumGlows      ( void );
-    void        pc_MultScreen               ( void );
-    void        pc_RadialBlur               ( void );
-    void        pc_ZFogFilter               ( void );
-    void        pc_MipFilter                ( void );
-    void        pc_NoiseFilter              ( void );
-    void        pc_ScreenFade               ( void );
+    void        ExecuteMotionBlur           ( void );
+    void        ExecuteSelfIllumGlow        ( void );
+    void        ExecuteMultScreen           ( void );
+    void        ExecuteRadialBlur           ( void );
+    void        ExecuteZFogFilter           ( void );
+    void        ExecuteMipFilter            ( void );
+    void        ExecuteNoiseFilter          ( void );
+    void        ExecuteScreenFade           ( void );
 
     void        UpdateGlowStageBegin        ( void );
     void        CompositePendingGlow        ( void );
-    xbool       EnsureGlowTargets           ( u32 SourceWidth, u32 SourceHeight );
-    void        ReleaseGlowTargets          ( void );
-    void        UpdateGlowConstants         ( f32 Cutoff, f32 IntensityScale, f32 MotionBlend, f32 StepX, f32 StepY );
-	
 
     // Helper functions
-    void        pc_CreateFogPalette         ( render::post_falloff_fn Fn, xcolor Color, f32 Param1, f32 Param2 );
-    void        pc_CreateMipPalette         ( render::post_falloff_fn Fn, xcolor Color, f32 Param1, f32 Param2, s32 PaletteIndex );
-    void        pc_CopyBackBuffer           ( void );
-    void        pc_BuildScreenMips          ( s32 nMips, xbool UseAlpha );
+    void        BuildFogPalette             ( render::post_falloff_fn Fn, xcolor Color, f32 Param1, f32 Param2 );
+    void        BuildMipPalette             ( render::post_falloff_fn Fn, xcolor Color, f32 Param1, f32 Param2, s32 PaletteIndex );
+    void        CopyBackBuffer              ( void );
+    void        BuildScreenMips             ( s32 nMips, xbool UseAlpha );
+    void        PrepareFullscreenQuad       ( void ) const;
+    void        RestoreDefaultState         ( void ) const;
 
 protected:
 
@@ -231,26 +246,43 @@ protected:
     // Fog data
     xbool       m_bFogValid[3];
 
-    // Mip filter data  
+    // Mip filter data
     const xbitmap*  m_pMipTexture;
-	
+
     // Glow rendering resources
-    rtarget                 m_GlowDownsample;
-    rtarget                 m_GlowBlur[2];
-    rtarget                 m_GlowComposite;
-    rtarget                 m_GlowHistory;
-    const rtarget*          m_pActiveGlowResult;
-    u32                     m_GlowBufferWidth;
-    u32                     m_GlowBufferHeight;
-    xbool                   m_bGlowResourcesValid;
-    xbool                   m_bGlowPendingComposite;
+    struct glow_resources
+    {
+        glow_resources();
+
+        void    Initialize                 ( void );
+        void    Shutdown                   ( void );
+        void    ResetFrame                 ( void );
+        xbool   ResizeIfNeeded             ( u32 SourceWidth, u32 SourceHeight );
+        const rtarget*
+                BindForComposite          ( void ) const;
+        void    FinalizeComposite          ( void );
+        void    UpdateConstants            ( f32 Cutoff, f32 IntensityScale, f32 MotionBlend, f32 StepX, f32 StepY );
+        void    SetPendingResult           ( const rtarget* pResult );
+
+        rtarget             Downsample;
+        rtarget             Blur[2];
+        rtarget             Composite;
+        rtarget             History;
+        const rtarget*      ActiveResult;
+        u32                 BufferWidth;
+        u32                 BufferHeight;
+        xbool               bResourcesValid;
+        xbool               bPendingComposite;
+        ID3D11PixelShader*  pDownsamplePS;
+        ID3D11PixelShader*  pBlurHPS;
+        ID3D11PixelShader*  pBlurVPS;
+        ID3D11PixelShader*  pCombinePS;
+        ID3D11PixelShader*  pCompositePS;
+        ID3D11Buffer*       pConstantBuffer;
+    };
+
+    glow_resources          m_GlowResources;
     xbool                   m_bGlowStageRegistered;
-    ID3D11PixelShader*      m_pGlowDownsamplePS;
-    ID3D11PixelShader*      m_pGlowBlurHPS;
-    ID3D11PixelShader*      m_pGlowBlurVPS;
-    ID3D11PixelShader*      m_pGlowCombinePS;
-    ID3D11PixelShader*      m_pGlowCompositePS;
-    ID3D11Buffer*           m_pGlowConstantBuffer;	
 };
 
 //==============================================================================
