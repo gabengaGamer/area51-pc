@@ -1,7 +1,7 @@
 //==============================================================================
-//  
+//
 //  MaterialMgr.hpp
-//  
+//
 //  Material Manager for PC platform
 //
 //==============================================================================
@@ -23,10 +23,14 @@
 //  INCLUDES
 //==============================================================================
 
-#include "../Texture.hpp"
-#include "../ProjTextureMgr.hpp"
-#include "../Material_Prefs.hpp"
-#include "../Material.hpp"
+#include "../../Texture.hpp"
+#include "../../ProjTextureMgr.hpp"
+#include "../../Material_Prefs.hpp"
+#include "../../Material.hpp"
+#include "../../Render.hpp"
+
+#include "e_engine.hpp"
+
 #include "Entropy/D3DEngine/d3deng_shader.hpp"
 #include "Entropy/D3DEngine/d3deng_rtarget.hpp"
 #include "Entropy/D3DEngine/d3deng_state.hpp"
@@ -45,7 +49,7 @@
 enum material_flags
 {
     MATERIAL_FLAG_ALPHA_TEST        = (1<<0),
-    MATERIAL_FLAG_ADDITIVE          = (1<<1), 
+    MATERIAL_FLAG_ADDITIVE          = (1<<1),
     MATERIAL_FLAG_SUBTRACTIVE       = (1<<2),
     MATERIAL_FLAG_VERTEX_COLOR      = (1<<3),
     MATERIAL_FLAG_TWO_SIDED         = (1<<4),
@@ -55,10 +59,10 @@ enum material_flags
     MATERIAL_FLAG_PERPOLY_ILLUM     = (1<<8),
     MATERIAL_FLAG_PERPIXEL_ENV      = (1<<9),
     MATERIAL_FLAG_PERPOLY_ENV       = (1<<10),
-    MATERIAL_FLAG_HAS_DETAIL        = (1<<11), 
+    MATERIAL_FLAG_HAS_DETAIL        = (1<<11),
     MATERIAL_FLAG_HAS_ENVIRONMENT   = (1<<12),
     MATERIAL_FLAG_PROJ_LIGHT        = (1<<13),
-    MATERIAL_FLAG_PROJ_SHADOW       = (1<<14), 
+    MATERIAL_FLAG_PROJ_SHADOW       = (1<<14),
 };
 
 //==============================================================================
@@ -73,27 +77,33 @@ struct d3d_lighting
     vector4 AmbCol;
 };
 
+//------------------------------------------------------------------------------
+
 struct cb_rigid_matrices
 {
     matrix4 World;
     matrix4 View;
     matrix4 Projection;
-    
+
     u32     MaterialFlags;
     f32     AlphaRef;
     vector3 CameraPosition;
     f32     Padding[2];
 };
 
+//------------------------------------------------------------------------------
+
 struct cb_skin_matrices
 {
     matrix4 View;                         // World to view matrix
     matrix4 Projection;                   // View to clip matrix
-    
+
     u32     MaterialFlags;                // Material feature flags
     f32     AlphaRef;                     // Alpha test reference
     f32     Padding[2];                   // Padding for alignment
 };
+
+//------------------------------------------------------------------------------
 
 struct cb_proj_textures
 {
@@ -105,6 +115,8 @@ struct cb_proj_textures
     f32     Padding[3];
 };
 
+//------------------------------------------------------------------------------
+
 struct cb_lighting
 {
     vector4 LightVec[MAX_GEOM_LIGHTS];
@@ -113,6 +125,8 @@ struct cb_lighting
     u32     LightCount;
     f32     Padding[3];
 };
+
+//------------------------------------------------------------------------------
 
 struct cb_skin_bone
 {
@@ -148,7 +162,7 @@ public:
                                       const material*     pMaterial,
                                       u32                 RenderFlags );
 
-    // Skin material management  
+    // Skin material management
     void        SetSkinMaterial     ( const matrix4*      pL2W,
                                       const bbox*         pBBox,
                                       const d3d_lighting* pLighting,
@@ -158,7 +172,7 @@ public:
     void        ResetProjTextures   ( void );
 
     // General material functions
-    void        SetBitmap           ( const xbitmap* pBitmap, 
+    void        SetBitmap           ( const xbitmap* pBitmap,
                                       texture_slot   slot );
     void        SetBlendMode        ( s32 BlendMode );
     void        SetDepthTestEnabled ( xbool ZTestEnabled );
@@ -169,10 +183,19 @@ public:
 
 protected:
 
+    struct material_constants
+    {
+        u32 Flags;
+        f32 AlphaRef;
+    };
+
     // Shader initialization
     xbool       InitRigidShaders    ( void );
+    void        KillRigidShaders    ( void );
     xbool       InitSkinShaders     ( void );
-    void        KillShaders         ( void );
+    void        KillSkinShaders     ( void );
+    xbool       InitProjTextures    ( void );
+    void        KillProjTextures    ( void );
 
     // Internal helpers
     xbool       UpdateRigidConstants( const matrix4*      pL2W,
@@ -186,6 +209,12 @@ protected:
                                       const bbox&    B,
                                       u32            Slot,
                                       u32            RenderFlags );
+    material_constants BuildMaterialFlags( const material* pMaterial,
+                                           u32             RenderFlags,
+                                           xbool           SupportsDetailMap,
+                                           xbool           IncludeVertexColor ) const;
+    cb_lighting        BuildLightingConstants( const d3d_lighting* pLighting,
+                                               const vector4&      AmbientBias ) const;
 
 protected:
 
@@ -199,7 +228,7 @@ protected:
     ID3D11Buffer*           m_pRigidConstantBuffer;
     ID3D11Buffer*           m_pSkinLightBuffer;
     ID3D11Buffer*           m_pRigidLightBuffer;
-    
+
     // Proj textures resources
     ID3D11Buffer*           m_pProjTextureBuffer;
     ID3D11SamplerState*     m_pProjSampler;
@@ -215,7 +244,7 @@ protected:
     const xbitmap*          m_pCurrentTexture;
     const xbitmap*          m_pCurrentDetailTexture;
     xbool                   m_bZTestEnabled;
-    
+
     // Cached constant buffer data to avoid redundant updates
     cb_rigid_matrices     m_CachedRigidMatrices;
     cb_lighting             m_CachedRigidLighting;
