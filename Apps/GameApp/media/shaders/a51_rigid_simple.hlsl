@@ -91,7 +91,7 @@ struct PS_OUTPUT
     float4 FinalColor : SV_Target0;  // Back buffer output
     float4 Albedo     : SV_Target1;  // Base color for deferred lighting
     float4 Normal     : SV_Target2;  // World-space normals + material info
-    float4 DepthInfo  : SV_Target3;  // NDC depth + linear depth + flags
+    float  DepthInfo  : SV_Target3;  // Linear depth for distance effects
     float4 Glow       : SV_Target4;  // Emissive color + intensity mask
 };
 
@@ -103,7 +103,7 @@ PS_OUTPUT PSMain(PS_INPUT input)
     float4 diffuseColor = txDiffuse.Sample(samLinear, input.UV);
 
     // Apply detail texture
-    if (MaterialFlags & MATERIAL_FLAG_HAS_DETAIL)
+    if (MaterialFlags & MATERIAL_FLAG_DETAIL)
     {
         float4 detailColor = txDetail.Sample(samLinear, input.UV * 4.0);
         diffuseColor *= detailColor * 2.0;
@@ -155,75 +155,6 @@ PS_OUTPUT PSMain(PS_INPUT input)
         finalColor.rgb = ApplyProjShadows( finalColor.rgb, input.WorldPos );
     }
 
-    //---------------------------------------------------------------------------------------
-    
-    // DEBUG
-    
-    //if (MaterialFlags & MATERIAL_FLAG_DISTORTION)
-    //{
-    //    output.FinalColor = float4(0.5, 0.8, 1.0, 1.0);  // BrightBlue
-    //    output.Albedo = float4(0.5, 0.8, 1.0, 1.0);
-    //    output.Normal = float4(0.5, 0.5, 1.0, 0.25);     // Distortion material alpha marker
-    //    output.DepthInfo = float4(input.Pos.z / input.Pos.w, input.LinearDepth, 0.0, 1.0);
-    //    return output;
-    //}
-    //
-    //if (MaterialFlags & MATERIAL_FLAG_PERPIXEL_ENV)
-    //{
-    //    output.FinalColor = float4(0.0, 1.0, 0.0, 1.0);  // Green
-    //    output.Albedo = float4(0.0, 1.0, 0.0, 1.0);
-    //    output.Normal = float4(0.5, 0.5, 1.0, 0.5);      // Environment material alpha marker
-    //    output.DepthInfo = float4(input.Pos.z / input.Pos.w, input.LinearDepth, 0.0, 1.0);
-    //    return output;
-    //}
-    //    
-    //if (MaterialFlags & MATERIAL_FLAG_PERPOLY_ENV)
-    //{
-    //    output.FinalColor = float4(1.0, 1.0, 0.0, 1.0);  // Yellow
-    //    output.Albedo = float4(1.0, 1.0, 0.0, 1.0);
-    //    output.Normal = float4(0.5, 0.5, 1.0, 0.5);      // Environment material alpha marker
-    //    output.DepthInfo = float4(input.Pos.z / input.Pos.w, input.LinearDepth, 0.0, 1.0);
-    //    return output;
-    //}
-    //    
-    //if (MaterialFlags & MATERIAL_FLAG_PERPIXEL_ILLUM)
-    //{
-    //    output.FinalColor = float4(0.0, 0.0, 1.0, 1.0);  // DarkBlue
-    //    output.Albedo = float4(0.0, 0.0, 1.0, 1.0);
-    //    output.Normal = float4(0.5, 0.5, 1.0, 1.0);      // Per-pixel illum alpha marker
-    //    output.DepthInfo = float4(input.Pos.z / input.Pos.w, input.LinearDepth, 0.0, 1.0);
-    //    return output;
-    //}
-    //    
-    //if (MaterialFlags & MATERIAL_FLAG_PERPOLY_ILLUM)
-    //{
-    //    output.FinalColor = float4(0.0, 1.0, 1.0, 1.0);  // Cyan
-    //    output.Albedo = float4(0.0, 1.0, 1.0, 1.0);
-    //    output.Normal = float4(0.5, 0.5, 1.0, 1.0);      // Per-poly illum alpha marker
-    //    output.DepthInfo = float4(input.Pos.z / input.Pos.w, input.LinearDepth, 0.0, 1.0);
-    //    return output;
-    //}
-    //    
-    //if (MaterialFlags & MATERIAL_FLAG_ADDITIVE)
-    //{
-    //    output.FinalColor = float4(1.0, 1.0, 1.0, 1.0);  // White
-    //    output.Albedo = float4(1.0, 1.0, 1.0, 1.0);
-    //    output.Normal = float4(0.5, 0.5, 1.0, 0.0);      // Additive alpha marker
-    //    output.DepthInfo = float4(input.Pos.z / input.Pos.w, input.LinearDepth, 0.0, 1.0);
-    //    return output;
-    //}
-    //    
-    //if (MaterialFlags & MATERIAL_FLAG_SUBTRACTIVE)
-    //{
-    //    output.FinalColor = float4(0.0, 0.0, 0.0, 1.0);  // Black
-    //    output.Albedo = float4(0.0, 0.0, 0.0, 1.0);
-    //    output.Normal = float4(0.5, 0.5, 1.0, 0.0);      // Subtractive alpha marker
-    //    output.DepthInfo = float4(input.Pos.z / input.Pos.w, input.LinearDepth, 0.0, 1.0);
-    //    return output;
-    //}
-    
-    //---------------------------------------------------------------------------------------  
-
     output.Glow = float4(0.0, 0.0, 0.0, 0.0);
 
     // Apply per-pixel illumination
@@ -258,12 +189,7 @@ PS_OUTPUT PSMain(PS_INPUT input)
     output.FinalColor = finalColor;
     output.Albedo     = baseColor;
     output.Normal     = float4(input.Normal * 0.5 + 0.5, 0.0);
-    output.DepthInfo  = float4(
-        input.Pos.z / input.Pos.w,  // NDC depth for position reconstruction
-        input.LinearDepth,          // Linear depth for distance effects
-        0.0,
-        finalColor.a                // Alpha for transparency effects
-    );
+    output.DepthInfo  = input.LinearDepth;
 
     return output;
 }

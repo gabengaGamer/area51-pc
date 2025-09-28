@@ -114,7 +114,7 @@ struct PS_OUTPUT
     float4 FinalColor : SV_Target0;  // Back buffer output
     float4 Albedo     : SV_Target1;  // Base color for deferred lighting
     float4 Normal     : SV_Target2;  // World-space normals
-    float4 DepthInfo  : SV_Target3;  // NDC depth + linear depth + flags
+    float  DepthInfo  : SV_Target3;  // Linear depth for distance effects
     float4 Glow       : SV_Target4;  // Emissive color + intensity mask
 };
 
@@ -190,12 +190,7 @@ PS_OUTPUT PSMain(PS_INPUT input)
     output.FinalColor = finalColor;
     output.Albedo     = baseColor;
     output.Normal     = float4(input.Normal * 0.5 + 0.5, 0.0);
-    output.DepthInfo  = float4(
-        input.Pos.z / input.Pos.w,  // NDC depth for position reconstruction
-        input.LinearDepth,          // Linear depth for distance effects
-        0.0,
-        finalColor.a                // Alpha for transparency effects
-    );
+    output.DepthInfo  = input.LinearDepth;
 
     return output;
 }

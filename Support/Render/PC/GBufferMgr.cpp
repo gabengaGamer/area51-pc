@@ -125,11 +125,17 @@ xbool gbuffer_mgr::InitGBuffer( u32 Width, u32 Height )
 
 void gbuffer_mgr::DestroyGBuffer( void )
 {
+    if( m_bGBufferTargetsActive )
+    {
+        rtarget_SetBackBuffer();
+        m_bGBufferTargetsActive = FALSE;
+    }
+
     for( u32 i = 0; i < (GBUFFER_TARGET_COUNT - 2); i++ )
         rtarget_Destroy( m_GBufferTarget[i] );
-    
+
     rtarget_Destroy( m_GBufferDepth );
-    
+
     m_bGBufferValid = FALSE;
     m_GBufferWidth = 0;
     m_GBufferHeight = 0;
@@ -210,7 +216,7 @@ void gbuffer_mgr::ClearGBuffer( void )
     g_pd3dContext->ClearRenderTargetView(m_GBufferTarget[0].pRenderTargetView, clearAlbedo);
 
     // Normals
-    static const f32 clearNormal[4] = { 0.5f, 0.5f, 1.0f, 0.5f };
+    static const f32 clearNormal[4] = { 0.5f, 0.5f, 1.0f, 0.0f };
     g_pd3dContext->ClearRenderTargetView(m_GBufferTarget[1].pRenderTargetView, clearNormal);
 
     // Depth info
