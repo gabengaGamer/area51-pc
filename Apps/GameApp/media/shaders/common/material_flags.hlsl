@@ -17,10 +17,9 @@
 #define MATERIAL_FLAG_PERPOLY_ILLUM     (1u<<8)
 #define MATERIAL_FLAG_PERPIXEL_ENV      (1u<<9)
 #define MATERIAL_FLAG_PERPOLY_ENV       (1u<<10)
-#define MATERIAL_FLAG_HAS_DETAIL        (1u<<11)
-#define MATERIAL_FLAG_HAS_ENVIRONMENT   (1u<<12)
-#define MATERIAL_FLAG_PROJ_LIGHT        (1u<<13)
-#define MATERIAL_FLAG_PROJ_SHADOW       (1u<<14)
+#define MATERIAL_FLAG_DETAIL            (1u<<11)
+#define MATERIAL_FLAG_PROJ_LIGHT        (1u<<12)
+#define MATERIAL_FLAG_PROJ_SHADOW       (1u<<13)
 
 #define MAX_PROJ_LIGHTS  10
 #define MAX_PROJ_SHADOWS 10
