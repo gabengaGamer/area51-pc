@@ -1,7 +1,9 @@
 //==============================================================================
+//
 //  LeastSquares.cpp
 //
 //  Copyright (c) 2004 Inevitable Entertainment Inc. All rights reserved.
+//
 //==============================================================================
 
 #include "x_plus.hpp"
@@ -221,22 +223,6 @@ f32 least_squares::Evaluate( f32 X )
     {
         Total += XPowers[i] * m_Coeffs[i];
     }
-
-/*
-    // figure out the powers of x
-    f32 XPowers[MAX_POLYNOMIAL_DEGREE+1];
-    XPowers[0] = 1.0;
-    XPowers[1] = (f32)X;
-    for( i = 2; i <= m_Degree; i++ )
-        XPowers[i] = (f32)X * XPowers[i-1];
-
-    // evaluate the polynomial
-    f32 Total = 0.0;
-    for( i = 0; i <= m_Degree; i++ )
-    {
-        Total += XPowers[i] * m_Coeffs[i];
-    }
-*/
 
     return (f32)Total;
 }
