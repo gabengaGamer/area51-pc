@@ -154,6 +154,10 @@ xbool material_mgr::UpdateRigidConstants( const matrix4*      pL2W,
     if( !pView )
         return FALSE;
 
+    f32 nearZ = 0.0f;
+    f32 farZ  = 0.0f;
+    pView->GetZLimits( nearZ, farZ );
+
     cb_rigid_matrices rigidMatrices;
 
     if( pL2W )
@@ -164,8 +168,8 @@ xbool material_mgr::UpdateRigidConstants( const matrix4*      pL2W,
     rigidMatrices.View           = pView->GetW2V();
     rigidMatrices.Projection     = pView->GetV2C();
     rigidMatrices.CameraPosition = pView->GetPosition();
-    rigidMatrices.Padding[0]     = 0.0f;
-    rigidMatrices.Padding[1]     = 0.0f;
+    rigidMatrices.DepthParams[0] = nearZ;
+    rigidMatrices.DepthParams[1] = farZ;
 
     const material_constants constants = BuildMaterialFlags( pMaterial, RenderFlags, TRUE, TRUE );
     rigidMatrices.MaterialFlags = constants.Flags;

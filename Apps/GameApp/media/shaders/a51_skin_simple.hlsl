@@ -21,7 +21,7 @@ cbuffer cbMatrices : register(b0)
     
     uint     MaterialFlags;
     float    AlphaRef;
-    float2   Padding;
+    float2   DepthParams;
 };
 
 struct Bone
@@ -99,7 +99,12 @@ PS_INPUT VSMain(VS_INPUT input)
     // Pass through vertex attributes
     output.WorldPos    = worldPos.xyz;
     output.Normal      = skinnedNorm;
-    output.LinearDepth = length(viewPos.xyz);
+
+    float nearZ = DepthParams.x;
+    float farZ  = DepthParams.y;
+    float invRange = rcp(max(farZ - nearZ, 1e-5f));
+    float linearDepth = (viewPos.z - nearZ) * invRange;
+    output.LinearDepth = saturate(linearDepth);
     output.UV          = input.UVWeights.xy;
 
     return output;

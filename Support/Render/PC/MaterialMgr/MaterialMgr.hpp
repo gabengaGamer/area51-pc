@@ -87,7 +87,7 @@ struct cb_rigid_matrices
     u32     MaterialFlags;
     f32     AlphaRef;
     vector3 CameraPosition;
-    f32     Padding[2];
+    f32     DepthParams[2];
 };
 
 //------------------------------------------------------------------------------
@@ -99,7 +99,7 @@ struct cb_skin_matrices
 
     u32     MaterialFlags;                // Material feature flags
     f32     AlphaRef;                     // Alpha test reference
-    f32     Padding[2];                   // Padding for alignment
+    f32     DepthParams[2];               // Near/Far depth range
 };
 
 //------------------------------------------------------------------------------

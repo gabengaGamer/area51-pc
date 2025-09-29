@@ -160,11 +160,15 @@ xbool material_mgr::UpdateSkinConstants( const d3d_lighting* pLighting,
     if( !pView )
         return FALSE;
 
+    f32 nearZ = 0.0f;
+    f32 farZ  = 0.0f;
+    pView->GetZLimits( nearZ, farZ );
+
     cb_skin_matrices skinMatrices;
     skinMatrices.View        = pView->GetW2V();
     skinMatrices.Projection  = pView->GetV2C();
-    skinMatrices.Padding[0]  = 0.0f;
-    skinMatrices.Padding[1]  = 0.0f;
+    skinMatrices.DepthParams[0] = nearZ;
+    skinMatrices.DepthParams[1] = farZ;
 
     const material_constants constants = BuildMaterialFlags( pMaterial, RenderFlags, FALSE, FALSE );
     skinMatrices.MaterialFlags = constants.Flags;
