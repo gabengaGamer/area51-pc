@@ -246,7 +246,7 @@ void material_mgr::SetBlendMode( s32 BlendMode )
     switch( BlendMode )
     {
         case render::BLEND_MODE_NORMAL:
-            state_SetState( STATE_TYPE_BLEND, STATE_BLEND_NONE );
+            state_SetState( STATE_TYPE_BLEND, STATE_BLEND_ALPHA );
             break;
         case render::BLEND_MODE_ADDITIVE:
             state_SetState( STATE_TYPE_BLEND, STATE_BLEND_ADD );
