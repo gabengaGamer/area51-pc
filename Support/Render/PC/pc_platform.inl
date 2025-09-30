@@ -494,6 +494,8 @@ void platform_Render3dSprites( s32               nSprites,
     draw_SetTexture( *s_pDrawBitmap );
     draw_SetL2W( V2W );
 
+    g_MaterialMgr.SetBlendMode( s_BlendMode );
+
     // loop through the sprites and render them
     s32 i, j;
     for( i = 0; i < nSprites; i++ )
@@ -516,6 +518,7 @@ void platform_Render3dSprites( s32               nSprites,
             Corners[1] = v1;
             Corners[2] = -v0;
             Corners[3] = -v1;
+            
             for( j = 0; j < 4; j++ )
             {
                 Corners[j].Scale( pRotScales[i].Y * UniScale );
@@ -523,11 +526,16 @@ void platform_Render3dSprites( s32               nSprites,
             }
 
             // now render it through draw
-            xcolor C( pColors[i]&0xff, (pColors[i]&0xff00)>>8, (pColors[i]&0xff0000)>>16, (pColors[i]&0xff000000)>>24 );
-            draw_Color( C );
+            xcolor Color( pColors[i] & 0xff,
+                        ( pColors[i] & 0xff00) >> 8,
+                        ( pColors[i] & 0xff0000) >> 16,
+                        ( pColors[i] & 0xff000000) >> 24 );
+            
+            draw_Color( Color );
             draw_UV( 0.0f, 0.0f );  draw_Vertex( Corners[0] );
             draw_UV( 1.0f, 0.0f );  draw_Vertex( Corners[3] );
             draw_UV( 0.0f, 1.0f );  draw_Vertex( Corners[1] );
+            
             draw_UV( 1.0f, 0.0f );  draw_Vertex( Corners[3] );
             draw_UV( 0.0f, 1.0f );  draw_Vertex( Corners[1] );
             draw_UV( 1.0f, 1.0f );  draw_Vertex( Corners[2] );
@@ -549,7 +557,81 @@ void platform_RenderHeatHazeSprites( s32 nSprites, f32 UniScale, const matrix4* 
     (void)pPositions;
     (void)pRotScales;
     (void)pColors;
-    // TODO:
+/*    
+    ASSERTS( s_pDrawBitmap, "You must set a material first!" );
+    if( (nSprites == 0) || !g_pd3dDevice )
+        return;
+
+    const rtarget* pGBufferDepth = g_GBufferMgr.GetGBufferTarget( GBUFFER_DEPTH );
+    const rtarget* pBackBuffer   = rtarget_GetBackBuffer();
+
+    if( pGBufferDepth && pBackBuffer )
+    {
+        rtarget_SetTargets( pBackBuffer, 1, pGBufferDepth );
+    }
+
+    const view* pView = eng_GetView();
+    if( !pView )
+        return;
+
+    const matrix4& V2W = pView->GetV2W();
+    const matrix4& W2V = pView->GetW2V();
+    matrix4 S2V;
+
+    if( pL2W )
+        S2V = W2V * (*pL2W);
+    else
+        S2V = W2V;
+
+    draw_ClearL2W();
+    draw_Begin( DRAW_TRIANGLES, DRAW_TEXTURED | DRAW_USE_ALPHA | DRAW_CULL_NONE | DRAW_NO_ZWRITE );
+    draw_SetTexture( *s_pDrawBitmap );
+    draw_SetL2W( V2W );
+
+    g_MaterialMgr.SetBlendMode( s_BlendMode );
+
+    for( s32 i = 0; i < nSprites; ++i )
+    {
+        if( (pPositions[i].GetIW() & 0x8000) == 0x8000 )
+            continue;
+
+        vector3 Center( pPositions[i].GetX(), pPositions[i].GetY(), pPositions[i].GetZ() );
+        Center = S2V * Center;
+
+        f32 Sine, Cosine;
+        x_sincos( -pRotScales[i].X, Sine, Cosine );
+
+        vector3 Corners[4];
+        vector3 v0( Cosine - Sine, Sine + Cosine, 0.0f );
+        vector3 v1( Cosine + Sine, Sine - Cosine, 0.0f );
+        Corners[0] = v0;
+        Corners[1] = v1;
+        Corners[2] = -v0;
+        Corners[3] = -v1;
+
+        for( s32 j = 0; j < 4; ++j )
+        {
+            Corners[j].Scale( pRotScales[i].Y * UniScale );
+            Corners[j] += Center;
+        }
+
+        xcolor Color( pColors[i] & 0xff,
+                    ( pColors[i] & 0xff00) >> 8,
+                    ( pColors[i] & 0xff0000) >> 16,
+                    ( pColors[i] & 0xff000000) >> 24 );
+
+        draw_Color( Color );
+        draw_UV( 0.0f, 0.0f ); draw_Vertex( Corners[0] );
+        draw_UV( 1.0f, 0.0f ); draw_Vertex( Corners[3] );
+        draw_UV( 0.0f, 1.0f ); draw_Vertex( Corners[1] );
+
+        draw_UV( 1.0f, 0.0f ); draw_Vertex( Corners[3] );
+        draw_UV( 0.0f, 1.0f ); draw_Vertex( Corners[1] );
+        draw_UV( 1.0f, 1.0f ); draw_Vertex( Corners[2] );
+    }
+
+    draw_End();
+*/    
 }
 
 //=============================================================================
@@ -582,6 +664,8 @@ void platform_RenderVelocitySprites( s32            nSprites,
     // NOTE: DRAW_NO_ZWRITE because we don't need spoil the depth buffer
     draw_Begin( DRAW_TRIANGLES, DRAW_TEXTURED | DRAW_USE_ALPHA | DRAW_CULL_NONE | DRAW_NO_ZWRITE );
     draw_SetTexture( *s_pDrawBitmap );
+
+    g_MaterialMgr.SetBlendMode( s_BlendMode );
 
     // Grab out a l2w matrix to use. If one is not specified, then
     // we will use the identity matrix.
@@ -624,11 +708,16 @@ void platform_RenderVelocitySprites( s32            nSprites,
             vector3 V3   = Fore + Up;
 
             // now render it through draw
-            xcolor C( pColors[i]&0xff, (pColors[i]&0xff00)>>8, (pColors[i]&0xff0000)>>16, (pColors[i]&0xff000000)>>24 );
-            draw_Color( C );
+            xcolor Color( pColors[i] & 0xff,
+                        ( pColors[i] & 0xff00) >> 8,
+                        ( pColors[i] & 0xff0000) >> 16,
+                        ( pColors[i] & 0xff000000) >> 24 );
+            
+            draw_Color( Color );
             draw_UV( 1.0f, 0.0f );  draw_Vertex( V0 );
             draw_UV( 0.0f, 0.0f );  draw_Vertex( V1 );
             draw_UV( 1.0f, 1.0f );  draw_Vertex( V3 );
+            
             draw_UV( 0.0f, 0.0f );  draw_Vertex( V1 );
             draw_UV( 1.0f, 1.0f );  draw_Vertex( V3 );
             draw_UV( 0.0f, 1.0f );  draw_Vertex( V2 );
