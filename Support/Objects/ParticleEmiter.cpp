@@ -768,11 +768,8 @@ xbool particle_emitter::OnProperty( prop_query& rPropQuery )
 
         return TRUE;
     }
-#endif // X_EDITOR
-
-#if defined(TARGET_PS2) || defined(TARGET_XBOX)
-    //on the PS2 we do not need to keep around the resource string, just use it to init ourselves..
-
+#else
+    //for non-editor versions
     med_string TmpStr;
 
     if (SMP_UTIL_IsExternalVar(rPropQuery, "Particle Emitter\\FxFile", TmpStr, IsRead))
