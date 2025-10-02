@@ -171,6 +171,80 @@ inline u32 draw_ColorToU32( const xcolor& Color )
 }
 
 //==============================================================================
+
+static
+xbool draw_CreateUITarget( void )
+{
+    if( !g_pd3dDevice )
+        return FALSE;
+    
+    // Get current resolution
+    s32 xRes, yRes;
+    eng_GetRes( xRes, yRes );
+    
+    // Validate resolution
+    if( xRes <= 0 || yRes <= 0 )
+    {
+        x_DebugMsg( "Draw: Invalid resolution %dx%d for UI target\n", xRes, yRes );
+        return FALSE;
+    }
+    
+    // Clean up existing target
+    if( m_bUITargetValid )
+    {
+        rtarget_Destroy( m_UITarget );
+        m_bUITargetValid = FALSE;
+    }
+    
+    // Create UI target with current resolution
+    rtarget_desc Desc;
+    Desc.Width = xRes;
+    Desc.Height = yRes;
+    Desc.Format = RTARGET_FORMAT_RGBA8;
+    Desc.SampleCount = 1;
+    Desc.SampleQuality = 0;
+    Desc.bBindAsTexture = TRUE;
+    
+    m_bUITargetValid = rtarget_Create( m_UITarget, Desc );
+    
+    if( m_bUITargetValid )
+    {
+        x_DebugMsg( "Draw: UI target created with resolution %dx%d\n", xRes, yRes );
+    }
+    else
+    {
+        x_DebugMsg( "Draw: Failed to create UI target with resolution %dx%d\n", xRes, yRes );
+    }
+    
+    return m_bUITargetValid;
+}
+
+//==============================================================================
+
+static
+xbool draw_ValidateUITarget( void )
+{
+    // If target doesn't exist, create it
+    if( !m_bUITargetValid )
+    {
+        return draw_CreateUITarget();
+    }
+    
+    // Check if resolution changed
+    s32 xRes, yRes;
+    eng_GetRes( xRes, yRes );
+    
+    if( m_UITarget.Desc.Width != (u32)xRes || m_UITarget.Desc.Height != (u32)yRes )
+    {
+        x_DebugMsg( "Draw: UI target resolution changed from %dx%d to %dx%d, recreating\n",
+                   m_UITarget.Desc.Width, m_UITarget.Desc.Height, xRes, yRes );
+        return draw_CreateUITarget();
+    }
+    
+    return TRUE;
+}
+
+//==============================================================================
 // FUNCTIONS
 //==============================================================================
 
@@ -270,24 +344,24 @@ void draw_Init( void )
 
         ASSERT( m_pConstantBuffer && m_pProjectionBuffer && m_pFlagsBuffer );
 
-        // Load shaders using shader system		
-		m_pVertexShader3d = shader_CompileVertexWithLayout( s_VertexShader3D, 
+        // Load shaders using shader system        
+        m_pVertexShader3d = shader_CompileVertexWithLayout( s_VertexShader3D, 
                                                             &m_pInputLayout3d, 
                                                             s_InputLayout3D, 
                                                             ARRAYSIZE(s_InputLayout3D), 
-									                        "main",
-									                        "vs_5_0" );
-		
-		m_pVertexShader2d = shader_CompileVertexWithLayout( s_VertexShader2D, 
+                                                            "main",
+                                                            "vs_5_0" );
+        
+        m_pVertexShader2d = shader_CompileVertexWithLayout( s_VertexShader2D, 
                                                             &m_pInputLayout2d, 
                                                             s_InputLayout2D, 
                                                             ARRAYSIZE(s_InputLayout2D), 
-									                        "main",
-									                        "vs_5_0" );
-			
+                                                            "main",
+                                                            "vs_5_0" );
+            
         m_pPixelShader = shader_CompilePixel( s_PixelShaderBasic, 
-	                                        "main",
-							                "ps_5_0" );
+                                            "main",
+                                            "ps_5_0" );
 
         if( !m_pVertexShader3d || !m_pVertexShader2d || !m_pPixelShader )
         {
@@ -310,21 +384,11 @@ void draw_Init( void )
     m_pColors = NULL;
     m_pVerts  = NULL;
 
-    // Initialize 2D target
+    // Initialize UI target with current screen resolution
     m_bUITargetValid = FALSE;
-    
-    // Try to create default 2D target
     if( g_pd3dDevice )
     {
-        rtarget_desc Desc;
-        Desc.Width = 1024;
-        Desc.Height = 768; 
-        Desc.Format = RTARGET_FORMAT_RGBA8;
-        Desc.SampleCount = 1;
-        Desc.SampleQuality = 0;
-        Desc.bBindAsTexture = TRUE;
-        
-        m_bUITargetValid = rtarget_Create( m_UITarget, Desc );
+        draw_CreateUITarget();
     }
 
     // Tell system we are initialized
@@ -436,7 +500,7 @@ void draw_SetMatrices( const view* pView )
             cbData.pad0 = 0.0f;
             cbData.pad1 = 0.0f;
 
-			shader_UpdateConstantBuffer( m_pProjectionBuffer, &cbData, sizeof(cbData) );
+            shader_UpdateConstantBuffer( m_pProjectionBuffer, &cbData, sizeof(cbData) );
             g_pd3dContext->VSSetConstantBuffers( 1, 1, &m_pProjectionBuffer );
         }
     }
@@ -458,7 +522,7 @@ void draw_SetMatrices( const view* pView )
             cbData.Projection = pView->GetV2C();
         }
 
-		shader_UpdateConstantBuffer( m_pConstantBuffer, &cbData, sizeof(cbData) );
+        shader_UpdateConstantBuffer( m_pConstantBuffer, &cbData, sizeof(cbData) );
         g_pd3dContext->VSSetConstantBuffers( 0, 1, &m_pConstantBuffer );
     }
 
@@ -469,7 +533,7 @@ void draw_SetMatrices( const view* pView )
     cbFlags.UsePremultipliedAlpha = (m_IsUI && m_bUITargetValid) ? 1 : 0;
     cbFlags.pad1 = 0;
 
-	shader_UpdateConstantBuffer( m_pFlagsBuffer, &cbFlags, sizeof(cbFlags) );
+    shader_UpdateConstantBuffer( m_pFlagsBuffer, &cbFlags, sizeof(cbFlags) );
     g_pd3dContext->PSSetConstantBuffers( 1, 1, &m_pFlagsBuffer );
 }
 
@@ -484,7 +548,7 @@ void draw_Dispatch( void )
     HRESULT Error;
 
     if( m_iVertex != 0 )
-    {		
+    {        
         // Copy staging data to GPU buffer
         D3D11_MAPPED_SUBRESOURCE mappedResource;
         
@@ -515,12 +579,12 @@ void draw_Dispatch( void )
         draw_SetMatrices( pView );
 
         // Set input layout and shaders
-		
-		// GS: TODO: For now, in the case of DRAW_CUSTOM_[]_SHADER we only set a custom shader, 
-		// without custom IASetVertexBuffers and IASetInputLayout, 
-		// in the future it makes sense to make this code customizable too, 
-		// maybe shoud use DRAW_CUSTOM_[]_BUFFER and DRAW_CUSTOM_[]_LAYOUT???	
-		
+        
+        // GS: TODO: For now, in the case of DRAW_CUSTOM_[]_SHADER we only set a custom shader, 
+        // without custom IASetVertexBuffers and IASetInputLayout, 
+        // in the future it makes sense to make this code customizable too, 
+        // maybe shoud use DRAW_CUSTOM_[]_BUFFER and DRAW_CUSTOM_[]_LAYOUT???    
+        
         if( m_Is2D && !(m_Flags & DRAW_2D_KEEP_Z) )
         {
             g_pd3dContext->IASetInputLayout( m_pInputLayout2d );
@@ -616,7 +680,7 @@ void draw_DispatchRects( void )
 
     // Only if there are quads to process
     if( nQuads > 0 )
-    {		
+    {        
         if( m_Is2D )
         {
             drawvertex2d*   ps     = &m_pActiveBuffer2dStart[(nQuads-1)*2];
@@ -725,7 +789,7 @@ void draw_DispatchSprites( void )
 
     // If there are any sprites to draw
     if( m_iSprite > 0 )
-    {	
+    {    
         // Get View
         const view* pView = eng_GetView();
         ASSERT( pView );
@@ -928,7 +992,7 @@ void draw_SetupRenderStates( u32 Flags, xbool IsTextured )
             state_SetState( STATE_TYPE_BLEND, STATE_BLEND_PREMULT_ADD );
         else
             state_SetState( STATE_TYPE_BLEND, STATE_BLEND_ADD );
-	}
+    }
     else if( Flags & DRAW_BLEND_SUB )
     {
         if( m_IsUI && m_bUITargetValid )
@@ -937,15 +1001,15 @@ void draw_SetupRenderStates( u32 Flags, xbool IsTextured )
             state_SetState( STATE_TYPE_BLEND, STATE_BLEND_SUB );
     }
     else if( Flags & DRAW_USE_ALPHA )
-	{
+    {
         if( m_IsUI && m_bUITargetValid )
-			state_SetState( STATE_TYPE_BLEND, STATE_BLEND_PREMULT_ALPHA );
+            state_SetState( STATE_TYPE_BLEND, STATE_BLEND_PREMULT_ALPHA );
         else
             state_SetState( STATE_TYPE_BLEND, STATE_BLEND_ALPHA );
-	}
+    }
     else
         //state_SetState( STATE_TYPE_BLEND, STATE_BLEND_ALPHA );
-	    state_SetState( STATE_TYPE_BLEND, STATE_BLEND_NONE );
+        state_SetState( STATE_TYPE_BLEND, STATE_BLEND_NONE );
 
     // Setup depth mode
     if( Flags & DRAW_NO_ZBUFFER )
@@ -1032,7 +1096,7 @@ void draw_Begin( draw_primitive Primitive, u32 Flags )
     m_Primitive  = Primitive;
     m_Flags      = Flags;
     m_Is2D       = Flags & (DRAW_2D | DRAW_2D_KEEP_Z);
-	m_IsUI       = Flags & DRAW_UI_RTARGET;
+    m_IsUI       = Flags & DRAW_UI_RTARGET;
     m_IsTextured = Flags & DRAW_TEXTURED;
 
     // Initialize internal state
@@ -1048,11 +1112,20 @@ void draw_Begin( draw_primitive Primitive, u32 Flags )
 
     // Setup all render states using centralized state system
     draw_SetupRenderStates( Flags, m_IsTextured );
-	
-	if( m_IsUI && m_bUITargetValid )
+    
+    if( m_IsUI )
     {
-        rtarget_PushTargets();
-        rtarget_SetTargets( &m_UITarget, 1, NULL );
+        // Validate and potentially recreate UI target if resolution changed
+        if( draw_ValidateUITarget() )
+        {
+            rtarget_PushTargets();
+            rtarget_SetTargets( &m_UITarget, 1, NULL );
+        }
+        else
+        {
+            x_DebugMsg( "Draw: Failed to validate UI target, disabling UI rendering\n" );
+            m_IsUI = FALSE;
+        }
     }
 }
 
@@ -1071,11 +1144,11 @@ void draw_End( void )
     // Flush any drawing we have queued up
     m_pfnDispatch();
     
-	if( m_IsUI && m_bUITargetValid )
+    if( m_IsUI && m_bUITargetValid )
     {
         rtarget_PopTargets();
     }
-	
+    
     // Restore depth state
     state_SetState( STATE_TYPE_DEPTH, STATE_DEPTH_NORMAL );
     
