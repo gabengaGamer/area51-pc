@@ -24,7 +24,9 @@ cbuffer cbMatrices : register(b0)
     float    AlphaRef;
     float3   CameraPosition;
     float2   DepthParams;
+    float4   UVAnim;
 };
+
 
 //==============================================================================
 //  TEXTURES AND SAMPLERS
@@ -80,7 +82,7 @@ PS_INPUT VSMain(VS_INPUT input)
     float invRange = rcp(max(farZ - nearZ, 1e-5f));
     float linearDepth = (viewPos.z - nearZ) * invRange;
     output.LinearDepth = saturate(linearDepth);
-    output.UV          = input.UV;
+    output.UV          = input.UV + UVAnim.xy;
     output.Color       = input.Color;
     
     return output;

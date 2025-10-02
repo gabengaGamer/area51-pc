@@ -88,6 +88,7 @@ struct cb_rigid_matrices
     f32     AlphaRef;
     vector3 CameraPosition;
     f32     DepthParams[2];
+    vector4 UVAnim;
 };
 
 //------------------------------------------------------------------------------
@@ -100,7 +101,9 @@ struct cb_skin_matrices
     u32     MaterialFlags;                // Material feature flags
     f32     AlphaRef;                     // Alpha test reference
     f32     DepthParams[2];               // Near/Far depth range
+    vector4 UVAnim;                       // UV animation offsets
 };
+
 
 //------------------------------------------------------------------------------
 
@@ -159,14 +162,18 @@ public:
                                       const bbox*         pBBox,
                                       const d3d_lighting* pLighting,
                                       const material*     pMaterial,
-                                      u32                 RenderFlags );
+                                      u32                 RenderFlags,
+                                      u8                  UOffset,
+                                      u8                  VOffset );
 
     // Skin material management
     void        SetSkinMaterial     ( const matrix4*      pL2W,
                                       const bbox*         pBBox,
                                       const d3d_lighting* pLighting,
                                       const material*     pMaterial,
-                                      u32                 RenderFlags );
+                                      u32                 RenderFlags,
+                                      u8                  UOffset,
+                                      u8                  VOffset );
 
     void        ResetProjTextures   ( void );
 
@@ -200,10 +207,14 @@ protected:
     xbool               UpdateRigidConstants   ( const matrix4*      pL2W,
                                                  const material*     pMaterial,
                                                  u32                 RenderFlags,
-                                                 const d3d_lighting* pLighting );
+                                                 const d3d_lighting* pLighting,
+                                                 u8                  UOffset,
+                                                 u8                  VOffset );
     xbool               UpdateSkinConstants    ( const d3d_lighting* pLighting,
                                                  const material*     pMaterial,
-                                                 u32                 RenderFlags );
+                                                 u32                 RenderFlags,
+                                                 u8                  UOffset,
+                                                 u8                  VOffset );
     xbool               UpdateProjTextures     ( const matrix4& L2W,
                                                  const bbox&    B,
                                                  u32            Slot,

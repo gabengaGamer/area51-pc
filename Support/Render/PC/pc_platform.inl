@@ -173,7 +173,9 @@ void platform_RenderRigidInstance( render_instance& Inst )
                                     &Inst.Data.Rigid.pGeom->m_BBox,
                                     (d3d_lighting*)Inst.pLighting,
                                     s_pMaterial,
-                                    Inst.Flags );
+                                    Inst.Flags,
+                                    Inst.UOffset,
+                                    Inst.VOffset );
 
     // TODO: GS: At the moment we use a lightmap every call to platform_RenderRigidInstance. 
     // In theory, this is not the best solution, should definitely come up with something else
@@ -237,7 +239,9 @@ void platform_RenderSkinInstance( render_instance& Inst )
                                    &Inst.Data.Skin.pGeom->m_BBox,
                                    (d3d_lighting*)Inst.pLighting,
                                    s_pMaterial,
-                                   Inst.Flags );
+                                   Inst.Flags,
+                                   Inst.UOffset,
+                                   Inst.VOffset );
 
     g_SkinVertMgr.DrawDList( Inst.hDList, Inst.Data.Skin.pBones, (d3d_lighting*)Inst.pLighting );
 
@@ -773,7 +777,9 @@ static
 void platform_SetDistortionMaterial( s32 BlendMode, xbool ZTestEnabled )
 {
     g_MaterialMgr.SetBlendMode( BlendMode );
-    g_MaterialMgr.SetDepthTestEnabled( ZTestEnabled );    
+    g_MaterialMgr.SetDepthTestEnabled( ZTestEnabled );  
+	
+    s_BlendMode = BlendMode; 	
 }
 
 //=============================================================================

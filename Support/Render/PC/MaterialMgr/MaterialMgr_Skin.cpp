@@ -122,7 +122,9 @@ void material_mgr::SetSkinMaterial( const matrix4*      pL2W,
                                     const bbox*         pBBox,
                                     const d3d_lighting* pLighting,
                                     const material*     pMaterial,
-                                    u32                 RenderFlags )
+                                    u32                 RenderFlags,
+                                    u8                  UOffset,
+                                    u8                  VOffset )
 {
     if( !g_pd3dDevice || !g_pd3dContext )
         return;
@@ -137,7 +139,7 @@ void material_mgr::SetSkinMaterial( const matrix4*      pL2W,
     state_SetState( STATE_TYPE_SAMPLER, STATE_SAMPLER_LINEAR_WRAP );
     g_pd3dContext->IASetPrimitiveTopology( D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST );
 
-    if( !UpdateSkinConstants( pLighting, pMaterial, RenderFlags ) )
+    if( !UpdateSkinConstants( pLighting, pMaterial, RenderFlags, UOffset, VOffset ) )
     {
         x_DebugMsg( "MaterialMgr: Failed to update skin constants\n" );
         return;
@@ -151,7 +153,9 @@ void material_mgr::SetSkinMaterial( const matrix4*      pL2W,
 
 xbool material_mgr::UpdateSkinConstants( const d3d_lighting* pLighting,
                                          const material*     pMaterial,
-                                         u32                 RenderFlags )
+                                         u32                 RenderFlags,
+                                         u8                  UOffset,
+                                         u8                  VOffset )
 {
     if( !m_pSkinVSConstBuffer || !m_pSkinLightBuffer || !pLighting || !g_pd3dDevice || !g_pd3dContext )
         return FALSE;
@@ -169,6 +173,12 @@ xbool material_mgr::UpdateSkinConstants( const d3d_lighting* pLighting,
     skinMatrices.Projection  = pView->GetV2C();
     skinMatrices.DepthParams[0] = nearZ;
     skinMatrices.DepthParams[1] = farZ;
+
+    const f32 invByte = 1.0f / 255.0f;
+    skinMatrices.UVAnim.Set( (f32)UOffset * invByte,
+                             (f32)VOffset * invByte,
+                             0.0f,
+                             0.0f );
 
     const material_constants constants = BuildMaterialFlags( pMaterial, RenderFlags, FALSE, FALSE );
     skinMatrices.MaterialFlags = constants.Flags;

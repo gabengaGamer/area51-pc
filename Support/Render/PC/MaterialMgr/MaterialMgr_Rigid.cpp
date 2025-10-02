@@ -115,7 +115,9 @@ void material_mgr::SetRigidMaterial( const matrix4*      pL2W,
                                      const bbox*         pBBox,
                                      const d3d_lighting* pLighting,
                                      const material*     pMaterial,
-                                     u32                 RenderFlags )
+                                     u32                 RenderFlags,
+                                     u8                  UOffset,
+                                     u8                  VOffset )
 {
     if( !g_pd3dDevice || !g_pd3dContext )
         return;
@@ -130,7 +132,7 @@ void material_mgr::SetRigidMaterial( const matrix4*      pL2W,
     state_SetState( STATE_TYPE_SAMPLER, STATE_SAMPLER_LINEAR_WRAP );
     g_pd3dContext->IASetPrimitiveTopology( D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST );
 
-    if( !UpdateRigidConstants( pL2W, pMaterial, RenderFlags, pLighting ) )
+    if( !UpdateRigidConstants( pL2W, pMaterial, RenderFlags, pLighting, UOffset, VOffset ) )
     {
         x_DebugMsg( "MaterialMgr: Failed to update rigid constants\n" );
         return;
@@ -145,7 +147,9 @@ void material_mgr::SetRigidMaterial( const matrix4*      pL2W,
 xbool material_mgr::UpdateRigidConstants( const matrix4*      pL2W,
                                           const material*     pMaterial,
                                           u32                 RenderFlags,
-                                          const d3d_lighting* pLighting )
+                                          const d3d_lighting* pLighting,
+                                          u8                  UOffset,
+                                          u8                  VOffset )
 {
     if( !m_pRigidConstantBuffer || !pLighting || !g_pd3dDevice || !g_pd3dContext )
         return FALSE;
@@ -170,6 +174,12 @@ xbool material_mgr::UpdateRigidConstants( const matrix4*      pL2W,
     rigidMatrices.CameraPosition = pView->GetPosition();
     rigidMatrices.DepthParams[0] = nearZ;
     rigidMatrices.DepthParams[1] = farZ;
+
+    const f32 invByte = 1.0f / 255.0f;
+    rigidMatrices.UVAnim.Set( (f32)UOffset * invByte,
+                              (f32)VOffset * invByte,
+                              0.0f,
+                              0.0f );
 
     const material_constants constants = BuildMaterialFlags( pMaterial, RenderFlags, TRUE, TRUE );
     rigidMatrices.MaterialFlags = constants.Flags;

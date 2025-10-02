@@ -18,10 +18,11 @@ cbuffer cbMatrices : register(b0)
 {
     float4x4 View;
     float4x4 Projection;
-    
+
     uint     MaterialFlags;
     float    AlphaRef;
     float2   DepthParams;
+    float4   UVAnim;
 };
 
 struct Bone
@@ -105,7 +106,7 @@ PS_INPUT VSMain(VS_INPUT input)
     float invRange = rcp(max(farZ - nearZ, 1e-5f));
     float linearDepth = (viewPos.z - nearZ) * invRange;
     output.LinearDepth = saturate(linearDepth);
-    output.UV          = input.UVWeights.xy;
+    output.UV          = input.UVWeights.xy + UVAnim.xy;
 
     return output;
 }
