@@ -33,7 +33,7 @@ extern ID3D11DeviceContext*    g_pd3dContext;
 //  CONSTANTS
 //==============================================================================
 
-static const f32 kGlowIntensityScale = 1.0f;
+static const f32 kGlowIntensityScale = 0.5f;
 
 //==============================================================================
 //  CONSTANT BUFFER LAYOUT
