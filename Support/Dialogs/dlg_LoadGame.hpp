@@ -13,6 +13,10 @@
 
 #include "ui\ui_dialog.hpp"
 
+#ifdef TARGET_PC
+#include "Entropy/D3DEngine/d3deng_rtarget.hpp"
+#endif
+
 //==============================================================================
 //  dlg_load_game
 //==============================================================================
@@ -206,11 +210,7 @@ protected:
     #endif
     
     #ifdef TARGET_PC
-    // DX11 render targets and textures
-    ID3D11RenderTargetView*   m_pBackBufferRTV;
-    ID3D11Texture2D*          m_pBufferTextures[4];
-    ID3D11RenderTargetView*   m_pBufferRTVs[4];
-    ID3D11ShaderResourceView* m_pBufferSRVs[4];
+    rtarget                   m_BufferTargets[BUFFER_COUNT];
     u32                       m_ColorWriteMask;
     s32                       m_BufferW;
     s32                       m_BufferH;

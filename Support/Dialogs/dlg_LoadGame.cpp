@@ -1181,104 +1181,55 @@ void dlg_load_game::platform_Init( void )
     
     g_RenderTarget.Reset();
 #elif defined( TARGET_PC )
-    // Initialize member variables
-    m_pBackBufferRTV = NULL;
-    x_memset( m_pBufferTextures, 0, sizeof(m_pBufferTextures) );
-    x_memset( m_pBufferRTVs, 0, sizeof(m_pBufferRTVs) );
-    x_memset( m_pBufferSRVs, 0, sizeof(m_pBufferSRVs) );
-    
+    x_memset( m_BufferTargets, 0, sizeof(m_BufferTargets) );
+    m_ColorWriteMask = D3D11_COLOR_WRITE_ENABLE_RED |
+                       D3D11_COLOR_WRITE_ENABLE_GREEN |
+                       D3D11_COLOR_WRITE_ENABLE_BLUE |
+                       D3D11_COLOR_WRITE_ENABLE_ALPHA;
+    m_BufferW = 0;
+    m_BufferH = 0;
+
     if( !g_pd3dDevice || !g_pd3dContext )
     {
         x_DebugMsg( "DialogLoadGame: D3D11 device not available\n" );
         return;
     }
-    
-    // Store current back buffer
-    ID3D11RenderTargetView* pCurrentRTV = NULL;
-    g_pd3dContext->OMGetRenderTargets( 1, &pCurrentRTV, NULL );
-    m_pBackBufferRTV = pCurrentRTV;
-    
-    // Create render target textures and views
-    HRESULT hr;
-    
-    // Level name buffer (TEXT_IMAGE_WIDTH x TEXT_IMAGE_HEIGHT)
-    D3D11_TEXTURE2D_DESC texDesc;
-    ZeroMemory( &texDesc, sizeof(texDesc) );
-    texDesc.Width = TEXT_IMAGE_WIDTH;
-    texDesc.Height = TEXT_IMAGE_HEIGHT;
-    texDesc.MipLevels = 1;
-    texDesc.ArraySize = 1;
-    texDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-    texDesc.SampleDesc.Count = 1;
-    texDesc.SampleDesc.Quality = 0;
-    texDesc.Usage = D3D11_USAGE_DEFAULT;
-    texDesc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
-    texDesc.CPUAccessFlags = 0;
-    texDesc.MiscFlags = 0;
-    
-    hr = g_pd3dDevice->CreateTexture2D( &texDesc, NULL, &m_pBufferTextures[BUFFER_LEVEL_NAME] );
-    if( FAILED(hr) )
+
+    rtarget_desc Desc;
+    Desc.SampleCount    = 1;
+    Desc.SampleQuality  = 0;
+    Desc.Format         = RTARGET_FORMAT_RGBA8;
+    Desc.bBindAsTexture = TRUE;
+
+    Desc.Width  = TEXT_IMAGE_WIDTH;
+    Desc.Height = TEXT_IMAGE_HEIGHT;
+    if( !rtarget_Create( m_BufferTargets[BUFFER_LEVEL_NAME], Desc ) )
     {
-        x_DebugMsg( "DialogLoadGame: Failed to create level name texture\n" );
+        x_DebugMsg( "DialogLoadGame: Failed to create level name target\n" );
         return;
     }
-    
+
     // Drop shadow buffers (half resolution)
-    texDesc.Width = TEXT_IMAGE_WIDTH / 2;
-    texDesc.Height = TEXT_IMAGE_HEIGHT / 2;
-    
-    hr = g_pd3dDevice->CreateTexture2D( &texDesc, NULL, &m_pBufferTextures[BUFFER_DROP_SHADOW_1] );
-    if( FAILED(hr) )
+    Desc.Width  = TEXT_IMAGE_WIDTH  / 2;
+    Desc.Height = TEXT_IMAGE_HEIGHT / 2;
+    if( !rtarget_Create( m_BufferTargets[BUFFER_DROP_SHADOW_1], Desc ) )
     {
-        x_DebugMsg( "DialogLoadGame: Failed to create drop shadow 1 texture\n" );
+        x_DebugMsg( "DialogLoadGame: Failed to create drop shadow target 1\n" );
+        rtarget_Destroy( m_BufferTargets[BUFFER_LEVEL_NAME] );
         return;
     }
-    
-    hr = g_pd3dDevice->CreateTexture2D( &texDesc, NULL, &m_pBufferTextures[BUFFER_DROP_SHADOW_2] );
-    if( FAILED(hr) )
+
+    if( !rtarget_Create( m_BufferTargets[BUFFER_DROP_SHADOW_2], Desc ) )
     {
-        x_DebugMsg( "DialogLoadGame: Failed to create drop shadow 2 texture\n" );
+        x_DebugMsg( "DialogLoadGame: Failed to create drop shadow target 2\n" );
+        rtarget_Destroy( m_BufferTargets[BUFFER_LEVEL_NAME] );
+        rtarget_Destroy( m_BufferTargets[BUFFER_DROP_SHADOW_1] );
         return;
     }
-    
-    // Create render target views and shader resource views
-    D3D11_RENDER_TARGET_VIEW_DESC rtvDesc;
-    ZeroMemory( &rtvDesc, sizeof(rtvDesc) );
-    rtvDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-    rtvDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
-    rtvDesc.Texture2D.MipSlice = 0;
-    
-    D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc;
-    ZeroMemory( &srvDesc, sizeof(srvDesc) );
-    srvDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-    srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
-    srvDesc.Texture2D.MipLevels = 1;
-    srvDesc.Texture2D.MostDetailedMip = 0;
-    
-    for( s32 i = 1; i < BUFFER_COUNT; i++ )  // Skip BUFFER_SCREEN (index 0)
-    {
-        if( m_pBufferTextures[i] )
-        {
-            hr = g_pd3dDevice->CreateRenderTargetView( m_pBufferTextures[i], &rtvDesc, &m_pBufferRTVs[i] );
-            if( FAILED(hr) )
-            {
-                x_DebugMsg( "DialogLoadGame: Failed to create RTV for buffer %d\n", i );
-                continue;
-            }
-            
-            hr = g_pd3dDevice->CreateShaderResourceView( m_pBufferTextures[i], &srvDesc, &m_pBufferSRVs[i] );
-            if( FAILED(hr) )
-            {
-                x_DebugMsg( "DialogLoadGame: Failed to create SRV for buffer %d\n", i );
-                continue;
-            }
-        }
-    }
-    
-    // Init buffer dimensions  
+
     m_BufferW = TEXT_IMAGE_WIDTH;
     m_BufferH = TEXT_IMAGE_HEIGHT;
-    
+
     x_DebugMsg( "DialogLoadGame: Platform initialized successfully\n" );
 #endif
 }
@@ -1316,38 +1267,20 @@ void dlg_load_game::platform_Destroy( void )
     }
 #elif defined( TARGET_PC )
     // Release render target views and shader resource views
-    for( s32 i = 0; i < BUFFER_COUNT; i++ )
+    if( g_pd3dContext )
     {
-        if( m_pBufferRTVs[i] )
-        {
-            m_pBufferRTVs[i]->Release();
-            m_pBufferRTVs[i] = NULL;
-        }
-        
-        if( m_pBufferSRVs[i] )
-        {
-            m_pBufferSRVs[i]->Release();
-            m_pBufferSRVs[i] = NULL;
-        }
+        ID3D11ShaderResourceView* pNullSRV = NULL;
+        g_pd3dContext->PSSetShaderResources( 0, 1, &pNullSRV );
     }
-    
-    // Release textures
-    for( s32 i = 0; i < BUFFER_COUNT; i++ )
+
+    for( s32 i = 1; i < BUFFER_COUNT; i++ )
     {
-        if( m_pBufferTextures[i] )
-        {
-            m_pBufferTextures[i]->Release();
-            m_pBufferTextures[i] = NULL;
-        }
+        rtarget_Destroy( m_BufferTargets[i] );
     }
-    
-    // Release back buffer RTV
-    if( m_pBackBufferRTV )
-    {
-        m_pBackBufferRTV->Release();
-        m_pBackBufferRTV = NULL;
-    }
-    
+
+    m_BufferW = 0;
+    m_BufferH = 0;
+
     // Make sure we destroy any slideshow images
     for( s32 i = 0; i < m_nSlides; i++ )
     {
@@ -1551,12 +1484,12 @@ void dlg_load_game::platform_RenderSlide( s32 SlideIndex, xcolor C )
     // Start up the drawing mode
     draw_EnableBilinear();
     draw_Begin( DRAW_SPRITES, DRAW_USE_ALPHA | 
-	                          DRAW_TEXTURED  | 
-	                          DRAW_2D        | 
-							  DRAW_UI_RTARGET|
-	                          DRAW_NO_ZBUFFER| 
-	                          DRAW_NO_ZWRITE | 
-	                          DRAW_BLEND_ADD );
+                              DRAW_TEXTURED  | 
+                              DRAW_2D        | 
+                              DRAW_UI_RTARGET|
+                              DRAW_NO_ZBUFFER| 
+                              DRAW_NO_ZWRITE | 
+                              DRAW_BLEND_ADD );
 
     // Activate the sprite texture
     draw_SetTexture( m_Slides[SlideIndex].BMP );
@@ -1722,13 +1655,11 @@ void dlg_load_game::platform_SetSrcBuffer( vram_buffer BufferID )
 #elif defined( TARGET_PC )
     if( !g_pd3dContext )
         return;
-    
+
     ASSERT( BufferID != BUFFER_SCREEN );
-    
-    if( m_pBufferSRVs[BufferID] )
-    {
-        g_pd3dContext->PSSetShaderResources( 0, 1, &m_pBufferSRVs[BufferID] );
-    }
+
+    ID3D11ShaderResourceView* pSRV = m_BufferTargets[BufferID].pShaderResourceView;
+    g_pd3dContext->PSSetShaderResources( 0, 1, &pSRV );
 #endif
 }
 
@@ -1802,35 +1733,66 @@ void dlg_load_game::platform_SetDstBuffer( vram_buffer BufferID,
 #elif defined( TARGET_PC )
     if( !g_pd3dContext )
         return;
-    
+
+    ID3D11ShaderResourceView* pNullSRV = NULL;
+    g_pd3dContext->PSSetShaderResources( 0, 1, &pNullSRV );
+
+    const rtarget* pTarget = NULL;
+
     if( BufferID == BUFFER_SCREEN )
     {
         // Set back buffer as render target
-        g_pd3dContext->OMSetRenderTargets( 1, &m_pBackBufferRTV, NULL );
-        eng_GetRes( m_BufferW, m_BufferH );
+        const rtarget* pBackBuffer = rtarget_GetBackBuffer();
+        if( pBackBuffer && rtarget_SetBackBuffer() )
+        {
+            pTarget = pBackBuffer;
+        }
+        else
+        {
+            x_DebugMsg( "DialogLoadGame: Failed to bind back buffer\n" );
+            return;
+        }
     }
     else
     {
         // Set custom render target
-        if( m_pBufferRTVs[BufferID] )
+        if( !m_BufferTargets[BufferID].pRenderTargetView )
         {
-            g_pd3dContext->OMSetRenderTargets( 1, &m_pBufferRTVs[BufferID], NULL );
-            s32 memOffset;
-            platform_GetBufferInfo( BufferID, memOffset, m_BufferW, m_BufferH );
+            x_DebugMsg( "DialogLoadGame: Render target %d not initialized\n", BufferID );
+            return;
         }
+
+        if( !rtarget_SetTargets( &m_BufferTargets[BufferID], 1, NULL ) )
+            return;
+
+        pTarget = &m_BufferTargets[BufferID];
     }
-    
+
     // Set up the color write mask
     m_ColorWriteMask = 0;
     if( EnableRGBChannel )
-        m_ColorWriteMask |= D3D11_COLOR_WRITE_ENABLE_RED | D3D11_COLOR_WRITE_ENABLE_GREEN | D3D11_COLOR_WRITE_ENABLE_BLUE;
+    {
+        m_ColorWriteMask |= D3D11_COLOR_WRITE_ENABLE_RED |
+                            D3D11_COLOR_WRITE_ENABLE_GREEN |
+                            D3D11_COLOR_WRITE_ENABLE_BLUE;
+    }
     if( EnableAlphaChannel )
         m_ColorWriteMask |= D3D11_COLOR_WRITE_ENABLE_ALPHA;
-    
+
     // Set viewport
+    if( pTarget )
+    {
+        m_BufferW = (s32)pTarget->Desc.Width;
+        m_BufferH = (s32)pTarget->Desc.Height;
+    }
+    else
+    {
+        eng_GetRes( m_BufferW, m_BufferH );
+    }
+
     D3D11_VIEWPORT vp;
-    vp.Width = (f32)m_BufferW;
-    vp.Height = (f32)m_BufferH;
+    vp.Width    = (f32)m_BufferW;
+    vp.Height   = (f32)m_BufferH;
     vp.MinDepth = 0.0f;
     vp.MaxDepth = 1.0f;
     vp.TopLeftX = 0.0f;
@@ -1861,19 +1823,11 @@ void dlg_load_game::platform_ClearBuffer( vram_buffer BufferID, xbool EnableRGBC
 #elif defined( TARGET_PC )
     if( !g_pd3dContext )
         return;
-    
+
     platform_SetDstBuffer( BufferID, EnableRGBChannel, EnableAlphaChannel );
-    
+
     f32 clearColor[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
-    
-    if( BufferID == BUFFER_SCREEN )
-    {
-        g_pd3dContext->ClearRenderTargetView( m_pBackBufferRTV, clearColor );
-    }
-    else if( m_pBufferRTVs[BufferID] )
-    {
-        g_pd3dContext->ClearRenderTargetView( m_pBufferRTVs[BufferID], clearColor );
-    }
+    rtarget_Clear( RTARGET_CLEAR_COLOR, clearColor, 1.0f, 0 );
 #endif
 }
 
@@ -1944,7 +1898,7 @@ void dlg_load_game::platform_DrawSprite( const vector2& UpperLeft,
     pc_ClipSprite( ClippedUL, ClippedSize, ClippedUV0, ClippedUV1 );
     
     u32 DrawFlags = DRAW_2D         | 
-	                DRAW_UI_RTARGET |
+                    DRAW_UI_RTARGET |
                     DRAW_USE_ALPHA  | 
                     DRAW_CULL_NONE  | 
                     DRAW_TEXTURED   | 
@@ -2020,7 +1974,7 @@ void dlg_load_game::platform_BeginFogRender( void )
     draw_Begin( DRAW_SPRITES, DRAW_USE_ALPHA | 
                               DRAW_TEXTURED  | 
                               DRAW_2D        | 
-							  DRAW_UI_RTARGET|
+                              DRAW_UI_RTARGET|
                               DRAW_NO_ZBUFFER| 
                               DRAW_NO_ZWRITE | 
                               DRAW_BLEND_ADD );
@@ -2195,7 +2149,7 @@ void dlg_load_game::platform_BeginShaftRender( void )
     
     draw_Begin( DRAW_QUADS, DRAW_CULL_NONE  |
                             DRAW_2D         |
-							DRAW_UI_RTARGET |
+                            DRAW_UI_RTARGET |
                             DRAW_NO_ZBUFFER |
                             DRAW_TEXTURED   |
                             DRAW_USE_ALPHA  |
