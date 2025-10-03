@@ -543,7 +543,7 @@ xbool state_SetState( state_type Type, s32 Mode )
     }
 
     if( !g_pd3dContext )
-        return;
+        return FALSE;
 
     switch( Type )
     {
