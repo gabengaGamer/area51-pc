@@ -1,170 +1,333 @@
+//==============================================================================
+//
+//  audio_mp3_mgr.cpp
+//
+//  dr_lib based mp3 decoder.
+//
+//==============================================================================
+
+//TODO: In the future, the s_DecodeBuffer needs to be protected by mutex.
+
+//==============================================================================
+//  PLATFORM CHECK
+//==============================================================================
+
+// Let it be only for PC, for now...
+
+#include "x_target.hpp"
+
+#ifndef TARGET_PC
+#error This file should only be compiled for PC platform. Please check your exclusions on your project spec.
+#endif
+
+//==============================================================================
+//  INCLUDES
+//==============================================================================
+
 #include "audio_stream_mgr.hpp"
 #include "audio_channel_mgr.hpp"
 #include "audio_hardware.hpp"
 #include "audio_mp3_mgr.hpp"
-//#include "audio\codecs\mp3api.hpp"
 #include "x_bytestream.hpp"
 #include "x_log.hpp"
 
-//TODO: GS: Replace with FFmpeg or something like that.
+//==============================================================================
+//  DR_MP3 INCLUDES
+//==============================================================================
 
-//------------------------------------------------------------------------------
+#include "dr_libs\dr_mp3.h"
+
+#define DRMP3_ASSERT ASSERT
+#define DR_MP3_IMPLEMENTATION
+#define DR_MP3_NO_STDIO
+
+//==============================================================================
+//  DEFINES
+//==============================================================================
 
 #define VALID_STREAM( pStream ) ((pStream >= &g_AudioStreamMgr.m_AudioStreams[0]) && (pStream <= &g_AudioStreamMgr.m_AudioStreams[MAX_AUDIO_STREAMS-1]))
 
+//==============================================================================
+//  STRUCTURES
+//==============================================================================
+
+struct mp3_decoder_context
+{
+    drmp3               Decoder;
+    audio_stream*       pStream;
+    xbool               Initialized;
+};
+
 //------------------------------------------------------------------------------
 
-static xbool s_Initialized = FALSE;
+struct mp3_stream_state
+{
+                        mp3_stream_state    ( void )
+                        : BufferedBytes      ( 0 )
+    {
+    }
+
+    void                Reset               ( void )
+    {
+        Mutex.Enter();
+        BufferedBytes = 0;
+        Mutex.Exit();
+    }
+
+    xmutex              Mutex;
+    s32                 BufferedBytes;
+};
 
 //------------------------------------------------------------------------------
+
+static s16              s_DecodeBuffer[1024];
+static mp3_stream_state s_StreamStates[MAX_AUDIO_STREAMS];
+static xbool            s_Initialized   = FALSE;
+
+//==============================================================================
+//  GLOBAL INSTANCE
+//==============================================================================
 
 audio_mp3_mgr g_AudioMP3Mgr;
 
-//------------------------------------------------------------------------------
+//==============================================================================
+// FUNCTIONS
+//==============================================================================
 
-void* AIL_mem_alloc_lock( u32 nBytes )
+static void* mp3_malloc( size_t nBytes, void* pUserData )
 {
-    return x_malloc( nBytes );
+    (void)pUserData;
+    return x_malloc( (s32)nBytes );
 }
 
-//------------------------------------------------------------------------------
+//==============================================================================
 
-void AIL_mem_free_lock( void* pBuffer )
+static void* mp3_realloc( void* pMemory, size_t nBytes, void* pUserData )
 {
-    x_free( pBuffer );
+    (void)pUserData;
+    return x_realloc( pMemory, (s32)nBytes );
 }
 
-//------------------------------------------------------------------------------
+//==============================================================================
 
-s32 mp3_fetch_data( u32 UserData, void* pBuffer, s32 nBytes, s32 Offset )
+static void mp3_free( void* pMemory, void* pUserData )
 {
-    (void)Offset;
+    (void)pUserData;
+    if( pMemory )
+        x_free( pMemory );
+}
 
-    ASSERT( (Offset == 0) || (Offset == -1) );
+//==============================================================================
 
-    audio_stream* pStream     = (audio_stream*)UserData;
-    if( Offset == 0 )
+static const drmp3_allocation_callbacks s_DrMp3AllocCallbacks =
+{
+    NULL,
+    mp3_malloc,
+    mp3_realloc,
+    mp3_free
+};
+
+//==============================================================================
+
+static size_t mp3_stream_read( void* pUserData, void* pBufferOut, size_t bytesToRead )
+{
+    mp3_decoder_context* pContext = (mp3_decoder_context*)pUserData;
+    audio_stream*        pStream  = pContext ? pContext->pStream : NULL;
+    u8*                  pDst     = (u8*)pBufferOut;
+    size_t               TotalRead = 0;
+
+    if( (pStream == NULL) || (pDst == NULL) || (bytesToRead == 0) )
+        return 0;
+
+    ASSERT( VALID_STREAM( pStream ) );
+    ASSERT( pStream->Index >= 0 );
+    ASSERT( pStream->Index < MAX_AUDIO_STREAMS );
+
+    mp3_stream_state& State = s_StreamStates[ pStream->Index ];
+
+    while( bytesToRead )
     {
-        ASSERT( pStream->CursorMP3 < MP3_BUFFER_SIZE );
-        pStream->CursorMP3 = 0;
-    }
+        State.Mutex.Enter();
+        s32 Buffered = State.BufferedBytes;
+        s32 Cursor   = pStream->CursorMP3;
 
-    s32           Previous    = pStream->CursorMP3;
-    s32           Current     = Previous + (s32)nBytes;
-    xbool         bTransition = FALSE;
-
-    // Need to wrap to front?
-    if( Current > (MP3_BUFFER_SIZE*2) )
-    {    
-        ASSERT( Previous <= (MP3_BUFFER_SIZE*2) );
-
-        // Copy the data from the cursor to the end of the buffer.
-        s32 Length = (MP3_BUFFER_SIZE*2) - Previous;
-        if( Length )
+        if( Buffered <= 0 )
         {
-            x_memcpy( pBuffer, (void*)(pStream->MainRAM[0] + Previous), Length );
-			x_memset( (void*)(pStream->MainRAM[0] + Previous), 0, Length );
-            pBuffer = (void*)((s32)pBuffer + Length);
+            State.Mutex.Exit();
+            break;
         }
 
-        // Now wrap it and copy data from start of buffer to cursor.
-        Current -= (MP3_BUFFER_SIZE*2);
-        x_memcpy( pBuffer, (void*)pStream->MainRAM[0], Current );
-		x_memset( (void*)pStream->MainRAM[0], 0, Current );
-    }
-    // Did not wrap, so just copy the data.
-    else
-    {
-        // Copy it.
-        x_memcpy( pBuffer, (void*)(pStream->MainRAM[0] + Previous), nBytes );
-		x_memset( (void*)(pStream->MainRAM[0] + Previous), 0, nBytes );
-    }
+        ASSERT( Cursor >= 0 );
+        ASSERT( Cursor < (MP3_BUFFER_SIZE*2) );
 
-    // Update the mp3 buffer cursor.
-    pStream->CursorMP3 = Current;
+        s32 RegionRemaining;
+        if( Cursor < MP3_BUFFER_SIZE )
+            RegionRemaining = MP3_BUFFER_SIZE - Cursor;
+        else
+            RegionRemaining = (MP3_BUFFER_SIZE*2) - Cursor;
 
-    // Determine if a transition has ocured.
-    // Which buffer are we in?
-    if( Previous <= MP3_BUFFER_SIZE )
-    {
-        // Did a buffer transition occur?
-        bTransition = (Current > MP3_BUFFER_SIZE );
-    }
-    else
-    {
-        // Did a buffer transition occur?
-        bTransition = (Current <= MP3_BUFFER_SIZE );
-    }
+        s32 Request = (s32)((bytesToRead < (size_t)RegionRemaining) ? bytesToRead : (size_t)RegionRemaining);
+        Request = x_min( Request, Buffered );
 
-    // Transition occur?
-    if( bTransition )
-    {
-        // Stream done?
-        if( !pStream->StreamDone )
+        if( Request <= 0 )
+        {
+            State.Mutex.Exit();
+            break;
+        }
+
+        u8* pBase = (u8*)pStream->MainRAM[0];
+        u8* pSrc  = pBase + Cursor;
+        x_memcpy( pDst, pSrc, Request );
+        x_memset( pSrc, 0, Request );
+
+        Buffered -= Request;
+        State.BufferedBytes = Buffered;
+
+        s32 Previous = Cursor;
+        Cursor      += Request;
+        if( Cursor >= (MP3_BUFFER_SIZE*2) )
+            Cursor -= (MP3_BUFFER_SIZE*2);
+        pStream->CursorMP3 = Cursor;
+
+        State.Mutex.Exit();
+
+        bytesToRead -= Request;
+        TotalRead   += Request;
+        pDst        += Request;
+
+        xbool bTransition;
+        if( Previous < MP3_BUFFER_SIZE )
+            bTransition = (Cursor >= MP3_BUFFER_SIZE);
+        else
+            bTransition = (Cursor < MP3_BUFFER_SIZE);
+
+        if( bTransition && !pStream->StreamDone )
         {
             // Fill the read buffer.
             g_AudioStreamMgr.ReadStream( pStream );
         }
     }
 
-    return nBytes;
+    return TotalRead;
 }
 
-//------------------------------------------------------------------------------
+//==============================================================================
 
 audio_mp3_mgr::audio_mp3_mgr( void )
 {
 }
 
-//------------------------------------------------------------------------------
+//==============================================================================
 
 audio_mp3_mgr::~audio_mp3_mgr( void )
 {
 }
 
-//------------------------------------------------------------------------------
+//==============================================================================
 
 void audio_mp3_mgr::Init( void )
 {
     ASSERT( s_Initialized == FALSE );
-  //  ASI_startup();
     s_Initialized = TRUE;
 }
 
-//------------------------------------------------------------------------------
+//==============================================================================
 
 void audio_mp3_mgr::Kill( void )
 {
     ASSERT( s_Initialized );
-   // ASI_shutdown();
     s_Initialized = FALSE;
 }
 
-//------------------------------------------------------------------------------
+//==============================================================================
+
+void audio_mp3_mgr::ResetStreamBuffer( audio_stream* pStream )
+{
+    ASSERT( pStream );
+    ASSERT( VALID_STREAM( pStream ) );
+    ASSERT( pStream->Index >= 0 );
+    ASSERT( pStream->Index < MAX_AUDIO_STREAMS );
+
+    s_StreamStates[ pStream->Index ].Reset();
+    pStream->CursorMP3 = 0;
+}
+
+//==============================================================================
+
+void audio_mp3_mgr::NotifyStreamData( audio_stream* pStream, s32 nBytes )
+{
+    if( (pStream == NULL) || (nBytes <= 0) )
+        return;
+
+    ASSERT( VALID_STREAM( pStream ) );
+    ASSERT( pStream->Index >= 0 );
+    ASSERT( pStream->Index < MAX_AUDIO_STREAMS );
+
+    mp3_stream_state& State = s_StreamStates[ pStream->Index ];
+    State.Mutex.Enter();
+    State.BufferedBytes += nBytes;
+    if( State.BufferedBytes > (MP3_BUFFER_SIZE * 2) )
+        State.BufferedBytes = MP3_BUFFER_SIZE * 2;
+    State.Mutex.Exit();
+}
+
+//==============================================================================
 
 void audio_mp3_mgr::Open( audio_stream* pStream )
 {
     ASSERT( s_Initialized );
     ASSERT( VALID_STREAM(pStream) );
-    pStream->CursorMP3 = 0;
-  //  pStream->HandleMP3 = (void*)ASI_stream_open( (U32)pStream, mp3_fetch_data, pStream->Samples[0].Sample.WaveformLength );
+
+    if( pStream->HandleMP3 )
+        Close( pStream );
+
+    mp3_decoder_context* pContext = new mp3_decoder_context;
+    if( pContext )
+    {
+        x_memset( pContext, 0, sizeof( mp3_decoder_context ) );
+        pContext->pStream = pStream;
+
+        if( drmp3_init( &pContext->Decoder, mp3_stream_read, NULL, NULL, NULL, pContext, &s_DrMp3AllocCallbacks ) )
+        {
+            pContext->Initialized = TRUE;
+            pStream->HandleMP3    = pContext;
+        }
+        else
+        {
+            x_DebugMsg( "audio_mp3_mgr::Open - Failed to initialize dr_mp3 decoder\n" );
+            delete pContext;
+            pStream->HandleMP3 = NULL;
+        }
+    }
+    else
+    {
+        x_DebugMsg( "audio_mp3_mgr::Open - Failed to allocate decoder context\n" );
+    }
 }
 
-//------------------------------------------------------------------------------
+//==============================================================================
 
 void audio_mp3_mgr::Close( audio_stream* pStream )
 {
     ASSERT( s_Initialized );
     ASSERT( VALID_STREAM(pStream) );
 
-  //  if( pStream->HandleMP3 )
-   //   ASI_stream_close( (s32)pStream->HandleMP3 );
-    pStream->HandleMP3 = NULL;
+    if( pStream->HandleMP3 )
+    {
+        mp3_decoder_context* pContext = (mp3_decoder_context*)pStream->HandleMP3;
+        if( pContext->Initialized )
+        {
+            drmp3_uninit( &pContext->Decoder );
+            pContext->Initialized = FALSE;
+        }
+        delete pContext;
+        pStream->HandleMP3 = NULL;
+    }
+
+    ResetStreamBuffer( pStream );
 }
 
-//------------------------------------------------------------------------------
-
-static s16 s_DecodeBuffer[1024];
+//==============================================================================
 
 void audio_mp3_mgr::Decode( audio_stream* pStream, s16* pBufferL, s16* pBufferR, s32 nSamples )
 {
@@ -183,53 +346,78 @@ void audio_mp3_mgr::Decode( audio_stream* pStream, s16* pBufferL, s16* pBufferR,
             x_memset( pBufferL, 0, nSamples * sizeof(s16) );
         if( pBufferR )
             x_memset( pBufferR, 0, nSamples * sizeof(s16) );
+        return;
+    }
+
+    mp3_decoder_context* pContext = (mp3_decoder_context*)pStream->HandleMP3;
+    if( (pContext == NULL) || (pContext->Initialized == FALSE) )
+    {
+        if( pBufferL )
+            x_memset( pBufferL, 0, nSamples * sizeof(s16) );
+        if( pBufferR )
+            x_memset( pBufferR, 0, nSamples * sizeof(s16) );
+        return;
+    }
+
+    // Lock the audio hardware.
+    g_AudioHardware.Lock();
+
+    s16* pDecodeBuffer = s_DecodeBuffer;
+    drmp3_uint32 Channels = pContext->Decoder.channels;
+    if( Channels == 0 )
+        Channels = (pStream->Type == STEREO_STREAM) ? 2 : 1;
+
+    drmp3_uint64 FramesRead = drmp3_read_pcm_frames_s16( &pContext->Decoder, (drmp3_uint64)nSamples, (drmp3_int16*)pDecodeBuffer );
+    if( FramesRead < (drmp3_uint64)nSamples )
+    {
+        s32 Start = (s32)(FramesRead * Channels);
+        s32 Count = (nSamples * (s32)Channels) - Start;
+        if( Count > 0 )
+        {
+            x_memset( pDecodeBuffer + Start, 0, Count * sizeof(s16) );
+        }
+    }
+
+    if( pStream->Type == STEREO_STREAM )
+    {
+        ASSERT( pBufferL );
+        ASSERT( pBufferR );
+
+        s16* pSrc = pDecodeBuffer;
+        for( s32 i = 0; i < nSamples; i++ )
+        {
+            s16 Left  = 0;
+            s16 Right = 0;
+
+            if( Channels >= 1 )
+                Left = pSrc[0];
+            if( Channels >= 2 )
+                Right = pSrc[1];
+            else
+                Right = Left;
+
+            pBufferL[i] = Left;
+            pBufferR[i] = Right;
+
+            pSrc += Channels;
+        }
     }
     else
     {
-        // Lock the audio hardware.
-        g_AudioHardware.Lock();
+        ASSERT( pBufferL );
 
-        // Is it stereo?
-        xbool bIsStereo = (pStream->Type == STEREO_STREAM);
-        s16*  pDest;
-        s32   nBytes;
-
-        // Stereo?
-        if( bIsStereo )
+        s16* pSrc = pDecodeBuffer;
+        for( s32 i = 0; i < nSamples; i++ )
         {
-            // Stick in buffer so we can "un-interleave" it.
-            pDest  = s_DecodeBuffer;
-            nBytes = nSamples * 4;
+            s16 Sample = 0;
+            if( Channels >= 1 )
+                Sample = pSrc[0];
+
+            pBufferL[i] = Sample;
+            pSrc += Channels;
         }
-        else
-        {
-            ASSERT( pBufferL );
-            // Decode directly to the buffer.
-            pDest  = pBufferL;
-            nBytes = nSamples * 2;
-        }
-
-        // Decode it.
-       // ASI_stream_process( (s32)pStream->HandleMP3, pDest, nBytes );
-
-        // Need to "un-interleave"?
-        if( bIsStereo )
-        {
-            ASSERT( pBufferL );
-            ASSERT( pBufferR );
-
-            s16* pSrc = s_DecodeBuffer;
-
-            while( nSamples-- )
-            {
-                *pBufferL++ = *pSrc++;
-                *pBufferR++ = *pSrc++;
-            }
-        }
-
-        // Unlock it now.
-        g_AudioHardware.Unlock();
     }
-}
 
- 
+    // Unlock it now.
+    g_AudioHardware.Unlock();
+}
