@@ -35,11 +35,11 @@
 //  DR_MP3 INCLUDES
 //==============================================================================
 
-#include "dr_libs\dr_mp3.h"
-
 #define DRMP3_ASSERT ASSERT
 #define DR_MP3_IMPLEMENTATION
 #define DR_MP3_NO_STDIO
+
+#include "dr_libs\dr_mp3.h"
 
 //==============================================================================
 //  DEFINES

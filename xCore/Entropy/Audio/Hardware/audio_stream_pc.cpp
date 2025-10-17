@@ -6,6 +6,7 @@
 
 #include "audio_hardware.hpp"
 #include "audio_stream_mgr.hpp"
+#include "audio_mp3_mgr.hpp"
 #include "e_Virtual.hpp"
 
 //------------------------------------------------------------------------------
