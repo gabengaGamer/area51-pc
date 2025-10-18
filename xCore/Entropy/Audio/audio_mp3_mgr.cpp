@@ -92,7 +92,7 @@ audio_mp3_mgr g_AudioMP3Mgr;
 // FUNCTIONS
 //==============================================================================
 
-static void* mp3_malloc( size_t nBytes, void* pUserData )
+static void* mp3_malloc( usize nBytes, void* pUserData )
 {
     (void)pUserData;
     return x_malloc( (s32)nBytes );
@@ -100,7 +100,7 @@ static void* mp3_malloc( size_t nBytes, void* pUserData )
 
 //==============================================================================
 
-static void* mp3_realloc( void* pMemory, size_t nBytes, void* pUserData )
+static void* mp3_realloc( void* pMemory, usize nBytes, void* pUserData )
 {
     (void)pUserData;
     return x_realloc( pMemory, (s32)nBytes );
@@ -127,12 +127,12 @@ static const drmp3_allocation_callbacks s_DrMp3AllocCallbacks =
 
 //==============================================================================
 
-static size_t mp3_stream_read( void* pUserData, void* pBufferOut, size_t bytesToRead )
+static usize mp3_stream_read( void* pUserData, void* pBufferOut, usize bytesToRead )
 {
-    mp3_decoder_context* pContext = (mp3_decoder_context*)pUserData;
-    audio_stream*        pStream  = pContext ? pContext->pStream : NULL;
-    u8*                  pDst     = (u8*)pBufferOut;
-    size_t               TotalRead = 0;
+    mp3_decoder_context* pContext  = (mp3_decoder_context*)pUserData;
+    audio_stream*        pStream   = pContext ? pContext->pStream : NULL;
+    u8*                  pDst      = (u8*)pBufferOut;
+    usize                TotalRead = 0;
 
     if( (pStream == NULL) || (pDst == NULL) || (bytesToRead == 0) )
         return 0;
@@ -164,7 +164,7 @@ static size_t mp3_stream_read( void* pUserData, void* pBufferOut, size_t bytesTo
         else
             RegionRemaining = (MP3_BUFFER_SIZE*2) - Cursor;
 
-        s32 Request = (s32)((bytesToRead < (size_t)RegionRemaining) ? bytesToRead : (size_t)RegionRemaining);
+        s32 Request = (s32)((bytesToRead < (usize)RegionRemaining) ? bytesToRead : (usize)RegionRemaining);
         Request = x_min( Request, Buffered );
 
         if( Request <= 0 )
