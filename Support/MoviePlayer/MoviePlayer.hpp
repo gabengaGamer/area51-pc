@@ -14,7 +14,7 @@
 s32 PlaySimpleMovie( const char* movieName );
 
 #ifdef TARGET_PC
-#include "MoviePlayer_FFmpeg.hpp"
+#include "MoviePlayer_WebM/MoviePlayer_WebM_Private.hpp"
 #endif
 
 //==============================================================================

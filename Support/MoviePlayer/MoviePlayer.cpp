@@ -119,7 +119,7 @@ s32 PlaySimpleMovie(const char* movieName)
 #if defined(TARGET_PC)
                 if( input_WasPressed( INPUT_KBD_RETURN, 0 ) || input_WasPressed( INPUT_KBD_ESCAPE, 0 ) || input_WasPressed( INPUT_KBD_SPACE, 0 ) )  
 #else
-                if( input_WasPressed( INPUT_KBD_RETURN, 0 ) || input_WasPressed( INPUT_KBD_ESCAPE, 0 ) || input_WasPressed( INPUT_KBD_SPACE, 0 ) ) 
+                #error Do something !!!
 #endif
                 {
                     done = TRUE;
