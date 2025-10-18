@@ -226,6 +226,17 @@ audio_mp3_mgr::~audio_mp3_mgr( void )
 void audio_mp3_mgr::Init( void )
 {
     ASSERT( s_Initialized == FALSE );
+	
+    for( s32 i = 0; i < MAX_AUDIO_STREAMS; ++i )
+    {
+        audio_stream& Stream = g_AudioStreamMgr.m_AudioStreams[i];  
+		
+        ASSERT( Stream.HandleMP3 == NULL );   
+		
+        s_StreamStates[i].Reset();
+        Stream.CursorMP3 = 0;
+    } 
+	
     s_Initialized = TRUE;
 }
 
@@ -234,7 +245,24 @@ void audio_mp3_mgr::Init( void )
 void audio_mp3_mgr::Kill( void )
 {
     ASSERT( s_Initialized );
-    s_Initialized = FALSE;
+	
+    if( s_Initialized )
+    {
+        for( s32 i = 0; i < MAX_AUDIO_STREAMS; ++i )
+        {
+            audio_stream& Stream = g_AudioStreamMgr.m_AudioStreams[i];
+            if( Stream.HandleMP3 )
+            {
+                Close( &Stream );
+            }
+            else
+            {
+                s_StreamStates[i].Reset();
+            }
+        }
+		
+        s_Initialized = FALSE;
+    }
 }
 
 //==============================================================================
