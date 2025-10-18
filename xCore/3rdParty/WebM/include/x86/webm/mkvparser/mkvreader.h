@@ -10,7 +10,7 @@
 
 #include <cstdio>
 
-#include "mkvparser/mkvparser.h"
+#include "mkvparser.h"
 
 namespace mkvparser {
 
