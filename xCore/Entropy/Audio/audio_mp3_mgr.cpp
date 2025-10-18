@@ -223,21 +223,13 @@ audio_mp3_mgr::~audio_mp3_mgr( void )
 
 //==============================================================================
 
+// NOTE: GS: audio_mp3_mgr::Open already does this work, 
+// it is enough to set it here s_Initialized = TRUE and thats it.
+
 void audio_mp3_mgr::Init( void )
 {
-    ASSERT( s_Initialized == FALSE );
-	
-    for( s32 i = 0; i < MAX_AUDIO_STREAMS; ++i )
-    {
-        audio_stream& Stream = g_AudioStreamMgr.m_AudioStreams[i];  
-		
-        ASSERT( Stream.HandleMP3 == NULL );   
-		
-        s_StreamStates[i].Reset();
-        Stream.CursorMP3 = 0;
-    } 
-	
-    s_Initialized = TRUE;
+    ASSERT( !s_Initialized );
+    s_Initialized = TRUE; 
 }
 
 //==============================================================================
@@ -245,24 +237,22 @@ void audio_mp3_mgr::Init( void )
 void audio_mp3_mgr::Kill( void )
 {
     ASSERT( s_Initialized );
-	
-    if( s_Initialized )
+    
+    for( s32 i = 0; i < MAX_AUDIO_STREAMS; ++i )
     {
-        for( s32 i = 0; i < MAX_AUDIO_STREAMS; ++i )
+        audio_stream& Stream = g_AudioStreamMgr.m_AudioStreams[i];
+        if( Stream.HandleMP3 )
         {
-            audio_stream& Stream = g_AudioStreamMgr.m_AudioStreams[i];
-            if( Stream.HandleMP3 )
-            {
-                Close( &Stream );
-            }
-            else
-            {
-                s_StreamStates[i].Reset();
-            }
+            Close( &Stream );
         }
-		
-        s_Initialized = FALSE;
+        else
+        {
+            s_StreamStates[i].Reset();
+            Stream.CursorMP3 = 0;
+        }
     }
+    
+    s_Initialized = FALSE;
 }
 
 //==============================================================================
