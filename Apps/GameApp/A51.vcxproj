@@ -119,8 +119,8 @@
       <ShowIncludes>true</ShowIncludes>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>dxguid.lib;dinput8.lib;dsound.lib;avcodec.lib;avdevice.lib;avfilter.lib;avformat.lib;avutil.lib;postproc.lib;swresample.lib;swscale.lib;DirectXTex.lib;legacy_stdio_definitions.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(X)\3rdParty\DirectX9;$(X)\3rdParty\ffmpeg-win32\bin;$(X)\3rdParty\DirectXTex\DirectXTex\Bin\x32;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>dxguid.lib;dinput8.lib;dsound.lib;DirectXTex.lib;legacy_stdio_definitions.lib;ogg.lib;opus.lib;opusfile.lib;vorbis.lib;vorbisenc.lib;vorbisfile.lib;vpx.lib;webm.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(X)\3rdParty\DirectX9;$(X)\3rdParty\WebM\lib\x86;$(X)\3rdParty\DirectXTex\DirectXTex\Bin\x32;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <IgnoreSpecificDefaultLibraries>libci.lib;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SuppressStartupBanner>true</SuppressStartupBanner>

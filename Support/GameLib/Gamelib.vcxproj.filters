@@ -215,6 +215,9 @@
     <Filter Include="TweakMgr">
       <UniqueIdentifier>{96feee97-6db7-4a46-90f6-f588c940f7cb}</UniqueIdentifier>
     </Filter>
+    <Filter Include="MoviePlayer\MoviePlayer_WebM">
+      <UniqueIdentifier>{4bf9b253-b311-436f-92cd-8fb0512f3b52}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\Animation\AnimAudioTimer.cpp">
@@ -1525,8 +1528,20 @@
     <ClCompile Include="LevelLoader.cpp" />
     <ClCompile Include="Link.cpp" />
     <ClCompile Include="RenderContext.cpp" />
-    <ClCompile Include="..\MoviePlayer\MoviePlayer_FFmpeg.cpp">
-      <Filter>MoviePlayer</Filter>
+    <ClCompile Include="..\MoviePlayer\MoviePlayer_WebM\MoviePlayer_WebM_Sync.cpp">
+      <Filter>MoviePlayer\MoviePlayer_WebM</Filter>
+    </ClCompile>
+    <ClCompile Include="..\MoviePlayer\MoviePlayer_WebM\MoviePlayer_WebM_Video.cpp">
+      <Filter>MoviePlayer\MoviePlayer_WebM</Filter>
+    </ClCompile>
+    <ClCompile Include="..\MoviePlayer\MoviePlayer_WebM\MoviePlayer_WebM.cpp">
+      <Filter>MoviePlayer\MoviePlayer_WebM</Filter>
+    </ClCompile>
+    <ClCompile Include="..\MoviePlayer\MoviePlayer_WebM\MoviePlayer_WebM_Audio.cpp">
+      <Filter>MoviePlayer\MoviePlayer_WebM</Filter>
+    </ClCompile>
+    <ClCompile Include="..\MoviePlayer\MoviePlayer_WebM\MoviePlayer_WebM_Container.cpp">
+      <Filter>MoviePlayer\MoviePlayer_WebM</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -2796,8 +2811,8 @@
     <ClInclude Include="..\SpatialDBase\SpatialDBase.hpp" />
     <ClInclude Include="..\Characters\God.hpp" />
     <ClInclude Include="..\Havok\Havok.hpp" />
-    <ClInclude Include="..\MoviePlayer\MoviePlayer_FFmpeg.hpp">
-      <Filter>MoviePlayer</Filter>
+    <ClInclude Include="..\MoviePlayer\MoviePlayer_WebM\MoviePlayer_WebM_Private.hpp">
+      <Filter>MoviePlayer\MoviePlayer_WebM</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

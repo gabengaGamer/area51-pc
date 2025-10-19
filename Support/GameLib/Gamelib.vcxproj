@@ -796,7 +796,11 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='VIEWER-Debug|Win32'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="..\MoviePlayer\MoviePlayer.cpp" />
-    <ClCompile Include="..\MoviePlayer\MoviePlayer_FFmpeg.cpp" />
+    <ClCompile Include="..\MoviePlayer\MoviePlayer_WebM\MoviePlayer_WebM.cpp" />
+    <ClCompile Include="..\MoviePlayer\MoviePlayer_WebM\MoviePlayer_WebM_Audio.cpp" />
+    <ClCompile Include="..\MoviePlayer\MoviePlayer_WebM\MoviePlayer_WebM_Container.cpp" />
+    <ClCompile Include="..\MoviePlayer\MoviePlayer_WebM\MoviePlayer_WebM_Sync.cpp" />
+    <ClCompile Include="..\MoviePlayer\MoviePlayer_WebM\MoviePlayer_WebM_Video.cpp" />
     <ClCompile Include="..\MusicStateMgr\MusicStateMgr.cpp" />
     <ClCompile Include="..\navigation\AlarmNode.cpp" />
     <ClCompile Include="..\navigation\ConnectionZoneMgr.cpp">
@@ -1472,7 +1476,7 @@
     <ClInclude Include="..\Menu\DebugMenuPerception.hpp" />
     <ClInclude Include="..\Menu\DebugMenu_main.hpp" />
     <ClInclude Include="..\MoviePlayer\MoviePlayer.hpp" />
-    <ClInclude Include="..\MoviePlayer\MoviePlayer_FFmpeg.hpp" />
+    <ClInclude Include="..\MoviePlayer\MoviePlayer_WebM\MoviePlayer_WebM_Private.hpp" />
     <ClInclude Include="..\MusicStateMgr\MusicStateMgr.hpp" />
     <ClInclude Include="..\navigation\AlarmNode.hpp" />
     <ClInclude Include="..\navigation\ConnectionZoneMgr.hpp" />
