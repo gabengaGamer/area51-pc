@@ -18,7 +18,7 @@ The main goal is to get the source code into a buildable state on modern systems
 ## PC Code Issues
 
 1. **Audio System Malfunctions:**
-The Miles Sound System 6 implementation is very often causes crash, unstable. (Delete Voice.DFS for stability)
+~~The Miles Sound System 6 implementation is very often causes crash, unstable. (Delete Voice.DFS for stability)~~ Probably fixed, the game now uses dr_mp3.
 
 2. **Console UI (Incomplete Interface):**
 The PC version is currently using the console UI. This results in:
@@ -30,7 +30,7 @@ The PC version is currently using the console UI. This results in:
 3. **Simple PC render:**
 A very basic DX11 renderer is implemented, without complex effects and shaders.
 
-4. **Unstable FFmpeg decoding:**
+4. **Unstable WebM decoding:**
 It's just poorly implemented so far, sorry.
 
 5. **Multiplayer & Network Stack Failure:** The network layer is completely broken. Multiplayer functionality is non-operational.
@@ -48,7 +48,7 @@ The following prerequisites are required to build the source tree for PC:
 
 1. Put game assets to **'C:\GameData\A51\Release\PC\DVD'**
 2. Put shaders folder from "area51-pc\Apps\GameApp\media" to "C:\".
-3. Put .webm/.mp4/.avi cinema videos to "C:\GameData\A51\Release\PC". (You must make it from .bik, so far so)
+3. Put .webm cinema videos from "area51-pc\Apps\GameApp\media\webms" to "C:\GameData\A51\Release\PC".
 4. Run game.
 
 
