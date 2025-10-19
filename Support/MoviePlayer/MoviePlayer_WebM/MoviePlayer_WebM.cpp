@@ -344,14 +344,21 @@ void movie_private::ThreadLoop(void)
 
     m_bThreadBusy = TRUE;
 
-    if (!m_IsLooped && m_LastVideoTime > 0.0)
+    if (m_LastVideoTime > 0.0)
     {
         movie_webm::sample PeekSample;
-        if (m_Container.PeekSample(PeekSample) && 
+        if (m_Container.PeekSample(PeekSample) &&
             PeekSample.Type == movie_webm::STREAM_TYPE_VIDEO &&
             PeekSample.TimeSeconds < m_LastVideoTime - 0.5)
         {
-            HandleEndOfStream();
+            if (m_IsLooped)
+            {
+                ResetPlayback();
+            }
+            else
+            {
+                HandleEndOfStream();
+            }
             m_bThreadBusy = FALSE;
             return;
         }
