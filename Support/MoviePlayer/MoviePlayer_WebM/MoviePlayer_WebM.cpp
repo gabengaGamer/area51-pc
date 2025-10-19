@@ -335,135 +335,148 @@ void movie_private::ThreadMain(void)
 
 //==============================================================================
 
+// Lazy fix.
+
 void movie_private::ThreadLoop(void)
 {
-    if (!m_bPlaybackActive)
-        return;
-
-    if (m_bPaused)
+    if (!m_bPlaybackActive || m_bPaused)
         return;
 
     m_bThreadBusy = TRUE;
 
-    for (;;)
+    if (!m_IsLooped && m_LastVideoTime > 0.0)
     {
-        movie_webm::sample Sample;
-        xbool bUsingPendingVideo = FALSE;
-
-        if (m_bHasPendingVideo)
+        movie_webm::sample PeekSample;
+        if (m_Container.PeekSample(PeekSample) && 
+            PeekSample.Type == movie_webm::STREAM_TYPE_VIDEO &&
+            PeekSample.TimeSeconds < m_LastVideoTime - 0.5)
         {
-            Sample               = m_PendingVideoSample;
-            bUsingPendingVideo   = TRUE;
+            HandleEndOfStream();
+            m_bThreadBusy = FALSE;
+            return;
         }
-        else
+    }
+
+    movie_webm::sample Sample;
+    xbool bUsingPendingVideo = FALSE;
+
+    if (m_bHasPendingVideo)
+    {
+        Sample = m_PendingVideoSample;
+        bUsingPendingVideo = TRUE;
+    }
+    else
+    {
+        if (!m_Container.PeekSample(Sample))
         {
-            if (!m_Container.PeekSample(Sample))
-            {
-                HandleEndOfStream();
-                break;
-            }
+            HandleEndOfStream();
+            m_bThreadBusy = FALSE;
+            return;
         }
+    }
 
-        const f64 playbackTime = m_Clock.GetTime();
+    const f64 playbackTime = m_Clock.GetTime();
 
-        if (!bUsingPendingVideo && (Sample.Type == movie_webm::STREAM_TYPE_AUDIO))
+    if (!bUsingPendingVideo && Sample.Type == movie_webm::STREAM_TYPE_AUDIO)
+    {
+        if (m_Config.HasAudio)
         {
-            if (m_Config.HasAudio)
+            const f64 targetTime = playbackTime + AUDIO_BUFFER_LEAD;
+            if (Sample.TimeSeconds > targetTime)
             {
-                const f64 targetTime = playbackTime + AUDIO_BUFFER_LEAD;
-
-                if (Sample.TimeSeconds > targetTime)
-                {
-                    SleepMilliseconds(Sample.TimeSeconds - targetTime);
-                    break;
-                }
+                SleepMilliseconds(Sample.TimeSeconds - targetTime);
+                m_bThreadBusy = FALSE;
+                return;
             }
-
-            if (!m_Container.ReadSample(Sample))
-            {
-                HandleEndOfStream();
-                break;
-            }
-
-            if (m_Config.HasAudio)
-            {
-                m_AudioDecoder.DecodeSample(Sample, m_Container.GetReader());
-            }
-
-            continue;
         }
 
-        if (Sample.Type != movie_webm::STREAM_TYPE_VIDEO)
+        if (!m_Container.ReadSample(Sample))
         {
-            if (!bUsingPendingVideo)
-            {
-                if (!m_Container.ReadSample(Sample))
-                {
-                    HandleEndOfStream();
-                    break;
-                }
-            }
-            else
-            {
-                m_bHasPendingVideo = FALSE;
-            }
-
-            continue;
+            HandleEndOfStream();
+            m_bThreadBusy = FALSE;
+            return;
         }
 
-        const f64 delta = Sample.TimeSeconds - playbackTime;
-        if (delta > VIDEO_PRESENT_LEAD)
+        if (m_Config.HasAudio)
         {
-            if (!bUsingPendingVideo)
-            {
-                if (!m_Container.ReadSample(Sample))
-                {
-                    HandleEndOfStream();
-                    break;
-                }
-
-                m_PendingVideoSample = Sample;
-                m_bHasPendingVideo   = TRUE;
-            }
-
-            PumpAudio(Sample.TimeSeconds + AUDIO_BUFFER_LEAD);
-            SleepMilliseconds(delta - VIDEO_PRESENT_LEAD);
-            break;
+            m_AudioDecoder.DecodeSample(Sample, m_Container.GetReader());
         }
 
+        m_bThreadBusy = FALSE;
+        return;
+    }
+
+    if (Sample.Type != movie_webm::STREAM_TYPE_VIDEO)
+    {
         if (!bUsingPendingVideo)
         {
-            if (!m_Container.ReadSample(Sample))
-            {
-                HandleEndOfStream();
-                break;
-            }
+            m_Container.ReadSample(Sample);
         }
         else
         {
             m_bHasPendingVideo = FALSE;
         }
+        m_bThreadBusy = FALSE;
+        return;
+    }
 
-        if (!ProcessVideoSample(Sample))
-            break;
-
-        m_LastVideoTime = Sample.TimeSeconds;
-
-        if (!m_IsLooped && (m_Config.Duration > 0.0))
+    const f64 delta = Sample.TimeSeconds - playbackTime;
+    if (delta > VIDEO_PRESENT_LEAD)
+    {
+        if (!bUsingPendingVideo)
         {
-            f64 frameEpsilon = (m_Config.FrameRate > 0.0f) ? (1.0 / (f64)m_Config.FrameRate) : (1.0 / 30.0);
-            const f64 endThreshold = x_max(0.0, m_Config.Duration - frameEpsilon);
-
-            if (Sample.TimeSeconds >= endThreshold)
+            if (!m_Container.ReadSample(Sample))
             {
                 HandleEndOfStream();
-                break;
+                m_bThreadBusy = FALSE;
+                return;
             }
+            m_PendingVideoSample = Sample;
+            m_bHasPendingVideo = TRUE;
         }
 
         PumpAudio(Sample.TimeSeconds + AUDIO_BUFFER_LEAD);
-        break;
+        SleepMilliseconds(delta - VIDEO_PRESENT_LEAD);
+        m_bThreadBusy = FALSE;
+        return;
     }
+
+    if (!bUsingPendingVideo)
+    {
+        if (!m_Container.ReadSample(Sample))
+        {
+            HandleEndOfStream();
+            m_bThreadBusy = FALSE;
+            return;
+        }
+    }
+    else
+    {
+        m_bHasPendingVideo = FALSE;
+    }
+
+    if (!ProcessVideoSample(Sample))
+    {
+        m_bThreadBusy = FALSE;
+        return;
+    }
+
+    m_LastVideoTime = Sample.TimeSeconds;
+
+    if (!m_IsLooped && m_Config.Duration > 0.0)
+    {
+        f64 frameEpsilon = (m_Config.FrameRate > 0.0f) ? (1.0 / (f64)m_Config.FrameRate) : (1.0 / 30.0);
+        const f64 endThreshold = x_max(0.0, m_Config.Duration - frameEpsilon);
+
+        if (Sample.TimeSeconds >= endThreshold)
+        {
+            HandleEndOfStream();
+            m_bThreadBusy = FALSE;
+            return;
+        }
+    }
+
+    PumpAudio(Sample.TimeSeconds + AUDIO_BUFFER_LEAD);
 
     m_bThreadBusy = FALSE;
 }
