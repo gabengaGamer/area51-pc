@@ -10393,7 +10393,6 @@ void state_mgr::ExitClientDisconnect( void )
 void state_mgr::EnableBackgroundMovie( void )
 {
 #if !defined( X_EDITOR ) && (!CONFIG_IS_DEMO)
-    Movie.Init();
     m_bPlayMovie = Movie.Open( SelectBestClip("MenuBackground"),TRUE,TRUE );
 #endif
 }

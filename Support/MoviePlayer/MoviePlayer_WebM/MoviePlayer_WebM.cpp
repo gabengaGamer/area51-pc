@@ -116,6 +116,11 @@ xbool movie_private::Open(const char* pFilename, xbool PlayResident, xbool IsLoo
     if (!pFilename || !pFilename[0])
         return FALSE;
 
+    if (!m_pThread)
+    {
+        Init();
+    }
+
     Close();
 
     m_IsLooped = IsLooped;
