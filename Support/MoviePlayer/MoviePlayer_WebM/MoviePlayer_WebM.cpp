@@ -7,7 +7,6 @@
 //==============================================================================
 
 //TODO: Rewrite ThreadLoop and PumpAudio code, its to bad.
-//TODO: Fix loading .webm videos after exiting back into main menu from game
 
 //==============================================================================
 //  PLATFORM CHECK
@@ -116,11 +115,7 @@ xbool movie_private::Open(const char* pFilename, xbool PlayResident, xbool IsLoo
     if (!pFilename || !pFilename[0])
         return FALSE;
 
-    if (!m_pThread)
-    {
-        Init();
-    }
-
+    Init();
     Close();
 
     m_IsLooped = IsLooped;
@@ -178,8 +173,12 @@ xbool movie_private::Open(const char* pFilename, xbool PlayResident, xbool IsLoo
     m_bPaused           = FALSE;
     m_bVideoEOF         = FALSE;
     m_bThreadFinished   = FALSE;
-    m_bPlaybackActive   = TRUE;
+    m_bPlaybackActive   = FALSE;
     m_bThreadBusy       = FALSE;
+
+    PrimePlayback();
+
+    m_bPlaybackActive = TRUE;
 
     return TRUE;
 }
@@ -514,6 +513,89 @@ void movie_private::ThreadLoop(void)
 
 //==============================================================================
 
+xbool movie_private::PrimePlayback(void)
+{
+    movie_webm::sample Sample;
+    xbool bDecodedFrame = FALSE;
+
+    while (m_Container.PeekSample(Sample))
+    {
+        if (Sample.Type == movie_webm::STREAM_TYPE_AUDIO)
+        {
+            if (!m_Container.ReadSample(Sample))
+                break;
+
+            if (m_Config.HasAudio)
+            {
+                m_AudioDecoder.DecodeSample(Sample, m_Container.GetReader());
+            }
+
+            continue;
+        }
+
+        if (Sample.Type == movie_webm::STREAM_TYPE_VIDEO)
+        {
+            if (!m_Container.ReadSample(Sample))
+                break;
+
+            if (!ProcessVideoSample(Sample))
+                break;
+
+            m_LastVideoTime = Sample.TimeSeconds;
+            PreloadAudio(Sample.TimeSeconds + AUDIO_BUFFER_LEAD);
+            bDecodedFrame = TRUE;
+            break;
+        }
+
+        if (!m_Container.ReadSample(Sample))
+            break;
+    }
+
+    if (!bDecodedFrame)
+    {
+        m_Container.Rewind();
+
+        if (m_Config.HasAudio)
+        {
+            m_AudioDecoder.Flush();
+        }
+
+        m_LastVideoTime = 0.0;
+        return FALSE;
+    }
+
+    return TRUE;
+}
+
+//==============================================================================
+
+void movie_private::PreloadAudio(f64 TargetTime)
+{
+    if (!m_Config.HasAudio)
+        return;
+
+    while (TRUE)
+    {
+        movie_webm::sample Sample;
+
+        if (!m_Container.PeekSample(Sample))
+            return;
+
+        if (Sample.Type != movie_webm::STREAM_TYPE_AUDIO)
+            return;
+
+        if (Sample.TimeSeconds > TargetTime)
+            return;
+
+        if (!m_Container.ReadSample(Sample))
+            return;
+
+        m_AudioDecoder.DecodeSample(Sample, m_Container.GetReader());
+    }
+}
+
+//==============================================================================
+
 xbool movie_private::ProcessVideoSample(const movie_webm::sample& Sample)
 {
     if (!m_VideoDecoder.DecodeSample(Sample, m_Container.GetReader()))
@@ -645,6 +727,8 @@ void movie_private::SleepMilliseconds(f64 Seconds)
 
 void movie_private::ResetPlayback(void)
 {
+    m_bPlaybackActive = FALSE;
+
     m_Container.Rewind();
     m_VideoDecoder.Shutdown();
     if (!m_VideoDecoder.Initialize(m_Config))

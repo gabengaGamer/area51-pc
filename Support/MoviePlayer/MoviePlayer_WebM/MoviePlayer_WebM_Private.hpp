@@ -405,6 +405,8 @@ private:
     xbool           ProcessVideoSample  (const movie_webm::sample& Sample);
     void            UpdateRenderBuffer  (const movie_webm::sample& Sample);
     void            ResetPlayback       (void);
+    xbool           PrimePlayback       (void);
+    void            PreloadAudio        (f64 TargetTime);	
     void            PumpAudio           (f64 TargetTime);
     void            HandleEndOfStream   (void);
     void            SleepMilliseconds   (f64 Seconds);
