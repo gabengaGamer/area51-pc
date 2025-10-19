@@ -287,10 +287,14 @@ xbool audio_decoder::InitializeXAudio(void)
     {
         m_ComInitialized = TRUE;
     }
+    else if (hr == S_FALSE)
+    {
+        m_ComInitialized = FALSE;
+    }
     else if (hr == RPC_E_CHANGED_MODE)
     {
         x_DebugMsg("MoviePlayer_WebM: CoInitializeEx failed (RPC_E_CHANGED_MODE).\n");
-        return FALSE;
+        m_ComInitialized = FALSE;
     }
     else
     {
@@ -638,15 +642,18 @@ xbool audio_decoder::DecodeOpusFrame(const u8* pData, s32 DataSize)
     if (m_OpusPreSkipRemaining > 0)
     {
         const s32 skip = x_min(m_OpusPreSkipRemaining, samples);
+        m_OpusPreSkipRemaining -= skip;
+        
         const s32 remaining = samples - skip;
         if (remaining > 0)
         {
             x_memmove(pOutput, pOutput + (skip * m_Channels), remaining * m_Channels * (s32)sizeof(s16));
+            samples = remaining;
         }
-        samples = remaining;
-        m_OpusPreSkipRemaining -= skip;
-        if (samples <= 0)
+        else
+        {
             return TRUE;
+        }
     }
 
     return SubmitPCM(pOutput, samples);
@@ -920,6 +927,13 @@ xbool audio_decoder::DecodeVorbisPacket(const u8* pData, s32 DataSize)
             break;
 
         const s32 sampleCount = (s32)samples;
+        if (sampleCount > (INT_MAX / m_Channels))
+        {
+            x_DebugMsg("MoviePlayer_WebM: Sample count overflow detected.\n");
+            vorbis_synthesis_read(m_pVorbisDsp, sampleCount);
+            continue;
+        }
+        
         const s32 totalSamples = sampleCount * m_Channels;
         if (totalSamples <= 0)
         {
@@ -1025,6 +1039,8 @@ xbool audio_decoder::SubmitPCM(const s16* pSamples, s32 SampleCount)
         if (FAILED(hr))
         {
             x_DebugMsg("MoviePlayer_WebM: Failed to start source voice (0x%08X).\n", hr);
+            m_pSourceVoice->FlushSourceBuffers();
+            return FALSE;
         }
         else
         {

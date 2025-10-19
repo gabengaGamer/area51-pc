@@ -90,18 +90,22 @@ int file_reader::Read(long long position, long length, unsigned char* buffer)
 {
     if (!m_pFile || !buffer || (length <= 0))
         return -1;
-
+    
     if (position < 0)
         return -1;
-
+    
     if (position > 0x7FFFFFFF)
         return -1;
-
+    
+    if (length > 0x7FFFFFFF)
+        return -1;
+    
     if (x_fseek(m_pFile, (s32)position, X_SEEK_SET) != 0)
         return -1;
-
-    const s32 bytesRead = x_fread(buffer, 1, length, m_pFile);
-    return (bytesRead == length) ? 0 : -1;
+    
+    const s32 len32 = (s32)length;
+    const s32 bytesRead = x_fread(buffer, 1, len32, m_pFile);
+    return (bytesRead == len32) ? 0 : -1;
 }
 
 //==============================================================================
@@ -199,7 +203,7 @@ void container::Rewind(void)
     if (!m_pSegment)
         return;
 
-    m_pCluster          = NULL;
+    m_pCluster          = m_pSegment->GetFirst();
     m_pEntry            = NULL;
     m_bEOF              = FALSE;
     m_bHasPendingSample = FALSE;
@@ -244,6 +248,8 @@ xbool container::AcquireSample(sample& OutSample)
     if (m_bEOF || !m_pSegment)
         return FALSE;
 
+    s32 skippedBlocks = 0;
+
     while (AdvanceEntry())
     {
         const mkvparser::Block* pBlock = m_pEntry->GetBlock();
@@ -253,7 +259,16 @@ xbool container::AcquireSample(sample& OutSample)
         const s32 trackNumber = (s32)pBlock->GetTrackNumber();
 
         if ((trackNumber != m_VideoTrack) && (trackNumber != m_AudioTrack))
+        {
+            ++skippedBlocks;
+            if (skippedBlocks > 1024) // 1024 Max skipped blocks
+            {
+                x_DebugMsg("MoviePlayer_WebM: Skipped too many blocks, stopping\n");
+                m_bEOF = TRUE;
+                return FALSE;
+            }
             continue;
+        }
 
         OutSample.pEntry      = m_pEntry;
         OutSample.pBlock      = pBlock;
@@ -353,7 +368,7 @@ xbool container::SelectTracks(player_config& Config)
 
             size_t privateSize = 0;
             const unsigned char* pPrivate = pTrack->GetCodecPrivate(privateSize);
-            if (pPrivate && (privateSize > 0))
+            if (pPrivate && (privateSize > 0) && (privateSize <= INT_MAX))
             {
                 Config.AudioCodecPrivate.SetCount((s32)privateSize);
                 x_memcpy(Config.AudioCodecPrivate.GetPtr(), pPrivate, (s32)privateSize);
@@ -402,40 +417,51 @@ xbool container::AdvanceEntry(void)
     if (m_bEOF)
         return FALSE;
 
-    if (!m_pCluster)
-    {
-        if (!AdvanceCluster())
-            return FALSE;
-    }
+    s32 retries = 0;
 
-    if (!m_pEntry)
+    while (retries < 128) // 128 Max retries
     {
-        const mkvparser::BlockEntry* pEntry = NULL;
-        const long status = m_pCluster->GetFirst(pEntry);
-
-        if ((status < 0) || !pEntry || pEntry->EOS())
+        if (!m_pCluster)
         {
             if (!AdvanceCluster())
                 return FALSE;
-            return AdvanceEntry();
         }
 
-        m_pEntry = pEntry;
+        if (!m_pEntry)
+        {
+            const mkvparser::BlockEntry* pEntry = NULL;
+            const long status = m_pCluster->GetFirst(pEntry);
+
+            if ((status < 0) || !pEntry || pEntry->EOS())
+            {
+                if (!AdvanceCluster())
+                    return FALSE;
+                ++retries;
+                continue;
+            }
+
+            m_pEntry = pEntry;
+            return TRUE;
+        }
+
+        const mkvparser::BlockEntry* pNext = NULL;
+        const long status = m_pCluster->GetNext(m_pEntry, pNext);
+
+        if ((status < 0) || !pNext || pNext->EOS())
+        {
+            if (!AdvanceCluster())
+                return FALSE;
+            ++retries;
+            continue;
+        }
+
+        m_pEntry = pNext;
         return TRUE;
     }
 
-    const mkvparser::BlockEntry* pNext = NULL;
-    const long status = m_pCluster->GetNext(m_pEntry, pNext);
-
-    if ((status < 0) || !pNext || pNext->EOS())
-    {
-        if (!AdvanceCluster())
-            return FALSE;
-        return AdvanceEntry();
-    }
-
-    m_pEntry = pNext;
-    return TRUE;
+    x_DebugMsg("MoviePlayer_WebM: Too many empty clusters\n");
+    m_bEOF = TRUE;
+    return FALSE;
 }
 
 //==============================================================================

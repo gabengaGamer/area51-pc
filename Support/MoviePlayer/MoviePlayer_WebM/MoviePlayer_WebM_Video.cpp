@@ -139,11 +139,18 @@ xbool video_decoder::DecodeSample(const sample& Sample, mkvparser::IMkvReader* p
         if (frameSize <= 0)
             continue;
 
+        if (frameSize > m_CompressedBuffer.GetCapacity())
+        {
+            const s32 newCapacity = frameSize + (frameSize / 4) + 4096;
+            m_CompressedBuffer.SetCapacity(newCapacity);
+        }
+
         m_CompressedBuffer.SetCount(frameSize);
+        
         if (Frame.Read(pReader, m_CompressedBuffer.GetPtr()) < 0)
         {
             x_DebugMsg("MoviePlayer_WebM: Failed to read frame data.\n");
-            return FALSE;
+            continue;
         }
 
         const vpx_codec_err_t Err = vpx_codec_decode(&m_CodecCtx, m_CompressedBuffer.GetPtr(), frameSize, NULL, 0);
@@ -179,6 +186,9 @@ xbool video_decoder::ConvertFrame(const vpx_image_t& Image)
     const s32 Height = (s32)Image.d_h;
 
     if ((Width <= 0) || (Height <= 0))
+        return FALSE;
+
+    if ((Width > 32768) || (Height > 32768))  // 32K resolution
         return FALSE;
 
     m_Width      = Width;
