@@ -6,11 +6,24 @@
 //
 //==============================================================================
 
+//TODO: Rewrite ThreadLoop and PumpAudio code, its to bad.
+//TODO: Fix loading .webm videos after exiting back into main menu from game
+
+//==============================================================================
+//  PLATFORM CHECK
+//==============================================================================
+
+// Let it be only for PC, for now...
+
 #include "x_target.hpp"
 
 #ifndef TARGET_PC
 #error This file should only be compiled for PC platform. Please check your exclusions on your project spec.
 #endif
+
+//==============================================================================
+//  INCLUDES
+//==============================================================================
 
 #include <d3d11.h>
 
@@ -21,11 +34,19 @@
 #include "../movieplayer.hpp"
 #include "MoviePlayer_WebM_Private.hpp"
 
+//==============================================================================
+// CONSTANTS
+//==============================================================================
+
 namespace
 {
     static const f64 VIDEO_PRESENT_LEAD = 0.005;
     static const f64 AUDIO_BUFFER_LEAD  = 0.25;
 }
+
+//==============================================================================
+//  GLOBAL INSTANCE
+//==============================================================================
 
 movie_player Movie;
 
@@ -334,8 +355,6 @@ void movie_private::ThreadMain(void)
 }
 
 //==============================================================================
-
-// Lazy fix.
 
 void movie_private::ThreadLoop(void)
 {

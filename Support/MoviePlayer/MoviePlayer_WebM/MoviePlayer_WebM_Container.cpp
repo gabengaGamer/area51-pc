@@ -6,11 +6,21 @@
 //
 //==============================================================================
 
+//==============================================================================
+//  PLATFORM CHECK
+//==============================================================================
+
+// Let it be only for PC, for now...
+
 #include "x_target.hpp"
 
 #ifndef TARGET_PC
 #error This file should only be compiled for PC platform. Please check your exclusions on your project spec.
 #endif
+
+//==============================================================================
+//  INCLUDES
+//==============================================================================
 
 #include "x_files.hpp"
 #include "x_memory.hpp"

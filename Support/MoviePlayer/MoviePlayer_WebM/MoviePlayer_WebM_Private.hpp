@@ -9,11 +9,21 @@
 #ifndef MOVIEPLAYER_WEBM_PRIVATE_HPP
 #define MOVIEPLAYER_WEBM_PRIVATE_HPP
 
+//==============================================================================
+//  PLATFORM CHECK
+//==============================================================================
+
+// Let it be only for PC, for now...
+
 #include "x_target.hpp"
 
 #ifndef TARGET_PC
 #error This file should only be compiled for PC platform. Please check your exclusions on your project spec.
 #endif
+
+//==============================================================================
+//  INCLUDES
+//==============================================================================
 
 #include "x_files.hpp"
 #include "Entropy.hpp"
@@ -60,6 +70,8 @@ enum stream_type
     STREAM_TYPE_AUDIO
 };
 
+//------------------------------------------------------------------------------
+
 struct player_config
 {
     player_config(void)
@@ -97,6 +109,8 @@ struct player_config
     xarray<u8>  AudioCodecPrivate;
 };
 
+//------------------------------------------------------------------------------
+
 struct sample
 {
     sample(void)
@@ -116,6 +130,8 @@ struct sample
     f64                         TimeSeconds;
     xbool                       IsKeyFrame;
 };
+
+//------------------------------------------------------------------------------
 
 struct render_data
 {
