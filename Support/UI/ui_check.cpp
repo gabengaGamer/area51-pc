@@ -160,20 +160,10 @@ xbool ui_check::IsChecked( void ) const
 
 void ui_check::OnLBDown ( ui_win* pWin )
 {
-    (void)pWin;
-
 #ifndef TARGET_PC
+    (void)pWin;
     return;
+#else
+    OnPadSelect( pWin );
 #endif
-
-    if( pWin == (ui_win*)this )
-    {
-        m_Flags ^= WF_SELECTED;
-
-        // Notify Parent
-        if( m_pParent )
-            m_pParent->OnNotify( m_pParent, this, WN_CHECK_CHANGE, (void*)(m_Flags & WF_SELECTED) );
-
-        //g_AudioMgr.Play("OptionSelect");
-    }
 }

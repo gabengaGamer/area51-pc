@@ -108,7 +108,7 @@ xbool ui_dlg_list::Create( s32                        UserID,
     Success = ui_dialog::Create( UserID, pManager, pDialogTem, Position, pParent, Flags );
 
     m_pResultPtr        = 0;
-    m_BackgroundColor   = xcolor(0, 20, 30,255);//FECOL_DIALOG2; //-- Jhowa
+    m_BackgroundColor   = xcolor(0, 20, 30, 256);
 
     m_pList = (ui_listbox*)FindChildByID( IDC_LIST );
 
@@ -148,9 +148,12 @@ void ui_dlg_list::Render( s32 ox, s32 oy )
         r.Set( m_Position.l+ox, m_Position.t+oy, m_Position.r+ox, m_Position.b+oy );
 
         // Render background color
-        irect   rb = r;
-        rb.Deflate( 1, 1 );
-        m_pManager->RenderRect( rb, m_BackgroundColor, FALSE );
+        if( m_BackgroundColor.A > 0 )
+        {
+            irect rb = r;
+            rb.Deflate( 1, 1 );
+            m_pManager->RenderRect( rb, m_BackgroundColor, FALSE );
+        }
 
         // Render frame
         m_pManager->RenderElement( m_iElement, r, 0 );

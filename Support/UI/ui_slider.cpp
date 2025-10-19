@@ -436,8 +436,8 @@ void ui_slider::OnCursorExit ( ui_win* pWin )
 #ifdef TARGET_PC
 
     // Stop dragging the thumb.
-//    if( m_MouseDown )
-//        m_MouseDown = FALSE;
+    if( m_MouseDown )
+        m_MouseDown = FALSE;
 
 #endif
     // Turn off the high light.
