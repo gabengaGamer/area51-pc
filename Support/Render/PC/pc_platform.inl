@@ -398,7 +398,7 @@ void platform_RenderRawStrips( s32               nVerts,
 
     // fill in the l2w...note we have to reset draw to do this
     // NOTE: DRAW_NO_ZWRITE because we don't need spoil the depth buffer
-    draw_Begin( DRAW_TRIANGLES, DRAW_TEXTURED | DRAW_CULL_NONE | DRAW_NO_ZWRITE );
+    draw_Begin( DRAW_TRIANGLES, DRAW_TEXTURED | DRAW_NO_ZWRITE | DRAW_UV_CLAMP | DRAW_CULL_NONE | DRAW_USE_ALPHA );
     draw_SetTexture( *s_pDrawBitmap );
     draw_SetL2W( L2W );
 
@@ -494,7 +494,7 @@ void platform_Render3dSprites( s32               nSprites,
     draw_ClearL2W();
     
     // NOTE: DRAW_NO_ZWRITE because we don't need spoil the depth buffer
-    draw_Begin( DRAW_TRIANGLES, DRAW_TEXTURED | DRAW_USE_ALPHA | DRAW_CULL_NONE | DRAW_NO_ZWRITE );
+    draw_Begin( DRAW_TRIANGLES, DRAW_TEXTURED | DRAW_NO_ZWRITE | DRAW_UV_CLAMP | DRAW_CULL_NONE | DRAW_USE_ALPHA );
     draw_SetTexture( *s_pDrawBitmap );
     draw_SetL2W( V2W );
 
@@ -588,7 +588,7 @@ void platform_RenderHeatHazeSprites( s32 nSprites, f32 UniScale, const matrix4* 
         S2V = W2V;
 
     draw_ClearL2W();
-    draw_Begin( DRAW_TRIANGLES, DRAW_TEXTURED | DRAW_USE_ALPHA | DRAW_CULL_NONE | DRAW_NO_ZWRITE );
+    draw_Begin( DRAW_TRIANGLES, DRAW_TEXTURED | DRAW_NO_ZWRITE | DRAW_UV_CLAMP | DRAW_CULL_NONE | DRAW_USE_ALPHA );
     draw_SetTexture( *s_pDrawBitmap );
     draw_SetL2W( V2W );
 
@@ -666,7 +666,7 @@ void platform_RenderVelocitySprites( s32            nSprites,
     // start up draw
     draw_ClearL2W();
     // NOTE: DRAW_NO_ZWRITE because we don't need spoil the depth buffer
-    draw_Begin( DRAW_TRIANGLES, DRAW_TEXTURED | DRAW_USE_ALPHA | DRAW_CULL_NONE | DRAW_NO_ZWRITE );
+    draw_Begin( DRAW_TRIANGLES, DRAW_TEXTURED | DRAW_NO_ZWRITE | DRAW_UV_CLAMP | DRAW_CULL_NONE | DRAW_USE_ALPHA );
     draw_SetTexture( *s_pDrawBitmap );
 
     g_MaterialMgr.SetBlendMode( s_BlendMode );
