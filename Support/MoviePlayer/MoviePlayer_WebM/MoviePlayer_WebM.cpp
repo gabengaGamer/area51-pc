@@ -34,6 +34,7 @@
 #include "MoviePlayer_WebM_Private.hpp"
 
 // Auto include WebM libs
+#ifdef _MSC_VER
 #pragma comment( lib, "ogg.lib" )
 #pragma comment( lib, "opus.lib" )
 #pragma comment( lib, "opusfile.lib" )
@@ -42,6 +43,7 @@
 #pragma comment( lib, "vorbisfile.lib" )
 #pragma comment( lib, "vpx.lib" )
 #pragma comment( lib, "webm.lib" )
+#endif
 
 //==============================================================================
 // CONSTANTS
