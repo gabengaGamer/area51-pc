@@ -758,18 +758,32 @@ void movie_private::ResetPlayback(void)
     m_LastVideoTime = 0.0;
 
     m_RenderData.DataMutex.Enter();
-    m_RenderData.pFrameData   = NULL;
-    m_RenderData.Width        = 0;
-    m_RenderData.Height       = 0;
-    m_RenderData.Pitch        = 0;
-    m_RenderData.FrameTime    = 0.0;
     m_RenderData.bHasNewFrame = FALSE;
-    m_RenderData.bIsValid     = FALSE;
     m_RenderData.DataMutex.Exit();
 
     m_bHasPendingVideo = FALSE;
+    m_PendingVideoSample = movie_webm::sample();
 
     m_Clock.Reset();
+
+    if (!PrimePlayback())
+    {
+        m_RenderData.DataMutex.Enter();
+        m_RenderData.pFrameData   = NULL;
+        m_RenderData.Width        = 0;
+        m_RenderData.Height       = 0;
+        m_RenderData.Pitch        = 0;
+        m_RenderData.FrameTime    = 0.0;
+        m_RenderData.bHasNewFrame = FALSE;
+        m_RenderData.bIsValid     = FALSE;
+        m_RenderData.DataMutex.Exit();
+
+        m_bPlaybackActive = FALSE;
+        m_bVideoEOF       = TRUE;
+        m_bThreadFinished = TRUE;
+        return;
+    }
+
     m_Clock.Start();
 
     m_bVideoEOF       = FALSE;
