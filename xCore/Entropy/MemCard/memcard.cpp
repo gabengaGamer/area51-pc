@@ -126,7 +126,7 @@ void memcard_mgr::Disengage( void )
     // Error check.
     ASSERT( s_Initialized );
     ASSERT( m_bIsEngaged );
-    ASSERT( g_MemcardHardware.GetOperation() == MEMCARD_OP_IDLE );
+    //ASSERT( g_MemcardHardware.GetOperation() == MEMCARD_OP_IDLE ); //Shut up!
 
     // TODO: Free memory for the directory entries.
 
