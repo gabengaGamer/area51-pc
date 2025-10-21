@@ -338,9 +338,16 @@ void dlg_extras::OnNotify ( ui_win* pWin, ui_win* pSender, s32 Command, void* pD
     (void)pWin;
     (void)pData;
 
-    if( m_pExtrasList && (pSender == m_pExtrasList) && (Command == WN_LIST_ACCEPTED) )
+    if( m_State == DIALOG_STATE_ACTIVE )
     {
-        PlaySelectedMovie();
+        if( pSender == (ui_win*)m_pExtrasList )
+        {
+            if( Command == WN_LIST_ACCEPTED )
+            {
+                g_AudioMgr.Play( "Select_Norm" );
+                PlaySelectedMovie();
+            }
+        }
     }
 }
 
@@ -353,12 +360,11 @@ void dlg_extras::PlaySelectedMovie( void )
 
     // shut down background movie
     g_StateMgr.DisableBackgoundMovie();
-
+	
     // play the selected movie
-    const s32 Selection = m_pExtrasList->GetSelection();
-    if( Selection >= 0 )
+    if( m_pExtrasList->GetSelection() != -1 )
     {
-        const s32 ItemIndex = m_pExtrasList->GetSelectedItemData( 0 );
+        s32 ItemIndex = m_pExtrasList->GetSelectedItemData( 0 );
         if( (ItemIndex >= 0) && (ItemIndex < (s32)(sizeof( s_MovieNames ) / sizeof( s_MovieNames[0] ))) )
         {
             PlaySimpleMovie( SelectBestClip( s_MovieNames[ ItemIndex ] ) );
@@ -368,6 +374,7 @@ void dlg_extras::PlaySelectedMovie( void )
     // start up the background movie
     g_StateMgr.EnableBackgroundMovie();
 }
+
 
 //=========================================================================
 
@@ -380,9 +387,8 @@ void dlg_extras::OnPadNavigate( ui_win* pWin, s32 Code, s32 Presses, s32 Repeats
 
 void dlg_extras::OnPadSelect( ui_win* pWin )
 {
-    if( m_pExtrasList )
+    if( m_State == DIALOG_STATE_ACTIVE )
     {
-		//g_AudioMgr.Play( "Select_Norm" );
         m_pExtrasList->OnPadActivate( pWin );
     }
 }
