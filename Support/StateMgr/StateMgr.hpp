@@ -49,7 +49,7 @@ enum sm_states
     SM_IDLE = 0,
 
     SM_ESRB_NOTICE,
-    SM_INEVITABLE_INTRO,
+    SM_STARTUP_INTRO,
 #if defined(TARGET_PS2)
     SM_AUTOSAVE_DIALOG,
     SM_CONTROLLER_CHECK,
@@ -550,9 +550,9 @@ private:
     void                    UpdateESRBNotice                ( void );
     void                    ExitESRBNotice                  ( void );
 
-    void                    EnterInevitableIntro            ( void );
-    void                    UpdateInevitableIntro           ( void );
-    void                    ExitInevitableIntro             ( void );
+    void                    EnterStartupIntro               ( void );
+    void                    UpdateStartupIntro              ( void );
+    void                    ExitStartupIntro                ( void );
 #if defined(TARGET_PS2)
     void                    EnterControllerCheck            ( void );
     void                    UpdateControllerCheck           ( void );

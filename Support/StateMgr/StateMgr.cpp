@@ -441,7 +441,7 @@ void state_mgr::Init( void )
 #endif
 #endif
 #if CONFIG_IS_DEMO
-    SetState( SM_INEVITABLE_INTRO );
+    SetState( SM_STARTUP_INTRO );
 #else
     if( CONFIG_IS_AUTOSERVER || CONFIG_IS_AUTOCLIENT || CONFIG_IS_AUTOCAMPAIGN || CONFIG_IS_AUTOSPLITSCREEN )
     {
@@ -452,7 +452,7 @@ void state_mgr::Init( void )
     {
     #ifdef TARGET_XBOX
         // The ESRB notice is done elsewhere
-        SetState( SM_INEVITABLE_INTRO );
+        SetState( SM_STARTUP_INTRO );
     #else
         // Normal build.
         SetState( SM_ESRB_NOTICE );
@@ -533,7 +533,7 @@ const char* state_mgr::GetStateName( sm_states State )
         LABEL_STRING( SM_IDLE );
 
         LABEL_STRING( SM_ESRB_NOTICE );
-        LABEL_STRING( SM_INEVITABLE_INTRO );
+        LABEL_STRING( SM_STARTUP_INTRO );
 #if defined(TARGET_PS2)
         LABEL_STRING( SM_CONTROLLER_CHECK );
         LABEL_STRING( SM_AUTOSAVE_DIALOG );
@@ -1319,7 +1319,7 @@ void state_mgr::EnterState( sm_states State )
     switch( State )
     {
         case SM_ESRB_NOTICE:                    EnterESRBNotice();                  break;
-        case SM_INEVITABLE_INTRO:               EnterInevitableIntro();             break;
+        case SM_STARTUP_INTRO:                  EnterStartupIntro();                break;
 #if defined(TARGET_PS2)
         case SM_AUTOSAVE_DIALOG:                EnterAutoSaveDialog();              break;
         case SM_CONTROLLER_CHECK:               EnterControllerCheck();             break;
@@ -1558,7 +1558,7 @@ void state_mgr::UpdateState( sm_states State, f32 DeltaTime )
     switch( State )
     {
         case SM_ESRB_NOTICE:                    UpdateESRBNotice();                 break;
-        case SM_INEVITABLE_INTRO:               UpdateInevitableIntro();            break;
+        case SM_STARTUP_INTRO:                  UpdateStartupIntro();               break;
 #if defined(TARGET_PS2)
         case SM_CONTROLLER_CHECK:               UpdateControllerCheck();            break;
         case SM_AUTOSAVE_DIALOG:                UpdateAutoSaveDialog();             break;
@@ -2298,7 +2298,7 @@ void state_mgr::UpdateESRBNotice( void )
 
         if( ( DialogState == DIALOG_STATE_SELECT ) || ( CONFIG_IS_AUTOSERVER || CONFIG_IS_AUTOCLIENT || CONFIG_IS_AUTOCAMPAIGN || CONFIG_IS_AUTOSPLITSCREEN) )
         {
-            SetState( SM_INEVITABLE_INTRO );
+            SetState( SM_STARTUP_INTRO );
         }
     }
 }
@@ -2312,7 +2312,7 @@ void state_mgr::ExitESRBNotice( void )
 
 //=========================================================================
 
-void state_mgr::EnterInevitableIntro( void )
+void state_mgr::EnterStartupIntro( void )
 {
 }
 
@@ -2361,7 +2361,7 @@ xstring SelectBestClip( const char* pName )
 
 //=========================================================================
 
-void state_mgr::UpdateInevitableIntro( void )
+void state_mgr::UpdateStartupIntro( void )
 {
 
 #if CONFIG_IS_DEMO
@@ -2376,11 +2376,27 @@ void state_mgr::UpdateInevitableIntro( void )
     SetState( SM_PRESS_START_SCREEN );
 #else
 #ifdef USE_MOVIES
-    // play midway movie
+    // play intro movies
+    if( !PlaySimpleMovie( SelectBestClip("Inevitable" )) )
+    {
+        DummyScreen( "Inevitable Movie Here", TRUE, 5 );
+    }
+
     if( !PlaySimpleMovie( SelectBestClip("Midway" )) )
     {
         DummyScreen( "Midway Movie Here", TRUE, 5 );
     }
+	
+    // Is Russian Federation ? 
+    //if( !PlaySimpleMovie( SelectBestClip("NewDisk" )) )
+    //{
+    //    DummyScreen( "NewDisk Movie Here", TRUE, 5 );
+    //}
+	
+	//if( !PlaySimpleMovie( SelectBestClip("ProjectDreamland" )) )
+    //{
+    //    DummyScreen( "ProjectDreamland Movie Here", TRUE, 5 );
+    //}
 #endif
     // change the state
 #ifdef TARGET_PS2
@@ -2396,7 +2412,7 @@ void state_mgr::UpdateInevitableIntro( void )
 
 //=========================================================================
 
-void state_mgr::ExitInevitableIntro( void )
+void state_mgr::ExitStartupIntro( void )
 {
 }
 
