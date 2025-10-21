@@ -102,6 +102,7 @@ s32 PlaySimpleMovie(const char* movieName)
     if( ret )
     {   
         xbool done = FALSE;
+        xbool allowSkip = FALSE;
 
         while(!done)
         {
@@ -117,13 +118,26 @@ s32 PlaySimpleMovie(const char* movieName)
                 eng_PageFlip();
 
 #if defined(TARGET_PC)
-                if( input_WasPressed( INPUT_KBD_RETURN, 0 ) || input_WasPressed( INPUT_KBD_ESCAPE, 0 ) || input_WasPressed( INPUT_KBD_SPACE, 0 ) )  
-#else
-                #error Do something !!!
-#endif
+                // Wait until the user release all keys,
+                // because if not do this, some videos to be accidentally skipped
+                if( !allowSkip )
+                {
+                    if( !input_IsPressed( INPUT_KBD_RETURN, 0 ) &&
+                        !input_IsPressed( INPUT_KBD_ESCAPE, 0 ) &&
+                        !input_IsPressed( INPUT_KBD_SPACE, 0 ) )
+                    {
+                        allowSkip = TRUE;
+                    }
+                }
+                else if( input_WasPressed( INPUT_KBD_RETURN, 0 ) ||
+                         input_WasPressed( INPUT_KBD_ESCAPE, 0 ) ||
+                         input_WasPressed( INPUT_KBD_SPACE, 0 ) )
                 {
                     done = TRUE;
                 }
+#else
+                #error Do something !!!
+#endif
             }
         }
         eng_PageFlip();

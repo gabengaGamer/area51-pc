@@ -50,7 +50,9 @@ public:
     virtual void        OnPadBack           ( ui_win* pWin );
     virtual void        OnUpdate            ( ui_win* pWin, f32 DeltaTime );
     
+private:	
     void                FillExtrasList      ( void );
+    void                PlaySelectedMovie   ( void );
 
 protected:
     ui_listbox*         m_pExtrasList;

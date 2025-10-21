@@ -20,11 +20,13 @@
 #include "Parsing/textin.hpp"
 #include "StateMgr/mapList.hpp"
 #include "NetworkMgr/GameMgr.hpp"
+
 #ifdef CONFIG_VIEWER
 #include "../../Apps/ArtistViewer/Config.hpp"
 #else
 #include "../../Apps/GameApp/Config.hpp"	
 #endif
+
 #include "Configuration/GameConfig.hpp"
 #include "MoviePlayer/MoviePlayer.hpp"
 
@@ -334,9 +336,37 @@ void dlg_extras::Render( s32 ox, s32 oy )
 void dlg_extras::OnNotify ( ui_win* pWin, ui_win* pSender, s32 Command, void* pData )
 {
     (void)pWin;
-    (void)pSender;
-    (void)Command;
     (void)pData;
+
+    if( m_pExtrasList && (pSender == m_pExtrasList) && (Command == WN_LIST_ACCEPTED) )
+    {
+        PlaySelectedMovie();
+    }
+}
+
+//=========================================================================
+
+void dlg_extras::PlaySelectedMovie( void )
+{
+    if( !m_pExtrasList )
+        return;
+
+    // shut down background movie
+    g_StateMgr.DisableBackgoundMovie();
+
+    // play the selected movie
+    const s32 Selection = m_pExtrasList->GetSelection();
+    if( Selection >= 0 )
+    {
+        const s32 ItemIndex = m_pExtrasList->GetSelectedItemData( 0 );
+        if( (ItemIndex >= 0) && (ItemIndex < (s32)(sizeof( s_MovieNames ) / sizeof( s_MovieNames[0] ))) )
+        {
+            PlaySimpleMovie( SelectBestClip( s_MovieNames[ ItemIndex ] ) );
+        }
+    }
+
+    // start up the background movie
+    g_StateMgr.EnableBackgroundMovie();
 }
 
 //=========================================================================
@@ -350,17 +380,11 @@ void dlg_extras::OnPadNavigate( ui_win* pWin, s32 Code, s32 Presses, s32 Repeats
 
 void dlg_extras::OnPadSelect( ui_win* pWin )
 {
-    g_AudioMgr.Play( "Select_Norm" );
-    m_pExtrasList->OnPadActivate( pWin );
-
-    // shut down background movie
-    g_StateMgr.DisableBackgoundMovie();
-#if defined( TARGET_PC )
-    // play the selected movie
-    PlaySimpleMovie(  SelectBestClip(s_MovieNames[ m_pExtrasList->GetSelectedItemData(0)]) );
-#endif
-    // start up the background movie
-    g_StateMgr.EnableBackgroundMovie();
+    if( m_pExtrasList )
+    {
+		//g_AudioMgr.Play( "Select_Norm" );
+        m_pExtrasList->OnPadActivate( pWin );
+    }
 }
 
 //=========================================================================
