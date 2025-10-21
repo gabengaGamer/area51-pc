@@ -384,6 +384,12 @@ void dlg_profile_select::OnPadSelect( ui_win* pWin )
 
     if( m_State == DIALOG_STATE_ACTIVE )
     {
+        if( g_UIMemCardMgr.IsPolling() )
+        {
+            g_AudioMgr.Play( "InvalidEntry" );
+            return;
+        }
+		
         // check for bad profile
         if( m_pProfileList->GetSelectedItemData( 1 ) != PROFILE_OK )
         {
@@ -602,6 +608,12 @@ void dlg_profile_select::OnPadDelete( ui_win* pWin )
 
     if ( m_State == DIALOG_STATE_ACTIVE )
     {
+        if( g_UIMemCardMgr.IsPolling() )
+        {
+            g_AudioMgr.Play( "InvalidEntry" );
+            return;
+        }
+		
         // get the profile index from the list
         s32 index = m_pProfileList->GetSelectedItemData();
 
@@ -642,6 +654,12 @@ void dlg_profile_select::OnPadActivate( ui_win* pWin )
 
     if ( m_State == DIALOG_STATE_ACTIVE )
     {
+        if( g_UIMemCardMgr.IsPolling() )
+        {
+            g_AudioMgr.Play( "InvalidEntry" );
+            return;
+        }
+		
         switch( m_Type )
         {
             // continue without saving
@@ -708,6 +726,7 @@ void dlg_profile_select::OnPadActivate( ui_win* pWin )
 
 void dlg_profile_select::OnPollReturn( void )
 {
+    RefreshProfileList();
 }
 
 //=========================================================================
