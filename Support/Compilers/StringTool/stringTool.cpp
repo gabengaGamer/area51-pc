@@ -1,68 +1,59 @@
 //==============================================================================
-//==============================================================================
-//  stringTool
-//==============================================================================
-//==============================================================================
 //
-//  String Table conversion tool
+//  StringTool.cpp
 //
+//  String table conversion tool
 //
-//
-//==============================================================================
 //==============================================================================
 
 #include "x_files.hpp"
 #include "x_bytestream.hpp"
 #include "Auxiliary/CommandLine/CommandLine.hpp"
 #include "Parsing/textout.hpp"
+#include "../../StringMgr/StringMgr.hpp"
 
 //==============================================================================
-//  Defines
+//  DEFINES
 //==============================================================================
 
-#define MAX_COLUMNS     5                   // Number of columns we are interested in
-#define VERSION         "v1.5b"
-#define MAX_PLATFORMS   3
+#define MAX_COLUMNS     5  // Number of columns we are interested in
+#define MAX_PLATFORMS   1
 #define PLATFORM_PC     0
-#define PLATFORM_PS2    1
-#define PLATFORM_XBOX   2
 
 //==============================================================================
-//  Display Help
+//  DISPLAY HELP
 //==============================================================================
 
 void DisplayHelp( void )
 {
     x_printf( "\n" );
-    x_printf( "stringTool (c)2001-2003 Inevitable Entertainment Inc.\n" );
-    x_printf( xfs("Version %s\n",VERSION) );
+    x_printf( "StringTool (c)2001-2025 Inevitable Entertainment Inc.\n" );
     x_printf( "\n" );
+    x_printf( "KSS: PS2,XBOX and GCN is not supported. Please use older version.\n" );
+    x_printf( "\n" );	
     x_printf( "  usage:\n" );
     x_printf( "         stringTool [-opt [param]] [txtfile|binfile]\n" );
     x_printf( "\n" );
     x_printf( "options:\n" );
-    //x_printf( "         -output <folder>  - Set output folder for writing\n" );
-    //x_printf( "         -p <prefix>       - Prefix all identifiers with prefix\n" );
-    //x_printf( "         -overwrite        - Overwrite output files if they exist\n" );
-    //x_printf( "         -gcn              - Bit Swap for GameCube\n" );
-    //x_printf( "         -info             - Output tOut file that has the IDS\n" );
     x_printf( "         -debug            - Output DEBUG ID names (col 1)\n" );
     x_printf( "         -pc               - Output destination for PC platform\n" );
-    x_printf( "         -ps2              - Output destination for PS2 platform\n" );
-    x_printf( "         -xbox             - Output destination for XBox platform\n" );
 
 
     x_printf( "File Structure\n" );
+    x_printf( "Signature(32)                // 'InEV'\n" );
+    x_printf( "Version(16)                  // format version\n" );
+    x_printf( "Encoding(16)                 // encoding identifier\n" );
     x_printf( "nStrings(32)                 // number of strings\n" );
-    x_printf( "nStringOffsets(32)           // offsets to StringIDs\n" );
+    x_printf( "StringOffsets[n](32)         // offsets to String IDs\n" );
     x_printf( "StringID(null)String(null)   // String ID followed by Text String\n" );
-    x_printf( "...                          // \n" );                   
+    x_printf( "...                          // \n" );
     x_printf( "StringID(null)String(null)   // Repeated nStrings times\n" );
     x_printf( "\n" );
 }
 
+
 //==============================================================================
-//  HexValue
+//  HEX VALUE
 //==============================================================================
 
 s32 HexValue( xwchar H )
@@ -75,7 +66,7 @@ s32 HexValue( xwchar H )
 }
 
 //==============================================================================
-//  main
+//  MAIN
 //==============================================================================
 
 int main( int argc, char** argv )
@@ -85,10 +76,8 @@ int main( int argc, char** argv )
     s32             iOpt;
     xstring         OutputFolder;
     xstring         Prefix;
-    //xbool           OutputFolderSet = FALSE;
     xbool           DoPrefix        = FALSE;
     xbool           Overwrite       = TRUE;
-	xbool			GCNOutput		= FALSE;
 	xbool			Info			= FALSE;
 	xbool			SubTitleMode    = TRUE;
     xbool           DebugOutput     = FALSE;
@@ -99,19 +88,10 @@ int main( int argc, char** argv )
 
     //-- Init x_Files and Memory
     x_Init( argc, argv );
-    //x_MemInit();
 
     // Setup recognized command line options
-    //CommandLine.AddOptionDef( "OVERWRITE" );
-    //CommandLine.AddOptionDef( "P", command_line::STRING );
-    //CommandLine.AddOptionDef( "OUTPUT", command_line::STRING );
-	//CommandLine.AddOptionDef( "GCN" );
-	//CommandLine.AddOptionDef( "INFO" );
-	//CommandLine.AddOptionDef( "SUBTITLE" );
 	CommandLine.AddOptionDef( "DEBUG" );
     CommandLine.AddOptionDef( "PC", command_line::STRING );
-    CommandLine.AddOptionDef( "PS2", command_line::STRING );
-    CommandLine.AddOptionDef( "XBOX", command_line::STRING );
 
     // Parse command line
     NeedHelp = CommandLine.Parse( argc, argv );
@@ -133,50 +113,9 @@ int main( int argc, char** argv )
         BinName[PLATFORM_PC].Clear();
     }
 
-    // Check output folder option
-    iOpt = CommandLine.FindOption( xstring("PS2") );
-    if( iOpt != -1 )
-    {
-        BinName[PLATFORM_PS2] = CommandLine.GetOptionString( iOpt );
-    }
-    else
-    {
-        BinName[PLATFORM_PS2].Clear();
-    }
-
-    // Check output folder option
-    iOpt = CommandLine.FindOption( xstring("XBOX") );
-    if( iOpt != -1 )
-    {
-        BinName[PLATFORM_XBOX] = CommandLine.GetOptionString( iOpt );
-    }
-    else
-    {
-        BinName[PLATFORM_XBOX].Clear();
-    }
-/*
-    // Check prefix option
-    iOpt = CommandLine.FindOption( xstring("P") );
-    if( iOpt != -1 )
-    {
-        DoPrefix = TRUE;
-        Prefix = CommandLine.GetOptionString( iOpt );
-    }
-
-    // Check overwrite option
-    Overwrite = (CommandLine.FindOption( xstring("OVERWRITE") ) != -1);
-
-	// Check for GCN option
-	GCNOutput = (CommandLine.FindOption( xstring("GCN") ) != -1 );
-
-	// Check for GCN option
-	Info = (CommandLine.FindOption( xstring("INFO") ) != -1 );
-
-//    SubTitleMode = (CommandLine.FindOption( xstring("SUBTITLE") ) != -1 );
-*/
     DebugOutput = (CommandLine.FindOption( xstring("DEBUG") ) != -1 );
 
-    x_printf(xfs("\nStringTool %s started on (%s) file.\n",VERSION,CommandLine.GetArgument( 0 )));
+    x_printf(xfs("\nStringTool started on (%s) file.\n",CommandLine.GetArgument( 0 )));
 
     // Loop through all the files
     for( i=0 ; i<CommandLine.GetNumArguments() ; i++ )
@@ -206,19 +145,6 @@ int main( int argc, char** argv )
         xbytestream Binary;
         xbytestream IndexTable;
 
-        // Change Path if output folder set
-/*        if( OutputFolderSet )
-        {
-            CommandLine.SplitPath( BinName, Path, File );
-            BinName = CommandLine.JoinPath( OutputFolder, File );
-       
-            CommandLine.SplitPath( CodeName, Path, File );
-            CodeName = CommandLine.JoinPath( OutputFolder, File );
-
-            CommandLine.SplitPath( OutName, Path, File );
-            OutName = CommandLine.JoinPath( OutputFolder, File );
-		}
-*/
 		if( Info )
 		{
 			x_try;
@@ -226,8 +152,7 @@ int main( int argc, char** argv )
                 tOut.OpenFile( OutName );
             
             x_catch_begin;
-            
-				//xExceptionDisplay();
+
                 x_printf( "Error Opening Info FILE\n" );
 				return 0;
 
@@ -368,14 +293,6 @@ int main( int argc, char** argv )
                     for( s32 i=Column[1]; i<End; i++ )
                     {
                         // Extra hack to handle playstation 2 action cluster buttons
-
-                        // Following 5 are removed to support extened char set - JHOWA
-//                        if( Text[i] == 0x00C7 ) Text[i] = 128;
-//                        if( Text[i] == 0x00FC ) Text[i] = 129;
-//                        if( Text[i] == 0x00E9 ) Text[i] = 130;
-//                        if( Text[i] == 0x00E2 ) Text[i] = 131;
-//                        if (Text[i] == 0x0092 ) Text[i] = '\'';
-
                         if( Text[i] == 0x2013 ) Text[i] = '!';
                         if( Text[i] == 0x2018 ) Text[i] = '\'';
                         if( Text[i] == 0x2019 ) Text[i] = '\'';
@@ -390,11 +307,6 @@ int main( int argc, char** argv )
                             Text.Insert( i, xwstring(".") );
                             End += 2;
                             NextColOffset+=2;
-                        }
-                        if( Text[i] > 0x00FF )
-                        {
-                            Text[i] = '?';
-                            //x_printf( "Warning: 0x%04X\n", Text[i] );
                         }
 
                         if( Text[i] == 0x0092 )
@@ -544,24 +456,9 @@ int main( int argc, char** argv )
                 {
                     Binary.Append((byte*)&term,sizeof(xwchar));
                 }
-
-//                x_printf("%s\n",xfs("%s", (const char*)xstring(&Text[Column[0]])));
-//                x_printf("%s\n",xfs("%s", (const char*)xstring(&Text[Column[1]])));
-//                x_printf("%s\n",xfs("%s", (const char*)xstring(&Text[Column[2]+NextColOffset])));
-//                x_printf("%s\n",xfs("%s", (const char*)xstring(&Text[Column[3]+NextColOffset])));
-//                x_printf("%i\n",NextColOffset);
-
                 // Increment number of entries
                 nEntries++;
             }
-            /*
-            else
-            {
-                // No - display error
-                x_printf( " Error - Invalid line\n" );
-            }
-            */
-
             // Advance to beginning of next line
             while( (Index < Text.GetLength()) && 
                    ((Text[Index] == 0x00) || 
@@ -586,44 +483,19 @@ int main( int argc, char** argv )
 		}
 
         // Write Binary
-		IndexTable.Insert( 0, (byte)((nEntries>>24)&0xFF) );
-		IndexTable.Insert( 0, (byte)((nEntries>>16)&0xFF) );
-		IndexTable.Insert( 0, (byte)((nEntries>> 8)&0xFF) );
-		IndexTable.Insert( 0, (byte)((nEntries>> 0)&0xFF) );
+        stringbin_header FileHeader;
+        x_memset( &FileHeader, 0, sizeof( FileHeader ) );
+        FileHeader.Signature   = STRINGBIN_SIGNATURE;
+        FileHeader.Version     = STRINGBIN_VERSION;
+        FileHeader.Encoding    = STRINGBIN_ENCODING_UTF16LE;
+        FileHeader.StringCount = nEntries;
 
-		//-- If we are gamecube then swap the bits..
-		if( GCNOutput )
-		{
-			byte*	pindexData = IndexTable.GetBuffer();
-			u32		ndata32;
-			u32*	temp32;
+        xbytestream Header;
+        Header.Append( (const byte*)&FileHeader, sizeof( FileHeader ) );
+        Header.Append( IndexTable );
 
-			//-- Swap the IndexTable
-   			for( s32 index = 0 ; index < IndexTable.GetLength()/4 ; index ++ )
-			{
-				temp32 = (u32*)pindexData;
-				ndata32 = *temp32;
-				*temp32 = ENDIAN_SWAP_32(ndata32);
-				pindexData = (byte*)temp32;
-				pindexData+=4;
-			}
-
-			byte*	pdata = Binary.GetBuffer();
-			u16		ndata16;
-			u16*	temp16;
-
-			//-- Swap the Strings
-   			for( Index = 0 ; Index < Binary.GetLength()/2 ; Index ++ )
-			{
-				temp16 = (u16*)pdata;
-				ndata16 = *temp16;
-				*temp16 = ENDIAN_SWAP_16(ndata16);
-				pdata = (byte*)temp16;
-				pdata+=2;
-			}
-		}
-
-        Binary.Insert( 0, IndexTable );
+                const s32 HeaderLength = Header.GetLength();
+                Binary.Insert( 0, Header );
 
 	    for( s32 iPlatform = PLATFORM_PC; iPlatform < MAX_PLATFORMS; iPlatform++ )
         {	
@@ -648,12 +520,9 @@ int main( int argc, char** argv )
 			    x_printf( "Error - File \"%s\" already exists\n", BinName[iPlatform] );
 		    }
         }
-    }
-    
+    } 
 
     // Return success
-    //x_MemKill();
     x_Kill();
-
     return 0;
 }

@@ -147,6 +147,10 @@ string_table::string_table( void )
     m_pTableName    = NULL;
     m_pData         = NULL;
     m_nStrings      = 0;
+    m_version       = 0;
+    m_encoding      = 0;
+    m_pIndex        = NULL;
+    m_pStrings      = NULL;
 }
 
 //==============================================================================
@@ -159,6 +163,10 @@ string_table::~string_table( void )
 
         m_pData     = NULL;
         m_nStrings  = 0;
+        m_version   = 0;
+        m_encoding  = 0;
+        m_pIndex    = NULL;
+        m_pStrings  = NULL;
 
         LOG_MESSAGE( "string_table::~string_table",
                      "Unloaded: %s", m_pTableName );
@@ -207,13 +215,108 @@ xbool string_table::Load( const char* pTableName, const char* pFileName )
         VERIFY( x_fread( m_pData, 1, Length, pFile ) == Length );
         x_fclose( pFile );
 
-        m_pTableName = pTableName;
-        m_nStrings = *(s32*)m_pData;
-        Success = TRUE;
+        m_version    = 0;
+        m_encoding   = 0;
+        m_pIndex     = NULL;
+        m_pStrings   = NULL;
+        m_nStrings   = 0;
 
-        LOG_MESSAGE( "string_table::Load",
-                     "Loaded: %s - %s",
-                     pTableName, pFileName );
+        do
+        {
+            if( Length < (s32)STRINGBIN_HEADER_BYTES )
+            {
+                LOG_ERROR( "string_table::Load",
+                           "String table too small: %s - %s",
+                           pTableName, pFileName );
+                break;
+            }
+
+            const stringbin_header* pHeader = (const stringbin_header*)m_pData;
+            if( pHeader->Signature != STRINGBIN_SIGNATURE )
+            {
+                LOG_ERROR( "string_table::Load",
+                           "Invalid string table signature: %s - %s",
+                           pTableName, pFileName );
+                break;
+            }
+
+            m_version  = pHeader->Version;
+            m_encoding = pHeader->Encoding;
+            m_nStrings = pHeader->StringCount;
+
+            if( m_version != STRINGBIN_VERSION )
+            {
+                LOG_ERROR( "string_table::Load",
+                           "Unsupported string table version %d: %s - %s",
+                           m_version, pTableName, pFileName );
+                break;
+            }
+
+            if( m_encoding != STRINGBIN_ENCODING_UTF16LE )
+            {
+                LOG_ERROR( "string_table::Load",
+                           "Unsupported string encoding %d: %s - %s",
+                           m_encoding, pTableName, pFileName );
+                break;
+            }
+
+            if( m_nStrings < 0 )
+            {
+                LOG_ERROR( "string_table::Load",
+                           "Invalid string count %d: %s - %s",
+                           m_nStrings, pTableName, pFileName );
+                break;
+            }
+
+            const s32 IndexOffset = STRINGBIN_HEADER_BYTES;
+            const s32 BytesAfterHeader = Length - IndexOffset;
+            if( BytesAfterHeader < 0 )
+            {
+                LOG_ERROR( "string_table::Load",
+                           "Corrupt string table length: %s - %s",
+                           pTableName, pFileName );
+                break;
+            }
+
+            if( m_nStrings > (BytesAfterHeader / (s32)sizeof(s32)) )
+            {
+                LOG_ERROR( "string_table::Load",
+                           "Corrupt string table index: %s - %s",
+                           pTableName, pFileName );
+                break;
+            }
+
+            const s32 IndexSize = m_nStrings * (s32)sizeof(s32);
+            if( BytesAfterHeader < IndexSize )
+            {
+                LOG_ERROR( "string_table::Load",
+                           "Truncated string table index: %s - %s",
+                           pTableName, pFileName );
+                break;
+            }
+
+            m_pIndex   = (s32*)(m_pData + IndexOffset);
+            m_pStrings = m_pData + IndexOffset + IndexSize;
+
+            m_pTableName = pTableName;
+            Success = TRUE;
+
+            LOG_MESSAGE( "string_table::Load",
+                         "Loaded: %s - %s",
+                         pTableName, pFileName );
+        } while( FALSE );
+
+        if( !Success )
+        {
+            x_free( m_pData );
+            m_pData      = NULL;
+            m_pTableName = NULL;
+            m_nStrings   = 0;
+            m_version    = 0;
+            m_encoding   = 0;
+            m_pIndex     = NULL;
+            m_pStrings   = NULL;
+        }
     }
     else
     {
@@ -274,17 +377,16 @@ const xwchar* string_table::GetAt( s32 Index ) const
 {
     const xwchar* pString = NULL;
 
-    if( (Index >= 0) && (Index < m_nStrings) )
+    if( (Index >= 0) && (Index < m_nStrings) && m_pIndex && m_pStrings )
     {
-        s32* pIndex = (s32*)(m_pData+4); 
-        pString = (const xwchar*)(m_pData+4+4*m_nStrings+pIndex[Index]); 
+        const xwchar* pStringBase = (const xwchar*)(m_pStrings + m_pIndex[Index]);
+        pString = pStringBase;
 
 #if !defined(X_RETAIL) || defined(X_QA)
         if( g_bShowStringID )
-            return pString;
+            return pStringBase;
 #endif
-        pString += x_wstrlen( pString );
-        pString++;
+        pString = pStringBase + x_wstrlen( pStringBase ) + 1;
 
 #if !defined(X_RETAIL) || defined(X_QA)
         if( g_bStringTest )
@@ -349,10 +451,14 @@ xwchar* Ansi2UpperWide( const char* pSrc, string_mgr::wchar_string& WideString )
 }
 
 //==============================================================================
+
 const xwchar* string_table::FindString( const char* lookupString ) const
 {
+    if( !m_pIndex || !m_pStrings )
+        return NULL;
+
+    const s32* pIndex = m_pIndex;
     xwchar* pString = NULL;
-    s32* pIndex = (s32*)(m_pData+4);
     
     s32 imax;
     s32 imin;
@@ -368,7 +474,7 @@ const xwchar* string_table::FindString( const char* lookupString ) const
     while( imax >= imin )
     {
         s32 i = (imin+imax)/2;
-        pString = (xwchar*)(m_pData+4+4*m_nStrings+pIndex[i]);
+        pString = (xwchar*)(m_pStrings + pIndex[i]);
 
         if( imax == imin+1 )
         {
@@ -408,6 +514,7 @@ const xwchar* string_table::FindString( const char* lookupString ) const
 }
 
 //==============================================================================
+
 const xwchar* string_table::GetAt( const char* lookupString ) const
 {
 #if defined(TARGET_XBOX)
@@ -465,10 +572,14 @@ const xwchar* string_table::GetAt( const char* lookupString ) const
 }
 
 //==============================================================================
+
 const xwchar* string_table::GetSubTitleSpeaker( const char* lookupString ) const
 {
+    if( !m_pIndex || !m_pStrings )
+        return NULL;
+
     xwchar* pString = NULL;
-    s32* pIndex = (s32*)(m_pData+4);
+    const s32* pIndex = m_pIndex;
 
     string_mgr::wchar_string WideString;
     xwchar* pLookupWide = Ansi2UpperWide( lookupString, WideString );
@@ -480,7 +591,7 @@ const xwchar* string_table::GetSubTitleSpeaker( const char* lookupString ) const
     {
         s32 i = (imin+imax)/2;
 
-        pString = (xwchar*)(m_pData+4+4*m_nStrings+pIndex[i]);
+        pString = (xwchar*)(m_pStrings + pIndex[i]);
 
         if( imax == imin+1 )
         {
@@ -535,8 +646,11 @@ const xwchar* string_table::GetSubTitleSpeaker( const char* lookupString ) const
 
 const xwchar* string_table::GetSoundDescString( const char* lookupString ) const
 {
+    if( !m_pIndex || !m_pStrings )
+        return NULL;
+
     xwchar* pString = NULL;
-    s32* pIndex = (s32*)(m_pData+4);
+    const s32* pIndex = m_pIndex;
 
     string_mgr::wchar_string WideString;
     xwchar* pLookupWide = Ansi2UpperWide( lookupString, WideString );
@@ -548,7 +662,7 @@ const xwchar* string_table::GetSoundDescString( const char* lookupString ) const
     {
         s32 i = (imin+imax)/2;
 
-        pString = (xwchar*)(m_pData+4+4*m_nStrings+pIndex[i]);
+        pString = (xwchar*)(m_pStrings + pIndex[i]);
 
         if( imax == imin+1 )
         {
@@ -622,6 +736,7 @@ string_mgr::~string_mgr( void )
 }
 
 //==============================================================================
+
 s32 string_mgr::GetStringCount( const char* pTableName )
 {
     s32 numStrings = 0;
@@ -760,6 +875,7 @@ const xwchar* string_mgr::operator () ( const char* pTableName, const char* Titl
 }
 
 //==============================================================================
+
 const xwchar* string_mgr::GetSubTitleSpeaker( const char* pTableName, const char* SpeakerString, const xbool bLogNULLString ) const
 {
     const string_table* pTable  = FindTable( pTableName );
@@ -777,6 +893,7 @@ const xwchar* string_mgr::GetSubTitleSpeaker( const char* pTableName, const char
 }
 
 //==============================================================================
+
 const xwchar* string_mgr::GetSoundDescString( const char* pTableName, const char* SpeakerString, const xbool bLogNULLString ) const
 {
     const string_table* pTable  = FindTable( pTableName );
