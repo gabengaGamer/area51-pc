@@ -46,10 +46,11 @@ The following prerequisites are required to build the source tree for PC:
 
 ## Running PC Build
 
-1. Put game assets to **'C:\GameData\A51\Release\PC\DVD'**
-2. Put shaders folder from "area51-pc\Apps\GameApp\media" to "C:\".
-3. Put .webm cinema videos from "area51-pc\Apps\GameApp\media\webms" to "C:\GameData\A51\Release\PC".
-4. Run game.
+1. Put game assets to **"C:\GameData\A51\Release\PC\DVD"** (delete STRINGS.DFS and STRINGS.000 files, temp hack)
+2. Put .STRINGBIN files from **"area51-pc\Apps\GameApp\media\strings"** to **"C:\GameData\A51\Release\PC\"**
+3. Put shaders folder from **"area51-pc\Apps\GameApp\media"** to **"C:\"**
+4. Put .webm cinema videos from **"area51-pc\Apps\GameApp\media\webms"** to **"C:\GameData\A51\Release\PC"**
+5. Run game.
 
 
 
