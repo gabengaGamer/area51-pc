@@ -82,6 +82,17 @@ void ui_text::Render( s32 ox, s32 oy )
     // Only render is visible
     if( m_Flags & WF_VISIBLE )
     {
+		
+// Skip specific button tips on PC platform. 
+// TODO: GS: In the future, if we plan to add support for gamepads on PC, 
+// this code should be removed and other code should made smart.		
+#if defined(TARGET_PC) && !defined(X_EDITOR)
+        if( m_LabelFlags & ui_font::is_help_text )
+        {
+            return;
+        }
+#endif		
+		
         xcolor  TextColor1 = XCOLOR_WHITE;
         xcolor  TextColor2 = XCOLOR_BLACK;
 
