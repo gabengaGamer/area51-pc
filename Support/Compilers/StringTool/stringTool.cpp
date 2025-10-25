@@ -40,14 +40,13 @@ void DisplayHelp( void )
 
 
     x_printf( "File Structure\n" );
-    x_printf( "Signature(32)                // 'InEV'\n" );
-    x_printf( "Version(16)                  // format version\n" );
-    x_printf( "Encoding(16)                 // encoding identifier\n" );
-    x_printf( "nStrings(32)                 // number of strings\n" );
-    x_printf( "StringOffsets[n](32)         // offsets to String IDs\n" );
-    x_printf( "StringID(null)String(null)   // String ID followed by Text String\n" );
-    x_printf( "...                          // \n" );
-    x_printf( "StringID(null)String(null)   // Repeated nStrings times\n" );
+    x_printf( "Signature(32)                //'STRB'\n" );
+    x_printf( "Version(32)                  //Format version\n" );
+    x_printf( "nStrings(32)                 //Number of strings\n" );
+    x_printf( "StringOffsets[n](32)         //Offsets to String IDs\n" );
+    x_printf( "StringID(null)String(null)   //String ID followed by Text String\n" );
+    x_printf( "...                          //\n" );
+    x_printf( "StringID(null)String(null)   //Repeated nStrings times\n" );
     x_printf( "\n" );
 }
 
@@ -487,7 +486,6 @@ int main( int argc, char** argv )
         x_memset( &FileHeader, 0, sizeof( FileHeader ) );
         FileHeader.Signature   = STRINGBIN_SIGNATURE;
         FileHeader.Version     = STRINGBIN_VERSION;
-        FileHeader.Encoding    = STRINGBIN_ENCODING_UTF16LE;
         FileHeader.StringCount = nEntries;
 
         xbytestream Header;

@@ -147,8 +147,7 @@ string_table::string_table( void )
     m_pTableName    = NULL;
     m_pData         = NULL;
     m_nStrings      = 0;
-    m_version       = 0;
-    m_encoding      = 0;
+    m_Version       = 0;
     m_pIndex        = NULL;
     m_pStrings      = NULL;
 }
@@ -163,8 +162,7 @@ string_table::~string_table( void )
 
         m_pData     = NULL;
         m_nStrings  = 0;
-        m_version   = 0;
-        m_encoding  = 0;
+        m_Version   = 0;
         m_pIndex    = NULL;
         m_pStrings  = NULL;
 
@@ -215,8 +213,7 @@ xbool string_table::Load( const char* pTableName, const char* pFileName )
         VERIFY( x_fread( m_pData, 1, Length, pFile ) == Length );
         x_fclose( pFile );
 
-        m_version    = 0;
-        m_encoding   = 0;
+        m_Version    = 0;
         m_pIndex     = NULL;
         m_pStrings   = NULL;
         m_nStrings   = 0;
@@ -240,23 +237,14 @@ xbool string_table::Load( const char* pTableName, const char* pFileName )
                 break;
             }
 
-            m_version  = pHeader->Version;
-            m_encoding = pHeader->Encoding;
+            m_Version  = pHeader->Version;
             m_nStrings = pHeader->StringCount;
 
-            if( m_version != STRINGBIN_VERSION )
+            if( m_Version != STRINGBIN_VERSION )
             {
                 LOG_ERROR( "string_table::Load",
                            "Unsupported string table version %d: %s - %s",
-                           m_version, pTableName, pFileName );
-                break;
-            }
-
-            if( m_encoding != STRINGBIN_ENCODING_UTF16LE )
-            {
-                LOG_ERROR( "string_table::Load",
-                           "Unsupported string encoding %d: %s - %s",
-                           m_encoding, pTableName, pFileName );
+                           m_Version, pTableName, pFileName );
                 break;
             }
 
@@ -312,8 +300,7 @@ xbool string_table::Load( const char* pTableName, const char* pFileName )
             m_pData      = NULL;
             m_pTableName = NULL;
             m_nStrings   = 0;
-            m_version    = 0;
-            m_encoding   = 0;
+            m_Version    = 0;
             m_pIndex     = NULL;
             m_pStrings   = NULL;
         }

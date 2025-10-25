@@ -17,7 +17,7 @@
 //  DEFINES UND STRUCTURES
 //==============================================================================
 
-#define STRINGBIN_SIGNATURE          (('V'<<24)|('E'<<16)|('n'<<8)|('I'))
+#define STRINGBIN_SIGNATURE          (('B'<<24)|('R'<<16)|('T'<<8)|('S'))
 #define STRINGBIN_VERSION            15
 
 //-----------------------------------------------------------------------------
@@ -25,17 +25,8 @@
 struct stringbin_header
 {
     u32     Signature;
-    s16     Version;
-    s16     Encoding;
+    s32     Version;
     s32     StringCount;
-};
-
-//-----------------------------------------------------------------------------
-
-enum stringbin_encoding
-{
-    STRINGBIN_ENCODING_UTF16LE   = 1,
-    STRINGBIN_ENCODING_UTF8      = 2
 };
 
 //-----------------------------------------------------------------------------
@@ -70,8 +61,7 @@ protected:
     const char*     m_pTableName;
     byte*           m_pData;
     s32             m_nStrings;
-    s16             m_version;
-    s16             m_encoding;
+    s32             m_Version;
     s32*            m_pIndex;
     byte*           m_pStrings;
 };
