@@ -54,6 +54,14 @@ enum x_language
     XL_NUM_LANGUAGES
 };
 
+enum x_locale_code_format
+{
+    XL_LOCALE_CODE_ISO_639_1 = 0,
+    XL_LOCALE_CODE_ISO_639_2,
+
+    XL_NUM_LOCALE_CODE_FORMATS
+};
+
 enum x_build
 {
     XL_BUILD_US = 0,
@@ -74,8 +82,8 @@ const x_console_territory x_GetConsoleRegion  ( void );
       void                x_SetLocale         ( x_language const lang );
 const x_language          x_GetLocale         ( void );
 
-const char *              x_GetLocaleString   ( void );
-const char *              x_GetLocaleString   ( x_language const lang );
+const char *              x_GetLocaleString   ( x_locale_code_format const format = XL_LOCALE_CODE_ISO_639_2 );
+const char *              x_GetLocaleString   ( x_language const lang, x_locale_code_format const format = XL_LOCALE_CODE_ISO_639_2 );
 
       void                x_SetTerritory      ( x_console_territory const territory );
 const x_console_territory x_GetTerritory      ( void );

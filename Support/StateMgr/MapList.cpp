@@ -76,6 +76,7 @@ void map_list::LoadDefault( void )
     (void)PRELOAD_FILE("GER_DiskMaps.txt");
     (void)PRELOAD_FILE("ITA_DiskMaps.txt");
     (void)PRELOAD_FILE("SPA_DiskMaps.txt");
+    (void)PRELOAD_FILE("RUS_DiskMaps.txt");
 
     Clear();
     VERIFY( Manifest.LoadFile( xfs("%s\\%s_DiskMaps.txt", g_RscMgr.GetRootDirectory(), x_GetLocaleString()) ) );

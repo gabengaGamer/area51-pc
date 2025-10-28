@@ -129,7 +129,7 @@
 #ifdef CONFIG_VIEWER
 #include "../../Apps/ArtistViewer/Config.hpp"
 #else
-#include "../../Apps/GameApp/Config.hpp"	
+#include "../../Apps/GameApp/Config.hpp"    
 #endif
 
 #if defined(CONFIG_IS_DEMO)
@@ -2318,13 +2318,15 @@ void state_mgr::EnterStartupIntro( void )
 
 //=========================================================================
 
+const char* pISO639_1 = x_GetLocaleString( XL_LOCALE_CODE_ISO_639_1 );
+
 xstring SelectBestClip( const char* pName )
 {
-	//const char* langCode = x_GetLocaleString(); //For lang-video support. (future)
+    //const char* langCode = x_GetLocaleString(); //For lang-video support. (future)
 
 #ifdef TARGET_PC
     return (const char*)xfs( "%s_640x480_%d", pName, 30 );
-	//return (const char*)xfs( "%s_640x480_%s_%d", pName, langCode, 30 ); //For lang-video support. (future)
+    //return (const char*)xfs( "%s_640x480_%s_%d", pName, langCode, 30 ); //For lang-video support. (future)
 #endif
 
 /* Console Graveyard.
@@ -2363,7 +2365,6 @@ xstring SelectBestClip( const char* pName )
 
 void state_mgr::UpdateStartupIntro( void )
 {
-
 #if CONFIG_IS_DEMO
   #if defined(USE_MOVIES)
     // play intro movie
@@ -2386,17 +2387,22 @@ void state_mgr::UpdateStartupIntro( void )
     {
         DummyScreen( "Midway Movie Here", TRUE, 5 );
     }
-	
-    // Is Russian Federation ? 
-    //if( !PlaySimpleMovie( SelectBestClip("NewDisk" )) )
-    //{
-    //    DummyScreen( "NewDisk Movie Here", TRUE, 5 );
-    //}
-	
-	//if( !PlaySimpleMovie( SelectBestClip("ProjectDreamland" )) )
+
+    // Play this stuff only on CIS locale systems
+    if (pISO639_1 && (x_stricmp(pISO639_1, "ru") == 0))
+    {
+        if( !PlaySimpleMovie( SelectBestClip("NewDisk" )) )
+        {
+            DummyScreen( "NewDisk Movie Here", TRUE, 5 );
+        }
+    }    
+
+    // TODO:
+    //if( !PlaySimpleMovie( SelectBestClip("ProjectDreamland" )) )
     //{
     //    DummyScreen( "ProjectDreamland Movie Here", TRUE, 5 );
     //}
+
 #endif
     // change the state
 #ifdef TARGET_PS2
@@ -3409,10 +3415,10 @@ void state_mgr::UpdateCampaignMenu( void )
                     g_StateMgr.SetLevelIndex( 0 );
 
 #ifndef TARGET_XBOX
-					//klkl: disable this check for Xbox because of silent login
+                    //klkl: disable this check for Xbox because of silent login
                     ASSERT( g_NetworkMgr.IsOnline()==FALSE );
 #endif
-					g_NetworkMgr.BecomeServer();
+                    g_NetworkMgr.BecomeServer();
 
                     // set campaign game type
                     m_CampaignType = SM_NEW_CAMPAIGN_GAME;
@@ -9522,7 +9528,7 @@ void state_mgr::UpdateAutosaveProfileReselect( void )
             case DIALOG_STATE_CREATE:
             {
 #ifdef TARGET_PS2
-			    // Select a card to save the profile to
+                // Select a card to save the profile to
                 SetState( SM_AUTOSAVE_MEMCARD_SELECT );
 #else
                 // create a new profile

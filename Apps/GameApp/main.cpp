@@ -943,8 +943,46 @@ x_language CheckLanguageSupport( x_language lang )
     return XL_LANG_ENGLISH;
     #else
 
-    // temp fix for programmers
-    #if defined (TARGET_DEV)
+    //// temp fix for programmers
+    //#if defined (TARGET_DEV)
+    //switch( lang ) 
+    //{
+    //case XL_LANG_ENGLISH:
+    //case XL_LANG_FRENCH:
+    //case XL_LANG_ITALIAN:
+    //case XL_LANG_SPANISH:
+    //case XL_LANG_GERMAN:
+    //case XL_LANG_RUSSIAN:
+    //    return lang;
+    //default:
+    //    return XL_LANG_ENGLISH;
+    //}
+    //#else
+    //
+    //switch( x_GetTerritory() )
+    //{
+    //    case XL_TERRITORY_AMERICA:
+    //        return XL_LANG_ENGLISH;
+    //
+    //    case XL_TERRITORY_EUROPE:
+    //        switch( lang ) 
+    //        {
+    //            case XL_LANG_ENGLISH:
+    //            case XL_LANG_FRENCH:
+    //            case XL_LANG_ITALIAN:
+    //            case XL_LANG_SPANISH:
+    //            case XL_LANG_GERMAN:
+    //            case XL_LANG_RUSSIAN:
+    //                return lang;
+    //            default:
+    //                return XL_LANG_ENGLISH;
+    //        }
+    //
+    //    default:
+    //        return XL_LANG_ENGLISH;
+    //}
+    //#endif
+
     switch( lang ) 
     {
     case XL_LANG_ENGLISH:
@@ -952,34 +990,11 @@ x_language CheckLanguageSupport( x_language lang )
     case XL_LANG_ITALIAN:
     case XL_LANG_SPANISH:
     case XL_LANG_GERMAN:
+    case XL_LANG_RUSSIAN:
         return lang;
     default:
         return XL_LANG_ENGLISH;
     }
-    #else
-
-    switch( x_GetTerritory() )
-    {
-        case XL_TERRITORY_AMERICA:
-            return XL_LANG_ENGLISH;
-
-        case XL_TERRITORY_EUROPE:
-            switch( lang ) 
-            {
-                case XL_LANG_ENGLISH:
-                case XL_LANG_FRENCH:
-                case XL_LANG_ITALIAN:
-                case XL_LANG_SPANISH:
-                case XL_LANG_GERMAN:
-                    return lang;
-                default:
-                    return XL_LANG_ENGLISH;
-            }
-
-        default:
-            return XL_LANG_ENGLISH;
-    }
-    #endif
 
     #endif   // !defined (X_EDITOR)
 }
@@ -1101,7 +1116,7 @@ void DoStartup( void )
     x_DebugMsg( "Loaded camera\n" );
 
     // initialize ui manager
-	g_UiMgr =  new ui_manager;
+    g_UiMgr =  new ui_manager;
     g_UiMgr->Init();
     g_UiMgr->SetRes();
 
@@ -1166,7 +1181,7 @@ void RunFrontEnd( void )
     // load lore strings
     g_StringTableMgr.LoadTable( "lore", xfs("%s\\%s", g_RscMgr.GetRootDirectory(), "ENG_lore_strings.stringbin") );
 
-	// Run the FrontEnd
+    // Run the FrontEnd
     s_FrontEndDelta.Reset();
     s_FrontEndDelta.Start();
 
@@ -1268,8 +1283,8 @@ void RunGame( void )
                 DeltaTime = 33.0f / 1000.0f;
             }
 
-		    g_GameTimer.Reset();
-		    g_GameTimer.Start();
+            g_GameTimer.Reset();
+            g_GameTimer.Start();
 
             GameTime += DeltaTime;
         }

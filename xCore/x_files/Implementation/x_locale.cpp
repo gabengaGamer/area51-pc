@@ -31,10 +31,59 @@
 static  x_language          s_LocaleLang = XL_LANG_ENGLISH;
 static  x_console_territory s_Territory = XL_TERRITORY_AMERICA;
 
-// these strings correspond to the ISO 639 3 letter language codes.
+
+//==============================================================================
+//  INTERNALS
+//==============================================================================
+
+// GS: Let's continue to obtain the system language this way for now; 
+// in the future, the user will have to specify it in the UI themselves.
+
+#ifdef TARGET_PC
+static x_language x_MapWindowsLanguage( LANGID const LangId )
+{
+    WORD const Primary = PRIMARYLANGID( LangId );
+
+    switch( Primary )
+    {
+        case LANG_ENGLISH:     return XL_LANG_ENGLISH;
+        case LANG_FRENCH:      return XL_LANG_FRENCH;
+        case LANG_GERMAN:      return XL_LANG_GERMAN;
+        case LANG_ITALIAN:     return XL_LANG_ITALIAN;
+        case LANG_SPANISH:     return XL_LANG_SPANISH;    // TODO: 
+        case LANG_DUTCH:       return XL_LANG_ENGLISH;    //XL_LANG_DUTCH
+        case LANG_JAPANESE:    return XL_LANG_ENGLISH;    //XL_LANG_JAPANESE
+        case LANG_KOREAN:      return XL_LANG_ENGLISH;    //XL_LANG_KOREAN
+        case LANG_PORTUGUESE:  return XL_LANG_ENGLISH;    //XL_LANG_PORTUGUESE
+        case LANG_RUSSIAN:     return XL_LANG_ENGLISH;    //XL_LANG_RUSSIAN
+        case LANG_CHINESE:
+        {
+            WORD const SubLang = SUBLANGID( LangId );
+
+            switch( SubLang )
+            {
+                case SUBLANG_CHINESE_TRADITIONAL:
+                case SUBLANG_CHINESE_HONGKONG:
+                case SUBLANG_CHINESE_MACAU: // TODO: 
+                    return XL_LANG_ENGLISH; //XL_LANG_TCHINESE
+                default:
+                    break;
+            }
+            break;
+        }
+        default:
+		    return XL_LANG_ENGLISH;
+    }
+}
+#endif
+
+//==============================================================================
+
+// these strings correspond to the ISO 639 language codes.
 // please stick to this standard when adding new languages.
 // Note also, that these must appear in the same order as the language enums!!
-static const char* const s_pLanguageStr[] = 
+
+static const char* const s_pLanguageStrISO639_2[] =
 {
     "ENG",      // XL_LANG_ENGLISH
     "FRE",      // XL_LANG_FRENCH
@@ -50,6 +99,42 @@ static const char* const s_pLanguageStr[] =
 };
 
 //==============================================================================
+
+static const char* const s_pLanguageStrISO639_1[] =
+{
+    "en",       // XL_LANG_ENGLISH
+    "fr",       // XL_LANG_FRENCH
+    "de",       // XL_LANG_GERMAN
+    "it",       // XL_LANG_ITALIAN
+    "es",       // XL_LANG_SPANISH
+    "nl",       // XL_LANG_DUTCH
+    "ja",       // XL_LANG_JAPANESE
+    "ko",       // XL_LANG_KOREAN
+    "pt",       // XL_LANG_PORTUGUESE
+    "zh",       // XL_LANG_TCHINESE
+    "ru"        // XL_LANG_RUSSIAN
+};
+
+//==============================================================================
+
+static const char* x_GetLocaleStringInternal( x_language const lang, x_locale_code_format const format )
+{
+    ASSERT( lang < XL_NUM_LANGUAGES );
+    ASSERT( format < XL_NUM_LOCALE_CODE_FORMATS );
+
+    switch( format )
+    {
+        case XL_LOCALE_CODE_ISO_639_1:
+            return s_pLanguageStrISO639_1[lang];
+        case XL_LOCALE_CODE_ISO_639_2:
+            return s_pLanguageStrISO639_2[lang];
+        default:
+		    ASSERT( 0 );
+            break;
+    }
+}
+
+//==============================================================================
 //  IMPLEMENTATION
 //==============================================================================
 
@@ -59,7 +144,7 @@ static const char* const s_pLanguageStr[] =
 // Parameters:
 //
 // Returns:
-//  x_language enumeration of consoles' set language. (english for PC)
+//  x_language enumeration of consoles' set language.
 //
 // Remarks:
 //  Use this during application init to determine the platform's language setting.
@@ -68,27 +153,17 @@ static const char* const s_pLanguageStr[] =
 //==============================================================================
 
 const x_language x_GetConsoleLanguage( void )
-{    
-/* XBOX
-    switch( XGetLanguage() )
-    {
-        case XC_LANGUAGE_PORTUGUESE:return XL_LANG_PORTUGUESE;    break;
-        case XC_LANGUAGE_JAPANESE:    return XL_LANG_JAPANESE;    break;
-        case XC_LANGUAGE_TCHINESE:    return XL_LANG_TCHINESE;    break;
-        case XC_LANGUAGE_KOREAN:    return XL_LANG_KOREAN;        break;
-        case XC_LANGUAGE_ENGLISH:    return XL_LANG_ENGLISH;        break;
-        case XC_LANGUAGE_FRENCH:    return XL_LANG_FRENCH;      break;
-        case XC_LANGUAGE_GERMAN:    return XL_LANG_GERMAN;        break;
-        case XC_LANGUAGE_SPANISH:    return XL_LANG_SPANISH;        break;
-        case XC_LANGUAGE_ITALIAN:    return XL_LANG_ITALIAN;        break;
-
-        default:
-            ASSERTS(0, "XBOX returned unknown language.");
-            return XL_LANG_ENGLISH;
-    }
-*/    
+{      
 #ifdef TARGET_PC
-    return XL_LANG_ENGLISH;
+    LANGID const LangId = GetUserDefaultLangID();
+    x_language const Lang = x_MapWindowsLanguage( LangId );
+
+    if( (Lang == XL_LANG_ENGLISH) && (PRIMARYLANGID( LangId ) != LANG_ENGLISH) )
+    {
+        x_DebugMsg( "x_GetConsoleLanguage: Unsupported Windows language (%u), defaulting to English.\n", LangId );
+    }
+
+    return Lang;
 #else
     return XL_LANG_ENGLISH;
 #endif
@@ -120,7 +195,6 @@ const x_console_territory x_GetConsoleRegion  ( void )
     ASSERTS(0, "This function is no supported on this platform");
     return XL_TERRITORY_AMERICA;
 }
-
 
 //==============================================================================
 // Sets the application's selected language.
@@ -159,7 +233,7 @@ const x_language x_GetLocale( void )
 }
 
 //==============================================================================
-// returns 3 character code string for the current language.
+// returns language code string for the current language.
 //
 // Parameters:
 //
@@ -170,15 +244,13 @@ const x_language x_GetLocale( void )
 //  Use for filename manipulation to select localized assets.
 //==============================================================================
 
-const char * x_GetLocaleString( void )
+const char * x_GetLocaleString( x_locale_code_format const format )
 {
-    ASSERT( s_LocaleLang < XL_NUM_LANGUAGES );
-
-    return s_pLanguageStr[s_LocaleLang];
+    return x_GetLocaleStringInternal( s_LocaleLang, format );
 }
 
 //==============================================================================
-// returns 3 character code string for the requested language.
+// returns language code string for the requested language.
 //
 // Parameters:
 //
@@ -189,11 +261,9 @@ const char * x_GetLocaleString( void )
 //  
 //==============================================================================
 
-const char * x_GetLocaleString( const x_language lang )
+const char * x_GetLocaleString( const x_language lang, x_locale_code_format const format )
 {
-    ASSERT( lang < XL_NUM_LANGUAGES );
-
-    return s_pLanguageStr[lang];
+    return x_GetLocaleStringInternal( lang, format );
 }
 
 //==============================================================================
