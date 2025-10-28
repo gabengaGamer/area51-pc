@@ -2240,22 +2240,46 @@ void player::SetLocalPlayer( s32 LocalIndex )
     m_ActivePlayerPad = LocalIndex;
 
 #if !defined(X_EDITOR)
-    // find a controller to assign
-    s32 nIndex = LocalIndex;
-    s32 iPad;
-    for( iPad = 0; iPad < MAX_LOCAL_PLAYERS; iPad++ )
-    {
-        if( g_StateMgr.GetControllerRequested(iPad) )
+    s32 iPad = LocalIndex;
+
+    #if defined(TARGET_PC)
+        // Prefer the controller chosen in the front-end so players can switch
+        // between keyboard and gamepad without restarting the session.
+        
+        // NOTE: GS: Also, I don't plan to support split-screen on PC, at least not yet. 
+        // Therefore, I'm not working on specific controllers.
+        
+        iPad = g_StateMgr.GetActiveControllerID();
+    
+        if( (iPad < 0) || (iPad >= MAX_LOCAL_PLAYERS) )
         {
-            if( nIndex == 0 )
-                break;
-
-            nIndex--;
+            iPad = LocalIndex;
         }
-    }
-    ASSERT( iPad < MAX_LOCAL_PLAYERS );
-
-    g_IngamePad[LocalIndex].SetControllerID( iPad );
+    
+        g_StateMgr.SetControllerRequested( iPad, TRUE );
+        g_IngamePad[LocalIndex].SetControllerID( iPad );
+    #else
+        // find a controller to assign
+        s32 nIndex = LocalIndex;
+        for( iPad = 0; iPad < MAX_LOCAL_PLAYERS; iPad++ )
+        {
+            if( g_StateMgr.GetControllerRequested(iPad) )
+            {
+                if( nIndex == 0 )
+                    break;
+    
+                nIndex--;
+            }
+        }
+    
+        if( iPad >= MAX_LOCAL_PLAYERS )
+        {
+            iPad = LocalIndex;
+            g_StateMgr.SetControllerRequested( iPad, TRUE );
+        }
+    
+        g_IngamePad[LocalIndex].SetControllerID( iPad );
+    #endif
 
     // enable vibration based on profile settings.
     player_profile& Profile = g_StateMgr.GetActiveProfile( g_StateMgr.GetProfileListIndex(LocalIndex));
