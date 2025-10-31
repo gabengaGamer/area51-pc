@@ -358,6 +358,17 @@ void platform_UnregisterSkinGeom( skin_geom& Geom )
 
 //=============================================================================
 
+//-----------------------------------------------------------------------------
+//
+// VERY IMPORTANT NOTE: README README README README!!!!! 
+//
+// NOTE: platform_SetDiffuseMaterial, platform_SetGlowMaterial, platform_SetEnvMapMaterial, platform_SetDistortionMaterial
+// Sets ONLY materials for primitives like sprites and decals! This code NOT for models. 
+//
+// TODO: This shit needs to change its functions name a long time ago because it's so fucking confusing.
+//
+//-----------------------------------------------------------------------------
+
 static s32 s_DrawFlags = 0;
 
 static
@@ -380,8 +391,6 @@ void platform_SetDiffuseMaterial( const xbitmap& Bitmap, s32 BlendMode, xbool ZT
 	
     // we can use draw to set up render states at which point the shader engine
     // will hijack what it needs and route the verts through its pixel pipeline
-
-    // NOTE: DRAW_NO_ZWRITE because we don't need spoil the depth buffer
 
     s_DrawFlags = DRAW_TEXTURED | DRAW_NO_ZWRITE | DRAW_UV_CLAMP | DRAW_CULL_NONE | DRAW_USE_ALPHA;
     if( !ZTestEnabled )
