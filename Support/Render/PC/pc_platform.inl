@@ -367,8 +367,21 @@ void platform_SetDiffuseMaterial( const xbitmap& Bitmap, s32 BlendMode, xbool ZT
 
     vram_Activate( Bitmap );		
 	
+    // do gbuffer stuff //////////////////////////////////////////////////	
+	
+    const rtarget* pGBufferDepth = g_GBufferMgr.GetGBufferTarget( GBUFFER_DEPTH );
+    const rtarget* pBackBuffer = rtarget_GetBackBuffer();
+    
+    if( pGBufferDepth && pBackBuffer )
+    {
+        // Make sure we're using the same depth target as geometry
+        rtarget_SetTargets( pBackBuffer, 1, pGBufferDepth );
+    }	
+	
     // we can use draw to set up render states at which point the shader engine
     // will hijack what it needs and route the verts through its pixel pipeline
+
+    // NOTE: DRAW_NO_ZWRITE because we don't need spoil the depth buffer
 
     s_DrawFlags = DRAW_TEXTURED | DRAW_NO_ZWRITE | DRAW_UV_CLAMP | DRAW_CULL_NONE | DRAW_USE_ALPHA;
     if( !ZTestEnabled )
@@ -450,18 +463,7 @@ void platform_RenderRawStrips( s32               nVerts,
     if( nVerts < 3 )
         return;
 
-    const rtarget* pGBufferDepth = g_GBufferMgr.GetGBufferTarget( GBUFFER_DEPTH );
-    const rtarget* pBackBuffer = rtarget_GetBackBuffer();
-    
-    if( pGBufferDepth && pBackBuffer )
-    {
-        // Make sure we're using the same depth target as geometry
-        rtarget_SetTargets( pBackBuffer, 1, pGBufferDepth );
-    }
-
     // fill in the l2w...note we have to reset draw to do this
-
-    // NOTE: DRAW_NO_ZWRITE because we don't need spoil the depth buffer
     draw_Begin( DRAW_TRIANGLES, s_DrawFlags );
     draw_SetTexture( *s_pDrawBitmap );
     draw_SetL2W( L2W );
@@ -530,15 +532,6 @@ void platform_Render3dSprites( s32               nSprites,
     ASSERTS( s_pDrawBitmap, "You must set a material first!" );
     if( nSprites == 0 )
         return;
-    
-    const rtarget* pGBufferDepth = g_GBufferMgr.GetGBufferTarget( GBUFFER_DEPTH );
-    const rtarget* pBackBuffer = rtarget_GetBackBuffer();
-    
-    if( pGBufferDepth && pBackBuffer )
-    {
-        // Make sure we're using the same depth target as geometry
-        rtarget_SetTargets( pBackBuffer, 1, pGBufferDepth );
-    }
 
     // start up draw
     const matrix4& V2W = eng_GetView()->GetV2W();
@@ -548,9 +541,8 @@ void platform_Render3dSprites( s32               nSprites,
         S2V = W2V * (*pL2W);
     else
         S2V = W2V;
+	
     draw_ClearL2W();
-    
-    // NOTE: DRAW_NO_ZWRITE because we don't need spoil the depth buffer
     draw_Begin( DRAW_TRIANGLES, s_DrawFlags );
     draw_SetTexture( *s_pDrawBitmap );
     draw_SetL2W( V2W );
@@ -620,14 +612,6 @@ void platform_RenderHeatHazeSprites( s32 nSprites, f32 UniScale, const matrix4* 
     if( (nSprites == 0) || !g_pd3dDevice )
         return;
 
-    const rtarget* pGBufferDepth = g_GBufferMgr.GetGBufferTarget( GBUFFER_DEPTH );
-    const rtarget* pBackBuffer   = rtarget_GetBackBuffer();
-
-    if( pGBufferDepth && pBackBuffer )
-    {
-        rtarget_SetTargets( pBackBuffer, 1, pGBufferDepth );
-    }
-
     const view* pView = eng_GetView();
     if( !pView )
         return;
@@ -642,8 +626,6 @@ void platform_RenderHeatHazeSprites( s32 nSprites, f32 UniScale, const matrix4* 
         S2V = W2V;
 
     draw_ClearL2W();
-
-    // NOTE: DRAW_NO_ZWRITE because we don't need spoil the depth buffer
     draw_Begin( DRAW_TRIANGLES, s_DrawFlags );
     draw_SetTexture( *s_pDrawBitmap );
     draw_SetL2W( V2W );
@@ -707,19 +689,8 @@ void platform_RenderVelocitySprites( s32            nSprites,
     if( nSprites == 0 )
         return;
 
-    const rtarget* pGBufferDepth = g_GBufferMgr.GetGBufferTarget( GBUFFER_DEPTH );
-    const rtarget* pBackBuffer = rtarget_GetBackBuffer();
-    
-    if( pGBufferDepth && pBackBuffer )
-    {
-        // Make sure we're using the same depth target as geometry
-        rtarget_SetTargets( pBackBuffer, 1, pGBufferDepth );
-    }
-
     // start up draw
     draw_ClearL2W();
-	
-    // NOTE: DRAW_NO_ZWRITE because we don't need spoil the depth buffer
     draw_Begin( DRAW_TRIANGLES, s_DrawFlags );
     draw_SetTexture( *s_pDrawBitmap );
 
