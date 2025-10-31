@@ -193,6 +193,9 @@ protected:
         f32 AlphaRef;
     };
 
+    void        ApplyRenderStates ( const material* pMaterial,
+                                    u32             RenderFlags );
+
     // Shader initialization
     xbool       InitRigidShaders    ( void );
     void        KillRigidShaders    ( void );

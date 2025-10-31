@@ -262,29 +262,6 @@ static xcolor s_FilterLightColor(xcolor(30,0,0,255));
 static s32                  s_nDynamicShadows;
 
 //=============================================================================
-
-inline
-xbool IsAlphaMaterial( material_type Type )
-{
-    switch ( Type )
-    {
-    default:
-    case Material_Diff:
-    case Material_Diff_PerPixelEnv:
-    case Material_Diff_PerPixelIllum:
-        return FALSE;
-
-    case Material_Alpha:
-    case Material_Alpha_PerPolyEnv:
-    case Material_Alpha_PerPixelIllum:
-    case Material_Alpha_PerPolyIllum:
-    case Material_Distortion:
-    case Material_Distortion_PerPolyEnv:
-        return TRUE;
-    }
-}
-
-//=============================================================================
 // Platform-specific code
 //=============================================================================
 

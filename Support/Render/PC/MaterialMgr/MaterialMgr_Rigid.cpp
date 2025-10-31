@@ -125,11 +125,6 @@ void material_mgr::SetRigidMaterial( const matrix4*      pL2W,
     g_pd3dContext->IASetInputLayout( m_pRigidInputLayout );
     g_pd3dContext->VSSetShader( m_pRigidVertexShader, NULL, 0 );
     g_pd3dContext->PSSetShader( m_pRigidPixelShader, NULL, 0 );
-
-    state_SetState( STATE_TYPE_BLEND, STATE_BLEND_NONE );
-    state_SetState( STATE_TYPE_DEPTH, STATE_DEPTH_NORMAL );
-    state_SetState( STATE_TYPE_RASTERIZER, STATE_RASTER_SOLID );
-    state_SetState( STATE_TYPE_SAMPLER, STATE_SAMPLER_LINEAR_WRAP );
     g_pd3dContext->IASetPrimitiveTopology( D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST );
 
     if( !UpdateRigidConstants( pL2W, pMaterial, RenderFlags, pLighting, UOffset, VOffset ) )
@@ -137,9 +132,23 @@ void material_mgr::SetRigidMaterial( const matrix4*      pL2W,
         x_DebugMsg( "MaterialMgr: Failed to update rigid constants\n" );
         return;
     }
+	
+	ApplyRenderStates( pMaterial, RenderFlags );
 
     if( pL2W && pBBox )
-        UpdateProjTextures( *pL2W, *pBBox, 1, RenderFlags );
+    {
+        if( !pMaterial || g_ProjTextureMgr.CanReceiveProjTexture( *pMaterial ) )
+        {
+            UpdateProjTextures( *pL2W, *pBBox, 1, RenderFlags );
+        }
+        else
+        {
+            UpdateProjTextures( *pL2W,
+                                *pBBox,
+                                1,
+                                RenderFlags | render::DISABLE_SPOTLIGHT | render::DISABLE_PROJ_SHADOWS );
+        }
+    }
 }
 
 //==============================================================================

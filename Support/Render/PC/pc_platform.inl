@@ -888,48 +888,49 @@ void* platform_CalculateSkinLighting( u32            Flags,
 }
 
 //=============================================================================
+// COMPILATION/EXPORT EDITOR FUNCTIONS
+//=============================================================================
+
+#ifdef X_EDITOR
 
 static
-void* platform_LockRigidDListVertex( render::hgeom_inst hInst, s32 iSubMesh ) //EDITOR SHIT, IGNORE!!!
+void* platform_LockRigidDListVertex( render::hgeom_inst hInst, s32 iSubMesh )
 {
-    (void)hInst;
-    (void)iSubMesh;
-    // TODO:
-    return NULL;
+    xhandle Handle = pc_GetRigidDList( hInst, iSubMesh );
+    return s_RigidVertMgr.LockDListVerts( Handle );
 }
 
 //=============================================================================
 
 static
-void platform_UnlockRigidDListVertex( render::hgeom_inst hInst, s32 iSubMesh ) //EDITOR SHIT, IGNORE!!!
+void platform_UnlockRigidDListVertex( render::hgeom_inst hInst, s32 iSubMesh )
 {
-    (void)hInst;
-    (void)iSubMesh;
-    // TODO:
+    xhandle Handle = pc_GetRigidDList( hInst, iSubMesh );
+    s_RigidVertMgr.UnlockDListVerts( Handle );
 }
 
 //=============================================================================
 
 static
-void* platform_LockRigidDListIndex( render::hgeom_inst hInst, s32 iSubMesh, s32& VertexOffset ) //EDITOR SHIT, IGNORE!!!
+void* platform_LockRigidDListIndex( render::hgeom_inst hInst, s32 iSubMesh,  s32& VertexOffset )
 {
-    (void)hInst;
-    (void)iSubMesh;
-    VertexOffset = 0;
-    // TODO:
-    return NULL;
+    xhandle Handle = pc_GetRigidDList( hInst, iSubMesh );
+    return s_RigidVertMgr.LockDListIndices( Handle, VertexOffset );
 }
 
 //=============================================================================
 
 static
-void platform_UnlockRigidDListIndex( render::hgeom_inst hInst, s32 iSubMesh ) //EDITOR SHIT, IGNORE!!!
+void platform_UnlockRigidDListIndex( render::hgeom_inst hInst, s32 iSubMesh )
 {
-    (void)hInst;
-    (void)iSubMesh;
-    // TODO:
+    xhandle Handle = pc_GetRigidDList( hInst, iSubMesh );
+    s_RigidVertMgr.UnlockDListIndices( Handle );
 }
 
+#endif
+
+//=============================================================================
+// COMPILATION/EXPORT EDITOR FUNCTIONS - END
 //=============================================================================
 
 static

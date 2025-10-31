@@ -86,10 +86,12 @@ material_mgr::material_constants material_mgr::BuildMaterialFlags( const materia
 {
     material_constants constants;
     constants.Flags    = 0;
-    constants.AlphaRef = 0.5f;
+    constants.AlphaRef = 0.0f;
 
     if( !pMaterial )
         return constants;
+
+    const xbool bPunchThru = !!(pMaterial->m_Flags & geom::material::FLAG_IS_PUNCH_THRU);
 
     switch( pMaterial->m_Type )
     {
@@ -147,6 +149,14 @@ material_mgr::material_constants material_mgr::BuildMaterialFlags( const materia
     if( !(RenderFlags & render::DISABLE_PROJ_SHADOWS) )
         constants.Flags |= MATERIAL_FLAG_PROJ_SHADOW;
 
+    if( constants.Flags & MATERIAL_FLAG_ALPHA_TEST )
+    {
+        // Blended alpha surfaces should only drop fully transparent texels,
+        // while explicit punch-through materials keep a tighter cutoff so the
+        // binary mask stays crisp.
+        constants.AlphaRef = bPunchThru ? 0.5f : (4.0f / 255.0f);
+    }
+
     return constants;
 }
 
@@ -193,6 +203,116 @@ cb_lighting material_mgr::BuildLightingConstants( const d3d_lighting* pLighting,
 
 //==============================================================================
 //  GENERAL STATE HELPERS
+//==============================================================================
+
+void material_mgr::ApplyRenderStates( const material* pMaterial, u32 RenderFlags )
+{
+    s32 blendMode   = STATE_BLEND_NONE;
+    s32 depthMode   = STATE_DEPTH_NORMAL;
+    s32 rasterMode  = STATE_RASTER_SOLID;
+    s32 samplerMode = STATE_SAMPLER_LINEAR_WRAP;
+
+    material_type materialType = Material_Diff;
+
+    xbool bAlphaMaterial = FALSE;
+    xbool bForceZFill    = FALSE;
+    xbool bDoubleSided   = FALSE;
+    xbool bAdditive      = FALSE;
+    xbool bSubtractive   = FALSE;
+
+    if( pMaterial )
+    {
+        materialType   = (material_type)pMaterial->m_Type;
+        bAlphaMaterial = IsAlphaMaterial( materialType );
+        bForceZFill    = !!(pMaterial->m_Flags & geom::material::FLAG_FORCE_ZFILL);
+        bDoubleSided   = !!(pMaterial->m_Flags & geom::material::FLAG_DOUBLE_SIDED);
+        bAdditive      = !!(pMaterial->m_Flags & geom::material::FLAG_IS_ADDITIVE);
+        bSubtractive   = !!(pMaterial->m_Flags & geom::material::FLAG_IS_SUBTRACTIVE);
+    }
+
+    const u32   FadeMask     = (render::FADING_ALPHA | render::INSTFLAG_FADING_ALPHA);
+    const xbool bFadingAlpha = !!(RenderFlags & FadeMask);
+
+    xbool bEnableBlend = FALSE;
+
+    if( bFadingAlpha )
+    {
+        blendMode    = STATE_BLEND_ALPHA;
+        bEnableBlend = TRUE;
+    }
+    else
+    {
+        switch( materialType )
+        {
+            case Material_Alpha:
+            case Material_Alpha_PerPolyEnv:
+            case Material_Alpha_PerPixelIllum:
+            case Material_Alpha_PerPolyIllum:
+            {
+                if( bAdditive )
+                {
+                    blendMode = STATE_BLEND_ADD;
+                }
+                else if( bSubtractive )
+                {
+                    blendMode = STATE_BLEND_SUB;
+                }
+                else
+                {
+                    blendMode = STATE_BLEND_ALPHA;
+                }
+
+                bEnableBlend = TRUE;
+            }
+            break;
+
+            case Material_Distortion:
+            case Material_Distortion_PerPolyEnv:
+            {
+                // Distortion classes keep blending disabled; they rely on shader
+                // authored offsets rather than color compositing.
+                blendMode    = STATE_BLEND_NONE;
+                bEnableBlend = FALSE;
+            }
+            break;
+
+            default:
+                break;
+        }
+    }
+
+    const xbool bDisableDepthWrite = ((bAlphaMaterial || bEnableBlend) && !bForceZFill);
+
+    depthMode = bDisableDepthWrite ? STATE_DEPTH_NO_WRITE : STATE_DEPTH_NORMAL;
+
+    //const xbool bWireframe       = !!(RenderFlags & render::WIREFRAME);
+    //const xbool bWireframeNoCull = !!(RenderFlags & render::WIREFRAME2);
+    const xbool bDisableCull     = bDoubleSided || bAlphaMaterial;
+
+    //if( bWireframeNoCull )
+    //{
+    //    rasterMode = STATE_RASTER_WIRE_NO_CULL;
+    //}
+    //else if( bWireframe )
+    //{
+    //    rasterMode = bDisableCull ? STATE_RASTER_WIRE_NO_CULL : STATE_RASTER_WIRE;
+    //}
+    //else
+    {
+        rasterMode = bDisableCull ? STATE_RASTER_SOLID_NO_CULL : STATE_RASTER_SOLID;
+    }
+
+    //if( RenderFlags & (render::CLIPPED | render::INSTFLAG_CLIPPED) )
+    //{
+    //    samplerMode = STATE_SAMPLER_LINEAR_CLAMP;
+    //}
+
+    state_SetState( STATE_TYPE_BLEND,      blendMode );
+    state_SetState( STATE_TYPE_DEPTH,      depthMode );
+    state_SetState( STATE_TYPE_RASTERIZER, rasterMode );
+    state_SetState( STATE_TYPE_SAMPLER,    samplerMode );
+}
+
 //==============================================================================
 
 void material_mgr::SetBitmap( const xbitmap* pBitmap, texture_slot slot )

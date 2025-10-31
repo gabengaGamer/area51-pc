@@ -39,6 +39,37 @@ proj_texture_mgr::~proj_texture_mgr( void )
 
 //=========================================================================
 
+xbool proj_texture_mgr::CanReceiveProjTexture( material_type Type,
+                                               u16           MaterialFlags ) const
+{
+    if( !IsAlphaMaterial( Type ) )
+        return TRUE;
+
+    if( !(MaterialFlags & geom::material::FLAG_FORCE_ZFILL) )
+        return FALSE;
+
+    if( MaterialFlags & geom::material::FLAG_IS_SUBTRACTIVE )
+        return FALSE;
+
+    return TRUE;
+}
+
+//=========================================================================
+
+xbool proj_texture_mgr::CanReceiveProjTexture( const geom::material& Mat ) const
+{
+    return CanReceiveProjTexture( (material_type)Mat.Type, Mat.Flags );
+}
+
+//=========================================================================
+
+xbool proj_texture_mgr::CanReceiveProjTexture( const material& Mat ) const
+{
+    return CanReceiveProjTexture( (material_type)Mat.m_Type, Mat.m_Flags );
+}
+
+//=========================================================================
+
 xbool proj_texture_mgr::ProjectionIntersectsBBox( const projection& Proj, const bbox& B )
 {
     if( Proj.ProjView.BBoxInView( B ) == view::VISIBLE_NONE )

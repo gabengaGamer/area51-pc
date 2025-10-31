@@ -14,6 +14,7 @@
 #include "x_math.hpp"
 #include "e_View.hpp"
 #include "Texture.hpp"
+#include "Render.hpp"
 
 //==============================================================================
 //  PROJ TEXTURE MANAGER CLASS
@@ -53,6 +54,11 @@ public:
                                       s32            MaxShadowCount = 1 );
     void    GetCollectedShadow      ( matrix4&       ShadMatrix,
                                       xbitmap*&      pBitmap );
+
+    xbool   CanReceiveProjTexture   ( material_type  Type,
+                                      u16            MaterialFlags ) const;
+    xbool   CanReceiveProjTexture   ( const geom::material& Mat ) const;
+    xbool   CanReceiveProjTexture   ( const material&       Mat ) const;
 
 protected:
     struct projection
