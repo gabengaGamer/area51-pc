@@ -44,36 +44,40 @@ static x_language x_MapWindowsLanguage( LANGID const LangId )
 {
     WORD const Primary = PRIMARYLANGID( LangId );
 
-    switch( Primary )
-    {
-        case LANG_ENGLISH:     return XL_LANG_ENGLISH;
-        case LANG_FRENCH:      return XL_LANG_FRENCH;
-        case LANG_GERMAN:      return XL_LANG_GERMAN;
-        case LANG_ITALIAN:     return XL_LANG_ITALIAN;
-        case LANG_SPANISH:     return XL_LANG_SPANISH;    // TODO: 
-        case LANG_DUTCH:       return XL_LANG_ENGLISH;    //XL_LANG_DUTCH
-        case LANG_JAPANESE:    return XL_LANG_ENGLISH;    //XL_LANG_JAPANESE
-        case LANG_KOREAN:      return XL_LANG_ENGLISH;    //XL_LANG_KOREAN
-        case LANG_PORTUGUESE:  return XL_LANG_ENGLISH;    //XL_LANG_PORTUGUESE
-        case LANG_RUSSIAN:     return XL_LANG_ENGLISH;    //XL_LANG_RUSSIAN
-        case LANG_CHINESE:
-        {
-            WORD const SubLang = SUBLANGID( LangId );
+    // Fonts is still broken, so skip this stuff, for now.
 
-            switch( SubLang )
-            {
-                case SUBLANG_CHINESE_TRADITIONAL:
-                case SUBLANG_CHINESE_HONGKONG:
-                case SUBLANG_CHINESE_MACAU: // TODO: 
-                    return XL_LANG_ENGLISH; //XL_LANG_TCHINESE
-                default:
-                    break;
-            }
-            break;
-        }
-        default:
-		    return XL_LANG_ENGLISH;
-    }
+    //switch( Primary )
+    //{
+    //    case LANG_ENGLISH:     return XL_LANG_ENGLISH;
+    //    case LANG_FRENCH:      return XL_LANG_FRENCH;
+    //    case LANG_GERMAN:      return XL_LANG_GERMAN;
+    //    case LANG_ITALIAN:     return XL_LANG_ITALIAN;
+    //    case LANG_SPANISH:     return XL_LANG_SPANISH;    
+    //    case LANG_DUTCH:       return XL_LANG_DUTCH;    
+    //    case LANG_JAPANESE:    return XL_LANG_JAPANESE;   
+    //    case LANG_KOREAN:      return XL_LANG_KOREAN;   
+    //    case LANG_PORTUGUESE:  return XL_LANG_PORTUGUESE; 
+    //    case LANG_RUSSIAN:     return XL_LANG_RUSSIAN;    
+    //    case LANG_CHINESE:
+    //    {
+    //        WORD const SubLang = SUBLANGID( LangId );
+	//
+    //        switch( SubLang )
+    //        {
+    //            case SUBLANG_CHINESE_TRADITIONAL:
+    //            case SUBLANG_CHINESE_HONGKONG:
+    //            case SUBLANG_CHINESE_MACAU: // TODO: 
+    //                return XL_LANG_ENGLISH; //XL_LANG_TCHINESE
+    //            default:
+    //                break;
+    //        }
+    //        break;
+    //    }
+    //    default:
+	//	    return XL_LANG_ENGLISH;
+    //}
+	
+	return XL_LANG_ENGLISH;
 }
 #endif
 
