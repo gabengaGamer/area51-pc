@@ -979,13 +979,9 @@ void draw_SetupPrimitiveStates( draw_primitive Primitive )
 
 //==============================================================================
 
-static 
-void draw_SetupRenderStates( u32 Flags, xbool IsTextured )
+static
+void draw_ApplyBlendState( u32 Flags )
 {
-    if( !g_pd3dContext ) 
-        return;
-
-    // Setup blend mode
     if( Flags & DRAW_BLEND_ADD )
     {
         if( m_IsUI && m_bUITargetValid )
@@ -1000,6 +996,10 @@ void draw_SetupRenderStates( u32 Flags, xbool IsTextured )
         else
             state_SetState( STATE_TYPE_BLEND, STATE_BLEND_SUB );
     }
+    else if( Flags & DRAW_BLEND_INTENSITY )
+    {
+        state_SetState( STATE_TYPE_BLEND, STATE_BLEND_INTENSITY );
+    }
     else if( Flags & DRAW_USE_ALPHA )
     {
         if( m_IsUI && m_bUITargetValid )
@@ -1008,10 +1008,16 @@ void draw_SetupRenderStates( u32 Flags, xbool IsTextured )
             state_SetState( STATE_TYPE_BLEND, STATE_BLEND_ALPHA );
     }
     else
-        //state_SetState( STATE_TYPE_BLEND, STATE_BLEND_ALPHA );
+    {
         state_SetState( STATE_TYPE_BLEND, STATE_BLEND_NONE );
+    }
+}
 
-    // Setup depth mode
+//==============================================================================
+
+static
+void draw_ApplyDepthState( u32 Flags )
+{
     if( Flags & DRAW_NO_ZBUFFER )
     {
         if( Flags & DRAW_NO_ZWRITE )
@@ -1026,8 +1032,13 @@ void draw_SetupRenderStates( u32 Flags, xbool IsTextured )
         else
             state_SetState( STATE_TYPE_DEPTH, STATE_DEPTH_NORMAL );
     }
+}
 
-    // Setup rasterizer mode
+//==============================================================================
+
+static
+void draw_ApplyRasterizerState( u32 Flags )
+{
     if( Flags & DRAW_WIRE_FRAME )
     {
         if( Flags & DRAW_CULL_NONE )
@@ -1042,10 +1053,15 @@ void draw_SetupRenderStates( u32 Flags, xbool IsTextured )
         else
             state_SetState( STATE_TYPE_RASTERIZER, STATE_RASTER_SOLID );
     }
+}
 
-    // Setup sampler mode
+//==============================================================================
+
+static
+void draw_ApplySamplerState( u32 Flags )
+{
     xbool clamp = (Flags & (DRAW_U_CLAMP | DRAW_V_CLAMP)) != 0;
-    
+
     if( s_bCurrentBilinear )
     {
         if( clamp )
@@ -1060,8 +1076,21 @@ void draw_SetupRenderStates( u32 Flags, xbool IsTextured )
         else
             state_SetState( STATE_TYPE_SAMPLER, STATE_SAMPLER_POINT_WRAP );
     }
+}
 
-    // Clear texture if not in textured mode
+//==============================================================================
+
+static
+void draw_SetupRenderStates( u32 Flags, xbool IsTextured )
+{
+    if( !g_pd3dContext )
+        return;
+
+    draw_ApplyBlendState( Flags );
+    draw_ApplyDepthState( Flags );
+    draw_ApplyRasterizerState( Flags );
+    draw_ApplySamplerState( Flags );
+	
     if( !IsTextured )
     {
         ID3D11ShaderResourceView* nullSRV = NULL;

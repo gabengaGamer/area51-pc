@@ -241,44 +241,6 @@ void material_mgr::SetBitmap( const xbitmap* pBitmap, texture_slot slot )
 
 //==============================================================================
 
-void material_mgr::SetBlendMode( s32 BlendMode )
-{
-    switch( BlendMode )
-    {
-        case render::BLEND_MODE_NORMAL:
-            state_SetState( STATE_TYPE_BLEND, STATE_BLEND_ALPHA );
-            break;
-        case render::BLEND_MODE_ADDITIVE:
-            state_SetState( STATE_TYPE_BLEND, STATE_BLEND_ADD );
-            break;
-        case render::BLEND_MODE_SUBTRACTIVE:
-            state_SetState( STATE_TYPE_BLEND, STATE_BLEND_SUB );
-            break;
-        case render::BLEND_MODE_INTENSITY:
-            state_SetState( STATE_TYPE_BLEND, STATE_BLEND_INTENSITY );
-            break;
-        default:
-            ASSERT(FALSE);
-            break;
-    }
-}
-
-//==============================================================================
-
-void material_mgr::SetDepthTestEnabled( xbool ZTestEnabled )
-{
-    if( !ZTestEnabled )
-    {
-        state_SetState( STATE_TYPE_DEPTH, STATE_DEPTH_DISABLED );
-    }
-    else
-    {
-        state_SetState( STATE_TYPE_DEPTH, STATE_DEPTH_NO_WRITE );
-    }
-}
-
-//==============================================================================
-
 void material_mgr::InvalidateCache( void )
 {
     m_pCurrentTexture = NULL;

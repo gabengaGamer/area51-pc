@@ -7,6 +7,7 @@
 #include "..\LightMgr.hpp"
 #include "..\platform_Render.hpp"
 #include "..\ProjTextureMgr.hpp"
+#include "..\..\Decals\DecalMgr.hpp"
 #include "VertexMgr.hpp"
 #include "SoftVertexMgr.hpp"
 #include "PostMgr/PostMgr.hpp"
@@ -18,11 +19,10 @@
 //=============================================================================
 
 // KSS, remove me!
-static const material*         s_pMaterial   = NULL;
-static rigid_geom*             s_pRigidGeom  = NULL;
-static skin_geom*              s_pSkinGeom   = NULL;
-static const xbitmap*          s_pDrawBitmap = NULL;
-static s32                     s_BlendMode   = 0;
+static const material*         s_pMaterial        = NULL;
+static rigid_geom*             s_pRigidGeom       = NULL;
+static skin_geom*              s_pSkinGeom        = NULL;
+static const xbitmap*          s_pDrawBitmap      = NULL;
 
 //=============================================================================
 // Implementation
@@ -358,6 +358,69 @@ void platform_UnregisterSkinGeom( skin_geom& Geom )
 
 //=============================================================================
 
+static s32 s_DrawFlags = 0;
+
+static
+void platform_SetDiffuseMaterial( const xbitmap& Bitmap, s32 BlendMode, xbool ZTestEnabled )
+{
+    // do some entropy stuff //////////////////////////////////////////////////
+
+    vram_Activate( Bitmap );		
+	
+    // we can use draw to set up render states at which point the shader engine
+    // will hijack what it needs and route the verts through its pixel pipeline
+
+    s_DrawFlags = DRAW_TEXTURED | DRAW_NO_ZWRITE | DRAW_UV_CLAMP | DRAW_CULL_NONE | DRAW_USE_ALPHA;
+    if( !ZTestEnabled )
+        s_DrawFlags |= DRAW_NO_ZBUFFER;	
+	
+    switch( BlendMode ) 
+    { 
+        case render::BLEND_MODE_ADDITIVE: 
+            s_DrawFlags |=  DRAW_BLEND_ADD;
+            break;
+        case render::BLEND_MODE_SUBTRACTIVE: 
+            s_DrawFlags |= DRAW_BLEND_SUB;
+            break;
+        case render::BLEND_MODE_INTENSITY: 
+            s_DrawFlags |= DRAW_BLEND_INTENSITY;
+            break;
+        case render::BLEND_MODE_NORMAL: 
+        default: 
+            break;
+    }
+	
+    s_pDrawBitmap = &Bitmap;	
+}
+
+//=============================================================================
+
+static
+void platform_SetGlowMaterial( const xbitmap& Bitmap, s32 BlendMode, xbool ZTestEnabled )
+{
+    platform_SetDiffuseMaterial( Bitmap, BlendMode, ZTestEnabled );
+}
+
+//=============================================================================
+
+static
+void platform_SetEnvMapMaterial( const xbitmap& Bitmap, s32 BlendMode, xbool ZTestEnabled )
+{
+    platform_SetDiffuseMaterial( Bitmap, BlendMode, ZTestEnabled );
+}
+
+//=============================================================================
+
+static
+void platform_SetDistortionMaterial( s32 BlendMode, xbool ZTestEnabled )
+{
+    ASSERTS( FALSE, "Not implemented yet!" );
+    (void)BlendMode;
+    (void)ZTestEnabled;
+}
+
+//=============================================================================
+
 static
 void platform_StartRawDataMode( void )
 {
@@ -397,62 +460,56 @@ void platform_RenderRawStrips( s32               nVerts,
     }
 
     // fill in the l2w...note we have to reset draw to do this
+
     // NOTE: DRAW_NO_ZWRITE because we don't need spoil the depth buffer
-    draw_Begin( DRAW_TRIANGLES, DRAW_TEXTURED | DRAW_NO_ZWRITE | DRAW_UV_CLAMP | DRAW_CULL_NONE | DRAW_USE_ALPHA );
+    draw_Begin( DRAW_TRIANGLES, s_DrawFlags );
     draw_SetTexture( *s_pDrawBitmap );
     draw_SetL2W( L2W );
 
-    // GS: Probably hack ? 
-    // Currently, render states need to be placed AFTER draw_Begin, 
-    // otherwise they will be overwritten by internal draw_Begin states. 
-    // Maybe it makes sense to add a flag for custom render states ?
-    
-    // Setup render states
-    
-    g_MaterialMgr.SetBlendMode( s_BlendMode );
-
-    // prime the loop by grabbing the data for the first two verts
-    xcolor  C0( pColor[0]&0xff, (pColor[0]&0xff00)>>8, (pColor[0]&0xff0000)>>16, (pColor[0]&0xff000000)>>24 );
-    xcolor  C1( pColor[1]&0xff, (pColor[1]&0xff00)>>8, (pColor[1]&0xff0000)>>16, (pColor[1]&0xff000000)>>24 );
-    vector2 UV0( pUV[0] * ItoFScale, pUV[1] * ItoFScale );
-    vector2 UV1( pUV[2] * ItoFScale, pUV[3] * ItoFScale );
-    vector3 Pos0( pPos[0].GetX(), pPos[0].GetY(), pPos[0].GetZ() );
-    vector3 Pos1( pPos[1].GetX(), pPos[1].GetY(), pPos[1].GetZ() );
-
-    // Intensity decals ignore vertex color and always render white
-    xbool   bIntensity = ( s_BlendMode == render::BLEND_MODE_INTENSITY );
-    xcolor  White( 255, 255, 255, 255 );
-
-    // Now render the raw strips. Having 0x8000 in the w component means don't
-    // kick this triangle. (Just like the ADC bit on the PS2.)
-    s32 i;
-    for( i = 2; i < nVerts; i++ )
+    for( s32 iVert = 0; iVert < nVerts; ++iVert )
     {
-        // grab the next vert
-        xcolor  C2( pColor[i]&0xff, (pColor[i]&0xff00)>>8, (pColor[i]&0xff0000)>>16, (pColor[i]&0xff000000)>>24 );
-        vector2 UV2( pUV[i*2+0] * ItoFScale, pUV[i*2+1] * ItoFScale );
-        vector3 Pos2( pPos[i].GetX(), pPos[i].GetY(), pPos[i].GetZ() );
+        const f32 W = pPos[iVert].GetW();
+        if( (*((const u32*)&W)) & decal_mgr::decal_vert::FLAG_SKIP_TRIANGLE )
+            continue;
 
-        // kick the triangle
-        if( (pPos[i].GetIW() & 0x8000) != 0x8000 )
+        if( iVert < 2 )
+            continue;
+
+        const vector3 Pos0( pPos[iVert-2].GetX(), pPos[iVert-2].GetY(), pPos[iVert-2].GetZ() );
+        const vector3 Pos1( pPos[iVert-1].GetX(), pPos[iVert-1].GetY(), pPos[iVert-1].GetZ() );
+        const vector3 Pos2( pPos[iVert-0].GetX(), pPos[iVert-0].GetY(), pPos[iVert-0].GetZ() );
+
+        const vector2 UV0( pUV[(iVert-2)*2+0] * ItoFScale, pUV[(iVert-2)*2+1] * ItoFScale );
+        const vector2 UV1( pUV[(iVert-1)*2+0] * ItoFScale, pUV[(iVert-1)*2+1] * ItoFScale );
+        const vector2 UV2( pUV[(iVert-0)*2+0] * ItoFScale, pUV[(iVert-0)*2+1] * ItoFScale );
+
+        // Intensity decals ignore vertex color and always render white
+        const xcolor White( 255, 255, 255, 255 );
+        if( s_DrawFlags == render::BLEND_MODE_INTENSITY )
         {
-            if( bIntensity )
-            {
-                draw_Color( White ); draw_UV( UV0 ); draw_Vertex( Pos0 );
-                draw_Color( White ); draw_UV( UV1 ); draw_Vertex( Pos1 );
-                draw_Color( White ); draw_UV( UV2 ); draw_Vertex( Pos2 );
-            }
-            else
-            {
-                draw_Color( C0 );   draw_UV( UV0 ); draw_Vertex( Pos0 );
-                draw_Color( C1 );   draw_UV( UV1 ); draw_Vertex( Pos1 );
-                draw_Color( C2 );   draw_UV( UV2 ); draw_Vertex( Pos2 );
-            }
+            draw_Color( White ); draw_UV( UV0 ); draw_Vertex( Pos0 );
+            draw_Color( White ); draw_UV( UV1 ); draw_Vertex( Pos1 );
+            draw_Color( White ); draw_UV( UV2 ); draw_Vertex( Pos2 );
         }
+        else
+        {
+            const xcolor C0( pColor[iVert-2]&0xff,
+                             (pColor[iVert-2]&0xff00)>>8,
+                             (pColor[iVert-2]&0xff0000)>>16,
+                             (pColor[iVert-2]&0xff000000)>>24 );
+            const xcolor C1( pColor[iVert-1]&0xff,
+                             (pColor[iVert-1]&0xff00)>>8,
+                             (pColor[iVert-1]&0xff0000)>>16,
+                             (pColor[iVert-1]&0xff000000)>>24 );
+            const xcolor C2( pColor[iVert]&0xff,
+                             (pColor[iVert]&0xff00)>>8,
+                             (pColor[iVert]&0xff0000)>>16,
+                             (pColor[iVert]&0xff000000)>>24 );
 
-        // move to the next triangle
-        C0 = C1;    UV0 = UV1;  Pos0 = Pos1;
-        C1 = C2;    UV1 = UV2;  Pos1 = Pos2;
+            draw_Color( C0 ); draw_UV( UV0 ); draw_Vertex( Pos0 );
+            draw_Color( C1 ); draw_UV( UV1 ); draw_Vertex( Pos1 );
+            draw_Color( C2 ); draw_UV( UV2 ); draw_Vertex( Pos2 );
+        }
     }
 
     // finished
@@ -494,11 +551,9 @@ void platform_Render3dSprites( s32               nSprites,
     draw_ClearL2W();
     
     // NOTE: DRAW_NO_ZWRITE because we don't need spoil the depth buffer
-    draw_Begin( DRAW_TRIANGLES, DRAW_TEXTURED | DRAW_NO_ZWRITE | DRAW_UV_CLAMP | DRAW_CULL_NONE | DRAW_USE_ALPHA );
+    draw_Begin( DRAW_TRIANGLES, s_DrawFlags );
     draw_SetTexture( *s_pDrawBitmap );
     draw_SetL2W( V2W );
-
-    g_MaterialMgr.SetBlendMode( s_BlendMode );
 
     // loop through the sprites and render them
     s32 i, j;
@@ -538,8 +593,7 @@ void platform_Render3dSprites( s32               nSprites,
             draw_Color( Color );
             draw_UV( 0.0f, 0.0f );  draw_Vertex( Corners[0] );
             draw_UV( 1.0f, 0.0f );  draw_Vertex( Corners[3] );
-            draw_UV( 0.0f, 1.0f );  draw_Vertex( Corners[1] );
-            
+            draw_UV( 0.0f, 1.0f );  draw_Vertex( Corners[1] );         
             draw_UV( 1.0f, 0.0f );  draw_Vertex( Corners[3] );
             draw_UV( 0.0f, 1.0f );  draw_Vertex( Corners[1] );
             draw_UV( 1.0f, 1.0f );  draw_Vertex( Corners[2] );
@@ -588,11 +642,11 @@ void platform_RenderHeatHazeSprites( s32 nSprites, f32 UniScale, const matrix4* 
         S2V = W2V;
 
     draw_ClearL2W();
-    draw_Begin( DRAW_TRIANGLES, DRAW_TEXTURED | DRAW_NO_ZWRITE | DRAW_UV_CLAMP | DRAW_CULL_NONE | DRAW_USE_ALPHA );
+
+    // NOTE: DRAW_NO_ZWRITE because we don't need spoil the depth buffer
+    draw_Begin( DRAW_TRIANGLES, s_DrawFlags );
     draw_SetTexture( *s_pDrawBitmap );
     draw_SetL2W( V2W );
-
-    g_MaterialMgr.SetBlendMode( s_BlendMode );
 
     for( s32 i = 0; i < nSprites; ++i )
     {
@@ -628,7 +682,6 @@ void platform_RenderHeatHazeSprites( s32 nSprites, f32 UniScale, const matrix4* 
         draw_UV( 0.0f, 0.0f ); draw_Vertex( Corners[0] );
         draw_UV( 1.0f, 0.0f ); draw_Vertex( Corners[3] );
         draw_UV( 0.0f, 1.0f ); draw_Vertex( Corners[1] );
-
         draw_UV( 1.0f, 0.0f ); draw_Vertex( Corners[3] );
         draw_UV( 0.0f, 1.0f ); draw_Vertex( Corners[1] );
         draw_UV( 1.0f, 1.0f ); draw_Vertex( Corners[2] );
@@ -665,11 +718,10 @@ void platform_RenderVelocitySprites( s32            nSprites,
 
     // start up draw
     draw_ClearL2W();
+	
     // NOTE: DRAW_NO_ZWRITE because we don't need spoil the depth buffer
-    draw_Begin( DRAW_TRIANGLES, DRAW_TEXTURED | DRAW_NO_ZWRITE | DRAW_UV_CLAMP | DRAW_CULL_NONE | DRAW_USE_ALPHA );
+    draw_Begin( DRAW_TRIANGLES, s_DrawFlags );
     draw_SetTexture( *s_pDrawBitmap );
-
-    g_MaterialMgr.SetBlendMode( s_BlendMode );
 
     // Grab out a l2w matrix to use. If one is not specified, then
     // we will use the identity matrix.
@@ -720,8 +772,7 @@ void platform_RenderVelocitySprites( s32            nSprites,
             draw_Color( Color );
             draw_UV( 1.0f, 0.0f );  draw_Vertex( V0 );
             draw_UV( 0.0f, 0.0f );  draw_Vertex( V1 );
-            draw_UV( 1.0f, 1.0f );  draw_Vertex( V3 );
-            
+            draw_UV( 1.0f, 1.0f );  draw_Vertex( V3 );        
             draw_UV( 0.0f, 0.0f );  draw_Vertex( V1 );
             draw_UV( 1.0f, 1.0f );  draw_Vertex( V3 );
             draw_UV( 0.0f, 1.0f );  draw_Vertex( V2 );
@@ -735,71 +786,25 @@ void platform_RenderVelocitySprites( s32            nSprites,
 //=============================================================================
 
 static
-void platform_SetDiffuseMaterial( const xbitmap& Bitmap, s32 BlendMode, xbool ZTestEnabled )
-{
-    g_MaterialMgr.SetBitmap( &Bitmap, TEXTURE_SLOT_DIFFUSE );
-    g_MaterialMgr.SetBlendMode( BlendMode );
-    g_MaterialMgr.SetDepthTestEnabled( ZTestEnabled );
-    
-    s_pDrawBitmap = &Bitmap;
-    s_BlendMode = BlendMode;
-}
-
-//=============================================================================
-
-static
-void platform_SetGlowMaterial( const xbitmap& Bitmap, s32 BlendMode, xbool ZTestEnabled )
-{
-    g_MaterialMgr.SetBitmap( &Bitmap, TEXTURE_SLOT_DIFFUSE );
-    g_MaterialMgr.SetBlendMode( BlendMode );
-    g_MaterialMgr.SetDepthTestEnabled( ZTestEnabled );
-    
-    s_pDrawBitmap = &Bitmap;
-    s_BlendMode = BlendMode;    
-}
-
-//=============================================================================
-
-static
-void platform_SetEnvMapMaterial( const xbitmap& Bitmap, s32 BlendMode, xbool ZTestEnabled )
-{
-    g_MaterialMgr.SetBitmap( &Bitmap, TEXTURE_SLOT_DIFFUSE );
-    g_MaterialMgr.SetBlendMode( BlendMode );
-    g_MaterialMgr.SetDepthTestEnabled( ZTestEnabled );
-    
-    s_pDrawBitmap = &Bitmap;
-    s_BlendMode = BlendMode;    
-}
-
-//=============================================================================
-
-static
-void platform_SetDistortionMaterial( s32 BlendMode, xbool ZTestEnabled )
-{
-    g_MaterialMgr.SetBlendMode( BlendMode );
-    g_MaterialMgr.SetDepthTestEnabled( ZTestEnabled );  
-	
-    s_BlendMode = BlendMode; 	
-}
-
-//=============================================================================
-
-static
 void* platform_CalculateRigidLighting( const matrix4&   L2W,
                                        const bbox&      WorldBBox )
 {
+    // Try allocate
     d3d_lighting* pLighting = (d3d_lighting*)smem_BufferAlloc( sizeof(d3d_lighting) );
     if( !pLighting )
     {
+        // Setup default lighting
         static d3d_lighting Default;
         Default.LightCount = 0;
         Default.AmbCol.Set( 0.05f, 0.05f, 0.05f, 1.0f );
-        for( s32 i = 0; i < MAX_GEOM_LIGHTS; i++ )
+        for( s32 i = 1; i < MAX_GEOM_LIGHTS; i++ )
         {
-            Default.LightVec[i].Set( 0.0f, 0.0f, 0.0f, 0.0f );
-            Default.LightCol[i].Set( 0.0f, 0.0f, 0.0f, 0.0f );
+            Default.LightVec[i].Set(0.0f, 0.0f, 0.0f, 0.0f);
+            Default.LightCol[i].Set(0.0f, 0.0f, 0.0f, 0.0f);
         }
-        pLighting = &Default;
+
+        // Use it
+        pLighting = &Default ;
     }
     else
     {
@@ -823,8 +828,9 @@ void* platform_CalculateRigidLighting( const matrix4&   L2W,
 
         for( s32 i = NLights; i < MAX_GEOM_LIGHTS; i++ )
         {
-            pLighting->LightVec[i].Set( 0.0f, 0.0f, 0.0f, 0.0f );
-            pLighting->LightCol[i].Set( 0.0f, 0.0f, 0.0f, 0.0f );
+            // Turn off directional lighting
+            pLighting->LightVec[i].Set(0.0f, 0.0f, 0.0f, 0.0f);
+            pLighting->LightCol[i].Set(0.0f, 0.0f, 0.0f, 0.0f);
         }
     }
 
@@ -848,7 +854,7 @@ void* platform_CalculateSkinLighting( u32            Flags,
     if (!pLighting)
     {
         // Setup default lighting
-        static d3d_lighting Default ;
+        static d3d_lighting Default;
         Default.LightCount = 1;
         Default.LightVec[0].Set(0.0f, 1.0f, 0.0f, 0.0f);
         Default.LightCol[0].Set(1.0f, 1.0f, 1.0f, 1.0f);

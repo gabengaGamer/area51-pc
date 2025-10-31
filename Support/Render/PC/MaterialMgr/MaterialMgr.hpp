@@ -180,8 +180,6 @@ public:
     // General material functions
     void        SetBitmap           ( const xbitmap* pBitmap,
                                       texture_slot   slot );
-    void        SetBlendMode        ( s32 BlendMode );
-    void        SetDepthTestEnabled ( xbool ZTestEnabled );
     void        InvalidateCache     ( void );
 
     // Resource access for vertex managers

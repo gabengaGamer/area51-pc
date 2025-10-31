@@ -51,15 +51,16 @@ struct rtarget;
 #define DRAW_2D_KEEP_Z         ( 1 <<  6 )     // Default: all on same Z plane close to camera
 #define DRAW_BLEND_ADD         ( 1 <<  7 )     // Default: Multiplicative (alpha) ADD and SUB mutually exclusive
 #define DRAW_BLEND_SUB         ( 1 <<  8 )     // Default: Multiplicative (alpha) ADD and SUB mutually exclusive
-#define DRAW_U_CLAMP           ( 1 <<  9 )     // Default: WRAP
-#define DRAW_V_CLAMP           ( 1 << 10 )     // Default: WRAP
+#define DRAW_BLEND_INTENSITY   ( 1 <<  9 )     // Default: Intensity disabled
+#define DRAW_U_CLAMP           ( 1 << 10 )     // Default: WRAP
+#define DRAW_V_CLAMP           ( 1 << 11 )     // Default: WRAP
 
 //------------------------------------------------------------------------------
 // DEPRECATED.
 //------------------------------------------------------------------------------
 
 // Use centralized d3deng_state system instead of manual state management.
-#define DRAW_KEEP_STATES	   ( 1 << 11 ) // Default: Off (doesn't set any render/texture-stage states)
+#define DRAW_KEEP_STATES	   ( 1 << 12 ) // Default: Off (doesn't set any render/texture-stage states)
 
 //------------------------------------------------------------------------------
 // Use custom shaders for rendering.
@@ -69,12 +70,12 @@ struct rtarget;
 // if you want to use your own shader instead of the ones prepared from d3deng_shader, 
 // then just enter one of these flags and load your own, easy.
 
-#define DRAW_CUSTOM_VS_SHADER  ( 1 << 12 )     // Default: Off
-#define DRAW_CUSTOM_PS_SHADER  ( 1 << 13 )     // Default: Off
-#define DRAW_CUSTOM_GS_SHADER  ( 1 << 14 )     // Default: Off
-#define DRAW_CUSTOM_CS_SHADER  ( 1 << 15 )     // Default: Off
-//#define DRAW_CUSTOM_[]_BUFFER  ( 1 << 16 )   // Default: Off
-//#define DRAW_CUSTOM_[]_LAYOUT  ( 1 << 17 )   // Default: Off
+#define DRAW_CUSTOM_VS_SHADER  ( 1 << 13 )     // Default: Off
+#define DRAW_CUSTOM_PS_SHADER  ( 1 << 14 )     // Default: Off
+#define DRAW_CUSTOM_GS_SHADER  ( 1 << 15 )     // Default: Off
+#define DRAW_CUSTOM_CS_SHADER  ( 1 << 16 )     // Default: Off
+//#define DRAW_CUSTOM_[]_BUFFER  ( 1 << 17 )   // Default: Off
+//#define DRAW_CUSTOM_[]_LAYOUT  ( 1 << 18 )   // Default: Off
 
 //------------------------------------------------------------------------------
 // Render on custom render targets, we only support 4 for now. 
@@ -84,10 +85,10 @@ struct rtarget;
 // but in some cases DRAW_2D should be drawn on a separate target from the UI render target, 
 // so that's why this code is here.
 
-#define DRAW_UI_RTARGET       ( 1 << 18 )      // Default: Off. Global render target is used.
-#define DRAW_DEBUG_RTARGET    ( 1 << 19 )      // Default: Off. Global render target is used.
-#define DRAW_CUSTOM_RTARGET_0 ( 1 << 20 )      // Default: Off. Global render target is used.
-#define DRAW_CUSTOM_RTARGET_1 ( 1 << 21 )      // Default: Off. Global render target is used.
+#define DRAW_UI_RTARGET       ( 1 << 19 )      // Default: Off. Global render target is used.
+#define DRAW_DEBUG_RTARGET    ( 1 << 20 )      // Default: Off. Global render target is used.
+#define DRAW_CUSTOM_RTARGET_0 ( 1 << 21 )      // Default: Off. Global render target is used.
+#define DRAW_CUSTOM_RTARGET_1 ( 1 << 22 )      // Default: Off. Global render target is used.
 
 
 //------------------------------------------------------------------------------
