@@ -199,11 +199,15 @@ xbool material_mgr::UpdateRigidConstants( const matrix4*      pL2W,
                                       nearZ,
                                       farZ );
     f32 fixedAlpha = pMaterial ? pMaterial->m_FixedAlpha : 0.0f;
-    f32 isCubeMap  = (pMaterial && (pMaterial->m_Flags & geom::material::FLAG_ENV_CUBE_MAP)) ? 1.0f : 0.0f;
-    f32 isViewSpace = (pMaterial && (pMaterial->m_Flags & geom::material::FLAG_ENV_VIEW_SPACE)) ? 1.0f : 0.0f;
-    rigidMatrices.EnvParams.Set( fixedAlpha, isCubeMap, isViewSpace, 0.0f );
+    const f32 cubeIntensity = ComputeCubeMapIntensity( pMaterial );
+    rigidMatrices.EnvParams.Set( fixedAlpha, cubeIntensity, 0.0f, 0.0f );
 
-    if( m_bRigidMatricesDirty || x_memcmp( &m_CachedRigidMatrices, &rigidMatrices, sizeof(cb_rigid_matrices) ) != 0 )
+    const xbool bMatricesChanged = ( m_bRigidMatricesDirty ||
+                                     x_memcmp( &m_CachedRigidMatrices,
+                                               &rigidMatrices,
+                                               sizeof(cb_rigid_matrices) ) != 0 );
+
+    if( bMatricesChanged )
     {
         D3D11_MAPPED_SUBRESOURCE mappedResource;
         HRESULT hr = g_pd3dContext->Map( m_pRigidConstantBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource );
@@ -218,17 +222,22 @@ xbool material_mgr::UpdateRigidConstants( const matrix4*      pL2W,
 
         m_CachedRigidMatrices = rigidMatrices;
         m_bRigidMatricesDirty = FALSE;
-
-        g_pd3dContext->VSSetConstantBuffers( 0, 1, &m_pRigidConstantBuffer );
-        g_pd3dContext->PSSetConstantBuffers( 0, 1, &m_pRigidConstantBuffer );
     }
+
+    g_pd3dContext->VSSetConstantBuffers( 0, 1, &m_pRigidConstantBuffer );
+    g_pd3dContext->PSSetConstantBuffers( 0, 1, &m_pRigidConstantBuffer );
 
     if( m_pRigidLightBuffer )
     {
         const vector4 ambientBias( 0.0f, 0.0f, 0.0f, 0.0f );
         const cb_lighting lightMatrices = BuildLightingConstants( pLighting, ambientBias );
 
-        if( m_bRigidLightingDirty || x_memcmp( &m_CachedRigidLighting, &lightMatrices, sizeof(cb_lighting) ) != 0 )
+        const xbool bLightingChanged = ( m_bRigidLightingDirty ||
+                                         x_memcmp( &m_CachedRigidLighting,
+                                                   &lightMatrices,
+                                                   sizeof(cb_lighting) ) != 0 );
+
+        if( bLightingChanged )
         {
             D3D11_MAPPED_SUBRESOURCE mappedResource;
             HRESULT hr = g_pd3dContext->Map( m_pRigidLightBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource );
@@ -243,9 +252,9 @@ xbool material_mgr::UpdateRigidConstants( const matrix4*      pL2W,
 
             m_CachedRigidLighting = lightMatrices;
             m_bRigidLightingDirty = FALSE;
-
-            g_pd3dContext->PSSetConstantBuffers( 2, 1, &m_pRigidLightBuffer );
         }
+
+        g_pd3dContext->PSSetConstantBuffers( 2, 1, &m_pRigidLightBuffer );
     }
 
     return TRUE;

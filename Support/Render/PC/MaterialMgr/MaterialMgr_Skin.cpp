@@ -199,14 +199,18 @@ xbool material_mgr::UpdateSkinConstants( const d3d_lighting* pLighting,
                                      camPos.GetZ(),
                                      1.0f );
     f32 fixedAlpha = pMaterial ? pMaterial->m_FixedAlpha : 0.0f;
-    f32 isCubeMap  = (pMaterial && (pMaterial->m_Flags & geom::material::FLAG_ENV_CUBE_MAP)) ? 1.0f : 0.0f;
-    f32 isViewSpace = (pMaterial && (pMaterial->m_Flags & geom::material::FLAG_ENV_VIEW_SPACE)) ? 1.0f : 0.0f;
-    skinMatrices.EnvParams.Set( fixedAlpha, isCubeMap, isViewSpace, 0.0f );
+    const f32 cubeIntensity = ComputeCubeMapIntensity( pMaterial );
+    skinMatrices.EnvParams.Set( fixedAlpha, cubeIntensity, 0.0f, 0.0f );
 
     const vector4 BaseBrightness( 0.16f, 0.16f, 0.16f, 0.0f ); // Maintain minimum ambient lighting.
     const cb_lighting lightMatrices = BuildLightingConstants( pLighting, BaseBrightness );
 
-    if( m_bSkinMatricesDirty || x_memcmp( &m_CachedSkinMatrices, &skinMatrices, sizeof(cb_skin_matrices) ) != 0 )
+    const xbool bMatricesChanged = ( m_bSkinMatricesDirty ||
+                                     x_memcmp( &m_CachedSkinMatrices,
+                                               &skinMatrices,
+                                               sizeof(cb_skin_matrices) ) != 0 );
+
+    if( bMatricesChanged )
     {
         D3D11_MAPPED_SUBRESOURCE mappedResource;
         HRESULT hr = g_pd3dContext->Map( m_pSkinVSConstBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource );
@@ -221,15 +225,24 @@ xbool material_mgr::UpdateSkinConstants( const d3d_lighting* pLighting,
 
         m_CachedSkinMatrices = skinMatrices;
         m_bSkinMatricesDirty = FALSE;
+    }
 
-        g_pd3dContext->VSSetConstantBuffers( 0, 1, &m_pSkinVSConstBuffer );
+    g_pd3dContext->VSSetConstantBuffers( 0, 1, &m_pSkinVSConstBuffer );
+    g_pd3dContext->PSSetConstantBuffers( 0, 1, &m_pSkinVSConstBuffer );
+
+    if( m_pSkinBoneBuffer )
+    {
         g_pd3dContext->VSSetConstantBuffers( 2, 1, &m_pSkinBoneBuffer );
-        g_pd3dContext->PSSetConstantBuffers( 0, 1, &m_pSkinVSConstBuffer );
     }
 
     if( m_pSkinLightBuffer )
     {
-        if( m_bSkinLightingDirty || x_memcmp( &m_CachedSkinLighting, &lightMatrices, sizeof(cb_lighting) ) != 0 )
+        const xbool bLightingChanged = ( m_bSkinLightingDirty ||
+                                         x_memcmp( &m_CachedSkinLighting,
+                                                   &lightMatrices,
+                                                   sizeof(cb_lighting) ) != 0 );
+
+        if( bLightingChanged )
         {
             D3D11_MAPPED_SUBRESOURCE mappedResource;
             HRESULT hr = g_pd3dContext->Map( m_pSkinLightBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource );
@@ -244,9 +257,9 @@ xbool material_mgr::UpdateSkinConstants( const d3d_lighting* pLighting,
 
             m_CachedSkinLighting = lightMatrices;
             m_bSkinLightingDirty = FALSE;
-
-            g_pd3dContext->PSSetConstantBuffers( 2, 1, &m_pSkinLightBuffer );
         }
+
+        g_pd3dContext->PSSetConstantBuffers( 2, 1, &m_pSkinLightBuffer );
     }
 
     return TRUE;

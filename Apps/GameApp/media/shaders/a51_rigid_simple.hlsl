@@ -23,8 +23,9 @@ cbuffer cbMatrices : register(b0)
     float4   MaterialParams;   // x = flags, y = alpha ref, z = nearZ, w = farZ
     float4   CameraPosition;   // xyz = camera position
     float4   UVAnim;           // xy = uv animation offsets
-    float4   EnvParams;        // x = fixed alpha, y = is cube map, z = is view-space env
+    float4   EnvParams;        // x = fixed alpha, y = cubemap intensity scale, zw = unused
 };
+
 
 //==============================================================================
 //  TEXTURES AND SAMPLERS
@@ -61,6 +62,7 @@ struct PS_INPUT
     float3 WorldPos    : TEXCOORD1;
     float3 Normal      : TEXCOORD2;
     float  LinearDepth : TEXCOORD3;
+    float3 ViewVector  : TEXCOORD4;
 };
 
 PS_INPUT VSMain(VS_INPUT input)
@@ -73,8 +75,12 @@ PS_INPUT VSMain(VS_INPUT input)
     output.Pos      = mul(Projection, viewPos);
 
     // Pass through vertex attributes
+    float3 worldNormal = normalize(mul((float3x3)World, input.Normal));
     output.WorldPos    = worldPos.xyz;
-    output.Normal      = normalize(mul((float3x3)World, input.Normal));
+    output.Normal      = worldNormal;
+
+    float3 viewVector = worldPos.xyz - CameraPosition.xyz;
+    output.ViewVector = viewVector;
 
     float2 depthParams = MaterialParams.zw;
     float nearZ = depthParams.x;
@@ -108,8 +114,6 @@ PS_OUTPUT PSMain(PS_INPUT input)
 
     uint  materialFlags = (uint)MaterialParams.x;
     float alphaRef      = MaterialParams.y;
-    float3 cameraPos    = CameraPosition.xyz;
-
     // Sample diffuse texture
     float4 diffuseSample = txDiffuse.Sample(samLinear, input.UV);
     float4 diffuseColor  = diffuseSample;
@@ -142,29 +146,55 @@ PS_OUTPUT PSMain(PS_INPUT input)
     if (materialFlags & MATERIAL_FLAG_ENVIRONMENT)
     {
         float3 worldNormal = normalize(input.Normal);
-        float3 viewDir     = normalize(cameraPos - input.WorldPos);
-        float3 reflection  = normalize(reflect(-viewDir, worldNormal));
-
         float3 envColor = 0.0;
 
         if (materialFlags & MATERIAL_FLAG_ENV_CUBEMAP)
         {
-            envColor = txEnvironmentCube.Sample(samLinear, reflection).rgb;
+            float3 viewToSurface = normalize(input.ViewVector);
+            float3 reflectionVec = normalize(reflect(viewToSurface, worldNormal));
+
+            if (materialFlags & MATERIAL_FLAG_ENV_VIEWSPACE)
+            {
+                reflectionVec = normalize(mul((float3x3)View, reflectionVec));
+            }
+
+            envColor = txEnvironmentCube.Sample(samLinear, reflectionVec).rgb;
         }
         else
         {
-            float2 envUV = reflection.xy * 0.5f + 0.5f;
+            float3 envVector = worldNormal;
+
+            if (materialFlags & MATERIAL_FLAG_ENV_VIEWSPACE)
+            {
+                envVector = mul((float3x3)View, envVector);
+            }
+
+            envVector = normalize(envVector);
+
+            float2 envUV = envVector.xy * 0.5f + 0.5f;
             envColor = txEnvironment.Sample(samLinear, envUV).rgb;
+        }
+
+        float envStrength = 1.0f;
+        if (materialFlags & MATERIAL_FLAG_ENV_CUBEMAP)
+        {
+            envStrength = saturate(EnvParams.y);
         }
 
         if (materialFlags & MATERIAL_FLAG_PERPIXEL_ENV)
         {
-            float blend = saturate(diffuseSample.a);
+            float blend = saturate(diffuseSample.a) * envStrength;
             diffuseColor.rgb = lerp(diffuseColor.rgb, envColor, blend);
         }
         else if (materialFlags & MATERIAL_FLAG_PERPOLY_ENV)
         {
             float blend = saturate(EnvParams.x);
+
+            if (materialFlags & MATERIAL_FLAG_ENV_CUBEMAP)
+            {
+                blend *= envStrength;
+            }
+
             diffuseColor.rgb = lerp(diffuseColor.rgb, envColor, blend);
         }
     }

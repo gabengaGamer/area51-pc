@@ -90,7 +90,7 @@ struct cb_rigid_matrices
     vector4 MaterialParams;    // x = flags, y = alpha ref, z = nearZ, w = farZ
     vector4 CameraPosition;    // xyz = camera position, w = 1
     vector4 UVAnim;            // xy = uv animation offsets
-    vector4 EnvParams;         // x = fixed alpha, y = is cube map, z = is view-space env
+    vector4 EnvParams;         // x = fixed alpha, y = cubemap intensity, zw = unused
 };
 
 //------------------------------------------------------------------------------
@@ -102,8 +102,8 @@ struct cb_skin_matrices
 
     vector4 MaterialParams;               // x = flags, y = alpha ref, z = nearZ, w = farZ
     vector4 UVAnim;                       // xy = uv animation offsets
-    vector4 CameraPosition;               // Camera position in world space
-    vector4 EnvParams;                    // Environment parameters
+    vector4 CameraPosition;               // xyz = camera position, w = 1
+    vector4 EnvParams;                    // x = fixed alpha, y = cubemap intensity, zw = unused
 };
 
 //------------------------------------------------------------------------------
@@ -135,6 +135,40 @@ struct cb_skin_bone
 {
     matrix4 L2W;                               // Local to world matrix
 };
+
+//==============================================================================
+//  HELPER FUNCS
+//==============================================================================
+
+inline f32 ComputeCubeMapIntensity( const material* pMaterial )
+{
+    const f32 kDefaultCubeMapIntensity = 0.35f;
+
+    if( !pMaterial )
+        return 1.0f;
+
+    if( !(pMaterial->m_Flags & geom::material::FLAG_ENV_CUBE_MAP) )
+        return 1.0f;
+
+    const s8 materialType = pMaterial->m_Type;
+    if( (materialType == Material_Alpha_PerPolyEnv) ||
+        (materialType == Material_Distortion_PerPolyEnv) )
+    {
+        return 1.0f;
+    }
+
+    f32 cubeIntensity = pMaterial->m_FixedAlpha;
+
+    if( cubeIntensity <= 0.0f )
+        cubeIntensity = kDefaultCubeMapIntensity;
+
+    if( cubeIntensity < 0.0f )
+        cubeIntensity = 0.0f;
+    if( cubeIntensity > 1.0f )
+        cubeIntensity = 1.0f;
+
+    return cubeIntensity;
+}
 
 //==============================================================================
 //  MATERIAL TYPES
