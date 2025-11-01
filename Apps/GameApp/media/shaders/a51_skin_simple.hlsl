@@ -191,21 +191,27 @@ PS_OUTPUT PSMain(PS_INPUT input)
             envStrength = saturate(EnvParams.y);
         }
 
+        float envBlend = 0.0f;
+
         if (materialFlags & MATERIAL_FLAG_PERPIXEL_ENV)
         {
-            float blend = saturate(diffuseSample.a) * envStrength;
-            diffuseColor.rgb = lerp(diffuseColor.rgb, envColor, blend);
+            envBlend = saturate(diffuseSample.a) * envStrength;
         }
         else if (materialFlags & MATERIAL_FLAG_PERPOLY_ENV)
         {
-            float blend = saturate(EnvParams.x);
+            envBlend = saturate(EnvParams.x) * envStrength;
+        }
 
-            if (materialFlags & MATERIAL_FLAG_ENV_CUBEMAP)
+        if (envBlend > 0.0f)
+        {
+            if (materialFlags & MATERIAL_FLAG_ADDITIVE)
             {
-                blend *= envStrength;
+                diffuseColor.rgb = saturate(diffuseColor.rgb + envColor * envBlend);
             }
-
-            diffuseColor.rgb = lerp(diffuseColor.rgb, envColor, blend);
+            else
+            {
+                diffuseColor.rgb = lerp(diffuseColor.rgb, envColor, envBlend);
+            }
         }
     }
 
