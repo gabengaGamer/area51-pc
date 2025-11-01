@@ -229,8 +229,8 @@ xbool material_mgr::UpdateRigidConstants( const matrix4*      pL2W,
 
     if( m_pRigidLightBuffer )
     {
-        const vector4 ambientBias( 0.0f, 0.0f, 0.0f, 0.0f );
-        const cb_lighting lightMatrices = BuildLightingConstants( pLighting, ambientBias );
+        const vector4 ambientFloor( 0.0f, 0.0f, 0.0f, 0.0f );
+        const cb_lighting lightMatrices = BuildLightingConstants( pLighting, ambientFloor );
 
         const xbool bLightingChanged = ( m_bRigidLightingDirty ||
                                          x_memcmp( &m_CachedRigidLighting,

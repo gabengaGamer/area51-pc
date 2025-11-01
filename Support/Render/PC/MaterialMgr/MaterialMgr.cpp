@@ -205,7 +205,22 @@ cb_lighting material_mgr::BuildLightingConstants( const d3d_lighting* pLighting,
         lighting.LightCount = pLighting->LightCount;
     }
 
-    ambient = ambient + AmbientBias;
+    f32 ambientX = ambient.GetX();
+    f32 ambientY = ambient.GetY();
+    f32 ambientZ = ambient.GetZ();
+    f32 ambientW = ambient.GetW();
+
+    const f32 biasX = AmbientBias.GetX();
+    const f32 biasY = AmbientBias.GetY();
+    const f32 biasZ = AmbientBias.GetZ();
+    const f32 biasW = AmbientBias.GetW();
+
+    ambientX = (biasX > 0.0f) ? x_max( ambientX, biasX ) : (ambientX + biasX);
+    ambientY = (biasY > 0.0f) ? x_max( ambientY, biasY ) : (ambientY + biasY);
+    ambientZ = (biasZ > 0.0f) ? x_max( ambientZ, biasZ ) : (ambientZ + biasZ);
+    ambientW = (biasW > 0.0f) ? x_max( ambientW, biasW ) : (ambientW + biasW);
+
+    ambient.Set( ambientX, ambientY, ambientZ, ambientW );
     lighting.LightAmbCol = ambient;
 
     return lighting;

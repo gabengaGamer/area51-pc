@@ -262,7 +262,7 @@ protected:
                                                  xbool           SupportsDetailMap,
                                                  xbool           IncludeVertexColor ) const;
     cb_lighting         BuildLightingConstants ( const d3d_lighting* pLighting,
-                                                 const vector4&      AmbientBias ) const;
+                                                 const vector4&      AmbientFloor ) const;
 
 protected:
 
