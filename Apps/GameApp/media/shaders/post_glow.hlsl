@@ -12,8 +12,7 @@ cbuffer GlowParams : register(b4)
     float4 GlowParams1;   // x=step.x, y=step.y, z=unused, w=unused
 };
 
-static const float kGlowSoftKnee       = 1.0f;
-static const float kThresholdEpsilon   = 1.0e-4f;
+static const float kThresholdEpsilon = 1.0e-4f;
 
 Texture2D GlowSource  : register(t0);
 Texture2D GlowHistory : register(t1);
@@ -26,11 +25,9 @@ float4 PS_Downsample( float4 Pos : SV_POSITION, float2 UV : TEXCOORD0 ) : SV_Tar
 {
     float2 texel = GlowParams1.xy;
     float  cutoff = GlowParams0.x;
-    float  softKnee = kGlowSoftKnee;
-    float  invRange = (cutoff < 1.0f) ? rcp( max( 1.0f - cutoff, kThresholdEpsilon ) ) : 0.0f;
 
     float3 colorAccum = 0.0;
-    float  maxMask = 0.0;
+    float  maxAlpha = 0.0;
 
     const float2 offsets[4] =
     {
@@ -46,20 +43,17 @@ float4 PS_Downsample( float4 Pos : SV_POSITION, float2 UV : TEXCOORD0 ) : SV_Tar
         float2 sampleUV = UV + offsets[i] * texel;
         float4 sample = GlowSource.SampleLevel( samPoint, sampleUV, 0.0 );
 
-        float  mask             = sample.a;
-        float  knee             = max( cutoff * softKnee, 1e-4f );
-        float  diff             = mask - cutoff;
-        float  soft             = saturate( (diff + knee) / (2.0f * knee) );
-        float  hard             = diff > 0.0f ? 1.0f : 0.0f;
-        float  blend            = lerp( hard, soft, softKnee );
-        float  intensity        = saturate( diff * invRange ) * blend;
-
-        colorAccum += sample.rgb * intensity;
-        maxMask = max( maxMask, intensity );
+        // Hard cutoff: if alpha > cutoff, use it, else reject
+        float mask = sample.a;
+        float accepted = (mask > cutoff) ? 1.0f : 0.0f;
+        
+        // Just extract bright areas, boost will be applied at composite stage
+        colorAccum += sample.rgb * accepted;
+        maxAlpha = max( maxAlpha, mask * accepted );
     }
 
-    float glowAlpha = saturate( maxMask );
     float3 glowColor = colorAccum * 0.25f;
+    float glowAlpha = saturate( maxAlpha );
 
     return float4( glowColor, glowAlpha );
 }
@@ -68,19 +62,19 @@ float4 PS_Downsample( float4 Pos : SV_POSITION, float2 UV : TEXCOORD0 ) : SV_Tar
 
 float4 SampleBlur( float2 UV, float2 Step )
 {
+    // Standard 5-tap Gaussian blur
     const float weights[5] =
     {
-        0.181818182f,
-        0.151515152f,
-        0.121212121f,
-        0.075757578f,
-        0.060606062f
+        0.227027f,  // center (stronger to preserve brightness)
+        0.194595f,
+        0.121622f,
+        0.054054f,
+        0.016216f
     };
 
     float4 center = GlowSource.SampleLevel( samPoint, UV, 0.0 );
     float3 color = center.rgb * weights[0];
-    float  alphaAccum = center.a * weights[0];
-    float  alphaMax   = center.a;
+    float  alphaMax = center.a;
 
     [unroll]
     for( int i = 1; i < 5; ++i )
@@ -88,13 +82,12 @@ float4 SampleBlur( float2 UV, float2 Step )
         float2 offset = Step * (float)i;
         float4 samplePos = GlowSource.SampleLevel( samPoint, UV + offset, 0.0 );
         float4 sampleNeg = GlowSource.SampleLevel( samPoint, UV - offset, 0.0 );
-        color      += (samplePos.rgb + sampleNeg.rgb) * weights[i];
-        alphaAccum += (samplePos.a   + sampleNeg.a)   * weights[i];
-        alphaMax    = max( alphaMax, max( samplePos.a, sampleNeg.a ) );
+        
+        color += (samplePos.rgb + sampleNeg.rgb) * weights[i];
+        alphaMax = max( alphaMax, max( samplePos.a, sampleNeg.a ) );
     }
 
-    float alpha = saturate( max( alphaAccum, alphaMax ) );
-    return float4( color, alpha );
+    return float4( color, alphaMax );
 }
 
 //==============================================================================
@@ -143,8 +136,12 @@ float4 PS_Combine( float4 Pos : SV_POSITION, float2 UV : TEXCOORD0 ) : SV_Target
 float4 PS_Composite( float4 Pos : SV_POSITION, float2 UV : TEXCOORD0 ) : SV_Target
 {
     float4 glow = GlowSource.SampleLevel( samPoint, UV, 0.0 );
-    glow.rgb *= GlowParams0.y;
-    glow.a    = saturate( glow.a );
+    
+    // Apply x2 boost here to match cnd_x2 behavior
+    // GlowParams0.y is the intensity scale (kGlowIntensityScale)
+    glow.rgb *= GlowParams0.y * 2.0f;
+    glow.a = saturate( glow.a );
+    
     return glow;
 }
 

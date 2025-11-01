@@ -20,13 +20,11 @@ cbuffer cbMatrices : register(b0)
     float4x4 View;
     float4x4 Projection;
 
-    uint     MaterialFlags;
-    float    AlphaRef;
-    float3   CameraPosition;
-    float2   DepthParams;
-    float4   UVAnim;
+    float4   MaterialParams;   // x = flags, y = alpha ref, z = nearZ, w = farZ
+    float4   CameraPosition;   // xyz = camera position
+    float4   UVAnim;           // xy = uv animation offsets
+    float4   EnvParams;        // x = fixed alpha, y = is cube map, z = is view-space env
 };
-
 
 //==============================================================================
 //  TEXTURES AND SAMPLERS
@@ -35,8 +33,9 @@ cbuffer cbMatrices : register(b0)
 Texture2D txDiffuse : register(t0);
 Texture2D txDetail  : register(t1);
 Texture2D txEnvironment : register(t2);
-Texture2D txProjLight[MAX_PROJ_LIGHTS]   : register(t3);
-Texture2D txProjShadow[MAX_PROJ_SHADOWS] : register(t13);
+TextureCube txEnvironmentCube : register(t3);
+Texture2D txProjLight[MAX_PROJ_LIGHTS]   : register(t4);
+Texture2D txProjShadow[MAX_PROJ_SHADOWS] : register(t14);
 
 SamplerState samLinear : register(s0);
 
@@ -77,12 +76,14 @@ PS_INPUT VSMain(VS_INPUT input)
     output.WorldPos    = worldPos.xyz;
     output.Normal      = normalize(mul((float3x3)World, input.Normal));
 
-    float nearZ = DepthParams.x;
-    float farZ  = DepthParams.y;
+    float2 depthParams = MaterialParams.zw;
+    float nearZ = depthParams.x;
+    float farZ  = depthParams.y;
     float invRange = rcp(max(farZ - nearZ, 1e-5f));
     float linearDepth = (viewPos.z - nearZ) * invRange;
     output.LinearDepth = saturate(linearDepth);
-    output.UV          = input.UV + UVAnim.xy;
+    float2 uvAnimOffset = UVAnim.xy;
+    output.UV          = input.UV + uvAnimOffset;
     output.Color       = input.Color;
     
     return output;
@@ -105,30 +106,71 @@ PS_OUTPUT PSMain(PS_INPUT input)
 {
     PS_OUTPUT output;
 
+    uint  materialFlags = (uint)MaterialParams.x;
+    float alphaRef      = MaterialParams.y;
+    float3 cameraPos    = CameraPosition.xyz;
+
     // Sample diffuse texture
-    float4 diffuseColor = txDiffuse.Sample(samLinear, input.UV);
+    float4 diffuseSample = txDiffuse.Sample(samLinear, input.UV);
+    float4 diffuseColor  = diffuseSample;
 
     // Apply detail texture
-    if (MaterialFlags & MATERIAL_FLAG_DETAIL)
+    if (materialFlags & MATERIAL_FLAG_DETAIL)
     {
         float4 detailColor = txDetail.Sample(samLinear, input.UV * 4.0);
         diffuseColor *= detailColor * 2.0;
     }
 
-    float4 baseColor = diffuseColor;
+    float4 baseColor;
 
-    // Apply vertex color modulation 
-    if (MaterialFlags & MATERIAL_FLAG_VERTEX_COLOR)
+    // Apply vertex color modulation
+    if (materialFlags & MATERIAL_FLAG_VERTEX_COLOR)
     {
         diffuseColor.a *= input.Color.a;
     }
 
+    float alphaValue = diffuseColor.a;
+
     // Perform alpha testing
-    if (MaterialFlags & MATERIAL_FLAG_ALPHA_TEST)
+    if (materialFlags & MATERIAL_FLAG_ALPHA_TEST)
     {
-        if (diffuseColor.a < AlphaRef)
+        if (diffuseSample.a < alphaRef)
             discard;
     }
+
+    // Environment mapping
+    if (materialFlags & MATERIAL_FLAG_ENVIRONMENT)
+    {
+        float3 worldNormal = normalize(input.Normal);
+        float3 viewDir     = normalize(cameraPos - input.WorldPos);
+        float3 reflection  = normalize(reflect(-viewDir, worldNormal));
+
+        float3 envColor = 0.0;
+
+        if (materialFlags & MATERIAL_FLAG_ENV_CUBEMAP)
+        {
+            envColor = txEnvironmentCube.Sample(samLinear, reflection).rgb;
+        }
+        else
+        {
+            float2 envUV = reflection.xy * 0.5f + 0.5f;
+            envColor = txEnvironment.Sample(samLinear, envUV).rgb;
+        }
+
+        if (materialFlags & MATERIAL_FLAG_PERPIXEL_ENV)
+        {
+            float blend = saturate(diffuseSample.a);
+            diffuseColor.rgb = lerp(diffuseColor.rgb, envColor, blend);
+        }
+        else if (materialFlags & MATERIAL_FLAG_PERPOLY_ENV)
+        {
+            float blend = saturate(EnvParams.x);
+            diffuseColor.rgb = lerp(diffuseColor.rgb, envColor, blend);
+        }
+    }
+
+    diffuseColor.a = alphaValue;
+    baseColor      = diffuseColor;
 
     // Apply per-pixel lighting
     float3 PerPixelLight = float3( 0.0, 0.0, 0.0 );
@@ -143,7 +185,7 @@ PS_OUTPUT PSMain(PS_INPUT input)
     }
 
     float3 totalLight = LightAmbCol.rgb + PerPixelLight;
-    if( MaterialFlags & MATERIAL_FLAG_VERTEX_COLOR )
+    if( materialFlags & MATERIAL_FLAG_VERTEX_COLOR )
     {
         totalLight += input.Color.rgb;
     }
@@ -151,12 +193,12 @@ PS_OUTPUT PSMain(PS_INPUT input)
     float4 finalColor = float4( diffuseColor.rgb * totalLight, diffuseColor.a );
 
     // Apply projection lights and shadows
-    if( MaterialFlags & MATERIAL_FLAG_PROJ_LIGHT )
+    if( materialFlags & MATERIAL_FLAG_PROJ_LIGHT )
     {
         finalColor.rgb = ApplyProjLights( finalColor.rgb, input.WorldPos );
     }
 
-    if( MaterialFlags & MATERIAL_FLAG_PROJ_SHADOW )
+    if( materialFlags & MATERIAL_FLAG_PROJ_SHADOW )
     {
         finalColor.rgb = ApplyProjShadows( finalColor.rgb, input.WorldPos );
     }
@@ -164,7 +206,7 @@ PS_OUTPUT PSMain(PS_INPUT input)
     output.Glow = float4(0.0, 0.0, 0.0, 0.0);
 
     // Apply per-pixel illumination
-    if (MaterialFlags & MATERIAL_FLAG_PERPIXEL_ILLUM)
+    if (materialFlags & MATERIAL_FLAG_PERPIXEL_ILLUM)
     {
         float4 texColor = txDiffuse.Sample(samLinear, input.UV);
         float  intensity = texColor.a;
@@ -180,7 +222,7 @@ PS_OUTPUT PSMain(PS_INPUT input)
     }
 
     // Apply per-poly illumination
-    if (MaterialFlags & MATERIAL_FLAG_PERPOLY_ILLUM)
+    if (materialFlags & MATERIAL_FLAG_PERPOLY_ILLUM)
     {
         float  intensity = diffuseColor.a;
         float3 emissive  = diffuseColor.rgb;
@@ -191,7 +233,7 @@ PS_OUTPUT PSMain(PS_INPUT input)
         output.Glow.a    = max(output.Glow.a, glowMask);
     }
 
-    if( (MaterialFlags & MATERIAL_FLAG_ALPHA_BLEND) == 0 )
+    if( (materialFlags & MATERIAL_FLAG_ALPHA_BLEND) == 0 )
     {
         finalColor.a *= 0.64;
     }

@@ -178,10 +178,9 @@ xbool material_mgr::UpdateSkinConstants( const d3d_lighting* pLighting,
     pView->GetZLimits( nearZ, farZ );
 
     cb_skin_matrices skinMatrices;
+    x_memset( &skinMatrices, 0, sizeof(cb_skin_matrices) );
     skinMatrices.View        = pView->GetW2V();
     skinMatrices.Projection  = pView->GetV2C();
-    skinMatrices.DepthParams[0] = nearZ;
-    skinMatrices.DepthParams[1] = farZ;
 
     const f32 invByte = 1.0f / 255.0f;
     skinMatrices.UVAnim.Set( (f32)UOffset * invByte,
@@ -190,8 +189,19 @@ xbool material_mgr::UpdateSkinConstants( const d3d_lighting* pLighting,
                              0.0f );
 
     const material_constants constants = BuildMaterialFlags( pMaterial, RenderFlags, FALSE, FALSE );
-    skinMatrices.MaterialFlags = constants.Flags;
-    skinMatrices.AlphaRef      = constants.AlphaRef;
+    skinMatrices.MaterialParams.Set( (f32)constants.Flags,
+                                     constants.AlphaRef,
+                                     nearZ,
+                                     farZ );
+    const vector3& camPos = pView->GetPosition();
+    skinMatrices.CameraPosition.Set( camPos.GetX(),
+                                     camPos.GetY(),
+                                     camPos.GetZ(),
+                                     1.0f );
+    f32 fixedAlpha = pMaterial ? pMaterial->m_FixedAlpha : 0.0f;
+    f32 isCubeMap  = (pMaterial && (pMaterial->m_Flags & geom::material::FLAG_ENV_CUBE_MAP)) ? 1.0f : 0.0f;
+    f32 isViewSpace = (pMaterial && (pMaterial->m_Flags & geom::material::FLAG_ENV_VIEW_SPACE)) ? 1.0f : 0.0f;
+    skinMatrices.EnvParams.Set( fixedAlpha, isCubeMap, isViewSpace, 0.0f );
 
     const vector4 BaseBrightness( 0.16f, 0.16f, 0.16f, 0.0f ); // Maintain minimum ambient lighting.
     const cb_lighting lightMatrices = BuildLightingConstants( pLighting, BaseBrightness );

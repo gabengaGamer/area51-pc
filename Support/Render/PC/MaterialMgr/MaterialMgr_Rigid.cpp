@@ -172,6 +172,7 @@ xbool material_mgr::UpdateRigidConstants( const matrix4*      pL2W,
     pView->GetZLimits( nearZ, farZ );
 
     cb_rigid_matrices rigidMatrices;
+    x_memset( &rigidMatrices, 0, sizeof(cb_rigid_matrices) );
 
     if( pL2W )
         rigidMatrices.World = *pL2W;
@@ -180,9 +181,11 @@ xbool material_mgr::UpdateRigidConstants( const matrix4*      pL2W,
 
     rigidMatrices.View           = pView->GetW2V();
     rigidMatrices.Projection     = pView->GetV2C();
-    rigidMatrices.CameraPosition = pView->GetPosition();
-    rigidMatrices.DepthParams[0] = nearZ;
-    rigidMatrices.DepthParams[1] = farZ;
+    const vector3& camPos = pView->GetPosition();
+    rigidMatrices.CameraPosition.Set( camPos.GetX(),
+                                      camPos.GetY(),
+                                      camPos.GetZ(),
+                                      1.0f );
 
     const f32 invByte = 1.0f / 255.0f;
     rigidMatrices.UVAnim.Set( (f32)UOffset * invByte,
@@ -191,8 +194,14 @@ xbool material_mgr::UpdateRigidConstants( const matrix4*      pL2W,
                               0.0f );
 
     const material_constants constants = BuildMaterialFlags( pMaterial, RenderFlags, TRUE, TRUE );
-    rigidMatrices.MaterialFlags = constants.Flags;
-    rigidMatrices.AlphaRef      = constants.AlphaRef;
+    rigidMatrices.MaterialParams.Set( (f32)constants.Flags,
+                                      constants.AlphaRef,
+                                      nearZ,
+                                      farZ );
+    f32 fixedAlpha = pMaterial ? pMaterial->m_FixedAlpha : 0.0f;
+    f32 isCubeMap  = (pMaterial && (pMaterial->m_Flags & geom::material::FLAG_ENV_CUBE_MAP)) ? 1.0f : 0.0f;
+    f32 isViewSpace = (pMaterial && (pMaterial->m_Flags & geom::material::FLAG_ENV_VIEW_SPACE)) ? 1.0f : 0.0f;
+    rigidMatrices.EnvParams.Set( fixedAlpha, isCubeMap, isViewSpace, 0.0f );
 
     if( m_bRigidMatricesDirty || x_memcmp( &m_CachedRigidMatrices, &rigidMatrices, sizeof(cb_rigid_matrices) ) != 0 )
     {

@@ -32,7 +32,7 @@ extern ID3D11DeviceContext* g_pd3dContext;
 //  CONSTANTS
 //==============================================================================
 
-static const s32 PROJ_LIGHT_TEX_SLOT  = 3;
+static const s32 PROJ_LIGHT_TEX_SLOT  = TEXTURE_SLOT_ENVIRONMENT_CUBE + 1;
 static const s32 PROJ_SHADOW_TEX_SLOT = PROJ_LIGHT_TEX_SLOT + proj_texture_mgr::MAX_PROJ_LIGHTS;
 
 //==============================================================================

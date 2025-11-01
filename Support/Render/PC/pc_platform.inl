@@ -96,7 +96,22 @@ void platform_ActivateMaterial( const material& Material )
     // Set primary textures through MaterialMgr
     g_MaterialMgr.SetBitmap( pDiffuseMap, TEXTURE_SLOT_DIFFUSE );
     g_MaterialMgr.SetBitmap( pDetailMap, TEXTURE_SLOT_DETAIL  );
-    g_MaterialMgr.SetBitmap( pEnvironmentMap, TEXTURE_SLOT_ENVIRONMENT );
+	
+    if( Material.m_Flags & geom::material::FLAG_ENV_CUBE_MAP )
+    {
+        if( !s_pCurrCubeMap )
+        {
+            x_DebugMsg( "MaterialMgr: WARNING - ENV cube map requested but no cubemap bound\n" );
+        }
+
+        g_MaterialMgr.SetBitmap( NULL, TEXTURE_SLOT_ENVIRONMENT );
+        g_MaterialMgr.SetEnvironmentCubemap( s_pCurrCubeMap );
+    }
+    else
+    {
+        g_MaterialMgr.SetEnvironmentCubemap( NULL );
+        g_MaterialMgr.SetBitmap( pEnvironmentMap, TEXTURE_SLOT_ENVIRONMENT );
+    }
 
     x_catch_display;
 }

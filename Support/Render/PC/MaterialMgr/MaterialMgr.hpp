@@ -62,6 +62,9 @@ enum material_flags
     MATERIAL_FLAG_DETAIL            = (1<<11),
     MATERIAL_FLAG_PROJ_LIGHT        = (1<<12),
     MATERIAL_FLAG_PROJ_SHADOW       = (1<<13),
+    MATERIAL_FLAG_ENV_CUBEMAP       = (1<<14),
+    MATERIAL_FLAG_ENV_VIEWSPACE     = (1<<15),
+    MATERIAL_FLAG_ALPHA_BLEND       = (1<<16),	
 };
 
 //==============================================================================
@@ -84,11 +87,10 @@ struct cb_rigid_matrices
     matrix4 View;
     matrix4 Projection;
 
-    u32     MaterialFlags;
-    f32     AlphaRef;
-    vector3 CameraPosition;
-    f32     DepthParams[2];
-    vector4 UVAnim;
+    vector4 MaterialParams;    // x = flags, y = alpha ref, z = nearZ, w = farZ
+    vector4 CameraPosition;    // xyz = camera position, w = 1
+    vector4 UVAnim;            // xy = uv animation offsets
+    vector4 EnvParams;         // x = fixed alpha, y = is cube map, z = is view-space env
 };
 
 //------------------------------------------------------------------------------
@@ -98,12 +100,11 @@ struct cb_skin_matrices
     matrix4 View;                         // World to view matrix
     matrix4 Projection;                   // View to clip matrix
 
-    u32     MaterialFlags;                // Material feature flags
-    f32     AlphaRef;                     // Alpha test reference
-    f32     DepthParams[2];               // Near/Far depth range
-    vector4 UVAnim;                       // UV animation offsets
+    vector4 MaterialParams;               // x = flags, y = alpha ref, z = nearZ, w = farZ
+    vector4 UVAnim;                       // xy = uv animation offsets
+    vector4 CameraPosition;               // Camera position in world space
+    vector4 EnvParams;                    // Environment parameters
 };
-
 
 //------------------------------------------------------------------------------
 
@@ -144,6 +145,7 @@ enum texture_slot
     TEXTURE_SLOT_DIFFUSE     = 0,
     TEXTURE_SLOT_DETAIL      = 1,
     TEXTURE_SLOT_ENVIRONMENT = 2,
+    TEXTURE_SLOT_ENVIRONMENT_CUBE = TEXTURE_SLOT_ENVIRONMENT + 1,
 };
 
 //==============================================================================
@@ -180,6 +182,7 @@ public:
     // General material functions
     void        SetBitmap           ( const xbitmap* pBitmap,
                                       texture_slot   slot );
+    void        SetEnvironmentCubemap( const cubemap* pCubemap );
     void        InvalidateCache     ( void );
 
     // Resource access for vertex managers
@@ -254,6 +257,8 @@ protected:
     // Current state tracking for caching
     const xbitmap*          m_pCurrentTexture;
     const xbitmap*          m_pCurrentDetailTexture;
+    const xbitmap*          m_pCurrentEnvironmentTexture;
+    const cubemap*          m_pCurrentEnvCubemap;
     xbool                   m_bZTestEnabled;
 
     // Cached constant buffer data to avoid redundant updates

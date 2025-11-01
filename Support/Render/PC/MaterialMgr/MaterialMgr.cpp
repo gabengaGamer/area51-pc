@@ -49,6 +49,8 @@ void material_mgr::Init( void )
     // Initialize member variables
     m_pCurrentTexture       = NULL;
     m_pCurrentDetailTexture = NULL;
+    m_pCurrentEnvironmentTexture = NULL;
+    m_pCurrentEnvCubemap    = NULL;
 
     // Initialize shaders and resources
     InitRigidShaders();
@@ -72,6 +74,7 @@ void material_mgr::Kill( void )
     KillSkinShaders();
     KillProjTextures();
     InvalidateCache();
+    SetEnvironmentCubemap( NULL );
 
     m_bInitialized = FALSE;
     x_DebugMsg( "MaterialMgr: Material manager shutdown complete\n" );
@@ -126,8 +129,15 @@ material_mgr::material_constants material_mgr::BuildMaterialFlags( const materia
     if( SupportsDetailMap && pMaterial->m_DetailMap.GetPointer() )
         constants.Flags |= MATERIAL_FLAG_DETAIL;
 
-    if( pMaterial->m_EnvironmentMap.GetPointer() )
+    if( pMaterial->m_EnvironmentMap.GetPointer() ||
+        (pMaterial->m_Flags & geom::material::FLAG_ENV_CUBE_MAP) )
         constants.Flags |= MATERIAL_FLAG_ENVIRONMENT;
+
+    if( pMaterial->m_Flags & geom::material::FLAG_ENV_CUBE_MAP )
+        constants.Flags |= MATERIAL_FLAG_ENV_CUBEMAP;
+
+    if( pMaterial->m_Flags & geom::material::FLAG_ENV_VIEW_SPACE )
+        constants.Flags |= MATERIAL_FLAG_ENV_VIEWSPACE;
 
     if( pMaterial->m_Flags & geom::material::FLAG_IS_PUNCH_THRU )
         constants.Flags |= MATERIAL_FLAG_ALPHA_TEST;
@@ -325,6 +335,18 @@ void material_mgr::SetBitmap( const xbitmap* pBitmap, texture_slot slot )
         return;
     if( slot == TEXTURE_SLOT_DETAIL && pBitmap == m_pCurrentDetailTexture )
         return;
+    if( slot == TEXTURE_SLOT_ENVIRONMENT &&
+        (pBitmap == m_pCurrentEnvironmentTexture) &&
+        (m_pCurrentEnvCubemap == NULL) )
+    {
+        return;
+    }
+
+    if( slot == TEXTURE_SLOT_ENVIRONMENT )
+    {
+        // Ensure cubemap binding is cleared when switching to 2D textures.
+        SetEnvironmentCubemap( NULL );
+    }
 
     if( pBitmap )
     {
@@ -339,6 +361,8 @@ void material_mgr::SetBitmap( const xbitmap* pBitmap, texture_slot slot )
                 m_pCurrentTexture = pBitmap;
             else if( slot == TEXTURE_SLOT_DETAIL )
                 m_pCurrentDetailTexture = pBitmap;
+            else if( slot == TEXTURE_SLOT_ENVIRONMENT )
+                m_pCurrentEnvironmentTexture = pBitmap;
         }
         else
         {
@@ -356,7 +380,52 @@ void material_mgr::SetBitmap( const xbitmap* pBitmap, texture_slot slot )
             m_pCurrentTexture = NULL;
         else if( slot == TEXTURE_SLOT_DETAIL )
             m_pCurrentDetailTexture = NULL;
+        else if( slot == TEXTURE_SLOT_ENVIRONMENT )
+            m_pCurrentEnvironmentTexture = NULL;
     }
+}
+
+//==============================================================================
+
+void material_mgr::SetEnvironmentCubemap( const cubemap* pCubemap )
+{
+    if( !g_pd3dContext )
+        return;
+
+    if( m_pCurrentEnvCubemap == pCubemap )
+        return;
+
+    ID3D11ShaderResourceView* pSRV = NULL;
+
+    if( pCubemap )
+    {
+        if( !pCubemap->m_hTexture )
+        {
+            x_DebugMsg( "MaterialMgr: WARNING - Cubemap has no VRAM handle\n" );
+        }
+        else
+        {
+            s32 vramID = (s32)(uaddr)pCubemap->m_hTexture;
+            pSRV = vram_GetSRV( vramID );
+            if( !pSRV )
+            {
+                x_DebugMsg( "MaterialMgr: ERROR - Failed to get cubemap SRV (id %d)\n", vramID );
+            }
+        }
+    }
+
+    g_pd3dContext->PSSetShaderResources( TEXTURE_SLOT_ENVIRONMENT_CUBE, 1, &pSRV );
+
+    if( pCubemap && pSRV )
+    {
+        m_pCurrentEnvCubemap = pCubemap;
+    }
+    else
+    {
+        m_pCurrentEnvCubemap = NULL;
+    }
+
+    m_pCurrentEnvironmentTexture = NULL;
 }
 
 //==============================================================================
@@ -365,6 +434,8 @@ void material_mgr::InvalidateCache( void )
 {
     m_pCurrentTexture = NULL;
     m_pCurrentDetailTexture = NULL;
+    m_pCurrentEnvironmentTexture = NULL;
+    m_pCurrentEnvCubemap = NULL;
     m_bRigidMatricesDirty = TRUE;
     m_bRigidLightingDirty = TRUE;
     m_bSkinMatricesDirty = TRUE;
