@@ -173,7 +173,7 @@ material_mgr::material_constants material_mgr::BuildMaterialFlags( const materia
 //==============================================================================
 
 cb_lighting material_mgr::BuildLightingConstants( const d3d_lighting* pLighting,
-                                                  const vector4&      AmbientBias ) const
+                                                  const vector4&      AmbientFloor ) const
 {
     cb_lighting lighting;
 
@@ -210,15 +210,15 @@ cb_lighting material_mgr::BuildLightingConstants( const d3d_lighting* pLighting,
     f32 ambientZ = ambient.GetZ();
     f32 ambientW = ambient.GetW();
 
-    const f32 biasX = AmbientBias.GetX();
-    const f32 biasY = AmbientBias.GetY();
-    const f32 biasZ = AmbientBias.GetZ();
-    const f32 biasW = AmbientBias.GetW();
+    const f32 floorX = AmbientFloor.GetX();
+    const f32 floorY = AmbientFloor.GetY();
+    const f32 floorZ = AmbientFloor.GetZ();
+    const f32 floorW = AmbientFloor.GetW();
 
-    ambientX = (biasX > 0.0f) ? x_max( ambientX, biasX ) : (ambientX + biasX);
-    ambientY = (biasY > 0.0f) ? x_max( ambientY, biasY ) : (ambientY + biasY);
-    ambientZ = (biasZ > 0.0f) ? x_max( ambientZ, biasZ ) : (ambientZ + biasZ);
-    ambientW = (biasW > 0.0f) ? x_max( ambientW, biasW ) : (ambientW + biasW);
+    ambientX = (floorX > 0.0f) ? x_max( ambientX, floorX ) : (ambientX + floorX);
+    ambientY = (floorY > 0.0f) ? x_max( ambientY, floorY ) : (ambientY + floorY);
+    ambientZ = (floorZ > 0.0f) ? x_max( ambientZ, floorZ ) : (ambientZ + floorZ);
+    ambientW = (floorW > 0.0f) ? x_max( ambientW, floorW ) : (ambientW + floorW);
 
     ambient.Set( ambientX, ambientY, ambientZ, ambientW );
     lighting.LightAmbCol = ambient;
