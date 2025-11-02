@@ -22,7 +22,6 @@
 #define MATERIAL_FLAG_PROJ_SHADOW       (1u<<13)
 #define MATERIAL_FLAG_ENV_CUBEMAP       (1u<<14)
 #define MATERIAL_FLAG_ENV_VIEWSPACE     (1u<<15)
-#define MATERIAL_FLAG_ALPHA_BLEND       (1u<<16)
 
 #define MAX_PROJ_LIGHTS  10
 #define MAX_PROJ_SHADOWS 10

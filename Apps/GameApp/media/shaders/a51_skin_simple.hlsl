@@ -271,11 +271,6 @@ PS_OUTPUT PSMain(PS_INPUT input)
         output.Glow.a    = max(output.Glow.a, glowMask);
     }
 
-    if( (materialFlags & MATERIAL_FLAG_ALPHA_BLEND) == 0 )
-    {
-        finalColor.a *= 0.64;
-    }
-
     // Fill G-Buffer outputs
     output.FinalColor = finalColor;
     output.Albedo     = baseColor;
