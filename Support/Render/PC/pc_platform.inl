@@ -407,7 +407,7 @@ void platform_SetDiffuseMaterial( const xbitmap& Bitmap, s32 BlendMode, xbool ZT
     // we can use draw to set up render states at which point the shader engine
     // will hijack what it needs and route the verts through its pixel pipeline
 
-    s_DrawFlags = DRAW_TEXTURED | DRAW_NO_ZWRITE | DRAW_UV_CLAMP | DRAW_CULL_NONE | DRAW_USE_ALPHA;
+    s_DrawFlags = DRAW_TEXTURED | DRAW_NO_ZWRITE | DRAW_UV_CLAMP | DRAW_CULL_NONE;
     if( !ZTestEnabled )
         s_DrawFlags |= DRAW_NO_ZBUFFER;	
 	
@@ -423,6 +423,7 @@ void platform_SetDiffuseMaterial( const xbitmap& Bitmap, s32 BlendMode, xbool ZT
             s_DrawFlags |= DRAW_BLEND_INTENSITY;
             break;
         case render::BLEND_MODE_NORMAL: 
+            s_DrawFlags |= DRAW_USE_ALPHA;
         default: 
             break;
     }
