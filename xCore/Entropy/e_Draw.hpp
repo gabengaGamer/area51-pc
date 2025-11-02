@@ -78,18 +78,16 @@ struct rtarget;
 //#define DRAW_CUSTOM_[]_LAYOUT  ( 1 << 18 )   // Default: Off
 
 //------------------------------------------------------------------------------
-// Render on custom render targets, we only support 4 for now. 
+// Render on custom render targets, we only support 3 for now. 
 //------------------------------------------------------------------------------
 
 // GS: Theoretically, i can bind the UI render target to the DRAW_2D flag, 
 // but in some cases DRAW_2D should be drawn on a separate target from the UI render target, 
 // so that's why this code is here.
 
-#define DRAW_UI_RTARGET       ( 1 << 19 )      // Default: Off. Global render target is used.
-#define DRAW_DEBUG_RTARGET    ( 1 << 20 )      // Default: Off. Global render target is used.
-#define DRAW_CUSTOM_RTARGET_0 ( 1 << 21 )      // Default: Off. Global render target is used.
-#define DRAW_CUSTOM_RTARGET_1 ( 1 << 22 )      // Default: Off. Global render target is used.
-
+#define DRAW_UI_RTARGET        ( 1 << 19 )      // Default: Off. Global render target is used.
+#define DRAW_DEBUG_RTARGET     ( 1 << 20 )      // Default: Off. Global render target is used.
+#define DRAW_PRIMITIVE_RTARGET ( 1 << 21 )      // Default: Off. Global render target is used.
 
 //------------------------------------------------------------------------------
 // Other.

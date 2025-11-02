@@ -10,13 +10,24 @@
 #define D3DENG_COMPOSITE_HPP
 
 //==============================================================================
+//  PLATFORM CHECK
+//==============================================================================
+
+#include "x_target.hpp"
+
+#ifndef TARGET_PC
+#error This file should only be compiled for PC platform. Please check your exclusions on your project spec.
+#endif
+
+//==============================================================================
 //  INCLUDES
 //==============================================================================
 
 #include "x_types.hpp"
 #include "d3deng_private.hpp"
-#include "d3deng_rtarget.hpp"
 #include "d3deng_state.hpp"
+
+struct rtarget;
 
 //==============================================================================
 //  TYPES

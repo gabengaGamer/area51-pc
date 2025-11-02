@@ -32,6 +32,7 @@
 #include "d3deng_draw_shaders.hpp"
 #include "d3deng_state.hpp"
 #include "d3deng_rtarget.hpp"
+#include "d3deng_draw_rt.hpp"
 
 #define NUM_VERTEX_BUFFERS          4                               // Number of vertex buffers to cycle through
 #define NUM_VERTICES                1000                            // Number of vertices in each buffer
@@ -93,7 +94,8 @@ xbool                       m_bBegin = FALSE;                       // TRUE when
 draw_primitive              m_Primitive;                            // Primitive Type, see enum draw_primitive
 u32                         m_Flags;                                // Flags, see defines
 xbool                       m_Is2D;                                 // TRUE for 2D mode
-xbool                       m_IsUI;                                 // TRUE for UI mode
+xbool                       m_IsUI;                                 // TRUE for UI render target mode
+xbool                       m_IsPrimitiveTarget;                    // TRUE for primitive render target mode
 xbool                       m_IsTextured;                           // TRUE for Textured mode
 
 matrix4                     m_L2W;                                  // L2W matrix for draw
@@ -154,13 +156,6 @@ drawvertex2d*               m_pStagingData2d[NUM_VERTEX_BUFFERS];   // CPU-side 
 static xbool                s_bCurrentBilinear = TRUE;
 
 //==============================================================================
-// ...
-//==============================================================================
-
-static rtarget              m_UITarget;
-static xbool                m_bUITargetValid = FALSE;
-
-//==============================================================================
 // HELPER FUNCTIONS
 //==============================================================================
 
@@ -173,75 +168,12 @@ inline u32 draw_ColorToU32( const xcolor& Color )
 //==============================================================================
 
 static
-xbool draw_CreateUITarget( void )
+xbool draw_IsPremultipliedTargetActive( void )
 {
-    if( !g_pd3dDevice )
-        return FALSE;
-    
-    // Get current resolution
-    s32 xRes, yRes;
-    eng_GetRes( xRes, yRes );
-    
-    // Validate resolution
-    if( xRes <= 0 || yRes <= 0 )
-    {
-        x_DebugMsg( "Draw: Invalid resolution %dx%d for UI target\n", xRes, yRes );
-        return FALSE;
-    }
-    
-    // Clean up existing target
-    if( m_bUITargetValid )
-    {
-        rtarget_Destroy( m_UITarget );
-        m_bUITargetValid = FALSE;
-    }
-    
-    // Create UI target with current resolution
-    rtarget_desc Desc;
-    Desc.Width = xRes;
-    Desc.Height = yRes;
-    Desc.Format = RTARGET_FORMAT_RGBA8;
-    Desc.SampleCount = 1;
-    Desc.SampleQuality = 0;
-    Desc.bBindAsTexture = TRUE;
-    
-    m_bUITargetValid = rtarget_Create( m_UITarget, Desc );
-    
-    if( m_bUITargetValid )
-    {
-        x_DebugMsg( "Draw: UI target created with resolution %dx%d\n", xRes, yRes );
-    }
-    else
-    {
-        x_DebugMsg( "Draw: Failed to create UI target with resolution %dx%d\n", xRes, yRes );
-    }
-    
-    return m_bUITargetValid;
-}
+    if( m_IsUI )
+        return draw_HasValidUITarget();
 
-//==============================================================================
-
-static
-xbool draw_ValidateUITarget( void )
-{
-    // If target doesn't exist, create it
-    if( !m_bUITargetValid )
-    {
-        return draw_CreateUITarget();
-    }
-    
-    // Check if resolution changed
-    s32 xRes, yRes;
-    eng_GetRes( xRes, yRes );
-    
-    if( m_UITarget.Desc.Width != (u32)xRes || m_UITarget.Desc.Height != (u32)yRes )
-    {
-        x_DebugMsg( "Draw: UI target resolution changed from %dx%d to %dx%d, recreating\n",
-                   m_UITarget.Desc.Width, m_UITarget.Desc.Height, xRes, yRes );
-        return draw_CreateUITarget();
-    }
-    
-    return TRUE;
+    return FALSE;
 }
 
 //==============================================================================
@@ -384,12 +316,8 @@ void draw_Init( void )
     m_pColors = NULL;
     m_pVerts  = NULL;
 
-    // Initialize UI target with current screen resolution
-    m_bUITargetValid = FALSE;
-    if( g_pd3dDevice )
-    {
-        draw_CreateUITarget();
-    }
+    // Initialize draw render targets
+    draw_rt_Init();
 
     // Tell system we are initialized
     m_Initialized = TRUE;
@@ -430,12 +358,8 @@ void draw_Kill( void )
         if( m_pInputLayout2d ) m_pInputLayout2d->Release();
     }
 
-    // Clean up 2D target
-    if( m_bUITargetValid )
-    {
-        rtarget_Destroy( m_UITarget );
-        m_bUITargetValid = FALSE;
-    }
+    // Kill render targets
+    draw_rt_Kill();
 
     // Free Sprite buffer
     x_free( m_pSpriteBuffer );
@@ -530,7 +454,7 @@ void draw_SetMatrices( const view* pView )
     cb_render_flags cbFlags;
     cbFlags.UseTexture = m_IsTextured ? 1 : 0;
     cbFlags.UseAlpha = (m_Flags & DRAW_USE_ALPHA) ? 1 : 0;
-    cbFlags.UsePremultipliedAlpha = (m_IsUI && m_bUITargetValid) ? 1 : 0;
+    cbFlags.UsePremultipliedAlpha = draw_IsPremultipliedTargetActive() ? 1 : 0;
     cbFlags.pad1 = 0;
 
     shader_UpdateConstantBuffer( m_pFlagsBuffer, &cbFlags, sizeof(cbFlags) );
@@ -984,14 +908,14 @@ void draw_ApplyBlendState( u32 Flags )
 {
     if( Flags & DRAW_BLEND_ADD )
     {
-        if( m_IsUI && m_bUITargetValid )
+        if( draw_IsPremultipliedTargetActive() )
             state_SetState( STATE_TYPE_BLEND, STATE_BLEND_PREMULT_ADD );
         else
             state_SetState( STATE_TYPE_BLEND, STATE_BLEND_ADD );
     }
     else if( Flags & DRAW_BLEND_SUB )
     {
-        if( m_IsUI && m_bUITargetValid )
+        if( draw_IsPremultipliedTargetActive() )
             state_SetState( STATE_TYPE_BLEND, STATE_BLEND_PREMULT_SUB );
         else
             state_SetState( STATE_TYPE_BLEND, STATE_BLEND_SUB );
@@ -1002,7 +926,7 @@ void draw_ApplyBlendState( u32 Flags )
     }
     else if( Flags & DRAW_USE_ALPHA )
     {
-        if( m_IsUI && m_bUITargetValid )
+        if( draw_IsPremultipliedTargetActive() )
             state_SetState( STATE_TYPE_BLEND, STATE_BLEND_PREMULT_ALPHA );
         else
             state_SetState( STATE_TYPE_BLEND, STATE_BLEND_ALPHA );
@@ -1122,11 +1046,18 @@ void draw_Begin( draw_primitive Primitive, u32 Flags )
     ASSERT( eng_InBeginEnd() );
 
     // Save primitive and flags
-    m_Primitive  = Primitive;
-    m_Flags      = Flags;
-    m_Is2D       = Flags & (DRAW_2D | DRAW_2D_KEEP_Z);
-    m_IsUI       = Flags & DRAW_UI_RTARGET;
-    m_IsTextured = Flags & DRAW_TEXTURED;
+    m_Primitive         = Primitive;
+    m_Flags             = Flags;
+    m_Is2D              = Flags & (DRAW_2D | DRAW_2D_KEEP_Z);
+    m_IsUI              = Flags & DRAW_UI_RTARGET;
+    m_IsPrimitiveTarget = Flags & DRAW_PRIMITIVE_RTARGET;
+    m_IsTextured        = Flags & DRAW_TEXTURED;
+
+    if( m_IsUI && m_IsPrimitiveTarget )
+    {
+        x_DebugMsg( "Draw: Both UI and primitive render target flags are set, primitive target will be used\n" );
+        m_IsUI = FALSE;
+    }
 
     // Initialize internal state
     draw_InitializeDrawState( Flags );
@@ -1144,16 +1075,18 @@ void draw_Begin( draw_primitive Primitive, u32 Flags )
     
     if( m_IsUI )
     {
-        // Validate and potentially recreate UI target if resolution changed
-        if( draw_ValidateUITarget() )
-        {
-            rtarget_PushTargets();
-            rtarget_SetTargets( &m_UITarget, 1, NULL );
-        }
-        else
+        if( !draw_rt_BeginUI() )
         {
             x_DebugMsg( "Draw: Failed to validate UI target, disabling UI rendering\n" );
             m_IsUI = FALSE;
+        }
+    }
+    else if( m_IsPrimitiveTarget )
+    {
+        if( !draw_rt_BeginPrimitive() )
+        {
+            x_DebugMsg( "Draw: Failed to validate primitive target, disabling primitive rendering\n" );
+            m_IsPrimitiveTarget = FALSE;
         }
     }
 }
@@ -1173,9 +1106,13 @@ void draw_End( void )
     // Flush any drawing we have queued up
     m_pfnDispatch();
     
-    if( m_IsUI && m_bUITargetValid )
+    if( m_IsUI )
     {
-        rtarget_PopTargets();
+        draw_rt_EndUI();
+    }
+    else if( m_IsPrimitiveTarget )
+    {
+        draw_rt_EndPrimitive();
     }
     
     // Restore depth state
@@ -1887,19 +1824,4 @@ void draw_EnableBilinear( void )
         draw_SetupRenderStates( m_Flags, m_IsTextured );
     else
         state_SetState( STATE_TYPE_SAMPLER, STATE_SAMPLER_LINEAR_WRAP );
-}
-
-//==============================================================================
-
-
-// Бля мне уже похуй, честное слово....
-
-const rtarget* draw_GetUITarget( void )
-{
-    return m_bUITargetValid ? &m_UITarget : NULL;
-}
-
-xbool draw_HasValidUITarget( void )
-{
-    return m_bUITargetValid;
 }

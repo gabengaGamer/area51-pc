@@ -889,9 +889,12 @@ void d3deng_SetDefaultStates( void )
                               s.BackColor.B/255.0f, s.BackColor.A/255.0f };
         
         rtarget_Clear( RTARGET_CLEAR_ALL, clearColor, 1.0f, 0 );
-											 
+
         // Set default blend state
         state_SetState( STATE_TYPE_BLEND, STATE_BLEND_ALPHA );
+
+        // Set default sampler state
+        state_SetState( STATE_TYPE_SAMPLER, STATE_SAMPLER_LINEAR_WRAP );
     }
 }
 
