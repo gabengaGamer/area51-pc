@@ -1,0 +1,1 @@
+#include <QtGui/qaccessibleobject.h> // IWYU pragma: export

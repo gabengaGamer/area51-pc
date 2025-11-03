@@ -1,0 +1,1 @@
+#include <QtDBus/qdbusinterface.h> // IWYU pragma: export

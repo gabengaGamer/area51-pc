@@ -1,0 +1,1 @@
+#include <QtCore/qfutureinterface.h> // IWYU pragma: export

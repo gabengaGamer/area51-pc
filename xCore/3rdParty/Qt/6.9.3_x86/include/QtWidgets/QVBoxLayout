@@ -1,0 +1,1 @@
+#include <QtWidgets/qboxlayout.h> // IWYU pragma: export

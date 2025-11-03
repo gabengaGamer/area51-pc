@@ -1,0 +1,1 @@
+#include <QtTest/qtestaccessible.h> // IWYU pragma: export

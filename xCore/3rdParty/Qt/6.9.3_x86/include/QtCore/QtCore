@@ -1,0 +1,325 @@
+#ifndef QT_QTCORE_MODULE_H
+#define QT_QTCORE_MODULE_H
+#include <QtCore/QtCoreDepends>
+#include <QtCore/qglobal.h>
+#include <QtCore/qtcoreglobal.h>
+#include <QtCore/q17memory.h>
+#include <QtCore/q20algorithm.h>
+#include <QtCore/q20bit.h>
+#include <QtCore/q20chrono.h>
+#include <QtCore/q20functional.h>
+#include <QtCore/q20iterator.h>
+#include <QtCore/q20map.h>
+#include <QtCore/q20memory.h>
+#include <QtCore/q20utility.h>
+#include <QtCore/q20vector.h>
+#include <QtCore/q23functional.h>
+#include <QtCore/q23utility.h>
+#include <QtCore/q26numeric.h>
+#if QT_CONFIG(animation)
+#include <QtCore/qabstractanimation.h>
+#endif
+#include <QtCore/qabstracteventdispatcher.h>
+#if QT_CONFIG(itemmodel)
+#include <QtCore/qabstractitemmodel.h>
+#endif
+#include <QtCore/qabstractnativeeventfilter.h>
+#if QT_CONFIG(proxymodel)
+#include <QtCore/qabstractproxymodel.h>
+#endif
+#include <QtCore/qalgorithms.h>
+#include <QtCore/qalloc.h>
+#if QT_CONFIG(animation)
+#include <QtCore/qanimationgroup.h>
+#endif
+#include <QtCore/qanystringview.h>
+#include <QtCore/qapplicationstatic.h>
+#include <QtCore/qarraydata.h>
+#include <QtCore/qarraydataops.h>
+#include <QtCore/qarraydatapointer.h>
+#include <QtCore/qassert.h>
+#include <QtCore/qassociativeiterable.h>
+#include <QtCore/qatomic.h>
+#include <QtCore/qatomicscopedvaluerollback.h>
+#include <QtCore/qbasictimer.h>
+#include <QtCore/qbindingstorage.h>
+#include <QtCore/qbitarray.h>
+#include <QtCore/qbuffer.h>
+#include <QtCore/qbytearray.h>
+#include <QtCore/qbytearrayalgorithms.h>
+#include <QtCore/qbytearraylist.h>
+#include <QtCore/qbytearraymatcher.h>
+#include <QtCore/qbytearrayview.h>
+#include <QtCore/qcache.h>
+#include <QtCore/qcalendar.h>
+#include <QtCore/qcborarray.h>
+#include <QtCore/qcborcommon.h>
+#include <QtCore/qcbormap.h>
+#include <QtCore/qcborstream.h>
+#if QT_CONFIG(cborstreamreader)
+#include <QtCore/qcborstreamreader.h>
+#endif
+#if QT_CONFIG(cborstreamwriter)
+#include <QtCore/qcborstreamwriter.h>
+#endif
+#include <QtCore/qcborvalue.h>
+#include <QtCore/qchar.h>
+#include <QtCore/qchronotimer.h>
+#include <QtCore/qcollator.h>
+#if QT_CONFIG(commandlineparser)
+#include <QtCore/qcommandlineoption.h>
+#endif
+#if QT_CONFIG(commandlineparser)
+#include <QtCore/qcommandlineparser.h>
+#endif
+#include <QtCore/qcompare.h>
+#include <QtCore/qcompilerdetection.h>
+#if QT_CONFIG(concatenatetablesproxymodel)
+#include <QtCore/qconcatenatetablesproxymodel.h>
+#endif
+#include <QtCore/qconstructormacros.h>
+#include <QtCore/qcontainerfwd.h>
+#include <QtCore/qcontainerinfo.h>
+#include <QtCore/qcontiguouscache.h>
+#include <QtCore/qcoreapplication.h>
+#include <QtCore/qcoreevent.h>
+#include <QtCore/qcryptographichash.h>
+#include <QtCore/qdarwinhelpers.h>
+#include <QtCore/qdatastream.h>
+#include <QtCore/qdatetime.h>
+#include <QtCore/qdeadlinetimer.h>
+#include <QtCore/qdebug.h>
+#include <QtCore/qdir.h>
+#include <QtCore/qdiriterator.h>
+#include <QtCore/qdirlisting.h>
+#if QT_CONFIG(easingcurve)
+#include <QtCore/qeasingcurve.h>
+#endif
+#include <QtCore/qelapsedtimer.h>
+#include <QtCore/qendian.h>
+#include <QtCore/qeventloop.h>
+#if QT_CONFIG(future)
+#include <QtCore/qexception.h>
+#endif
+#include <QtCore/qexceptionhandling.h>
+#include <QtCore/qfactoryinterface.h>
+#include <QtCore/qfile.h>
+#include <QtCore/qfiledevice.h>
+#include <QtCore/qfileinfo.h>
+#include <QtCore/qfileselector.h>
+#if QT_CONFIG(filesystemwatcher)
+#include <QtCore/qfilesystemwatcher.h>
+#endif
+#include <QtCore/qflags.h>
+#include <QtCore/qforeach.h>
+#include <QtCore/qfunctionpointer.h>
+#if QT_CONFIG(future)
+#include <QtCore/qfuture.h>
+#endif
+#if QT_CONFIG(future)
+#include <QtCore/qfutureinterface.h>
+#endif
+#if QT_CONFIG(future)
+#include <QtCore/qfuturesynchronizer.h>
+#endif
+#if QT_CONFIG(future)
+#include <QtCore/qfuturewatcher.h>
+#endif
+#include <QtCore/qgenericatomic.h>
+#include <QtCore/qglobalstatic.h>
+#include <QtCore/qhash.h>
+#include <QtCore/qhashfunctions.h>
+#if QT_CONFIG(identityproxymodel)
+#include <QtCore/qidentityproxymodel.h>
+#endif
+#include <QtCore/qiodevice.h>
+#include <QtCore/qiodevicebase.h>
+#if QT_CONFIG(itemmodel)
+#include <QtCore/qitemselectionmodel.h>
+#endif
+#include <QtCore/qiterable.h>
+#include <QtCore/qiterator.h>
+#include <QtCore/qjsonarray.h>
+#include <QtCore/qjsondocument.h>
+#include <QtCore/qjsonobject.h>
+#include <QtCore/qjsonparseerror.h>
+#include <QtCore/qjsonvalue.h>
+#include <QtCore/qlatin1stringmatcher.h>
+#include <QtCore/qlatin1stringview.h>
+#if QT_CONFIG(library)
+#include <QtCore/qlibrary.h>
+#endif
+#include <QtCore/qlibraryinfo.h>
+#include <QtCore/qline.h>
+#include <QtCore/qlist.h>
+#include <QtCore/qlocale.h>
+#include <QtCore/qlockfile.h>
+#include <QtCore/qloggingcategory.h>
+#include <QtCore/qmalloc.h>
+#include <QtCore/qmap.h>
+#include <QtCore/qmargins.h>
+#include <QtCore/qmath.h>
+#include <QtCore/qmessageauthenticationcode.h>
+#include <QtCore/qmetacontainer.h>
+#include <QtCore/qmetaobject.h>
+#include <QtCore/qmetatype.h>
+#include <QtCore/qmimedata.h>
+#if QT_CONFIG(mimetype)
+#include <QtCore/qmimedatabase.h>
+#endif
+#if QT_CONFIG(mimetype)
+#include <QtCore/qmimetype.h>
+#endif
+#include <QtCore/qminmax.h>
+#include <QtCore/qmutex.h>
+#include <QtCore/qnamespace.h>
+#include <QtCore/qnativeinterface.h>
+#include <QtCore/qnumeric.h>
+#include <QtCore/qobject.h>
+#include <QtCore/qobjectcleanuphandler.h>
+#include <QtCore/qobjectdefs.h>
+#include <QtCore/qoperatingsystemversion.h>
+#include <QtCore/qoverload.h>
+#include <QtCore/qpair.h>
+#if QT_CONFIG(animation)
+#include <QtCore/qparallelanimationgroup.h>
+#endif
+#if QT_CONFIG(animation)
+#include <QtCore/qpauseanimation.h>
+#endif
+#if QT_CONFIG(permissions)
+#include <QtCore/qpermissions.h>
+#endif
+#include <QtCore/qplugin.h>
+#include <QtCore/qpluginloader.h>
+#include <QtCore/qpoint.h>
+#include <QtCore/qpointer.h>
+#if QT_CONFIG(processenvironment)
+#include <QtCore/qprocess.h>
+#endif
+#include <QtCore/qprocessordetection.h>
+#if QT_CONFIG(future)
+#include <QtCore/qpromise.h>
+#endif
+#include <QtCore/qproperty.h>
+#if QT_CONFIG(animation)
+#include <QtCore/qpropertyanimation.h>
+#endif
+#include <QtCore/qpropertyprivate.h>
+#include <QtCore/qqueue.h>
+#include <QtCore/qrandom.h>
+#include <QtCore/qrangemodel.h>
+#include <QtCore/qreadwritelock.h>
+#include <QtCore/qrect.h>
+#include <QtCore/qrefcount.h>
+#if QT_CONFIG(regularexpression)
+#include <QtCore/qregularexpression.h>
+#endif
+#include <QtCore/qresource.h>
+#if QT_CONFIG(future)
+#include <QtCore/qresultstore.h>
+#endif
+#include <QtCore/qrunnable.h>
+#include <QtCore/qsavefile.h>
+#include <QtCore/qscopedpointer.h>
+#include <QtCore/qscopedvaluerollback.h>
+#include <QtCore/qscopeguard.h>
+#include <QtCore/qsemaphore.h>
+#if QT_CONFIG(animation)
+#include <QtCore/qsequentialanimationgroup.h>
+#endif
+#include <QtCore/qsequentialiterable.h>
+#include <QtCore/qset.h>
+#if QT_CONFIG(settings)
+#include <QtCore/qsettings.h>
+#endif
+#include <QtCore/qshareddata.h>
+#include <QtCore/qsharedmemory.h>
+#include <QtCore/qsharedpointer.h>
+#include <QtCore/qsignalmapper.h>
+#include <QtCore/qsimd.h>
+#include <QtCore/qsize.h>
+#include <QtCore/qsocketnotifier.h>
+#if QT_CONFIG(sortfilterproxymodel)
+#include <QtCore/qsortfilterproxymodel.h>
+#endif
+#include <QtCore/qspan.h>
+#include <QtCore/qstack.h>
+#include <QtCore/qstandardpaths.h>
+#include <QtCore/qstaticlatin1stringmatcher.h>
+#include <QtCore/qstdlibdetection.h>
+#include <QtCore/qstorageinfo.h>
+#include <QtCore/qstring.h>
+#include <QtCore/qstringalgorithms.h>
+#include <QtCore/qstringbuilder.h>
+#include <QtCore/qstringconverter.h>
+#include <QtCore/qstringfwd.h>
+#include <QtCore/qstringlist.h>
+#if QT_CONFIG(stringlistmodel)
+#include <QtCore/qstringlistmodel.h>
+#endif
+#include <QtCore/qstringliteral.h>
+#include <QtCore/qstringmatcher.h>
+#include <QtCore/qstringtokenizer.h>
+#include <QtCore/qstringview.h>
+#include <QtCore/qswap.h>
+#include <QtCore/qsysinfo.h>
+#include <QtCore/qsystemdetection.h>
+#include <QtCore/qsystemsemaphore.h>
+#include <QtCore/qtaggedpointer.h>
+#include <QtCore/qtclasshelpermacros.h>
+#include <QtCore/qtconfiginclude.h>
+#include <QtCore/qtconfigmacros.h>
+#include <QtCore/qtcoreversion.h>
+#include <QtCore/qtdeprecationmarkers.h>
+#include <QtCore/qtemporarydir.h>
+#include <QtCore/qtemporaryfile.h>
+#include <QtCore/qtenvironmentvariables.h>
+#include <QtCore/qtextboundaryfinder.h>
+#include <QtCore/qtextstream.h>
+#include <QtCore/qthread.h>
+#include <QtCore/qthreadpool.h>
+#include <QtCore/qthreadstorage.h>
+#if QT_CONFIG(easingcurve)
+#include <QtCore/qtimeline.h>
+#endif
+#include <QtCore/qtimer.h>
+#include <QtCore/qtimezone.h>
+#include <QtCore/qtipccommon.h>
+#include <QtCore/qtmetamacros.h>
+#include <QtCore/qtmocconstants.h>
+#include <QtCore/qtnoop.h>
+#include <QtCore/qtpreprocessorsupport.h>
+#include <QtCore/qtranslator.h>
+#if QT_CONFIG(transposeproxymodel)
+#include <QtCore/qtransposeproxymodel.h>
+#endif
+#include <QtCore/qtresource.h>
+#include <QtCore/qtsymbolmacros.h>
+#include <QtCore/qttranslation.h>
+#include <QtCore/qttypetraits.h>
+#include <QtCore/qtversion.h>
+#include <QtCore/qtversionchecks.h>
+#include <QtCore/qtypeinfo.h>
+#include <QtCore/qtyperevision.h>
+#include <QtCore/qtypes.h>
+#include <QtCore/qurl.h>
+#include <QtCore/qurlquery.h>
+#include <QtCore/qutf8stringview.h>
+#include <QtCore/quuid.h>
+#include <QtCore/qvariant.h>
+#if QT_CONFIG(animation)
+#include <QtCore/qvariantanimation.h>
+#endif
+#include <QtCore/qvarianthash.h>
+#include <QtCore/qvariantlist.h>
+#include <QtCore/qvariantmap.h>
+#include <QtCore/qvarlengtharray.h>
+#include <QtCore/qvector.h>
+#include <QtCore/qversionnumber.h>
+#include <QtCore/qwaitcondition.h>
+#include <QtCore/qwineventnotifier.h>
+#include <QtCore/qxmlstream.h>
+#include <QtCore/qxpfunctional.h>
+#include <QtCore/qyieldcpu.h>
+#endif

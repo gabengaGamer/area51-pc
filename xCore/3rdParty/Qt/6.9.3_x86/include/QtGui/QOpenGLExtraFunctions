@@ -1,0 +1,1 @@
+#include <QtGui/qopenglextrafunctions.h> // IWYU pragma: export

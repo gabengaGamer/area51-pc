@@ -1,0 +1,1 @@
+#include <QtCore/qmimedatabase.h> // IWYU pragma: export

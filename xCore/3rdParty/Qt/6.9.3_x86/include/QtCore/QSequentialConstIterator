@@ -1,0 +1,1 @@
+#include <QtCore/qsequentialiterable.h> // IWYU pragma: export

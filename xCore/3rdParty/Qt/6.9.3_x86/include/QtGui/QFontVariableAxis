@@ -1,0 +1,1 @@
+#include <QtGui/qfontvariableaxis.h> // IWYU pragma: export

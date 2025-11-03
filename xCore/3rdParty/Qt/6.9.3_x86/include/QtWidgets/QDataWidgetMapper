@@ -1,0 +1,1 @@
+#include <QtWidgets/qdatawidgetmapper.h> // IWYU pragma: export

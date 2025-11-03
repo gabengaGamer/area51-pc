@@ -1,0 +1,1 @@
+#include <QtTest/qabstractitemmodeltester.h> // IWYU pragma: export

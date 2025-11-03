@@ -1,0 +1,1 @@
+#include <QtCore/qvarlengtharray.h> // IWYU pragma: export

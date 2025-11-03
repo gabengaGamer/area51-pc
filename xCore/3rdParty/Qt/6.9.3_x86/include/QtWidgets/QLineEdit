@@ -1,0 +1,1 @@
+#include <QtWidgets/qlineedit.h> // IWYU pragma: export

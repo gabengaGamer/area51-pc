@@ -1,0 +1,1 @@
+#include <QtCore/qtemporarydir.h> // IWYU pragma: export

@@ -1,0 +1,1 @@
+#include <QtGui/qabstracttextdocumentlayout.h> // IWYU pragma: export

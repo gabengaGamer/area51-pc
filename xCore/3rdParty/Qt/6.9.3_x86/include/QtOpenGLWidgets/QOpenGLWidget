@@ -1,0 +1,1 @@
+#include <QtOpenGLWidgets/qopenglwidget.h> // IWYU pragma: export

@@ -1,0 +1,1 @@
+#include <QtWidgets/qtooltip.h> // IWYU pragma: export

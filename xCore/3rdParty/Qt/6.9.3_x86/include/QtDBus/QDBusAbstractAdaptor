@@ -1,0 +1,1 @@
+#include <QtDBus/qdbusabstractadaptor.h> // IWYU pragma: export

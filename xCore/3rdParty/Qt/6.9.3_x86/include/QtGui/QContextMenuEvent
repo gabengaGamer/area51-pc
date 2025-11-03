@@ -1,0 +1,1 @@
+#include <QtGui/qevent.h> // IWYU pragma: export

@@ -1,0 +1,1 @@
+#include <QtWidgets/qproxystyle.h> // IWYU pragma: export

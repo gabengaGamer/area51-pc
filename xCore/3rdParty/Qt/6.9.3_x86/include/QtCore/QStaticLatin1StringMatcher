@@ -1,0 +1,1 @@
+#include <QtCore/qstaticlatin1stringmatcher.h> // IWYU pragma: export

@@ -1,0 +1,1 @@
+#include <QtWidgets/qgraphicsgridlayout.h> // IWYU pragma: export

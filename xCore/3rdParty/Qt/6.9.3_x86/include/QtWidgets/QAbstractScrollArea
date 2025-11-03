@@ -1,0 +1,1 @@
+#include <QtWidgets/qabstractscrollarea.h> // IWYU pragma: export

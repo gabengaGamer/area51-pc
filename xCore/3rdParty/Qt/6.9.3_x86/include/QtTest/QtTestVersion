@@ -1,0 +1,1 @@
+#include <QtTest/qttestversion.h> // IWYU pragma: export

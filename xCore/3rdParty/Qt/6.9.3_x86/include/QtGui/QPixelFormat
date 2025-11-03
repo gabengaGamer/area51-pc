@@ -1,0 +1,1 @@
+#include <QtGui/qpixelformat.h> // IWYU pragma: export

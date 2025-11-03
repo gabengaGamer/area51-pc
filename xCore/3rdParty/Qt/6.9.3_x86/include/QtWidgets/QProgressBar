@@ -1,0 +1,1 @@
+#include <QtWidgets/qprogressbar.h> // IWYU pragma: export

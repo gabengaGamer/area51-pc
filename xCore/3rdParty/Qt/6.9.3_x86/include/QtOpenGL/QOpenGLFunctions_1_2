@@ -1,0 +1,1 @@
+#include <QtOpenGL/qopenglfunctions_1_2.h> // IWYU pragma: export

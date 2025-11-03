@@ -1,0 +1,1 @@
+#include <QtCore/qtversionchecks.h> // IWYU pragma: export

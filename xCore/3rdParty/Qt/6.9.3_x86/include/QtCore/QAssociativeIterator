@@ -1,0 +1,1 @@
+#include <QtCore/qassociativeiterable.h> // IWYU pragma: export

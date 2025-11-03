@@ -1,0 +1,1 @@
+#include <QtCore/qreadwritelock.h> // IWYU pragma: export

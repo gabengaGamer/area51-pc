@@ -1,0 +1,1 @@
+#include <QtCore/qsocketnotifier.h> // IWYU pragma: export

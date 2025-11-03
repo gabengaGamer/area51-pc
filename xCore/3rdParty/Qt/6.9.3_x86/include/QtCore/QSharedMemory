@@ -1,0 +1,1 @@
+#include <QtCore/qsharedmemory.h> // IWYU pragma: export

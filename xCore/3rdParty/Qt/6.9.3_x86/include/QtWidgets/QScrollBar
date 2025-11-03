@@ -1,0 +1,1 @@
+#include <QtWidgets/qscrollbar.h> // IWYU pragma: export

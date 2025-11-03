@@ -1,0 +1,1 @@
+#include <QtCore/qalgorithms.h> // IWYU pragma: export

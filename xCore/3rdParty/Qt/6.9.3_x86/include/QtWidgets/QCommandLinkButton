@@ -1,0 +1,1 @@
+#include <QtWidgets/qcommandlinkbutton.h> // IWYU pragma: export

@@ -1,0 +1,1 @@
+#include <QtCore/qatomicscopedvaluerollback.h> // IWYU pragma: export

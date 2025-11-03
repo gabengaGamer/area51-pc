@@ -1,0 +1,1 @@
+#include <QtConcurrent/qtconcurrentmap.h> // IWYU pragma: export

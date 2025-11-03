@@ -1,0 +1,1 @@
+#include <QtCore/qtransposeproxymodel.h> // IWYU pragma: export

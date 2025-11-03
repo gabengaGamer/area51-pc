@@ -1,0 +1,1 @@
+#include <QtGui/qpageranges.h> // IWYU pragma: export

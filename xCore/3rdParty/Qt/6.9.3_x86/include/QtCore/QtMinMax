@@ -1,0 +1,1 @@
+#include <QtCore/qminmax.h> // IWYU pragma: export

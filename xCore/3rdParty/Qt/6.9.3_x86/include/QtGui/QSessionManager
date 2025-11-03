@@ -1,0 +1,1 @@
+#include <QtGui/qsessionmanager.h> // IWYU pragma: export

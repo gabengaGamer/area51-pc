@@ -1,0 +1,1 @@
+#include <QtCore/qbytearray.h> // IWYU pragma: export

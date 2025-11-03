@@ -1,0 +1,1 @@
+#include <QtCore/qlibraryinfo.h> // IWYU pragma: export

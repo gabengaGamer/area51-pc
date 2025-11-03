@@ -1,0 +1,1 @@
+#include <QtCore/qstringbuilder.h> // IWYU pragma: export

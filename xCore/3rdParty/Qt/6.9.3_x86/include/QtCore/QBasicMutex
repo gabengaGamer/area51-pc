@@ -1,0 +1,1 @@
+#include <QtCore/qmutex.h> // IWYU pragma: export

@@ -1,0 +1,1 @@
+#include <QtNetwork/qhttpmultipart.h> // IWYU pragma: export

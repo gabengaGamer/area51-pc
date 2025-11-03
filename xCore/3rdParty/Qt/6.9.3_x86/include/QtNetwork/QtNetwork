@@ -1,0 +1,72 @@
+#ifndef QT_QTNETWORK_MODULE_H
+#define QT_QTNETWORK_MODULE_H
+#include <QtNetwork/QtNetworkDepends>
+#include <QtNetwork/qtnetworkglobal.h>
+#include <QtNetwork/qabstractnetworkcache.h>
+#include <QtNetwork/qabstractsocket.h>
+#include <QtNetwork/qauthenticator.h>
+#if QT_CONFIG(dnslookup)
+#include <QtNetwork/qdnslookup.h>
+#endif
+#if QT_CONFIG(http)
+#include <QtNetwork/qformdatabuilder.h>
+#endif
+#include <QtNetwork/qhostaddress.h>
+#include <QtNetwork/qhostinfo.h>
+#include <QtNetwork/qhstspolicy.h>
+#if QT_CONFIG(http)
+#include <QtNetwork/qhttp1configuration.h>
+#endif
+#if QT_CONFIG(http)
+#include <QtNetwork/qhttp2configuration.h>
+#endif
+#include <QtNetwork/qhttpheaders.h>
+#if QT_CONFIG(http)
+#include <QtNetwork/qhttpmultipart.h>
+#endif
+#if QT_CONFIG(localserver)
+#include <QtNetwork/qlocalserver.h>
+#endif
+#if QT_CONFIG(localserver)
+#include <QtNetwork/qlocalsocket.h>
+#endif
+#include <QtNetwork/qnetworkaccessmanager.h>
+#include <QtNetwork/qnetworkcookie.h>
+#include <QtNetwork/qnetworkcookiejar.h>
+#include <QtNetwork/qnetworkdatagram.h>
+#if QT_CONFIG(networkdiskcache)
+#include <QtNetwork/qnetworkdiskcache.h>
+#endif
+#include <QtNetwork/qnetworkinformation.h>
+#include <QtNetwork/qnetworkinterface.h>
+#include <QtNetwork/qnetworkproxy.h>
+#include <QtNetwork/qnetworkreply.h>
+#include <QtNetwork/qnetworkrequest.h>
+#include <QtNetwork/qnetworkrequestfactory.h>
+#if QT_CONFIG(ssl)
+#include <QtNetwork/qocspresponse.h>
+#endif
+#include <QtNetwork/qpassworddigestor.h>
+#include <QtNetwork/qrestaccessmanager.h>
+#include <QtNetwork/qrestreply.h>
+#include <QtNetwork/qssl.h>
+#include <QtNetwork/qsslcertificate.h>
+#include <QtNetwork/qsslcertificateextension.h>
+#include <QtNetwork/qsslcipher.h>
+#include <QtNetwork/qsslconfiguration.h>
+#include <QtNetwork/qssldiffiehellmanparameters.h>
+#include <QtNetwork/qsslellipticcurve.h>
+#include <QtNetwork/qsslerror.h>
+#include <QtNetwork/qsslkey.h>
+#if QT_CONFIG(ssl)
+#include <QtNetwork/qsslpresharedkeyauthenticator.h>
+#endif
+#if QT_CONFIG(ssl)
+#include <QtNetwork/qsslserver.h>
+#endif
+#include <QtNetwork/qsslsocket.h>
+#include <QtNetwork/qtcpserver.h>
+#include <QtNetwork/qtcpsocket.h>
+#include <QtNetwork/qtnetworkversion.h>
+#include <QtNetwork/qudpsocket.h>
+#endif

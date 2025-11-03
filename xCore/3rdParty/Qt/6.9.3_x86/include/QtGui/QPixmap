@@ -1,0 +1,1 @@
+#include <QtGui/qpixmap.h> // IWYU pragma: export

@@ -1,0 +1,1 @@
+#include <QtOpenGL/qopenglpaintdevice.h> // IWYU pragma: export

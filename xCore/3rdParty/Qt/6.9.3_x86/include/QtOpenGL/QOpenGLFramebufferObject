@@ -1,0 +1,1 @@
+#include <QtOpenGL/qopenglframebufferobject.h> // IWYU pragma: export

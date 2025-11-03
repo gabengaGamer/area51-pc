@@ -1,0 +1,1 @@
+#include <QtCore/qjsonobject.h> // IWYU pragma: export

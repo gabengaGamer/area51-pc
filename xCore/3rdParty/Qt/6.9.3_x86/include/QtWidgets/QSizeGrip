@@ -1,0 +1,1 @@
+#include <QtWidgets/qsizegrip.h> // IWYU pragma: export

@@ -1,0 +1,1 @@
+#include <QtGui/qtextdocumentwriter.h> // IWYU pragma: export

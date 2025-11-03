@@ -1,0 +1,1 @@
+#include <QtNetwork/qauthenticator.h> // IWYU pragma: export

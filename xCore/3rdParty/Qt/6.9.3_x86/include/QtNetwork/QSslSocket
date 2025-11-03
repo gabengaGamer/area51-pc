@@ -1,0 +1,1 @@
+#include <QtNetwork/qsslsocket.h> // IWYU pragma: export

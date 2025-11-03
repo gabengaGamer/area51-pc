@@ -1,0 +1,1 @@
+#include <QtCore/qitemselectionmodel.h> // IWYU pragma: export

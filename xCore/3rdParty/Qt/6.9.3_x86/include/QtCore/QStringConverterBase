@@ -1,0 +1,1 @@
+#include <QtCore/qstringconverter_base_deprecated.h> // IWYU pragma: export

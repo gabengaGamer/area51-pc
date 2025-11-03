@@ -1,0 +1,1 @@
+#include <QtCore/qabstractproxymodel.h> // IWYU pragma: export

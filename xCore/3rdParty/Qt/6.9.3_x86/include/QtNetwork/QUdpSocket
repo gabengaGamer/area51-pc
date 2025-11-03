@@ -1,0 +1,1 @@
+#include <QtNetwork/qudpsocket.h> // IWYU pragma: export

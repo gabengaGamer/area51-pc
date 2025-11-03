@@ -1,0 +1,1 @@
+#include <QtCore/qvariant.h> // IWYU pragma: export

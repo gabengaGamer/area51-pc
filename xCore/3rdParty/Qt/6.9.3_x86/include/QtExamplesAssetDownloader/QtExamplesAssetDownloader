@@ -1,0 +1,14 @@
+#ifndef QT_QTEXAMPLESASSETDOWNLOADER_MODULE_H
+#define QT_QTEXAMPLESASSETDOWNLOADER_MODULE_H
+#include <QtExamplesAssetDownloader/QtExamplesAssetDownloaderDepends>
+#include <QtExamplesAssetDownloader/assetdownloader.h>
+#include <QtExamplesAssetDownloader/barrier.h>
+#include <QtExamplesAssetDownloader/concurrentcall.h>
+#include <QtExamplesAssetDownloader/conditional.h>
+#include <QtExamplesAssetDownloader/networkquery.h>
+#include <QtExamplesAssetDownloader/qprocesstask.h>
+#include <QtExamplesAssetDownloader/qtexamplesassetdownloaderversion.h>
+#include <QtExamplesAssetDownloader/tasktree.h>
+#include <QtExamplesAssetDownloader/tasktreerunner.h>
+#include <QtExamplesAssetDownloader/tcpsocket.h>
+#endif

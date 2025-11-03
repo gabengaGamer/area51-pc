@@ -1,0 +1,1 @@
+#include <QtCore/qpluginloader.h> // IWYU pragma: export

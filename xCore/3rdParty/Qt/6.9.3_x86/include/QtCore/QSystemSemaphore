@@ -1,0 +1,1 @@
+#include <QtCore/qsystemsemaphore.h> // IWYU pragma: export

@@ -1,0 +1,1 @@
+#include <QtGui/qtextlayout.h> // IWYU pragma: export

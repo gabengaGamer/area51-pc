@@ -1,0 +1,1 @@
+#include <QtCore/qfactoryinterface.h> // IWYU pragma: export

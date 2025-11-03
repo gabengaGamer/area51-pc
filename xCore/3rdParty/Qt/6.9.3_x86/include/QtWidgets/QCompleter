@@ -1,0 +1,1 @@
+#include <QtWidgets/qcompleter.h> // IWYU pragma: export

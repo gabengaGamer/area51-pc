@@ -1,0 +1,1 @@
+#include <QtNetwork/qlocalserver.h> // IWYU pragma: export

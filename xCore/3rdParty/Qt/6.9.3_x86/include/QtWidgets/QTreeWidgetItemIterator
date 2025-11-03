@@ -1,0 +1,1 @@
+#include <QtWidgets/qtreewidgetitemiterator.h> // IWYU pragma: export

@@ -1,0 +1,1 @@
+#include <QtWidgets/qtabwidget.h> // IWYU pragma: export

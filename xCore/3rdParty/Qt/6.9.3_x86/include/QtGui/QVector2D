@@ -1,0 +1,1 @@
+#include <QtGui/qvectornd.h> // IWYU pragma: export

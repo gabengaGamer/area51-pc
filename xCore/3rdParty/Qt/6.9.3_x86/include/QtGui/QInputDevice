@@ -1,0 +1,1 @@
+#include <QtGui/qinputdevice.h> // IWYU pragma: export

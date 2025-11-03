@@ -1,0 +1,1 @@
+#include <QtGui/qactiongroup.h> // IWYU pragma: export

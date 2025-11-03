@@ -1,0 +1,1 @@
+#include <QtOpenGL/qopengltimerquery.h> // IWYU pragma: export

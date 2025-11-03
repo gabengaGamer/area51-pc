@@ -1,0 +1,1 @@
+#include <QtWidgets/qrubberband.h> // IWYU pragma: export

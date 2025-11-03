@@ -1,0 +1,1 @@
+#include <QtCore/qabstractitemmodel.h> // IWYU pragma: export

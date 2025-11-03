@@ -1,0 +1,1 @@
+#include <QtWidgets/qfocusframe.h> // IWYU pragma: export

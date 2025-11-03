@@ -1,0 +1,1 @@
+#include <QtWidgets/qgesturerecognizer.h> // IWYU pragma: export

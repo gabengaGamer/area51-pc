@@ -1,0 +1,1 @@
+#include <QtCore/qeasingcurve.h> // IWYU pragma: export

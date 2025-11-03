@@ -1,0 +1,1 @@
+#include <QtNetwork/qhttp1configuration.h> // IWYU pragma: export

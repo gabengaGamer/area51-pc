@@ -1,0 +1,1 @@
+#include <QtWidgets/qstatusbar.h> // IWYU pragma: export

@@ -1,0 +1,1 @@
+#include <QtWidgets/qcolormap.h> // IWYU pragma: export

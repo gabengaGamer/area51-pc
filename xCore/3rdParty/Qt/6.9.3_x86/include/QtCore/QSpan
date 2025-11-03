@@ -1,0 +1,1 @@
+#include <QtCore/qspan.h> // IWYU pragma: export

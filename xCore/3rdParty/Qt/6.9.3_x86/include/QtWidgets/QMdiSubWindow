@@ -1,0 +1,1 @@
+#include <QtWidgets/qmdisubwindow.h> // IWYU pragma: export

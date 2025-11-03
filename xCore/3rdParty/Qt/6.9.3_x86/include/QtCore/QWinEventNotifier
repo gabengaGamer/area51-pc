@@ -1,0 +1,1 @@
+#include <QtCore/qwineventnotifier.h> // IWYU pragma: export

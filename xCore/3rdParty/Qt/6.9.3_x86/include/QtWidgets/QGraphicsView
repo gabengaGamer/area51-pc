@@ -1,0 +1,1 @@
+#include <QtWidgets/qgraphicsview.h> // IWYU pragma: export

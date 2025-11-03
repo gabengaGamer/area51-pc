@@ -1,0 +1,1 @@
+#include <QtGui/qquaternion.h> // IWYU pragma: export

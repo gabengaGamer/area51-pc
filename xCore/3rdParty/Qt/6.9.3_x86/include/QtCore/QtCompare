@@ -1,0 +1,1 @@
+#include <QtCore/qcompare.h> // IWYU pragma: export

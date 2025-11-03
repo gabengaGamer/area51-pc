@@ -1,0 +1,27 @@
+#ifndef QT_QTSQL_MODULE_H
+#define QT_QTSQL_MODULE_H
+#include <QtSql/QtSqlDepends>
+#include <QtSql/qtsqlglobal.h>
+#include <QtSql/qsqldatabase.h>
+#include <QtSql/qsqldriver.h>
+#include <QtSql/qsqldriverplugin.h>
+#include <QtSql/qsqlerror.h>
+#include <QtSql/qsqlfield.h>
+#include <QtSql/qsqlindex.h>
+#include <QtSql/qsqlquery.h>
+#if QT_CONFIG(sqlmodel)
+#include <QtSql/qsqlquerymodel.h>
+#endif
+#include <QtSql/qsqlrecord.h>
+#if QT_CONFIG(sqlmodel)
+#include <QtSql/qsqlrelationaldelegate.h>
+#endif
+#if QT_CONFIG(sqlmodel)
+#include <QtSql/qsqlrelationaltablemodel.h>
+#endif
+#include <QtSql/qsqlresult.h>
+#if QT_CONFIG(sqlmodel)
+#include <QtSql/qsqltablemodel.h>
+#endif
+#include <QtSql/qtsqlversion.h>
+#endif

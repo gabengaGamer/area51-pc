@@ -1,0 +1,1 @@
+#include <QtCore/qsettings.h> // IWYU pragma: export

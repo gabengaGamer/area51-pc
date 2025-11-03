@@ -1,0 +1,1 @@
+#include <QtGui/qpaintdevicewindow.h> // IWYU pragma: export

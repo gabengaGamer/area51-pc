@@ -1,0 +1,1 @@
+#include <QtWidgets/qfileiconprovider.h> // IWYU pragma: export

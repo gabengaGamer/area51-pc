@@ -1,0 +1,1 @@
+#include <QtWidgets/qmenubar.h> // IWYU pragma: export

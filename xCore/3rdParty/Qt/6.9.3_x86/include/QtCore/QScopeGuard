@@ -1,0 +1,1 @@
+#include <QtCore/qscopeguard.h> // IWYU pragma: export

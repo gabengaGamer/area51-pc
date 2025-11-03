@@ -1,0 +1,1 @@
+#include <QtWidgets/qsplitter.h> // IWYU pragma: export

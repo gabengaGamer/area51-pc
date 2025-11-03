@@ -1,0 +1,1 @@
+#include <QtGui/qabstractfileiconprovider.h> // IWYU pragma: export

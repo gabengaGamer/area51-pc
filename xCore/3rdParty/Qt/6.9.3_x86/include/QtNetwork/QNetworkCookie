@@ -1,0 +1,1 @@
+#include <QtNetwork/qnetworkcookie.h> // IWYU pragma: export

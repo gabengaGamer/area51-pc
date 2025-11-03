@@ -1,0 +1,21 @@
+{
+    "schema_version": 3,
+    "name": "JpegPrivate",
+    "repository": "qtbase",
+    "version": "6.11.0",
+    "internal": true,
+    "platforms": [
+        {
+            "name": "Windows",
+            "version": "10.0.19045",
+            "compiler_id": "MSVC",
+            "compiler_version": "19.44.35217.0",
+            "targets": [
+                {
+                    "architecture": "i386",
+                    "abi": "i386-little_endian-ilp32"
+                }
+            ]
+        }
+    ]
+}

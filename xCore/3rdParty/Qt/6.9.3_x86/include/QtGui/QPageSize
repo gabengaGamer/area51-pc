@@ -1,0 +1,1 @@
+#include <QtGui/qpagesize.h> // IWYU pragma: export

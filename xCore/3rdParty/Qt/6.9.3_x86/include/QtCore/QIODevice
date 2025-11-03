@@ -1,0 +1,1 @@
+#include <QtCore/qiodevice.h> // IWYU pragma: export

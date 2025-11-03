@@ -1,0 +1,1 @@
+#include <QtCore/qlockfile.h> // IWYU pragma: export

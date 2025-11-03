@@ -1,0 +1,5 @@
+QMAKE_PRL_TARGET = Qt6ExamplesAssetDownloader.lib
+QMAKE_PRL_CONFIG = static
+QMAKE_PRL_VERSION = 6.11.0
+QMAKE_PRL_LIBS = $$[QT_INSTALL_LIBS]/Qt6Concurrent.lib $$[QT_INSTALL_LIBS]/Qt6Network.lib -lws2_32 $$[QT_INSTALL_LIBS]/Qt6Core.lib -lmpr -luserenv
+QMAKE_PRL_LIBS_FOR_CMAKE = $$[QT_INSTALL_LIBS]/Qt6Concurrent.lib;$$[QT_INSTALL_LIBS]/Qt6Network.lib;-lws2_32;$$[QT_INSTALL_LIBS]/Qt6Core.lib;-lmpr;-luserenv

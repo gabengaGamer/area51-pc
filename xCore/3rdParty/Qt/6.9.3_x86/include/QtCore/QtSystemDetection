@@ -1,0 +1,1 @@
+#include <QtCore/qsystemdetection.h> // IWYU pragma: export

@@ -1,0 +1,1 @@
+#include <QtWidgets/qtextbrowser.h> // IWYU pragma: export

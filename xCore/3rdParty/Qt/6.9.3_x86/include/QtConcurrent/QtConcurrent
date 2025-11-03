@@ -1,0 +1,20 @@
+#ifndef QT_QTCONCURRENT_MODULE_H
+#define QT_QTCONCURRENT_MODULE_H
+#include <QtConcurrent/QtConcurrentDepends>
+#include <QtConcurrent/qtaskbuilder.h>
+#include <QtConcurrent/qtconcurrentcompilertest.h>
+#include <QtConcurrent/qtconcurrentfilter.h>
+#include <QtConcurrent/qtconcurrentfilterkernel.h>
+#include <QtConcurrent/qtconcurrentfunctionwrappers.h>
+#include <QtConcurrent/qtconcurrentiteratekernel.h>
+#include <QtConcurrent/qtconcurrentmap.h>
+#include <QtConcurrent/qtconcurrentmapkernel.h>
+#include <QtConcurrent/qtconcurrentmedian.h>
+#include <QtConcurrent/qtconcurrentreducekernel.h>
+#include <QtConcurrent/qtconcurrentrun.h>
+#include <QtConcurrent/qtconcurrentrunbase.h>
+#include <QtConcurrent/qtconcurrentstoredfunctioncall.h>
+#include <QtConcurrent/qtconcurrenttask.h>
+#include <QtConcurrent/qtconcurrentthreadengine.h>
+#include <QtConcurrent/qtconcurrentversion.h>
+#endif

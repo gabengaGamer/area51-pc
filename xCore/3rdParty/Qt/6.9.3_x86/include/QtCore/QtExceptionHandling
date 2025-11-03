@@ -1,0 +1,1 @@
+#include <QtCore/qexceptionhandling.h> // IWYU pragma: export

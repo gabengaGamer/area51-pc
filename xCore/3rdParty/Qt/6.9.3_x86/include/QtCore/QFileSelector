@@ -1,0 +1,1 @@
+#include <QtCore/qfileselector.h> // IWYU pragma: export

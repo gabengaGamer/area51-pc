@@ -1,0 +1,1 @@
+#include <QtWidgets/qinputdialog.h> // IWYU pragma: export

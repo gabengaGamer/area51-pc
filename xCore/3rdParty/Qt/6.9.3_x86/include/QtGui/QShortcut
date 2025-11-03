@@ -1,0 +1,1 @@
+#include <QtGui/qshortcut.h> // IWYU pragma: export

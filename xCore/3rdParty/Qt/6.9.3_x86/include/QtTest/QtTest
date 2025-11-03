@@ -1,0 +1,19 @@
+#ifndef QT_QTTEST_MODULE_H
+#define QT_QTTEST_MODULE_H
+#include <QtTest/QtTestDepends>
+#include <QtTest/qttestglobal.h>
+#if QT_CONFIG(itemmodeltester)
+#include <QtTest/qabstractitemmodeltester.h>
+#endif
+#include <QtTest/qbenchmark.h>
+#include <QtTest/qbenchmarkmetric.h>
+#include <QtTest/qsignalspy.h>
+#include <QtTest/qtest.h>
+#include <QtTest/qtestassert.h>
+#include <QtTest/qtestcase.h>
+#include <QtTest/qtestdata.h>
+#include <QtTest/qtesteventloop.h>
+#include <QtTest/qtestsystem.h>
+#include <QtTest/qtesttostring.h>
+#include <QtTest/qttestversion.h>
+#endif

@@ -1,0 +1,1 @@
+#include <QtCore/qrect.h> // IWYU pragma: export

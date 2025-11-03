@@ -1,0 +1,1 @@
+#include <QtWidgets/qcolumnview.h> // IWYU pragma: export

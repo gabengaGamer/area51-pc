@@ -1,0 +1,1 @@
+#include <QtWidgets/qslider.h> // IWYU pragma: export

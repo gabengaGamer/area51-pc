@@ -1,0 +1,1 @@
+#include <QtWidgets/qdial.h> // IWYU pragma: export

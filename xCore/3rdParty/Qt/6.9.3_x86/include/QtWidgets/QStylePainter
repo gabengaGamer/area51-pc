@@ -1,0 +1,1 @@
+#include <QtWidgets/qstylepainter.h> // IWYU pragma: export

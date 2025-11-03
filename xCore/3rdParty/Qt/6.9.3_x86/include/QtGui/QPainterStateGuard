@@ -1,0 +1,1 @@
+#include <QtGui/qpainterstateguard.h> // IWYU pragma: export

@@ -1,0 +1,1 @@
+#include <QtGui/qwindow.h> // IWYU pragma: export

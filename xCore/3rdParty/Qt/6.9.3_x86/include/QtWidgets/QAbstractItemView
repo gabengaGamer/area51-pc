@@ -1,0 +1,1 @@
+#include <QtWidgets/qabstractitemview.h> // IWYU pragma: export

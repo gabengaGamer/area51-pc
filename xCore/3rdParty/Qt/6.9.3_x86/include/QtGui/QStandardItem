@@ -1,0 +1,1 @@
+#include <QtGui/qstandarditemmodel.h> // IWYU pragma: export

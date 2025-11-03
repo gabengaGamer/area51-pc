@@ -1,0 +1,1 @@
+#include <QtWidgets/qframe.h> // IWYU pragma: export

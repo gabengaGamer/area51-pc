@@ -1,0 +1,1 @@
+#include <QtWidgets/qkeysequenceedit.h> // IWYU pragma: export

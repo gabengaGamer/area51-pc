@@ -1,0 +1,1 @@
+#include <QtDBus/qdbuspendingreply.h> // IWYU pragma: export
