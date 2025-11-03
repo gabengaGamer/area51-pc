@@ -190,6 +190,7 @@
     <ClCompile Include="Audio\Hardware\audio_stream_pc.cpp" />
     <ClCompile Include="Audio\IAL\IAL.cpp" />
     <ClCompile Include="D3DEngine\d3deng_composite.cpp" />
+    <ClCompile Include="D3DEngine\d3deng_draw_rt.cpp" />
     <ClCompile Include="D3DEngine\d3deng_rtarget.cpp" />
     <ClCompile Include="D3DEngine\d3deng_shader.cpp" />
     <ClCompile Include="D3DEngine\d3deng_state.cpp" />
@@ -242,6 +243,7 @@
   <ItemGroup>
     <ClInclude Include="Audio\Hardware\audio_prologic2.hpp" />
     <ClInclude Include="D3DEngine\d3deng_composite.hpp" />
+    <ClInclude Include="D3DEngine\d3deng_draw_rt.hpp" />
     <ClInclude Include="D3DEngine\d3deng_font.hpp" />
     <ClInclude Include="D3DEngine\d3deng_rtarget.hpp" />
     <ClInclude Include="D3DEngine\d3deng_shader.hpp" />

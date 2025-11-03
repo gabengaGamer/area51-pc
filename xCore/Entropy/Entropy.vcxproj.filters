@@ -181,6 +181,9 @@
     <ClCompile Include="D3DEngine\d3deng_composite.cpp">
       <Filter>PC</Filter>
     </ClCompile>
+    <ClCompile Include="D3DEngine\d3deng_draw_rt.cpp">
+      <Filter>PC</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Audio\audio_channel_mgr.hpp">
@@ -305,6 +308,9 @@
       <Filter>PC</Filter>
     </ClInclude>
     <ClInclude Include="D3DEngine\d3deng_composite.hpp">
+      <Filter>PC</Filter>
+    </ClInclude>
+    <ClInclude Include="D3DEngine\d3deng_draw_rt.hpp">
       <Filter>PC</Filter>
     </ClInclude>
   </ItemGroup>
