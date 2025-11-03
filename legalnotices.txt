@@ -1,3 +1,6 @@
+====================================================================================
+AREA-51 SOURCE CODE — LEGAL NOTICE
+====================================================================================
 ------------------------------------------------------------------------------------
 ABOUT THIS MATERIAL
 ------------------------------------------------------------------------------------
@@ -10,6 +13,10 @@ Warner Bros. Discovery.
 This constitutes a form of redistribution for archival purposes.
 It is made in good faith under fair use principles,
 without intent to infringe upon the rights of the original copyright holders.
+
+This project is an independent, non-commercial community initiative.
+**Warner Bros. Discovery, Midway Games, and Inevitable Entertainment are not affiliated
+with, do not endorse, and have no involvement in this repository or its contents.**
 
 ------------------------------------------------------------------------------------
 OPEN-SOURCE COMPONENTS
@@ -27,3 +34,6 @@ THIS MATERIAL IS PROVIDED FOR HISTORICAL RESEARCH AND EDUCATIONAL PURPOSES ONLY.
 IT IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING
 BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
 PURPOSE, OR NON-INFRINGEMENT.
+====================================================================================
+END OF FILE
+====================================================================================
