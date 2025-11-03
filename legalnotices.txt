@@ -1,0 +1,29 @@
+------------------------------------------------------------------------------------
+ABOUT THIS MATERIAL
+------------------------------------------------------------------------------------
+
+This repository contains the leaked source code of the 2005 video game *Area-51*,
+originally developed by Inevitable Entertainment and published by Midway Games.
+All rights to the original game, its assets, name, and trademarks belong to
+Warner Bros. Discovery.
+
+This constitutes a form of redistribution for archival purposes.
+It is made in good faith under fair use principles,
+without intent to infringe upon the rights of the original copyright holders.
+
+------------------------------------------------------------------------------------
+OPEN-SOURCE COMPONENTS
+------------------------------------------------------------------------------------
+
+Some files within this codebase reference or utilize open-source libraries
+distributed under licenses (e.g. Unlicense, BSD, MIT, LGPLv3).
+Full license texts for these components are included in `thirdpartylegalnotices.txt`.
+
+------------------------------------------------------------------------------------
+DISCLAIMER
+------------------------------------------------------------------------------------
+
+THIS MATERIAL IS PROVIDED FOR HISTORICAL RESEARCH AND EDUCATIONAL PURPOSES ONLY.  
+IT IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING
+BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+PURPOSE, OR NON-INFRINGEMENT.
