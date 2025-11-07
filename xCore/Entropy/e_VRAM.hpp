@@ -55,17 +55,17 @@ void        vram_Kill           ( void );
 #include "D3DEngine\d3deng_private.hpp"
 
 s32                         vram_LoadTexture    ( const char*    pFileName  );
-s32                         vram_Register       ( ID3D11Texture2D* pTexture );
 s32                         vram_Register       ( ID3D11Texture1D* pTexture );
+s32                         vram_Register       ( ID3D11Texture2D* pTexture );
 s32                         vram_Register       ( ID3D11Texture3D* pTexture );
 s32                         vram_Register       ( const xbitmap* pBitmaps, s32 nBitmaps );
 
 ID3D11ShaderResourceView*   vram_GetSRV         ( const xbitmap& Bitmap    );
 ID3D11ShaderResourceView*   vram_GetSRV         (       s32      VRAM_ID   );
                                                                            
+ID3D11Texture1D*            vram_GetTexture1D   (       s32      VRAM_ID   );
 ID3D11Texture2D*            vram_GetTexture2D   ( const xbitmap& Bitmap    );
 ID3D11Texture2D*            vram_GetTexture2D   (       s32      VRAM_ID   );
-ID3D11Texture1D*            vram_GetTexture1D   (       s32      VRAM_ID   );
 ID3D11Texture3D*            vram_GetTexture3D   (       s32      VRAM_ID   );
 ID3D11Texture2D*            vram_GetTextureCube (       s32      VRAM_ID   );
                                                                            
