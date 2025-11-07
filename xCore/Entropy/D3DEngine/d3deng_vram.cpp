@@ -104,9 +104,7 @@ s32 GetBlockSize( DXGI_FORMAT Format )
 
 void vram_Init( void )
 {
-    //
     // Initialize the empty list
-    //
     s32 i;
     for( i=0; i<MAX_TEXTURES-1; i++ )
     {
@@ -214,8 +212,10 @@ s32 vram_Register( ID3D11Texture1D* pTexture )
     if( !pTexture || !g_pd3dDevice )
         return 0;
 
+    // Get texture description
     pTexture->GetDesc( &desc );
 
+    // Create shader resource view
     D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc;
     x_memset( &srvDesc, 0, sizeof(srvDesc) );
     u32 mipLevels          = desc.MipLevels ? desc.MipLevels : (u32)-1;
@@ -240,6 +240,7 @@ s32 vram_Register( ID3D11Texture1D* pTexture )
     if( FAILED( Error ) )
         return 0;
 
+    // Add reference to texture since we're storing it
     pTexture->AddRef();
 
     s32 Index = AddNode( pTexture, pSRV, D3D11_RESOURCE_DIMENSION_TEXTURE1D );
@@ -291,8 +292,10 @@ s32 vram_Register( ID3D11Texture3D* pTexture )
     if( !pTexture || !g_pd3dDevice )
         return 0;
 
+    // Get texture description
     pTexture->GetDesc( &desc );
 
+    // Create shader resource view
     D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc;
     x_memset( &srvDesc, 0, sizeof(srvDesc) );
     u32 mipLevels                     = desc.MipLevels ? desc.MipLevels : (u32)-1;
@@ -305,6 +308,7 @@ s32 vram_Register( ID3D11Texture3D* pTexture )
     if( FAILED( Error ) )
         return 0;
 
+    // Add reference to texture since we're storing it
     pTexture->AddRef();
 
     s32 Index = AddNode( pTexture, pSRV, D3D11_RESOURCE_DIMENSION_TEXTURE3D );
@@ -326,15 +330,11 @@ s32 vram_Register( const xbitmap& Bitmap )
     if( !g_pd3dDevice )
         return 0;
 
-    //
     // Get the DX11 format
-    //
     Format = GetDXGIFormat( Bitmap.GetFormat() );
     ASSERT( Format != DXGI_FORMAT_UNKNOWN );
 
-    //
     // Create the texture
-    //
     D3D11_TEXTURE2D_DESC desc;
     x_memset( &desc, 0, sizeof(desc) );
     desc.Width              = Bitmap.GetWidth();
@@ -351,9 +351,7 @@ s32 vram_Register( const xbitmap& Bitmap )
 
     xbool bCompressed = IsCompressedFormat( Format );
 
-    //
     // For compressed formats, don't use mipmaps
-    //
     if( bCompressed )
     {
         desc.MipLevels = 1;
@@ -367,9 +365,7 @@ s32 vram_Register( const xbitmap& Bitmap )
         return 0;
     }
 
-    //
     // Create shader resource view
-    //
     D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc;
     x_memset( &srvDesc, 0, sizeof(srvDesc) );
     srvDesc.Format                    = Format;
@@ -384,9 +380,7 @@ s32 vram_Register( const xbitmap& Bitmap )
         return 0;
     }
 
-    //
     // Copy texture data safely
-    //
     {
         char* pSrcData;   
         s32   BitmapPitch;
@@ -416,17 +410,13 @@ s32 vram_Register( const xbitmap& Bitmap )
         }
     }
 
-    //
     // Create the mipmaps
-    //
     if( desc.MiscFlags & D3D11_RESOURCE_MISC_GENERATE_MIPS )
     {
         g_pd3dContext->GenerateMips( pSRV );
     }
 
-    //
     // Add texture in the list
-    //
     s32 Index = AddNode( pTexture, pSRV, D3D11_RESOURCE_DIMENSION_TEXTURE2D );
     Bitmap.SetVRAMID( Index );
     return Index;
@@ -703,6 +693,7 @@ ID3D11ShaderResourceView* vram_GetSRV( const xbitmap& Bitmap )
 
 ID3D11Texture1D* vram_GetTexture1D( s32 VRAM_ID )
 {
+    // Note: VRAM_ID == 0 means bitmap not registered!	
     ASSERT( VRAM_ID > 0 );
     ASSERT( VRAM_ID < MAX_TEXTURES );
     ASSERT( s_List[ VRAM_ID ].pResource != NULL );
@@ -735,6 +726,7 @@ ID3D11Texture2D* vram_GetTexture2D( const xbitmap& Bitmap )
 
 ID3D11Texture3D* vram_GetTexture3D( s32 VRAM_ID )
 {
+    // Note: VRAM_ID == 0 means bitmap not registered!	
     ASSERT( VRAM_ID > 0 );
     ASSERT( VRAM_ID < MAX_TEXTURES );
     ASSERT( s_List[ VRAM_ID ].pResource != NULL );
@@ -747,6 +739,7 @@ ID3D11Texture3D* vram_GetTexture3D( s32 VRAM_ID )
 
 ID3D11Texture2D* vram_GetTextureCube( s32 VRAM_ID )
 {
+    // Note: VRAM_ID == 0 means bitmap not registered!	
     ASSERT( VRAM_ID > 0 );
     ASSERT( VRAM_ID < MAX_TEXTURES );
     ASSERT( s_List[ VRAM_ID ].pResource != NULL );
