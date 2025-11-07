@@ -66,10 +66,10 @@ static struct texture_loader : public rsc_loader
         texture* pTexture = (texture*)pData;
     
         s32 vramID = vram_Register( pTexture->m_Bitmap );
-	#ifdef texdebug
+    #ifdef texdebug
         x_DebugMsg( "texture_loader::Resolve: Registered bitmap %dx%d, VRAM_ID = %d\n", 
                     pTexture->m_Bitmap.GetWidth(), pTexture->m_Bitmap.GetHeight(), vramID );
-	#endif			
+    #endif            
     
     #ifdef texdebug
         if( g_OutputTGA == TRUE )
@@ -90,11 +90,11 @@ static struct texture_loader : public rsc_loader
         s_TextureMem -= pTexture->m_Bitmap.GetDataSize();
         s_nTexture--;
     
-	#ifdef texdebug
+    #ifdef texdebug
         x_DebugMsg( "texture_loader::Unload: Unregistering bitmap %dx%d, VRAM_ID = %d\n", 
                     pTexture->m_Bitmap.GetWidth(), pTexture->m_Bitmap.GetHeight(), 
                     pTexture->m_Bitmap.GetVRAMID() );
-	#endif				
+    #endif                
     
         vram_Unregister( pTexture->m_Bitmap );
     
@@ -133,7 +133,7 @@ static struct cubemap_loader : public rsc_loader
         cubemap* pCubemap = (cubemap*)pData;
 
     #ifdef TARGET_PC
-        s32 vramID = vram_RegisterCubemap( pCubemap->m_Bitmap, 6 );
+        s32 vramID = vram_Register( pCubemap->m_Bitmap, 6 );
         if( vramID == 0 )
         {
             x_DebugMsg( "cubemap_loader::Resolve: Failed to register cubemap\n" );

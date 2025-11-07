@@ -56,14 +56,19 @@ void        vram_Kill           ( void );
 
 s32                         vram_LoadTexture    ( const char*    pFileName  );
 s32                         vram_Register       ( ID3D11Texture2D* pTexture );
-s32                         vram_RegisterCubemap( const xbitmap* pBitmaps, s32 nBitmaps );
+s32                         vram_Register       ( ID3D11Texture1D* pTexture );
+s32                         vram_Register       ( ID3D11Texture3D* pTexture );
+s32                         vram_Register       ( const xbitmap* pBitmaps, s32 nBitmaps );
 
 ID3D11ShaderResourceView*   vram_GetSRV         ( const xbitmap& Bitmap    );
 ID3D11ShaderResourceView*   vram_GetSRV         (       s32      VRAM_ID   );
-																		   
+                                                                           
 ID3D11Texture2D*            vram_GetTexture2D   ( const xbitmap& Bitmap    );
 ID3D11Texture2D*            vram_GetTexture2D   (       s32      VRAM_ID   );
-																		   
+ID3D11Texture1D*            vram_GetTexture1D   (       s32      VRAM_ID   );
+ID3D11Texture3D*            vram_GetTexture3D   (       s32      VRAM_ID   );
+ID3D11Texture2D*            vram_GetTextureCube (       s32      VRAM_ID   );
+                                                                           
 ID3D11UnorderedAccessView*  vram_GetUAV         ( s32 VRAM_ID              );
 
 // Register bitmap as a dudv bump map (bitmap should be grey scale height)

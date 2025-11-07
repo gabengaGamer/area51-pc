@@ -32,8 +32,9 @@
 
 struct d3d_tex_node
 {
-    ID3D11Texture2D*           pTexture;
+    ID3D11Resource*            pResource;
     ID3D11ShaderResourceView*  pSRV;
+    D3D11_RESOURCE_DIMENSION   Dimension;
     s32                        iNext;
 };
 
@@ -106,17 +107,19 @@ void vram_Init( void )
     //
     // Initialize the empty list
     //
-	s32 i;
+    s32 i;
     for( i=0; i<MAX_TEXTURES-1; i++ )
     {
-        s_List[i].iNext    = i+1;
-		s_List[i].pTexture = 0;
-        s_List[i].pSRV     = 0;  
+        s_List[i].iNext       = i+1;
+        s_List[i].pResource   = 0;
+        s_List[i].pSRV        = 0;
+        s_List[i].Dimension   = D3D11_RESOURCE_DIMENSION_UNKNOWN;
     }
-    s_List[i].iNext    = 0;    // Zero is the universal NULL
-	s_List[i].pTexture = 0;
-    s_List[i].pSRV     = 0;    
-    s_iEmpty           = 1;    // Leave empty the node 0
+    s_List[i].iNext       = 0;    // Zero is the universal NULL
+    s_List[i].pResource   = 0;
+    s_List[i].pSRV        = 0;
+    s_List[i].Dimension   = D3D11_RESOURCE_DIMENSION_UNKNOWN;
+    s_iEmpty              = 1;    // Leave empty the node 0
 }
 
 //=============================================================================
@@ -125,19 +128,20 @@ void vram_Kill( void )
 {
     for( s32 i=0; i<MAX_TEXTURES; i++ )
     {
-        if( s_List[i].pTexture != 0 )
+        if( s_List[i].pResource != 0 )
         {
-            if( s_List[i].pSRV )     s_List[i].pSRV->Release();
-            if( s_List[i].pTexture ) s_List[i].pTexture->Release();
-            s_List[i].pTexture = 0;
-            s_List[i].pSRV     = 0;
+            if( s_List[i].pSRV )      s_List[i].pSRV->Release();
+            if( s_List[i].pResource ) s_List[i].pResource->Release();
+            s_List[i].pResource = 0;
+            s_List[i].pSRV      = 0;
+            s_List[i].Dimension = D3D11_RESOURCE_DIMENSION_UNKNOWN;
         }
     }
 }
 
 //=============================================================================
 
-static s32 AddNode( ID3D11Texture2D* pTexture, ID3D11ShaderResourceView* pSRV )
+static s32 AddNode( ID3D11Resource* pResource, ID3D11ShaderResourceView* pSRV, D3D11_RESOURCE_DIMENSION Dimension )
 {
     s32 NewID;
 
@@ -149,9 +153,10 @@ static s32 AddNode( ID3D11Texture2D* pTexture, ID3D11ShaderResourceView* pSRV )
     ASSERT( NewID > 0 );
     ASSERT( NewID < MAX_TEXTURES );
 
-    s_List[ NewID ].pTexture = pTexture;
-    s_List[ NewID ].pSRV     = pSRV;
-    s_List[ NewID ].iNext    = 0;
+    s_List[ NewID ].pResource = pResource;
+    s_List[ NewID ].pSRV      = pSRV;
+    s_List[ NewID ].Dimension = Dimension;
+    s_List[ NewID ].iNext     = 0;
 
     return NewID;
 }
@@ -160,7 +165,7 @@ static s32 AddNode( ID3D11Texture2D* pTexture, ID3D11ShaderResourceView* pSRV )
 
 s32 vram_LoadTexture( const char* pFileName )
 {
-	// TODO: GS: Implement this.
+    // TODO: GS: Implement this.
     return 0;
 }
 
@@ -187,8 +192,8 @@ void vram_Activate( s32 VRAM_ID )
     ASSERT( VRAM_ID > 0 );              
     ASSERT( VRAM_ID < MAX_TEXTURES );
     ASSERT( eng_InBeginEnd() );
-	ASSERT( s_List[ VRAM_ID ].pTexture != NULL );
-	ASSERT( s_List[ VRAM_ID ].pSRV != NULL );
+    ASSERT( s_List[ VRAM_ID ].pResource != NULL );
+    ASSERT( s_List[ VRAM_ID ].pSRV != NULL );
 
     s_LastActiveID = VRAM_ID;
     
@@ -196,6 +201,49 @@ void vram_Activate( s32 VRAM_ID )
     {
         g_pd3dContext->PSSetShaderResources( 0, 1, &s_List[ VRAM_ID ].pSRV );
     }
+}
+
+//=============================================================================
+
+s32 vram_Register( ID3D11Texture1D* pTexture )
+{
+    ID3D11ShaderResourceView* pSRV = NULL;
+    HRESULT                   Error;
+    D3D11_TEXTURE1D_DESC      desc;
+
+    if( !pTexture || !g_pd3dDevice )
+        return 0;
+
+    pTexture->GetDesc( &desc );
+
+    D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc;
+    x_memset( &srvDesc, 0, sizeof(srvDesc) );
+    u32 mipLevels          = desc.MipLevels ? desc.MipLevels : (u32)-1;
+    srvDesc.Format        = desc.Format;
+    srvDesc.ViewDimension = (desc.ArraySize > 1) ? D3D11_SRV_DIMENSION_TEXTURE1DARRAY
+                                                 : D3D11_SRV_DIMENSION_TEXTURE1D;
+
+    if( desc.ArraySize > 1 )
+    {
+        srvDesc.Texture1DArray.MipLevels        = mipLevels;
+        srvDesc.Texture1DArray.MostDetailedMip  = 0;
+        srvDesc.Texture1DArray.FirstArraySlice  = 0;
+        srvDesc.Texture1DArray.ArraySize        = desc.ArraySize;
+    }
+    else
+    {
+        srvDesc.Texture1D.MipLevels       = mipLevels;
+        srvDesc.Texture1D.MostDetailedMip = 0;
+    }
+
+    Error = g_pd3dDevice->CreateShaderResourceView( pTexture, &srvDesc, &pSRV );
+    if( FAILED( Error ) )
+        return 0;
+
+    pTexture->AddRef();
+
+    s32 Index = AddNode( pTexture, pSRV, D3D11_RESOURCE_DIMENSION_TEXTURE1D );
+    return Index;
 }
 
 //=============================================================================
@@ -215,9 +263,10 @@ s32 vram_Register( ID3D11Texture2D* pTexture )
     // Create shader resource view
     D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc;
     x_memset( &srvDesc, 0, sizeof(srvDesc) );
+    u32 mipLevels                     = desc.MipLevels ? desc.MipLevels : (u32)-1;
     srvDesc.Format                    = desc.Format;
     srvDesc.ViewDimension             = D3D11_SRV_DIMENSION_TEXTURE2D;
-    srvDesc.Texture2D.MipLevels       = desc.MipLevels;
+    srvDesc.Texture2D.MipLevels       = mipLevels;
     srvDesc.Texture2D.MostDetailedMip = 0;
 
     Error = g_pd3dDevice->CreateShaderResourceView( pTexture, &srvDesc, &pSRV );
@@ -227,7 +276,38 @@ s32 vram_Register( ID3D11Texture2D* pTexture )
     // Add reference to texture since we're storing it
     pTexture->AddRef();
 
-    s32 Index = AddNode( pTexture, pSRV );
+    s32 Index = AddNode( pTexture, pSRV, D3D11_RESOURCE_DIMENSION_TEXTURE2D );
+    return Index;
+}
+
+//=============================================================================
+
+s32 vram_Register( ID3D11Texture3D* pTexture )
+{
+    ID3D11ShaderResourceView* pSRV = NULL;
+    HRESULT                   Error;
+    D3D11_TEXTURE3D_DESC      desc;
+
+    if( !pTexture || !g_pd3dDevice )
+        return 0;
+
+    pTexture->GetDesc( &desc );
+
+    D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc;
+    x_memset( &srvDesc, 0, sizeof(srvDesc) );
+    u32 mipLevels                     = desc.MipLevels ? desc.MipLevels : (u32)-1;
+    srvDesc.Format                    = desc.Format;
+    srvDesc.ViewDimension             = D3D11_SRV_DIMENSION_TEXTURE3D;
+    srvDesc.Texture3D.MipLevels       = mipLevels;
+    srvDesc.Texture3D.MostDetailedMip = 0;
+
+    Error = g_pd3dDevice->CreateShaderResourceView( pTexture, &srvDesc, &pSRV );
+    if( FAILED( Error ) )
+        return 0;
+
+    pTexture->AddRef();
+
+    s32 Index = AddNode( pTexture, pSRV, D3D11_RESOURCE_DIMENSION_TEXTURE3D );
     return Index;
 }
 
@@ -347,14 +427,14 @@ s32 vram_Register( const xbitmap& Bitmap )
     //
     // Add texture in the list
     //
-    s32 Index = AddNode( pTexture, pSRV );
+    s32 Index = AddNode( pTexture, pSRV, D3D11_RESOURCE_DIMENSION_TEXTURE2D );
     Bitmap.SetVRAMID( Index );
     return Index;
 }
 
 //=============================================================================
 
-s32 vram_RegisterCubemap( const xbitmap* pBitmaps, s32 nBitmaps )
+s32 vram_Register( const xbitmap* pBitmaps, s32 nBitmaps )
 {
     if( !pBitmaps || (nBitmaps != 6) )
     {
@@ -479,7 +559,7 @@ s32 vram_RegisterCubemap( const xbitmap* pBitmaps, s32 nBitmaps )
         g_pd3dContext->GenerateMips( pSRV );
     }
 
-    s32 Index = AddNode( pTexture, pSRV );
+    s32 Index = AddNode( pTexture, pSRV, D3D11_RESOURCE_DIMENSION_TEXTURE2D );
     return Index;
 }
 
@@ -509,13 +589,14 @@ void vram_Unregister( s32 VRAM_ID )
 
     if( VRAM_ID == s_LastActiveID ) s_LastActiveID = 0;
 
-    if( s_List[ VRAM_ID ].pSRV )     s_List[ VRAM_ID ].pSRV->Release();
-    if( s_List[ VRAM_ID ].pTexture ) s_List[ VRAM_ID ].pTexture->Release();
+    if( s_List[ VRAM_ID ].pSRV )      s_List[ VRAM_ID ].pSRV->Release();
+    if( s_List[ VRAM_ID ].pResource ) s_List[ VRAM_ID ].pResource->Release();
 
-    s_List[ VRAM_ID ].pTexture = NULL;
-    s_List[ VRAM_ID ].pSRV = NULL;    
-    s_List[ VRAM_ID ].iNext = s_iEmpty;
-    s_iEmpty = VRAM_ID;
+    s_List[ VRAM_ID ].pResource = NULL;
+    s_List[ VRAM_ID ].pSRV      = NULL;
+    s_List[ VRAM_ID ].Dimension = D3D11_RESOURCE_DIMENSION_UNKNOWN;
+    s_List[ VRAM_ID ].iNext     = s_iEmpty;
+    s_iEmpty                    = VRAM_ID;
 }
 
 //=============================================================================
@@ -556,7 +637,7 @@ s32 vram_GetNRegistered( void )
 
     for( s32 i=0; i<MAX_TEXTURES; i++ )
     {
-        if( s_List[i].pTexture != NULL )
+        if( s_List[i].pResource != NULL )
         {
             nRegister++;
         }
@@ -573,7 +654,7 @@ s32 vram_GetRegistered( s32 ID )
 
     for( s32 i=0; i<MAX_TEXTURES; i++ )
     {
-        if( s_List[i].pTexture != NULL )
+        if( s_List[i].pResource != NULL )
         {
             nRegister++;
             if( nRegister == ID ) return i;
@@ -588,7 +669,7 @@ s32 vram_GetRegistered( s32 ID )
 
 void vram_PrintStats( void )
 {
-	//TODO: GS: To make this work, need to implement new functionality, I'm too lazy.
+    //TODO: GS: To make this work, need to implement new functionality, I'm too lazy.
     x_printfxy( 0,  6, "Free Vmem:   N/A (DX11)" );
     x_printfxy( 0,  7, "NTextures:   %d", vram_GetNRegistered() );
 }
@@ -606,16 +687,28 @@ ID3D11ShaderResourceView* vram_GetSRV( s32 VRAM_ID )
     // Note: VRAM_ID == 0 means bitmap not registered!
     ASSERT( VRAM_ID > 0 );
     ASSERT( VRAM_ID < MAX_TEXTURES );
-    ASSERT( s_List[ VRAM_ID ].pTexture != NULL );
+    ASSERT( s_List[ VRAM_ID ].pResource != NULL );
 
     return s_List[ VRAM_ID ].pSRV;
 }
 
 //=============================================================================
 
-ID3D11ShaderResourceView* vram_GetSRV( const xbitmap& Bitmap ) 
+ID3D11ShaderResourceView* vram_GetSRV( const xbitmap& Bitmap )
 {
     return vram_GetSRV( Bitmap.GetVRAMID() );
+}
+
+//=============================================================================
+
+ID3D11Texture1D* vram_GetTexture1D( s32 VRAM_ID )
+{
+    ASSERT( VRAM_ID > 0 );
+    ASSERT( VRAM_ID < MAX_TEXTURES );
+    ASSERT( s_List[ VRAM_ID ].pResource != NULL );
+    ASSERT( s_List[ VRAM_ID ].Dimension == D3D11_RESOURCE_DIMENSION_TEXTURE1D );
+
+    return static_cast<ID3D11Texture1D*>( s_List[ VRAM_ID ].pResource );
 }
 
 //=============================================================================
@@ -625,16 +718,49 @@ ID3D11Texture2D* vram_GetTexture2D( s32 VRAM_ID )
     // Note: VRAM_ID == 0 means bitmap not registered!
     ASSERT( VRAM_ID > 0 );
     ASSERT( VRAM_ID < MAX_TEXTURES );
-    ASSERT( s_List[ VRAM_ID ].pTexture != NULL );
+    ASSERT( s_List[ VRAM_ID ].pResource != NULL );
+    ASSERT( s_List[ VRAM_ID ].Dimension == D3D11_RESOURCE_DIMENSION_TEXTURE2D );
 
-    return s_List[ VRAM_ID ].pTexture;
+    return static_cast<ID3D11Texture2D*>( s_List[ VRAM_ID ].pResource );
 }
 
 //=============================================================================
 
-ID3D11Texture2D* vram_GetTexture2D( const xbitmap& Bitmap ) 
+ID3D11Texture2D* vram_GetTexture2D( const xbitmap& Bitmap )
 {
     return vram_GetTexture2D( Bitmap.GetVRAMID() );
+}
+
+//=============================================================================
+
+ID3D11Texture3D* vram_GetTexture3D( s32 VRAM_ID )
+{
+    ASSERT( VRAM_ID > 0 );
+    ASSERT( VRAM_ID < MAX_TEXTURES );
+    ASSERT( s_List[ VRAM_ID ].pResource != NULL );
+    ASSERT( s_List[ VRAM_ID ].Dimension == D3D11_RESOURCE_DIMENSION_TEXTURE3D );
+
+    return static_cast<ID3D11Texture3D*>( s_List[ VRAM_ID ].pResource );
+}
+
+//=============================================================================
+
+ID3D11Texture2D* vram_GetTextureCube( s32 VRAM_ID )
+{
+    ASSERT( VRAM_ID > 0 );
+    ASSERT( VRAM_ID < MAX_TEXTURES );
+    ASSERT( s_List[ VRAM_ID ].pResource != NULL );
+    ASSERT( s_List[ VRAM_ID ].Dimension == D3D11_RESOURCE_DIMENSION_TEXTURE2D );
+
+    ID3D11Texture2D* pTexture = static_cast<ID3D11Texture2D*>( s_List[ VRAM_ID ].pResource );
+
+#if defined( X_DEBUG )
+    D3D11_TEXTURE2D_DESC desc;
+    pTexture->GetDesc( &desc );
+    ASSERT( desc.MiscFlags & D3D11_RESOURCE_MISC_TEXTURECUBE );
+#endif
+
+    return pTexture;
 }
 
 //=============================================================================
