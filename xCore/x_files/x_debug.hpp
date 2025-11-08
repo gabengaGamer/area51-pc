@@ -30,6 +30,15 @@
 #endif
 
 //==============================================================================
+//  RTF Declaration
+//==============================================================================
+
+xbool RTFHandler( const char* pFileName,
+                  s32         LineNumber,
+                  const char* pExprString,
+                  const char* pMessageString );
+
+//==============================================================================
 //  Debugger Message
 //==============================================================================
 //
@@ -67,7 +76,6 @@ const char* x_DebugGetVersionString( void );
 
 void                x_DebugSetCrashFunction( x_debug_crash_fn* pCallbackFn );
 x_debug_crash_fn*   x_DebugGetCrashFunction( void );
-
 
 //==============================================================================
 //  The BREAK macro.
