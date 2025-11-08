@@ -49,8 +49,6 @@ public:
 
 private:
         struct      mp3_decoder_state;
-		
-private:
         static s32  mp3_fetch_data              ( audio_stream*       pStream,
                                                   void*               pBuffer,
                                                   s32                 nBytes,
@@ -64,7 +62,6 @@ private:
         static s32  mp3_state_decode_frame      ( audio_stream*       pStream,
                                                   mp3_decoder_state&  State );
         static xbool IsValidStream              ( const audio_stream* pStream );
-
         static xbool s_Initialized;
 };
 
