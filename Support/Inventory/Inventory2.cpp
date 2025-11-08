@@ -38,7 +38,7 @@ static table_entry s_Table[] =
     // Weapons                                                
     { INVEN_WEAPON_SCANNER,         "Weapon Scanner",        "INVEN_WEAPON_SCANNER",        0.0f,   1.0f, PRELOAD_FILE( "WPN_EGL_Pickup.rigidgeom" ) },
     { INVEN_WEAPON_DESERT_EAGLE,    "Weapon Desert Eagle",   "INVEN_WEAPON_DESERT_EAGLE",   0.0f,   1.0f, PRELOAD_FILE( "WPN_EGL_Pickup.rigidgeom" ) },
-    { INVEN_WEAPON_DUAL_EAGLE,      "Weapon Dual Eagle",     "INVEN_WEAPON_DUAL_EAGLE",     0.0f,   1.0f, NULL },// KSS -- FIXME -- need rigid
+    { INVEN_WEAPON_DUAL_EAGLE,      "Weapon Dual Eagle",     "INVEN_WEAPON_DUAL_EAGLE",     0.0f,   1.0f, NULL },
     { INVEN_WEAPON_SMP,             "Weapon SMP",            "INVEN_WEAPON_SMP",            0.0f,   1.0f, PRELOAD_FILE( "WPN_SMP_Pickup.rigidgeom" ) },
     { INVEN_WEAPON_DUAL_SMP,        "Weapon Dual SMP",       "INVEN_WEAPON_DUAL_SMP",       0.0f,   1.0f, NULL },    
     { INVEN_WEAPON_SHOTGUN,         "Weapon Shotgun",        "INVEN_WEAPON_SHOTGUN",        0.0f,   1.0f, PRELOAD_FILE( "WPN_SHT_Pickup.rigidgeom" ) },
@@ -316,6 +316,9 @@ const char* inventory2::ItemToBlueprintName( inven_item Item )
     case INVEN_WEAPON_DUAL_SHT:
         pBlueprintName = "C:\\GameData\\A51\\Source\\Themes\\Weapons\\Blueprint\\WPN_Dual_SHT.bpx";
         break;
+    //case INVEN_WEAPON_DUAL_EAGLE:
+    //    pBlueprintName = "C:\\GameData\\A51\\Source\\Themes\\Weapons\\Blueprint\\WPN_Dual_EAGLE.bpx";
+    //    break;		
     case INVEN_WEAPON_MUTATION:
         pBlueprintName = "C:\\GameData\\A51\\Source\\Themes\\Weapons\\Blueprint\\WPN_Mutation.bpx";
         break;

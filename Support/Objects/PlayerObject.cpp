@@ -7434,13 +7434,12 @@ void player::TakePickup( pickup& Pickup )
         {
             Item = INVEN_WEAPON_DUAL_SHT;
         }
-        /*** Uncomment this code to support dual desert eagles. 
+		else
         if( (Item == INVEN_WEAPON_DESERT_EAGLE) &&
-            (m_Inventory2.GetAmount( Item ) == 1.0f) )
+                (m_Inventory2.GetAmount( Item ) == 1.0f) )
         {
             Item = INVEN_WEAPON_DUAL_EAGLE;
         }
-        ***/
 
         xbool bFirstTimePickedup = FALSE;
         
@@ -7453,7 +7452,7 @@ void player::TakePickup( pickup& Pickup )
             m_Inventory2.SetAmount( Item, 1.0f );
 
             // set flag for dual weapon
-            xbool bIsDual = (Item == INVEN_WEAPON_DUAL_SMP) || (Item == INVEN_WEAPON_DUAL_SHT ); //|| (Item == INVEN_WEAPON_DUAL_EAGLE );
+            xbool bIsDual = (Item == INVEN_WEAPON_DUAL_SMP) || (Item == INVEN_WEAPON_DUAL_SHT ) || (Item == INVEN_WEAPON_DUAL_EAGLE );
 
             // we currently don't have one of these in our inventory
             if( ShouldSwitchToWeapon2( Item, TRUE ) )

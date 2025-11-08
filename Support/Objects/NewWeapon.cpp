@@ -792,7 +792,7 @@ inven_item new_weapon::GetDualWeaponID( inven_item ParentItem )
     else
     if( ParentItem == INVEN_WEAPON_DESERT_EAGLE )
     {
-        //return INVEN_WEAPON_DUAL_EAGLE;
+        return INVEN_WEAPON_DUAL_EAGLE;
     }
 
     return INVEN_NULL;
@@ -815,7 +815,7 @@ inven_item new_weapon::GetParentIDForDualWeapon( inven_item DualItem )
     else
     if( DualItem == INVEN_WEAPON_DUAL_EAGLE )
     {
-        //return INVEN_WEAPON_DESERT_EAGLE;
+        return INVEN_WEAPON_DESERT_EAGLE;
     }
 
     return INVEN_NULL;

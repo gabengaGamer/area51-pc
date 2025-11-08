@@ -2403,14 +2403,13 @@ xbool player::SetupDualWeaponDiscard( inven_item &WeaponItem )
             }
         }
         break;
-        /*
     case INVEN_WEAPON_DUAL_EAGLE:
         {
             // clear dual
-            m_Inventory2.SetAmount( INVEN_WEAPON_DUAL_SMP, 0.0f );
+            m_Inventory2.SetAmount( INVEN_WEAPON_DUAL_EAGLE, 0.0f );
 
             // Set next weapon to the DE
-            m_CurrentWeaponItem = INVEN_WEAPON_DESERT_EAGLE;
+            WeaponItem = INVEN_WEAPON_DESERT_EAGLE;
 
             new_weapon* pWeapon = GetWeaponPtr( WeaponItem );
 
@@ -2421,7 +2420,6 @@ xbool player::SetupDualWeaponDiscard( inven_item &WeaponItem )
             }
         }
         break;
-        */
     default:
         {
             // no dual discard
@@ -2495,6 +2493,7 @@ s32 player::GetAmmoFromWeaponType(inven_item Item)
         }
         break;
     default:
+	//case INVEN_WEAPON_DUAL_EAGLE:
     case INVEN_WEAPON_DUAL_SMP:
     case INVEN_WEAPON_DUAL_SHT:
         //case INVEN_WEAPON_MESON_CANNON: // don't do anything for meson cannon?
