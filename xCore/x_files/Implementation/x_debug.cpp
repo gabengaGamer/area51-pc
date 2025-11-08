@@ -222,38 +222,38 @@ s32 RTFDialog( const char* pTitle, const char* pMessage )
     s32 ID = 1;
 
     // Add buttons
-    for( s32 i=0 ; i<5 ; i++ )
-    {
-        xwstring Name;
-        
-        // Align to DWORD boundry
-        while( (b.GetLength() & 3) != 0 )
-            b.Append( (byte)0 );
-
-        // Get name of button
-        switch( i )
-        {
-        case 0: Name = xstring("Break"); break;
-        case 1: Name = xstring("Continue"); break;
-        case 2: Name = xstring("Ignore"); break;
-        case 3: Name = xstring("Ignore All"); break;
-        case 4: Name = xstring("Email..."); break;
-        }
-        /* helpID */    b << (u32)0;
-        /* exStyle */   b << (u32)0;
-        /* style */     b << (u32)( WS_CHILD | WS_VISIBLE | WS_TABSTOP | ((i==4)?WS_DISABLED:0) | ((i==0)?BS_DEFPUSHBUTTON:0) );
-        /* x */         b << (u16)(RTF_DLG_S + (RTF_DLG_BW + RTF_DLG_S)*i);
-        /* y */         b << (u16)(RTF_DLG_H - RTF_DLG_S - RTF_DLG_BH);
-        /* cx */        b << (u16)RTF_DLG_BW;
-        /* cy */        b << (u16)RTF_DLG_BH;
-        /* id */        b << (u32)ID++;
-                        xwstring ClassName = xstring("BUTTON");
-        /* class */     b.Append( (const byte*)(const xwchar*)ClassName, ClassName.GetLength()*2+2 );
-        /* class */     //b << (u16)0xffff;
-        /* class */     //b << (u16)0x080;
-        /* title */     b.Append( (const byte*)(const xwchar*)Name, Name.GetLength()*2+2 );
-        /* create */    b << (u16)0;
-    }
+    //for( s32 i=0 ; i<5 ; i++ )
+    //{
+    //    xwstring Name;
+    //    
+    //    // Align to DWORD boundry
+    //    while( (b.GetLength() & 3) != 0 )
+    //        b.Append( (byte)0 );
+	//
+    //    // Get name of button
+    //    switch( i )
+    //    {
+    //    case 0: Name = xstring("Break"); break;
+    //    case 1: Name = xstring("Continue"); break;
+    //    case 2: Name = xstring("Ignore"); break;
+    //    case 3: Name = xstring("Ignore All"); break;
+    //    case 4: Name = xstring("Email..."); break;
+    //    }
+    //    /* helpID */    b << (u32)0;
+    //    /* exStyle */   b << (u32)0;
+    //    /* style */     b << (u32)( WS_CHILD | WS_VISIBLE | WS_TABSTOP | ((i==4)?WS_DISABLED:0) | ((i==0)?BS_DEFPUSHBUTTON:0) );
+    //    /* x */         b << (u16)(RTF_DLG_S + (RTF_DLG_BW + RTF_DLG_S)*i);
+    //    /* y */         b << (u16)(RTF_DLG_H - RTF_DLG_S - RTF_DLG_BH);
+    //    /* cx */        b << (u16)RTF_DLG_BW;
+    //    /* cy */        b << (u16)RTF_DLG_BH;
+    //    /* id */        b << (u32)ID++;
+    //                    xwstring ClassName = xstring("BUTTON");
+    //    /* class */     b.Append( (const byte*)(const xwchar*)ClassName, ClassName.GetLength()*2+2 );
+    //    /* class */     //b << (u16)0xffff;
+    //    /* class */     //b << (u16)0x080;
+    //    /* title */     b.Append( (const byte*)(const xwchar*)Name, Name.GetLength()*2+2 );
+    //    /* create */    b << (u16)0;
+    //}
 
     // Align to DWORD boundry
     while( (b.GetLength() & 3) != 0 )
