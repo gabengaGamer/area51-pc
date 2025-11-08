@@ -56,11 +56,11 @@
     #define WIN32_LEAN_AND_MEAN
     #endif
     
-    #ifndef WIN64
-    #define POINTER_64
-    #else
-    #define POINTER_64 __ptr64
-    #endif
+    //#ifndef WIN64
+    //#define POINTER_64
+    //#else
+    //#define POINTER_64 __ptr64
+    //#endif
     
     #include <windows.h>
 #endif

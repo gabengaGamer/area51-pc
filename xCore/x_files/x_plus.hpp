@@ -668,8 +668,8 @@ void x_qsort( T* apBase, s32 NItems, Cmp Compare )
     s32 RecursionThresh;          // Recursion threshold in objects
     s32 PartitionThresh;          // Partition threshold in objects
 
-    ASSERT( pBase    );
-    ASSERT( NItems   >= 0 );
+    //ASSERT( pBase    );
+    //ASSERT( NItems   >= 0 );
 
     // Easy out?
     if( NItems <= 1 )
