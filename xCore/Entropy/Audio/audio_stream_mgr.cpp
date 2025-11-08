@@ -386,11 +386,6 @@ xbool audio_stream_mgr::WarmStream( audio_stream* pStream, io_request::callback_
         pStream->WaveformCursor  = 0;
         pStream->ARAMWriteBuffer = 0;
 
-        if( pStream->CompressionType == MP3 )
-        {
-            g_AudioMP3Mgr.ResetStreamBuffer( pStream );
-        }
-
         // Check the callback
         if( pCallback == NULL )
         {

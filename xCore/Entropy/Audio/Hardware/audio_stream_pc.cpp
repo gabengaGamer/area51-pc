@@ -6,7 +6,6 @@
 
 #include "audio_hardware.hpp"
 #include "audio_stream_mgr.hpp"
-#include "audio_mp3_mgr.hpp"
 #include "e_Virtual.hpp"
 
 //------------------------------------------------------------------------------
@@ -34,7 +33,6 @@ void audio_stream_read_callback( io_request* pRequest, audio_stream* pStream, s3
 					x_memcpy( (void*)pStream->MainRAM[pStream->ARAMWriteBuffer],
 						      (void*)g_AudioStreamMgr.m_ReadBuffers[ReadBufferIndex],
 							  MP3_BUFFER_SIZE );
-					g_AudioMP3Mgr.NotifyStreamData( pStream, pRequest->GetLength() );		  
 					break;
 			}
             break;
@@ -60,7 +58,6 @@ void audio_stream_read_callback( io_request* pRequest, audio_stream* pStream, s3
 					x_memcpy( (void*)pStream->MainRAM[pStream->ARAMWriteBuffer],
 						      (void*)g_AudioStreamMgr.m_ReadBuffers[ReadBufferIndex],
 							  MP3_BUFFER_SIZE );
-					g_AudioMP3Mgr.NotifyStreamData( pStream, pRequest->GetLength() );		  
 					break;
 			}				
             break;
