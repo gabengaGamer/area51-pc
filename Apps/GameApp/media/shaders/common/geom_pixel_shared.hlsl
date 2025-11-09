@@ -260,7 +260,7 @@ GEOM_PIXEL_OUTPUT ShadeGeometryPixel( GEOM_PIXEL_INPUT input )
 
     output.FinalColor = finalColor;
     output.Albedo     = baseColor;
-    output.Normal     = float4( input.Normal * 0.5 + 0.5, 0.0 );
+    output.Normal     = float4( input.ViewNormal * 0.5 + 0.5, 0.0 );
     output.DepthInfo  = input.LinearDepth;
 
     return output;

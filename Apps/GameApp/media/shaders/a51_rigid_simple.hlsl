@@ -39,8 +39,10 @@ GEOM_PIXEL_INPUT VSMain(VS_INPUT input)
 
     // Pass through vertex attributes
     float3 worldNormal = normalize(mul((float3x3)World, input.Normal));
+    float3 viewNormal  = normalize(mul((float3x3)View, worldNormal));
     output.WorldPos    = worldPos.xyz;
     output.Normal      = worldNormal;
+    output.ViewNormal  = viewNormal;
 
     float3 viewVector = worldPos.xyz - CameraPosition.xyz;
     output.ViewVector = viewVector;
@@ -49,7 +51,7 @@ GEOM_PIXEL_INPUT VSMain(VS_INPUT input)
     float nearZ = depthParams.x;
     float farZ  = depthParams.y;
     float invRange = rcp(max(farZ - nearZ, 1e-5f));
-    float linearDepth = (viewPos.z - nearZ) * invRange;
+    float linearDepth = (-viewPos.z - nearZ) * invRange;
     output.LinearDepth = saturate(linearDepth);
     float2 uvAnimOffset = UVAnim.xy;
     output.UV          = input.UV + uvAnimOffset;

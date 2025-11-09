@@ -61,8 +61,10 @@ GEOM_PIXEL_INPUT VSMain(VS_INPUT input)
     output.Pos      = mul(Projection, viewPos);
 
     // Pass through vertex attributes
+    float3 viewNormal  = normalize(mul((float3x3)View, skinnedNorm));
     output.WorldPos    = worldPos.xyz;
     output.Normal      = skinnedNorm;
+    output.ViewNormal  = viewNormal;
 
     float3 viewVector = worldPos.xyz - CameraPosition.xyz;
     output.ViewVector = viewVector;
@@ -71,7 +73,7 @@ GEOM_PIXEL_INPUT VSMain(VS_INPUT input)
     float nearZ = depthParams.x;
     float farZ  = depthParams.y;
     float invRange = rcp(max(farZ - nearZ, 1e-5f));
-    float linearDepth = (viewPos.z - nearZ) * invRange;
+    float linearDepth = (-viewPos.z - nearZ) * invRange;
     output.LinearDepth = saturate(linearDepth);
     float2 uvAnimOffset = UVAnim.xy;
     output.UV          = input.UVWeights.xy + uvAnimOffset;

@@ -33,7 +33,7 @@ enum gbuffer_target
 {
     GBUFFER_FINAL_COLOR  = 0,  // Main backbuffer output
     GBUFFER_ALBEDO,            // RGB: Base color
-    GBUFFER_NORMAL,            // RGB: World Normal
+    GBUFFER_NORMAL,            // RGB: View-space Normal
     GBUFFER_DEPTH_INFO,        // R: Linear Depth
     GBUFFER_GLOW,              // RGB: Emissive color, A: Intensity mask
     GBUFFER_DEPTH,             // Hardware depth buffer
@@ -85,7 +85,7 @@ extern gbuffer_mgr g_GBufferMgr;
 
 #define GBUFFER_FORMAT_FINAL_COLOR  RTARGET_FORMAT_RGBA8
 #define GBUFFER_FORMAT_ALBEDO       RTARGET_FORMAT_RGBA8
-#define GBUFFER_FORMAT_NORMAL       RTARGET_FORMAT_RGBA8
+#define GBUFFER_FORMAT_NORMAL       RTARGET_FORMAT_RGBA16F
 #define GBUFFER_FORMAT_GLOW         RTARGET_FORMAT_RGBA16F
 #define GBUFFER_FORMAT_DEPTH_INFO   RTARGET_FORMAT_R32F
 
