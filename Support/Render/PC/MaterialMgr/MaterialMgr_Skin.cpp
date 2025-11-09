@@ -188,7 +188,7 @@ xbool material_mgr::UpdateSkinConstants( const d3d_lighting* pLighting,
                              0.0f,
                              0.0f );
 
-    const material_constants constants = BuildMaterialFlags( pMaterial, RenderFlags, FALSE, FALSE );
+    const material_constants constants = BuildMaterialFlags( pMaterial, RenderFlags, FALSE );
     skinMatrices.MaterialParams.Set( (f32)constants.Flags,
                                      constants.AlphaRef,
                                      nearZ,

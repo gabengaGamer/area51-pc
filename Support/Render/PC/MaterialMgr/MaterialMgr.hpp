@@ -259,7 +259,6 @@ protected:
                                                  u32            RenderFlags );
     material_constants  BuildMaterialFlags     ( const material* pMaterial,
                                                  u32             RenderFlags,
-                                                 xbool           SupportsDetailMap,
                                                  xbool           IncludeVertexColor ) const;
     cb_lighting         BuildLightingConstants ( const d3d_lighting* pLighting,
                                                  const vector4&      AmbientFloor ) const;

@@ -40,6 +40,7 @@ cbuffer cbBones : register(b2)
 //==============================================================================
 
 Texture2D txDiffuse : register(t0);
+Texture2D txDetail  : register(t1);
 Texture2D txEnvironment : register(t2);
 TextureCube txEnvironmentCube : register(t3);
 Texture2D txProjLight[MAX_PROJ_LIGHTS]   : register(t4);
@@ -141,6 +142,13 @@ PS_OUTPUT PSMain(PS_INPUT input)
     // Sample diffuse texture
     float4 diffuseSample = txDiffuse.Sample(samLinear, input.UV);
     float4 diffuseColor  = diffuseSample;
+
+    // Apply detail texture
+    if (materialFlags & MATERIAL_FLAG_DETAIL)
+    {
+        float4 detailColor = txDetail.Sample(samLinear, input.UV * 4.0);
+        diffuseColor *= detailColor * 2.0;
+    }
 
     // Perform alpha testing
     if (materialFlags & MATERIAL_FLAG_ALPHA_TEST)

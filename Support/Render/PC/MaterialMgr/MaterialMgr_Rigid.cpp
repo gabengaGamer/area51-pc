@@ -193,7 +193,7 @@ xbool material_mgr::UpdateRigidConstants( const matrix4*      pL2W,
                               0.0f,
                               0.0f );
 
-    const material_constants constants = BuildMaterialFlags( pMaterial, RenderFlags, TRUE, TRUE );
+    const material_constants constants = BuildMaterialFlags( pMaterial, RenderFlags, TRUE );
     rigidMatrices.MaterialParams.Set( (f32)constants.Flags,
                                       constants.AlphaRef,
                                       nearZ,

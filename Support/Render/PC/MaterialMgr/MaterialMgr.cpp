@@ -84,7 +84,6 @@ void material_mgr::Kill( void )
 
 material_mgr::material_constants material_mgr::BuildMaterialFlags( const material* pMaterial,
                                                                   u32             RenderFlags,
-                                                                  xbool           SupportsDetailMap,
                                                                   xbool           IncludeVertexColor ) const
 {
     material_constants constants;
@@ -126,7 +125,8 @@ material_mgr::material_constants material_mgr::BuildMaterialFlags( const materia
             break;
     }
 
-    if( SupportsDetailMap && pMaterial->m_DetailMap.GetPointer() )
+    if( pMaterial->m_DetailMap.GetPointer() || 
+	    (geom::material::FLAG_HAS_DETAIL_MAP) )
         constants.Flags |= MATERIAL_FLAG_DETAIL;
 
     if( pMaterial->m_EnvironmentMap.GetPointer() ||
