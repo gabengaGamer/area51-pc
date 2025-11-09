@@ -73,7 +73,7 @@ GEOM_PIXEL_INPUT VSMain(VS_INPUT input)
     float nearZ = depthParams.x;
     float farZ  = depthParams.y;
     float invRange = rcp(max(farZ - nearZ, 1e-5f));
-    float linearDepth = (-viewPos.z - nearZ) * invRange;
+    float linearDepth = (viewPos.z - nearZ) * invRange;
     output.LinearDepth = saturate(linearDepth);
     float2 uvAnimOffset = UVAnim.xy;
     output.UV          = input.UVWeights.xy + uvAnimOffset;
