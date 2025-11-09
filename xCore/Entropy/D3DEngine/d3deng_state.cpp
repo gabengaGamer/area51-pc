@@ -70,17 +70,18 @@ const char* state_GetModeName( state_type Type, s32 Mode )
     {
         case STATE_TYPE_BLEND:
         {
-            static const char* s_BlendModeNames[STATE_BLEND_COUNT] = 
+            static const char* s_BlendModeNames[STATE_BLEND_COUNT] =
             {
-                "NONE", 
-                "ALPHA", 
-                "ADD", 
-                "SUB", 
-                "PREMULT_ALPHA", 
-                "PREMULT_ADD", 
-                "PREMULT_SUB", 
-                "MULTIPLY", 
-                "INTENSITY"
+                "NONE",
+                "ALPHA",
+                "ADD",
+                "SUB",
+                "PREMULT_ALPHA",
+                "PREMULT_ADD",
+                "PREMULT_SUB",
+                "MULTIPLY",
+                "INTENSITY",
+                "COLOR_WRITE_DISABLE"
             };
             ASSERT(Mode >= 0 && Mode < STATE_BLEND_COUNT);
             return (Mode < STATE_BLEND_COUNT) ? s_BlendModeNames[Mode] : "UNKNOWN";
@@ -274,6 +275,20 @@ void state_CreateBlendStates( void )
     bd.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_ADD;
     bd.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
     g_pd3dDevice->CreateBlendState( &bd, &s_pBlendStates[STATE_BLEND_INTENSITY] );
+
+    // Disable color writes while keeping depth active
+    ZeroMemory( &bd, sizeof(bd) );
+    bd.AlphaToCoverageEnable = FALSE;
+    bd.IndependentBlendEnable = FALSE;
+    bd.RenderTarget[0].BlendEnable = FALSE;
+    bd.RenderTarget[0].SrcBlend = D3D11_BLEND_ONE;
+    bd.RenderTarget[0].DestBlend = D3D11_BLEND_ZERO;
+    bd.RenderTarget[0].BlendOp = D3D11_BLEND_OP_ADD;
+    bd.RenderTarget[0].SrcBlendAlpha = D3D11_BLEND_ONE;
+    bd.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_ZERO;
+    bd.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_ADD;
+    bd.RenderTarget[0].RenderTargetWriteMask = 0;
+    g_pd3dDevice->CreateBlendState( &bd, &s_pBlendStates[STATE_BLEND_COLOR_WRITE_DISABLE] );
 
     x_DebugMsg( "RStateMgr: Blend states created successfully\n" );
 }

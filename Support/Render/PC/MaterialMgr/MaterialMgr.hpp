@@ -81,29 +81,22 @@ struct d3d_lighting
 
 //------------------------------------------------------------------------------
 
-struct cb_rigid_matrices
+struct cb_geom_frame
 {
-    matrix4 World;
-    matrix4 View;
-    matrix4 Projection;
+    matrix4 View;              // World to view matrix
+    matrix4 Projection;        // View to clip matrix
 
     vector4 MaterialParams;    // x = flags, y = alpha ref, z = nearZ, w = farZ
-    vector4 CameraPosition;    // xyz = camera position, w = 1
     vector4 UVAnim;            // xy = uv animation offsets
+    vector4 CameraPosition;    // xyz = camera position, w = 1
     vector4 EnvParams;         // x = fixed alpha, y = cubemap intensity, zw = unused
 };
 
 //------------------------------------------------------------------------------
 
-struct cb_skin_matrices
+struct cb_geom_object
 {
-    matrix4 View;                         // World to view matrix
-    matrix4 Projection;                   // View to clip matrix
-
-    vector4 MaterialParams;               // x = flags, y = alpha ref, z = nearZ, w = farZ
-    vector4 UVAnim;                       // xy = uv animation offsets
-    vector4 CameraPosition;               // xyz = camera position, w = 1
-    vector4 EnvParams;                    // x = fixed alpha, y = cubemap intensity, zw = unused
+    matrix4 World;             // Local to world matrix
 };
 
 //------------------------------------------------------------------------------
@@ -272,8 +265,8 @@ protected:
     ID3D11VertexShader*     m_pRigidVertexShader;
     ID3D11PixelShader*      m_pRigidPixelShader;
     ID3D11InputLayout*      m_pRigidInputLayout;
-    ID3D11Buffer*           m_pRigidConstantBuffer;
-    ID3D11Buffer*           m_pSkinLightBuffer;
+    ID3D11Buffer*           m_pRigidFrameBuffer;
+    ID3D11Buffer*           m_pRigidObjectBuffer;
     ID3D11Buffer*           m_pRigidLightBuffer;
 
     // Proj textures resources
@@ -284,8 +277,9 @@ protected:
     ID3D11VertexShader*     m_pSkinVertexShader;
     ID3D11PixelShader*      m_pSkinPixelShader;
     ID3D11InputLayout*      m_pSkinInputLayout;
-    ID3D11Buffer*           m_pSkinVSConstBuffer;
+    ID3D11Buffer*           m_pSkinFrameBuffer;
     ID3D11Buffer*           m_pSkinBoneBuffer;
+    ID3D11Buffer*           m_pSkinLightBuffer;
 
     // Current state tracking for caching
     const xbitmap*          m_pCurrentTexture;
@@ -295,15 +289,17 @@ protected:
     xbool                   m_bZTestEnabled;
 
     // Cached constant buffer data to avoid redundant updates
-    cb_rigid_matrices       m_CachedRigidMatrices;
+    cb_geom_frame           m_CachedRigidFrame;
+    cb_geom_object          m_CachedRigidObject;
     cb_lighting             m_CachedRigidLighting;
-    cb_skin_matrices        m_CachedSkinMatrices;
+    cb_geom_frame           m_CachedSkinFrame;
     cb_lighting             m_CachedSkinLighting;
     u32                     m_LastProjLightCount;
     u32                     m_LastProjShadowCount;
-    xbool                   m_bRigidMatricesDirty;
+    xbool                   m_bRigidFrameDirty;
+    xbool                   m_bRigidObjectDirty;
     xbool                   m_bRigidLightingDirty;
-    xbool                   m_bSkinMatricesDirty;
+    xbool                   m_bSkinFrameDirty;
     xbool                   m_bSkinLightingDirty;
 };
 

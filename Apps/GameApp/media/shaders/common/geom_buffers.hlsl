@@ -2,25 +2,19 @@
 //
 //  geom_buffers.hlsl
 //
-//  Shared constant buffers for lighting and projection textures.
+//  Aggregated include for geometry constant buffers.
 //
 //==============================================================================
 
-cbuffer cbProjTextures : register(b1)
-{
-    float4x4 ProjLightMatrix[MAX_PROJ_LIGHTS];
-    float4x4 ProjShadowMatrix[MAX_PROJ_SHADOWS];
-    uint     ProjLightCount;
-    uint     ProjShadowCount;
-    float    EdgeSize;
-    float3   ProjPadding;
-};
+#ifndef GEOM_BUFFERS_HLSL
+#define GEOM_BUFFERS_HLSL
 
-cbuffer cbLightConsts : register(b2)
-{
-    float4 LightVec[MAX_GEOM_LIGHTS];   // position or direction
-    float4 LightCol[MAX_GEOM_LIGHTS];
-    float4 LightAmbCol;
-    uint   LightCount;
-    float3 LightPadding;
-};
+#include "common/frame_constants.hlsl"
+#include "common/lighting_constants.hlsl"
+#include "common/proj_buffers.hlsl"
+
+#if defined(GEOM_INCLUDE_OBJECT_BUFFER)
+#include "common/object_constants.hlsl"
+#endif
+
+#endif // GEOM_BUFFERS_HLSL

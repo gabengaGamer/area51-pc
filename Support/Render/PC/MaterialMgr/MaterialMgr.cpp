@@ -442,9 +442,10 @@ void material_mgr::InvalidateCache( void )
     m_pCurrentDetailTexture = NULL;
     m_pCurrentEnvironmentTexture = NULL;
     m_pCurrentEnvCubemap = NULL;
-    m_bRigidMatricesDirty = TRUE;
+    m_bRigidFrameDirty   = TRUE;
+    m_bRigidObjectDirty  = TRUE;
     m_bRigidLightingDirty = TRUE;
-    m_bSkinMatricesDirty = TRUE;
+    m_bSkinFrameDirty   = TRUE;
     m_bSkinLightingDirty = TRUE;
 }
 

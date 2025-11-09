@@ -23,13 +23,6 @@
 #include "MaterialMgr.hpp"
 
 //==============================================================================
-//  EXTERNAL VARIABLES
-//==============================================================================
-
-extern ID3D11Device*           g_pd3dDevice;
-extern ID3D11DeviceContext*    g_pd3dContext;
-
-//==============================================================================
 //  FUNCTIONS
 //==============================================================================
 
@@ -41,9 +34,11 @@ xbool material_mgr::InitRigidShaders( void )
     m_pRigidVertexShader    = NULL;
     m_pRigidPixelShader     = NULL;
     m_pRigidInputLayout     = NULL;
-    m_pRigidConstantBuffer  = NULL;
+    m_pRigidFrameBuffer     = NULL;
+    m_pRigidObjectBuffer    = NULL;
     m_pRigidLightBuffer     = NULL;
-    m_bRigidMatricesDirty   = TRUE;
+    m_bRigidFrameDirty      = TRUE;
+    m_bRigidObjectDirty     = TRUE;
     m_bRigidLightingDirty   = TRUE;
 
     D3D11_INPUT_ELEMENT_DESC rigidLayout[] =
@@ -64,9 +59,10 @@ xbool material_mgr::InitRigidShaders( void )
                                                                   "VSMain",
                                                                   "vs_5_0" );
 
-    m_pRigidPixelShader = shader_CompilePixelFromFile( shaderPath, "PSMain", "ps_5_0" );
-    m_pRigidConstantBuffer = shader_CreateConstantBuffer( sizeof(cb_rigid_matrices) );
-    m_pRigidLightBuffer    = shader_CreateConstantBuffer( sizeof(cb_lighting) );
+    m_pRigidPixelShader   = shader_CompilePixelFromFile( shaderPath, "PSMain", "ps_5_0" );
+    m_pRigidFrameBuffer   = shader_CreateConstantBuffer( sizeof(cb_geom_frame) );
+    m_pRigidObjectBuffer  = shader_CreateConstantBuffer( sizeof(cb_geom_object) );
+    m_pRigidLightBuffer   = shader_CreateConstantBuffer( sizeof(cb_lighting) );
 
     x_DebugMsg( "MaterialMgr: Rigid shaders initialized successfully\n" );
     return TRUE;
@@ -94,10 +90,16 @@ void material_mgr::KillRigidShaders( void )
         m_pRigidInputLayout = NULL;
     }
 
-    if( m_pRigidConstantBuffer )
+    if( m_pRigidFrameBuffer )
     {
-        m_pRigidConstantBuffer->Release();
-        m_pRigidConstantBuffer = NULL;
+        m_pRigidFrameBuffer->Release();
+        m_pRigidFrameBuffer = NULL;
+    }
+
+    if( m_pRigidObjectBuffer )
+    {
+        m_pRigidObjectBuffer->Release();
+        m_pRigidObjectBuffer = NULL;
     }
 
     if( m_pRigidLightBuffer )
@@ -139,13 +141,13 @@ void material_mgr::SetRigidMaterial( const matrix4*      pL2W,
     {
         if( !pMaterial || g_ProjTextureMgr.CanReceiveProjTexture( *pMaterial ) )
         {
-            UpdateProjTextures( *pL2W, *pBBox, 1, RenderFlags );
+            UpdateProjTextures( *pL2W, *pBBox, 4, RenderFlags );
         }
         else
         {
             UpdateProjTextures( *pL2W,
                                 *pBBox,
-                                1,
+                                4,
                                 RenderFlags | render::DISABLE_SPOTLIGHT | render::DISABLE_PROJ_SHADOWS );
         }
     }
@@ -160,7 +162,7 @@ xbool material_mgr::UpdateRigidConstants( const matrix4*      pL2W,
                                           u8                  UOffset,
                                           u8                  VOffset )
 {
-    if( !m_pRigidConstantBuffer || !pLighting || !g_pd3dDevice || !g_pd3dContext )
+    if( !m_pRigidFrameBuffer || !m_pRigidObjectBuffer || !pLighting || !g_pd3dDevice || !g_pd3dContext )
         return FALSE;
 
     const view* pView = eng_GetView();
@@ -171,61 +173,86 @@ xbool material_mgr::UpdateRigidConstants( const matrix4*      pL2W,
     f32 farZ  = 0.0f;
     pView->GetZLimits( nearZ, farZ );
 
-    cb_rigid_matrices rigidMatrices;
-    x_memset( &rigidMatrices, 0, sizeof(cb_rigid_matrices) );
+    cb_geom_frame  frameData;
+    cb_geom_object objectData;
+    x_memset( &frameData,  0, sizeof(cb_geom_frame) );
+    x_memset( &objectData, 0, sizeof(cb_geom_object) );
 
     if( pL2W )
-        rigidMatrices.World = *pL2W;
+        objectData.World = *pL2W;
     else
-        rigidMatrices.World.Identity();
+        objectData.World.Identity();
 
-    rigidMatrices.View           = pView->GetW2V();
-    rigidMatrices.Projection     = pView->GetV2C();
+    frameData.View       = pView->GetW2V();
+    frameData.Projection = pView->GetV2C();
     const vector3& camPos = pView->GetPosition();
-    rigidMatrices.CameraPosition.Set( camPos.GetX(),
-                                      camPos.GetY(),
-                                      camPos.GetZ(),
-                                      1.0f );
+    frameData.CameraPosition.Set( camPos.GetX(),
+                                  camPos.GetY(),
+                                  camPos.GetZ(),
+                                  1.0f );
 
     const f32 invByte = 1.0f / 255.0f;
-    rigidMatrices.UVAnim.Set( (f32)UOffset * invByte,
-                              (f32)VOffset * invByte,
-                              0.0f,
-                              0.0f );
+    frameData.UVAnim.Set( (f32)UOffset * invByte,
+                          (f32)VOffset * invByte,
+                          0.0f,
+                          0.0f );
 
     const material_constants constants = BuildMaterialFlags( pMaterial, RenderFlags, TRUE );
-    rigidMatrices.MaterialParams.Set( (f32)constants.Flags,
-                                      constants.AlphaRef,
-                                      nearZ,
-                                      farZ );
+    frameData.MaterialParams.Set( (f32)constants.Flags,
+                                  constants.AlphaRef,
+                                  nearZ,
+                                  farZ );
     f32 fixedAlpha = pMaterial ? pMaterial->m_FixedAlpha : 0.0f;
     const f32 cubeIntensity = ComputeCubeMapIntensity( pMaterial );
-    rigidMatrices.EnvParams.Set( fixedAlpha, cubeIntensity, 0.0f, 0.0f );
+    frameData.EnvParams.Set( fixedAlpha, cubeIntensity, 0.0f, 0.0f );
 
-    const xbool bMatricesChanged = ( m_bRigidMatricesDirty ||
-                                     x_memcmp( &m_CachedRigidMatrices,
-                                               &rigidMatrices,
-                                               sizeof(cb_rigid_matrices) ) != 0 );
+    const xbool bFrameChanged = ( m_bRigidFrameDirty ||
+                                  x_memcmp( &m_CachedRigidFrame,
+                                            &frameData,
+                                            sizeof(cb_geom_frame) ) != 0 );
 
-    if( bMatricesChanged )
+    if( bFrameChanged )
     {
         D3D11_MAPPED_SUBRESOURCE mappedResource;
-        HRESULT hr = g_pd3dContext->Map( m_pRigidConstantBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource );
+        HRESULT hr = g_pd3dContext->Map( m_pRigidFrameBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource );
         if( FAILED(hr) )
         {
-            x_DebugMsg( "MaterialMgr: Failed to map rigid constant buffer, HRESULT 0x%08X\n", hr );
+            x_DebugMsg( "MaterialMgr: Failed to map rigid frame buffer, HRESULT 0x%08X\n", hr );
             return FALSE;
         }
 
-        x_memcpy( mappedResource.pData, &rigidMatrices, sizeof(cb_rigid_matrices) );
-        g_pd3dContext->Unmap( m_pRigidConstantBuffer, 0 );
+        x_memcpy( mappedResource.pData, &frameData, sizeof(cb_geom_frame) );
+        g_pd3dContext->Unmap( m_pRigidFrameBuffer, 0 );
 
-        m_CachedRigidMatrices = rigidMatrices;
-        m_bRigidMatricesDirty = FALSE;
+        m_CachedRigidFrame  = frameData;
+        m_bRigidFrameDirty  = FALSE;
     }
 
-    g_pd3dContext->VSSetConstantBuffers( 0, 1, &m_pRigidConstantBuffer );
-    g_pd3dContext->PSSetConstantBuffers( 0, 1, &m_pRigidConstantBuffer );
+    const xbool bObjectChanged = ( m_bRigidObjectDirty ||
+                                    x_memcmp( &m_CachedRigidObject,
+                                              &objectData,
+                                              sizeof(cb_geom_object) ) != 0 );
+
+    if( bObjectChanged )
+    {
+        D3D11_MAPPED_SUBRESOURCE mappedResource;
+        HRESULT hr = g_pd3dContext->Map( m_pRigidObjectBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource );
+        if( FAILED(hr) )
+        {
+            x_DebugMsg( "MaterialMgr: Failed to map rigid object buffer, HRESULT 0x%08X\n", hr );
+            return FALSE;
+        }
+
+        x_memcpy( mappedResource.pData, &objectData, sizeof(cb_geom_object) );
+        g_pd3dContext->Unmap( m_pRigidObjectBuffer, 0 );
+
+        m_CachedRigidObject  = objectData;
+        m_bRigidObjectDirty  = FALSE;
+    }
+
+    g_pd3dContext->VSSetConstantBuffers( 0, 1, &m_pRigidFrameBuffer );
+    g_pd3dContext->VSSetConstantBuffers( 1, 1, &m_pRigidObjectBuffer );
+    g_pd3dContext->PSSetConstantBuffers( 0, 1, &m_pRigidFrameBuffer );
 
     if( m_pRigidLightBuffer )
     {
@@ -254,7 +281,7 @@ xbool material_mgr::UpdateRigidConstants( const matrix4*      pL2W,
             m_bRigidLightingDirty = FALSE;
         }
 
-        g_pd3dContext->PSSetConstantBuffers( 2, 1, &m_pRigidLightBuffer );
+        g_pd3dContext->PSSetConstantBuffers( 3, 1, &m_pRigidLightBuffer );
     }
 
     return TRUE;
