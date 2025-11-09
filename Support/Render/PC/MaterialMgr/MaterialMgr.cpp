@@ -121,7 +121,7 @@ material_mgr::material_constants material_mgr::BuildMaterialFlags( const materia
     if( pMaterial->m_Flags & geom::material::FLAG_HAS_DETAIL_MAP )
         constants.Flags |= MATERIAL_FLAG_DETAIL;
 
-    if( pMaterial->m_Flags & geom::material::FLAG_HAS_ENV_MAP )
+    //if( pMaterial->m_Flags & geom::material::FLAG_HAS_ENV_MAP )
         constants.Flags |= MATERIAL_FLAG_ENVIRONMENT;
 
     if( pMaterial->m_Flags & geom::material::FLAG_ENV_CUBE_MAP )
