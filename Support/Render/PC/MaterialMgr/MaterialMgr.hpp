@@ -40,7 +40,7 @@
 //==============================================================================
 
 #define MAX_SKIN_BONES 96
-#define MAX_GEOM_LIGHTS 4
+#define MAX_GEOM_LIGHTS 16
 
 //==============================================================================
 //  MATERIAL FLAGS
@@ -253,8 +253,7 @@ protected:
     material_constants  BuildMaterialFlags     ( const material* pMaterial,
                                                  u32             RenderFlags,
                                                  xbool           IncludeVertexColor ) const;
-    cb_lighting         BuildLightingConstants ( const d3d_lighting* pLighting,
-                                                 const vector4&      AmbientFloor ) const;
+    cb_lighting         BuildLightingConstants ( const d3d_lighting* pLighting ) const;
 
 protected:
 

@@ -129,7 +129,7 @@ float3 GeomComputeLighting( GEOM_PIXEL_INPUT input, uint materialFlags )
         float ndotl = saturate( dot( input.Normal, -LightVec[i].xyz ) );
         dynLight += LightCol[i].rgb * ndotl;
     }
-    return LightAmbCol.rgb + dynLight;
+    const float MinBrightness = 0.16;
 #else
     float3 perPixelLight = float3( 0.0, 0.0, 0.0 );
     for( uint i = 0; i < LightCount; i++ )

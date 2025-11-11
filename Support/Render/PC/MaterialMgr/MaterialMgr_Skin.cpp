@@ -195,8 +195,7 @@ xbool material_mgr::UpdateSkinConstants( const d3d_lighting* pLighting,
     const f32 cubeIntensity = ComputeCubeMapIntensity( pMaterial );
     skinFrame.EnvParams.Set( fixedAlpha, cubeIntensity, 0.0f, 0.0f );
 
-    const vector4 AmbientFloor( 0.16f, 0.16f, 0.16f, 0.0f );
-    const cb_lighting lightMatrices = BuildLightingConstants( pLighting, AmbientFloor );
+    const cb_lighting lightMatrices = BuildLightingConstants( pLighting );
 
     const xbool bFrameChanged = ( m_bSkinFrameDirty ||
                                   x_memcmp( &m_CachedSkinFrame,
