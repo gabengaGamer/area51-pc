@@ -130,6 +130,7 @@ float3 GeomComputeLighting( GEOM_PIXEL_INPUT input, uint materialFlags )
         dynLight += LightCol[i].rgb * ndotl;
     }
     const float MinBrightness = 0.16;
+    return saturate( LightAmbCol.rgb + MinBrightness + dynLight );
 #else
     float3 perPixelLight = float3( 0.0, 0.0, 0.0 );
     for( uint i = 0; i < LightCount; i++ )
@@ -137,9 +138,7 @@ float3 GeomComputeLighting( GEOM_PIXEL_INPUT input, uint materialFlags )
         float3 L     = LightVec[i].xyz - input.WorldPos;
         float  dist  = length( L );
         float  atten = saturate( 1.0 - dist / max( LightVec[i].w, 1e-4f ) );
-        float3 Ldir  = L / max( dist, 1e-4f );
-        float  NdotL = max( dot( input.Normal, Ldir ) + 0.5f, 0.0f );
-        perPixelLight += LightCol[i].rgb * NdotL * atten;
+        perPixelLight += LightCol[i].rgb * atten;
     }
 
     float3 totalLight = LightAmbCol.rgb + perPixelLight;
