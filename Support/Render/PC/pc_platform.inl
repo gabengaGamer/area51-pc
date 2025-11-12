@@ -808,9 +808,9 @@ void* platform_CalculateRigidLighting( const matrix4&   L2W,
 
             // Setup rigid lights
             pLighting->LightVec[i].Set( Pos.GetX(), Pos.GetY(), Pos.GetZ(), Radius );
-            pLighting->LightCol[i].Set( (f32)Col.R * (1.0f / 255.0f),
-                                        (f32)Col.G * (1.0f / 255.0f),
-                                        (f32)Col.B * (1.0f / 255.0f),
+            pLighting->LightCol[i].Set( (f32)Col.R / 255.0f,
+                                        (f32)Col.G / 255.0f,
+                                        (f32)Col.B / 255.0f,
                                         1.0f );
         }
 
@@ -850,10 +850,10 @@ void* platform_CalculateSkinLighting( u32            Flags,
     if ( pLighting )
     {
         // Setup ambient
-        pLighting->AmbCol.Set((f32)Ambient.R * (1.0f / 255.0f),
-                              (f32)Ambient.G * (1.0f / 255.0f),
-                              (f32)Ambient.B * (1.0f / 255.0f),
-                              (f32)Ambient.A * (1.0f / 255.0f) ) ;
+        pLighting->AmbCol.Set((f32)Ambient.R / 255.0f,
+                              (f32)Ambient.G / 255.0f,
+                              (f32)Ambient.B / 255.0f,
+                              (f32)Ambient.A / 255.0f ) ;
 
         // Grab lights
         s32 NLights = g_LightMgr.CollectCharLights( L2W, BBox, MAX_GEOM_LIGHTS );
@@ -867,10 +867,10 @@ void* platform_CalculateSkinLighting( u32            Flags,
 
             // Setup skin lights
             pLighting->LightVec[i].Set( Dir.GetX(), Dir.GetY(), Dir.GetZ(), 0.0f );
-            pLighting->LightCol[i].Set((f32)Col.R * (1.0f / 255.0f),
-                                       (f32)Col.G * (1.0f / 255.0f),
-                                       (f32)Col.B * (1.0f / 255.0f),
-                                       (f32)Col.A * (1.0f / 255.0f) );
+            pLighting->LightCol[i].Set((f32)Col.R / 255.0f,
+                                       (f32)Col.G / 255.0f,
+                                       (f32)Col.B / 255.0f,
+                                       (f32)Col.A / 255.0f );
         }
         
         for( s32 i = NLights; i < MAX_GEOM_LIGHTS; i++ )
