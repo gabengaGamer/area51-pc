@@ -130,7 +130,7 @@ float3 GeomComputeLighting( GEOM_PIXEL_INPUT input, uint materialFlags )
         dynLight += LightCol[i].rgb * ndotl;
     }
     const float MinBrightness = 0.16;
-    //return saturate( LightAmbCol.rgb + MinBrightness + dynLight ); // Broken for skingeom ???
+    //return saturate( LightAmbCol.rgb + MinBrightness + dynLight ); // LightAmbCol is broken for skingeom ???
     return saturate( MinBrightness + dynLight );
 #else
     float3 perPixelLight = float3( 0.0, 0.0, 0.0 );
