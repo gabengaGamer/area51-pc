@@ -21,10 +21,10 @@
 class light_mgr
 {
 public:
-    enum    { MAX_CHAR_LIGHTS      = 60 }; //TODO: Increase this limits.
-    enum    { MAX_DYNAMIC_LIGHTS   = 10 };
-    enum    { MAX_FADING_LIGHTS    = 10 };
-    enum    { MAX_COLLECTED_LIGHTS = 10 };
+    enum    { MAX_CHAR_LIGHTS      = 32 }; //TODO: Increase this limits.
+    enum    { MAX_DYNAMIC_LIGHTS   = 16 };
+    enum    { MAX_FADING_LIGHTS    = 16 };
+    enum    { MAX_COLLECTED_LIGHTS = 16 };
 
              light_mgr( void );
     virtual ~light_mgr( void );
