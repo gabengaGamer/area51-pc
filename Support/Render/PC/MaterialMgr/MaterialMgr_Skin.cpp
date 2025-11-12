@@ -132,8 +132,8 @@ void material_mgr::SetSkinMaterial( const matrix4*      pL2W,
         x_DebugMsg( "MaterialMgr: Failed to update skin constants\n" );
         return;
     }
-	
-	ApplyRenderStates( pMaterial, RenderFlags );
+    
+    ApplyRenderStates( pMaterial, RenderFlags );
 
     if( pL2W && pBBox )
     {
@@ -153,14 +153,22 @@ void material_mgr::SetSkinMaterial( const matrix4*      pL2W,
 
 //==============================================================================
 
+//-------------------------------------------------------------------------------------------------------------------
+// TODO: GS: There's a lot of code here in common with UpdateRigidConstants. 
+// It's worth separating a couple of functions for this and simply calling them from there to avoid code duplication.
+//-------------------------------------------------------------------------------------------------------------------
+
 xbool material_mgr::UpdateSkinConstants( const d3d_lighting* pLighting,
                                          const material*     pMaterial,
                                          u32                 RenderFlags,
                                          u8                  UOffset,
                                          u8                  VOffset )
 {
-    if( !m_pSkinFrameBuffer || !m_pSkinLightBuffer || !pLighting || !g_pd3dDevice || !g_pd3dContext )
+    if( !m_pSkinFrameBuffer || !m_pSkinBoneBuffer|| !m_pSkinLightBuffer || !pLighting  )
         return FALSE;
+    
+    if( !g_pd3dDevice || !g_pd3dContext )
+        return FALSE;    
 
     const view* pView = eng_GetView();
     if( !pView )
@@ -221,38 +229,31 @@ xbool material_mgr::UpdateSkinConstants( const d3d_lighting* pLighting,
 
     g_pd3dContext->VSSetConstantBuffers( 0, 1, &m_pSkinFrameBuffer );
     g_pd3dContext->PSSetConstantBuffers( 0, 1, &m_pSkinFrameBuffer );
+    g_pd3dContext->VSSetConstantBuffers( 2, 1, &m_pSkinBoneBuffer );
 
-    if( m_pSkinBoneBuffer )
+    const xbool bLightingChanged = ( m_bSkinLightingDirty ||
+                                     x_memcmp( &m_CachedSkinLighting,
+                                               &lightMatrices,
+                                               sizeof(cb_lighting) ) != 0 );
+
+    if( bLightingChanged )
     {
-        g_pd3dContext->VSSetConstantBuffers( 2, 1, &m_pSkinBoneBuffer );
-    }
-
-    if( m_pSkinLightBuffer )
-    {
-        const xbool bLightingChanged = ( m_bSkinLightingDirty ||
-                                         x_memcmp( &m_CachedSkinLighting,
-                                                   &lightMatrices,
-                                                   sizeof(cb_lighting) ) != 0 );
-
-        if( bLightingChanged )
+        D3D11_MAPPED_SUBRESOURCE mappedResource;
+        HRESULT hr = g_pd3dContext->Map( m_pSkinLightBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource );
+        if( FAILED(hr) )
         {
-            D3D11_MAPPED_SUBRESOURCE mappedResource;
-            HRESULT hr = g_pd3dContext->Map( m_pSkinLightBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource );
-            if( FAILED(hr) )
-            {
-                x_DebugMsg( "MaterialMgr: Failed to map skin light buffer, HRESULT 0x%08X\n", hr );
-                return FALSE;
-            }
-
-            x_memcpy( mappedResource.pData, &lightMatrices, sizeof(cb_lighting) );
-            g_pd3dContext->Unmap( m_pSkinLightBuffer, 0 );
-
-            m_CachedSkinLighting = lightMatrices;
-            m_bSkinLightingDirty = FALSE;
+            x_DebugMsg( "MaterialMgr: Failed to map skin light buffer, HRESULT 0x%08X\n", hr );
+            return FALSE;
         }
 
-        g_pd3dContext->PSSetConstantBuffers( 3, 1, &m_pSkinLightBuffer );
+        x_memcpy( mappedResource.pData, &lightMatrices, sizeof(cb_lighting) );
+        g_pd3dContext->Unmap( m_pSkinLightBuffer, 0 );
+
+        m_CachedSkinLighting = lightMatrices;
+        m_bSkinLightingDirty = FALSE;
     }
+
+    g_pd3dContext->PSSetConstantBuffers( 3, 1, &m_pSkinLightBuffer );
 
     return TRUE;
 }

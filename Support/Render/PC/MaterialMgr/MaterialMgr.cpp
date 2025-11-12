@@ -166,19 +166,7 @@ material_mgr::material_constants material_mgr::BuildMaterialFlags( const materia
 cb_lighting material_mgr::BuildLightingConstants( const d3d_lighting* pLighting ) const
 {
     cb_lighting lighting;
-
-    for( s32 i = 0; i < MAX_GEOM_LIGHTS; i++ )
-    {
-        lighting.LightVec[i].Set( 0.0f, 0.0f, 0.0f, 0.0f );
-        lighting.LightCol[i].Set( 0.0f, 0.0f, 0.0f, 0.0f );
-    }
-
-    lighting.LightCount = 0;
-    lighting.Padding[0] = 0.0f;
-    lighting.Padding[1] = 0.0f;
-    lighting.Padding[2] = 0.0f;
-
-    vector4 ambient( 0.0f, 0.0f, 0.0f, 1.0f );
+    x_memset( &lighting, 0, sizeof(cb_lighting) );
 
     if( pLighting )
     {
@@ -190,13 +178,9 @@ cb_lighting material_mgr::BuildLightingConstants( const d3d_lighting* pLighting 
                 lighting.LightCol[i] = pLighting->LightCol[i];
             }
         }
-
-        ambient      = pLighting->AmbCol;
-        lighting.LightCount = pLighting->LightCount;
+        lighting.LightCount  = pLighting->LightCount;
+        lighting.LightAmbCol = pLighting->AmbCol;
     }
-
-    lighting.LightAmbCol = ambient;
-
     return lighting;
 }
 

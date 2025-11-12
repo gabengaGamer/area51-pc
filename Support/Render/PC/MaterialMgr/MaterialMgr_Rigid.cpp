@@ -134,8 +134,8 @@ void material_mgr::SetRigidMaterial( const matrix4*      pL2W,
         x_DebugMsg( "MaterialMgr: Failed to update rigid constants\n" );
         return;
     }
-	
-	ApplyRenderStates( pMaterial, RenderFlags );
+    
+    ApplyRenderStates( pMaterial, RenderFlags );
 
     if( pL2W && pBBox )
     {
@@ -155,6 +155,11 @@ void material_mgr::SetRigidMaterial( const matrix4*      pL2W,
 
 //==============================================================================
 
+//-------------------------------------------------------------------------------------------------------------------
+// TODO: GS: There's a lot of code here in common with UpdateSkinConstants. 
+// It's worth separating a couple of functions for this and simply calling them from there to avoid code duplication.
+//-------------------------------------------------------------------------------------------------------------------
+
 xbool material_mgr::UpdateRigidConstants( const matrix4*      pL2W,
                                           const material*     pMaterial,
                                           u32                 RenderFlags,
@@ -162,8 +167,11 @@ xbool material_mgr::UpdateRigidConstants( const matrix4*      pL2W,
                                           u8                  UOffset,
                                           u8                  VOffset )
 {
-    if( !m_pRigidFrameBuffer || !m_pRigidObjectBuffer || !pLighting || !g_pd3dDevice || !g_pd3dContext )
+    if( !m_pRigidFrameBuffer || !m_pRigidLightBuffer || !m_pRigidObjectBuffer || !pLighting )
         return FALSE;
+
+    if( !g_pd3dDevice || !g_pd3dContext )
+        return FALSE;    
 
     const view* pView = eng_GetView();
     if( !pView )
@@ -254,34 +262,32 @@ xbool material_mgr::UpdateRigidConstants( const matrix4*      pL2W,
     g_pd3dContext->VSSetConstantBuffers( 1, 1, &m_pRigidObjectBuffer );
     g_pd3dContext->PSSetConstantBuffers( 0, 1, &m_pRigidFrameBuffer );
 
-    if( m_pRigidLightBuffer )
+
+    const cb_lighting lightMatrices = BuildLightingConstants( pLighting );
+
+    const xbool bLightingChanged = ( m_bRigidLightingDirty ||
+                                     x_memcmp( &m_CachedRigidLighting,
+                                               &lightMatrices,
+                                               sizeof(cb_lighting) ) != 0 );
+
+    if( bLightingChanged )
     {
-        const cb_lighting lightMatrices = BuildLightingConstants( pLighting );
-
-        const xbool bLightingChanged = ( m_bRigidLightingDirty ||
-                                         x_memcmp( &m_CachedRigidLighting,
-                                                   &lightMatrices,
-                                                   sizeof(cb_lighting) ) != 0 );
-
-        if( bLightingChanged )
+        D3D11_MAPPED_SUBRESOURCE mappedResource;
+        HRESULT hr = g_pd3dContext->Map( m_pRigidLightBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource );
+        if( FAILED(hr) )
         {
-            D3D11_MAPPED_SUBRESOURCE mappedResource;
-            HRESULT hr = g_pd3dContext->Map( m_pRigidLightBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource );
-            if( FAILED(hr) )
-            {
-                x_DebugMsg( "MaterialMgr: Failed to map rigid light buffer, HRESULT 0x%08X\n", hr );
-                return FALSE;
-            }
-
-            x_memcpy( mappedResource.pData, &lightMatrices, sizeof(cb_lighting) );
-            g_pd3dContext->Unmap( m_pRigidLightBuffer, 0 );
-
-            m_CachedRigidLighting = lightMatrices;
-            m_bRigidLightingDirty = FALSE;
+            x_DebugMsg( "MaterialMgr: Failed to map rigid light buffer, HRESULT 0x%08X\n", hr );
+            return FALSE;
         }
 
-        g_pd3dContext->PSSetConstantBuffers( 3, 1, &m_pRigidLightBuffer );
+        x_memcpy( mappedResource.pData, &lightMatrices, sizeof(cb_lighting) );
+        g_pd3dContext->Unmap( m_pRigidLightBuffer, 0 );
+
+        m_CachedRigidLighting = lightMatrices;
+        m_bRigidLightingDirty = FALSE;
     }
+
+    g_pd3dContext->PSSetConstantBuffers( 3, 1, &m_pRigidLightBuffer );
 
     return TRUE;
 }
