@@ -96,7 +96,7 @@ void platform_ActivateMaterial( const material& Material )
     // Set primary textures through MaterialMgr
     g_MaterialMgr.SetBitmap( pDiffuseMap, TEXTURE_SLOT_DIFFUSE );
     g_MaterialMgr.SetBitmap( pDetailMap, TEXTURE_SLOT_DETAIL  );
-	
+    
     if( Material.m_Flags & geom::material::FLAG_ENV_CUBE_MAP )
     {
         if( !s_pCurrCubeMap )
@@ -391,10 +391,10 @@ void platform_SetDiffuseMaterial( const xbitmap& Bitmap, s32 BlendMode, xbool ZT
 {
     // do some entropy stuff //////////////////////////////////////////////////
 
-    vram_Activate( Bitmap );		
-	
-    // do gbuffer stuff //////////////////////////////////////////////////	
-	
+    vram_Activate( Bitmap );        
+    
+    // do gbuffer stuff //////////////////////////////////////////////////    
+    
     const rtarget* pGBufferDepth = g_GBufferMgr.GetGBufferTarget( GBUFFER_DEPTH );
     const rtarget* pBackBuffer = rtarget_GetBackBuffer();
     
@@ -402,15 +402,15 @@ void platform_SetDiffuseMaterial( const xbitmap& Bitmap, s32 BlendMode, xbool ZT
     {
         // Make sure we're using the same depth target as geometry
         rtarget_SetTargets( pBackBuffer, 1, pGBufferDepth );
-    }	
-	
+    }    
+    
     // we can use draw to set up render states at which point the shader engine
     // will hijack what it needs and route the verts through its pixel pipeline
 
     s_DrawFlags = DRAW_TEXTURED | DRAW_NO_ZWRITE | DRAW_UV_CLAMP | DRAW_CULL_NONE;
     if( !ZTestEnabled )
-        s_DrawFlags |= DRAW_NO_ZBUFFER;	
-	
+        s_DrawFlags |= DRAW_NO_ZBUFFER;    
+    
     switch( BlendMode ) 
     { 
         case render::BLEND_MODE_ADDITIVE: 
@@ -427,8 +427,8 @@ void platform_SetDiffuseMaterial( const xbitmap& Bitmap, s32 BlendMode, xbool ZT
         default: 
             break;
     }
-	
-    s_pDrawBitmap = &Bitmap;	
+    
+    s_pDrawBitmap = &Bitmap;    
 }
 
 //=============================================================================
@@ -566,7 +566,7 @@ void platform_Render3dSprites( s32               nSprites,
         S2V = W2V * (*pL2W);
     else
         S2V = W2V;
-	
+    
     draw_ClearL2W();
     draw_Begin( DRAW_TRIANGLES, s_DrawFlags );
     draw_SetTexture( *s_pDrawBitmap );
@@ -785,26 +785,17 @@ static
 void* platform_CalculateRigidLighting( const matrix4&   L2W,
                                        const bbox&      WorldBBox )
 {
+    CONTEXT("platform_CalculateRigidLighting");    
+    
     // Try allocate
     d3d_lighting* pLighting = (d3d_lighting*)smem_BufferAlloc( sizeof(d3d_lighting) );
-    if( !pLighting )
+    
+    if( pLighting )
     {
-        // Setup default lighting
-        static d3d_lighting Default;
-        Default.LightCount = 0;
-        Default.AmbCol.Set( 0.05f, 0.05f, 0.05f, 1.0f );
-        for( s32 i = 1; i < MAX_GEOM_LIGHTS; i++ )
-        {
-            Default.LightVec[i].Set(0.0f, 0.0f, 0.0f, 0.0f);
-            Default.LightCol[i].Set(0.0f, 0.0f, 0.0f, 0.0f);
-        }
-
-        // Use it
-        pLighting = &Default ;
-    }
-    else
-    {
-        pLighting->AmbCol.Set( 0.05f, 0.05f, 0.05f, 1.0f );
+        // Setup ambient (disable for rigid)
+        pLighting->AmbCol.Set( 0.0f, 0.0f, 0.0f, 1.0f );
+        
+        // Grab lights
         s32 NLights = g_LightMgr.CollectLights( WorldBBox, MAX_GEOM_LIGHTS );
         pLighting->LightCount = NLights;
 
@@ -815,6 +806,7 @@ void* platform_CalculateRigidLighting( const matrix4&   L2W,
             xcolor  Col;
             g_LightMgr.GetCollectedLight( i, Pos, Radius, Col );
 
+            // Setup rigid lights
             pLighting->LightVec[i].Set( Pos.GetX(), Pos.GetY(), Pos.GetZ(), Radius );
             pLighting->LightCol[i].Set( (f32)Col.R * (1.0f / 255.0f),
                                         (f32)Col.G * (1.0f / 255.0f),
@@ -829,7 +821,14 @@ void* platform_CalculateRigidLighting( const matrix4&   L2W,
             pLighting->LightCol[i].Set(0.0f, 0.0f, 0.0f, 0.0f);
         }
     }
+    else
+    {
+        ASSERT(FALSE);
+        pLighting = NULL;
+    }
 
+    // Store in render instance
+    ASSERT(pLighting);
     return pLighting;
 }
 
@@ -843,28 +842,12 @@ void* platform_CalculateSkinLighting( u32            Flags,
 {
     (void)Flags;
 
-    CONTEXT("platform_CalculateSkinLighting") ;
+    CONTEXT("platform_CalculateSkinLighting");
 
     // Try allocate
     d3d_lighting* pLighting = (d3d_lighting*)smem_BufferAlloc( sizeof(d3d_lighting) );
-    if (!pLighting)
-    {
-        // Setup default lighting
-        static d3d_lighting Default;
-        Default.LightCount = 1;
-        Default.LightVec[0].Set(0.0f, 1.0f, 0.0f, 0.0f);
-        Default.LightCol[0].Set(1.0f, 1.0f, 1.0f, 1.0f);
-        Default.AmbCol.Set(0.3f, 0.3f, 0.3f, 1.0f);
-        for( s32 i = 1; i < MAX_GEOM_LIGHTS; i++ )
-        {
-            Default.LightVec[i].Set(0.0f, 0.0f, 0.0f, 0.0f);
-            Default.LightCol[i].Set(0.0f, 0.0f, 0.0f, 0.0f);
-        }
-
-        // Use it
-        pLighting = &Default ;
-    }
-    else
+    
+    if ( pLighting )
     {
         // Setup ambient
         pLighting->AmbCol.Set((f32)Ambient.R * (1.0f / 255.0f),
@@ -897,9 +880,14 @@ void* platform_CalculateSkinLighting( u32            Flags,
             pLighting->LightCol[i].Set(0.0f, 0.0f, 0.0f, 0.0f);
         }
     }
+    else
+    {
+        ASSERT(FALSE);
+        pLighting = NULL;
+    }
 
     // Store in render instance
-    ASSERT(pLighting) ;
+    ASSERT(pLighting);
     return pLighting;
 }
 
@@ -1036,9 +1024,7 @@ void platform_SetShadowProjectionMatrix( s32 Index, const matrix4& Matrix )
 static
 void platform_SetCustomFogPalette( const texture::handle& Texture, xbool ImmediateSwitch, s32 PaletteIndex )
 {
-    (void)Texture;
-    (void)ImmediateSwitch;
-    (void)PaletteIndex;
+        //g_MaterialMgr.SetCustomFogPalette( Texture, ImmediateSwitch, PaletteIndex );
 }
 
 //=============================================================================
