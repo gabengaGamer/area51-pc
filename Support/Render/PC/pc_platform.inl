@@ -792,7 +792,7 @@ void* platform_CalculateRigidLighting( const matrix4&   L2W,
     
     if( pLighting )
     {
-        // Setup ambient (disable for rigid)
+        // Setup ambient (disable for rigid, because we already have lightmaps)
         pLighting->AmbCol.Set( 0.0f, 0.0f, 0.0f, 1.0f );
         
         // Grab lights
