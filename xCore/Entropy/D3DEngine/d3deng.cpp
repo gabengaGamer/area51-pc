@@ -87,7 +87,7 @@ static struct eng_locals
     u32             Mode;
     xcolor          BackColor;
     xbool           bBeginScene;
-	xbool           bD3DBeginScene;
+    xbool           bD3DBeginScene;
 
     //
     // View variables
@@ -249,30 +249,30 @@ void eng_Kill( void ) //Deprecated, but i still prefer to maintenance this func
     //
     // Free sub modules (in reverse order of initialization)
     //
-	
-	draw_Kill();
+    
+    draw_Kill();
     x_DebugMsg( "Engine: Draw system shutdown\n" );
-	
-	smem_Kill();
+    
+    smem_Kill();
     x_DebugMsg( "Engine: Scratch memory shutdown\n" );
-	
-	vram_Kill();
+    
+    vram_Kill();
     x_DebugMsg( "Engine: VRAM system shutdown\n" );
-	
-	font_Kill();
+    
+    font_Kill();
     x_DebugMsg( "Engine: Font system shutdown\n" );
-	
-	text_Kill();
+    
+    text_Kill();
     x_DebugMsg( "Engine: Text system shutdown\n" );
-	
-	shader_Kill();
+    
+    shader_Kill();
     x_DebugMsg( "Engine: Shader system shutdown\n" );
-	
-	state_Kill();
-	x_DebugMsg( "Engine: Render state system shutdown\n" );   
+    
+    state_Kill();
+    x_DebugMsg( "Engine: Render state system shutdown\n" );   
 
-	composite_Kill();
-	x_DebugMsg( "Engine: Composite system shutdown\n" );
+    composite_Kill();
+    x_DebugMsg( "Engine: Composite system shutdown\n" );
 
     rtarget_Kill();
     x_DebugMsg( "Engine: Render target system shutdown\n" );
@@ -313,7 +313,7 @@ void eng_Kill( void ) //Deprecated, but i still prefer to maintenance this func
 
 s32 d3deng_ExitPoint( void )
 {
-	//eng_Kill();
+    //eng_Kill();
     x_Kill();
     return 0;
 }
@@ -378,14 +378,14 @@ void d3deng_SetupDepthStencilParams( void )
 static 
 xbool d3deng_SetupWindowedParams( void )
 {
-    g_SwapChainDesc.Windowed               = TRUE;
-    g_SwapChainDesc.SwapEffect             = DXGI_SWAP_EFFECT_DISCARD;
-    g_SwapChainDesc.BufferDesc.Format      = DXGI_FORMAT_R8G8B8A8_UNORM;
-    g_SwapChainDesc.BufferCount            = 1;
-    g_SwapChainDesc.BufferDesc.Width       = s.MaxXRes;
-    g_SwapChainDesc.BufferDesc.Height      = s.MaxYRes;
+    g_SwapChainDesc.Windowed                           = TRUE;
+    g_SwapChainDesc.SwapEffect                         = DXGI_SWAP_EFFECT_DISCARD;
+    g_SwapChainDesc.BufferDesc.Format                  = DXGI_FORMAT_R8G8B8A8_UNORM;
+    g_SwapChainDesc.BufferDesc.Width                   = s.MaxXRes;
+    g_SwapChainDesc.BufferDesc.Height                  = s.MaxYRes;
     g_SwapChainDesc.BufferDesc.RefreshRate.Numerator   = 60;
     g_SwapChainDesc.BufferDesc.RefreshRate.Denominator = 1;
+    g_SwapChainDesc.BufferCount                        = 1;
 
     return TRUE;
 }
@@ -395,11 +395,11 @@ xbool d3deng_SetupWindowedParams( void )
 static 
 void d3deng_SetupFullscreenParams( s32 XRes, s32 YRes )
 {
-    g_SwapChainDesc.Windowed                = FALSE;
-    g_SwapChainDesc.BufferDesc.Width        = s.MaxXRes = XRes;
-    g_SwapChainDesc.BufferDesc.Height       = s.MaxYRes = YRes;
-    g_SwapChainDesc.BufferDesc.Format       = (s.Mode & ENG_ACT_16_BPP) ? DXGI_FORMAT_B5G5R5A1_UNORM : DXGI_FORMAT_R8G8B8A8_UNORM;
-    g_SwapChainDesc.SwapEffect              = DXGI_SWAP_EFFECT_DISCARD;
+    g_SwapChainDesc.Windowed                           = FALSE;
+    g_SwapChainDesc.SwapEffect                         = DXGI_SWAP_EFFECT_DISCARD;    
+    g_SwapChainDesc.BufferDesc.Format                  = (s.Mode & ENG_ACT_16_BPP) ? DXGI_FORMAT_B5G5R5A1_UNORM : DXGI_FORMAT_R8G8B8A8_UNORM;    
+    g_SwapChainDesc.BufferDesc.Width                   = s.MaxXRes = XRes;
+    g_SwapChainDesc.BufferDesc.Height                  = s.MaxYRes = YRes;
     g_SwapChainDesc.BufferDesc.RefreshRate.Numerator   = 60;
     g_SwapChainDesc.BufferDesc.RefreshRate.Denominator = 1;
 }
@@ -600,8 +600,8 @@ void d3deng_SetupWindowedViewport( HWND hWnd, s32 XRes, s32 YRes )
     D3D11_VIEWPORT vp;
     vp.TopLeftX = 0.0f;
     vp.TopLeftY = 0.0f;
-    vp.Width = (f32)XRes;
-    vp.Height = (f32)YRes;
+    vp.Width    = (f32)XRes;
+    vp.Height   = (f32)YRes;
     vp.MinDepth = 0.0f;
     vp.MaxDepth = 1.0f;
     g_pd3dContext->RSSetViewports( 1, &vp );
@@ -702,8 +702,8 @@ void d3deng_UpdateDisplayWindow( HWND hWindow )
     D3D11_VIEWPORT vp;
     vp.TopLeftX = 0.0f;
     vp.TopLeftY = 0.0f;
-    vp.Width = (f32)dwRenderWidth;
-    vp.Height = (f32)dwRenderHeight;
+    vp.Width    = (f32)dwRenderWidth;
+    vp.Height   = (f32)dwRenderHeight;
     vp.MinDepth = 0.0f;
     vp.MaxDepth = 1.0f;
     
@@ -729,8 +729,8 @@ LRESULT CALLBACK eng_D3DWndProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
                 }
             }
             break;
-			
-		case WM_ACTIVATEAPP:
+            
+        case WM_ACTIVATEAPP:
             {
                 s.bActive = (BOOL)wParam;
             }
@@ -791,31 +791,31 @@ LRESULT CALLBACK eng_D3DWndProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
                 }
             }
             return 0;
-			
+            
          case WM_LBUTTONDOWN:
             s.bMouseLeftButton = true;
             return 0;
-			
+            
          case WM_MBUTTONDOWN:
              s.bMouseMiddleButton = true;
             return 0;
-			
+            
          case WM_RBUTTONDOWN:
              s.bMouseRightButton = true;
             return 0;
-			
+            
          case WM_LBUTTONUP:
              s.bMouseLeftButton = false;
             return 0;
-			
+            
          case WM_MBUTTONUP:
              s.bMouseMiddleButton = false;
             return 0;
-			
+            
          case WM_RBUTTONUP:
              s.bMouseRightButton = false;
             return 0;
-			
+            
          case WM_MOUSEWHEEL:
             {
                  f32 Wheel = (f32)((s16)(wParam >> 16)) / 120.0f ;
@@ -823,7 +823,7 @@ LRESULT CALLBACK eng_D3DWndProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
                  s.MouseWheelRel = Wheel ;
             }
             return 0;
-			
+            
          case WM_KEYDOWN:
              break;
     }
@@ -837,18 +837,44 @@ HWND CreateWin( s32 Width, s32 Height )
 {
     // Register the window class
     WNDCLASS wndClass = { CS_HREDRAW | CS_VREDRAW, eng_D3DWndProc, 0, 0, s.hInst,
-                          NULL,
-                          LoadCursor(NULL, IDC_ARROW), 
+                          NULL, LoadCursor(NULL, IDC_ARROW),
                           (HBRUSH)GetStockObject(WHITE_BRUSH), NULL,
                           TEXT("Render Window") };
-
+    
     RegisterClass( &wndClass );
-
-    // Create our main window
-    return CreateWindow( TEXT("Render Window"),
-                         TEXT("Area 51"),
-                         WS_OVERLAPPEDWINDOW, CW_USEDEFAULT,
-                         CW_USEDEFAULT, Width, Height, 0L, 0L, s.hInst, 0L );
+    
+    s32 screenWidth  = GetSystemMetrics(SM_CXSCREEN);
+    s32 screenHeight = GetSystemMetrics(SM_CYSCREEN);
+    
+    RECT rect = { 0, 0, Width, Height };
+    AdjustWindowRect(&rect, WS_OVERLAPPEDWINDOW, FALSE);
+    
+    s32 windowWidth  = rect.right - rect.left;
+    s32 windowHeight = rect.bottom - rect.top;
+   
+    if (windowWidth >= screenWidth || windowHeight >= screenHeight)
+    {
+        // Fallback to the native resolution of the monitor, if something is wrong with the desired resolution.
+        d3deng_SetResolution( screenWidth, screenHeight );
+        
+        // Create our main boardless window
+        return CreateWindow(TEXT("Render Window"), TEXT("Area 51"),
+                           WS_POPUP | WS_VISIBLE, 0, 0, 
+                           screenWidth, screenHeight,
+                           0L, 0L, s.hInst, 0L);
+    }
+    else
+    {
+        // Everything is fine, set the desired resolution
+        d3deng_SetResolution( windowWidth, windowHeight );
+        
+        // Create our main window
+        return CreateWindow(TEXT("Render Window"), TEXT("Area 51"),
+                           WS_OVERLAPPEDWINDOW | WS_VISIBLE, 
+                           CW_USEDEFAULT, CW_USEDEFAULT,
+                           windowWidth, windowHeight,
+                           0L, 0L, s.hInst, 0L);
+    }
 }
 
 //=========================================================================
@@ -874,8 +900,8 @@ void d3deng_SetResolution( s32 Width,  s32 Height )
     ASSERT( Height > 0 );
     ASSERT( Height < 40000 );
 
-    s.MaxXRes  = Width;
-    s.MaxYRes  = Height;
+    s.MaxXRes = Width;
+    s.MaxYRes = Height;
 }
 
 //=========================================================================
@@ -944,7 +970,7 @@ void eng_Init( void )
     composite_Init();
     x_DebugMsg( "Engine: Composite system initialized\n" );
 
-	state_Init();
+    state_Init();
     x_DebugMsg( "Engine: Render state system initialized\n" );
 
     shader_Init();
@@ -982,7 +1008,7 @@ void eng_Init( void )
 
     draw_Init();
     x_DebugMsg( "Engine: Draw system initialized\n" );
-	
+    
     // Indicate the engine is ready
     s.bReady = TRUE;
 
@@ -1295,7 +1321,7 @@ void eng_SetViewport( const view& View )
 
     D3D11_VIEWPORT vp;
     s32 L, T, R, B;
-	
+    
     View.GetViewport( L, T, R, B );
 
     vp.TopLeftX = L;
