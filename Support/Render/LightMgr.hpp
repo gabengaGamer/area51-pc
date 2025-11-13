@@ -18,10 +18,17 @@
 //  LIGHTMGR MANAGER CLASS
 //==============================================================================
 
+//------------------------------------------------------------------------------
+//
+// GLOBAL TODO: GS: I'm noticing some serious performance issues, 
+// the lighting system needs to be optimized because it's a mess right now.
+//
+//------------------------------------------------------------------------------
+
 class light_mgr
 {
 public:
-    enum    { MAX_CHAR_LIGHTS      = 32 }; //TODO: Increase this limits.
+    enum    { MAX_CHAR_LIGHTS      = 64 }; //TODO: Increase this limits.
     enum    { MAX_DYNAMIC_LIGHTS   = 16 };
     enum    { MAX_FADING_LIGHTS    = 16 };
     enum    { MAX_COLLECTED_LIGHTS = 16 };
