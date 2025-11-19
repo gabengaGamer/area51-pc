@@ -854,7 +854,7 @@ HWND CreateWin( s32 Width, s32 Height )
    
     if (windowWidth >= screenWidth || windowHeight >= screenHeight)
     {
-        // Fallback to the native resolution of the monitor, if something is wrong with the desired resolution.
+        // Fallback to the native resolution of the monitor, because something is wrong with the desired resolution.
         d3deng_SetResolution( screenWidth, screenHeight );
         
         // Create our main boardless window
