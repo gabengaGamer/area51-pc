@@ -235,8 +235,8 @@ void player::UpdateStickInput(void)
     m_fPreviousPitchValue = m_fPitchValue;
 
 #if defined(TARGET_PC) //GS: Experimental PC mouse controls.
-    const f32 BaseMouseSensitivity = 64.0f;
-    f32 Rot = R_10 * m_DeltaTime;
+    const f32 BaseMouseSensitivity = 2.0f;
+    f32 Rot = R_10;
     
     m_fRawControllerYaw = -g_IngamePad[m_ActivePlayerPad].GetLogical(ingame_pad::LOOK_HORIZONTAL).IsValue * Rot;
     m_fRawControllerPitch = g_IngamePad[m_ActivePlayerPad].GetLogical(ingame_pad::LOOK_VERTICAL).IsValue * Rot;
