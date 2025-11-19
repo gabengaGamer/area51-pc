@@ -415,6 +415,10 @@ public:
 
     s32                     GetCurrentControl               ( void )                                { return m_CurrentControl[m_State]; }
 
+   // BG Music controls
+   void                     InitFrontEndMusic               ( const char* pMusicName = "MUSIC_MenuBackground" );
+   void                     KillFrontEndMusic               ( void );
+
     // Pause controls
     xbool                   IsPaused                        ( void )                                { return m_bIsPaused; }
     void                    SetPaused                       ( xbool bPause, s32 PausingController );

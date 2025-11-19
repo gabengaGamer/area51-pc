@@ -173,9 +173,6 @@ static s32 s_ProfileOptRight   = 406;
 //=========================================================================
 //  Player Profile Functions
 //=========================================================================
-//=========================================================================
-void InitFrontEndMusic( void );
-void KillFrontEndMusic( void );
 
 void GetMissionName( s32 MapIndex, xwchar* pBuffer )
 {
@@ -1096,23 +1093,41 @@ void state_mgr::Update( f32 DeltaTime )
             }
             break;
 
-            case SM_SECRETS_MENU:
-            {
-                if( m_bPlayMovie )
-                {
-                    // keep it looping
-                    if( !g_AudioMgr.IsValidVoiceId( s_VoiceID ) )
-                    {
-                        if( !s_Delay )
-                        {
-                            InitFrontEndMusic();
-
-                            s_Delay = 5;
-                        }
-                    }
-                }
-            }
-            break;
+            //case SM_CREDITS_SCREEN:
+            //{
+            //    if( m_bPlayMovie )
+            //    {
+            //        // keep it looping
+            //        if( !g_AudioMgr.IsValidVoiceId( s_VoiceID ) )
+            //        {
+            //            if( !s_Delay )
+            //            {
+            //                InitFrontEndMusic("MUSIC_CreditsTheme");
+			//
+            //                s_Delay = 5;
+            //            }
+            //        }
+            //    }
+            //}
+            //break;
+			//
+            //case SM_SECRETS_MENU:
+            //{
+            //    if( m_bPlayMovie )
+            //    {
+            //        // keep it looping
+            //        if( !g_AudioMgr.IsValidVoiceId( s_VoiceID ) )
+            //        {
+            //            if( !s_Delay )
+            //            {
+            //                InitFrontEndMusic("MUSIC_SecretsDemo");
+			//
+            //                s_Delay = 5;
+            //            }
+            //        }
+            //    }
+            //}
+            //break;
 
             default:
             {
@@ -1121,7 +1136,7 @@ void state_mgr::Update( f32 DeltaTime )
                 {
                     if( !s_Delay )
                     {
-                        InitFrontEndMusic();
+                        InitFrontEndMusic("MUSIC_MenuBackground");
                         s_Delay = 5;
                     }
                 }
@@ -11959,7 +11974,7 @@ void state_mgr::DisconnectFromNetwork( void )
         g_NetworkMgr.SetOnline( FALSE );
         StopBackgroundRendering();
 #if defined(TARGET_PS2)
-        InitFrontEndMusic();
+        InitFrontEndMusic("MUSIC_MenuBackground");
 #endif
 
         g_UiMgr->EndDialog( g_UiUserID, TRUE );
@@ -12340,7 +12355,7 @@ void state_mgr::SetFeedbackPlayer( const char* pName, u64 Identifier )
 
 //=========================================================================
 
-void KillFrontEndMusic( void )
+void state_mgr::KillFrontEndMusic( void )
 {
     if( g_AudioMgr.IsValidVoiceId( s_VoiceID ) )
     {
@@ -12351,7 +12366,7 @@ void KillFrontEndMusic( void )
 
 //=========================================================================
 
-void InitFrontEndMusic( void )
+void state_mgr::InitFrontEndMusic( const char* pMusicName )
 {
-    s_VoiceID = g_AudioMgr.Play( "MUSIC_MenuBackground" );
+    s_VoiceID = g_AudioMgr.Play( pMusicName );
 }

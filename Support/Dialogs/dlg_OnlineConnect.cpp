@@ -28,8 +28,6 @@
 #include "../../Apps/GameApp/Config.hpp"
 #endif
 
-extern void InitFrontEndMusic( void );
-extern void KillFrontEndMusic( void );
 //=========================================================================
 //  Main Menu Dialog
 //=========================================================================
@@ -717,7 +715,7 @@ void dlg_online_connect::OnUpdate ( ui_win* pWin, f32 DeltaTime )
 
                     // *** NOTE *** we must be very careful where we kick off the background
                     // rendering.
-                    KillFrontEndMusic();
+                    g_StateMgr.KillFrontEndMusic();
                     g_StateMgr.StartBackgroundRendering();
                     xtimer t;
 
@@ -726,7 +724,7 @@ void dlg_online_connect::OnUpdate ( ui_win* pWin, f32 DeltaTime )
                     t.Stop();
                     LOG_MESSAGE( "dlg_online_connect::OnUpdate", "SetOnline() call took %2.02fms", t.ReadMs() );
                     g_StateMgr.StopBackgroundRendering();
-                    InitFrontEndMusic();
+                    g_StateMgr.InitFrontEndMusic();
                 }
                 break;
 
@@ -1103,7 +1101,7 @@ void dlg_online_connect::OnUpdate ( ui_win* pWin, f32 DeltaTime )
                     m_PopUp->EnableBlackout( FALSE );
 
                     m_pNavText->SetFlag(ui_win::WF_VISIBLE, FALSE);
-                    KillFrontEndMusic();
+                    g_StateMgr.KillFrontEndMusic();
                     g_StateMgr.StartBackgroundRendering();
                     net_ActivateConfig( FALSE );
                     g_NetworkMgr.SetOnline( FALSE );
@@ -1112,7 +1110,7 @@ void dlg_online_connect::OnUpdate ( ui_win* pWin, f32 DeltaTime )
                     // Reset exit reason so that we don't get two messages telling us the network is down.
                     //
                     g_ActiveConfig.SetExitReason( GAME_EXIT_CONTINUE );
-                    InitFrontEndMusic();
+                    g_StateMgr.InitFrontEndMusic();
 
                     // Once we have actually disconnected, then we go back.
                     SetState( DIALOG_STATE_BACK );
