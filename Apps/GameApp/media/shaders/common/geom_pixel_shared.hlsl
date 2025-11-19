@@ -129,9 +129,7 @@ float3 GeomComputeLighting( GEOM_PIXEL_INPUT input, uint materialFlags )
         float ndotl = saturate( dot( input.Normal, -LightVec[i].xyz ) );
         dynLight += LightCol[i].rgb * ndotl;
     }
-    const float MinBrightness = 0.16;
-    //return saturate( LightAmbCol.rgb + MinBrightness + dynLight ); // LightAmbCol is broken for skingeom ???
-    return saturate( MinBrightness + dynLight );
+    float3 totalLight = LightAmbCol.rgb + dynLight;
 #else
     float3 perPixelLight = float3( 0.0, 0.0, 0.0 );
     for( uint i = 0; i < LightCount; i++ )
@@ -142,15 +140,15 @@ float3 GeomComputeLighting( GEOM_PIXEL_INPUT input, uint materialFlags )
         perPixelLight += LightCol[i].rgb * atten;
     }
 
-    float3 totalLight = LightAmbCol.rgb + perPixelLight;
+    float3 totalLight = perPixelLight;
 #if GEOM_HAS_VERTEX_COLOR
     if( materialFlags & MATERIAL_FLAG_VERTEX_COLOR )
     {
         totalLight += input.Color.rgb;
     }
 #endif
-    return totalLight;
 #endif
+    return totalLight;
 }
 
 //==============================================================================

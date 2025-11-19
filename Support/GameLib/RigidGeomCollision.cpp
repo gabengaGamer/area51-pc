@@ -82,8 +82,8 @@ xbool RigidGeom_GetTriangle( const rigid_geom*          pRigidGeom,
     #ifdef TARGET_PC
     {
         collision_data::high_cluster& Cluster = pRigidGeom->m_Collision.pHighCluster [iCluster];
-        rigid_geom::dlist_pc&    DList   = pRigidGeom->m_System.pPC[Cluster.iDList];
-
+        rigid_geom::dlist_pc        & DList   = pRigidGeom->m_System.pPC[Cluster.iDList];
+        ASSERT( DList.iColor <= pRigidGeom->m_nVertices );
         if( !IN_RANGE( 0, iTriangle, Cluster.nTris-1 ) )
             return( FALSE );
 
@@ -149,7 +149,7 @@ xbool RigidGeom_GetColDetails(const rigid_geom*     pRigidGeom,
                               s32                   Key,
                               object::detail_tri&   Tri )
 {
-#ifdef TARGET_XBOX
+#if ( defined TARGET_PC ) || ( defined TARGET_XBOX )
     const u32* pColor=( u32* )pColorIn;
 #else
     const u16* pColor=( u16* )pColorIn;
@@ -243,12 +243,9 @@ xbool RigidGeom_GetColDetails(const rigid_geom*     pRigidGeom,
         }
         else
         {
-            Tri.Color [0] = DList.pVert[ DList.pIndices[Index+0] ].Color;
-            Tri.Color [1] = DList.pVert[ DList.pIndices[Index+1] ].Color;
-            Tri.Color [2] = DList.pVert[ DList.pIndices[Index+2] ].Color;
-            //Tri.Color [0] = pColor[ DList.pIndices[Index+0]+DList.iColor ];
-            //Tri.Color [1] = pColor[ DList.pIndices[Index+1]+DList.iColor ];
-            //Tri.Color [2] = pColor[ DList.pIndices[Index+2]+DList.iColor ];
+            Tri.Color [0] = pColor[ DList.pIndices[Index+0]+DList.iColor ];
+            Tri.Color [1] = pColor[ DList.pIndices[Index+1]+DList.iColor ];
+            Tri.Color [2] = pColor[ DList.pIndices[Index+2]+DList.iColor ];
         }
 
         Tri.Normal[0] = DList.pVert[ DList.pIndices[Index+0] ].Normal;
