@@ -853,7 +853,7 @@ void* platform_CalculateSkinLighting( u32            Flags,
         pLighting->AmbCol.Set((f32)Ambient.R / 255.0f,
                               (f32)Ambient.G / 255.0f,
                               (f32)Ambient.B / 255.0f,
-                              (f32)Ambient.A / 255.0f ) ;
+                              1.0f );
 
         // Grab lights
         s32 NLights = g_LightMgr.CollectCharLights( L2W, BBox, MAX_GEOM_LIGHTS );
