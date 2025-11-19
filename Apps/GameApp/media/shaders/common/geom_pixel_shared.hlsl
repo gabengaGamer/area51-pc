@@ -139,14 +139,13 @@ float3 GeomComputeLighting( GEOM_PIXEL_INPUT input, uint materialFlags )
         float  atten = saturate( 1.0 - dist / max( LightVec[i].w, 1e-4f ) );
         perPixelLight += LightCol[i].rgb * atten;
     }
-
     float3 totalLight = perPixelLight;
-#if GEOM_HAS_VERTEX_COLOR
-    if( materialFlags & MATERIAL_FLAG_VERTEX_COLOR )
-    {
-        totalLight += input.Color.rgb;
-    }
-#endif
+    #if GEOM_HAS_VERTEX_COLOR
+        if( materialFlags & MATERIAL_FLAG_VERTEX_COLOR )
+        {
+            totalLight += input.Color.rgb;
+        }
+    #endif
 #endif
     return totalLight;
 }
