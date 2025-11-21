@@ -82,7 +82,6 @@ void ingame_pad::OnInitialize( void )
     SetLogical( ACTION_MP_MUTATE,               "Multiplayer Toggle Mutation" );
     SetLogical( ACTION_DROP_FLAG,               "Drop Flag" );
 
-// todo: this is all bogus! should be ripped out for both platforms?
 #ifdef TARGET_XBOX
     // Set the default controler
     // Left Analog
@@ -149,7 +148,11 @@ void ingame_pad::OnInitialize( void )
     AddMapping( INPUT_PLATFORM_PC, ACTION_RELOAD,        INPUT_KBD_R,            TRUE );
     AddMapping( INPUT_PLATFORM_PC, ACTION_THROW_GRENADE, INPUT_KBD_G,            TRUE );
     AddMapping( INPUT_PLATFORM_PC, ACTION_USE,           INPUT_KBD_TAB,          TRUE );
+	
+	//-----BRUH...------
     AddMapping( INPUT_PLATFORM_PC, ACTION_MUTATION,      INPUT_KBD_X,            TRUE );
+    AddMapping( INPUT_PLATFORM_PC, ACTION_MP_MUTATE,     INPUT_KBD_X,            TRUE );
+	
     AddMapping( INPUT_PLATFORM_PC, ACTION_MELEE_ATTACK,  INPUT_KBD_V,            TRUE );
     AddMapping( INPUT_PLATFORM_PC, ACTION_FLASHLIGHT,    INPUT_KBD_F,            TRUE );
                                                                                  
@@ -196,7 +199,6 @@ void ingame_pad::OnInitialize( void )
     AddMapping( INPUT_PLATFORM_PS2, LEAN_RIGHT, INPUT_PS2_BTN_L_RIGHT, TRUE);
 
     AddMapping( INPUT_PLATFORM_PS2, ACTION_TALK_MODE_TOGGLE, INPUT_PS2_BTN_SELECT, TRUE );
-
 #endif
 }
 
