@@ -130,8 +130,8 @@ void ingame_pad::OnInitialize( void )
     AddMapping( INPUT_PLATFORM_PC, LOOK_VERTICAL,        INPUT_MOUSE_Y_REL,      FALSE );
     
 	//Basic weapon change
-    AddMapping( INPUT_PLATFORM_PC, ACTION_CYCLE_LEFT,    INPUT_KBD_1,            FALSE );
-    AddMapping( INPUT_PLATFORM_PC, ACTION_CYCLE_RIGHT,   INPUT_KBD_2,            FALSE );
+    AddMapping( INPUT_PLATFORM_PC, ACTION_CYCLE_RIGHT,    INPUT_MOUSE_WHEEL_REL, FALSE,  1.0f );
+    AddMapping( INPUT_PLATFORM_PC, ACTION_CYCLE_LEFT,     INPUT_MOUSE_WHEEL_REL, FALSE, -1.0f );
 	
     //Movement
     AddMapping( INPUT_PLATFORM_PC, MOVE_FORWARD,         INPUT_KBD_W,            FALSE );
