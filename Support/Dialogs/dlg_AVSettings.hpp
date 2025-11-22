@@ -23,6 +23,39 @@
 #include "dlg_PopUp.hpp"
 #include "dlg_AVSettings.hpp"
 
+//=========================================================================
+//  Enums
+//=========================================================================
+
+enum av_settings_controls
+{
+    IDC_AV_VOLUME_SFX_TEXT,
+    IDC_AV_VOLUME_MUSIC_TEXT,
+    IDC_AV_VOLUME_SPEECH_TEXT,
+#ifdef TARGET_PS2
+    IDC_AV_TOGGLE_SPEAKER_TEXT,
+#endif
+#ifdef TARGET_XBOX
+    IDC_AV_BRIGHTNESS_TEXT,
+#endif
+
+    IDC_AV_VOLUME_SFX,
+    IDC_AV_VOLUME_MUSIC,
+    IDC_AV_VOLUME_SPEECH,
+#ifdef TARGET_PS2
+    IDC_AV_TOGGLE_SPEAKER,
+#endif
+    IDC_AV_HEADSET_TEST,
+    IDC_AV_GRAPHICS_MENU,
+#ifdef TARGET_XBOX
+    IDC_AV_BRIGHTNESS,
+#endif
+    IDC_AV_BUTTON_DEFAULTS,
+    IDC_AV_BUTTON_ACCEPT,
+
+    IDC_AV_NAV_TEXT,
+};
+
 //==============================================================================
 //  dlg_av_settings
 //==============================================================================
@@ -78,6 +111,7 @@ protected:
 #endif
 
     ui_button*          m_pHeadsetTest;
+    ui_button*          m_pGraphicsMenu;	
     ui_button*          m_pButtonAccept;
 
     ui_text*            m_pNavText;

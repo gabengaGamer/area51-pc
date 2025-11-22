@@ -61,6 +61,7 @@ enum sm_states
     SM_MAIN_MENU,
     SM_SETTINGS_MENU,
     SM_SETTINGS_HEADSET,
+    SM_SETTINGS_GRAPHICS,	
     SM_SETTINGS_MEMCARD_SELECT,
     SM_MANAGE_PROFILES,
     SM_MANAGE_PROFILE_OPTIONS,
@@ -178,6 +179,7 @@ enum sm_states
     SM_PAUSE_CONTROLS,
     SM_PAUSE_SETTINGS,
     SM_PAUSE_HEADSET,
+    SM_PAUSE_GRAPHICS,	
     SM_PAUSE_SETTINGS_SELECT,
 #ifdef TARGET_XBOX
     SM_PAUSE_FRIENDS,
@@ -193,6 +195,7 @@ enum sm_states
     SM_PAUSE_MP_CONTROLS,
     SM_PAUSE_MP_SETTINGS,
     SM_PAUSE_MP_HEADSET,
+    SM_PAUSE_MP_GRAPHICS,	
     SM_PAUSE_MP_SETTINGS_SELECT,
 #ifdef TARGET_XBOX
     SM_PAUSE_MP_FRIENDS,
@@ -587,6 +590,10 @@ private:
     void                    UpdateSettingsHeadset           ( void );
     void                    ExitSettingsHeadset             ( void );
 
+    void                    EnterSettingsGraphics           ( void );
+    void                    UpdateSettingsGraphics          ( void );
+    void                    ExitSettingsGraphics            ( void );
+
     void                    EnterSettingsMemcardSelect      ( void );
     void                    UpdateSettingsMemcardSelect     ( void );
     void                    ExitSettingsMemcardSelect       ( void );
@@ -912,6 +919,10 @@ private:
     void                    UpdatePauseHeadset              ( void );
     void                    ExitPauseHeadset                ( void );
 
+    void                    EnterPauseGraphics              ( void );
+    void                    UpdatePauseGraphics             ( void );
+    void                    ExitPauseGraphics               ( void );
+
     void                    EnterPauseSettingsSelect        ( void );
     void                    UpdatePauseSettingsSelect       ( void );
     void                    ExitPauseSettingsSelect         ( void );
@@ -944,6 +955,10 @@ private:
     void                    EnterPauseMPHeadset             ( void );
     void                    UpdatePauseMPHeadset            ( void );
     void                    ExitPauseMPHeadset              ( void );
+
+    void                    EnterPauseMPGraphics            ( void );
+    void                    UpdatePauseMPGraphics           ( void );
+    void                    ExitPauseMPGraphics             ( void );
 
     void                    EnterPauseMPSettingsSelect      ( void );
     void                    UpdatePauseMPSettingsSelect     ( void );
@@ -1309,4 +1324,3 @@ extern state_mgr g_StateMgr;
 //==============================================================================
 #endif // STATEMGR_HPP
 //==============================================================================
-

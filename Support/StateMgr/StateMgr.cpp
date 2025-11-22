@@ -31,6 +31,7 @@
 #include "dialogs/dlg_MainMenu.hpp"
 #include "dialogs/dlg_AVSettings.hpp"
 #include "dialogs/dlg_Headset.hpp"
+#include "dialogs/dlg_GraphicsSettings.hpp"
 #include "dialogs/dlg_PressStart.hpp"
 #include "dialogs/dlg_MultiOptions.hpp"
 #include "dialogs/dlg_LevelSelect.hpp"
@@ -234,6 +235,7 @@ void state_mgr::Init( void )
     dlg_main_menu_register          ( g_UiMgr );
     dlg_av_settings_register        ( g_UiMgr );
     dlg_headset_register            ( g_UiMgr );
+    dlg_graphics_settings_register  ( g_UiMgr );	
     dlg_profile_select_register     ( g_UiMgr );
     dlg_profile_options_register    ( g_UiMgr );
     dlg_profile_controls_register   ( g_UiMgr );
@@ -542,6 +544,7 @@ const char* state_mgr::GetStateName( sm_states State )
         LABEL_STRING( SM_MAIN_MENU );
         LABEL_STRING( SM_SETTINGS_MENU );
         LABEL_STRING( SM_SETTINGS_HEADSET );
+        LABEL_STRING( SM_SETTINGS_GRAPHICS );		
         LABEL_STRING( SM_SETTINGS_MEMCARD_SELECT );
         LABEL_STRING( SM_MANAGE_PROFILES );
         LABEL_STRING( SM_MANAGE_PROFILE_OPTIONS );
@@ -659,6 +662,7 @@ const char* state_mgr::GetStateName( sm_states State )
         LABEL_STRING( SM_PAUSE_CONTROLS );
         LABEL_STRING( SM_PAUSE_SETTINGS );
         LABEL_STRING( SM_PAUSE_HEADSET );
+        LABEL_STRING( SM_PAUSE_GRAPHICS );		
         LABEL_STRING( SM_PAUSE_SETTINGS_SELECT );
 #ifdef TARGET_XBOX
         LABEL_STRING( SM_PAUSE_FRIENDS );
@@ -675,6 +679,7 @@ const char* state_mgr::GetStateName( sm_states State )
         LABEL_STRING( SM_PAUSE_MP_CONTROLS );
         LABEL_STRING( SM_PAUSE_MP_SETTINGS );
         LABEL_STRING( SM_PAUSE_MP_HEADSET );
+        LABEL_STRING( SM_PAUSE_MP_GRAPHICS );		
         LABEL_STRING( SM_PAUSE_MP_SETTINGS_SELECT );
 #ifdef TARGET_XBOX
         LABEL_STRING( SM_PAUSE_MP_FRIENDS );
@@ -1344,6 +1349,7 @@ void state_mgr::EnterState( sm_states State )
         case SM_MAIN_MENU:                      EnterMainMenu();                    break;
         case SM_SETTINGS_MENU:                  EnterSettingsMenu();                break;
         case SM_SETTINGS_HEADSET:               EnterSettingsHeadset();             break;
+        case SM_SETTINGS_GRAPHICS:              EnterSettingsGraphics();            break;		
         case SM_SETTINGS_MEMCARD_SELECT:        EnterSettingsMemcardSelect();       break;
         case SM_MANAGE_PROFILES:                EnterManageProfiles();              break;
         case SM_MANAGE_PROFILE_OPTIONS:         EnterManageProfileOptions();        break;
@@ -1446,6 +1452,7 @@ void state_mgr::EnterState( sm_states State )
         case SM_PAUSE_CONTROLS:                 EnterPauseControls();               break;
         case SM_PAUSE_SETTINGS:                 EnterPauseSettings();               break;
         case SM_PAUSE_HEADSET:                  EnterPauseHeadset();                break;
+        case SM_PAUSE_GRAPHICS:                 EnterPauseGraphics();               break;		
         case SM_PAUSE_SETTINGS_SELECT:          EnterPauseSettingsSelect();         break;
 #ifdef TARGET_XBOX
         case SM_PAUSE_FRIENDS:                  EnterPauseFriends();                break;
@@ -1460,6 +1467,7 @@ void state_mgr::EnterState( sm_states State )
         case SM_PAUSE_MP_CONTROLS:              EnterPauseMPControls();             break;
         case SM_PAUSE_MP_SETTINGS:              EnterPauseMPSettings();             break;
         case SM_PAUSE_MP_HEADSET:               EnterPauseMPHeadset();              break;
+        case SM_PAUSE_MP_GRAPHICS:              EnterPauseMPGraphics();             break;		
         case SM_PAUSE_MP_SETTINGS_SELECT:       EnterPauseMPSettingsSelect();       break;
 #ifdef TARGET_XBOX
         case SM_PAUSE_MP_FRIENDS:               EnterPauseMPFriends();              break;
@@ -1583,6 +1591,7 @@ void state_mgr::UpdateState( sm_states State, f32 DeltaTime )
         case SM_MAIN_MENU:                      UpdateMainMenu();                   break;
         case SM_SETTINGS_MENU:                  UpdateSettingsMenu();               break;
         case SM_SETTINGS_HEADSET:               UpdateSettingsHeadset();            break;
+        case SM_SETTINGS_GRAPHICS:              UpdateSettingsGraphics();           break;		
         case SM_SETTINGS_MEMCARD_SELECT:        UpdateSettingsMemcardSelect();      break;
 
         case SM_MANAGE_PROFILES:                UpdateManageProfiles();             break;
@@ -1694,6 +1703,7 @@ void state_mgr::UpdateState( sm_states State, f32 DeltaTime )
         case SM_PAUSE_CONTROLS:                 UpdatePauseControls();              break;
         case SM_PAUSE_SETTINGS:                 UpdatePauseSettings();              break;
         case SM_PAUSE_HEADSET:                  UpdatePauseHeadset();               break;
+        case SM_PAUSE_GRAPHICS:                 UpdatePauseGraphics();              break;		
         case SM_PAUSE_SETTINGS_SELECT:          UpdatePauseSettingsSelect();        break;
 #ifdef TARGET_XBOX
         case SM_PAUSE_FRIENDS:                  UpdatePauseFriends();               break;
@@ -1708,6 +1718,7 @@ void state_mgr::UpdateState( sm_states State, f32 DeltaTime )
         case SM_PAUSE_MP_CONTROLS:              UpdatePauseMPControls();            break;
         case SM_PAUSE_MP_SETTINGS:              UpdatePauseMPSettings();            break;
         case SM_PAUSE_MP_HEADSET:               UpdatePauseMPHeadset();             break;
+        case SM_PAUSE_MP_GRAPHICS:              UpdatePauseMPGraphics();            break;		
         case SM_PAUSE_MP_SETTINGS_SELECT:       UpdatePauseMPSettingsSelect();      break;
 #ifdef TARGET_XBOX
         case SM_PAUSE_MP_FRIENDS:               UpdatePauseMPFriends();             break;
@@ -2905,7 +2916,16 @@ void state_mgr::UpdateSettingsMenu( void )
 
             case DIALOG_STATE_SELECT:
             {
-                SetState( SM_SETTINGS_HEADSET );
+                s32 Control = m_CurrentDialog->GetControl();
+
+                if( Control == IDC_AV_HEADSET_TEST )
+                {
+                    SetState( SM_SETTINGS_HEADSET );
+                }
+                else if( Control == IDC_AV_GRAPHICS_MENU )
+                {
+                    SetState( SM_SETTINGS_GRAPHICS );
+                }
             }
             break;
 
@@ -2959,6 +2979,39 @@ void state_mgr::UpdateSettingsHeadset( void )
 //=========================================================================
 
 void state_mgr::ExitSettingsHeadset( void )
+{
+}
+
+//=========================================================================
+
+void state_mgr::EnterSettingsGraphics( void )
+{
+    g_UiMgr->EndDialog( g_UiUserID, TRUE );
+    irect mainarea(26, DIALOG_TOP, 486, DIALOG_BOTTOM );
+    m_CurrentDialog = g_UiMgr->OpenDialog( g_UiUserID, "graphics settings", mainarea, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER );
+#ifndef USE_MOVIES
+    g_UiMgr->SetUserBackground( g_UiUserID, "background1" );
+#endif
+}
+
+//=========================================================================
+
+void state_mgr::UpdateSettingsGraphics( void )
+{
+    if( m_CurrentDialog != NULL )
+    {
+        u32 DialogState = m_CurrentDialog->GetState();
+
+        if( DialogState == DIALOG_STATE_BACK )
+        {
+            SetState( SM_SETTINGS_MENU );
+        }
+    }
+}
+
+//=========================================================================
+
+void state_mgr::ExitSettingsGraphics( void )
 {
 }
 
@@ -7204,7 +7257,16 @@ void state_mgr::UpdatePauseSettings( void )
 
             case DIALOG_STATE_SELECT:
             {
-                SetState( SM_PAUSE_HEADSET );
+                s32 Control = m_CurrentDialog->GetControl();
+
+                if( Control == IDC_AV_HEADSET_TEST )
+                {
+                    SetState( SM_PAUSE_HEADSET );
+                }
+                else if( Control == IDC_AV_GRAPHICS_MENU )
+                {
+                    SetState( SM_PAUSE_GRAPHICS );
+                }
             }
             break;
 
@@ -7259,6 +7321,39 @@ void state_mgr::UpdatePauseHeadset ( void )
 //=========================================================================
 
 void state_mgr::ExitPauseHeadset ( void )
+{
+}
+
+//=========================================================================
+
+void state_mgr::EnterPauseGraphics( void )
+{
+    g_UiMgr->EndDialog( g_UiUserID, TRUE );
+    irect mainarea(26, DIALOG_TOP, 486, DIALOG_BOTTOM );
+    m_CurrentDialog = g_UiMgr->OpenDialog( g_UiUserID, "graphics settings", mainarea, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER );
+#ifndef USE_MOVIES
+    g_UiMgr->SetUserBackground( g_UiUserID, "background1" );
+#endif
+}
+
+//=========================================================================
+
+void state_mgr::UpdatePauseGraphics( void )
+{
+    if( m_CurrentDialog != NULL )
+    {
+        u32 DialogState = m_CurrentDialog->GetState();
+
+        if( DialogState == DIALOG_STATE_BACK )
+        {
+            SetState( SM_PAUSE_SETTINGS );
+        }
+    }
+}
+
+//=========================================================================
+
+void state_mgr::ExitPauseGraphics( void )
 {
 }
 
@@ -7539,7 +7634,16 @@ void state_mgr::UpdatePauseMPSettings( void )
 
             case DIALOG_STATE_SELECT:
             {
-                SetState( SM_PAUSE_MP_HEADSET );
+                s32 Control = m_CurrentDialog->GetControl();
+
+                if( Control == IDC_AV_HEADSET_TEST )
+                {
+                    SetState( SM_PAUSE_MP_HEADSET );
+                }
+                else if( Control == IDC_AV_GRAPHICS_MENU )
+                {
+                    SetState( SM_PAUSE_MP_GRAPHICS );
+                }
             }
             break;
 
@@ -7594,6 +7698,39 @@ void state_mgr::UpdatePauseMPHeadset ( void )
 //=========================================================================
 
 void state_mgr::ExitPauseMPHeadset ( void )
+{
+}
+
+//=========================================================================
+
+void state_mgr::EnterPauseMPGraphics( void )
+{
+    g_UiMgr->EndDialog( g_UiUserID, TRUE );
+    irect mainarea(26, DIALOG_TOP, 486, DIALOG_BOTTOM );
+    m_CurrentDialog = g_UiMgr->OpenDialog( g_UiUserID, "graphics settings", mainarea, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER );
+#ifndef USE_MOVIES
+    g_UiMgr->SetUserBackground( g_UiUserID, "background1" );
+#endif
+}
+
+//=========================================================================
+
+void state_mgr::UpdatePauseMPGraphics( void )
+{
+    if( m_CurrentDialog != NULL )
+    {
+        u32 DialogState = m_CurrentDialog->GetState();
+
+        if( DialogState == DIALOG_STATE_BACK )
+        {
+            SetState( SM_PAUSE_MP_SETTINGS );
+        }
+    }
+}
+
+//=========================================================================
+
+void state_mgr::ExitPauseMPGraphics( void )
 {
 }
 

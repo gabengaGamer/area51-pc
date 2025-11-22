@@ -245,6 +245,7 @@
     <ClCompile Include="dlg_Extras.cpp" />
     <ClCompile Include="dlg_Feedback.cpp" />
     <ClCompile Include="dlg_Friends.cpp" />
+    <ClCompile Include="dlg_GraphicsSettings.cpp" />
     <ClCompile Include="dlg_Headset.cpp" />
     <ClCompile Include="dlg_JoinFilter.cpp" />
     <ClCompile Include="dlg_KickPlayer.cpp" />
@@ -348,6 +349,7 @@
     <ClInclude Include="dlg_Extras.hpp" />
     <ClInclude Include="dlg_Feedback.hpp" />
     <ClInclude Include="dlg_Friends.hpp" />
+    <ClInclude Include="dlg_GraphicsSettings.hpp" />
     <ClInclude Include="dlg_Headset.hpp" />
     <ClInclude Include="dlg_JoinFilter.hpp" />
     <ClInclude Include="dlg_KickPlayer.hpp" />

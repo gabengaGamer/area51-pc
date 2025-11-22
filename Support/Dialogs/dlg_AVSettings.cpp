@@ -27,34 +27,6 @@ enum
     POPUP_OVERWRITE_SETTINGS
 };
 
-enum controls
-{
-    IDC_AV_VOLUME_SFX_TEXT,
-    IDC_AV_VOLUME_MUSIC_TEXT,
-    IDC_AV_VOLUME_SPEECH_TEXT,
-#ifdef TARGET_PS2
-    IDC_AV_TOGGLE_SPEAKER_TEXT,
-#endif
-#ifdef TARGET_XBOX
-    IDC_AV_BRIGHTNESS_TEXT,
-#endif
-
-    IDC_AV_VOLUME_SFX,
-    IDC_AV_VOLUME_MUSIC,
-    IDC_AV_VOLUME_SPEECH,
-#ifdef TARGET_PS2
-    IDC_AV_TOGGLE_SPEAKER,
-#endif
-    IDC_AV_HEADSET_TEST,
-#ifdef TARGET_XBOX
-    IDC_AV_BRIGHTNESS,
-#endif
-    IDC_AV_BUTTON_ACCEPT,
-
-    IDC_AV_NAV_TEXT,
-};
-
-
 ui_manager::control_tem AVSettingsControls[] = 
 {
     // Frames.
@@ -73,13 +45,20 @@ ui_manager::control_tem AVSettingsControls[] =
 #if defined(TARGET_PS2)
     { IDC_AV_TOGGLE_SPEAKER,        "IDS_NULL",                     "combo",    300, 154, 140, 40, 0, 3, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
     { IDC_AV_HEADSET_TEST,          "IDS_OPTIONS_HEADSET_TEST",     "button",    40, 180, 220, 40, 0, 4, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
+    { IDC_AV_GRAPHICS_MENU,         "IDS_OPTIONS_GRAPHICS_SETTINGS", "button",    40, 225, 220, 40, 0, 5, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
 #elif defined TARGET_XBOX
     { IDC_AV_BRIGHTNESS,            "IDS_NULL",                     "slider",   310, 170, 120, 40, 0, 4, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
     { IDC_AV_HEADSET_TEST,          "IDS_OPTIONS_HEADSET_TEST",     "button",    40, 216, 220, 40, 0, 5, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
+    { IDC_AV_GRAPHICS_MENU,         "IDS_OPTIONS_GRAPHICS_SETTINGS", "button",    40, 252, 220, 40, 0, 6, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
 #else
     { IDC_AV_HEADSET_TEST,          "IDS_OPTIONS_HEADSET_TEST",     "button",    40, 180, 220, 40, 0, 4, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
+    { IDC_AV_GRAPHICS_MENU,         "IDS_OPTIONS_GRAPHICS_SETTINGS", "button",    40, 225, 220, 40, 0, 5, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
 #endif
-    { IDC_AV_BUTTON_ACCEPT,         "IDS_PROFILE_OPTIONS_ACCEPT",   "button",    40, 285, 220, 40, 0, 6, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
+#if defined(TARGET_XBOX)
+    { IDC_AV_BUTTON_ACCEPT,         "IDS_PROFILE_OPTIONS_ACCEPT",   "button",    40, 324, 220, 40, 0, 8, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
+#else
+    { IDC_AV_BUTTON_ACCEPT,         "IDS_PROFILE_OPTIONS_ACCEPT",   "button",    40, 285, 220, 40, 0, 8, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
+#endif
     { IDC_AV_NAV_TEXT,              "IDS_NULL",                     "text",       0,   0,   0,  0, 0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
 };
 
@@ -172,6 +151,7 @@ xbool dlg_av_settings::Create( s32                        UserID,
     m_pToggleSpeakerSetup	    = (ui_combo*)   FindChildByID( IDC_AV_TOGGLE_SPEAKER       );  
 #endif
     m_pHeadsetTest              = (ui_button*)  FindChildByID( IDC_AV_HEADSET_TEST         );
+    m_pGraphicsMenu             = (ui_button*)  FindChildByID( IDC_AV_GRAPHICS_MENU        );	
     m_pButtonAccept             = (ui_button*)  FindChildByID( IDC_AV_BUTTON_ACCEPT        );
 
     m_pVolumeSFXText	        = (ui_text*)    FindChildByID( IDC_AV_VOLUME_SFX_TEXT      );
@@ -210,6 +190,7 @@ xbool dlg_av_settings::Create( s32                        UserID,
     m_pToggleSpeakerSetup       ->SetFlag( ui_win::WF_VISIBLE, FALSE );
 #endif
     m_pHeadsetTest              ->SetFlag( ui_win::WF_VISIBLE, FALSE );
+    m_pGraphicsMenu             ->SetFlag( ui_win::WF_VISIBLE, FALSE );	
     m_pButtonAccept             ->SetFlag( ui_win::WF_VISIBLE, FALSE );
 
     m_pVolumeSFXText            ->SetFlag( ui_win::WF_VISIBLE, FALSE );
@@ -235,6 +216,7 @@ xbool dlg_av_settings::Create( s32                        UserID,
 
     // set button alignment
     m_pHeadsetTest              ->SetFlag( ui_win::WF_BUTTON_LEFT, TRUE );
+    m_pGraphicsMenu             ->SetFlag( ui_win::WF_BUTTON_LEFT, TRUE );	
     m_pButtonAccept             ->SetFlag( ui_win::WF_BUTTON_LEFT, TRUE );
 
 #ifdef TARGET_PS2
@@ -459,7 +441,14 @@ void dlg_av_settings::OnPadSelect( ui_win* pWin )
 
             // goto headset test screen
             g_AudioMgr.Play("Select_Norm");
+            m_CurrentControl = IDC_AV_HEADSET_TEST;
             m_State = DIALOG_STATE_SELECT;
+        }
+        else if( pWin == (ui_win*)m_pGraphicsMenu )
+        {
+            g_AudioMgr.Play("Select_Norm");
+            m_CurrentControl = IDC_AV_GRAPHICS_MENU;
+            m_State = DIALOG_STATE_SELECT;       
         }
         else if( pWin == (ui_win*)m_pButtonAccept )
         {
@@ -598,6 +587,7 @@ void dlg_av_settings::OnUpdate ( ui_win* pWin, f32 DeltaTime )
 #ifdef TARGET_XBOX
             m_pBrightness               ->SetFlag( ui_win::WF_VISIBLE, TRUE );
 #endif
+            m_pGraphicsMenu             ->SetFlag( ui_win::WF_VISIBLE, TRUE );
             m_pButtonAccept             ->SetFlag( ui_win::WF_VISIBLE, TRUE );
 
             m_pVolumeSFXText            ->SetFlag( ui_win::WF_VISIBLE, TRUE );
@@ -626,6 +616,11 @@ void dlg_av_settings::OnUpdate ( ui_win* pWin, f32 DeltaTime )
             {
                 m_pHeadsetTest          ->SetFlag( ui_win::WF_VISIBLE, TRUE );
             }
+			
+            if( m_pGraphicsMenu->GetFlags( ui_win::WF_DISABLED ) == FALSE )
+            {
+                m_pGraphicsMenu         ->SetFlag( ui_win::WF_VISIBLE, TRUE );
+            }			
 
             GotoControl( (ui_control*)m_pVolumeSFX );
             m_pVolumeSFX->SetFlag(WF_HIGHLIGHT, TRUE);        
@@ -791,6 +786,12 @@ void dlg_av_settings::OnUpdate ( ui_win* pWin, f32 DeltaTime )
     }
 
 #ifdef TARGET_XBOX
+    if( m_pGraphicsMenu->GetFlags(WF_HIGHLIGHT) )
+    {
+        highLight = 6;
+        g_UiMgr->SetScreenHighlight( m_pGraphicsMenu->GetPosition() );
+    }
+
     if( m_pBrightness->GetFlags(WF_HIGHLIGHT) )
     {
         highLight = 5;
@@ -799,11 +800,21 @@ void dlg_av_settings::OnUpdate ( ui_win* pWin, f32 DeltaTime )
     }
     else
         m_pBrightnessText->SetLabelColor( xcolor(126,220,60,255) );
+#else
+    if( m_pGraphicsMenu->GetFlags(WF_HIGHLIGHT) )
+    {
+        highLight = 5;
+        g_UiMgr->SetScreenHighlight( m_pGraphicsMenu->GetPosition() );
+    }
 #endif
 
     if( m_pButtonAccept->GetFlags(WF_HIGHLIGHT) )
     {
+#ifdef TARGET_XBOX
+        highLight = 7;
+#else
         highLight = 6;
+#endif
         g_UiMgr->SetScreenHighlight( m_pButtonAccept->GetPosition() );
     }
 

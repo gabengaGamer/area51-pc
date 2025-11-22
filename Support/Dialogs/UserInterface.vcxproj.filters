@@ -153,6 +153,7 @@
     <ClCompile Include="dlg_VoteKick.cpp" />
     <ClCompile Include="dlg_VoteMap.cpp" />
     <ClCompile Include="dlg_COPA.cpp" />
+    <ClCompile Include="dlg_GraphicsSettings.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Ui\ui_bitmap.hpp">
@@ -289,5 +290,6 @@
     <ClInclude Include="dlg_OnlineLogin.hpp" />
     <ClInclude Include="dlg_OnlineMain.hpp" />
     <ClInclude Include="dlg_PauseOnline.hpp" />
+    <ClInclude Include="dlg_GraphicsSettings.hpp" />
   </ItemGroup>
 </Project>
