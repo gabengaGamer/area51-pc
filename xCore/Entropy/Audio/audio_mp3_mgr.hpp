@@ -42,6 +42,7 @@ public:
 
         void        Open                        ( audio_stream* pStream );
         void        Close                       ( audio_stream* pStream );
+        void        Seek                        ( audio_stream* pStream );
         void        Decode                      ( audio_stream* pStream,
                                                   s16*          pBufferL,
                                                   s16*          pBufferR,

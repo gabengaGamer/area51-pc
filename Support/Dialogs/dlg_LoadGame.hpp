@@ -82,8 +82,6 @@ protected:
             void        UpdateLightShaftEffect  ( f32               DeltaTime );
             void        CreateDropShadow        ( s32               FontIndex );
             void        RenderLightShaftEffect  ( void );
-			
-			void        AudioDestroy            ( void );
 
     //  Platform-specific functions for the effects rendering
     //  IMPORTANT NOTE: We can't use vector3's for any of the operations in the

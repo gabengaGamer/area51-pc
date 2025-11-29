@@ -105,18 +105,18 @@ s32 audio_mp3_mgr::mp3_fetch_data( audio_stream* pStream, void* pBuffer, s32 nBy
         if( Length )
         {
             x_memcpy( pBuffer, (void*)(pStream->MainRAM[0] + Previous), Length );
-            //x_memset( (void*)(pStream->MainRAM[0] + Previous), 0, Length );
+            x_memset( (void*)(pStream->MainRAM[0] + Previous), 0, Length );
             pBuffer = (void*)((uaddr)pBuffer + Length);
         }
 
         Current -= (MP3_BUFFER_SIZE * 2);
         x_memcpy( pBuffer, (void*)pStream->MainRAM[0], Current );
-        //x_memset( (void*)pStream->MainRAM[0], 0, Current );
+        x_memset( (void*)pStream->MainRAM[0], 0, Current );
     }
     else
     {
         x_memcpy( pBuffer, (void*)(pStream->MainRAM[0] + Previous), nBytes );
-        //x_memset( (void*)(pStream->MainRAM[0] + Previous), 0, nBytes );
+        x_memset( (void*)(pStream->MainRAM[0] + Previous), 0, nBytes );
     }
 
     pStream->CursorMP3 = Current;
@@ -152,8 +152,6 @@ void audio_mp3_mgr::mp3_state_reset( mp3_decoder_state& State, stream_type Type 
     State.SampleOffset      = 0;
     State.Channels          = (Type == STEREO_STREAM) ? 2 : 1;
     State.EndOfStream       = FALSE;
-    //x_memset( State.SamplesBuffer, 0, sizeof( State.SamplesBuffer ) );
-    //x_memset( State.InputBuffer,   0, sizeof( State.InputBuffer ) );
 }
 
 //==============================================================================
@@ -239,8 +237,17 @@ s32 audio_mp3_mgr::mp3_state_decode_frame( audio_stream* pStream, mp3_decoder_st
 
     mp3_state_refill( pStream, State );
 
+    s32 SkipCount = 0;
+    const s32 MAX_SKIP_ATTEMPTS = 100;
+
     while( mp3_state_available_bytes( State ) > 0 )
     {
+        if( SkipCount > MAX_SKIP_ATTEMPTS )
+        {
+            State.EndOfStream = TRUE;
+            break;
+        }
+
         s32 BytesLeft      = mp3_state_available_bytes( State );
         s32 SamplesDecoded = mp3dec_decode_frame( &State.Decoder,
                                                   State.InputBuffer + State.InputCursor,
@@ -252,6 +259,11 @@ s32 audio_mp3_mgr::mp3_state_decode_frame( audio_stream* pStream, mp3_decoder_st
         if( FrameBytes <= 0 )
         {
             FrameBytes = (BytesLeft > 0) ? 1 : 0;
+            SkipCount++;
+        }
+        else
+        {
+            SkipCount = 0;
         }
 
         State.InputCursor += FrameBytes;
@@ -287,6 +299,10 @@ audio_mp3_mgr::audio_mp3_mgr( void )
 
 audio_mp3_mgr::~audio_mp3_mgr( void )
 {
+    if( s_Initialized )
+    {
+        Kill();
+    }
 }
 
 //==============================================================================
@@ -302,6 +318,16 @@ void audio_mp3_mgr::Init( void )
 void audio_mp3_mgr::Kill( void )
 {
     ASSERT( s_Initialized );
+    
+    for( s32 i = 0; i < MAX_AUDIO_STREAMS; i++ )
+    {
+        audio_stream* pStream = &g_AudioStreamMgr.m_AudioStreams[i];
+        if( pStream->HandleMP3 )
+        {
+            Close( pStream );
+        }
+    }
+    
     s_Initialized = FALSE;
 }
 
@@ -342,6 +368,28 @@ void audio_mp3_mgr::Close( audio_stream* pStream )
         x_free( pState );
         pStream->HandleMP3 = NULL;
     }
+}
+
+//==============================================================================
+
+void audio_mp3_mgr::Seek( audio_stream* pStream )
+{
+    ASSERT( s_Initialized );
+    ASSERT( IsValidStream( pStream ) );
+
+    if( pStream->HandleMP3 == NULL )
+        return;
+
+    // Lock the audio hardware.
+    g_AudioHardware.Lock();
+
+    pStream->CursorMP3 = 0;
+
+    mp3_decoder_state* pState = (mp3_decoder_state*)pStream->HandleMP3;
+    mp3_state_reset( *pState, pStream->Type );
+
+    // Unlock it now.
+    g_AudioHardware.Unlock();
 }
 
 //==============================================================================
@@ -437,6 +485,9 @@ void audio_mp3_mgr::Decode( audio_stream* pStream, s16* pBufferL, s16* pBufferR,
         SamplesNeeded           -= CopyCount;
     }
 
+    // Unlock it now.
+    g_AudioHardware.Unlock();
+
     if( SamplesNeeded > 0 )
     {
         if( pOutL )
@@ -444,9 +495,6 @@ void audio_mp3_mgr::Decode( audio_stream* pStream, s16* pBufferL, s16* pBufferR,
         if( bIsStereo && pOutR )
             x_memset( pOutR, 0, SamplesNeeded * sizeof(s16) );
     }
-
-    // Unlock it now.
-    g_AudioHardware.Unlock();
 }
 
 //==============================================================================

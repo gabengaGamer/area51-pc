@@ -239,8 +239,6 @@ void dlg_load_game::Destroy( void )
 {
     ui_dialog::Destroy();
 
-    AudioDestroy();
-
     // Kill screen wipe
     g_UiMgr->ResetScreenWipe();
 
@@ -516,23 +514,13 @@ void dlg_load_game::OnPadSelect( ui_win* pWin )
         // kill the audio
         if( g_AudioMgr.IsValidVoiceId(m_VoiceID) )
         {
-            AudioDestroy();
+            g_AudioMgr.Release( m_VoiceID, 0.0f );
         }
 
         // go into the the loading state
         m_SlideshowState = STATE_LOADING;
         m_ElapsedTime    = 0.0f;
     }
-}
-
-//==============================================================================
-
-void dlg_load_game::AudioDestroy( void )
-{
-    if( g_AudioMgr.IsValidVoiceId( m_VoiceID ) )
-    {
-        g_AudioMgr.Release( m_VoiceID, 0.0f );
-    }   
 }
 
 //=========================================================================
