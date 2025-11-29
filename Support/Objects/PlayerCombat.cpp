@@ -2403,23 +2403,23 @@ xbool player::SetupDualWeaponDiscard( inven_item &WeaponItem )
             }
         }
         break;
-    case INVEN_WEAPON_DUAL_EAGLE:
-        {
-            // clear dual
-            m_Inventory2.SetAmount( INVEN_WEAPON_DUAL_EAGLE, 0.0f );
-
-            // Set next weapon to the DE
-            WeaponItem = INVEN_WEAPON_DESERT_EAGLE;
-
-            new_weapon* pWeapon = GetWeaponPtr( WeaponItem );
-
-            // clear current weapon's clip ammo so that we'll have to reload once we dump the dual.            
-            if( pWeapon )
-            {                
-                pWeapon->ClearClipAmmo();
-            }
-        }
-        break;
+    //case INVEN_WEAPON_DUAL_EAGLE:
+    //    {
+    //        // clear dual
+    //        m_Inventory2.SetAmount( INVEN_WEAPON_DUAL_EAGLE, 0.0f );
+	//
+    //        // Set next weapon to the DE
+    //        WeaponItem = INVEN_WEAPON_DESERT_EAGLE;
+	//
+    //        new_weapon* pWeapon = GetWeaponPtr( WeaponItem );
+	//
+    //        // clear current weapon's clip ammo so that we'll have to reload once we dump the dual.            
+    //        if( pWeapon )
+    //        {                
+    //            pWeapon->ClearClipAmmo();
+    //        }
+    //    }
+    //    break;
     default:
         {
             // no dual discard

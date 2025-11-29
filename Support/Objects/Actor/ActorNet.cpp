@@ -2148,9 +2148,9 @@ void actor::net_DropWeapon( void )
         DropWeapon = INVEN_WEAPON_SMP;
         break;
 
-    case INVEN_WEAPON_DUAL_EAGLE:
-        DropWeapon = INVEN_WEAPON_DESERT_EAGLE;
-        break;
+    //case INVEN_WEAPON_DUAL_EAGLE:
+    //    DropWeapon = INVEN_WEAPON_DESERT_EAGLE;
+    //    break;
 
     case INVEN_WEAPON_MUTATION:
     case INVEN_WEAPON_SCANNER:

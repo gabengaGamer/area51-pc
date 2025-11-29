@@ -7434,12 +7434,12 @@ void player::TakePickup( pickup& Pickup )
         {
             Item = INVEN_WEAPON_DUAL_SHT;
         }
-		else
-        if( (Item == INVEN_WEAPON_DESERT_EAGLE) &&
-                (m_Inventory2.GetAmount( Item ) == 1.0f) )
-        {
-            Item = INVEN_WEAPON_DUAL_EAGLE;
-        }
+		//else
+        //if( (Item == INVEN_WEAPON_DESERT_EAGLE) &&
+        //        (m_Inventory2.GetAmount( Item ) == 1.0f) )
+        //{
+        //    Item = INVEN_WEAPON_DUAL_EAGLE;
+        //}
 
         xbool bFirstTimePickedup = FALSE;
         
@@ -7452,7 +7452,8 @@ void player::TakePickup( pickup& Pickup )
             m_Inventory2.SetAmount( Item, 1.0f );
 
             // set flag for dual weapon
-            xbool bIsDual = (Item == INVEN_WEAPON_DUAL_SMP) || (Item == INVEN_WEAPON_DUAL_SHT ) || (Item == INVEN_WEAPON_DUAL_EAGLE );
+            //xbool bIsDual = (Item == INVEN_WEAPON_DUAL_SMP) || (Item == INVEN_WEAPON_DUAL_SHT ) || (Item == INVEN_WEAPON_DUAL_EAGLE );
+			xbool bIsDual = (Item == INVEN_WEAPON_DUAL_SMP) || (Item == INVEN_WEAPON_DUAL_SHT );
 
             // we currently don't have one of these in our inventory
             if( ShouldSwitchToWeapon2( Item, TRUE ) )
@@ -7821,9 +7822,9 @@ void player::EditorPreGame( void )
             DoCreateWeapon = WeaponsForLevel & WB_SCN;
             break;
 
-        case INVEN_WEAPON_DUAL_EAGLE:
-            DoCreateWeapon = WeaponsForLevel & WB_DE;
-            break;
+        //case INVEN_WEAPON_DUAL_EAGLE:
+        //    DoCreateWeapon = WeaponsForLevel & WB_DE;
+        //    break;
         case INVEN_WEAPON_MUTATION:
             DoCreateWeapon = WeaponsForLevel & WB_MM;
             break;

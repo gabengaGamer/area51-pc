@@ -224,6 +224,11 @@ void event_sound_emitter::PlayEmitter( const char* pDescriptor, vector3& Positio
             x_sprintf( m_DescriptorName, "2MP_%s", pDescriptor );
             x_sprintf( m_ObjectName, "2MP" );
         }
+        //else if( pObject->GetType() == object::TYPE_WEAPON_DUAL_EAGLE )
+        //{
+        //    x_sprintf( m_DescriptorName, "2EG_%s", pDescriptor );
+        //    x_sprintf( m_ObjectName, "2EG" );
+        //}		
 // KSS -- TO ADD NEW WEAPON
         else if( pObject->GetType() == object::TYPE_WEAPON_SHOTGUN )
         {

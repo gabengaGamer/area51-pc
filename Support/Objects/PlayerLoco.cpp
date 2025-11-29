@@ -139,6 +139,7 @@ player_loco::mp_weapon player_loco::GetMPWeapon( inven_item InvenWeapon )
     case INVEN_WEAPON_BBG:          return MP_WEAPON_RFL;
     case INVEN_WEAPON_DUAL_SMP:     return MP_WEAPON_DUAL;
     case INVEN_WEAPON_DUAL_SHT:     return MP_WEAPON_DUAL;
+    //case INVEN_WEAPON_DUAL_EGL:     return MP_WEAPON_DUAL;
     case INVEN_WEAPON_MUTATION:     return MP_WEAPON_MUT;
     }
 }
@@ -163,6 +164,7 @@ loco::anim_type player_loco::GetMPReloadAnimType( inven_item InvenWeapon )
     case INVEN_WEAPON_BBG:          return loco::ANIM_RELOAD_BBG;
     case INVEN_WEAPON_DUAL_SMP:     return loco::ANIM_RELOAD_DUAL_SMP;
     case INVEN_WEAPON_DUAL_SHT:     return loco::ANIM_RELOAD_DUAL_SHT;
+    //case INVEN_WEAPON_DUAL_EGL:     return loco::ANIM_RELOAD_DUAL_EGL;
     case INVEN_WEAPON_MUTATION:     return loco::ANIM_RELOAD;
     }
 }
@@ -186,6 +188,7 @@ const char* player_loco::GetMPReloadAnimName( inven_item InvenWeapon )
     case INVEN_WEAPON_BBG:          return "PST_EGL_RELOAD"; // *Not needed so just use eagle*
     case INVEN_WEAPON_DUAL_SMP:     return "PST_EGL_RELOAD"; // *Not needed so just use eagle*
     case INVEN_WEAPON_DUAL_SHT:     return "PST_EGL_RELOAD"; // *Not needed so just use eagle*
+    //case INVEN_WEAPON_DUAL_EGL:     return "PST_EGL_RELOAD"; // *Not needed so just use eagle*    
     case INVEN_WEAPON_MUTATION:     return "PST_EGL_RELOAD"; // *Not needed so just use eagle*
     }
 }
@@ -210,6 +213,7 @@ loco::anim_type player_loco::GetMPShootPrimaryAnimType( inven_item InvenWeapon )
     case INVEN_WEAPON_BBG:          return loco::ANIM_SHOOT_BBG;
     case INVEN_WEAPON_DUAL_SMP:     return loco::ANIM_SHOOT_DUAL_SMP;
     case INVEN_WEAPON_DUAL_SHT:     return loco::ANIM_SHOOT_DUAL_SHT;
+    //case INVEN_WEAPON_DUAL_EGL:     return loco::ANIM_SHOOT_DUAL_EGL;    
     case INVEN_WEAPON_MUTATION:     return loco::ANIM_SHOOT_MUTANT;
     }
 }
@@ -234,6 +238,7 @@ const char* player_loco::GetMPShootPrimaryAnimName( inven_item InvenWeapon )
     case INVEN_WEAPON_BBG:          return "RFL_BBG_SHOOT";
     case INVEN_WEAPON_DUAL_SMP:     return "DUL_2MP_SHOOT";
     case INVEN_WEAPON_DUAL_SHT:     return "DUL_2SH_SHOOT";
+    //case INVEN_WEAPON_DUAL_EGL:     return "DUL_2EG_SHOOT";    
     case INVEN_WEAPON_MUTATION:     return "MUT_SHOOT";
     }
 }
@@ -258,6 +263,7 @@ loco::anim_type player_loco::GetMPShootSecondaryAnimType( inven_item InvenWeapon
     case INVEN_WEAPON_BBG:          return loco::ANIM_SHOOT_BBG;
     case INVEN_WEAPON_DUAL_SMP:     return loco::ANIM_SHOOT_DUAL_SMP;
     case INVEN_WEAPON_DUAL_SHT:     return loco::ANIM_SHOOT_DUAL_SHT_SECONDARY;
+    //case INVEN_WEAPON_DUAL_EGL:     return loco::ANIM_SHOOT_DUAL_EGL_SECONDARY;
     case INVEN_WEAPON_MUTATION:     return loco::ANIM_SHOOT_SECONDARY_MUTANT;
     }
 }
@@ -282,6 +288,7 @@ const char* player_loco::GetMPShootSecondaryAnimName( inven_item InvenWeapon )
     case INVEN_WEAPON_BBG:          return "RFL_BBG_SHOOT";
     case INVEN_WEAPON_DUAL_SMP:     return "DUL_2MP_SHOOT";
     case INVEN_WEAPON_DUAL_SHT:     return "DUL_2SH_ALT_SHOOT";
+    //case INVEN_WEAPON_DUAL_EGL:     return "DUL_2EG_SHOOT";
     case INVEN_WEAPON_MUTATION:     return "MUT_SHOOT";
     }
 }
