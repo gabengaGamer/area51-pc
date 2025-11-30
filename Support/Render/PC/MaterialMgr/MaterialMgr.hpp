@@ -65,6 +65,7 @@ enum material_flags
     MATERIAL_FLAG_ENV_CUBEMAP       = (1<<14),
     MATERIAL_FLAG_ENV_VIEWSPACE     = (1<<15),
     MATERIAL_FLAG_ALPHA_BLEND       = (1<<16),	
+    MATERIAL_FLAG_ILLUM_USE_DIFFUSE = (1<<17),	
 };
 
 //==============================================================================

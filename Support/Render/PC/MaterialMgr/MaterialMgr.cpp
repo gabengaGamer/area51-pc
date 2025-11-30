@@ -141,6 +141,9 @@ material_mgr::material_constants material_mgr::BuildMaterialFlags( const materia
     else if( pMaterial->m_Flags & geom::material::FLAG_IS_SUBTRACTIVE )
         constants.Flags |= MATERIAL_FLAG_SUBTRACTIVE;
 
+    if( pMaterial->m_Flags & geom::material::FLAG_ILLUM_USES_DIFFUSE )
+        constants.Flags |= MATERIAL_FLAG_ILLUM_USE_DIFFUSE;
+
     if( IncludeVertexColor )
         constants.Flags |= MATERIAL_FLAG_VERTEX_COLOR;
 
