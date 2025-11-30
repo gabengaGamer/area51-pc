@@ -87,7 +87,7 @@ struct cb_geom_frame
     matrix4 Projection;        // View to clip matrix
 
     vector4 MaterialParams;    // x = flags, y = alpha ref, z = nearZ, w = farZ
-    vector4 UVAnim;            // xy = uv animation offsets
+    vector4 UVAnim;            // xy = uv animation offsets, z = detail scale
     vector4 CameraPosition;    // xyz = camera position, w = 1
     vector4 EnvParams;         // x = fixed alpha, y = cubemap intensity, zw = unused
 };

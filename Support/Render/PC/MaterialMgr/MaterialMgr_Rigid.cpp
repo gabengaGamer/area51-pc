@@ -200,9 +200,14 @@ xbool material_mgr::UpdateRigidConstants( const matrix4*      pL2W,
                                   1.0f );
 
     const f32 invByte = 1.0f / 255.0f;
+
+    f32 detailScale = pMaterial ? pMaterial->m_DetailScale : 1.0f;
+    if( detailScale <= 0.0f )
+        detailScale = 1.0f;
+
     frameData.UVAnim.Set( (f32)UOffset * invByte,
                           (f32)VOffset * invByte,
-                          0.0f,
+                          detailScale,
                           0.0f );
 
     const material_constants constants = BuildMaterialFlags( pMaterial, RenderFlags, TRUE );

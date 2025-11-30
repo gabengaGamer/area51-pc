@@ -26,7 +26,8 @@ GeomDiffuseResult GeomEvaluateDiffuse( GEOM_PIXEL_INPUT input, uint materialFlag
 
     if( materialFlags & MATERIAL_FLAG_DETAIL )
     {
-        float4 detailColor = txDetail.Sample( samLinear, input.UV * 4.0 );
+        float  detailScale = (UVAnim.z > 0.0f) ? UVAnim.z : 1.0f;
+        float4 detailColor = txDetail.Sample( samLinear, input.UV * detailScale );
         result.Color *= detailColor * 2.0;
     }
 
