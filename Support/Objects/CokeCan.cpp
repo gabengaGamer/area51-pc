@@ -81,8 +81,8 @@ static coke_can_tweaks k_CokeCanTweak[ coke_can::PROFILE_COUNT ] = {
       0.010f,                       // MIN_FRICTION                 
       0.030f,                       // MAX_FRICTION                 
       0.1f,                         // MAJOR_AXIS_FRICTION          
-      0.70f,                        // BOUNCY                       
-      1.0f / 30.0f,                 // TIME_STEP                    
+      0.8f,                         // BOUNCY                       
+      1.0f / 60.0f,                 // TIME_STEP                    
       0.1f,                         // COLLISION_BACKOFF            
       0.1f,                         // MIN_COLL_DIST                
       20.0f,                        // COLL_BBOX_INFLATE            
@@ -94,7 +94,7 @@ static coke_can_tweaks k_CokeCanTweak[ coke_can::PROFILE_COUNT ] = {
       4.0f,                         // ACTIVE_ENERGY                
       625.0f,                       // PAIN_BULLET_FORCE_SCALE             
       1000.0f,                      // PAIN_EXPLOSION_FORCE_SCALE
-      4,                            // ACTIVE_FRAMES                
+      512,                          // ACTIVE_FRAMES                
       3.0f,                         // AUDIO_IMPACT_SPEED           
       2.0f,                         // AUDIO_MAX_ROLLING_SPEED      
       0.05f,                        // AUDIO_MIN_ROLLING_SPEED      
@@ -115,8 +115,8 @@ static coke_can_tweaks k_CokeCanTweak[ coke_can::PROFILE_COUNT ] = {
     0.010f,                         // MIN_FRICTION                 
     0.040f,                         // MAX_FRICTION                 
     0.1f,                           // MAJOR_AXIS_FRICTION
-    0.25f,                          // BOUNCY                       
-    1.0f / 30.0f,                   // TIME_STEP                    
+    0.8f,                           // BOUNCY                       
+    1.0f / 60.0f,                   // TIME_STEP                    
     0.1f,                           // COLLISION_BACKOFF            
     0.1f,                           // MIN_COLL_DIST                
     20.0f,                          // COLL_BBOX_INFLATE            
@@ -128,7 +128,7 @@ static coke_can_tweaks k_CokeCanTweak[ coke_can::PROFILE_COUNT ] = {
     4.0f,                           // ACTIVE_ENERGY                
     50.0f,                          // PAIN_BULLET_FORCE_SCALE             
     300.0f,                         // PAIN_EXPLOSION_FORCE_SCALE
-    4,                              // ACTIVE_FRAMES                
+    512,                            // ACTIVE_FRAMES                
     3.0f,                           // AUDIO_IMPACT_SPEED           
     2.0f,                           // AUDIO_MAX_ROLLING_SPEED      
     0.05f,                          // AUDIO_MIN_ROLLING_SPEED      
