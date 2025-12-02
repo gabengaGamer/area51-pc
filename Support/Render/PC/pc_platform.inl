@@ -139,9 +139,17 @@ void platform_ActivateMaterial( const material& Material )
 static
 void platform_ActivateDistortionMaterial( const material* pMaterial, const radian3& NormalRot )
 {
-    (void)pMaterial;
-    (void)NormalRot;
-    // TODO:
+    // TODO:    
+    if( !pMaterial )
+    {    
+        (void)pMaterial;
+        (void)NormalRot;
+    }
+    else
+    {
+        platform_ActivateMaterial( *pMaterial );    
+    }
+    
 }
 
 //=============================================================================
