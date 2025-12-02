@@ -47,6 +47,9 @@ enum gbuffer_target
 class gbuffer_mgr
 {
 public:
+    gbuffer_mgr();
+    ~gbuffer_mgr();
+
     void           Init                ( void );
     void           Kill                ( void );
                    
@@ -63,6 +66,8 @@ public:
     void           GetGBufferSize      ( u32& Width, u32& Height ) const;
 
 private:
+    void           ResetState          ( void );
+
     xbool       m_bInitialized;
     rtarget     m_GBufferTarget[GBUFFER_TARGET_COUNT-2];
     rtarget     m_GBufferTargetSet[GBUFFER_TARGET_COUNT];

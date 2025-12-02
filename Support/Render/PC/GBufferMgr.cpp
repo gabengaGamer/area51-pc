@@ -36,15 +36,26 @@ gbuffer_mgr g_GBufferMgr;
 //  IMPLEMENTATION
 //==============================================================================
 
+gbuffer_mgr::gbuffer_mgr()
+{
+    ResetState();
+    m_bInitialized = FALSE;
+}
+
+//==============================================================================
+
+gbuffer_mgr::~gbuffer_mgr()
+{
+}
+
+//==============================================================================
+
 void gbuffer_mgr::Init( void )
 {
     if( m_bInitialized )
         return;
 
-    m_bGBufferValid = FALSE;
-    m_GBufferWidth = 0;
-    m_GBufferHeight = 0;
-    m_bGBufferTargetsActive = FALSE;
+    ResetState();
     m_bInitialized = TRUE;
 }
 
@@ -80,40 +91,44 @@ xbool gbuffer_mgr::InitGBuffer( u32 Width, u32 Height )
     desc.SampleCount = 1;
     desc.SampleQuality = 0;
     desc.bBindAsTexture = TRUE;
-    
+
     // Create G-Buffer targets
     desc.Format = GBUFFER_FORMAT_ALBEDO;
     if( !rtarget_Create( m_GBufferTarget[0], desc ) )
+    {
+        x_throw( "Failed to create GBuffer Albedo target" );
         return FALSE;
-    
+    }
+
     desc.Format = GBUFFER_FORMAT_NORMAL;
     if( !rtarget_Create( m_GBufferTarget[1], desc ) )
     {
-        rtarget_Destroy( m_GBufferTarget[0] );
+        DestroyGBuffer();
+        x_throw( "Failed to create GBuffer Normal target" );
         return FALSE;
     }
-    
+
     desc.Format = GBUFFER_FORMAT_DEPTH_INFO;
     if( !rtarget_Create( m_GBufferTarget[2], desc ) )
     {
-        rtarget_Destroy( m_GBufferTarget[0] );
-        rtarget_Destroy( m_GBufferTarget[1] );
+        DestroyGBuffer();
+        x_throw( "Failed to create GBuffer Depth Info target" );
         return FALSE;
     }
-    
+
     desc.Format = GBUFFER_FORMAT_GLOW;
     if( !rtarget_Create( m_GBufferTarget[3], desc ) )
     {
-        rtarget_Destroy( m_GBufferTarget[0] );
-        rtarget_Destroy( m_GBufferTarget[1] );
-        rtarget_Destroy( m_GBufferTarget[2] );
+        DestroyGBuffer();
+        x_throw( "Failed to create GBuffer Glow target" );
         return FALSE;
-    }    
-    
+    }
+
     desc.Format = RTARGET_FORMAT_DEPTH24_STENCIL8;
     if( !rtarget_Create( m_GBufferDepth, desc ) )
     {
         DestroyGBuffer();
+        x_throw( "Failed to create GBuffer depth-stencil" );
         return FALSE;
     }
     
@@ -132,14 +147,13 @@ void gbuffer_mgr::DestroyGBuffer( void )
     }
 
     for( u32 i = 0; i < (GBUFFER_TARGET_COUNT - 2); i++ )
+    {
         rtarget_Destroy( m_GBufferTarget[i] );
+    }
 
     rtarget_Destroy( m_GBufferDepth );
 
-    m_bGBufferValid = FALSE;
-    m_GBufferWidth = 0;
-    m_GBufferHeight = 0;
-    m_bGBufferTargetsActive = FALSE;
+    ResetState();
 }
 
 //==============================================================================
@@ -156,12 +170,24 @@ xbool gbuffer_mgr::ResizeGBuffer( u32 Width, u32 Height )
 
 xbool gbuffer_mgr::SetGBufferTargets( void )
 {
-    if( !m_bGBufferValid || !g_pd3dContext || m_bGBufferTargetsActive )
+    if( !m_bGBufferValid )
+    {
+        x_throw( "SetGBufferTargets called before a valid G-Buffer was created" );
+        return FALSE;
+    }
+
+    if( !g_pd3dContext )
+        return FALSE;
+
+    if( m_bGBufferTargetsActive )
         return m_bGBufferTargetsActive;
 
     const rtarget* pBackBuffer = rtarget_GetBackBuffer();
     if( !pBackBuffer )
+    {
+        x_throw( "Back buffer is not available" );
         return FALSE;
+    }
 
     const rtarget* pFinalColor = pBackBuffer;
     const rtarget* pDepthTarget = &m_GBufferDepth;
@@ -211,6 +237,9 @@ void gbuffer_mgr::ClearGBuffer( void )
     if( !m_bGBufferValid || !m_bGBufferTargetsActive )
         return;
 
+    if( !g_pd3dContext )
+        return;
+
     // Albedo
     static const f32 clearAlbedo[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
     g_pd3dContext->ClearRenderTargetView(m_GBufferTarget[0].pRenderTargetView, clearAlbedo);
@@ -229,6 +258,16 @@ void gbuffer_mgr::ClearGBuffer( void )
 
     // Depth-stencil
     g_pd3dContext->ClearDepthStencilView(m_GBufferDepth.pDepthStencilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
+}
+
+//==============================================================================
+
+void gbuffer_mgr::ResetState( void )
+{
+    m_bGBufferValid = FALSE;
+    m_GBufferWidth = 0;
+    m_GBufferHeight = 0;
+    m_bGBufferTargetsActive = FALSE;
 }
 
 //==============================================================================
