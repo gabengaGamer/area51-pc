@@ -507,6 +507,7 @@ void platform_RenderRawStrips( s32               nVerts,
         return;
 
     // fill in the l2w...note we have to reset draw to do this
+    draw_EnableBilinear();
     draw_Begin( DRAW_TRIANGLES, s_DrawFlags );
     draw_SetTexture( *s_pDrawBitmap );
     draw_SetL2W( L2W );
@@ -586,6 +587,7 @@ void platform_Render3dSprites( s32               nSprites,
         S2V = W2V;
     
     draw_ClearL2W();
+    draw_EnableBilinear();
     draw_Begin( DRAW_TRIANGLES, s_DrawFlags );
     draw_SetTexture( *s_pDrawBitmap );
     draw_SetL2W( V2W );
@@ -669,6 +671,7 @@ void platform_RenderHeatHazeSprites( s32 nSprites, f32 UniScale, const matrix4* 
         S2V = W2V;
 
     draw_ClearL2W();
+    draw_EnableBilinear();
     draw_Begin( DRAW_TRIANGLES, s_DrawFlags );
     draw_SetTexture( *s_pDrawBitmap );
     draw_SetL2W( V2W );
@@ -734,6 +737,7 @@ void platform_RenderVelocitySprites( s32            nSprites,
 
     // start up draw
     draw_ClearL2W();
+    draw_EnableBilinear();
     draw_Begin( DRAW_TRIANGLES, s_DrawFlags );
     draw_SetTexture( *s_pDrawBitmap );
 

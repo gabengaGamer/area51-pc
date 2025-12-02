@@ -995,12 +995,15 @@ void draw_ApplySamplerState( u32 Flags )
 {
     xbool clamp = (Flags & (DRAW_U_CLAMP | DRAW_V_CLAMP)) != 0;
 
+    // TODO: GS: I think that in the future it is worth making this system more flexible, 
+    // giving the ability to set different types of samplers in draw_begin, instead of POINT and ANISOTROPIC
+
     if( s_bCurrentBilinear )
     {
         if( clamp )
-            state_SetState( STATE_TYPE_SAMPLER, STATE_SAMPLER_LINEAR_CLAMP );
+            state_SetState( STATE_TYPE_SAMPLER, STATE_SAMPLER_ANISOTROPIC_CLAMP ); //state_SetState( STATE_TYPE_SAMPLER, STATE_SAMPLER_LINEAR_CLAMP );
         else
-            state_SetState( STATE_TYPE_SAMPLER, STATE_SAMPLER_LINEAR_WRAP );
+            state_SetState( STATE_TYPE_SAMPLER, STATE_SAMPLER_ANISOTROPIC_WRAP ); //state_SetState( STATE_TYPE_SAMPLER, STATE_SAMPLER_LINEAR_WRAP );
     }
     else
     {
