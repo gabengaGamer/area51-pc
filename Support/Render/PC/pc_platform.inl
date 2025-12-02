@@ -120,6 +120,7 @@ void platform_ActivateMaterial( const material& Material )
         if( !s_pCurrCubeMap )
         {
             x_DebugMsg( "MaterialMgr: WARNING - ENV cube map requested but no cubemap bound\n" );
+            ASSERT( s_pCurrCubeMap );
         }
 
         g_MaterialMgr.SetBitmap( NULL, TEXTURE_SLOT_ENVIRONMENT );
