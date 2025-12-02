@@ -120,7 +120,9 @@ const char* state_GetModeName( state_type Type, s32 Mode )
                 "LINEAR_WRAP", 
                 "LINEAR_CLAMP", 
                 "POINT_WRAP", 
-                "POINT_CLAMP"
+                "POINT_CLAMP",
+                "ANISOTROPIC_WRAP", 
+                "ANISOTROPIC_CLAMP"				
             };
             ASSERT(Mode >= 0 && Mode < STATE_SAMPLER_COUNT);
             return (Mode < STATE_SAMPLER_COUNT) ? s_SamplerModeNames[Mode] : "UNKNOWN";
@@ -419,6 +421,50 @@ void state_CreateSamplerStates( void )
 
     D3D11_SAMPLER_DESC sd;
     
+    // Linear + wrap
+    ZeroMemory( &sd, sizeof(sd) );
+    sd.MipLODBias = 0.0f;
+    sd.MaxAnisotropy = 1;
+    sd.ComparisonFunc = D3D11_COMPARISON_ALWAYS;
+    sd.MinLOD = 0;
+    sd.MaxLOD = D3D11_FLOAT32_MAX;
+    sd.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+    sd.AddressU = sd.AddressV = sd.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
+    g_pd3dDevice->CreateSamplerState( &sd, &s_pSamplerStates[STATE_SAMPLER_LINEAR_WRAP] );
+    
+    // Linear + clamp
+    ZeroMemory( &sd, sizeof(sd) );
+    sd.MipLODBias = 0.0f;
+    sd.MaxAnisotropy = 1;
+    sd.ComparisonFunc = D3D11_COMPARISON_ALWAYS;
+    sd.MinLOD = 0;
+    sd.MaxLOD = D3D11_FLOAT32_MAX;
+    sd.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+    sd.AddressU = sd.AddressV = sd.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
+    g_pd3dDevice->CreateSamplerState( &sd, &s_pSamplerStates[STATE_SAMPLER_LINEAR_CLAMP] );
+    
+    // Point + wrap  
+    ZeroMemory( &sd, sizeof(sd) );
+    sd.MipLODBias = 0.0f;
+    sd.MaxAnisotropy = 1;
+    sd.ComparisonFunc = D3D11_COMPARISON_ALWAYS;
+    sd.MinLOD = 0;
+    sd.MaxLOD = D3D11_FLOAT32_MAX;
+    sd.Filter = D3D11_FILTER_MIN_MAG_MIP_POINT;
+    sd.AddressU = sd.AddressV = sd.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
+    g_pd3dDevice->CreateSamplerState( &sd, &s_pSamplerStates[STATE_SAMPLER_POINT_WRAP] );
+    
+    // Point + clamp
+    ZeroMemory( &sd, sizeof(sd) );
+    sd.MipLODBias = 0.0f;
+    sd.MaxAnisotropy = 1;
+    sd.ComparisonFunc = D3D11_COMPARISON_ALWAYS;
+    sd.MinLOD = 0;
+    sd.MaxLOD = D3D11_FLOAT32_MAX;
+    sd.Filter = D3D11_FILTER_MIN_MAG_MIP_POINT;
+    sd.AddressU = sd.AddressV = sd.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
+    g_pd3dDevice->CreateSamplerState( &sd, &s_pSamplerStates[STATE_SAMPLER_POINT_CLAMP] );
+
     // Anisotropic + wrap
     ZeroMemory( &sd, sizeof(sd) );
     sd.MipLODBias = 0.0f;
@@ -428,7 +474,7 @@ void state_CreateSamplerStates( void )
     sd.MaxLOD = D3D11_FLOAT32_MAX;
     sd.Filter = D3D11_FILTER_ANISOTROPIC;
     sd.AddressU = sd.AddressV = sd.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
-    g_pd3dDevice->CreateSamplerState( &sd, &s_pSamplerStates[STATE_SAMPLER_LINEAR_WRAP] );
+    g_pd3dDevice->CreateSamplerState( &sd, &s_pSamplerStates[STATE_SAMPLER_ANISOTROPIC_WRAP] );
     
     // Anisotropic + clamp
     ZeroMemory( &sd, sizeof(sd) );
@@ -439,29 +485,7 @@ void state_CreateSamplerStates( void )
     sd.MaxLOD = D3D11_FLOAT32_MAX;
     sd.Filter = D3D11_FILTER_ANISOTROPIC;
     sd.AddressU = sd.AddressV = sd.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
-    g_pd3dDevice->CreateSamplerState( &sd, &s_pSamplerStates[STATE_SAMPLER_LINEAR_CLAMP] );
-    
-    // Anisotropic + wrap  
-    ZeroMemory( &sd, sizeof(sd) );
-    sd.MipLODBias = 0.0f;
-    sd.MaxAnisotropy = 16;
-    sd.ComparisonFunc = D3D11_COMPARISON_ALWAYS;
-    sd.MinLOD = 0;
-    sd.MaxLOD = D3D11_FLOAT32_MAX;
-    sd.Filter = D3D11_FILTER_ANISOTROPIC;
-    sd.AddressU = sd.AddressV = sd.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
-    g_pd3dDevice->CreateSamplerState( &sd, &s_pSamplerStates[STATE_SAMPLER_POINT_WRAP] );
-    
-    // Anisotropic + clamp
-    ZeroMemory( &sd, sizeof(sd) );
-    sd.MipLODBias = 0.0f;
-    sd.MaxAnisotropy = 16;
-    sd.ComparisonFunc = D3D11_COMPARISON_ALWAYS;
-    sd.MinLOD = 0;
-    sd.MaxLOD = D3D11_FLOAT32_MAX;
-    sd.Filter = D3D11_FILTER_ANISOTROPIC;
-    sd.AddressU = sd.AddressV = sd.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
-    g_pd3dDevice->CreateSamplerState( &sd, &s_pSamplerStates[STATE_SAMPLER_POINT_CLAMP] );
+    g_pd3dDevice->CreateSamplerState( &sd, &s_pSamplerStates[STATE_SAMPLER_ANISOTROPIC_CLAMP] );
 
     x_DebugMsg( "RStateMgr: Sampler states created successfully\n" );
 }

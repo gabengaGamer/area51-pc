@@ -920,7 +920,7 @@ void d3deng_SetDefaultStates( void )
         state_SetState( STATE_TYPE_BLEND, STATE_BLEND_ALPHA );
 
         // Set default sampler state
-        state_SetState( STATE_TYPE_SAMPLER, STATE_SAMPLER_LINEAR_WRAP );
+        state_SetState( STATE_TYPE_SAMPLER, STATE_SAMPLER_ANISOTROPIC_WRAP );
     }
 }
 

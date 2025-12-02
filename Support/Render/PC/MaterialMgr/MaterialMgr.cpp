@@ -196,7 +196,7 @@ void material_mgr::ApplyRenderStates( const material* pMaterial, u32 RenderFlags
     s32 blendMode   = STATE_BLEND_NONE;
     s32 depthMode   = STATE_DEPTH_NORMAL;
     s32 rasterMode  = STATE_RASTER_SOLID;
-    s32 samplerMode = STATE_SAMPLER_LINEAR_WRAP;
+    s32 samplerMode = STATE_SAMPLER_ANISOTROPIC_WRAP;
 
     material_type materialType = Material_Diff;
 
