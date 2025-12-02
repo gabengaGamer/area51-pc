@@ -97,6 +97,8 @@ xbool                       m_Is2D;                                 // TRUE for 
 xbool                       m_IsUI;                                 // TRUE for UI render target mode
 xbool                       m_IsPrimitiveTarget;                    // TRUE for primitive render target mode
 xbool                       m_IsTextured;                           // TRUE for Textured mode
+xbool                       m_UseGBufferDepth;                      // TRUE when gbuffer depth should be applied
+draw_gdepth_provider        m_pGDepthProvider = NULL;               // GBuffer depth provider
 
 matrix4                     m_L2W;                                  // L2W matrix for draw
 
@@ -184,6 +186,13 @@ void draw_SetZBias( s32 Bias )
 {
     ASSERT( (Bias>=0) && (Bias<=16) );
     m_ZBias = Bias;
+}
+
+//==============================================================================
+
+void draw_RegisterGDepthProvider( draw_gdepth_provider pfnProvider )
+{
+    m_pGDepthProvider = pfnProvider;
 }
 
 //==============================================================================
@@ -1014,7 +1023,7 @@ void draw_SetupRenderStates( u32 Flags, xbool IsTextured )
     draw_ApplyDepthState( Flags );
     draw_ApplyRasterizerState( Flags );
     draw_ApplySamplerState( Flags );
-	
+    
     if( !IsTextured )
     {
         ID3D11ShaderResourceView* nullSRV = NULL;
@@ -1052,10 +1061,12 @@ void draw_Begin( draw_primitive Primitive, u32 Flags )
     m_IsUI              = Flags & DRAW_UI_RTARGET;
     m_IsPrimitiveTarget = Flags & DRAW_PRIMITIVE_RTARGET;
     m_IsTextured        = Flags & DRAW_TEXTURED;
+    m_UseGBufferDepth   = Flags & DRAW_USE_GDEPTH;
 
     if( m_IsUI && m_IsPrimitiveTarget )
     {
         x_DebugMsg( "Draw: Both UI and primitive render target flags are set, primitive target will be used\n" );
+        ASSERT( FALSE );        
         m_IsUI = FALSE;
     }
 
@@ -1070,6 +1081,26 @@ void draw_Begin( draw_primitive Primitive, u32 Flags )
     if( !g_pd3dDevice )
         return;
 
+    // Setup GBufferDepth
+    if( m_UseGBufferDepth && !m_IsUI && !m_IsPrimitiveTarget )
+    {
+        if( m_pGDepthProvider )
+        {
+            if( !m_pGDepthProvider() )
+            {
+                x_DebugMsg( "Draw: Scene depth provider failed, disabling scene depth for this draw\n" );
+                ASSERT( FALSE );                
+                m_UseGBufferDepth = FALSE;
+            }
+        }
+        else
+        {
+            x_DebugMsg( "Draw: Scene depth requested but no provider registered\n" );
+            ASSERT( FALSE );            
+            m_UseGBufferDepth = FALSE;
+        }
+    }
+
     // Setup all render states using centralized state system
     draw_SetupRenderStates( Flags, m_IsTextured );
     
@@ -1078,6 +1109,7 @@ void draw_Begin( draw_primitive Primitive, u32 Flags )
         if( !draw_rt_BeginUI() )
         {
             x_DebugMsg( "Draw: Failed to validate UI target, disabling UI rendering\n" );
+            ASSERT( FALSE );
             m_IsUI = FALSE;
         }
     }
@@ -1086,6 +1118,7 @@ void draw_Begin( draw_primitive Primitive, u32 Flags )
         if( !draw_rt_BeginPrimitive() )
         {
             x_DebugMsg( "Draw: Failed to validate primitive target, disabling primitive rendering\n" );
+            ASSERT( FALSE );
             m_IsPrimitiveTarget = FALSE;
         }
     }

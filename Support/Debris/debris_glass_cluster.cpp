@@ -678,7 +678,7 @@ void debris_glass_cluster::OnRenderTransparent ( void )
     Clr.A = (u8)((255 - Fog.A) * FogAScalar);
 
     draw_ClearL2W();
-    draw_Begin( DRAW_TRIANGLES,  DRAW_TEXTURED | DRAW_CULL_NONE | DRAW_USE_ALPHA   );
+    draw_Begin( DRAW_TRIANGLES,  DRAW_TEXTURED | DRAW_CULL_NONE | DRAW_USE_ALPHA | DRAW_USE_GDEPTH );
     //draw_Begin( DRAW_TRIANGLES,  DRAW_TEXTURED | DRAW_CULL_NONE );
     {        
         draw_Color( Clr );

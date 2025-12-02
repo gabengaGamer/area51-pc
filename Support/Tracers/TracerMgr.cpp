@@ -158,7 +158,7 @@ void tracer_mgr::Render( void )
     // render the bullets
     if( m_Bitmaps[TRACER_BMP_BULLET].GetPointer() )
     {
-        draw_Begin( DRAW_TRIANGLES, DRAW_TEXTURED | DRAW_USE_ALPHA | DRAW_NO_ZWRITE | DRAW_BLEND_ADD | DRAW_CULL_NONE );
+        draw_Begin( DRAW_TRIANGLES, DRAW_TEXTURED | DRAW_USE_ALPHA | DRAW_NO_ZWRITE | DRAW_BLEND_ADD | DRAW_CULL_NONE | DRAW_USE_GDEPTH);
         draw_SetTexture( *m_Bitmaps[TRACER_BMP_BULLET].GetPointer() );
         for ( s32 i = 0; i < MAX_TRACERS_PER_TYPE; i++ )
         {
@@ -182,7 +182,7 @@ void tracer_mgr::Render( void )
     // ENERGY SWOOSHES
     if( m_Bitmaps[TRACER_BMP_SWOOSH].GetPointer() )
     {
-        draw_Begin( DRAW_TRIANGLES, DRAW_TEXTURED | DRAW_USE_ALPHA | DRAW_NO_ZWRITE | DRAW_BLEND_ADD | DRAW_CULL_NONE );
+        draw_Begin( DRAW_TRIANGLES, DRAW_TEXTURED | DRAW_USE_ALPHA | DRAW_NO_ZWRITE | DRAW_BLEND_ADD | DRAW_CULL_NONE | DRAW_USE_GDEPTH );
         draw_SetTexture( *m_Bitmaps[TRACER_BMP_SWOOSH].GetPointer() );
         for ( s32 i = 0; i < MAX_TRACERS_PER_TYPE; i++ )
         {

@@ -342,7 +342,15 @@ void fx_sphere::Render( const fx_effect_base* pEffect ) const
         DrawFlags |= DRAW_BLEND_SUB;
 
     if( !SphereDef.ReadZ )
+	{
         DrawFlags |= DRAW_NO_ZBUFFER;
+	}
+	#ifdef TARGET_PC	
+	else
+	{
+		DrawFlags |= DRAW_USE_GDEPTH;
+	}
+	#endif	
 
     draw_SetL2W( L2W );
 

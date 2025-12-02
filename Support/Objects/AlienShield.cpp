@@ -564,7 +564,7 @@ void alien_shield::OnRenderTransparent( void )
         Outer.A = 0;
         Center.A = (u8)(Multiplier * 255);
 
-        draw_Begin( DRAW_TRIANGLES, DRAW_USE_ALPHA | DRAW_NO_ZWRITE | DRAW_BLEND_ADD | DRAW_CULL_NONE );
+        draw_Begin( DRAW_TRIANGLES, DRAW_USE_ALPHA | DRAW_NO_ZWRITE | DRAW_BLEND_ADD | DRAW_CULL_NONE | DRAW_USE_GDEPTH );
         draw_ClearL2W();
         draw_SetTexture();
         s32 i;

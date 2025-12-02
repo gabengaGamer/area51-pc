@@ -338,7 +338,15 @@ void fx_shockwave::Render( const fx_effect_base* pEffect ) const
         DrawFlags |= DRAW_BLEND_SUB;
 
     if( !ShockWaveDef.ReadZ )
+	{
         DrawFlags |= DRAW_NO_ZBUFFER;
+	}
+	#ifdef TARGET_PC	
+	else
+	{
+		DrawFlags |= DRAW_USE_GDEPTH;
+	}
+	#endif		
 
     if( ShockWaveDef.IsFlat )
     {

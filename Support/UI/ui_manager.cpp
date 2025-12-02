@@ -180,6 +180,7 @@ static s32 s_EndDialogCount;
 #ifdef TARGET_PC
 #include "Entropy/D3DEngine/d3deng_rtarget.hpp"
 #include "Entropy/D3DEngine/d3deng_composite.hpp"
+#include "Entropy/D3DEngine/d3deng_draw_rt.hpp"
 #endif
 
 #ifdef TARGET_PC

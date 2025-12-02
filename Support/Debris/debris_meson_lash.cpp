@@ -1519,7 +1519,7 @@ void debris_meson_explosion::OnRenderTransparent ( void )
    // s32 i;
     draw_ClearL2W();
     /*
-    draw_Begin( DRAW_TRIANGLES, DRAW_TEXTURED | DRAW_USE_ALPHA | DRAW_NO_ZWRITE | DRAW_CULL_NONE );        
+    draw_Begin( DRAW_TRIANGLES, DRAW_TEXTURED | DRAW_USE_ALPHA | DRAW_NO_ZWRITE | DRAW_CULL_NONE | DRAW_USE_GDEPTH );        
     xbitmap* pBitmap = m_Texture.GetPointer();
     draw_SetTexture( *pBitmap );
 */
@@ -2057,7 +2057,7 @@ void debris_meson_explosion::RenderLashes( void )
 
         BuildPoints( Pos, nPoints, Pt, Nrm, 3, T );
         
-        draw_Begin( DRAW_TRIANGLES, DRAW_BLEND_ADD | DRAW_TEXTURED | DRAW_USE_ALPHA | DRAW_NO_ZWRITE | DRAW_CULL_NONE );        
+        draw_Begin( DRAW_TRIANGLES, DRAW_BLEND_ADD | DRAW_TEXTURED | DRAW_USE_ALPHA | DRAW_NO_ZWRITE | DRAW_CULL_NONE | DRAW_USE_GDEPTH );        
         xbitmap* pBitmap = m_Texture.GetPointer();
         draw_SetTexture( *pBitmap );
         draw_OrientedStrand( Pos, nPoints, vector2(Ofs,0), vector2(1+Ofs,1), L.m_Color, L.m_Color, L.m_Size * RadiusScale );
@@ -2331,7 +2331,7 @@ void debris_meson_explosion::RenderBeams( void )
 
     C1 = C2 = k_START_COLOR;
 
-    draw_Begin( DRAW_TRIANGLES, DRAW_BLEND_ADD | DRAW_TEXTURED | DRAW_USE_ALPHA | DRAW_NO_ZWRITE | DRAW_CULL_NONE );        
+    draw_Begin( DRAW_TRIANGLES, DRAW_BLEND_ADD | DRAW_TEXTURED | DRAW_USE_ALPHA | DRAW_NO_ZWRITE | DRAW_CULL_NONE | DRAW_USE_GDEPTH);        
     xbitmap* pBitmap = m_Texture.GetPointer();
     draw_SetTexture( *pBitmap );
     vector3 EndPt[ MAX_BEAMS ];

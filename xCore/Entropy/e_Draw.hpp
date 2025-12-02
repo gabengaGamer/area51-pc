@@ -88,6 +88,7 @@ struct rtarget;
 #define DRAW_UI_RTARGET        ( 1 << 19 )      // Default: Off. Global render target is used.
 #define DRAW_DEBUG_RTARGET     ( 1 << 20 )      // Default: Off. Global render target is used.
 #define DRAW_PRIMITIVE_RTARGET ( 1 << 21 )      // Default: Off. Global render target is used.
+#define DRAW_USE_GDEPTH        ( 1 << 28 )      // Default: Off. Uses registered scene depth provider
 
 //------------------------------------------------------------------------------
 // Other.
@@ -114,6 +115,15 @@ enum draw_primitive
     DRAW_RECTS,
     DRAW_SPRITES,
 };
+
+//==============================================================================
+//  PLATFORM-SPECIFIC FUNCTIONS
+//==============================================================================
+
+#ifdef TARGET_PC
+typedef xbool (*draw_gdepth_provider)( void );
+void    draw_RegisterGDepthProvider( draw_gdepth_provider pfnProvider );
+#endif
 
 //==============================================================================
 //  FUNCTIONS
@@ -146,14 +156,6 @@ void    draw_Verts              ( const vector3* pVerts,  s32 Count, s32 Stride 
                         
 void    draw_Index              ( s32 Index );
 void    draw_Execute            ( const s16* pIndices, s32 NIndices );
-
-// GS: We need to somehow have access to this function, 
-// so its declaration will be located here.
-
-#ifdef TARGET_PC
-const rtarget*   draw_GetUITarget( void );
-#endif
-
 
 // Primitive must be DRAW_TRIANGLES
 void    draw_OrientedQuad   (const vector3& Pos0,

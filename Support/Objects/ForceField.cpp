@@ -513,7 +513,7 @@ void force_field::OnRenderTransparent( void )
                 matrix4 L2W = GetL2W();
                 L2W.Transform( Points, Points, 4 );
 
-                draw_Begin( DRAW_TRIANGLE_STRIPS, DRAW_USE_ALPHA|DRAW_CULL_NONE|DRAW_TEXTURED|DRAW_NO_ZWRITE );
+                draw_Begin( DRAW_TRIANGLE_STRIPS, DRAW_USE_ALPHA | DRAW_CULL_NONE | DRAW_TEXTURED | DRAW_NO_ZWRITE | DRAW_USE_GDEPTH );
 
                 const xbitmap* pBitmap = m_ForceTexture.GetPointer();
 
@@ -607,7 +607,7 @@ void force_field::OnRenderTransparent( void )
                 matrix4 L2W = GetL2W();
                 L2W.Transform( Points, Points, 4 );
 
-                draw_Begin( DRAW_TRIANGLE_STRIPS, DRAW_USE_ALPHA|DRAW_CULL_NONE|DRAW_TEXTURED|DRAW_NO_ZWRITE );
+                draw_Begin( DRAW_TRIANGLE_STRIPS, DRAW_USE_ALPHA | DRAW_CULL_NONE | DRAW_TEXTURED | DRAW_NO_ZWRITE | DRAW_USE_GDEPTH );
 
                 draw_SetTexture( *pBitmap );
 

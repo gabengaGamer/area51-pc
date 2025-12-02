@@ -338,7 +338,15 @@ void fx_cylinder::Render( const fx_effect_base* pEffect ) const
         DrawFlags |= DRAW_BLEND_SUB;
 
     if( !CylinderDef.ReadZ )
+	{
         DrawFlags |= DRAW_NO_ZBUFFER;
+	}
+	#ifdef TARGET_PC	
+	else
+	{
+		DrawFlags |= DRAW_USE_GDEPTH;
+	}
+	#endif	
 
     if( m_Cone )
         DrawMode = DRAW_TRIANGLES;

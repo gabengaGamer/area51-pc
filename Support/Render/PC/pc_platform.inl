@@ -24,6 +24,23 @@ static rigid_geom*             s_pRigidGeom       = NULL;
 static skin_geom*              s_pSkinGeom        = NULL;
 static const xbitmap*          s_pDrawBitmap      = NULL;
 
+static
+xbool platform_ApplyGDepthTarget( void )
+{
+    if( !g_GBufferMgr.IsGBufferEnabled() )
+        return TRUE;
+
+    const rtarget* pGBufferDepth = g_GBufferMgr.GetGBufferTarget( GBUFFER_DEPTH );
+    const rtarget* pBackBuffer   = rtarget_GetBackBuffer();
+
+    if( pGBufferDepth && pBackBuffer )
+    {
+        return rtarget_SetTargets( pBackBuffer, 1, pGBufferDepth );
+    }
+
+    return FALSE;
+}
+
 //=============================================================================
 // Implementation
 //=============================================================================
@@ -36,6 +53,7 @@ void platform_Init( void )
     g_PostMgr.Init(); 
     g_RigidVertMgr.Init( sizeof( rigid_geom::vertex_pc ) );
     g_SkinVertMgr.Init();
+    draw_RegisterGDepthProvider( platform_ApplyGDepthTarget );
 }
 
 //=============================================================================
@@ -391,25 +409,16 @@ void platform_SetDiffuseMaterial( const xbitmap& Bitmap, s32 BlendMode, xbool ZT
 {
     // do some entropy stuff //////////////////////////////////////////////////
 
-    vram_Activate( Bitmap );        
-    
-    // do gbuffer stuff //////////////////////////////////////////////////    
-    
-    const rtarget* pGBufferDepth = g_GBufferMgr.GetGBufferTarget( GBUFFER_DEPTH );
-    const rtarget* pBackBuffer = rtarget_GetBackBuffer();
-    
-    if( pGBufferDepth && pBackBuffer )
-    {
-        // Make sure we're using the same depth target as geometry
-        rtarget_SetTargets( pBackBuffer, 1, pGBufferDepth );
-    }    
+    vram_Activate( Bitmap );          
     
     // we can use draw to set up render states at which point the shader engine
     // will hijack what it needs and route the verts through its pixel pipeline
 
     s_DrawFlags = DRAW_TEXTURED | DRAW_NO_ZWRITE | DRAW_UV_CLAMP | DRAW_CULL_NONE;
     if( !ZTestEnabled )
-        s_DrawFlags |= DRAW_NO_ZBUFFER;    
+        s_DrawFlags |= DRAW_NO_ZBUFFER;
+    else
+        s_DrawFlags |= DRAW_USE_GDEPTH;  
     
     switch( BlendMode ) 
     { 
@@ -1024,7 +1033,7 @@ void platform_SetShadowProjectionMatrix( s32 Index, const matrix4& Matrix )
 static
 void platform_SetCustomFogPalette( const texture::handle& Texture, xbool ImmediateSwitch, s32 PaletteIndex )
 {
-        //g_MaterialMgr.SetCustomFogPalette( Texture, ImmediateSwitch, PaletteIndex );
+    //g_PostMgr.SetCustomFogPalette( Texture, ImmediateSwitch, PaletteIndex );
 }
 
 //=============================================================================
