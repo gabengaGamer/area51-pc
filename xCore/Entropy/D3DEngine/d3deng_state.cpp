@@ -415,49 +415,51 @@ void state_CreateSamplerStates( void )
     if( !g_pd3dDevice )
         return;
 
+    //TODO: Make this system better.
+
     D3D11_SAMPLER_DESC sd;
     
-    // Linear + wrap
+    // Anisotropic + wrap
     ZeroMemory( &sd, sizeof(sd) );
     sd.MipLODBias = 0.0f;
-    sd.MaxAnisotropy = 1;
+    sd.MaxAnisotropy = 16;
     sd.ComparisonFunc = D3D11_COMPARISON_ALWAYS;
     sd.MinLOD = 0;
     sd.MaxLOD = D3D11_FLOAT32_MAX;
-    sd.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+    sd.Filter = D3D11_FILTER_ANISOTROPIC;
     sd.AddressU = sd.AddressV = sd.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
     g_pd3dDevice->CreateSamplerState( &sd, &s_pSamplerStates[STATE_SAMPLER_LINEAR_WRAP] );
     
-    // Linear + clamp
+    // Anisotropic + clamp
     ZeroMemory( &sd, sizeof(sd) );
     sd.MipLODBias = 0.0f;
-    sd.MaxAnisotropy = 1;
+    sd.MaxAnisotropy = 16;
     sd.ComparisonFunc = D3D11_COMPARISON_ALWAYS;
     sd.MinLOD = 0;
     sd.MaxLOD = D3D11_FLOAT32_MAX;
-    sd.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+    sd.Filter = D3D11_FILTER_ANISOTROPIC;
     sd.AddressU = sd.AddressV = sd.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
     g_pd3dDevice->CreateSamplerState( &sd, &s_pSamplerStates[STATE_SAMPLER_LINEAR_CLAMP] );
     
-    // Point + wrap  
+    // Anisotropic + wrap  
     ZeroMemory( &sd, sizeof(sd) );
     sd.MipLODBias = 0.0f;
-    sd.MaxAnisotropy = 1;
+    sd.MaxAnisotropy = 16;
     sd.ComparisonFunc = D3D11_COMPARISON_ALWAYS;
     sd.MinLOD = 0;
     sd.MaxLOD = D3D11_FLOAT32_MAX;
-    sd.Filter = D3D11_FILTER_MIN_MAG_MIP_POINT;
+    sd.Filter = D3D11_FILTER_ANISOTROPIC;
     sd.AddressU = sd.AddressV = sd.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
     g_pd3dDevice->CreateSamplerState( &sd, &s_pSamplerStates[STATE_SAMPLER_POINT_WRAP] );
     
-    // Point + clamp
+    // Anisotropic + clamp
     ZeroMemory( &sd, sizeof(sd) );
     sd.MipLODBias = 0.0f;
-    sd.MaxAnisotropy = 1;
+    sd.MaxAnisotropy = 16;
     sd.ComparisonFunc = D3D11_COMPARISON_ALWAYS;
     sd.MinLOD = 0;
     sd.MaxLOD = D3D11_FLOAT32_MAX;
-    sd.Filter = D3D11_FILTER_MIN_MAG_MIP_POINT;
+    sd.Filter = D3D11_FILTER_ANISOTROPIC;
     sd.AddressU = sd.AddressV = sd.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
     g_pd3dDevice->CreateSamplerState( &sd, &s_pSamplerStates[STATE_SAMPLER_POINT_CLAMP] );
 
