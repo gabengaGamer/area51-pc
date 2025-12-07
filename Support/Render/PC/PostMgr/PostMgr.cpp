@@ -32,10 +32,10 @@ post_mgr g_PostMgr;
 //  FORWARD DECLARATIONS
 //==============================================================================
 
-static const eng_frame_stage s_GlowFrameStage =
+static const eng_frame_stage s_PostFrameStage =
 {
-    post_mgr::GlowStage_BeginFrameThunk,
-    post_mgr::GlowStage_BeforePresentThunk
+    post_mgr::PostStage_BeginFrameThunk,
+    post_mgr::PostStage_BeforePresentThunk
 };
 
 //==============================================================================
@@ -69,12 +69,12 @@ void post_mgr::Init( void )
     m_MipFilter = post_mip_filter_params();
     m_Simple = post_simple_params();
 
-    m_bGlowStageRegistered = FALSE;
+    m_bPostStageRegistered = FALSE;
     m_GlowResources = glow_resources();
     m_GlowResources.Initialize();
 
-    d3deng_RegisterFrameStage( s_GlowFrameStage );
-    m_bGlowStageRegistered = TRUE;
+    d3deng_RegisterFrameStage( s_PostFrameStage );
+    m_bPostStageRegistered = TRUE;
 
     m_bInitialized = TRUE;
     x_DebugMsg( "PostMgr: Post-processing manager initialized successfully\n" );
@@ -89,10 +89,10 @@ void post_mgr::Kill( void )
 
     x_DebugMsg( "PostMgr: Shutting down post-processing manager\n" );
 
-    if( m_bGlowStageRegistered )
+    if( m_bPostStageRegistered )
     {
-        d3deng_UnregisterFrameStage( s_GlowFrameStage );
-        m_bGlowStageRegistered = FALSE;
+        d3deng_UnregisterFrameStage( s_PostFrameStage );
+        m_bPostStageRegistered = FALSE;
     }
 
     m_GlowResources.Shutdown();
@@ -380,20 +380,22 @@ void post_mgr::RestoreDefaultState( void ) const
 //  FRAME STAGE THUNKS
 //==============================================================================
 
-void post_mgr::GlowStage_BeginFrameThunk( void )
+void post_mgr::PostStage_BeginFrameThunk( void )
 {
     if( !g_PostMgr.m_bInitialized )
         return;
 
+    // GS: NOTE: Dispatch additional post-processing stages here (glow, blur, etc.)
     g_PostMgr.UpdateGlowStageBegin();
 }
 
 //==============================================================================
 
-void post_mgr::GlowStage_BeforePresentThunk( void )
+void post_mgr::PostStage_BeforePresentThunk( void )
 {
     if( !g_PostMgr.m_bInitialized )
         return;
 
+    // GS: NOTE: Dispatch additional post-processing stages here (glow, blur, etc.)
     g_PostMgr.CompositePendingGlow();
 }

@@ -197,8 +197,8 @@ public:
     // Utility functions
     xcolor      GetFogValue                 ( const vector3& WorldPos, s32 PaletteIndex );
 	
-	static void GlowStage_BeginFrameThunk   ( void );
-    static void GlowStage_BeforePresentThunk( void );
+    static void PostStage_BeginFrameThunk   ( void );
+    static void PostStage_BeforePresentThunk( void );
 
 protected:
 
@@ -282,7 +282,7 @@ protected:
     };
 
     glow_resources          m_GlowResources;
-    xbool                   m_bGlowStageRegistered;
+    xbool                   m_bPostStageRegistered;
 };
 
 //==============================================================================
