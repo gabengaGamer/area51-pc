@@ -34,6 +34,9 @@ extern ID3D11DeviceContext*    g_pd3dContext;
 //==============================================================================
 
 static const f32 kGlowIntensityScale = 0.5f;
+static const f32 kGlowWeightHalf     = (64.0f  / 255.0f);
+static const f32 kGlowWeightQuarter  = (64.0f  / 255.0f);
+static const f32 kGlowWeightEighth   = (128.0f / 255.0f);
 
 //==============================================================================
 //  CONSTANT BUFFER LAYOUT
@@ -61,10 +64,13 @@ static void ReleaseGlowTarget( rtarget& Target )
 
 post_mgr::glow_resources::glow_resources()
 {
-    Downsample = rtarget();
+    Downsample[0] = rtarget();
+    Downsample[1] = rtarget();
+    Downsample[2] = rtarget();
     Blur[0]    = rtarget();
     Blur[1]    = rtarget();
     Composite  = rtarget();
+    Accum      = rtarget();
     History    = rtarget();
     ActiveResult = NULL;
     BufferWidth = 0;
@@ -116,10 +122,13 @@ void post_mgr::glow_resources::Initialize( void )
 
 void post_mgr::glow_resources::Shutdown( void )
 {
-    ReleaseGlowTarget( Downsample );
+    ReleaseGlowTarget( Downsample[0] );
+    ReleaseGlowTarget( Downsample[1] );
+    ReleaseGlowTarget( Downsample[2] );
     ReleaseGlowTarget( Blur[0] );
     ReleaseGlowTarget( Blur[1] );
     ReleaseGlowTarget( Composite );
+    ReleaseGlowTarget( Accum );
     ReleaseGlowTarget( History );
 
     BufferWidth = 0;
@@ -189,10 +198,13 @@ xbool post_mgr::glow_resources::ResizeIfNeeded( u32 SourceWidth, u32 SourceHeigh
 {
     if( SourceWidth == 0 || SourceHeight == 0 )
     {
-        ReleaseGlowTarget( Downsample );
+        ReleaseGlowTarget( Downsample[0] );
+        ReleaseGlowTarget( Downsample[1] );
+        ReleaseGlowTarget( Downsample[2] );
         ReleaseGlowTarget( Blur[0] );
         ReleaseGlowTarget( Blur[1] );
         ReleaseGlowTarget( Composite );
+        ReleaseGlowTarget( Accum );
         ReleaseGlowTarget( History );
         BufferWidth = 0;
         BufferHeight = 0;
@@ -201,31 +213,49 @@ xbool post_mgr::glow_resources::ResizeIfNeeded( u32 SourceWidth, u32 SourceHeigh
         return FALSE;
     }
 
-    u32 width  = (SourceWidth  > 1) ? (SourceWidth  / 2) : SourceWidth;
-    u32 height = (SourceHeight > 1) ? (SourceHeight / 2) : SourceHeight;
+    u32 halfW  = (SourceWidth  > 1) ? (SourceWidth  / 2) : SourceWidth;
+    u32 halfH  = (SourceHeight > 1) ? (SourceHeight / 2) : SourceHeight;
+    u32 qW     = (halfW  > 1) ? (halfW  / 2) : halfW;
+    u32 qH     = (halfH  > 1) ? (halfH  / 2) : halfH;
+    u32 eW     = (qW     > 1) ? (qW     / 2) : qW;
+    u32 eH     = (qH     > 1) ? (qH     / 2) : qH;
 
-    if( bResourcesValid && (BufferWidth == width) && (BufferHeight == height) )
+    if( bResourcesValid && (BufferWidth == halfW) && (BufferHeight == halfH) )
         return TRUE;
 
-    ReleaseGlowTarget( Downsample );
+    ReleaseGlowTarget( Downsample[0] );
+    ReleaseGlowTarget( Downsample[1] );
+    ReleaseGlowTarget( Downsample[2] );
     ReleaseGlowTarget( Blur[0] );
     ReleaseGlowTarget( Blur[1] );
     ReleaseGlowTarget( Composite );
+    ReleaseGlowTarget( Accum );
     ReleaseGlowTarget( History );
 
-    rtarget_desc desc;
-    desc.Width = width;
-    desc.Height = height;
-    desc.Format = RTARGET_FORMAT_RGBA16F;
-    desc.SampleCount = 1;
-    desc.SampleQuality = 0;
-    desc.bBindAsTexture = TRUE;
+    rtarget_desc descHalf;
+    descHalf.Width = halfW;
+    descHalf.Height = halfH;
+    descHalf.Format = RTARGET_FORMAT_RGBA16F;
+    descHalf.SampleCount = 1;
+    descHalf.SampleQuality = 0;
+    descHalf.bBindAsTexture = TRUE;
 
-    if( !CreateGlowTarget( Downsample, desc ) ||
-        !CreateGlowTarget( Blur[0], desc ) ||
-        !CreateGlowTarget( Blur[1], desc ) ||
-        !CreateGlowTarget( Composite, desc ) ||
-        !CreateGlowTarget( History, desc ) )
+    rtarget_desc descQuarter = descHalf;
+    descQuarter.Width = qW;
+    descQuarter.Height = qH;
+
+    rtarget_desc descEighth = descHalf;
+    descEighth.Width = eW;
+    descEighth.Height = eH;
+
+    if( !CreateGlowTarget( Downsample[0], descHalf ) ||
+        !CreateGlowTarget( Downsample[1], descQuarter ) ||
+        !CreateGlowTarget( Downsample[2], descEighth ) ||
+        !CreateGlowTarget( Blur[0], descEighth ) ||
+        !CreateGlowTarget( Blur[1], descEighth ) ||
+        !CreateGlowTarget( Composite, descEighth ) ||
+        !CreateGlowTarget( Accum, descHalf ) ||
+        !CreateGlowTarget( History, descEighth ) )
     {
         ResizeIfNeeded( 0, 0 );
         return FALSE;
@@ -234,15 +264,18 @@ xbool post_mgr::glow_resources::ResizeIfNeeded( u32 SourceWidth, u32 SourceHeigh
     if( g_pd3dContext )
     {
         const f32 clearColor[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
-        g_pd3dContext->ClearRenderTargetView( Downsample.pRenderTargetView, clearColor );
+        g_pd3dContext->ClearRenderTargetView( Downsample[0].pRenderTargetView, clearColor );
+        g_pd3dContext->ClearRenderTargetView( Downsample[1].pRenderTargetView, clearColor );
+        g_pd3dContext->ClearRenderTargetView( Downsample[2].pRenderTargetView, clearColor );
         g_pd3dContext->ClearRenderTargetView( Blur[0].pRenderTargetView, clearColor );
         g_pd3dContext->ClearRenderTargetView( Blur[1].pRenderTargetView, clearColor );
         g_pd3dContext->ClearRenderTargetView( Composite.pRenderTargetView, clearColor );
+        g_pd3dContext->ClearRenderTargetView( Accum.pRenderTargetView, clearColor );
         g_pd3dContext->ClearRenderTargetView( History.pRenderTargetView, clearColor );
     }
 
-    BufferWidth = width;
-    BufferHeight = height;
+    BufferWidth = halfW;
+    BufferHeight = halfH;
     bResourcesValid = TRUE;
     ResetFrame();
 
@@ -275,14 +308,14 @@ void post_mgr::glow_resources::FinalizeComposite( void )
 
 //==============================================================================
 
-void post_mgr::glow_resources::UpdateConstants( f32 Cutoff, f32 IntensityScale, f32 MotionBlend, f32 StepX, f32 StepY )
+void post_mgr::glow_resources::UpdateConstants( f32 Cutoff, f32 IntensityScale, f32 MotionBlend, f32 StepX, f32 StepY, f32 CompositeWeight )
 {
     if( !pConstantBuffer || !g_pd3dContext )
         return;
 
     cb_post_glow cbData;
     cbData.Params0.Set( Cutoff, IntensityScale, MotionBlend, 0.0f );
-    cbData.Params1.Set( StepX, StepY, 0.0f, 0.0f );
+    cbData.Params1.Set( StepX, StepY, CompositeWeight, 0.0f );
 
     shader_UpdateConstantBuffer( pConstantBuffer, &cbData, sizeof(cb_post_glow) );
     g_pd3dContext->PSSetConstantBuffers( 4, 1, &pConstantBuffer );
@@ -329,19 +362,31 @@ void post_mgr::ExecuteSelfIllumGlow( void )
     const f32 intensity    = kGlowIntensityScale;
     const f32 clearColor[4]= { 0.0f, 0.0f, 0.0f, 0.0f };
 
-    rtarget_SetTargets( &m_GlowResources.Downsample, 1, NULL );
+    // Downsample chain: 1/2, 1/4, 1/8
+    rtarget_SetTargets( &m_GlowResources.Downsample[0], 1, NULL );
     rtarget_Clear( RTARGET_CLEAR_COLOR, clearColor, 1.0f, 0 );
     m_GlowResources.UpdateConstants( cutoff, intensity, motionBlend, 1.0f / (f32)sourceWidth, 1.0f / (f32)sourceHeight );
     composite_Blit( *pGlowSource, COMPOSITE_BLEND_ADDITIVE, 1.0f, m_GlowResources.pDownsamplePS );
 
+    rtarget_SetTargets( &m_GlowResources.Downsample[1], 1, NULL );
+    rtarget_Clear( RTARGET_CLEAR_COLOR, clearColor, 1.0f, 0 );
+    m_GlowResources.UpdateConstants( cutoff, intensity, motionBlend, 1.0f / (f32)m_GlowResources.Downsample[0].Desc.Width, 1.0f / (f32)m_GlowResources.Downsample[0].Desc.Height );
+    composite_Blit( m_GlowResources.Downsample[0], COMPOSITE_BLEND_ADDITIVE, 1.0f, m_GlowResources.pDownsamplePS );
+
+    rtarget_SetTargets( &m_GlowResources.Downsample[2], 1, NULL );
+    rtarget_Clear( RTARGET_CLEAR_COLOR, clearColor, 1.0f, 0 );
+    m_GlowResources.UpdateConstants( cutoff, intensity, motionBlend, 1.0f / (f32)m_GlowResources.Downsample[1].Desc.Width, 1.0f / (f32)m_GlowResources.Downsample[1].Desc.Height );
+    composite_Blit( m_GlowResources.Downsample[1], COMPOSITE_BLEND_ADDITIVE, 1.0f, m_GlowResources.pDownsamplePS );
+
+    // Jitter blur on the 1/8 buffer
     rtarget_SetTargets( &m_GlowResources.Blur[0], 1, NULL );
     rtarget_Clear( RTARGET_CLEAR_COLOR, clearColor, 1.0f, 0 );
-    m_GlowResources.UpdateConstants( cutoff, intensity, motionBlend, 1.0f / (f32)m_GlowResources.BufferWidth, 0.0f );
-    composite_Blit( m_GlowResources.Downsample, COMPOSITE_BLEND_ADDITIVE, 1.0f, m_GlowResources.pBlurHPS, STATE_SAMPLER_LINEAR_CLAMP );
+    m_GlowResources.UpdateConstants( cutoff, intensity, motionBlend, 1.0f / (f32)m_GlowResources.Downsample[2].Desc.Width, 0.0f );
+    composite_Blit( m_GlowResources.Downsample[2], COMPOSITE_BLEND_ADDITIVE, 1.0f, m_GlowResources.pBlurHPS, STATE_SAMPLER_LINEAR_CLAMP );
 
     rtarget_SetTargets( &m_GlowResources.Blur[1], 1, NULL );
     rtarget_Clear( RTARGET_CLEAR_COLOR, clearColor, 1.0f, 0 );
-    m_GlowResources.UpdateConstants( cutoff, intensity, motionBlend, 0.0f, 1.0f / (f32)m_GlowResources.BufferHeight );
+    m_GlowResources.UpdateConstants( cutoff, intensity, motionBlend, 0.0f, 1.0f / (f32)m_GlowResources.Downsample[2].Desc.Height );
     composite_Blit( m_GlowResources.Blur[0], COMPOSITE_BLEND_ADDITIVE, 1.0f, m_GlowResources.pBlurVPS, STATE_SAMPLER_LINEAR_CLAMP );
 
     const rtarget* pBlurredResult = &m_GlowResources.Blur[1];
@@ -370,7 +415,21 @@ void post_mgr::ExecuteSelfIllumGlow( void )
         g_pd3dContext->CopyResource( m_GlowResources.History.pTexture, pBlurredResult->pTexture );
     }
 
-    m_GlowResources.SetPendingResult( pBlurredResult );
+    // Accumulate multi-res glow back into a half-resolution buffer
+    rtarget_SetTargets( &m_GlowResources.Accum, 1, NULL );
+    rtarget_Clear( RTARGET_CLEAR_COLOR, clearColor, 1.0f, 0 );
+
+    m_GlowResources.UpdateConstants( cutoff, intensity, motionBlend, 0.0f, 0.0f, kGlowWeightHalf );
+    composite_Blit( m_GlowResources.Downsample[0], COMPOSITE_BLEND_ADDITIVE, 1.0f, m_GlowResources.pCompositePS, STATE_SAMPLER_LINEAR_CLAMP );
+
+    m_GlowResources.UpdateConstants( cutoff, intensity, motionBlend, 0.0f, 0.0f, kGlowWeightQuarter );
+    composite_Blit( m_GlowResources.Downsample[1], COMPOSITE_BLEND_ADDITIVE, 1.0f, m_GlowResources.pCompositePS, STATE_SAMPLER_LINEAR_CLAMP );
+
+    // GS: NOTE: intensity*8 make glow outline more brighter
+    m_GlowResources.UpdateConstants( cutoff, intensity*8, motionBlend, 0.0f, 0.0f, kGlowWeightEighth );
+    composite_Blit( *pBlurredResult, COMPOSITE_BLEND_ADDITIVE, 1.0f, m_GlowResources.pCompositePS, STATE_SAMPLER_LINEAR_CLAMP );
+
+    m_GlowResources.SetPendingResult( &m_GlowResources.Accum );
 }
 
 //==============================================================================

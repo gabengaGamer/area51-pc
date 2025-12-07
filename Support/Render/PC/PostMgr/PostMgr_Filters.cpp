@@ -46,24 +46,21 @@ extern ID3D11DeviceContext*    g_pd3dContext;
 
 void post_mgr::ExecuteMotionBlur( void )
 {
-    PrepareFullscreenQuad();
-    //TODO:
+    // DEPRECATED
 }
 
 //==============================================================================
 
 void post_mgr::ExecuteMultScreen( void )
 {
-    PrepareFullscreenQuad();
-    //TODO:	
+    // DEPRECATED
 }
 
 //==============================================================================
 
 void post_mgr::ExecuteRadialBlur( void )
 {
-    PrepareFullscreenQuad();
-    //TODO:	
+    // DEPRECATED
 }
 
 //==============================================================================
@@ -88,8 +85,7 @@ void post_mgr::ExecuteMipFilter( void )
 
 void post_mgr::ExecuteNoiseFilter( void )
 {
-    PrepareFullscreenQuad();
-    //TODO:
+    // DEPRECATED
 }
 
 //==============================================================================
@@ -158,13 +154,12 @@ void post_mgr::BuildMipPalette( render::post_falloff_fn Fn, xcolor Color, f32 Pa
 
 void post_mgr::CopyBackBuffer( void )
 {
-    //TODO:
+    // DEPRECATED
 }
 
 //==============================================================================
 
 void post_mgr::BuildScreenMips( s32 nMips, xbool UseAlpha )
 {
-    (void)UseAlpha;
-    //TODO:
+    // DEPRECATED
 }

@@ -261,12 +261,13 @@ protected:
         const rtarget*
                 BindForComposite          ( void ) const;
         void    FinalizeComposite          ( void );
-        void    UpdateConstants            ( f32 Cutoff, f32 IntensityScale, f32 MotionBlend, f32 StepX, f32 StepY );
+        void    UpdateConstants            ( f32 Cutoff, f32 IntensityScale, f32 MotionBlend, f32 StepX, f32 StepY, f32 CompositeWeight = 1.0f );
         void    SetPendingResult           ( const rtarget* pResult );
 
-        rtarget             Downsample;
+        rtarget             Downsample[3];
         rtarget             Blur[2];
         rtarget             Composite;
+        rtarget             Accum;
         rtarget             History;
         const rtarget*      ActiveResult;
         u32                 BufferWidth;

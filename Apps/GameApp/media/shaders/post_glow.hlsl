@@ -13,6 +13,7 @@ cbuffer GlowParams : register(b4)
 };
 
 static const float kThresholdEpsilon = 1.0e-4f;
+static const float kWeightNorm       = 1.0f / 255.0f;
 
 Texture2D GlowSource  : register(t0);
 Texture2D GlowHistory : register(t1);
@@ -60,16 +61,16 @@ float4 PS_Downsample( float4 Pos : SV_POSITION, float2 UV : TEXCOORD0 ) : SV_Tar
 
 //==============================================================================
 
-float4 SampleBlur( float2 UV, float2 Step )
+float4 SampleBlurH( float2 UV, float stepX )
 {
-    // Standard 5-tap Gaussian blur
+    // Horizontal jitter weights scaled by 1/255
     const float weights[5] =
     {
-        0.227027f,  // center (stronger to preserve brightness)
-        0.194595f,
-        0.121622f,
-        0.054054f,
-        0.016216f
+        24.0f * kWeightNorm,
+        20.0f * kWeightNorm,
+        16.0f * kWeightNorm,
+        10.0f * kWeightNorm,
+        8.0f  * kWeightNorm
     };
 
     float4 center = GlowSource.SampleLevel( samPoint, UV, 0.0 );
@@ -79,10 +80,42 @@ float4 SampleBlur( float2 UV, float2 Step )
     [unroll]
     for( int i = 1; i < 5; ++i )
     {
-        float2 offset = Step * (float)i;
-        float4 samplePos = GlowSource.SampleLevel( samPoint, UV + offset, 0.0 );
-        float4 sampleNeg = GlowSource.SampleLevel( samPoint, UV - offset, 0.0 );
-        
+        float offset = stepX * (float)i;
+        float4 samplePos = GlowSource.SampleLevel( samPoint, UV + float2( offset, 0.0f ), 0.0 );
+        float4 sampleNeg = GlowSource.SampleLevel( samPoint, UV - float2( offset, 0.0f ), 0.0 );
+
+        color += (samplePos.rgb + sampleNeg.rgb) * weights[i];
+        alphaMax = max( alphaMax, max( samplePos.a, sampleNeg.a ) );
+    }
+
+    return float4( color, alphaMax );
+}
+
+//==============================================================================
+
+float4 SampleBlurV( float2 UV, float stepY )
+{
+    // Vertical jitter weights scaled by 1/255
+    const float weights[5] =
+    {
+        96.0f * kWeightNorm,
+        40.0f * kWeightNorm,
+        32.0f * kWeightNorm,
+        20.0f * kWeightNorm,
+        16.0f * kWeightNorm
+    };
+
+    float4 center = GlowSource.SampleLevel( samPoint, UV, 0.0 );
+    float3 color = center.rgb * weights[0];
+    float  alphaMax = center.a;
+
+    [unroll]
+    for( int i = 1; i < 5; ++i )
+    {
+        float offset = stepY * (float)i;
+        float4 samplePos = GlowSource.SampleLevel( samPoint, UV + float2( 0.0f, offset ), 0.0 );
+        float4 sampleNeg = GlowSource.SampleLevel( samPoint, UV - float2( 0.0f, offset ), 0.0 );
+
         color += (samplePos.rgb + sampleNeg.rgb) * weights[i];
         alphaMax = max( alphaMax, max( samplePos.a, sampleNeg.a ) );
     }
@@ -94,16 +127,14 @@ float4 SampleBlur( float2 UV, float2 Step )
 
 float4 PS_BlurHorizontal( float4 Pos : SV_POSITION, float2 UV : TEXCOORD0 ) : SV_Target
 {
-    float2 stepDir = float2( GlowParams1.x, 0.0f );
-    return SampleBlur( UV, stepDir );
+    return SampleBlurH( UV, GlowParams1.x );
 }
 
 //==============================================================================
 
 float4 PS_BlurVertical( float4 Pos : SV_POSITION, float2 UV : TEXCOORD0 ) : SV_Target
 {
-    float2 stepDir = float2( 0.0f, GlowParams1.y );
-    return SampleBlur( UV, stepDir );
+    return SampleBlurV( UV, GlowParams1.y );
 }
 
 //==============================================================================
@@ -136,12 +167,10 @@ float4 PS_Combine( float4 Pos : SV_POSITION, float2 UV : TEXCOORD0 ) : SV_Target
 float4 PS_Composite( float4 Pos : SV_POSITION, float2 UV : TEXCOORD0 ) : SV_Target
 {
     float4 glow = GlowSource.SampleLevel( samPoint, UV, 0.0 );
-    
-    // Apply x2 boost here to match cnd_x2 behavior
-    // GlowParams0.y is the intensity scale (kGlowIntensityScale)
-    glow.rgb *= GlowParams0.y * 2.0f;
+
+    glow.rgb *= GlowParams0.y * GlowParams1.z;
     glow.a = saturate( glow.a );
-    
+
     return glow;
 }
 

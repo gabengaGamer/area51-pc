@@ -168,7 +168,9 @@ float4 GeomComputeGlow( GEOM_PIXEL_INPUT input,
         float  emissiveStrength = max( max( emissive.r, emissive.g ), emissive.b );
         float  glowMask         = saturate( max( intensity, emissiveStrength ) );
 
-        glow.rgb += emissive;
+        float3 maskedEmissive = emissive * glowMask;
+
+        glow.rgb += maskedEmissive;
         glow.a    = max( glow.a, glowMask );
 
         finalColor.rgb = lerp( finalColor.rgb, texColor.rgb, intensity );
@@ -182,7 +184,9 @@ float4 GeomComputeGlow( GEOM_PIXEL_INPUT input,
         float  emissiveStrength = max( max( emissive.r, emissive.g ), emissive.b );
         float  glowMask         = saturate( max( intensity, emissiveStrength ) );
 
-        glow.rgb += emissive;
+        float3 maskedEmissive = emissive * glowMask;
+
+        glow.rgb += maskedEmissive;
         glow.a    = max( glow.a, glowMask );
     }
 
