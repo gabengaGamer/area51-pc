@@ -858,7 +858,7 @@ HWND CreateWin( s32 Width, s32 Height )
         d3deng_SetResolution( screenWidth, screenHeight );
         
         // Create our main boardless window
-        return CreateWindow(TEXT("Render Window"), TEXT("Area 51"),
+        return CreateWindow(TEXT("Render Window"), TEXT("Dreamlnd 51"),
                            WS_POPUP | WS_VISIBLE, 0, 0, 
                            screenWidth, screenHeight,
                            0L, 0L, s.hInst, 0L);
@@ -869,7 +869,7 @@ HWND CreateWin( s32 Width, s32 Height )
         d3deng_SetResolution( windowWidth, windowHeight );
         
         // Create our main window
-        return CreateWindow(TEXT("Render Window"), TEXT("Area 51"),
+        return CreateWindow(TEXT("Render Window"), TEXT("Dreamlnd 51"),
                            WS_OVERLAPPEDWINDOW | WS_VISIBLE, 
                            CW_USEDEFAULT, CW_USEDEFAULT,
                            windowWidth, windowHeight,
@@ -938,6 +938,10 @@ void eng_Init( void )
         s.MaxXRes = 1024;
         s.MaxYRes = 768;
         x_DebugMsg( "Engine: Using default resolution 1024x768\n" );
+
+        // Get ready to the retail.
+        //s.MaxXRes = GetSystemMetrics(SM_CXSCREEN);
+        //s.MaxYRes = GetSystemMetrics(SM_CYSCREEN);
     }
     else
     {
