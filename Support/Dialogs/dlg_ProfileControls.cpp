@@ -166,8 +166,8 @@ xbool dlg_profile_controls::Create( s32                        UserID,
     m_CurrHL = 0;
 
     // set range
-    m_pSensitivityX->SetRange( 0, 100 );
-    m_pSensitivityY->SetRange( 0, 100 );
+    m_pSensitivityX->SetRange( 0, 32 );
+    m_pSensitivityY->SetRange( 0, 32 );
 
     // switch off the controls to start
     m_pToggleInvertY    ->SetFlag( ui_win::WF_VISIBLE, FALSE );

@@ -39,8 +39,8 @@ void player_profile::Reset( void )
     m_Version               = PROFILE_VERSION_NUMBER;
     m_HashString            = 0;
     m_AvatarID              = 0;
-    m_Sensitivity[0]        = 50;
-    m_Sensitivity[1]        = 50;
+    m_Sensitivity[0]        = 8;
+    m_Sensitivity[1]        = 8;
     m_LoreTotal             = 0;
     m_bNewLoreUnlocked      = FALSE;
     m_NumSecretsUnlocked    = 0;
@@ -111,8 +111,8 @@ void player_profile::SetHash( void )
 
 void player_profile::RestoreControlDefaults( void )
 {
-    m_Sensitivity[0]    = 50;
-    m_Sensitivity[1]    = 50;
+    m_Sensitivity[0]    = 8;
+    m_Sensitivity[1]    = 8;
     m_bLookspringOn     = FALSE;
     m_bCrouchOn         = FALSE;
     m_bInvertY          = TRUE;

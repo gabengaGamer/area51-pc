@@ -235,15 +235,14 @@ void player::UpdateStickInput(void)
     m_fPreviousPitchValue = m_fPitchValue;
 
 #if defined(TARGET_PC) //GS: Experimental PC mouse controls.
-    const f32 BaseMouseSensitivity = 2.0f;
-    f32 Rot = R_10;
-    
-    m_fRawControllerYaw = -g_IngamePad[m_ActivePlayerPad].GetLogical(ingame_pad::LOOK_HORIZONTAL).IsValue * Rot;
-    m_fRawControllerPitch = g_IngamePad[m_ActivePlayerPad].GetLogical(ingame_pad::LOOK_VERTICAL).IsValue * Rot;
-    
-    #if !defined(X_EDITOR)    
-    player_profile& p = g_StateMgr.GetActiveProfile(g_StateMgr.GetProfileListIndex(m_LocalSlot));
-	
+    const f32 MouseSmoothing       = 0.90f; // A bit :)
+
+    m_fRawControllerYaw   = -g_IngamePad[m_ActivePlayerPad].GetLogical( ingame_pad::LOOK_HORIZONTAL ).IsValue;
+    m_fRawControllerPitch =  g_IngamePad[m_ActivePlayerPad].GetLogical( ingame_pad::LOOK_VERTICAL ).IsValue;
+
+    #if !defined(X_EDITOR)
+    player_profile& p = g_StateMgr.GetActiveProfile( g_StateMgr.GetProfileListIndex( m_LocalSlot ) );
+
     //MAB: removed invert Y global var - only check profile now
     if( p.m_bInvertY )
     {
@@ -254,12 +253,12 @@ void player::UpdateStickInput(void)
     extern xbool g_EditorInvertY;
     if( g_EditorInvertY )
     {
-        m_fRawControllerPitch   = -m_fRawControllerPitch;
+        m_fRawControllerPitch = -m_fRawControllerPitch;
     }
-    
+
     // Mirror weapon?
     extern xbool g_MirrorWeapon;
-    if( g_MirrorWeapon )        
+    if( g_MirrorWeapon )
     {
         // Turn on mirror for hands
         m_AnimPlayer.SetMirrorBone( 0 );
@@ -280,29 +279,29 @@ void player::UpdateStickInput(void)
             pWeapon->GetCurrentAnimPlayer().SetMirrorBone( -1 );
     }
     #endif
-    
-    m_fYawValue = m_fRawControllerYaw * BaseMouseSensitivity;
-    m_fPitchValue = m_fRawControllerPitch * BaseMouseSensitivity;
-    
-    #if !defined(X_EDITOR)    
-    u32 sensitivity_H = p.GetSensitivity(SM_X_SENSITIVITY);
-    u32 sensitivity_V = p.GetSensitivity(SM_Y_SENSITIVITY);
+
+    #if !defined(X_EDITOR)
+    u32 sensitivity_H = p.GetSensitivity( SM_X_SENSITIVITY );
+    u32 sensitivity_V = p.GetSensitivity( SM_Y_SENSITIVITY );
     #else
     u32 sensitivity_H = 32; //HACK HACK HACK!!!
     u32 sensitivity_V = 32; //HACK HACK HACK!!!
     #endif
-    
-    f32 scaleH = 0.5f + (sensitivity_H / 100.0f);
-    f32 scaleV = 0.5f + (sensitivity_V / 100.0f);
-    
-    m_fYawValue   *= scaleH; //R_0
-    m_fPitchValue *= scaleV; //R_0
+
+    f32 scaleH = 0.1f + (sensitivity_H / 100.0f); // 0.1f is minimal sensivity for H
+    f32 scaleV = 0.1f + (sensitivity_V / 100.0f); // 0.1f is minimal sensivity for V
+
+    f32 targetYaw   = m_fRawControllerYaw * scaleH;
+    f32 targetPitch = m_fRawControllerPitch * scaleV;
+
+    m_fYawValue   = (m_fPreviousYawValue   * (1.0f - MouseSmoothing)) + (targetYaw   * MouseSmoothing);
+    m_fPitchValue = (m_fPreviousPitchValue * (1.0f - MouseSmoothing)) + (targetPitch * MouseSmoothing);
 #else
     m_fRawControllerYaw = -g_IngamePad[m_ActivePlayerPad].GetLogical(ingame_pad::LOOK_HORIZONTAL).IsValue;
     m_fRawControllerPitch = g_IngamePad[m_ActivePlayerPad].GetLogical(ingame_pad::LOOK_VERTICAL).IsValue;
 
     player_profile& p = g_StateMgr.GetActiveProfile(g_StateMgr.GetProfileListIndex(m_LocalSlot));
-	
+    
     //MAB: removed invert Y global var - only check profile now
     if( p.m_bInvertY )
     {
