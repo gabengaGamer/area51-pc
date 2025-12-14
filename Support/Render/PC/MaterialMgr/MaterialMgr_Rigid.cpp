@@ -167,7 +167,7 @@ xbool material_mgr::UpdateRigidConstants( const matrix4*      pL2W,
                                           u8                  UOffset,
                                           u8                  VOffset )
 {
-    if( !m_pRigidFrameBuffer || !m_pRigidLightBuffer || !m_pRigidObjectBuffer || !pLighting )
+    if( !m_pRigidFrameBuffer || !m_pRigidLightBuffer || !m_pRigidObjectBuffer )
         return FALSE;
 
     if( !g_pd3dDevice || !g_pd3dContext )

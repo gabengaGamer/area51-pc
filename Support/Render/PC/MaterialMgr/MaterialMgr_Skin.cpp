@@ -164,7 +164,7 @@ xbool material_mgr::UpdateSkinConstants( const d3d_lighting* pLighting,
                                          u8                  UOffset,
                                          u8                  VOffset )
 {
-    if( !m_pSkinFrameBuffer || !m_pSkinBoneBuffer|| !m_pSkinLightBuffer || !pLighting  )
+    if( !m_pSkinFrameBuffer || !m_pSkinBoneBuffer|| !m_pSkinLightBuffer  )
         return FALSE;
     
     if( !g_pd3dDevice || !g_pd3dContext )

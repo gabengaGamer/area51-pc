@@ -807,51 +807,44 @@ static
 void* platform_CalculateRigidLighting( const matrix4&   L2W,
                                        const bbox&      WorldBBox )
 {
-    CONTEXT("platform_CalculateRigidLighting");    
+    CONTEXT( "platform_CalculateRigidLighting" );
     
-    // Try allocate
-    d3d_lighting* pLighting = (d3d_lighting*)smem_BufferAlloc( sizeof(d3d_lighting) );
+    void* pResult = NULL;
     
-    if( pLighting )
+    // Grab lights
+    s32 NLights = g_LightMgr.CollectLights( WorldBBox, MAX_GEOM_LIGHTS );
+    
+    if( NLights )
     {
-        // Setup ambient (disable for rigid, because we already have lightmaps)
-        pLighting->AmbCol.Set( 0.0f, 0.0f, 0.0f, 1.0f );
-        
-        // Grab lights
-        s32 NLights = g_LightMgr.CollectLights( WorldBBox, MAX_GEOM_LIGHTS );
+        // Try allocate
+        d3d_lighting* pLighting = (d3d_lighting*)smem_BufferAlloc( sizeof(d3d_lighting) );
         pLighting->LightCount = NLights;
-
+      
         for( s32 i = 0; i < NLights; i++ )
         {
             vector3 Pos;
             f32     Radius;
             xcolor  Col;
+            
             g_LightMgr.GetCollectedLight( i, Pos, Radius, Col );
-
+            
             // Setup rigid lights
-            pLighting->LightVec[i].Set( Pos.GetX(), Pos.GetY(), Pos.GetZ(), Radius );
+            pLighting->LightVec[i].Set( Pos.GetX(),
+                                        Pos.GetY(),
+                                        Pos.GetZ(),
+                                        Radius );
+            
             pLighting->LightCol[i].Set( (f32)Col.R / 255.0f,
                                         (f32)Col.G / 255.0f,
                                         (f32)Col.B / 255.0f,
                                         1.0f );
         }
-
-        for( s32 i = NLights; i < MAX_GEOM_LIGHTS; i++ )
-        {
-            // Turn off directional lighting
-            pLighting->LightVec[i].Set(0.0f, 0.0f, 0.0f, 0.0f);
-            pLighting->LightCol[i].Set(0.0f, 0.0f, 0.0f, 0.0f);
-        }
+        
+        pResult = pLighting;
     }
-    else
-    {
-        ASSERT(FALSE);
-        pLighting = NULL;
-    }
-
+    
     // Store in render instance
-    ASSERT(pLighting);
-    return pLighting;
+    return pResult;
 }
 
 //=============================================================================
@@ -863,54 +856,50 @@ void* platform_CalculateSkinLighting( u32            Flags,
                                       xcolor         Ambient )
 {
     (void)Flags;
-
-    CONTEXT("platform_CalculateSkinLighting");
-
+    CONTEXT( "platform_CalculateSkinLighting" );
+    
+    void* pResult = NULL;
+    
+    // Grab lights
+    s32 NLights = g_LightMgr.CollectCharLights( L2W, BBox, MAX_GEOM_LIGHTS );
+    
     // Try allocate
     d3d_lighting* pLighting = (d3d_lighting*)smem_BufferAlloc( sizeof(d3d_lighting) );
     
-    if ( pLighting )
+    // Setup ambient
+    pLighting->AmbCol.Set( (f32)Ambient.R / 255.0f,
+                           (f32)Ambient.G / 255.0f,
+                           (f32)Ambient.B / 255.0f,
+                           1.0f );
+    
+    pLighting->LightCount = NLights;
+    
+    if( NLights )
     {
-        // Setup ambient
-        pLighting->AmbCol.Set((f32)Ambient.R / 255.0f,
-                              (f32)Ambient.G / 255.0f,
-                              (f32)Ambient.B / 255.0f,
-                              1.0f );
-
-        // Grab lights
-        s32 NLights = g_LightMgr.CollectCharLights( L2W, BBox, MAX_GEOM_LIGHTS );
-        pLighting->LightCount = NLights;
-        
         for( s32 i = 0; i < NLights; i++ )
         {
             vector3 Dir;
             xcolor  Col;
+            
             g_LightMgr.GetCollectedCharLight( i, Dir, Col );
-
+            
             // Setup skin lights
-            pLighting->LightVec[i].Set( Dir.GetX(), Dir.GetY(), Dir.GetZ(), 0.0f );
-            pLighting->LightCol[i].Set((f32)Col.R / 255.0f,
-                                       (f32)Col.G / 255.0f,
-                                       (f32)Col.B / 255.0f,
-                                       (f32)Col.A / 255.0f );
-        }
-        
-        for( s32 i = NLights; i < MAX_GEOM_LIGHTS; i++ )
-        {
-            // Turn off directional lighting
-            pLighting->LightVec[i].Set(0.0f, 0.0f, 0.0f, 0.0f);
-            pLighting->LightCol[i].Set(0.0f, 0.0f, 0.0f, 0.0f);
+            pLighting->LightVec[i].Set( Dir.GetX(),
+                                        Dir.GetY(),
+                                        Dir.GetZ(),
+                                        0.0f );
+            
+            pLighting->LightCol[i].Set( (f32)Col.R / 255.0f,
+                                        (f32)Col.G / 255.0f,
+                                        (f32)Col.B / 255.0f,
+                                        (f32)Col.A / 255.0f );
         }
     }
-    else
-    {
-        ASSERT(FALSE);
-        pLighting = NULL;
-    }
-
+    
+    pResult = pLighting;
+    
     // Store in render instance
-    ASSERT(pLighting);
-    return pLighting;
+    return pResult;
 }
 
 //=============================================================================
