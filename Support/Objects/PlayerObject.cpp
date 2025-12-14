@@ -977,7 +977,7 @@ void player::OnInit( void )
     m_EnemyGlowColor.Set   ( 255,  50, 0, 255 );
 
     // player stuff
-    m_ViewInfo.XFOV             = R_60;
+    m_ViewInfo.XFOV             = R_90;
     m_OriginalViewInfo.XFOV     = m_ViewInfo.XFOV;
     m_nLoreDiscoveries          = 0;
 #if !defined( CONFIG_RETAIL )
@@ -3122,7 +3122,7 @@ void player::InitFlashlight( const vector3& rInitPos )
         ProjObj.m_pObject->SetShadow( FALSE );
         ProjObj.m_pObject->SetActive( FALSE );
         ProjObj.m_pObject->SetIsFlashlight( TRUE );
-        ProjObj.m_pObject->SetFOV( R_60 );
+        ProjObj.m_pObject->SetFOV( R_90 );
         ProjObj.m_pObject->SetLength( 2000.0f );
         ProjObj.m_pObject->SetTextureHandle( Texture );
         ProjObj.m_pObject->OnMove( rInitPos );
@@ -4980,20 +4980,25 @@ xbool player::OnProperty( prop_query& rPropQuery )
         return TRUE;
     }
 
+    // GS: This is so stupid I'm speechless. 
+    // Why the hell is FOV set in the level editor? What the fuck? 
+    // FOV should be controlled by the user, period! I won't use this code.
 
-    if( rPropQuery.IsVar( "Player\\CamFOV" ) )
-    {
-        if( rPropQuery.IsRead() )
-        {
-            rPropQuery.SetVarAngle( m_ViewInfo.XFOV );
-        }
-        else
-        {
-            m_ViewInfo.XFOV = rPropQuery.GetVarAngle();
-            m_OriginalViewInfo.XFOV = m_ViewInfo.XFOV;
-        }
-        return TRUE;
-    }
+    // Also TODO: Make FOV settingable and auto scalable in hud_MutantVision, hud_ContagiousVision and weapons stuff.
+
+    //if( rPropQuery.IsVar( "Player\\CamFOV" ) )
+    //{
+    //    if( rPropQuery.IsRead() )
+    //    {
+    //        rPropQuery.SetVarAngle( m_ViewInfo.XFOV );
+    //    }
+    //    else
+    //    {
+    //        m_ViewInfo.XFOV = rPropQuery.GetVarAngle();
+    //        m_OriginalViewInfo.XFOV = m_ViewInfo.XFOV;
+    //    }
+    //    return TRUE;
+    //}
 
     radian3 Rot( m_Pitch, m_Yaw, 0.0f );
     if ( rPropQuery.VarRotation( "Player\\View Rotation", Rot ) )

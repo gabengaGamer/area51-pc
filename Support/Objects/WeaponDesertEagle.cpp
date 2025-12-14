@@ -19,6 +19,21 @@
 // STATIC DEFINTIONS AND CONSTANTS
 //=========================================================================
 
+// Adjust zoom transition speed to account for a larger base FOV
+static 
+inline f32 AdjustViewChangeRate( const player::view_info& OriginalViewInfo, radian TargetFOV, f32 ViewChangeRate )
+{
+    f32 TargetDelta  = OriginalViewInfo.XFOV - TargetFOV;
+    f32 DefaultDelta = R_60 - TargetFOV;
+
+    if( (TargetDelta > 0.0f) && (DefaultDelta > 0.0f) )
+    {
+        return ViewChangeRate * (TargetDelta / DefaultDelta);
+    }
+
+    return ViewChangeRate;
+}
+
 //=========================================================================
 // OBJECT DESCRIPTION
 //=========================================================================
@@ -250,18 +265,19 @@ void weapon_desert_eagle::OnAdvanceLogic( f32 DeltaTime )
         // Get the player.
         player& Player = player::GetSafeType( *g_ObjMgr.GetObjectByGuid( m_ParentGuid ) );
         const player::view_info& OriginalViewInfo = Player.GetOriginalViewInfo();
+        const f32 ViewChangeRate = AdjustViewChangeRate( OriginalViewInfo, m_ZoomFOV, m_ViewChangeRate );
 
         if( m_ZoomState == WEAPON_STATE_ZOOM_IN )
         {
             // Zooming in.
-            m_CurrentViewX -= m_ViewChangeRate * DeltaTime;
-            m_CurrentViewX = fMax( m_CurrentViewX , m_ZoomFOV );     
+            m_CurrentViewX -= ViewChangeRate * DeltaTime;
+            m_CurrentViewX = fMax( m_CurrentViewX , m_ZoomFOV );
         }
         else
         {
             // Zooming Out.
-            m_CurrentViewX += m_ViewChangeRate * DeltaTime;
-            m_CurrentViewX = fMin( m_CurrentViewX , OriginalViewInfo.XFOV );     
+            m_CurrentViewX += ViewChangeRate * DeltaTime;
+            m_CurrentViewX = fMin( m_CurrentViewX , OriginalViewInfo.XFOV );
             if( m_CurrentViewX >= OriginalViewInfo.XFOV )
                 ClearZoom();
         }

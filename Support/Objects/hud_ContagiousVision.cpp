@@ -22,7 +22,7 @@
 //==============================================================================
 
 static const f32 s_MutantOverlayHeight = 425.0f;
-static const f32 s_MutantOverlayFOV    = R_60;
+static const f32 s_MutantOverlayFOV    = R_90;
 
 fx_handle       hud_contagious_vision::m_OverlayHandle;
  

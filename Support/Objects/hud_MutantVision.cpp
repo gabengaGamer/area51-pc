@@ -22,7 +22,7 @@
 //==============================================================================
 
 static const f32 s_MutantOverlayHeight = 425.0f;
-static const f32 s_MutantOverlayFOV    = R_60;
+static const f32 s_MutantOverlayFOV    = R_90;
 
 rhandle<char>   hud_mutant_vision::m_OverlayResource;
 fx_handle       hud_mutant_vision::m_OverlayHandle;

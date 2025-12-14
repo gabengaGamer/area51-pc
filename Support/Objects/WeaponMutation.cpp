@@ -33,6 +33,20 @@
 // DEFINES and CONSTS
 //=========================================================================
 
+// Adjust zoom transition speed to account for a larger base FOV
+static inline f32 AdjustViewChangeRate( const player::view_info& OriginalViewInfo, radian TargetFOV, f32 ViewChangeRate )
+{
+    f32 TargetDelta  = OriginalViewInfo.XFOV - TargetFOV;
+    f32 DefaultDelta = R_60 - TargetFOV;
+
+    if( (TargetDelta > 0.0f) && (DefaultDelta > 0.0f) )
+    {
+        return ViewChangeRate * (TargetDelta / DefaultDelta);
+    }
+
+    return ViewChangeRate;
+}
+
 f32 s_HitShakeTime     = 0.8f;
 f32 s_HitShakeAmount   = 1.0f;
 f32 s_HitShakeSpeed    = 1.5f;
@@ -1424,22 +1438,23 @@ void weapon_mutation::ChangeFOV( f32 DeltaTime )
     // Get the player.
     player& Player = player::GetSafeType( *g_ObjMgr.GetObjectByGuid( m_HostPlayerGuid ) );
     const player::view_info& OriginalViewInfo = Player.GetOriginalViewInfo();
+    const f32 ViewChangeRate = AdjustViewChangeRate( OriginalViewInfo, ZOOM_FOV, m_ViewChangeRate );
 
     if( m_bMeleeComplete )
     {
         // Zooming Out.
-        m_CurrentViewX += m_ViewChangeRate * DeltaTime;
-        m_CurrentViewX = fMin( m_CurrentViewX , OriginalViewInfo.XFOV );     
+        m_CurrentViewX += ViewChangeRate * DeltaTime;
+        m_CurrentViewX = fMin( m_CurrentViewX , OriginalViewInfo.XFOV );
         if( m_CurrentViewX >= OriginalViewInfo.XFOV )
         {
-            m_CurrentViewX = OriginalViewInfo.XFOV;    
+            m_CurrentViewX = OriginalViewInfo.XFOV;
             Player.ResetView();
         }
     }
     else
     {
         // Zooming in.
-        m_CurrentViewX -= m_ViewChangeRate * DeltaTime;
+        m_CurrentViewX -= ViewChangeRate * DeltaTime;
         m_CurrentViewX = fMax( m_CurrentViewX , ZOOM_FOV );
     }
 }
@@ -1937,4 +1952,3 @@ void weapon_mutation::BeginSwitchFrom( void )
 }
 
 //=============================================================================
-
