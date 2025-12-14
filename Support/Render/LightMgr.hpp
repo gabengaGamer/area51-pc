@@ -23,22 +23,14 @@
 // GLOBAL TODO: GS: I'm noticing some serious performance issues, 
 // the lighting system needs to be optimized because it's a mess right now.
 //
-// Also see TODO below in class light_mgr
-//
 //------------------------------------------------------------------------------
 
 class light_mgr
 {
 public:
-    // TODO: GS: These limits are a problem. 
-    // The artists clearly didn't take these values ​​into account, 
-    // so dynamic lighting can appear artifacted or disappear in many places in the game. 
-    // I don't yet know how to fix this without increasing the limits. 
-    // However, increasing the limits leads to HUGE performance drops. 
-    // This needs to be addressed!!!
-    enum    { MAX_CHAR_LIGHTS      = 64 };
-    enum    { MAX_DYNAMIC_LIGHTS   = 16 };
-    enum    { MAX_FADING_LIGHTS    = 16 };
+    enum    { MAX_CHAR_LIGHTS      = 128 };
+    enum    { MAX_DYNAMIC_LIGHTS   = 64 };
+    enum    { MAX_FADING_LIGHTS    = 64 };
     enum    { MAX_COLLECTED_LIGHTS = 16 };
 
              light_mgr( void );
