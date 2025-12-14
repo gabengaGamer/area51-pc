@@ -137,7 +137,7 @@ void font_SetColor( const xcolor& Color )
 
 //=========================================================================
 
-#ifndef X_RETAIL
+#if !defined( X_RETAIL ) || defined( X_QA )
 
 void text_BeginRender( void )
 {

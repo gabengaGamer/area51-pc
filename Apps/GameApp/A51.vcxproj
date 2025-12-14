@@ -119,7 +119,7 @@
       <ShowIncludes>true</ShowIncludes>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>dxguid.lib;dinput8.lib;dsound.lib;DirectXTex.lib;legacy_stdio_definitions.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>dxguid.lib;dinput8.lib;dsound.lib;DirectXTex.lib;legacy_stdio_definitions.lib</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(X)\3rdParty\DirectX9;$(X)\3rdParty\WebM\lib\x86;$(X)\3rdParty\DirectXTex\DirectXTex\Bin\x32;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <IgnoreSpecificDefaultLibraries>libci.lib;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -155,8 +155,12 @@
       <ShowIncludes>true</ShowIncludes>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>dxguid.lib;dinput8.lib;dsound.lib;avcodec.lib;avdevice.lib;avfilter.lib;avformat.lib;avutil.lib;postproc.lib;swresample.lib;swscale.lib;DirectXTex.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(X)\3rdParty\DirectX9;$(X)\3rdParty\ffmpeg-win32\bin;$(X)\3rdParty\DirectXTex\DirectXTex\Bin\x32;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>dxguid.lib;dinput8.lib;dsound.lib;DirectXTex.lib;legacy_stdio_definitions.lib;ole32.lib;
+
+user32.lib;
+
+gdi32.lib</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(X)\3rdParty\DirectX9;$(X)\3rdParty\WebM\lib\x86;$(X)\3rdParty\DirectXTex\DirectXTex\Bin\x32;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <IgnoreSpecificDefaultLibraries>libci.lib;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SuppressStartupBanner>true</SuppressStartupBanner>
@@ -189,8 +193,12 @@
       <ShowIncludes>true</ShowIncludes>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>dxguid.lib;dinput8.lib;dsound.lib;avcodec.lib;avdevice.lib;avfilter.lib;avformat.lib;avutil.lib;postproc.lib;swresample.lib;swscale.lib;DirectXTex.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(X)\3rdParty\DirectX9;$(X)\3rdParty\ffmpeg-win32\bin;$(X)\3rdParty\DirectXTex\DirectXTex\Bin\x32;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>dxguid.lib;dinput8.lib;dsound.lib;DirectXTex.lib;legacy_stdio_definitions.lib;ole32.lib;
+
+user32.lib;
+
+gdi32.lib</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(X)\3rdParty\DirectX9;$(X)\3rdParty\WebM\lib\x86;$(X)\3rdParty\DirectXTex\DirectXTex\Bin\x32;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <IgnoreSpecificDefaultLibraries>libci.lib;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <SuppressStartupBanner>true</SuppressStartupBanner>
@@ -223,10 +231,15 @@
       <DisableSpecificWarnings>4996;4995;4244;4267;4018;4100;4101;4102;4189;4389;4245;4127</DisableSpecificWarnings>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <ShowIncludes>true</ShowIncludes>
+      <CallingConvention>Cdecl</CallingConvention>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>dxguid.lib;dinput8.lib;dsound.lib;avcodec.lib;avdevice.lib;avfilter.lib;avformat.lib;avutil.lib;postproc.lib;swresample.lib;swscale.lib;DirectXTex.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(X)\3rdParty\DirectX9;$(X)\3rdParty\ffmpeg-win32\bin;$(X)\3rdParty\DirectXTex\DirectXTex\Bin\x32;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>dxguid.lib;dinput8.lib;dsound.lib;DirectXTex.lib;legacy_stdio_definitions.lib;ole32.lib;
+
+user32.lib;
+
+gdi32.lib</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(X)\3rdParty\DirectX9;$(X)\3rdParty\WebM\lib\x86;$(X)\3rdParty\DirectXTex\DirectXTex\Bin\x32;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <IgnoreSpecificDefaultLibraries>libci.lib;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SuppressStartupBanner>true</SuppressStartupBanner>
