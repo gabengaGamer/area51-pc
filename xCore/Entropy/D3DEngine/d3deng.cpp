@@ -934,14 +934,17 @@ void eng_Init( void )
 
     if( s.MaxXRes == 0 )
     {
-        // Use desktop resolution as default
-        s.MaxXRes = 1024;
-        s.MaxYRes = 768;
-        x_DebugMsg( "Engine: Using default resolution 1024x768\n" );
-
-        // Get ready to the retail.
-        //s.MaxXRes = GetSystemMetrics(SM_CXSCREEN);
-        //s.MaxYRes = GetSystemMetrics(SM_CYSCREEN);
+        //TODO: GS: Ofc, made settings and .inl loader, but for now this code is good.
+        #ifdef X_RETAIL
+            // Get ready to the retail.
+            s.MaxXRes = GetSystemMetrics(SM_CXSCREEN);
+            s.MaxYRes = GetSystemMetrics(SM_CYSCREEN);
+        #else
+            // Use desktop resolution as default
+            s.MaxXRes = 1024;
+            s.MaxYRes = 768;
+            x_DebugMsg( "Engine: Using default resolution 1024x768\n" );    
+        #endif
     }
     else
     {
