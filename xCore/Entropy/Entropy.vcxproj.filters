@@ -25,9 +25,6 @@
     <Filter Include="IOManager">
       <UniqueIdentifier>{f2ea50f4-8080-4b64-a540-69763c20e5da}</UniqueIdentifier>
     </Filter>
-    <Filter Include="IOManager\Device_DVD">
-      <UniqueIdentifier>{810e74a7-120f-4a49-bdc9-c12d7e954968}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Network">
       <UniqueIdentifier>{228dc53a-9cb3-4646-83ca-59e43d16ad36}</UniqueIdentifier>
     </Filter>
@@ -36,6 +33,9 @@
     </Filter>
     <Filter Include="MemCard">
       <UniqueIdentifier>{a0b2c32e-1855-4d32-b441-3a7055b9351f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="IOManager\Device_Host">
+      <UniqueIdentifier>{810e74a7-120f-4a49-bdc9-c12d7e954968}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -114,12 +114,6 @@
     <ClCompile Include="IOManager\io_device.cpp">
       <Filter>IOManager</Filter>
     </ClCompile>
-    <ClCompile Include="IOManager\device_net\io_device_net.cpp">
-      <Filter>IOManager</Filter>
-    </ClCompile>
-    <ClCompile Include="IOManager\io_device_netfs.cpp">
-      <Filter>IOManager</Filter>
-    </ClCompile>
     <ClCompile Include="IOManager\io_dfs.cpp">
       <Filter>IOManager</Filter>
     </ClCompile>
@@ -131,12 +125,6 @@
     </ClCompile>
     <ClCompile Include="IOManager\io_request.cpp">
       <Filter>IOManager</Filter>
-    </ClCompile>
-    <ClCompile Include="IOManager\Device_DVD\io_device_dvd.cpp">
-      <Filter>IOManager\Device_DVD</Filter>
-    </ClCompile>
-    <ClCompile Include="IOManager\Device_DVD\io_device_dvd_pc.cpp">
-      <Filter>IOManager\Device_DVD</Filter>
     </ClCompile>
     <ClCompile Include="Network\fifo.cpp">
       <Filter>Network</Filter>
@@ -184,6 +172,12 @@
     <ClCompile Include="D3DEngine\d3deng_draw_rt.cpp">
       <Filter>PC</Filter>
     </ClCompile>
+    <ClCompile Include="IOManager\Device_Host\io_device_host_pc.cpp">
+      <Filter>IOManager\Device_Host</Filter>
+    </ClCompile>
+    <ClCompile Include="IOManager\Device_Host\io_device_host.cpp">
+      <Filter>IOManager\Device_Host</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Audio\audio_channel_mgr.hpp">
@@ -207,9 +201,6 @@
     <ClInclude Include="IOManager\io_device.hpp">
       <Filter>IOManager</Filter>
     </ClInclude>
-    <ClInclude Include="IOManager\device_net\io_device_net.hpp">
-      <Filter>IOManager</Filter>
-    </ClInclude>
     <ClInclude Include="IOManager\io_dfs.hpp">
       <Filter>IOManager</Filter>
     </ClInclude>
@@ -221,9 +212,6 @@
     </ClInclude>
     <ClInclude Include="IOManager\io_request.hpp">
       <Filter>IOManager</Filter>
-    </ClInclude>
-    <ClInclude Include="IOManager\Device_DVD\io_device_dvd.hpp">
-      <Filter>IOManager\Device_DVD</Filter>
     </ClInclude>
     <ClInclude Include="Network\fifo.hpp">
       <Filter>Network</Filter>
@@ -292,9 +280,6 @@
     <ClInclude Include="IOManager\io_header.hpp">
       <Filter>IOManager</Filter>
     </ClInclude>
-    <ClInclude Include="IOManager\io_device_netfs.hpp">
-      <Filter>IOManager</Filter>
-    </ClInclude>
     <ClInclude Include="Audio\Hardware\audio_prologic2.hpp">
       <Filter>Audio\Hardware</Filter>
     </ClInclude>
@@ -312,6 +297,9 @@
     </ClInclude>
     <ClInclude Include="D3DEngine\d3deng_draw_rt.hpp">
       <Filter>PC</Filter>
+    </ClInclude>
+    <ClInclude Include="IOManager\Device_Host\io_device_host.hpp">
+      <Filter>IOManager\Device_Host</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

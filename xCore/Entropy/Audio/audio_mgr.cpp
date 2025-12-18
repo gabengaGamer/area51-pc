@@ -2585,7 +2585,7 @@ void audio_mgr::ResumeAll( void )
     ASSERT( s_Initialized );
 #endif
 
-    while( g_IoMgr.GetDeviceQueueStatus( IO_DEVICE_DVD ) )
+    while( g_IoMgr.GetDeviceQueueStatus( IO_DEVICE_HOST ) )
     {
         x_DelayThread( 10 );
 //        Update( 10 );

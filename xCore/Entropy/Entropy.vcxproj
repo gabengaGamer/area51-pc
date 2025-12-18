@@ -207,26 +207,10 @@
     <ClCompile Include="D3DEngine\d3deng_font.cpp" />
     <ClCompile Include="D3DEngine\d3deng_input.cpp" />
     <ClCompile Include="D3DEngine\d3deng_vram.cpp" />
-    <ClCompile Include="IOManager\Device_DVD\io_device_dvd.cpp" />
-    <ClCompile Include="IOManager\Device_DVD\io_device_dvd_pc.cpp" />
-    <ClCompile Include="IOManager\device_net\io_device_net.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='EDITOR-Debug|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='OptDebug|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='QA|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='VIEWER-Debug|Win32'">true</ExcludedFromBuild>
-    </ClCompile>
+    <ClCompile Include="IOManager\Device_Host\io_device_host.cpp" />
+    <ClCompile Include="IOManager\Device_Host\io_device_host_pc.cpp" />
     <ClCompile Include="IOManager\io_cache.cpp" />
     <ClCompile Include="IOManager\io_device.cpp" />
-    <ClCompile Include="IOManager\io_device_netfs.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='EDITOR-Debug|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='OptDebug|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='QA|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='VIEWER-Debug|Win32'">true</ExcludedFromBuild>
-    </ClCompile>
     <ClCompile Include="IOManager\io_dfs.cpp" />
     <ClCompile Include="IOManager\io_filesystem.cpp" />
     <ClCompile Include="IOManager\io_mgr.cpp" />
@@ -279,11 +263,9 @@
     <ClInclude Include="Audio\audio_stream_mgr.hpp" />
     <ClInclude Include="Audio\audio_voice_mgr.hpp" />
     <ClInclude Include="Audio\IAL\IAL.h" />
-    <ClInclude Include="IOManager\Device_DVD\io_device_dvd.hpp" />
-    <ClInclude Include="IOManager\device_net\io_device_net.hpp" />
+    <ClInclude Include="IOManager\Device_Host\io_device_host.hpp" />
     <ClInclude Include="IOManager\io_cache.hpp" />
     <ClInclude Include="IOManager\io_device.hpp" />
-    <ClInclude Include="IOManager\io_device_netfs.hpp" />
     <ClInclude Include="IOManager\io_dfs.hpp" />
     <ClInclude Include="IOManager\io_filesystem.hpp" />
     <ClInclude Include="IOManager\io_header.hpp" />

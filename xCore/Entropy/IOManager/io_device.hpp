@@ -1,5 +1,13 @@
-#ifndef __IO_DEVICE_HPP__
-#define __IO_DEVICE_HPP__
+//==============================================================================
+//
+//  io_device.hpp
+//
+//  Base IO device utilities and checksum helpers.
+//
+//==============================================================================
+
+#ifndef IO_DEVICE_HPP
+#define IO_DEVICE_HPP
 
 #include "x_types.hpp"
 #include "x_threads.hpp"
@@ -25,18 +33,18 @@ class io_device;
 
 struct io_device_file
 {
-        	void*           pBuffer;
-        	xbool           IsOpen;
-        	void*           pHeader;
-        	void*           Handle;
-        	s32             Length;
-        	s32             BufferValid;
+            void*           pBuffer;
+            xbool           IsOpen;
+            void*           pHeader;
+            void*           Handle;
+            s32             Length;
+            s32             BufferValid;
             s32             SubFileIndex;
-volatile	s32             ReferenceCount;
-        	io_device*      pDevice;
-        	void*           pHardwareData;
-        	char            Filename[IO_DEVICE_FILENAME_LIMIT];
-        	io_device_file* pNext;
+volatile    s32             ReferenceCount;
+            io_device*      pDevice;
+            void*           pHardwareData;
+            char            Filename[IO_DEVICE_FILENAME_LIMIT];
+            io_device_file* pNext;
 };
 
 //==============================================================================
@@ -134,11 +142,11 @@ protected:
         void            GetPathPrefix               ( char* pBuffer  );
 virtual device_data*    GetDeviceData               ( void );
 virtual void            CleanFilename               ( char* pClean, char* pFilename );
-virtual xbool           PhysicalOpen                ( const char* pFilename, io_device_file* pFile, open_flags OpenFlags );
-virtual xbool           PhysicalRead                ( io_device_file* pFile, void* pBuffer, s32 Length, s32 Offset, s32 AddressSpace );
-virtual xbool           PhysicalWrite               ( io_device_file* pFile, void* pBuffer, s32 Length, s32 Offset, s32 AddressSpace );
-virtual void            PhysicalClose               ( io_device_file* pFile );
+virtual xbool           DeviceOpen                  ( const char* pFilename, io_device_file* pFile, open_flags OpenFlags );
+virtual xbool           DeviceRead                  ( io_device_file* pFile, void* pBuffer, s32 Length, s32 Offset, s32 AddressSpace );
+virtual xbool           DeviceWrite                 ( io_device_file* pFile, void* pBuffer, s32 Length, s32 Offset, s32 AddressSpace );
+virtual void            DeviceClose                 ( io_device_file* pFile );
 
 };
 
-#endif
+#endif // IO_DEVICE_HPP

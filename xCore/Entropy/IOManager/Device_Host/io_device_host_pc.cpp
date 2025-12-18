@@ -1,62 +1,70 @@
 //==============================================================================
 //
-// DVD Device layer for PC
+//  io_device_host_pc.cpp
+//
+//  Host filesystem device layer for PC.
 //
 //==============================================================================
 
-#include "x_target.hpp"
+//==============================================================================
+//  PLATFORM CHECK
+//==============================================================================
+
+#include "x_types.hpp"
 
 #if !defined(TARGET_PC)
-#error This is not for this target platform. Check dependancy rules.
+#error "This is only for the PC target platform. Please check build exclusion rules"
 #endif
+
+//==============================================================================
+//  INCLUDES
+//==============================================================================
 
 #include "..\io_mgr.hpp"
 #include "..\io_filesystem.hpp"
 #include "x_memory.hpp"
 #include "x_math.hpp"
-#include "io_device_dvd.hpp"
+#include "io_device_host.hpp"
 #include <stdio.h>
 
 //==============================================================================
-//
-// CDROM Defines, Buffers, Etc
-//
+//  HOSTFS: DEFINES, BUFFERS, ETC...
 //==============================================================================
 
-#define CDROM_CACHE_SIZE    (32*1024)
-#define CDROM_NUM_FILES     (32)                        // TODO: CJG - Increase this to accomodate multiple CDFS's
-#define CDROM_INFO_SIZE     (32)
-#define CDROM_CACHE         ((void*)s_CdromCache)
-#define CDROM_FILES         ((void*)s_CdromFiles)
-#define CDROM_BUFFER_ALIGN  (32)
-#define CDROM_OFFSET_ALIGN  (4)
-#define CDROM_LENGTH_ALIGN  (32)
+#define HOSTFS_CACHE_SIZE    (32*1024)
+#define HOSTFS_NUM_FILES     (32)                        // TODO: CJG - Increase this to accomodate multiple CDFS's
+#define HOSTFS_INFO_SIZE     (32)
+#define HOSTFS_CACHE         ((void*)s_HostCache)
+#define HOSTFS_FILES         ((void*)s_HostFiles)
+#define HOSTFS_BUFFER_ALIGN  (32)
+#define HOSTFS_OFFSET_ALIGN  (4)
+#define HOSTFS_LENGTH_ALIGN  (32)
 
-static char           s_CdromCache[ CDROM_CACHE_SIZE ] GCN_ALIGNMENT(CDROM_BUFFER_ALIGN);
-static io_device_file s_CdromFiles[ CDROM_NUM_FILES ];
+static char           s_HostCache[ HOSTFS_CACHE_SIZE ] GCN_ALIGNMENT(HOSTFS_BUFFER_ALIGN);
+static io_device_file s_HostFiles[ HOSTFS_NUM_FILES ];
 
 //==============================================================================
-//
-// Device definition.
-//
+// DEVICE DEFINITION.
 //==============================================================================
 
 io_device::device_data s_DeviceData =
 {
-    "PC DVD",           // Name
+    "PC HostFS",        // Name
     TRUE,               // IsSupported
     TRUE,               // IsReadable
     FALSE,              // IsWriteable
-    CDROM_CACHE_SIZE,   // CacheSize
-    CDROM_BUFFER_ALIGN, // BufferAlign
-    CDROM_OFFSET_ALIGN, // OffsetAlign
-    CDROM_LENGTH_ALIGN, // LengthAlign
-    CDROM_NUM_FILES,    // NumFiles
-    CDROM_INFO_SIZE,    // InfoSize
-    CDROM_CACHE,        // pCache    
-    CDROM_FILES         // pFilesBuffer
+    HOSTFS_CACHE_SIZE,  // CacheSize
+    HOSTFS_BUFFER_ALIGN,// BufferAlign
+    HOSTFS_OFFSET_ALIGN,// OffsetAlign
+    HOSTFS_LENGTH_ALIGN,// LengthAlign
+    HOSTFS_NUM_FILES,   // NumFiles
+    HOSTFS_INFO_SIZE,   // InfoSize
+    HOSTFS_CACHE,       // pCache
+    HOSTFS_FILES        // pFilesBuffer
 };
 
+//==============================================================================
+//  IMPLEMENTATION
 //==============================================================================
 
 static void ReadCallback( s32 Result, void* pFileInfo )
@@ -64,27 +72,27 @@ static void ReadCallback( s32 Result, void* pFileInfo )
     (void)pFileInfo;
 
     // We are in the callback
-    g_IODeviceDVD.EnterCallback();
+    g_IODeviceHost.EnterCallback();
 
     // Success?
     if( Result >= 0 )
     {
         // Its all good!
-        ProcessEndOfRequest( &g_IODeviceDVD, io_request::COMPLETED );
+        ProcessEndOfRequest( &g_IODeviceHost, io_request::COMPLETED );
     }
     else
     {
         // Ack failed!
-        ProcessEndOfRequest( &g_IODeviceDVD, io_request::FAILED );
+        ProcessEndOfRequest( &g_IODeviceHost, io_request::FAILED );
     }
 
     // Done with callback
-    g_IODeviceDVD.LeaveCallback();
+    g_IODeviceHost.LeaveCallback();
 }
 
 //==============================================================================
 
-void io_device_dvd::CleanFilename( char* pClean, const char* pFilename )
+void io_device_host::CleanFilename( char* pClean, const char* pFilename )
 {
     // Gotta fit.
     ASSERT( x_strlen(pFilename) + x_strlen(m_Prefix) < IO_DEVICE_FILENAME_LIMIT );
@@ -125,7 +133,8 @@ void io_device_dvd::CleanFilename( char* pClean, const char* pFilename )
 }
 
 //==============================================================================
-void io_device_dvd::Init( void )
+
+void io_device_host::Init( void )
 {
     // Base class initialization
     io_device::Init();
@@ -135,23 +144,22 @@ void io_device_dvd::Init( void )
 }
 
 //==============================================================================
-void io_device_dvd::Kill( void )
+
+void io_device_host::Kill( void )
 {
     io_device::Kill();
 }
 
 //==============================================================================
 
-io_device::device_data* io_device_dvd::GetDeviceData( void )
+io_device::device_data* io_device_host::GetDeviceData( void )
 {
     return &s_DeviceData;
 }
 
 //==============================================================================
-//================================ DVD Functions ===============================
-//==============================================================================
 
-xbool io_device_dvd::PhysicalOpen( const char* pFilename, io_device_file* pFile, open_flags OpenFlags )
+xbool io_device_host::DeviceOpen( const char* pFilename, io_device_file* pFile, open_flags OpenFlags )
 {
     (void)OpenFlags;
     // Clean the filename.
@@ -159,7 +167,7 @@ xbool io_device_dvd::PhysicalOpen( const char* pFilename, io_device_file* pFile,
     CleanFilename( CleanFile, (char *)pFilename );
 
     pFile->Handle = fopen(CleanFile,"rb");
-    // Open the file on the dvd.
+    // Open the file on the host filesystem.
     if( pFile->Handle )
     {
         // Get the length of the file.
@@ -169,21 +177,20 @@ xbool io_device_dvd::PhysicalOpen( const char* pFilename, io_device_file* pFile,
         // Woot!
         return TRUE;
     }
-    else
-    {
-        return FALSE;
-    }
+
+    return FALSE;
 }
 
 //==============================================================================
 
-xbool io_device_dvd::PhysicalRead( io_device_file* pFile, void* pBuffer, s32 Length, s32 Offset, s32 AddressSpace )
+xbool io_device_host::DeviceRead( io_device_file* pFile, void* pBuffer, s32 Length, s32 Offset, s32 AddressSpace )
 {
     s32 ReadLength;
-	(void)AddressSpace;
-
+    (void)AddressSpace;
+#if !defined(X_RETAIL)
     // Log the read.
-    LogPhysRead( pFile, Length, Offset );    
+    LogDeviceRead( pFile, Length, Offset );   
+#endif    
 
     fseek( (FILE*)pFile->Handle, Offset, SEEK_SET );
     ReadLength = fread(pBuffer,1,Length,(FILE*)pFile->Handle);
@@ -195,7 +202,7 @@ xbool io_device_dvd::PhysicalRead( io_device_file* pFile, void* pBuffer, s32 Len
 
 //==============================================================================
 
-xbool io_device_dvd::PhysicalWrite( io_device_file* pFile, void* pBuffer, s32 Length, s32 Offset, s32 AddressSpace )
+xbool io_device_host::DeviceWrite( io_device_file* pFile, void* pBuffer, s32 Length, s32 Offset, s32 AddressSpace )
 {
     (void)pFile;
     (void)pBuffer;
@@ -208,9 +215,7 @@ xbool io_device_dvd::PhysicalWrite( io_device_file* pFile, void* pBuffer, s32 Le
 
 //==============================================================================
 
-void io_device_dvd::PhysicalClose ( io_device_file* pFile )
+void io_device_host::DeviceClose ( io_device_file* pFile )
 {
     fclose((FILE*)pFile->Handle);
-    // Close the file on the DVD.
 }
-

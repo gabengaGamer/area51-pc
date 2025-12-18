@@ -1,6 +1,15 @@
-#ifdef TARGET_GCN // TODO: RMB - Remove this - need pc version
-#include <dolphin.h>
-#endif
+//==============================================================================
+//
+//  io_mgr.cpp
+//
+//  Core IO manager control and dispatcher.
+//
+//==============================================================================
+
+//==============================================================================
+//  INCLUDES
+//==============================================================================
+
 #include "x_types.hpp"
 #include "x_memory.hpp"
 #include "x_threads.hpp"
@@ -10,20 +19,23 @@
 #include "x_context.hpp"
 #include "io_mgr.hpp"
 #include "io_filesystem.hpp"
-#include "device_dvd\io_device_dvd.hpp"
-#include "device_net\io_device_net.hpp"
+#include "device_host\io_device_host.hpp"
 
 //==============================================================================
-// Local variables
+//  LOCAL VARIABLES
+//==============================================================================
 
 static xbool s_Initialized      = FALSE;
 static xbool s_DispatcherActive = FALSE;
 
 //==============================================================================
-// Global variables
+//  GLOBAL INSTANCE
+//==============================================================================
 
 io_mgr g_IoMgr;
 
+//==============================================================================
+//  IMPLEMENTATION
 //==============================================================================
 
 void io_dispatcher( void )
@@ -143,8 +155,8 @@ s32 io_mgr::Init( void )
     // Error check.
     ASSERT( s_Initialized == FALSE );
 
-    m_Devices[ IO_DEVICE_DVD ] = &g_IODeviceDVD;
-    m_Devices[ IO_DEVICE_DVD ]->Init();
+    m_Devices[ IO_DEVICE_HOST ] = &g_IODeviceHost;
+    m_Devices[ IO_DEVICE_HOST ]->Init();
 
     // It's inited.
     s_Initialized = TRUE;
@@ -204,8 +216,8 @@ s32 io_mgr::QueueRequest( io_request* pRequest )
 
     ASSERT( pRequest->m_Priority >= io_request::HIGH_PRIORITY );
     ASSERT( pRequest->m_Priority <= io_request::LOW_PRIORITY );
-	// BW - A buffer address of 0 is actually valid when the destination
-	// is audio ram for the PS2.
+    // BW - A buffer address of 0 is actually valid when the destination
+    // is audio ram for the PS2.
     ASSERT( pRequest->m_pBuffer || pRequest->m_Destination);
     ASSERT( pRequest->m_Offset >= 0 );
     ASSERT( pRequest->m_Length >= 0 );

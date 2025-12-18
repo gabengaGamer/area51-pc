@@ -1,24 +1,34 @@
+//==============================================================================
+//
+//  io_filesystem.cpp
+//
+//  Filesystem abstraction for DFS and host access.
+//
+//==============================================================================
+
+//==============================================================================
+//  INCLUDES
+//==============================================================================
+
 #include "io_filesystem.hpp"
 #include "io_mgr.hpp"
 #include "x_files.hpp"
 #include "e_virtual.hpp"
-#include "device_dvd\io_device_dvd.hpp"
+#include "device_host\io_device_host.hpp"
 #include "x_log.hpp"
 
 //==============================================================================
-// defines.
+//  DEFINES
+//==============================================================================
 
-#if defined(TARGET_PC)
 #define ENABLE_PASSTHROUGH  (1)
-#else
-#define ENABLE_PASSTHROUGH  (1)
-#endif
 
 #define IO_FS_PASS_OPEN_SUCCESS "io_fs::Open(pass success)"
 #define IO_FS_PASS_OPEN_FAILURE "io_fs::Open(pass failure)"
 
 //==============================================================================
-// Local variables.
+//  LOCAL VARIABLES
+//==============================================================================
 
 static open_fn*     old_Open            = NULL;     // old filesystem functions
 static close_fn*    old_Close           = NULL;
@@ -38,11 +48,14 @@ static xbool        s_Initialized       = FALSE;
 static s32          s_MountedCount      = 0;    
 
 //==============================================================================
+//  GLOBAL INSTANCE
+//==============================================================================
 
 io_fs g_IOFSMgr;
 
 //==============================================================================
-// Helper functions.
+//  HELPER FUNCTIONS
+//==============================================================================
 
 void io_fs::DumpFileSystem( s32 Index )
 {
@@ -285,7 +298,8 @@ static s32 io_length( X_FILE* pFile )
 }
 
 //==============================================================================
-// Class functions.
+//  IMPLEMENTATION
+//==============================================================================
 
 io_fs::io_fs( void )
 {
@@ -488,7 +502,7 @@ xbool io_fs::MountFileSystem( const char* pPathName, s32 SearchPriority )
     io_clean_path( pCleanFilename, pPathName );
 
     // Open the filesystem header file.
-    pFile = g_IoMgr.OpenDeviceFile( xfs("%s.DFS", pCleanFilename), IO_DEVICE_DVD, io_device::READ );
+    pFile = g_IoMgr.OpenDeviceFile( xfs("%s.DFS", pCleanFilename), IO_DEVICE_HOST, io_device::READ );
     
     // Success?
     if( pFile )
@@ -552,7 +566,7 @@ xbool io_fs::MountFileSystem( const char* pPathName, s32 SearchPriority )
         for( j=0 ; (j<pHeader->nSubFiles) && bSuccess ; j++ )
         {
             // Open the sub-file.
-            pFile = g_IoMgr.OpenDeviceFile( xfs("%s.%03d", pCleanFilename, j), IO_DEVICE_DVD, io_device::READ );
+            pFile = g_IoMgr.OpenDeviceFile( xfs("%s.%03d", pCleanFilename, j), IO_DEVICE_HOST, io_device::READ );
 
             // Only if it was found!
             if( pFile )
@@ -1050,8 +1064,8 @@ io_open_file* io_fs::Open( const char* pPathName, const char* pMode )
     xbool         bWrite          = FALSE;
     xbool         bAppend         = FALSE;
     io_device*    pDevice         = NULL;
-    s32           Device          = IO_DEVICE_DVD;
-    xbool         bIsDVD          = TRUE;
+    s32           Device          = IO_DEVICE_HOST;
+    xbool         bIsHost         = TRUE;
     xbool         bOpenDeviceFile = TRUE;
     s32           OpenFlags       = 0;
 
@@ -1078,13 +1092,13 @@ io_open_file* io_fs::Open( const char* pPathName, const char* pMode )
 
     // TODO: Put in device name indentification/stripping from filenames.
     pDevice = GET_DEVICE_FROM_INDEX( Device );
-    bIsDVD = (Device == IO_DEVICE_DVD); 
+    bIsHost = (Device == IO_DEVICE_HOST);
 
 #ifdef DEBUG_IO
     x_DebugMsg( "FS Open: '%s'\n", pPathName );
 #endif
         
-    if( bIsDVD && s_MountedCount && bRead )
+    if( bIsHost && s_MountedCount && bRead )
     {
         u32             Offset;
         u32             Length;
@@ -1582,4 +1596,3 @@ void io_fs::GetFileNameInFileSystem( s32 iFileSystem, s32 iFile, char* pFileName
 
     dfs_BuildFileName( m_DFS[iFileSystem].pHeader, iFile, pFileName );
 }
-

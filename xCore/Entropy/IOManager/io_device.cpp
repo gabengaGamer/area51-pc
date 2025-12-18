@@ -1,3 +1,15 @@
+//==============================================================================
+//
+//  io_device.cpp
+//
+//  Base IO device utilities and checksum helpers.
+//
+//==============================================================================
+
+//==============================================================================
+//  INCLUDES
+//==============================================================================
+
 #include "io_mgr.hpp"
 #include "io_filesystem.hpp"
 #include "x_memory.hpp"
@@ -6,7 +18,7 @@
 #include "x_log.hpp"
 
 //==============================================================================
-//  Checksum Helper Class
+//  CRC16 TABLE
 //==============================================================================
 
 u16 crc16Table[] = {
@@ -51,7 +63,7 @@ u16 crc16Table[] = {
 void ProcessEndOfRequest( s32 DeviceIndex, s32 Status );
 
 //==============================================================================
-//========================== Hardware Specific Stuff ===========================
+//  IMPLEMENTATION
 //==============================================================================
 
 void ProcessEndOfRequest( io_device* pDevice, s32 Status )
@@ -337,7 +349,7 @@ void io_device::ProcessReadRequest( io_request* pRequest )
     io_device_file* pFile;
     s32             Adjust;
 
-	// BW - On PS2, having a zero m_pBuffer is valid if the destination address 
+    // BW - On PS2, having a zero m_pBuffer is valid if the destination address 
     // is not the local memory space.
     ASSERT( pRequest->m_pBuffer || pRequest->m_Destination);
 
@@ -419,10 +431,10 @@ void io_device::ProcessReadRequest( io_request* pRequest )
     //
     // Do the asynch read.
     //
-	// BW - If we are transferring data to anything other than the main memory address space,
-	// go ahead and transfer it to where it is supposed to be but bear in mind that the device
-	// must be aware of the differences between memory spaces and deal with alignment that may
-	// cause.
+    // BW - If we are transferring data to anything other than the main memory address space,
+    // go ahead and transfer it to where it is supposed to be but bear in mind that the device
+    // must be aware of the differences between memory spaces and deal with alignment that may
+    // cause.
     //
     if( Length + pRequest->m_Offset > pFile->Length )
     {
@@ -430,22 +442,22 @@ void io_device::ProcessReadRequest( io_request* pRequest )
         ASSERT( Length > 0 );
     }
 
-	if (pRequest->m_Destination==0)
-	{
-		Success = PhysicalRead( pFile, 
-                                pFile->pBuffer, 
-                                Length, 
-                                pRequest->m_Offset+pRequest->m_ChunkOffset, 
+        if (pRequest->m_Destination==0)
+        {
+                Success = DeviceRead( pFile,
+                                pFile->pBuffer,
+                                Length,
+                                pRequest->m_Offset+pRequest->m_ChunkOffset,
                                 pRequest->m_Destination );
-	}
-	else
-	{
-		Success = PhysicalRead( pFile, 
-								(void*)((s32)pRequest->m_pBuffer+pRequest->m_ChunkOffset), 
-								Length, 
-								pRequest->m_Offset+pRequest->m_ChunkOffset, 
-								pRequest->m_Destination );
-	}
+        }
+        else
+        {
+                Success = DeviceRead( pFile,
+                                                                (void*)((s32)pRequest->m_pBuffer+pRequest->m_ChunkOffset),
+                                                                Length,
+                                                                pRequest->m_Offset+pRequest->m_ChunkOffset,
+                                                                pRequest->m_Destination );
+        }
 
     // TODO: Handle Errors.
     ASSERT( Success );
@@ -470,7 +482,7 @@ void io_device::ProcessWriteRequest( io_request* pRequest )
     m_CurrentRequest = pRequest;
 
     // Do the write
-    bSuccess = PhysicalWrite( pFile, pRequest->m_pBuffer, pRequest->m_Length, pRequest->m_Offset, 0 ); 
+    bSuccess = DeviceWrite( pFile, pRequest->m_pBuffer, pRequest->m_Length, pRequest->m_Offset, 0 );
 
     // TODO: Handle Errors.
     ASSERT( bSuccess );
@@ -578,7 +590,7 @@ void io_device::Init()
             pFile->pNext = (pFile+1);
         }
 
-		pFile--;
+        pFile--;
         // Terminate list
         pFile->pNext = NULL;
 
@@ -675,7 +687,7 @@ io_device_file* io_device::OpenFile( const char* pFileName, open_flags OpenFlags
         pFile->pDevice = pDevice;
 
         // Attempt to open the file
-        if( PhysicalOpen( (const char*)pFileName, pFile, OpenFlags ) )
+        if( DeviceOpen( (const char*)pFileName, pFile, OpenFlags ) )
         {
             // Set up the buffer (uses devices cache)
             pFile->pBuffer     = pDevice->m_pCache;
@@ -728,7 +740,7 @@ void io_device::CloseFile( io_device_file* pFile )
     pDevice->m_Semaphore.Recv( MQ_BLOCK );
 
     // Physically close the file
-    PhysicalClose( pFile );
+    DeviceClose( pFile );
 
     // The file CANNOT be referenced by any IO Requests.
     ASSERT( pFile->ReferenceCount == 0 );
@@ -826,7 +838,7 @@ io_device::device_data* io_device::GetDeviceData( void )
 
 //==============================================================================
 
-xbool io_device::PhysicalOpen( const char* pFilename, io_device_file* pFile, open_flags OpenFlags )
+xbool io_device::DeviceOpen( const char* pFilename, io_device_file* pFile, open_flags OpenFlags )
 {
     (void)pFilename;
     (void)pFile;
@@ -837,7 +849,7 @@ xbool io_device::PhysicalOpen( const char* pFilename, io_device_file* pFile, ope
 
 //==============================================================================
 
-xbool io_device::PhysicalRead( io_device_file* pFile, void* pBuffer, s32 Length, s32 Offset, s32 AddressSpace )
+xbool io_device::DeviceRead( io_device_file* pFile, void* pBuffer, s32 Length, s32 Offset, s32 AddressSpace )
 {
     (void)pFile;
     (void)pBuffer;
@@ -850,7 +862,7 @@ xbool io_device::PhysicalRead( io_device_file* pFile, void* pBuffer, s32 Length,
 
 //==============================================================================
 
-xbool io_device::PhysicalWrite( io_device_file* pFile, void* pBuffer, s32 Length, s32 Offset, s32 AddressSpace )
+xbool io_device::DeviceWrite( io_device_file* pFile, void* pBuffer, s32 Length, s32 Offset, s32 AddressSpace )
 {
     (void)pFile;
     (void)pBuffer;
@@ -863,10 +875,9 @@ xbool io_device::PhysicalWrite( io_device_file* pFile, void* pBuffer, s32 Length
 
 //==============================================================================
 
-void io_device::PhysicalClose ( io_device_file* pFile )
+void io_device::DeviceClose ( io_device_file* pFile )
 {
     (void)pFile;
     ASSERT( 0 );
 }
-
 

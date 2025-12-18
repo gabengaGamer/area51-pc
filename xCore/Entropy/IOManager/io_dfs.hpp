@@ -1,8 +1,16 @@
+//==============================================================================
+//
+//  io_dfs.hpp
+//
+//  DFS table parsing and lookup helpers.
+//
+//==============================================================================
+
 #ifndef IO_DFS_HPP
 #define IO_DFS_HPP
 
 //==============================================================================
-//  STRUCTS
+//  STRUCTS AND DEFINES
 //==============================================================================
 
 #define DFS_MAGIC   'XDFS'
@@ -18,11 +26,15 @@ struct dfs_file
     u32         Length;             // Length of file
 };
 
+//-------------------------------------------------------------------------------
+
 struct dfs_subfile
 {
     u32         Offset;
     u32         ChecksumIndex;
 };
+
+//-------------------------------------------------------------------------------
 
 struct dfs_header
 {
@@ -41,8 +53,10 @@ struct dfs_header
 
 };
 
-dfs_header* dfs_InitHeaderFromRawPtr    ( void* pRawHeaderData, s32 Length  );
-void        dfs_DumpFileListing         ( const dfs_header* pHeader, const char* pFileName );
-void        dfs_BuildFileName           ( const dfs_header* pHeader, s32 iFile, char* pFileName );
+//==============================================================================
+
+    dfs_header* dfs_InitHeaderFromRawPtr    ( void* pRawHeaderData, s32 Length  );
+    void        dfs_DumpFileListing         ( const dfs_header* pHeader, const char* pFileName );
+    void        dfs_BuildFileName           ( const dfs_header* pHeader, s32 iFile, char* pFileName );
 
 #endif // IO_DFS_HPP

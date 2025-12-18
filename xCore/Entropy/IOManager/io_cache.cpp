@@ -1,6 +1,20 @@
+//==============================================================================
+//
+//  io_cache.cpp
+//
+//  IO cache management for host filesystem requests.
+//
+//==============================================================================
+
+//==============================================================================
+//  INCLUDES
+//==============================================================================
+
 #include "io_mgr.hpp"
 #include "io_cache.hpp"
 
+//==============================================================================
+//  IMPLEMENTATION
 //==============================================================================
 
 io_cache::io_cache( void ) : m_Semaphore(1,1)
@@ -26,7 +40,7 @@ io_cache::~io_cache( void )
 void io_cache::Init( void )
 {
     MEMORY_OWNER( "io_cache::Init()" );
-    m_CacheSize    = g_IoMgr.m_Devices[ IO_DEVICE_DVD ]->m_CacheSize;
+    m_CacheSize    = g_IoMgr.m_Devices[ IO_DEVICE_HOST ]->m_CacheSize;
     m_pCacheMemory = (void*)x_malloc( m_CacheSize + 256 );
     m_pCacheData   = (u8*)(((s32)m_pCacheMemory+255) & -256);
     ASSERTS( m_pCacheMemory, "Failed to allocate Cache buffer" );
