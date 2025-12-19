@@ -95,21 +95,10 @@ static void ReadCallback( s32 Result, void* pFileInfo )
 void io_device_host::CleanFilename( char* pClean, const char* pFilename )
 {
     // Gotta fit.
-    ASSERT( x_strlen(pFilename) + x_strlen(m_Prefix) < IO_DEVICE_FILENAME_LIMIT );
+    ASSERT( x_strlen(pFilename) < IO_DEVICE_FILENAME_LIMIT );
 
-    // If hard disk drive is specified, do NOT prepend the prefix.
-    if( strnicmp( pFilename, "C:", 2 ) != 0 )
-    {
-        // Pre-pend the prefix.
-        x_strcpy( pClean, m_Prefix );
-    }
-    else
-    {
-        *pClean = 0;
-    }
-    
-    // Move to end of string.
-    pClean += x_strlen( pClean );
+    // Start with empty prefix
+    *pClean = 0;
 
     // Now clean it.
     while( *pFilename )
@@ -138,9 +127,6 @@ void io_device_host::Init( void )
 {
     // Base class initialization
     io_device::Init();
-
-    // Set default path so current apps will function without modification
-    x_strcpy( m_Prefix, "C:\\GAMEDATA\\A51\\RELEASE\\PC\\DVD\\" );
 }
 
 //==============================================================================
