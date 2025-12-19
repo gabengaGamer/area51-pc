@@ -214,6 +214,11 @@ xbool dlg_av_settings::Create( s32                        UserID,
     m_pBrightnessText           ->SetLabelFlags( ui_font::h_left|ui_font::v_center );
 #endif
 
+#ifdef X_RETAIL
+    // Turn it off for retail, for now.
+    m_pGraphicsMenu             ->SetFlag(ui_win::WF_DISABLED, TRUE);
+#endif
+
     // set button alignment
     m_pHeadsetTest              ->SetFlag( ui_win::WF_BUTTON_LEFT, TRUE );
     m_pGraphicsMenu             ->SetFlag( ui_win::WF_BUTTON_LEFT, TRUE );	
