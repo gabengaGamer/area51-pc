@@ -96,7 +96,7 @@ void post_mgr::glow_resources::Initialize( void )
         return;
 
     char shaderPath[256];
-    x_sprintf( shaderPath, "%s\\%s\\spost_glow.hlsl", g_RscMgr.GetRootDirectory(), "SHADERS" );
+    x_sprintf( shaderPath, "%s\\%s\\post_glow.hlsl", g_RscMgr.GetRootDirectory(), "SHADERS" );
 
     char* pSource = shader_LoadSourceFromFile( shaderPath ); // GS: TODO: Maybe should this check be added to the shader manager itself?
     if( !pSource )
