@@ -48,7 +48,7 @@ xbool material_mgr::InitSkinShaders( void )
     };
 
     char shaderPath[256];
-    x_sprintf( shaderPath, "%sa51_skin_simple.hlsl", SHADER_PATH );
+    x_sprintf( shaderPath, "%s\\%s\\sa51_skin_simple.hlsl", g_RscMgr.GetRootDirectory(), "SHADERS" );
 
     m_pSkinVertexShader = shader_CompileVertexFromFileWithLayout( shaderPath,
                                                                  &m_pSkinInputLayout,
