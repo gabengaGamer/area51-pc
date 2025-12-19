@@ -1098,8 +1098,8 @@ void DoStartup( void )
     g_RscMgr.SetOnDemandLoading( FALSE );
     x_DebugMsg( "Finished initializing resource manager\n" );
 
-    g_LevelLoader.LoadDFS( "BOOT" );
-    g_LevelLoader.LoadDFS( "PRELOAD" );
+    g_RscMgr.LoadDFS( "BOOT" );
+    g_RscMgr.LoadDFS( "PRELOAD" );
 
     // Initialize the render system
     render::Init();

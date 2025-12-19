@@ -93,9 +93,9 @@ public:
         void        DumpStatsToFile ( const char* pFileName );
 #endif // RSC_MGR_COLLECT_STATS
 
-        void        SetRootDirectory( const char* pRootDir, s32 i=0 );
-        void        LoadDFS         ( const char* pDFSFile );
-        const char* GetRootDirectory( s32 i=0 ) const;
+        void        SetRootDirectory  ( const char* pRootDir, s32 i=0 );
+        void        LoadDFS           ( const char* pDFSFile );
+        const char* GetRootDirectory  ( s32 i=0 ) const;
         void        SetOnDemandLoading( xbool OnDemand );
 
         const char* FixupFilename   ( const char* Filename );
