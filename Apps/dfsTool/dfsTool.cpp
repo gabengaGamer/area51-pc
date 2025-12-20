@@ -65,7 +65,6 @@ void DisplayHelp( void )
 
 void DoBuild( void )
 {
-    dfs_SetRootPath( s_RootPath );
     dfs_Build( s_dfsPathName, s_ScriptFiles, s_DoMake, s_SectorSize, s_SplitSize, s_ChunkSize, s_bEnableCRC );
 }
 
@@ -301,6 +300,9 @@ int main( int argc, char** argv )
         DisplayHelp();
         return 10;
     }
+
+    // Apply root stripping
+    dfs_SetRootPath( s_RootPath );
 
     // Set the chunk size.
     dfs_SetChunkSize( s_ChunkSize );
