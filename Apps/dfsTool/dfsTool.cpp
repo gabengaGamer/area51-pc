@@ -26,6 +26,7 @@ xstring         s_ExtractPath;                      // Path for extract option
 xarray<xstring> s_ScriptFiles;                      // Array of PathNames to script files to process
 xbool           s_DoMake        = FALSE;            // Perform make type date checking
 xbool           s_bEnableCRC    = FALSE;
+xstring         s_RootPath;                         // Base path to strip from inputs
 
 //==============================================================================
 //  Display Help
@@ -52,6 +53,7 @@ void DisplayHelp( void )
               "         -sector Sector      - Set sector size (default = 2048)\n"
               "         -chunk  ChunkSize   - Set chunk size (default = 32k bytes)\n"
               "         -crc    CRC Enable  - Enable CRC's in the dfs file!\n"
+              "         -root   BasePath    - Strip this base path from entries when building dfs\n"
               "\n"
               "<script files> are text file with filenames on each line, they are only\n"
               "valid with the -b and -u options.\n" );
@@ -63,6 +65,7 @@ void DisplayHelp( void )
 
 void DoBuild( void )
 {
+    dfs_SetRootPath( s_RootPath );
     dfs_Build( s_dfsPathName, s_ScriptFiles, s_DoMake, s_SectorSize, s_SplitSize, s_ChunkSize, s_bEnableCRC );
 }
 
@@ -160,6 +163,7 @@ int main( int argc, char** argv )
     CommandLine.AddOptionDef( "SECTOR", command_line::STRING );
     CommandLine.AddOptionDef( "CHUNK" , command_line::STRING );
     CommandLine.AddOptionDef( "CRC"   , command_line::SWITCH );
+    CommandLine.AddOptionDef( "ROOT"  , command_line::STRING );
 
     // Parse command line
     NeedHelp    = CommandLine.Parse( argc, argv );
@@ -265,6 +269,12 @@ int main( int argc, char** argv )
     if( iOption != -1 )
     {
         s_bEnableCRC = TRUE;
+    }
+
+    iOption = CommandLine.FindOption( xstring("ROOT") );
+    if( iOption != -1 )
+    {
+        s_RootPath = CommandLine.GetOptionString( iOption );
     }
 
     // Read M option

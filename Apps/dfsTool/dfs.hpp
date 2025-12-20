@@ -60,6 +60,7 @@ dfs_header* dfs_InitHeaderFromRawPtr    ( void* pRawHeaderData  );
 void        dfs_DumpFileListing         ( const dfs_header* pHeader, const char* pFileName );
 
 void dfs_Build          ( const xstring& PathName, const xarray<xstring>& Scripts, xbool DoMake, u32 SectorSize, u32 SplitSize, u32 ChunkSize, xbool bEnableCRC );
+void dfs_SetRootPath    ( const char* pRootPath );
 void dfs_Update         ( const xstring& PathName, const xarray<xstring>& Scripts );
 void dfs_Optimize       ( const xstring& PathName );
 

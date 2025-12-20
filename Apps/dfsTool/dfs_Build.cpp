@@ -35,6 +35,7 @@ struct src_file
 {
     const char*     pPathName;                  // Full PathName string
     s32             PathNameLength;             // Length of PathName string
+    const char*     pStoredPath;                // Stored Path (after root strip) for DFS entry
     s32             iPath;                      // Index of string in dictionary
     s32             iFile1;                     // Index of string in dictionary
     s32             iFile2;                     // Index of string in dictionary
@@ -47,6 +48,7 @@ xarray<u32>         s_FileOffsetTable;          // Array of file offsets
 xarray<u32>         s_ChecksumIndex;            // Array of checksum indexes
 u32                 s_DFSBufferSize = 32 * 1024;// Default buffer size is 32k
 xarray<xstring>     s_SectorAligned;            // Sector aligned file extensions
+xstring             s_NormalizedRoot;           // Base path to strip from inputs
 
 //==============================================================================
 //  Checksum Helper Class
@@ -179,6 +181,37 @@ void dfs_SetChunkSize( u32 nBytes )
 }
 
 //==============================================================================
+
+void dfs_SetRootPath( const char* pRootPath )
+{
+    s_NormalizedRoot.Clear();
+
+    if( pRootPath && *pRootPath )
+    {
+        s_NormalizedRoot = pRootPath;
+
+        // Normalize: uppercase, backslashes
+        for( s32 i=0; i<s_NormalizedRoot.GetLength(); ++i )
+        {
+            s32 c = s_NormalizedRoot[i];
+            s_NormalizedRoot[i] = (char)TransformChar( c );
+        }
+
+        // Remove trailing slashes
+        while( (s_NormalizedRoot.GetLength() > 0) &&
+               ((s_NormalizedRoot.GetAt(s_NormalizedRoot.GetLength()-1) == '\\') ||
+                (s_NormalizedRoot.GetAt(s_NormalizedRoot.GetLength()-1) == '/')) )
+        {
+            s_NormalizedRoot.Delete( s_NormalizedRoot.GetLength()-1, 1 );
+        }
+
+        // Ensure single trailing slash for prefix checks
+        if( s_NormalizedRoot.GetLength() )
+            s_NormalizedRoot += '\\';
+    }
+}
+
+//==============================================================================
 //  SectorAlign
 //==============================================================================
 
@@ -271,10 +304,26 @@ void dfs_ReadScripts( const xarray<xstring>& Scripts )
                         if( pStringEnd == pStringStart )
                             continue;
 
+                        const char* pStoredPath = pStringStart;
+
+                        // Strip normalized root prefix if provided
+                        if( s_NormalizedRoot.GetLength() > 0 )
+                        {
+                            s32 RootLen = s_NormalizedRoot.GetLength();
+                            const char* pRoot = (const char*)s_NormalizedRoot;
+                            if( x_strncmp( pStringStart, pRoot, RootLen ) == 0 )
+                            {
+                                pStoredPath = pStringStart + RootLen;
+                                while( (*pStoredPath == '\\') || (*pStoredPath == '/') )
+                                    pStoredPath++;
+                            }
+                        }
+
                         // Add a new source file record
                         src_file& SrcFile = s_SrcFiles.Append();
                         SrcFile.pPathName = pStringStart;
-                        SrcFile.PathNameLength = (s32)(pStringEnd-pStringStart)+1;
+                        SrcFile.pStoredPath = pStoredPath;
+                        SrcFile.PathNameLength = (s32)(pStringEnd-pStoredPath)+1;
                     }
                 }
                 else
@@ -653,9 +702,9 @@ void dfs_Build( const xstring&          PathName,
             ASSERT( SrcFile1.PathNameLength > 0 );
 
             // Split path in components and combine Drive and Path
-            x_splitpath( SrcFile0.pPathName, Drive0, Dir0, FName0, Ext0 );
-            x_splitpath( SrcFile1.pPathName, Drive1, Dir1, FName1, Ext1 );
-            x_splitpath( SrcFile2.pPathName, Drive2, Dir2, FName2, Ext2 );
+            x_splitpath( SrcFile0.pStoredPath, Drive0, Dir0, FName0, Ext0 );
+            x_splitpath( SrcFile1.pStoredPath, Drive1, Dir1, FName1, Ext1 );
+            x_splitpath( SrcFile2.pStoredPath, Drive2, Dir2, FName2, Ext2 );
             x_strcat( Drive1, Dir1 );
 
             // Search for common substring in FName0 and FName1 and FName2
@@ -688,8 +737,8 @@ void dfs_Build( const xstring&          PathName,
                 x_strcat( Test, Dictionary.GetString( SrcFile1.iFile2 ) );
                 x_strcat( Test, Dictionary.GetString( SrcFile1.iExt   ) );
 
-                // Compate against original name
-                ASSERT( x_strcmp( Test, SrcFile1.pPathName ) == 0 );
+                // Compare against stored (stripped) name
+                ASSERT( x_strcmp( Test, SrcFile1.pStoredPath ) == 0 );
             }
 #endif
 
