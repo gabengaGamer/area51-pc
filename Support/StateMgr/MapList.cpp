@@ -79,7 +79,8 @@ void map_list::LoadDefault( void )
     (void)PRELOAD_FILE("RUS_DiskMaps.txt");
 
     Clear();
-    VERIFY( Manifest.LoadFile( xfs("%s\\%s_DiskMaps.txt", g_RscMgr.GetRootDirectory(), x_GetLocaleString()) ) );
+    //VERIFY( Manifest.LoadFile( xfs("%s\\%s_DiskMaps.txt", g_RscMgr.GetRootDirectory(), x_GetLocaleString()) ) );
+	VERIFY( Manifest.LoadFile( xfs("%s_DiskMaps.txt", x_GetLocaleString()) ) );
     Parse( (const char*)Manifest, MF_NOT_PRESENT, -1 );
     // Note: We do NOT add the HDD maps at the moment as the likelihood of the hard drive
     // having completed initialization at this point is zero. This should be done
@@ -93,7 +94,8 @@ void map_list::LoadDefault( void )
     text_in     TextIn;
 
 
-    if( TextIn.OpenFile( xfs("%s\\%s", g_RscMgr.GetRootDirectory(), "MapList.txt") ) == FALSE )
+    //if( TextIn.OpenFile( xfs("%s\\%s", g_RscMgr.GetRootDirectory(), "MapList.txt") ) == FALSE )
+    if( TextIn.OpenFile("MapList.txt") == FALSE )		
     {
         ASSERTS( FALSE, "Could not open MapList.txt file\n" );
         return;

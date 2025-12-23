@@ -11,6 +11,7 @@ public:
     void        LoadLevel                   ( xbool         bFullLoad );
     void        LoadLevelFinish             ( void );
     void        UnloadLevel                 ( xbool         bFullUnload );
+    void        LoadDFS                     ( const char*   pDFS );
     void        LoadInfo                    ( const char*   pPath );
     void        InitSlideShow               ( const char*   pSlideShowScriptFile );
     void        KillSlideShow               ( void );

@@ -949,7 +949,8 @@ s32 ui_dlg_vkeyboard::IsValid( const xwstring* pString, xbool bIsName )
         //
         // Obscenity Filter.
         //
-        g_StringTableMgr.LoadTable( "Obscenities", xfs("%s\\%s", g_RscMgr.GetRootDirectory(), "ENG_obscenities.stringbin" ) );
+        //g_StringTableMgr.LoadTable( "Obscenities", xfs("%s\\%s", g_RscMgr.GetRootDirectory(), "ENG_obscenities.stringbin" ) );
+		g_StringTableMgr.LoadTable( "Obscenities", "ENG_obscenities.stringbin" );
         xwstring Words[ 100 ];
 
         s32 NumWords = -1;

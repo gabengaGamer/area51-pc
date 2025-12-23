@@ -6,6 +6,14 @@
 //
 //==============================================================================
 
+//-----------------------------------------------------------------------------
+//
+// GLOBAL TODO: GS:
+// Okay, This system is currently a complete mess. The code needs to be reviewed and further rewritten.
+// By the way, at least this shit is works, so it will remain like this for now.
+//
+//-----------------------------------------------------------------------------
+
 //==============================================================================
 //  INCLUDES
 //==============================================================================
@@ -21,7 +29,9 @@
 //  DEFINES
 //==============================================================================
 
-#define ENABLE_PASSTHROUGH  (1)
+#define DEBUG_IO
+
+#define ENABLE_PASSTHROUGH  (0) // TODO: Delete all PASSTHROUGH code ?
 
 #define IO_FS_PASS_OPEN_SUCCESS "io_fs::Open(pass success)"
 #define IO_FS_PASS_OPEN_FAILURE "io_fs::Open(pass failure)"
@@ -68,31 +78,32 @@ void io_fs::DumpFileSystem( s32 Index )
 
 static void io_clean_path( char* pClean, const char* pFilename )
 {
+    const char* pSource = pFilename;
     char* pOrig = pClean;
 
     // Skip over leading "."
-    if( *pFilename == '.' )
+    if( *pSource == '.' )
     {
-        pFilename++;
+        pSource++;
     }
 
     // Skip any leading \ or /
-    while( *pFilename == '\\' || *pFilename == '/' )
-        pFilename++;
+    while( *pSource == '\\' || *pSource == '/' )
+        pSource++;
 
-    while( *pFilename )
+    while( *pSource )
     {
-        if( (*pFilename == '\\') || (*pFilename == '/') )
+        if( (*pSource == '\\') || (*pSource == '/') )
         {
             *pClean++ = '\\';
-            pFilename++;
+            pSource++;
 
-            while( *pFilename && ((*pFilename == '\\') || (*pFilename == '/')) )
-                pFilename++;
+            while( *pSource && ((*pSource == '\\') || (*pSource == '/')) )
+                pSource++;
         }
         else
         {
-            *pClean++ = *pFilename++;
+            *pClean++ = *pSource++;
         }
     }
 
@@ -444,6 +455,10 @@ xbool io_fs::MountFileSystemRAM( const char* pPathName, void* pHeaderData, void*
     ASSERT( pPathName );
     io_clean_path( pCleanFilename, pPathName );
 
+#ifdef DEBUG_IO
+    x_DebugMsg( "FS: reading DFS header for '%s'\n", pCleanFilename );
+#endif
+
     pHeader = dfs_InitHeaderFromRawPtr(pHeaderData,0);
     if( pHeader )
     {
@@ -501,12 +516,20 @@ xbool io_fs::MountFileSystem( const char* pPathName, s32 SearchPriority )
     ASSERT( pPathName );
     io_clean_path( pCleanFilename, pPathName );
 
+#ifdef DEBUG_IO
+    x_DebugMsg( "FS: reading DFS header '%s.DFS' (priority %d)\n", pCleanFilename, SearchPriority );
+#endif
+
     // Open the filesystem header file.
     pFile = g_IoMgr.OpenDeviceFile( xfs("%s.DFS", pCleanFilename), IO_DEVICE_HOST, io_device::READ );
     
     // Success?
     if( pFile )
     {
+#ifdef DEBUG_IO        
+        x_DebugMsg( "FS: opened DFS header '%s.DFS'\n", pCleanFilename );
+#endif
+
         // Allocate space for the header file.
         pHeader = (dfs_header*)x_malloc( pFile->Length );
 
@@ -539,6 +562,12 @@ xbool io_fs::MountFileSystem( const char* pPathName, s32 SearchPriority )
         g_IoMgr.CloseDeviceFile( pFile );
         pFile = NULL;
     }
+#ifdef DEBUG_IO        
+    else
+    {    
+        x_DebugMsg( "FS: failed to open DFS header '%s.DFS'\n", pCleanFilename );        
+    }
+#endif    
 
     // Header file loaded successfully?
     if( bSuccess )
@@ -571,6 +600,10 @@ xbool io_fs::MountFileSystem( const char* pPathName, s32 SearchPriority )
             // Only if it was found!
             if( pFile )
             {
+                #ifdef DEBUG_IO    
+                x_DebugMsg( "FS: opened DFS chunk '%s.%03d'\n", pCleanFilename, j );
+                #endif
+
                 // Mark it as a DFS file.
                 pFile->pHeader      = pHeader;
                 pFile->SubFileIndex = j;
@@ -580,6 +613,9 @@ xbool io_fs::MountFileSystem( const char* pPathName, s32 SearchPriority )
             }
             else
             {
+                #ifdef DEBUG_IO    
+                x_DebugMsg( "FS: failed to open DFS chunk '%s.%03d'\n", pCleanFilename, j );
+                #endif
                 // Oops!
                 bSuccess = FALSE;
             }
@@ -614,6 +650,27 @@ xbool io_fs::MountFileSystem( const char* pPathName, s32 SearchPriority )
         m_CurrentDFS = -1;
 
         //DumpFileSystem( m_DFS.GetCount() - 1 );
+    }
+    else
+    {
+        // Remember host root from the DFS path (use full cleaned path without extension).
+        char root[X_MAX_PATH];
+        x_strncpy( root, pCleanFilename, X_MAX_PATH );
+        root[X_MAX_PATH-1] = 0;
+        for( char* p=root; *p; ++p )
+            if( *p == '/' ) *p = '\\';
+
+        xbool exists = FALSE;
+        for( s32 i=0; i<m_HostRoots.GetCount(); ++i )
+        {
+            if( x_stricmp( m_HostRoots[i], root ) == 0 )
+            {
+                exists = TRUE;
+                break;
+            }
+        }
+        if( !exists )
+            m_HostRoots.Append() = root;
     }
 
     // Release the mutex!
@@ -1016,9 +1073,16 @@ xbool io_fs::FindFile( const char* pPathName, io_device_file* &DeviceFile, u32 &
     ASSERT( pPathName );
     io_clean_path( pCleanFilename, pPathName );
 
+#ifdef DEBUG_IO    
+    x_DebugMsg( "FS: searching for '%s' (clean '%s') across %d mounted DFS files\n", pPathName, pCleanFilename, m_DFS.GetCount() );
+#endif
+
     // Current DFS valid?
     if( m_CurrentDFS != -1 )
     {
+        #ifdef DEBUG_IO    
+        x_DebugMsg( "FS: searching current DFS '%s' from index %d\n", (const char*)m_DFS[m_CurrentDFS].PathName, m_CurrentDFSIndex );
+        #endif
         // Look in the current disk file system...
         Result = SearchDFS( pCleanFilename, DeviceFile, Offset, Length, m_CurrentDFS, m_CurrentDFSIndex, pRAM );
     }
@@ -1033,6 +1097,9 @@ xbool io_fs::FindFile( const char* pPathName, io_device_file* &DeviceFile, u32 &
             // Don't look in the one we have already searched.
             if( i != m_CurrentDFS )
             {
+                #ifdef DEBUG_IO    
+                x_DebugMsg( "FS: searching DFS '%s' from index 0\n", (const char*)m_DFS[i].PathName );
+                #endif
                 // Is it there?
                 Result = SearchDFS( pCleanFilename, DeviceFile, Offset, Length, i, 0, pRAM );
                 if( Result )
@@ -1040,6 +1107,73 @@ xbool io_fs::FindFile( const char* pPathName, io_device_file* &DeviceFile, u32 &
             }
         }
     }
+
+#ifdef DEBUG_IO    
+    if( Result )
+    {
+        x_DebugMsg( "FS: found '%s' in DFS '%s' (offset %u, length %u)%s\n",
+                    pCleanFilename,
+                    (const char*)m_DFS[m_CurrentDFS].PathName,
+                    Offset,
+                    Length,
+                    pRAM ? " [RAM]" : "" );
+    }
+    else
+    {
+        x_DebugMsg( "FS: '%s' not found in mounted DFS files\n", pCleanFilename );
+    }
+#endif
+
+    // Host fallback using known roots (e.g. failed DFS mounts).
+    if( !Result )
+    {
+        #ifdef DEBUG_IO    
+        x_DebugMsg( "FS: DFS miss '%s', host roots %d\n", pCleanFilename, m_HostRoots.GetCount() );
+        #endif
+
+        // Absolute path? Try it directly.
+        if( (pCleanFilename[0] && pCleanFilename[1]==':') || (pCleanFilename[0]=='\\' && pCleanFilename[1]=='\\') )
+        {
+            io_device_file* pHostAbs = g_IoMgr.OpenDeviceFile( pCleanFilename, IO_DEVICE_HOST, io_device::READ );
+            if( pHostAbs )
+            {
+                DeviceFile = pHostAbs;
+                Offset     = 0;
+                Length     = pHostAbs->Length;
+                pRAM       = NULL;
+                Result     = TRUE;
+            }
+        }
+    }
+
+    if( !Result )
+    {
+        for( s32 r=0 ; (r<m_HostRoots.GetCount()) && !Result ; ++r )
+        {
+            char path[X_MAX_PATH];
+            x_sprintf( path, "%s\\%s", (const char*)m_HostRoots[r], pCleanFilename );
+            #ifdef DEBUG_IO    
+            x_DebugMsg( "FS: host try '%s'\n", path );
+            #endif
+            io_device_file* pHost = g_IoMgr.OpenDeviceFile( path, IO_DEVICE_HOST, io_device::READ );
+            if( pHost )
+            {
+                DeviceFile = pHost;
+                Offset     = 0;
+                Length     = pHost->Length;
+                pRAM       = NULL;
+                Result     = TRUE;
+            }
+        }
+    }
+
+#ifdef DEBUG_IO    
+    // Debug log for host fallback success
+    if( Result && DeviceFile && (DeviceFile->pHeader == NULL) )
+    {
+        x_DebugMsg( "FS: host fallback opened '%s' (len=%u)\n", pCleanFilename, Length );
+    }
+#endif    
 
     // Let it go!
     m_Mutex.Exit();
@@ -1126,7 +1260,7 @@ io_open_file* io_fs::Open( const char* pPathName, const char* pMode )
                 pOpenFile->Position          = 0;
                 pOpenFile->Mode              = OpenFlags; 
                 pOpenFile->pNext             = NULL;
-                pOpenFile->bEnableChecksum   = TRUE;
+                pOpenFile->bEnableChecksum   = (pDeviceFile->pHeader != NULL);
 
 #ifdef IO_RETAIN_FILENAME
                 // Save the filename...

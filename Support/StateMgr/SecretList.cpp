@@ -35,7 +35,8 @@ void secret_list::Init( void )
     (void)PRELOAD_FILE("SecretList.txt");
 
     Clear();
-    VERIFY( Manifest.LoadFile( xfs("%s/SecretList.txt", g_RscMgr.GetRootDirectory()) ) );
+    VERIFY( Manifest.LoadFile("SecretList.txt") );	
+    //VERIFY( Manifest.LoadFile( xfs("%s/SecretList.txt", g_RscMgr.GetRootDirectory()) ) );
     Append( (const char*)Manifest );
 }
 

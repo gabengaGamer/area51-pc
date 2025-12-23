@@ -192,7 +192,7 @@ AsyncDeleteFile:
 
 #ifdef TARGET_PC
 // Root directory for the memory card
-#define PC_MEMCARD_ROOT_DIR "C:\\GameData\\A51\\Release\\PC\\SAVES\\"
+#define PC_MEMCARD_ROOT_DIR "SAVES\\"
 #endif
 
 typedef void card_status_update_fn( s32 CardID );

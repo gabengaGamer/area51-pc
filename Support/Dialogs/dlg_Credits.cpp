@@ -134,7 +134,8 @@ xbool dlg_credits::Create( s32                        UserID,
     Success = ui_dialog::Create( UserID, pManager, pDialogTem, Position, pParent, Flags );
 
     // Load Credits String Table
-    g_StringTableMgr.LoadTable( "credits", xfs("%s\\%s", g_RscMgr.GetRootDirectory(), "ENG_Credits_strings.stringbin" ) );
+    //g_StringTableMgr.LoadTable( "credits", xfs("%s\\%s", g_RscMgr.GetRootDirectory(), "ENG_Credits_strings.stringbin" ) );
+    g_StringTableMgr.LoadTable( "credits", "ENG_Credits_strings.stringbin" );
 
     // init
     m_LineIndex = 0;

@@ -14,7 +14,6 @@
 #include "x_log.hpp"
 #include "x_time.hpp"
 #include "x_context.hpp"
-#include "IOManager\io_filesystem.hpp"
 
 //==============================================================================
 //  DEFINES
@@ -158,52 +157,7 @@ void rsc_mgr::SetRootDirectory( const char* pRootDir, s32 i )
 
 void rsc_mgr::LoadDFS( const char* pRootDir )
 {
-    char* Ext[] = 
-    {
-        ".xbmp",
-        ".rigidgeom",
-        ".skingeom",
-        ".anim",
-        ".decalpkg",
-        ".envmap",
-        ".rigidcolor",
-        ".stringbin",
-        ".fxo",
-        ".audiopkg",
-        ".font"
-    };
-
-    s32 iFileSystem = g_IOFSMgr.GetFileSystemIndex( pRootDir );
-    s32 nFiles      = g_IOFSMgr.GetNFilesInFileSystem( iFileSystem );
-    xtimer DeltaTime;
-
-    DeltaTime.Start();
-
-    for( s32 i=0; i<nFiles; i++ )
-    {
-        char FilePath[256];
-
-        g_IOFSMgr.GetFileNameInFileSystem( iFileSystem, i, FilePath );
-
-        char FExt[32];
-        char FName[128];
-        char RscName[128];
-        x_splitpath(FilePath,NULL,NULL,FName,FExt);
-        x_sprintf(RscName,"%s%s",FName,FExt);
-
-        for( s32 j=0 ; (j<sizeof(Ext)/sizeof(char*)) ; j++ )
-        {
-            // Is it a supported type?
-            if( x_stricmp( FExt, Ext[j] ) == 0 )
-            {
-                // Force resource mgr to load resource
-                rhandle_base Handle;
-                Handle.SetName( RscName );
-                Handle.GetPointer();
-                j = sizeof(Ext)/sizeof(char*);
-            }
-        }
-    }
+    (void)pRootDir;
 }
 
 //==============================================================================

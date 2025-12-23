@@ -137,6 +137,58 @@ void level_loader::LoadInfo( const char* pPath )
 
 //=============================================================================
 
+void level_loader::LoadDFS( const char* pDFS )
+{
+    char* Ext[] = 
+    {
+        ".xbmp",
+        ".rigidgeom",
+        ".skingeom",
+        ".anim",
+        ".decalpkg",
+        ".envmap",
+        ".rigidcolor",
+        ".stringbin",
+        ".fxo",
+        ".audiopkg",
+        ".font"
+    };
+
+    s32 iFileSystem = g_IOFSMgr.GetFileSystemIndex( pDFS );
+    s32 nFiles      = g_IOFSMgr.GetNFilesInFileSystem( iFileSystem );
+    xtimer DeltaTime;
+
+    DeltaTime.Start();
+
+    for( s32 i=0; i<nFiles; i++ )
+    {
+        char FilePath[256];
+
+        g_IOFSMgr.GetFileNameInFileSystem( iFileSystem, i, FilePath );
+
+        char FExt[32];
+        char FName[128];
+        char RscName[128];
+        x_splitpath(FilePath,NULL,NULL,FName,FExt);
+        x_sprintf(RscName,"%s%s",FName,FExt);
+
+        for( s32 j=0 ; (j<sizeof(Ext)/sizeof(char*)) ; j++ )
+        {
+            // Is it a supported type?
+            if( x_stricmp( FExt, Ext[j] ) == 0 )
+            {
+                // Force resource mgr to load resource
+                rhandle_base Handle;
+                Handle.SetName( RscName );
+                Handle.GetPointer();
+                j = sizeof(Ext)/sizeof(char*);
+            }
+        }
+    }
+}
+
+//=============================================================================
+
 void RedirectTextureAllocator( void )
 {
 #ifdef TARGET_XBOX
@@ -345,11 +397,13 @@ void level_loader::LoadLevel( xbool bFullLoad )
         render::BeginSession( g_NetworkMgr.GetLocalPlayerCount() );
 
         // Load the slide show script.
-        InitSlideShow( xfs("%s\\%s", g_RscMgr.GetRootDirectory(), "SlideShowScript.txt") );
+        //InitSlideShow( xfs("%s\\%s", g_RscMgr.GetRootDirectory(), "SlideShowScript.txt") );
+		InitSlideShow( "SlideShowScript.txt" );
 
         // Open the load script.
         text_in TextIn;
-        TextIn.OpenFile( xfs("%s\\%s", g_RscMgr.GetRootDirectory(), "LoadScript.txt") );
+        //TextIn.OpenFile( xfs("%s\\%s", g_RscMgr.GetRootDirectory(), "LoadScript.txt") );
+        TextIn.OpenFile( "LoadScript.txt" );		
         TextIn.ReadHeader();
 
         // Execute the load script.
@@ -378,7 +432,7 @@ void level_loader::LoadLevel( xbool bFullLoad )
             if( x_strcmp( command, "load_dfs" ) == 0 )
             {
                 g_IOFSMgr.MountFileSystem( hddargs, 3 );
-                g_RscMgr.LoadDFS( hddargs );
+                LoadDFS( hddargs );
                 g_IOFSMgr.UnmountFileSystem( hddargs );
             }
             else if( x_strcmp( command, "load_resource" ) == 0 )
@@ -401,25 +455,25 @@ void level_loader::LoadLevel( xbool bFullLoad )
         TextIn.CloseFile();
 
         g_DataVault.Init();
-        LoadTweaks( g_FullPath );
-        LoadPain( g_FullPath );
+        LoadTweaks( "" );  //LoadTweaks( g_FullPath );
+        LoadPain( "" );    //LoadPain( g_FullPath ); 
 
         // Create permanent objects
         g_ObjMgr.CreateObject("god") ;
 
         // Load the NavMap
-        x_makepath( pPath, NULL, g_FullPath, "level_data", ".nmp" );
+        x_makepath( pPath, NULL, "", "level_data", ".nmp" ); //x_makepath( pPath, NULL, g_FullPath, "level_data", ".nmp" );
         g_NavMap.Load( pPath );
 
         // Load Globals Variables...
-        x_makepath( pPath, NULL, g_FullPath, "level_data", ".glb" );
+        x_makepath( pPath, NULL, "", "level_data", ".glb" ); //x_makepath( pPath, NULL, g_FullPath, "level_data", ".glb" );
         {
             MEMORY_OWNER( "GLOBAL VARIABLE DATA" );
             g_VarMgr.LoadGlobals( pPath );
         }
 
         // Setup resource handles to rigid color table
-        x_makepath( pPath, NULL, g_FullPath, "level_data", ".rigidcolor" );
+        x_makepath( pPath, NULL, "", "level_data", ".rigidcolor" ); //x_makepath( pPath, NULL, g_FullPath, "level_data", ".rigidcolor" );
 
         // Force the rigid color instance to be loaded prior to level init
         // since it requires a large allocation
@@ -431,14 +485,14 @@ void level_loader::LoadLevel( xbool bFullLoad )
         }
     #if 0
         // Force the ordered files to load
-        x_makepath( pPath, NULL, g_FullPath, "level_data", ".load" );
+        x_makepath( pPath, NULL, "", "level_data", ".load" ); //x_makepath( pPath, NULL, g_FullPath, "level_data", ".load" );
         ForceLoad(pPath);
 
-        x_makepath( pPath, NULL, g_FullPath, "level_data", ".load_extra" );
+        x_makepath( pPath, NULL, "", "level_data", ".load_extra" ); //x_makepath( pPath, NULL, g_FullPath, "level_data", ".load_extra" );
         ForceLoad(pPath);
     #endif
 
-        x_makepath( pPath, NULL, g_FullPath, "level_data", ".info" );
+        x_makepath( pPath, NULL, "", "level_data", ".info" ); //x_makepath( pPath, NULL, g_FullPath, "level_data", ".info" );
         LoadInfo( pPath );
     }
 
@@ -449,11 +503,11 @@ void level_loader::LoadLevel( xbool bFullLoad )
         g_PlaySurfaceMgr.CreateProxyPlaySurfaceObject();
 
         // Load the NavMap
-        x_makepath( pPath, NULL, g_FullPath, "level_data", ".nmp" );
+        x_makepath( pPath, NULL, "", "level_data", ".nmp" ); //x_makepath( pPath, NULL, g_FullPath, "level_data", ".nmp" );
         g_NavMap.Load( pPath );
 
         // Load Globals Variables...
-        x_makepath( pPath, NULL, g_FullPath, "level_data", ".glb" );
+        x_makepath( pPath, NULL, "", "level_data", ".glb" ); //x_makepath( pPath, NULL, g_FullPath, "level_data", ".glb" );
         {
             MEMORY_OWNER( "GLOBAL VARIABLE DATA" );
             g_VarMgr.LoadGlobals( pPath );
@@ -461,9 +515,9 @@ void level_loader::LoadLevel( xbool bFullLoad )
     }
 
     // Load the level
-    x_makepath( pPath,      NULL, g_FullPath, "level_data", ".bin_level" );
-    x_makepath( pPath2,     NULL, g_FullPath, "level_data", ".lev_dict" );
-    x_makepath( pPath3,     NULL, g_FullPath, "level_data", ".load" );
+    x_makepath( pPath,      NULL, "", "level_data", ".bin_level" ); //x_makepath( pPath,      NULL, g_FullPath, "level_data", ".bin_level" );
+    x_makepath( pPath2,     NULL, "", "level_data", ".lev_dict" );  //x_makepath( pPath2,     NULL, g_FullPath, "level_data", ".lev_dict" );
+    x_makepath( pPath3,     NULL, "", "level_data", ".load" );      //x_makepath( pPath3,     NULL, g_FullPath, "level_data", ".load" );
 
     g_BinLevelMgr.LoadLevel( pPath, pPath2, pPath3 );
 
@@ -473,7 +527,7 @@ void level_loader::LoadLevel( xbool bFullLoad )
             // load the rigid colors...they will be assigned to the
             // geometry in a moment
             rhandle<color_info> hRigidColor;
-            x_makepath( pPath, NULL, g_FullPath, "level_data", ".rigidcolor" );
+            x_makepath( pPath, NULL, "", "level_data", ".rigidcolor" ); //x_makepath( pPath, NULL, g_FullPath, "level_data", ".rigidcolor" );
             hRigidColor.SetName( pPath );
             hRigidColor.GetPointer();
         }
@@ -481,22 +535,22 @@ void level_loader::LoadLevel( xbool bFullLoad )
         {   
             MEMORY_OWNER("TEMPLATE DATA");
             //load templates
-            x_makepath( pPath, NULL, g_FullPath, "level_data", ".templates" );
-            x_makepath( pPath2, NULL, g_FullPath, "level_data", ".tmpl_dct" );
+            x_makepath( pPath, NULL, "", "level_data", ".templates" ); //x_makepath( pPath, NULL, g_FullPath, "level_data", ".templates" );
+            x_makepath( pPath2, NULL, "", "level_data", ".tmpl_dct" ); //x_makepath( pPath2, NULL, g_FullPath, "level_data", ".tmpl_dct" );
             g_TemplateMgr.LoadData(pPath, pPath2);
         }
 
         {
             MEMORY_OWNER("ZONE DATA");
             //load portal/zone list
-            x_makepath( pPath, NULL, g_FullPath, "level_data", ".zone" );
+            x_makepath( pPath, NULL, "", "level_data", ".zone" ); //x_makepath( pPath, NULL, g_FullPath, "level_data", ".zone" );
             g_ZoneMgr.Load(pPath);
         }
 
         {
             MEMORY_OWNER("PLAYSURFACE DATA");
             //load playsurfaces
-            x_makepath( pPath, NULL, g_FullPath, "level_data", ".playsurface" );
+            x_makepath( pPath, NULL, "", "level_data", ".playsurface" ); //x_makepath( pPath, NULL, g_FullPath, "level_data", ".playsurface" );
             g_PlaySurfaceMgr.OpenFile(pPath, TRUE);
             g_PlaySurfaceMgr.LoadAllZones();
             g_PlaySurfaceMgr.CloseFile();
@@ -505,7 +559,7 @@ void level_loader::LoadLevel( xbool bFullLoad )
         {
             MEMORY_OWNER("STATIC DECAL DATA");
             //load static decals
-            x_makepath( pPath, NULL, g_FullPath, "level_data", ".decals" );
+            x_makepath( pPath, NULL, "", "level_data", ".decals" ); //x_makepath( pPath, NULL, g_FullPath, "level_data", ".decals" );
             g_DecalMgr.LoadStaticDecals( pPath );
         }
     }
@@ -537,7 +591,7 @@ void level_loader::LoadLevel( xbool bFullLoad )
 #endif
 
     // reset the rigid color pointers
-    x_makepath( pPath, NULL, g_FullPath, "level_data", ".rigidcolor" );
+    x_makepath( pPath, NULL, "", "level_data", ".rigidcolor" ); //x_makepath( pPath, NULL, g_FullPath, "level_data", ".rigidcolor" );
     g_BinLevelMgr.SetRigidColor( pPath );
 
     // reset any screen fades we might've had on
@@ -823,12 +877,16 @@ void level_loader::MountDefaultFilesystems( void )
     g_IOFSMgr.MountFileSystem( "AUDIO\\AMBIENT", 12 );
     g_IOFSMgr.MountFileSystem( "STRINGS",        13 );
     g_IOFSMgr.MountFileSystem( "COMMON",         14 );
+    g_IOFSMgr.MountFileSystem( "MOVIES",         15 );
+    g_IOFSMgr.MountFileSystem( "SHADERS",        16 );
 }
 
 //=============================================================================
 
 void level_loader::UnmountDefaultFilesystems( void )
 {
+    g_IOFSMgr.UnmountFileSystem( "SHADERS" );
+    g_IOFSMgr.UnmountFileSystem( "MOVIES" );
     g_IOFSMgr.UnmountFileSystem( "COMMON" );
     g_IOFSMgr.UnmountFileSystem( "STRINGS" );
     g_IOFSMgr.UnmountFileSystem( "AUDIO\\AMBIENT" );
@@ -838,7 +896,6 @@ void level_loader::UnmountDefaultFilesystems( void )
     g_IOFSMgr.UnmountFileSystem( "PRELOAD" );
     g_IOFSMgr.UnmountFileSystem( "BOOT" );
 }
-
 
 //=========================================================================
 void level_loader::OnPollReturn( void )

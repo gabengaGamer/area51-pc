@@ -138,7 +138,9 @@ xbool ui_font::Load( const char* pPathName )
     FontName = FontName.Left(FontName.Find(".xbmp")) + ".font";
 
     // load the map
-    X_FILE* pFontFile = x_fopen(g_RscMgr.FixupFilename(FontName), "rb");
+
+    X_FILE* pFontFile = x_fopen( FontName, "rb" );
+    //X_FILE* pFontFile = x_fopen(g_RscMgr.FixupFilename(FontName), "rb");
 
     ASSERTS( pFontFile, xfs("ui_font::Load() failed %s", (const char*)FontName));
 

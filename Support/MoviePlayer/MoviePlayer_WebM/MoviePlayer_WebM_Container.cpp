@@ -66,7 +66,7 @@ xbool file_reader::Open(const char* pFilename)
 
     if (!m_pFile && g_RscMgr.GetRootDirectory())
     {
-        Path = xfs("%s\\%s\\%s", g_RscMgr.GetRootDirectory(), "MOVIES", pFilename);
+        Path = pFilename;
         if (Path.Find('.') == -1)
         {
             Path += ".webm";

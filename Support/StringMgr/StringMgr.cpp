@@ -73,18 +73,22 @@ void* binstring_loader::PreLoad( X_FILE*& Fp, const char* pFileName )
         //
         xstring FileName( pFileName );  
         
-        // Find the last '/'.
-        s32 i = 0;
-        for( i = FileName.GetLength()-1; i >= 0 ; i--)
+        // Find the last '/' or '\'.
+        s32 i = -1;
+        for( s32 j = FileName.GetLength()-1; j >= 0 ; j--)
         {
-            if( FileName[i] == '/' )
+            if( FileName[j] == '/' || FileName[j] == '\\' )
             {
-                i++;
+                i = j + 1;
                 break;
             }
         }
 
-        xstring TableNameExt = FileName.Right( (FileName.GetLength() - i) );
+        if( i == -1 )
+            i = 0;
+        
+        s32 CharsToTake = FileName.GetLength() - i;
+        xstring TableNameExt = FileName.Right( CharsToTake );	
         TableNameExt = TableNameExt.Left( TableNameExt.Find( '.' ) );
 
         s32 StrLen = TableNameExt.GetLength();
@@ -92,7 +96,7 @@ void* binstring_loader::PreLoad( X_FILE*& Fp, const char* pFileName )
         x_memset( pTableName, 0, StrLen+1 );
 
         x_strncpy( pTableName, (const char*)TableNameExt, StrLen );
-        Loaded = g_StringTableMgr.LoadTable( pTableName, pFileName );
+        Loaded = g_StringTableMgr.LoadTable( pTableName, pFileName );	
 
         if( Loaded )
         {
@@ -104,7 +108,6 @@ void* binstring_loader::PreLoad( X_FILE*& Fp, const char* pFileName )
             return NULL;
         }
     }
-
     return NULL;
 }
 

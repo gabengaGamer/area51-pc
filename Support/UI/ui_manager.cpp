@@ -400,13 +400,13 @@ s32 ui_manager::Init( void )
     s32 MemoryStart = x_MemGetFree();
 
     //-- Load String Table.
-    g_StringTableMgr.LoadTable( "ui", xfs("%s\\%s", g_RscMgr.GetRootDirectory(), "ENG_ui_strings.stringbin" ) );
+    g_StringTableMgr.LoadTable( "ui", "ENG_ui_strings.stringbin" );
 
     // load scan strings
-    g_StringTableMgr.LoadTable( "scan", xfs("%s\\%s", g_RscMgr.GetRootDirectory(), "ENG_character_scan_strings.stringbin") );
+    g_StringTableMgr.LoadTable( "scan", "ENG_character_scan_strings.stringbin" );
 
     // load lore_ingame strings
-    g_StringTableMgr.LoadTable( "lore_ingame", xfs("%s\\%s", g_RscMgr.GetRootDirectory(), "ENG_ingame_lore_strings.stringbin") );
+    g_StringTableMgr.LoadTable( "lore_ingame", "ENG_ingame_lore_strings.stringbin");
 
     //-- Load Elements
     (void)m_ButtonTexturesNames;

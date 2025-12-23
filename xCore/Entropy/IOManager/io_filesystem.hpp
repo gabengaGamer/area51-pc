@@ -82,6 +82,7 @@ private:
     s32                 m_CurrentDFSIndex;
     s32                 m_LogFlags;
     xmutex              m_Mutex;
+    xarray<xstring>     m_HostRoots;
 
 private:
 

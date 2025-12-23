@@ -1046,6 +1046,27 @@ void DoStartup( void )
 
     g_IoMgr.Init();
 
+    #ifdef TARGET_PC
+    // Setup the full path to the PC exe
+    char exePath[256];
+    GetModuleFileNameA(NULL, exePath, sizeof(exePath));
+
+    x_strcpy(g_FullPath, exePath);
+    char* pLastSlash = x_strrchr(g_FullPath, '\\');
+    if (pLastSlash)
+        *pLastSlash = '\0';
+    
+    x_DebugMsg( "Executable directory: %s\n", g_FullPath );
+
+    // Mount the default file system.
+    g_IoMgr.SetDevicePathPrefix( xfs("%s\\", g_FullPath ), IO_DEVICE_HOST );
+    #else
+    // Mount the default file system.
+    g_IoMgr.SetDevicePathPrefix( "C:\\",IO_DEVICE_HOST );	
+    // Setup the full path to the platform specific release data
+    x_strcpy( g_FullPath, xfs( "%s\\%s", RELEASE_PATH, PLATFORM_PATH ) );
+    #endif
+
     // Xbox: cache to the utility partition.
     g_LevelLoader.MountDefaultFilesystems();
 
@@ -1088,9 +1109,6 @@ void DoStartup( void )
     g_Stats.Interval = 1;
     #endif
 
-    // Setup the full path to the platform specific release data
-    x_strcpy( g_FullPath, xfs( "%s\\%s", RELEASE_PATH, PLATFORM_PATH ) );
-
     // Initialize the resource system
     x_DebugMsg( "Starting to initialize resource manager\n" );
     g_RscMgr.Init();
@@ -1098,8 +1116,8 @@ void DoStartup( void )
     g_RscMgr.SetOnDemandLoading( FALSE );
     x_DebugMsg( "Finished initializing resource manager\n" );
 
-    g_RscMgr.LoadDFS( "BOOT" );
-    g_RscMgr.LoadDFS( "PRELOAD" );
+    g_LevelLoader.LoadDFS( "BOOT" );
+    g_LevelLoader.LoadDFS( "PRELOAD" );
 
     // Initialize the render system
     render::Init();
@@ -1121,7 +1139,8 @@ void DoStartup( void )
     g_UiMgr->SetRes();
 
     // load strings for inventory items.
-    g_StringTableMgr.LoadTable( "Inventory", xfs("%s\\%s", g_RscMgr.GetRootDirectory(), "ENG_Inventory_strings.stringbin" ) );
+    //g_StringTableMgr.LoadTable( "Inventory", xfs("%s\\%s", g_RscMgr.GetRootDirectory(), "ENG_Inventory_strings.stringbin" ) );
+    g_StringTableMgr.LoadTable( "Inventory", "ENG_Inventory_strings.stringbin" );
 
     // initialize state manager
     // MUST be done AFTER resource manager init
@@ -1179,7 +1198,8 @@ void RunFrontEnd( void )
     MEMORY_OWNER( "RunFrontEnd()" );
 
     // load lore strings
-    g_StringTableMgr.LoadTable( "lore", xfs("%s\\%s", g_RscMgr.GetRootDirectory(), "ENG_lore_strings.stringbin") );
+    //g_StringTableMgr.LoadTable( "lore", xfs("%s\\%s", g_RscMgr.GetRootDirectory(), "ENG_lore_strings.stringbin") );
+    g_StringTableMgr.LoadTable( "lore", "ENG_lore_strings.stringbin" );
 
     // Run the FrontEnd
     s_FrontEndDelta.Reset();

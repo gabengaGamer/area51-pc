@@ -23,9 +23,9 @@
 
 //==============================================================================
 
-#define IO_DEVICE_FILENAME_LIMIT    (128)
-#define IO_DEVICE_MAX_NAME_LENGTH   (32)
-#define IO_DEVICE_MAX_PREFIX_LENGTH (128)
+#define IO_DEVICE_FILENAME_LIMIT    (256)
+#define IO_DEVICE_MAX_NAME_LENGTH   (64)
+#define IO_DEVICE_MAX_PREFIX_LENGTH (256)
 
 //==============================================================================
 

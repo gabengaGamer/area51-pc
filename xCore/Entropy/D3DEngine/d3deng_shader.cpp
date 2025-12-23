@@ -224,6 +224,93 @@ const char* shader_GetDefaultProfile( shader_type Type )
 }
 
 //==============================================================================
+//  INCLUDE HANDLER
+//==============================================================================
+
+class shader_include_handler : public ID3DInclude
+{
+    xstring m_BasePath;
+
+public:
+    explicit shader_include_handler( const char* pSourceName )
+    {
+        if( pSourceName )
+        {
+            char drive[X_MAX_DRIVE], dir[X_MAX_DIR];
+            x_splitpath( pSourceName, drive, dir, NULL, NULL );
+            m_BasePath = xstring(drive) + dir;
+            //x_DebugMsg( "ShaderMgr: Include handler base path: '%s'\n", (const char*)m_BasePath );
+        }
+    }
+
+    STDMETHOD(Open)( THIS_ D3D_INCLUDE_TYPE, LPCSTR pFileName, LPCVOID, LPCVOID* ppData, UINT* pBytes ) override
+    {
+        xstring path = m_BasePath + pFileName;
+        X_FILE* fp = x_fopen( path, "rb" );
+        
+        if( !fp )
+        {
+            x_DebugMsg( "ShaderMgr: Failed to open include '%s', trying raw path\n", (const char*)path );
+            fp = x_fopen( pFileName, "rb" );
+        }
+            
+        if( !fp )
+        {
+            x_DebugMsg( "ShaderMgr: Failed to open include file '%s'\n", pFileName );
+            return E_FAIL;
+        }
+
+        s32 len = x_flength( fp );
+        if( len <= 0 )
+        {
+            x_DebugMsg( "ShaderMgr: Include file '%s' is empty or invalid\n", pFileName );
+            x_fclose( fp );
+            return E_FAIL;
+        }
+
+        const s32 MAX_INCLUDE_SIZE = 5 * 1024 * 1024;
+        if( len > MAX_INCLUDE_SIZE )
+        {
+            x_DebugMsg( "ShaderMgr: Include file '%s' too large (%d bytes)\n", pFileName, len );
+            x_fclose( fp );
+            return E_FAIL;
+        }
+
+        char* pBuffer = (char*)x_malloc( len );
+        if( !pBuffer )
+        {
+            x_DebugMsg( "ShaderMgr: Failed to allocate memory for include '%s'\n", pFileName );
+            x_fclose( fp );
+            return E_OUTOFMEMORY;
+        }
+
+        s32 bytesRead = x_fread( pBuffer, 1, len, fp );
+        x_fclose( fp );
+        
+        if( bytesRead != len )
+        {
+            x_DebugMsg( "ShaderMgr: Failed to read complete include '%s' (%d/%d bytes)\n", 
+                       pFileName, bytesRead, len );
+            x_free( pBuffer );
+            return E_FAIL;
+        }
+
+        *ppData = pBuffer;
+        *pBytes = (UINT)len;
+        x_DebugMsg( "ShaderMgr: Successfully loaded include '%s' (%d bytes)\n", pFileName, len );
+        return S_OK;
+    }
+
+    STDMETHOD(Close)( THIS_ LPCVOID pData ) override
+    {
+        x_free( (void*)pData );
+        return S_OK;
+    }
+};
+
+//==============================================================================
+//  IMPLEMENTATION
+//==============================================================================
 
 static
 xbool shader_CompileShaderInternal( const char* pSource,
@@ -234,20 +321,29 @@ xbool shader_CompileShaderInternal( const char* pSource,
                                     ID3DBlob** ppErrorBlob )
 {
     if( !pSource || !pEntryPoint || !pProfile || !ppBlob )
+    if( !pSource || !pEntryPoint || !pProfile || !ppBlob || !g_pd3dDevice )
     {
         x_DebugMsg( "ShaderMgr: Invalid parameters for compilation\n" );
         ASSERT(FALSE);
         return FALSE;
     }
 
-    if( !g_pd3dDevice )
+    const usize MAX_SOURCE_SIZE = 10 * 1024 * 1024;
+    usize sourceLen = strlen(pSource);
+    if( sourceLen > MAX_SOURCE_SIZE )
+    {
+        x_DebugMsg( "ShaderMgr: Source too large (%d bytes)\n", (s32)sourceLen );
+        ASSERT(FALSE);
         return FALSE;
+    }
+
+    shader_include_handler includeHandler( pSourceName );
 
     HRESULT hr = D3DCompile( pSource,
-                            strlen(pSource),
+                            sourceLen,
                             pSourceName,
                             NULL,
-                            D3D_COMPILE_STANDARD_FILE_INCLUDE,
+                            &includeHandler,
                             pEntryPoint,
                             pProfile,
                             0,
@@ -259,8 +355,8 @@ xbool shader_CompileShaderInternal( const char* pSource,
     {
         if( ppErrorBlob && *ppErrorBlob )
         {
-            const char* pErrorMsg = (const char*)(*ppErrorBlob)->GetBufferPointer();
-            x_DebugMsg( "ShaderMgr: Compilation failed\n%s\n", pErrorMsg );
+            x_DebugMsg( "ShaderMgr: Compilation failed\n%s\n",
+                       (const char*)(*ppErrorBlob)->GetBufferPointer() );
         }
         else
         {

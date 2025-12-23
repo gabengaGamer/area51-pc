@@ -35,7 +35,8 @@ void lore_list::Init( void )
     (void)PRELOAD_FILE("LoreList.txt");
 
     Clear();
-    VERIFY( Manifest.LoadFile( xfs("%s/LoreList.txt", g_RscMgr.GetRootDirectory()) ) );
+    //VERIFY( Manifest.LoadFile( xfs("%s/LoreList.txt", g_RscMgr.GetRootDirectory()) ) );
+    VERIFY( Manifest.LoadFile("LoreList.txt"));	
     Append( (const char*)Manifest );
 
 #if defined (mbillington)

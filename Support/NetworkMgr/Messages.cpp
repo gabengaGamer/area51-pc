@@ -598,8 +598,8 @@ void WriteWString( bitstream& BS, const xwchar* pString )
 
 void InitMessages( void )
 {
-    g_StringTableMgr.LoadTable( "Msg", xfs( "%s\\%s", g_RscMgr.GetRootDirectory(), 
-                                            "ENG_Msg_strings.stringbin" ) );
+    //g_StringTableMgr.LoadTable( "Msg", xfs( "%s\\%s", g_RscMgr.GetRootDirectory(), "ENG_Msg_strings.stringbin" ) );
+    g_StringTableMgr.LoadTable( "Msg", "ENG_Msg_strings.stringbin" );
 
     if( MsgClient.m_SelfName.GetLength() == 0 )
     {

@@ -645,8 +645,8 @@ void dlg_load_game::StartLoadingProcess( void )
     }
 
     // Load the light shaft fog image
-    m_FogLoaded = m_FogBMP.Load( xfs( "%s\\%s", g_RscMgr.GetRootDirectory(),
-                                 LIGHT_SHAFT_FOG_NAME ) );
+    //m_FogLoaded = m_FogBMP.Load( xfs( "%s\\%s", g_RscMgr.GetRootDirectory(), LIGHT_SHAFT_FOG_NAME ) );
+    m_FogLoaded = m_FogBMP.Load( LIGHT_SHAFT_FOG_NAME );	
     if( m_FogLoaded )
     {
         vram_Register( m_FogBMP );

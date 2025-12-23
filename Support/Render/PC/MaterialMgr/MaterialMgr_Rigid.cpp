@@ -50,7 +50,7 @@ xbool material_mgr::InitRigidShaders( void )
     };
 
     char shaderPath[256];
-    x_sprintf( shaderPath, "%s\\%s\\a51_rigid_simple.hlsl", g_RscMgr.GetRootDirectory(), "SHADERS" );
+    x_sprintf( shaderPath, "a51_rigid_simple.hlsl" );
 
     m_pRigidVertexShader = shader_CompileVertexFromFileWithLayout( shaderPath,
                                                                   &m_pRigidInputLayout,
