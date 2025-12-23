@@ -2357,6 +2357,8 @@ voice_id audio_mgr::PlayInternal( const char*    pIdentifier,
 
         // TODO: Put in master fader calculation - apply it to AbsoluteVolume.
 
+        g_AudioVoiceMgr.Lock(); 
+
         // Attempt to aquire a voice.
         pVoice = g_AudioVoiceMgr.AcquireVoice( Params.Priority, AbsoluteVolume );
         if( pVoice )
@@ -2436,22 +2438,28 @@ voice_id audio_mgr::PlayInternal( const char*    pIdentifier,
                 if( AutoStart )
                     g_AudioVoiceMgr.StartVoice( pVoice );
 
+                voice_id ResultID = VoiceToId( pVoice );
+
+                // Unlock before returning success
+                g_AudioVoiceMgr.Unlock(); 
+
                 // Its all good!
-                return( VoiceToId( pVoice ) );
+                return( ResultID );
             }
             else
             {
-                #if defined(ENABLE_AUDIO_DEBUG)
-                if( DEBUG_PLAY_ACQUIRE_VOICE_FAILED && bDebug )
-                    AudioDebug( xfs("'%s' could not acquire voice! (element error)\n", pIdentifier) );
-                #endif //!defined(X_RETAIL)
-
                 // Had problems, no elements in voice, so release the voice...
                 g_AudioVoiceMgr.ReleaseVoice( pVoice, 0.0f );
+                
+                // Unlock before continuing (ReleaseVoice might unlock internally, 
+                // but we locked externally, so we must balance our own lock).
+                g_AudioVoiceMgr.Unlock();
             }
         }
         else
         {
+            // We didn't get a voice, but we still hold the lock. Unlock now.
+            g_AudioVoiceMgr.Unlock();
             #ifdef LOG_PLAY_FAILURE
             LOG_MESSAGE( LOG_PLAY_FAILURE, "'%s' could not acquire voice!", pIdentifier );
             #endif // LOG_PLAY_FAILURE            
