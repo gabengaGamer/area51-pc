@@ -2448,6 +2448,11 @@ voice_id audio_mgr::PlayInternal( const char*    pIdentifier,
             }
             else
             {
+                #if defined(ENABLE_AUDIO_DEBUG)
+                if( DEBUG_PLAY_ACQUIRE_VOICE_FAILED && bDebug )
+                    AudioDebug( xfs("'%s' could not acquire voice! (element error)\n", pIdentifier) );
+                #endif //!defined(X_RETAIL)
+                
                 // Had problems, no elements in voice, so release the voice...
                 g_AudioVoiceMgr.ReleaseVoice( pVoice, 0.0f );
                 
