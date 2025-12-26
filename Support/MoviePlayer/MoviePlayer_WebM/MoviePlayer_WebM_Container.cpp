@@ -64,7 +64,8 @@ xbool file_reader::Open(const char* pFilename)
 
     m_pFile = x_fopen(Path, "rb");
 
-    if (!m_pFile && g_RscMgr.GetRootDirectory())
+    //if (!m_pFile && g_RscMgr.GetRootDirectory())
+    if (!m_pFile)
     {
         Path = pFilename;
         if (Path.Find('.') == -1)

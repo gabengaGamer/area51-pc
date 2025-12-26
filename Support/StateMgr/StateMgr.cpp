@@ -181,7 +181,8 @@ void GetMissionName( s32 MapIndex, xwchar* pBuffer )
     char        Buffer[128];
     s32         i;
 
-    TextIn.OpenFile( xfs("%s\\%s", g_RscMgr.GetRootDirectory(), "config.txt") );
+    //TextIn.OpenFile( xfs("%s\\%s", g_RscMgr.GetRootDirectory(), "config.txt") );
+    TextIn.OpenFile( "config.txt" );
     TextIn.ReadHeader();
     
     s32  nLevel = TextIn.GetHeaderCount();
