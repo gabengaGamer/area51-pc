@@ -1400,7 +1400,8 @@ void dlg_load_game::platform_LoadSlide( s32         Index,
 
     // Other targets we don't really care about giving up the memory.
     // Just load it as though it were any other image.
-    xbool Success = m_Slides[Index].BMP.Load( xfs( "%s\\%s", g_RscMgr.GetRootDirectory(), pTextureName ) );
+    //xbool Success = m_Slides[Index].BMP.Load( xfs( "%s\\%s", g_RscMgr.GetRootDirectory(), pTextureName ) );
+    xbool Success = m_Slides[Index].BMP.Load( pTextureName );
     if( Success )
     {
         vram_Register( m_Slides[Index].BMP );
