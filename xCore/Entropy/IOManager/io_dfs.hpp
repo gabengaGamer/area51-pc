@@ -56,6 +56,7 @@ struct dfs_header
 //==============================================================================
 
     dfs_header* dfs_InitHeaderFromRawPtr    ( void* pRawHeaderData, s32 Length  );
+    dfs_header* dfs_BuildHeaderFromDirectory( const char* pRootPath );
     void        dfs_DumpFileListing         ( const dfs_header* pHeader, const char* pFileName );
     void        dfs_BuildFileName           ( const dfs_header* pHeader, s32 iFile, char* pFileName );
 

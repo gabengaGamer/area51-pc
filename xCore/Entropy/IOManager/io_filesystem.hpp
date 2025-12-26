@@ -68,6 +68,8 @@ struct io_dfs_data
     s32                     SearchPriority;
     s32                     FindIndex;
     dfs_header*             pHeader;
+    xbool                   bEmulated;
+    xstring                 EmuRootPath;
     xarray<io_device_file*> DeviceFiles;
 };
 
@@ -82,7 +84,6 @@ private:
     s32                 m_CurrentDFSIndex;
     s32                 m_LogFlags;
     xmutex              m_Mutex;
-    xarray<xstring>     m_HostRoots;
 
 private:
 
