@@ -808,7 +808,12 @@ void RenderGame( void )
         InitRenderPlatform();
 
         // render all objects
-        g_ObjMgr.Render(TRUE,g_View,pPlayers[i]->GetPlayerViewZone());
+        xbool DoPortalWalk = TRUE;
+    #if (!CONFIG_IS_DEMO)
+        if( g_FreeCam )
+            DoPortalWalk = FALSE;
+    #endif
+        g_ObjMgr.Render( DoPortalWalk, g_View, pPlayers[i]->GetPlayerViewZone() );
 
         EndRenderPlatform();
         pPlayers[i]->SetAsActivePlayer( FALSE );
