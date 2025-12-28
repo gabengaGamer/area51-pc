@@ -1231,7 +1231,11 @@ void ui_listbox::OnCursorMove( ui_win* pWin, s32 x, s32 y )
     }
 
     // Find out which item is the cursor on.
-    dy = y - SPACE_TOP;
+    s32 yOffset = SPACE_TOP;
+    if( m_ShowHeaderBar )
+        yOffset += HEADER_HEIGHT;
+
+    dy = y - yOffset;
     dy = dy/m_LineHeight;
     dy += m_iFirstVisibleItem;
 
