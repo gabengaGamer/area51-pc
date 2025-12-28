@@ -50,6 +50,13 @@ void FreeCam( f32 DeltaTime )
     Pitch += input_GetValue( INPUT_MOUSE_Y_REL ) * Rot;
     Yaw   -= input_GetValue( INPUT_MOUSE_X_REL ) * Rot;
     View.SetRotation( radian3( Pitch, Yaw, R_0 ) );
+	
+    // Move the player.
+    player* pPlayer = SMP_UTIL_GetActivePlayer();
+    if ( pPlayer )
+    {
+        pPlayer->OnMoveFreeCam( View );
+    }	
 }
 
 //=============================================================================
