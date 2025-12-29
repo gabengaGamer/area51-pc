@@ -184,7 +184,7 @@ void ui_combo::Render( s32 ox, s32 oy )
         if( m_iSelection != -1 )
         {
 #if defined(TARGET_PC)
-            r2.Translate( 0, -22 );
+            r2.Translate( 0, (s32)(-16.0f * g_UiMgr->GetScaleY()) );
 #else
             r2.Translate( 0, -10 );
 #endif
