@@ -160,7 +160,7 @@ ui_win* ui_win::GetWindowAtXY( s32 x, s32 y ) const
             ((y >= 0) && (y < m_Position.GetHeight())) )
         {
             // Loop through all children testing
-            for( s32 i=0 ; (i<m_Children.GetCount()) && !pFound ; i++ )
+            for( s32 i=m_Children.GetCount()-1 ; (i>=0) && !pFound ; i-- )
             {
                 irect r = m_Children[i]->GetPosition();
                 pFound = m_Children[i]->GetWindowAtXY( x - r.l, y - r.t );
