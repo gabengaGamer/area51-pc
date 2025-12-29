@@ -48,11 +48,11 @@ ui_manager::control_tem GraphicsSettingsControls[] =
     { IDC_GRAPHICS_GAMMA_TEXT,           "IDS_NULL", "text",    40, 145, 220, 40, 0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
     { IDC_GRAPHICS_FOV_TEXT,             "IDS_NULL", "text",    40, 180, 220, 40, 0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
 
-    { IDC_GRAPHICS_RESOLUTION,           "IDS_NULL", "combo",  280,  49, 140, 40, 0, 0, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_GRAPHICS_DISPLAY_MODE,         "IDS_NULL", "combo",  280,  84, 140, 40, 0, 1, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_GRAPHICS_VSYNC,                "IDS_NULL", "check",  280, 119, 140, 40, 0, 2, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_GRAPHICS_GAMMA,                "IDS_NULL", "slider", 290, 154, 120, 40, 0, 3, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_GRAPHICS_FOV,                  "IDS_NULL", "slider", 290, 189, 120, 40, 0, 4, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
+    { IDC_GRAPHICS_RESOLUTION,           "IDS_NULL", "combo",  280,  55, 140, 40, 0, 0, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
+    { IDC_GRAPHICS_DISPLAY_MODE,         "IDS_NULL", "combo",  280,  90, 140, 40, 0, 1, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
+    { IDC_GRAPHICS_VSYNC,                "IDS_NULL", "check",  280, 125, 140, 40, 0, 2, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
+    { IDC_GRAPHICS_GAMMA,                "IDS_NULL", "slider", 290, 160, 120, 40, 0, 3, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
+    { IDC_GRAPHICS_FOV,                  "IDS_NULL", "slider", 290, 195, 120, 40, 0, 4, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
     { IDC_GRAPHICS_BUTTON_APPLY,         "IDS_PROFILE_OPTIONS_ACCEPT", "button",  40, 285, 220, 40, 0, 5, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
 
     { IDC_GRAPHICS_NAV_TEXT,             "IDS_NULL", "text",     0,   0,   0,  0, 0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },

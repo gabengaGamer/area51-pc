@@ -39,9 +39,9 @@ ui_manager::control_tem AVSettingsControls[] =
     { IDC_AV_BRIGHTNESS_TEXT,       "IDS_OPTIONS_BRIGHTNESS",       "text",      40, 160, 220, 40, 0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
 #endif
 
-    { IDC_AV_VOLUME_SFX,            "IDS_NULL",                     "slider",   310,  50, 120, 40, 0, 0, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_AV_VOLUME_MUSIC,          "IDS_NULL",                     "slider",   310,  85, 120, 40, 0, 1, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_AV_VOLUME_SPEECH,         "IDS_NULL",                     "slider",   310, 120, 120, 40, 0, 2, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
+    { IDC_AV_VOLUME_SFX,            "IDS_NULL",                     "slider",   310,  55, 120, 40, 0, 0, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
+    { IDC_AV_VOLUME_MUSIC,          "IDS_NULL",                     "slider",   310,  90, 120, 40, 0, 1, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
+    { IDC_AV_VOLUME_SPEECH,         "IDS_NULL",                     "slider",   310, 125, 120, 40, 0, 2, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
 #if defined(TARGET_PS2)
     { IDC_AV_TOGGLE_SPEAKER,        "IDS_NULL",                     "combo",    300, 154, 140, 40, 0, 3, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
     { IDC_AV_HEADSET_TEST,          "IDS_OPTIONS_HEADSET_TEST",     "button",    40, 180, 220, 40, 0, 4, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
