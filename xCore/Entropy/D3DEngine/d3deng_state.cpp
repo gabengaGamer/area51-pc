@@ -9,6 +9,7 @@
 //#define STATE_VERBOSE_MODE
 
 // TODO: Learn about CMD state system.
+// TODO: Add support for differend texture slots ( for sampler ).
 
 //==============================================================================
 //  PLATFORM CHECK
