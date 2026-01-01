@@ -61,7 +61,7 @@ enum constant_buffer_type
 struct shader_blob
 {
     void*   pData;
-    s32     Size;
+    u32     Size;
 };
 
 //==============================================================================
@@ -140,10 +140,10 @@ void                shader_FreeBlob                ( shader_blob& Blob );
 //==============================================================================
 
 // Constant buffer management
-ID3D11Buffer*       shader_CreateConstantBuffer    ( s32 Size, 
+ID3D11Buffer*       shader_CreateConstantBuffer    ( u32 Size, 
                                                      constant_buffer_type Type = CB_TYPE_DYNAMIC,
                                                      const void* pInitialData = NULL );										  
-void                shader_UpdateConstantBuffer    ( ID3D11Buffer* pBuffer, const void* pData, s32 Size );
+void                shader_UpdateConstantBuffer    ( ID3D11Buffer* pBuffer, const void* pData, u32 Size );
 void                shader_ReleaseConstantBuffer   ( ID3D11Buffer* pBuffer );
 
 //==============================================================================

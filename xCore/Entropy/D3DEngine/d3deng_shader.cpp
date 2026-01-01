@@ -60,7 +60,7 @@ char* shader_LoadSourceFromFile( const char* pFileName )
         return NULL;
     }
 
-    s32 FileLength = x_flength( pFile );
+    u32 FileLength = x_flength( pFile );
     if( FileLength <= 0 )
     {
         x_DebugMsg( "ShaderMgr: File '%s' is empty or invalid\n", pFileName );
@@ -79,7 +79,7 @@ char* shader_LoadSourceFromFile( const char* pFileName )
         return NULL;
     }
 
-    s32 BytesRead = x_fread( pBuffer, 1, FileLength, pFile );
+    u32 BytesRead = x_fread( pBuffer, 1, FileLength, pFile );
     x_fclose( pFile );
 
     if( BytesRead != FileLength )
@@ -118,7 +118,7 @@ xbool shader_LoadBlobFromFile( const char* pFileName, shader_blob& Blob )
         return FALSE;
     }
 
-    s32 FileLength = x_flength( pFile );
+    u32 FileLength = x_flength( pFile );
     if( FileLength <= 0 )
     {
         x_DebugMsg( "ShaderMgr: Blob file '%s' is empty or invalid\n", pFileName );
@@ -136,7 +136,7 @@ xbool shader_LoadBlobFromFile( const char* pFileName, shader_blob& Blob )
         return FALSE;
     }
 
-    s32 BytesRead = x_fread( pBuffer, 1, FileLength, pFile );
+    u32 BytesRead = x_fread( pBuffer, 1, FileLength, pFile );
     x_fclose( pFile );
 
     if( BytesRead != FileLength )
@@ -149,7 +149,7 @@ xbool shader_LoadBlobFromFile( const char* pFileName, shader_blob& Blob )
     }
 
     Blob.pData = pBuffer;
-    Blob.Size  = (s32)FileLength;
+    Blob.Size  = (u32)FileLength;
 
     x_DebugMsg( "ShaderMgr: Successfully loaded blob from '%s' (%d bytes)\n",
                 pFileName, FileLength );
@@ -182,19 +182,19 @@ xbool shader_SaveBlobToFile( const char* pFileName, const shader_blob& Blob )
         return FALSE;
     }
 
-    s32 BytesWritten = x_fwrite( Blob.pData, 1, (s32)Blob.Size, pFile );
+    u32 BytesWritten = x_fwrite( Blob.pData, 1, (u32)Blob.Size, pFile );
     x_fclose( pFile );
 
-    if( BytesWritten != (s32)Blob.Size )
+    if( BytesWritten != (u32)Blob.Size )
     {
         x_DebugMsg( "ShaderMgr: Failed to write complete blob to file '%s' (%d/%d bytes)\n",
-                    pFileName, BytesWritten, (s32)Blob.Size );
+                    pFileName, BytesWritten, (u32)Blob.Size );
         ASSERT(FALSE);
         return FALSE;
     }
 
     x_DebugMsg( "ShaderMgr: Successfully saved blob to '%s' (%d bytes)\n",
-                pFileName, (s32)Blob.Size );
+                pFileName, (u32)Blob.Size );
     return TRUE;
 }
 
@@ -260,7 +260,7 @@ public:
             return E_FAIL;
         }
 
-        s32 len = x_flength( fp );
+        u32 len = x_flength( fp );
         if( len <= 0 )
         {
             x_DebugMsg( "ShaderMgr: Include file '%s' is empty or invalid\n", pFileName );
@@ -268,7 +268,7 @@ public:
             return E_FAIL;
         }
 
-        const s32 MAX_INCLUDE_SIZE = 1 * 1024 * 1024;
+        const u32 MAX_INCLUDE_SIZE = 1 * 1024 * 1024;
         if( len > MAX_INCLUDE_SIZE )
         {
             x_DebugMsg( "ShaderMgr: Include file '%s' too large (%d bytes)\n", pFileName, len );
@@ -284,7 +284,7 @@ public:
             return E_OUTOFMEMORY;
         }
 
-        s32 bytesRead = x_fread( pBuffer, 1, len, fp );
+        u32 bytesRead = x_fread( pBuffer, 1, len, fp );
         x_fclose( fp );
         
         if( bytesRead != len )
@@ -296,7 +296,7 @@ public:
         }
 
         *ppData = pBuffer;
-        *pBytes = (UINT)len;
+        *pBytes = (u32)len;
         x_DebugMsg( "ShaderMgr: Successfully loaded include '%s' (%d bytes)\n", pFileName, len );
         return S_OK;
     }
@@ -327,11 +327,11 @@ xbool shader_CompileShaderInternal( const char* pSource,
         return FALSE;
     }
 
-    const s32 MAX_SOURCE_SIZE = 2 * 1024 * 1024;
-    s32 sourceLen = strlen(pSource);
+    const u32 MAX_SOURCE_SIZE = 2 * 1024 * 1024;
+    u32 sourceLen = strlen(pSource);
     if( sourceLen > MAX_SOURCE_SIZE )
     {
-        x_DebugMsg( "ShaderMgr: Source too large (%d bytes)\n", (s32)sourceLen );
+        x_DebugMsg( "ShaderMgr: Source too large (%d bytes)\n", (u32)sourceLen );
         ASSERT(FALSE);
         return FALSE;
     }
@@ -540,7 +540,7 @@ xbool shader_CompileToBlob( const char* pSource,
     pD3DBlob->Release();
     if( pErrorBlob ) pErrorBlob->Release();
     
-    x_DebugMsg( "ShaderMgr: Compiled to blob successfully (%d bytes)\n", (s32)Blob.Size );
+    x_DebugMsg( "ShaderMgr: Compiled to blob successfully (%d bytes)\n", (u32)Blob.Size );
     return TRUE;
 }
 
@@ -673,14 +673,14 @@ void shader_FreeBlob( shader_blob& Blob )
 //  CONSTANT BUFFER UTILITIES
 //==============================================================================
 
-ID3D11Buffer* shader_CreateConstantBuffer( s32 Size, constant_buffer_type Type, const void* pInitialData )
+ID3D11Buffer* shader_CreateConstantBuffer( u32 Size, constant_buffer_type Type, const void* pInitialData )
 {
     if( !g_pd3dDevice )
         return NULL;
 
     D3D11_BUFFER_DESC cbd;
     ZeroMemory( &cbd, sizeof(cbd) );
-    cbd.ByteWidth = (UINT)Size;
+    cbd.ByteWidth = (u32)Size;
     cbd.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
 
     switch( Type )
@@ -737,7 +737,7 @@ ID3D11Buffer* shader_CreateConstantBuffer( s32 Size, constant_buffer_type Type, 
 
 //==============================================================================
 
-void shader_UpdateConstantBuffer( ID3D11Buffer* pBuffer, const void* pData, s32 Size )
+void shader_UpdateConstantBuffer( ID3D11Buffer* pBuffer, const void* pData, u32 Size )
 {
     if (!g_pd3dContext || !pBuffer || !pData)
         return;
@@ -748,7 +748,7 @@ void shader_UpdateConstantBuffer( ID3D11Buffer* pBuffer, const void* pData, s32 
     {
         x_memcpy(mappedResource.pData, pData, Size);
         g_pd3dContext->Unmap(pBuffer, 0);
-        //x_DebugMsg("ShaderMgr: Constant buffer updated (%d bytes)\n", (s32)Size);
+        //x_DebugMsg("ShaderMgr: Constant buffer updated (%d bytes)\n", (u32)Size);
     }
     else
     {
