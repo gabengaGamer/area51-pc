@@ -122,7 +122,7 @@ const char* state_GetModeName( state_type Type, s32 Mode )
                 "POINT_WRAP", 
                 "POINT_CLAMP",
                 "ANISOTROPIC_WRAP", 
-                "ANISOTROPIC_CLAMP"				
+                "ANISOTROPIC_CLAMP"                
             };
             ASSERT(Mode >= 0 && Mode < STATE_SAMPLER_COUNT);
             return (Mode < STATE_SAMPLER_COUNT) ? s_SamplerModeNames[Mode] : "UNKNOWN";
@@ -150,7 +150,8 @@ void state_CreateBlendStates( void )
     if( !g_pd3dDevice )
         return;
 
-    D3D11_BLEND_DESC bd;
+    D3D11_BLEND_DESC bd;    
+    HRESULT hr;  
     
     // No blending
     ZeroMemory( &bd, sizeof(bd) );
@@ -164,7 +165,12 @@ void state_CreateBlendStates( void )
     bd.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_ZERO;
     bd.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_ADD;
     bd.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
-    g_pd3dDevice->CreateBlendState( &bd, &s_pBlendStates[STATE_BLEND_NONE] );
+    hr = g_pd3dDevice->CreateBlendState( &bd, &s_pBlendStates[STATE_BLEND_NONE] );
+    if (FAILED(hr))
+    {
+        x_DebugMsg("Failed to create blend state, HRESULT = 0x%08X\n", hr);
+        ASSERT(FALSE);
+    }
     
     // Alpha blending
     ZeroMemory( &bd, sizeof(bd) );
@@ -178,7 +184,12 @@ void state_CreateBlendStates( void )
     bd.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_ZERO;
     bd.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_ADD;
     bd.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
-    g_pd3dDevice->CreateBlendState( &bd, &s_pBlendStates[STATE_BLEND_ALPHA] );
+    hr = g_pd3dDevice->CreateBlendState( &bd, &s_pBlendStates[STATE_BLEND_ALPHA] );
+    if (FAILED(hr))
+    {
+        x_DebugMsg("Failed to create blend state, HRESULT = 0x%08X\n", hr);
+        ASSERT(FALSE);
+    }
     
     // Additive blending
     ZeroMemory( &bd, sizeof(bd) );
@@ -192,7 +203,12 @@ void state_CreateBlendStates( void )
     bd.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_ONE;
     bd.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_ADD;
     bd.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
-    g_pd3dDevice->CreateBlendState( &bd, &s_pBlendStates[STATE_BLEND_ADD] );
+    hr = g_pd3dDevice->CreateBlendState( &bd, &s_pBlendStates[STATE_BLEND_ADD] );
+    if (FAILED(hr))
+    {
+        x_DebugMsg("Failed to create blend state, HRESULT = 0x%08X\n", hr);
+        ASSERT(FALSE);
+    }
     
     // Subtractive blending  
     ZeroMemory( &bd, sizeof(bd) );
@@ -206,8 +222,13 @@ void state_CreateBlendStates( void )
     bd.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_ONE;
     bd.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_REV_SUBTRACT;
     bd.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
-    g_pd3dDevice->CreateBlendState( &bd, &s_pBlendStates[STATE_BLEND_SUB] );
-
+    hr = g_pd3dDevice->CreateBlendState( &bd, &s_pBlendStates[STATE_BLEND_SUB] );
+    if (FAILED(hr))
+    {
+        x_DebugMsg("Failed to create blend state, HRESULT = 0x%08X\n", hr);
+        ASSERT(FALSE);
+    }
+    
     // Premultiplied alpha blending
     ZeroMemory( &bd, sizeof(bd) );
     bd.AlphaToCoverageEnable = FALSE;
@@ -220,8 +241,13 @@ void state_CreateBlendStates( void )
     bd.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_INV_SRC_ALPHA;
     bd.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_ADD;
     bd.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
-    g_pd3dDevice->CreateBlendState( &bd, &s_pBlendStates[STATE_BLEND_PREMULT_ALPHA] );
-
+    hr = g_pd3dDevice->CreateBlendState( &bd, &s_pBlendStates[STATE_BLEND_PREMULT_ALPHA] );
+    if (FAILED(hr))
+    {
+        x_DebugMsg("Failed to create blend state, HRESULT = 0x%08X\n", hr);
+        ASSERT(FALSE);
+    }
+    
     // Premultiplied additive blending
     ZeroMemory( &bd, sizeof(bd) );
     bd.AlphaToCoverageEnable = FALSE;
@@ -234,7 +260,12 @@ void state_CreateBlendStates( void )
     bd.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_ONE;
     bd.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_ADD;
     bd.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
-    g_pd3dDevice->CreateBlendState( &bd, &s_pBlendStates[STATE_BLEND_PREMULT_ADD] );
+    hr = g_pd3dDevice->CreateBlendState( &bd, &s_pBlendStates[STATE_BLEND_PREMULT_ADD] );
+    if (FAILED(hr))
+    {
+        x_DebugMsg("Failed to create blend state, HRESULT = 0x%08X\n", hr);
+        ASSERT(FALSE);
+    }
     
     // Premultiplied subtractive blending  
     ZeroMemory( &bd, sizeof(bd) );
@@ -248,8 +279,13 @@ void state_CreateBlendStates( void )
     bd.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_ONE;
     bd.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_REV_SUBTRACT;
     bd.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
-    g_pd3dDevice->CreateBlendState( &bd, &s_pBlendStates[STATE_BLEND_PREMULT_SUB] );
-
+    hr = g_pd3dDevice->CreateBlendState( &bd, &s_pBlendStates[STATE_BLEND_PREMULT_SUB] );
+    if (FAILED(hr))
+    {
+        x_DebugMsg("Failed to create blend state, HRESULT = 0x%08X\n", hr);
+        ASSERT(FALSE);
+    }
+    
     // Multiplicative blending
     ZeroMemory( &bd, sizeof(bd) );
     bd.AlphaToCoverageEnable = FALSE;
@@ -262,8 +298,13 @@ void state_CreateBlendStates( void )
     bd.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_ZERO;
     bd.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_ADD;
     bd.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
-    g_pd3dDevice->CreateBlendState( &bd, &s_pBlendStates[STATE_BLEND_MULTIPLY] );
-
+    hr = g_pd3dDevice->CreateBlendState( &bd, &s_pBlendStates[STATE_BLEND_MULTIPLY] );
+    if (FAILED(hr))
+    {
+        x_DebugMsg("Failed to create blend state, HRESULT = 0x%08X\n", hr);
+        ASSERT(FALSE);
+    }
+    
     // Intensity blending - uses source alpha to modulate destination color
     ZeroMemory( &bd, sizeof(bd) );
     bd.AlphaToCoverageEnable = FALSE;
@@ -276,8 +317,13 @@ void state_CreateBlendStates( void )
     bd.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_SRC_ALPHA;
     bd.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_ADD;
     bd.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
-    g_pd3dDevice->CreateBlendState( &bd, &s_pBlendStates[STATE_BLEND_INTENSITY] );
-
+    hr = g_pd3dDevice->CreateBlendState( &bd, &s_pBlendStates[STATE_BLEND_INTENSITY] );
+    if (FAILED(hr))
+    {
+        x_DebugMsg("Failed to create blend state, HRESULT = 0x%08X\n", hr);
+        ASSERT(FALSE);
+    }
+    
     // Disable color writes while keeping depth active
     ZeroMemory( &bd, sizeof(bd) );
     bd.AlphaToCoverageEnable = FALSE;
@@ -290,9 +336,12 @@ void state_CreateBlendStates( void )
     bd.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_ZERO;
     bd.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_ADD;
     bd.RenderTarget[0].RenderTargetWriteMask = 0;
-    g_pd3dDevice->CreateBlendState( &bd, &s_pBlendStates[STATE_BLEND_COLOR_WRITE_DISABLE] );
-
-    x_DebugMsg( "RStateMgr: Blend states created successfully\n" );
+    hr = g_pd3dDevice->CreateBlendState( &bd, &s_pBlendStates[STATE_BLEND_COLOR_WRITE_DISABLE] );
+    if (FAILED(hr))
+    {
+        x_DebugMsg("Failed to create blend state, HRESULT = 0x%08X\n", hr);
+        ASSERT(FALSE);
+    }    
 }
 
 //==============================================================================
@@ -304,7 +353,8 @@ void state_CreateRasterizerStates( void )
         return;
 
     D3D11_RASTERIZER_DESC rd;
-
+    HRESULT hr;
+    
     // Solid + cull
     ZeroMemory( &rd, sizeof(rd) );
     rd.FillMode = D3D11_FILL_SOLID;
@@ -317,8 +367,13 @@ void state_CreateRasterizerStates( void )
     rd.ScissorEnable = FALSE;
     rd.MultisampleEnable = FALSE;
     rd.AntialiasedLineEnable = FALSE;
-    g_pd3dDevice->CreateRasterizerState( &rd, &s_pRasterStates[STATE_RASTER_SOLID] );
-
+    hr = g_pd3dDevice->CreateRasterizerState( &rd, &s_pRasterStates[STATE_RASTER_SOLID] );
+    if (FAILED(hr))
+    {
+        x_DebugMsg("Failed to create rasterizer state, HRESULT = 0x%08X\n", hr);
+        ASSERT(FALSE);
+    }
+    
     // Wire + cull
     ZeroMemory( &rd, sizeof(rd) );
     rd.FillMode = D3D11_FILL_WIREFRAME;
@@ -331,7 +386,12 @@ void state_CreateRasterizerStates( void )
     rd.ScissorEnable = FALSE;
     rd.MultisampleEnable = FALSE;
     rd.AntialiasedLineEnable = FALSE;
-    g_pd3dDevice->CreateRasterizerState( &rd, &s_pRasterStates[STATE_RASTER_WIRE] );
+    hr = g_pd3dDevice->CreateRasterizerState( &rd, &s_pRasterStates[STATE_RASTER_WIRE] );
+    if (FAILED(hr))
+    {
+        x_DebugMsg("Failed to create rasterizer state, HRESULT = 0x%08X\n", hr);
+        ASSERT(FALSE);
+    }
     
     // Solid + no cull
     ZeroMemory( &rd, sizeof(rd) );
@@ -345,7 +405,12 @@ void state_CreateRasterizerStates( void )
     rd.ScissorEnable = FALSE;
     rd.MultisampleEnable = FALSE;
     rd.AntialiasedLineEnable = FALSE;
-    g_pd3dDevice->CreateRasterizerState( &rd, &s_pRasterStates[STATE_RASTER_SOLID_NO_CULL] );
+    hr = g_pd3dDevice->CreateRasterizerState( &rd, &s_pRasterStates[STATE_RASTER_SOLID_NO_CULL] );
+    if (FAILED(hr))
+    {
+        x_DebugMsg("Failed to create rasterizer state, HRESULT = 0x%08X\n", hr);
+        ASSERT(FALSE);
+    }
     
     // Wire + no cull
     ZeroMemory( &rd, sizeof(rd) );
@@ -359,9 +424,12 @@ void state_CreateRasterizerStates( void )
     rd.ScissorEnable = FALSE;
     rd.MultisampleEnable = FALSE;
     rd.AntialiasedLineEnable = FALSE;
-    g_pd3dDevice->CreateRasterizerState( &rd, &s_pRasterStates[STATE_RASTER_WIRE_NO_CULL] );
-
-    x_DebugMsg( "RStateMgr: Rasterizer states created successfully\n" );
+    hr = g_pd3dDevice->CreateRasterizerState( &rd, &s_pRasterStates[STATE_RASTER_WIRE_NO_CULL] );
+    if (FAILED(hr))
+    {
+        x_DebugMsg("Failed to create rasterizer state, HRESULT = 0x%08X\n", hr);
+        ASSERT(FALSE);
+    }        
 }
 
 //==============================================================================
@@ -372,7 +440,8 @@ void state_CreateDepthStencilStates( void )
     if( !g_pd3dDevice )
         return;
 
-    D3D11_DEPTH_STENCIL_DESC dd;
+    D3D11_DEPTH_STENCIL_DESC dd;      
+    HRESULT hr;
     
     // Normal depth
     ZeroMemory( &dd, sizeof(dd) );
@@ -380,7 +449,12 @@ void state_CreateDepthStencilStates( void )
     dd.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;
     dd.DepthFunc = D3D11_COMPARISON_LESS_EQUAL;
     dd.StencilEnable = FALSE;
-    g_pd3dDevice->CreateDepthStencilState( &dd, &s_pDepthStates[STATE_DEPTH_NORMAL] );
+    hr = g_pd3dDevice->CreateDepthStencilState( &dd, &s_pDepthStates[STATE_DEPTH_NORMAL] );
+    if (FAILED(hr))
+    {
+        x_DebugMsg("Failed to create depth state, HRESULT = 0x%08X\n", hr);
+        ASSERT(FALSE);
+    }    
     
     // No write  
     ZeroMemory( &dd, sizeof(dd) );
@@ -388,7 +462,12 @@ void state_CreateDepthStencilStates( void )
     dd.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ZERO;
     dd.DepthFunc = D3D11_COMPARISON_LESS_EQUAL;
     dd.StencilEnable = FALSE;
-    g_pd3dDevice->CreateDepthStencilState( &dd, &s_pDepthStates[STATE_DEPTH_NO_WRITE] );
+    hr = g_pd3dDevice->CreateDepthStencilState( &dd, &s_pDepthStates[STATE_DEPTH_NO_WRITE] );
+    if (FAILED(hr))
+    {
+        x_DebugMsg("Failed to create depth state, HRESULT = 0x%08X\n", hr);
+        ASSERT(FALSE);
+    }    
     
     // Disabled + write
     ZeroMemory( &dd, sizeof(dd) );
@@ -396,7 +475,12 @@ void state_CreateDepthStencilStates( void )
     dd.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;
     dd.DepthFunc = D3D11_COMPARISON_LESS_EQUAL;
     dd.StencilEnable = FALSE;
-    g_pd3dDevice->CreateDepthStencilState( &dd, &s_pDepthStates[STATE_DEPTH_DISABLED] );
+    hr = g_pd3dDevice->CreateDepthStencilState( &dd, &s_pDepthStates[STATE_DEPTH_DISABLED] );
+    if (FAILED(hr))
+    {
+        x_DebugMsg("Failed to create depth state, HRESULT = 0x%08X\n", hr);
+        ASSERT(FALSE);
+    }    
     
     // Disabled + no write
     ZeroMemory( &dd, sizeof(dd) );
@@ -404,9 +488,12 @@ void state_CreateDepthStencilStates( void )
     dd.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ZERO;
     dd.DepthFunc = D3D11_COMPARISON_LESS_EQUAL;
     dd.StencilEnable = FALSE;
-    g_pd3dDevice->CreateDepthStencilState( &dd, &s_pDepthStates[STATE_DEPTH_DISABLED_NO_WRITE] );
-
-    x_DebugMsg( "RStateMgr: Depth stencil states created successfully\n" );
+    hr = g_pd3dDevice->CreateDepthStencilState( &dd, &s_pDepthStates[STATE_DEPTH_DISABLED_NO_WRITE] );
+    if (FAILED(hr))
+    {
+        x_DebugMsg("Failed to create depth state, HRESULT = 0x%08X\n", hr);
+        ASSERT(FALSE);
+    }    
 }
 
 //==============================================================================
@@ -420,6 +507,7 @@ void state_CreateSamplerStates( void )
     //TODO: Make this system better.
 
     D3D11_SAMPLER_DESC sd;
+    HRESULT hr;
     
     // Linear + wrap
     ZeroMemory( &sd, sizeof(sd) );
@@ -430,7 +518,12 @@ void state_CreateSamplerStates( void )
     sd.MaxLOD = D3D11_FLOAT32_MAX;
     sd.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
     sd.AddressU = sd.AddressV = sd.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
-    g_pd3dDevice->CreateSamplerState( &sd, &s_pSamplerStates[STATE_SAMPLER_LINEAR_WRAP] );
+    hr = g_pd3dDevice->CreateSamplerState(&sd, &s_pSamplerStates[STATE_SAMPLER_LINEAR_WRAP]);
+    if (FAILED(hr))
+    {
+        x_DebugMsg("Failed to create sampler state, HRESULT = 0x%08X\n", hr);
+        ASSERT(FALSE);
+    }
     
     // Linear + clamp
     ZeroMemory( &sd, sizeof(sd) );
@@ -441,7 +534,12 @@ void state_CreateSamplerStates( void )
     sd.MaxLOD = D3D11_FLOAT32_MAX;
     sd.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
     sd.AddressU = sd.AddressV = sd.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
-    g_pd3dDevice->CreateSamplerState( &sd, &s_pSamplerStates[STATE_SAMPLER_LINEAR_CLAMP] );
+    hr = g_pd3dDevice->CreateSamplerState(&sd, &s_pSamplerStates[STATE_SAMPLER_LINEAR_CLAMP]);
+    if (FAILED(hr))
+    {
+        x_DebugMsg("Failed to create sampler state, HRESULT = 0x%08X\n", hr);
+        ASSERT(FALSE);
+    }
     
     // Point + wrap  
     ZeroMemory( &sd, sizeof(sd) );
@@ -452,7 +550,12 @@ void state_CreateSamplerStates( void )
     sd.MaxLOD = D3D11_FLOAT32_MAX;
     sd.Filter = D3D11_FILTER_MIN_MAG_MIP_POINT;
     sd.AddressU = sd.AddressV = sd.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
-    g_pd3dDevice->CreateSamplerState( &sd, &s_pSamplerStates[STATE_SAMPLER_POINT_WRAP] );
+    hr = g_pd3dDevice->CreateSamplerState(&sd, &s_pSamplerStates[STATE_SAMPLER_POINT_WRAP]);
+    if (FAILED(hr))
+    {
+        x_DebugMsg("Failed to create sampler state, HRESULT = 0x%08X\n", hr);
+        ASSERT(FALSE);
+    }
     
     // Point + clamp
     ZeroMemory( &sd, sizeof(sd) );
@@ -463,8 +566,13 @@ void state_CreateSamplerStates( void )
     sd.MaxLOD = D3D11_FLOAT32_MAX;
     sd.Filter = D3D11_FILTER_MIN_MAG_MIP_POINT;
     sd.AddressU = sd.AddressV = sd.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
-    g_pd3dDevice->CreateSamplerState( &sd, &s_pSamplerStates[STATE_SAMPLER_POINT_CLAMP] );
-
+    hr = g_pd3dDevice->CreateSamplerState(&sd, &s_pSamplerStates[STATE_SAMPLER_POINT_CLAMP]);
+    if (FAILED(hr))
+    {
+        x_DebugMsg("Failed to create sampler state, HRESULT = 0x%08X\n", hr);
+        ASSERT(FALSE);
+    }
+    
     // Anisotropic + wrap
     ZeroMemory( &sd, sizeof(sd) );
     sd.MipLODBias = 0.0f;
@@ -474,7 +582,12 @@ void state_CreateSamplerStates( void )
     sd.MaxLOD = D3D11_FLOAT32_MAX;
     sd.Filter = D3D11_FILTER_ANISOTROPIC;
     sd.AddressU = sd.AddressV = sd.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
-    g_pd3dDevice->CreateSamplerState( &sd, &s_pSamplerStates[STATE_SAMPLER_ANISOTROPIC_WRAP] );
+    hr = g_pd3dDevice->CreateSamplerState(&sd, &s_pSamplerStates[STATE_SAMPLER_ANISOTROPIC_WRAP]);
+    if (FAILED(hr))
+    {
+        x_DebugMsg("Failed to create sampler state, HRESULT = 0x%08X\n", hr);
+        ASSERT(FALSE);
+    }
     
     // Anisotropic + clamp
     ZeroMemory( &sd, sizeof(sd) );
@@ -485,9 +598,12 @@ void state_CreateSamplerStates( void )
     sd.MaxLOD = D3D11_FLOAT32_MAX;
     sd.Filter = D3D11_FILTER_ANISOTROPIC;
     sd.AddressU = sd.AddressV = sd.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
-    g_pd3dDevice->CreateSamplerState( &sd, &s_pSamplerStates[STATE_SAMPLER_ANISOTROPIC_CLAMP] );
-
-    x_DebugMsg( "RStateMgr: Sampler states created successfully\n" );
+    hr = g_pd3dDevice->CreateSamplerState(&sd, &s_pSamplerStates[STATE_SAMPLER_ANISOTROPIC_CLAMP]);
+    if (FAILED(hr))
+    {
+        x_DebugMsg("Failed to create sampler state, HRESULT = 0x%08X\n", hr);
+        ASSERT(FALSE);
+    }
 }
 
 //==============================================================================
@@ -634,7 +750,7 @@ xbool state_SetState( state_type Type, s32 Mode )
             }
 
             // Set the state
-            g_pd3dContext->OMSetBlendState( s_pBlendStates[Mode], NULL, 0xffffffff );
+            g_pd3dContext->OMSetBlendState( s_pBlendStates[Mode], NULL, D3D11_DEFAULT_SAMPLE_MASK );
             s_StateCache.CurrentBlendMode = BlendMode;
 
             #ifdef STATE_VERBOSE_MODE
