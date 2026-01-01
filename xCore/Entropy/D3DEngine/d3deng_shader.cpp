@@ -438,6 +438,7 @@ void* shader_CompileShader( const char* pSource,
             break;
             
         default:
+            x_DebugMsg( "ShaderMgr: Invalid shader type %d\n", Type );
             ASSERT(FALSE);
             pBlob->Release();
             if( pErrorBlob ) pErrorBlob->Release();
@@ -704,6 +705,11 @@ ID3D11Buffer* shader_CreateConstantBuffer( s32 Size, constant_buffer_type Type, 
                 return NULL;
             }
             break;
+            
+        default:
+            x_DebugMsg( "ShaderMgr: Invalid constant buffer type %d\n", Type );
+            ASSERT(FALSE);
+            return NULL;	
     }
 
     D3D11_SUBRESOURCE_DATA* pInitData = NULL;
