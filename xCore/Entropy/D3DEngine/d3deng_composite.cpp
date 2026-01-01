@@ -230,16 +230,19 @@ void composite_Init( void )
     }
 
     // Create shaders
-    s.pVertexShader = shader_CompileVertexWithLayout( s_CompositeVertexShader,
-                                                     &s.pInputLayout,
-                                                     s_CompositeInputLayout,
-                                                     ARRAYSIZE(s_CompositeInputLayout),
-                                                     "main",
-                                                     "vs_5_0" );
+    s.pVertexShader = (ID3D11VertexShader*)shader_CompileShader( s_CompositeVertexShader,
+                                                                 SHADER_TYPE_VERTEX,
+                                                                 "main",
+                                                                 "vs_5_0",
+                                                                 NULL,
+                                                                 &s.pInputLayout,
+                                                                 s_CompositeInputLayout,
+                                                                 ARRAYSIZE(s_CompositeInputLayout) );
 
-    s.pPixelShader = shader_CompilePixel( s_CompositePixelShader,
-                                         "main", 
-                                         "ps_5_0" );
+    s.pPixelShader = (ID3D11PixelShader*)shader_CompileShader( s_CompositePixelShader,
+                                                               SHADER_TYPE_PIXEL,
+                                                               "main", 
+                                                               "ps_5_0" );
 
     if( !s.pVertexShader || !s.pPixelShader )
     {

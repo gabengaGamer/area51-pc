@@ -162,9 +162,8 @@
     typedef float               f32;
     typedef double              f64;
     typedef u8                  byte;
-    typedef s32                 xbool;
-    typedef u16                 xwchar;  //Should by replaced wchar_t  
-	typedef wchar_t             xwchar_t; //Temp solution.
+    typedef s32                 xbool;    //bool
+    typedef char16_t            xwchar;
     typedef uintptr_t           uaddr;
     typedef ptrdiff_t           saddr;
     typedef size_t              usize;

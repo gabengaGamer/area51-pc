@@ -286,23 +286,28 @@ void draw_Init( void )
         ASSERT( m_pConstantBuffer && m_pProjectionBuffer && m_pFlagsBuffer );
 
         // Load shaders using shader system        
-        m_pVertexShader3d = shader_CompileVertexWithLayout( s_VertexShader3D, 
-                                                            &m_pInputLayout3d, 
-                                                            s_InputLayout3D, 
-                                                            ARRAYSIZE(s_InputLayout3D), 
-                                                            "main",
-                                                            "vs_5_0" );
+        m_pVertexShader3d = (ID3D11VertexShader*)shader_CompileShader( s_VertexShader3D,
+                                                                       SHADER_TYPE_VERTEX,
+                                                                       "main",
+                                                                       "vs_5_0",
+                                                                       NULL,
+                                                                       &m_pInputLayout3d,
+                                                                       s_InputLayout3D,
+                                                                       ARRAYSIZE(s_InputLayout3D) );
         
-        m_pVertexShader2d = shader_CompileVertexWithLayout( s_VertexShader2D, 
-                                                            &m_pInputLayout2d, 
-                                                            s_InputLayout2D, 
-                                                            ARRAYSIZE(s_InputLayout2D), 
-                                                            "main",
-                                                            "vs_5_0" );
+        m_pVertexShader2d = (ID3D11VertexShader*)shader_CompileShader( s_VertexShader2D,
+                                                                       SHADER_TYPE_VERTEX,
+                                                                       "main",
+                                                                       "vs_5_0",
+                                                                       NULL,
+                                                                       &m_pInputLayout2d,
+                                                                       s_InputLayout2D,
+                                                                       ARRAYSIZE(s_InputLayout2D) );
             
-        m_pPixelShader = shader_CompilePixel( s_PixelShaderBasic, 
-                                            "main",
-                                            "ps_5_0" );
+        m_pPixelShader = (ID3D11PixelShader*)shader_CompileShader( s_PixelShaderBasic,
+                                                                   SHADER_TYPE_PIXEL,
+                                                                   "main",
+                                                                   "ps_5_0" );
 
         if( !m_pVertexShader3d || !m_pVertexShader2d || !m_pPixelShader )
         {

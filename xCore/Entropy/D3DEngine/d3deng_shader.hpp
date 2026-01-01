@@ -51,7 +51,7 @@ enum shader_type
 struct shader_blob
 {
     void*   pData;
-    usize   Size;
+    s32     Size;
 };
 
 //==============================================================================
@@ -74,67 +74,25 @@ xbool               shader_LoadBlobFromFile         ( const char* pFileName, sha
 xbool               shader_SaveBlobToFile           ( const char* pFileName, const shader_blob& Blob );
 
 //==============================================================================
-//  SHADER COMPILATION FROM SOURCE
+//  SHADER COMPILATION FROM CODE/FILES
 //==============================================================================
 
-// Compile shaders from source
-ID3D11VertexShader* shader_CompileVertex            ( const char* pSource,
-                                                      const char* pEntryPoint,
+void*               shader_CompileShader            ( const char* pSource,
+                                                      shader_type Type,
+                                                      const char* pEntryPoint = NULL,
                                                       const char* pProfile = NULL,
-                                                      const char* pSourceName = NULL );
+                                                      const char* pSourceName = NULL,
+                                                      ID3D11InputLayout** ppLayout = NULL,
+                                                      const D3D11_INPUT_ELEMENT_DESC* pLayoutDesc = NULL,
+                                                      u32 NumElements = 0 );
 
-ID3D11PixelShader*  shader_CompilePixel             ( const char* pSource,
-                                                      const char* pEntryPoint,
+void*               shader_CompileShaderFromFile    ( const char* pFileName,
+                                                      shader_type Type,
+                                                      const char* pEntryPoint = NULL,
                                                       const char* pProfile = NULL,
-                                                      const char* pSourceName = NULL );
-
-ID3D11GeometryShader* shader_CompileGeometry        ( const char* pSource,
-                                                      const char* pEntryPoint,
-                                                      const char* pProfile = NULL,
-                                                      const char* pSourceName = NULL );
-
-ID3D11ComputeShader* shader_CompileCompute          ( const char* pSource,
-                                                      const char* pEntryPoint,
-                                                      const char* pProfile = NULL,
-                                                      const char* pSourceName = NULL );
-
-// Compile vertex shader with input layout
-ID3D11VertexShader* shader_CompileVertexWithLayout  ( const char* pSource,
-                                                      ID3D11InputLayout** ppLayout,
-                                                      const D3D11_INPUT_ELEMENT_DESC* pLayoutDesc,
-                                                      u32 NumElements,
-                                                      const char* pEntryPoint,
-                                                      const char* pProfile = NULL,
-                                                      const char* pSourceName = NULL );
-
-//==============================================================================
-//  SHADER COMPILATION FROM FILES
-//==============================================================================
-
-// Compile shaders from files
-ID3D11VertexShader* shader_CompileVertexFromFile    ( const char* pFileName,
-                                                      const char* pEntryPoint,
-                                                      const char* pProfile = NULL );
-
-ID3D11PixelShader*  shader_CompilePixelFromFile     ( const char* pFileName,
-                                                      const char* pEntryPoint,
-                                                      const char* pProfile = NULL );
-
-ID3D11GeometryShader* shader_CompileGeometryFromFile( const char* pFileName,
-                                                      const char* pEntryPoint,
-                                                      const char* pProfile = NULL );
-
-ID3D11ComputeShader* shader_CompileComputeFromFile  ( const char* pFileName,
-                                                      const char* pEntryPoint,
-                                                      const char* pProfile = NULL );
-
-// Compile vertex shader from file with input layout
-ID3D11VertexShader* shader_CompileVertexFromFileWithLayout( const char* pFileName,
-                                                           ID3D11InputLayout** ppLayout,
-                                                           const D3D11_INPUT_ELEMENT_DESC* pLayoutDesc,
-                                                           u32 NumElements,
-                                                           const char* pEntryPoint,
-                                                           const char* pProfile = NULL );
+                                                      ID3D11InputLayout** ppLayout = NULL,
+                                                      const D3D11_INPUT_ELEMENT_DESC* pLayoutDesc = NULL,
+                                                      u32 NumElements = 0 );
 
 //==============================================================================
 //  SHADER BLOB OPERATIONS
@@ -144,7 +102,7 @@ ID3D11VertexShader* shader_CompileVertexFromFileWithLayout( const char* pFileNam
 xbool               shader_CompileToBlob           ( const char* pSource,
                                                      shader_type Type,
                                                      shader_blob& Blob,
-                                                     const char* pEntryPoint,
+                                                     const char* pEntryPoint = NULL,
                                                      const char* pProfile = NULL,
                                                      const char* pSourceName = NULL );
 
@@ -152,14 +110,12 @@ xbool               shader_CompileToBlob           ( const char* pSource,
 xbool               shader_CompileFileToBlob       ( const char* pFileName,
                                                      shader_type Type,
                                                      shader_blob& Blob,
-                                                     const char* pEntryPoint,
+                                                     const char* pEntryPoint = NULL,
                                                      const char* pProfile = NULL );
 
-// Create shaders from blob
-ID3D11VertexShader*   shader_CreateVertexFromBlob  ( const shader_blob& Blob );
-ID3D11PixelShader*    shader_CreatePixelFromBlob   ( const shader_blob& Blob );
-ID3D11GeometryShader* shader_CreateGeometryFromBlob( const shader_blob& Blob );
-ID3D11ComputeShader*  shader_CreateComputeFromBlob ( const shader_blob& Blob );
+// Create shader from blob
+void*               shader_CreateShaderFromBlob     ( const shader_blob& Blob,
+                                                      shader_type Type );
 
 // Create input layout from vertex shader blob
 ID3D11InputLayout*  shader_CreateInputLayout       ( const shader_blob& VertexBlob,
@@ -174,8 +130,8 @@ void                shader_FreeBlob                ( shader_blob& Blob );
 //==============================================================================
 
 // Constant buffer management
-ID3D11Buffer*       shader_CreateConstantBuffer    ( usize Size );
-void                shader_UpdateConstantBuffer    ( ID3D11Buffer* pBuffer, const void* pData, usize Size );
+ID3D11Buffer*       shader_CreateConstantBuffer    ( s32 Size );
+void                shader_UpdateConstantBuffer    ( ID3D11Buffer* pBuffer, const void* pData, s32 Size );
 void                shader_ReleaseConstantBuffer   ( ID3D11Buffer* pBuffer );
 
 //==============================================================================

@@ -538,14 +538,14 @@ const xwchar* ReadWString( const bitstream& BS )
         }
         else
         {
-            BS.ReadU16( TempBuff[ i ] );
+            u16 temp;
+            BS.ReadU16( temp );
+            TempBuff[ i ] = (xwchar)temp;
         }
-
         if( TempBuff[i] == 0 ) 
         {
             break;
         }
-
         i++;
     }
 

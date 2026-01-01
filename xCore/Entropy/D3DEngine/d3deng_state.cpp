@@ -349,8 +349,8 @@ void state_CreateRasterizerStates( void )
     
     // Wire + no cull
     ZeroMemory( &rd, sizeof(rd) );
-    rd.FillMode = D3D11_FILL_SOLID;
     rd.FillMode = D3D11_FILL_WIREFRAME;
+    rd.CullMode = D3D11_CULL_NONE;
     rd.FrontCounterClockwise = FALSE;
     rd.DepthBias = 0;
     rd.DepthBiasClamp = 0.0f;
