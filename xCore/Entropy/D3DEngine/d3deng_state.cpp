@@ -770,10 +770,10 @@ void state_FlushCache( void )
     x_DebugMsg( "RStateMgr: Flushing state cache\n" );
     
     // Force all states to be invalid so they get reapplied
-    s_StateCache.CurrentBlendMode   = (state_blend_mode)0xFF;
-    s_StateCache.CurrentRasterMode  = (state_raster_mode)0xFF;
-    s_StateCache.CurrentDepthMode   = (state_depth_mode)0xFF;
-    s_StateCache.CurrentSamplerMode = (state_sampler_mode)0xFF;
+    s_StateCache.CurrentBlendMode   = STATE_BLEND_INVALID;
+    s_StateCache.CurrentRasterMode  = STATE_RASTER_INVALID;
+    s_StateCache.CurrentDepthMode   = STATE_DEPTH_INVALID;
+    s_StateCache.CurrentSamplerMode = STATE_SAMPLER_INVALID;
 }
 
 //==============================================================================

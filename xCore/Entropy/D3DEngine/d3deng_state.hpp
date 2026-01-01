@@ -54,7 +54,8 @@ enum state_blend_mode
     STATE_BLEND_MULTIPLY,
     STATE_BLEND_INTENSITY,
     STATE_BLEND_COLOR_WRITE_DISABLE,    
-    STATE_BLEND_COUNT
+    STATE_BLEND_COUNT,
+    STATE_BLEND_INVALID = 0xFF
 };
 
 //------------------------------------------------------------------------------
@@ -65,7 +66,8 @@ enum state_raster_mode
     STATE_RASTER_WIRE,
     STATE_RASTER_SOLID_NO_CULL,
     STATE_RASTER_WIRE_NO_CULL,
-    STATE_RASTER_COUNT
+    STATE_RASTER_COUNT,
+    STATE_RASTER_INVALID = 0xFF
 };
 
 //------------------------------------------------------------------------------
@@ -76,7 +78,8 @@ enum state_depth_mode
     STATE_DEPTH_NO_WRITE,
     STATE_DEPTH_DISABLED,
     STATE_DEPTH_DISABLED_NO_WRITE,
-    STATE_DEPTH_COUNT
+    STATE_DEPTH_COUNT,
+    STATE_DEPTH_INVALID = 0xFF
 };
 
 //------------------------------------------------------------------------------
@@ -89,7 +92,8 @@ enum state_sampler_mode
     STATE_SAMPLER_POINT_CLAMP,
     STATE_SAMPLER_ANISOTROPIC_WRAP,
     STATE_SAMPLER_ANISOTROPIC_CLAMP,	
-    STATE_SAMPLER_COUNT
+    STATE_SAMPLER_COUNT,
+    STATE_SAMPLER_INVALID = 0xFF
 };
 
 //==============================================================================
