@@ -107,7 +107,7 @@ void post_mgr::glow_resources::Initialize( void )
     pBlurVPS = (ID3D11PixelShader*)shader_CompileShader( pSource, SHADER_TYPE_PIXEL, "PS_BlurVertical", "ps_5_0", shaderPath );      
     pCombinePS = (ID3D11PixelShader*)shader_CompileShader( pSource, SHADER_TYPE_PIXEL, "PS_Combine", "ps_5_0", shaderPath );     
     pCompositePS = (ID3D11PixelShader*)shader_CompileShader( pSource, SHADER_TYPE_PIXEL, "PS_Composite", "ps_5_0", shaderPath );
-    pConstantBuffer = shader_CreateConstantBuffer( sizeof(cb_post_glow) );
+    pConstantBuffer = shader_CreateConstantBuffer( sizeof(cb_post_glow), CB_TYPE_DYNAMIC );
 
     x_free( pSource );
 

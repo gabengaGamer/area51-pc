@@ -65,9 +65,9 @@ xbool material_mgr::InitRigidShaders( void )
                                                                             "PSMain", 
                                                                             "ps_5_0" );	
 	
-    m_pRigidFrameBuffer   = shader_CreateConstantBuffer( sizeof(cb_geom_frame) );
-    m_pRigidObjectBuffer  = shader_CreateConstantBuffer( sizeof(cb_geom_object) );
-    m_pRigidLightBuffer   = shader_CreateConstantBuffer( sizeof(cb_lighting) );
+    m_pRigidFrameBuffer   = shader_CreateConstantBuffer( sizeof(cb_geom_frame), CB_TYPE_DYNAMIC );
+    m_pRigidObjectBuffer  = shader_CreateConstantBuffer( sizeof(cb_geom_object), CB_TYPE_DYNAMIC );
+    m_pRigidLightBuffer   = shader_CreateConstantBuffer( sizeof(cb_lighting), CB_TYPE_DYNAMIC );
 
     x_DebugMsg( "MaterialMgr: Rigid shaders initialized successfully\n" );
     return TRUE;

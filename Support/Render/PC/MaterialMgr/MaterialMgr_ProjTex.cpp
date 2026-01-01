@@ -49,7 +49,7 @@ xbool material_mgr::InitProjTextures( void )
     m_LastProjLightCount    = 0;
     m_LastProjShadowCount   = 0;
 
-    m_pProjTextureBuffer = shader_CreateConstantBuffer( sizeof(cb_proj_textures) );
+    m_pProjTextureBuffer = shader_CreateConstantBuffer( sizeof(cb_proj_textures), CB_TYPE_DYNAMIC );
 
     if( g_pd3dDevice )
     {

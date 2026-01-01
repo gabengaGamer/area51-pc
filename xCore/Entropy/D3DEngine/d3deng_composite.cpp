@@ -252,7 +252,7 @@ void composite_Init( void )
     }
 
     // Create constant buffer
-    s.pConstantBuffer = shader_CreateConstantBuffer( sizeof(cb_composite_params) );
+    s.pConstantBuffer = shader_CreateConstantBuffer( sizeof(cb_composite_params), CB_TYPE_DYNAMIC );
     if( !s.pConstantBuffer )
     {
         x_DebugMsg( "CompositeMgr: ERROR - Failed to create constant buffer\n" );

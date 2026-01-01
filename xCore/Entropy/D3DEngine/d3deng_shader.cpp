@@ -672,21 +672,52 @@ void shader_FreeBlob( shader_blob& Blob )
 //  CONSTANT BUFFER UTILITIES
 //==============================================================================
 
-ID3D11Buffer* shader_CreateConstantBuffer( s32 Size )
+ID3D11Buffer* shader_CreateConstantBuffer( s32 Size, constant_buffer_type Type, const void* pInitialData )
 {
     if( !g_pd3dDevice )
-        return FALSE;
+        return NULL;
 
     D3D11_BUFFER_DESC cbd;
     ZeroMemory( &cbd, sizeof(cbd) );
-    cbd.Usage = D3D11_USAGE_DYNAMIC;
     cbd.ByteWidth = (UINT)Size;
     cbd.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-    cbd.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-    cbd.MiscFlags = 0;
+
+    switch( Type )
+    {
+        case CB_TYPE_DYNAMIC:
+            cbd.Usage = D3D11_USAGE_DYNAMIC;
+            cbd.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+            break;
+            
+        case CB_TYPE_DEFAULT:
+            cbd.Usage = D3D11_USAGE_DEFAULT;
+            cbd.CPUAccessFlags = 0;
+            break;
+            
+        case CB_TYPE_IMMUTABLE:
+            cbd.Usage = D3D11_USAGE_IMMUTABLE;
+            cbd.CPUAccessFlags = 0;
+            if( !pInitialData )
+            {
+                x_DebugMsg( "ShaderMgr: CB_TYPE_IMMUTABLE requires initial data\n" );
+                ASSERT(FALSE);
+                return NULL;
+            }
+            break;
+    }
+
+    D3D11_SUBRESOURCE_DATA* pInitData = NULL;
+    D3D11_SUBRESOURCE_DATA initData;
+    if( pInitialData )
+    {
+        initData.pSysMem = pInitialData;
+        initData.SysMemPitch = 0;
+        initData.SysMemSlicePitch = 0;
+        pInitData = &initData;
+    }
 
     ID3D11Buffer* pBuffer = NULL;
-    HRESULT hr = g_pd3dDevice->CreateBuffer( &cbd, NULL, &pBuffer );
+    HRESULT hr = g_pd3dDevice->CreateBuffer( &cbd, pInitData, &pBuffer );
     if( FAILED(hr) )
     {
         x_DebugMsg( "ShaderMgr: Failed to create constant buffer, HRESULT 0x%08X\n", hr );
@@ -694,7 +725,7 @@ ID3D11Buffer* shader_CreateConstantBuffer( s32 Size )
         return NULL;
     }
 
-    x_DebugMsg( "ShaderMgr: Constant buffer created (%d bytes)\n", (s32)Size );
+    x_DebugMsg( "ShaderMgr: Constant buffer created (%d bytes, type %d)\n", Size, Type );
     return pBuffer;
 }
 

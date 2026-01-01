@@ -63,9 +63,9 @@ xbool material_mgr::InitSkinShaders( void )
                                                                            "PSMain", 
                                                                            "ps_5_0" );	
 	
-    m_pSkinFrameBuffer  = shader_CreateConstantBuffer( sizeof(cb_geom_frame) );
-    m_pSkinBoneBuffer   = shader_CreateConstantBuffer( sizeof(cb_skin_bone) * MAX_SKIN_BONES );
-    m_pSkinLightBuffer  = shader_CreateConstantBuffer( sizeof(cb_lighting) );
+    m_pSkinFrameBuffer  = shader_CreateConstantBuffer( sizeof(cb_geom_frame), CB_TYPE_DYNAMIC );
+    m_pSkinBoneBuffer   = shader_CreateConstantBuffer( sizeof(cb_skin_bone) * MAX_SKIN_BONES, CB_TYPE_DYNAMIC );
+    m_pSkinLightBuffer  = shader_CreateConstantBuffer( sizeof(cb_lighting), CB_TYPE_DYNAMIC );
 
     x_DebugMsg( "MaterialMgr: Skin shaders initialized successfully\n" );
     return TRUE;

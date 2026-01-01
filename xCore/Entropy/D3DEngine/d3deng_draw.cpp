@@ -279,9 +279,9 @@ void draw_Init( void )
         }
 
         // Create constant buffers using shader system
-        m_pConstantBuffer = shader_CreateConstantBuffer( sizeof(cb_matrices) );
-        m_pProjectionBuffer = shader_CreateConstantBuffer( sizeof(cb_projection_2d) );
-        m_pFlagsBuffer = shader_CreateConstantBuffer( sizeof(cb_render_flags) );
+        m_pConstantBuffer = shader_CreateConstantBuffer( sizeof(cb_matrices), CB_TYPE_DYNAMIC );
+        m_pProjectionBuffer = shader_CreateConstantBuffer( sizeof(cb_projection_2d), CB_TYPE_DYNAMIC );
+        m_pFlagsBuffer = shader_CreateConstantBuffer( sizeof(cb_render_flags), CB_TYPE_DYNAMIC );
 
         ASSERT( m_pConstantBuffer && m_pProjectionBuffer && m_pFlagsBuffer );
 
