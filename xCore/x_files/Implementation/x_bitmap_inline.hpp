@@ -197,6 +197,13 @@ inline s32 xbitmap::GetNMips( void ) const
 
 //==============================================================================
 
+inline void xbitmap::SetFormat( xbitmap::format Format )
+{
+    m_Format = (s8)Format;
+}
+
+//==============================================================================
+
 inline xbitmap::format xbitmap::GetFormat( void ) const
 {
     return( (format)m_Format );

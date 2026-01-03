@@ -261,6 +261,7 @@ const   byte*           GetClutData     ( void ) const;
         u32             GetFlags        ( void ) const;
         s32             GetNMips        ( void ) const;
         format          GetFormat       ( void ) const;
+        void            SetFormat       ( format Format );		
 const   format_info&    GetFormatInfo   ( void ) const;
 
 static
