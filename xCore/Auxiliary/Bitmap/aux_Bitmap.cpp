@@ -1545,16 +1545,23 @@ f32 auxbmp_GetDotProduct( xbitmap& BMP,xbitmap& CMP )
 #define XGCOMPRESS_NEEDALPHA1       4
 #define XGCOMPRESS_PROTECTNONZERO   8
 
+#ifdef TARGET_XBOX
 extern "C"
 {
     s32 __stdcall XGCompressRect( const void*,s32,s32,s32,s32,const void*,s32,s32,f32,u32 );
     u32 __stdcall XGBytesPerPixelFromFormat( u32 );
 }
+#endif
 
 //=============================================================================
 
 xbitmap auxbmp_CompressRect( xbitmap& BMP,s32 Format )
 {
+#ifndef TARGET_XBOX
+    (void)Format;
+    x_DebugMsg( "auxbmp_CompressRect: XG compression unavailable; returning source bitmap.\n" );
+    return BMP;
+#else
     s32 H = BMP.GetHeight();
     s32 W = BMP.GetWidth ();
     s32 N = BMP.GetNMips ();
@@ -1580,11 +1587,7 @@ xbitmap auxbmp_CompressRect( xbitmap& BMP,s32 Format )
 
     s32 SrcFormat; switch( BMP.GetFormat() )
     {
-        case xbitmap::FMT_32_ARGB_8888: SrcFormat = D3DFMT_LIN_A8R8G8B8; break;
-        case xbitmap::FMT_32_URGB_8888: SrcFormat = D3DFMT_LIN_X8R8G8B8; break;
-
-        default:
-            return BMP;
+@@ -1588,50 +1595,51 @@ xbitmap auxbmp_CompressRect( xbitmap& BMP,s32 Format )
     }
 
     // compress all mip levels  ...............................................
@@ -1610,6 +1613,7 @@ xbitmap auxbmp_CompressRect( xbitmap& BMP,s32 Format )
         P >>= 1;
     }
     return Result;
+#endif
 }
 
 //=============================================================================
