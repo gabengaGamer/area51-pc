@@ -36,6 +36,8 @@ SettingsDialog::SettingsDialog(QWidget* pParent)
     m_pThemeType->addItem("Fusion Dark");
     m_pThemeType->addItem("Windows White");
     m_pThemeType->addItem("Windows Dark");
+    //m_pThemeType->addItem("Windows 10 White");
+    m_pThemeType->addItem("Windows 10 Dark");	
 	m_pThemeType->addItem("VGUI");
 
     QFormLayout* pFormLayout = new QFormLayout();

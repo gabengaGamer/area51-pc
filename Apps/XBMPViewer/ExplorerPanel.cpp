@@ -48,6 +48,7 @@ ExplorerPanel::ExplorerPanel(QWidget* pParent)
     pHeader->setSectionsClickable(TRUE); 
     pHeader->setSortIndicatorShown(TRUE);
     pHeader->setStretchLastSection(TRUE);
+    pHeader->setHighlightSections(FALSE);	
     pHeader->setSectionResizeMode(QHeaderView::ResizeToContents);
 
     m_pPathEdit = new QLineEdit(this);

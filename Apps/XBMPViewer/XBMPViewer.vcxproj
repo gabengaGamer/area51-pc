@@ -118,6 +118,7 @@
     <ClCompile Include="ConvertUtils.cpp" />
     <ClCompile Include="ExplorerPanel.cpp" />
     <ClCompile Include="FileListModel.cpp" />
+    <ClCompile Include="FileListView.cpp" />
     <ClCompile Include="FullscreenPreviewDialog.cpp" />
     <ClCompile Include="PreviewPanel.cpp" />
     <ClCompile Include="SettingsDialog.cpp" />
@@ -137,6 +138,7 @@
     <ClInclude Include="ConfigManager.h" />
     <QtMoc Include="FullscreenPreviewDialog.h" />
     <ClInclude Include="ConvertUtils.h" />
+    <ClInclude Include="FileListView.h" />
     <ClInclude Include="ThemeManager.h" />
     <ClInclude Include="XBMPViewerConfig.h" />
   </ItemGroup>

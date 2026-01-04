@@ -22,7 +22,7 @@ class QAction;
 class QLabel;
 class QItemSelection;
 class QSlider;
-class QTableView;
+class FileListView;
 class ExplorerPanel;
 class FileListModel;
 class PreviewPanel;
@@ -73,7 +73,7 @@ private:
 private:
     FileListModel*         m_pFileModel;
     QSortFilterProxyModel* m_pSortModel;
-    QTableView*            m_pFileList;
+    FileListView*          m_pFileList;
     PreviewPanel*          m_pPreviewPanel;
     QSlider*               m_pMipSlider;
     QLabel*                m_pStatusColor;

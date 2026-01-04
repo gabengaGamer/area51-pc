@@ -20,6 +20,7 @@
 #include "ExplorerPanel.h"
 #include "FileListModel.h"
 #include "FullscreenPreviewDialog.h"
+#include "FileListView.h"
 #include "PreviewPanel.h"
 #include "SettingsDialog.h"
 #include "ThemeManager.h"
@@ -40,7 +41,6 @@
 #include <QSlider>
 #include <QSortFilterProxyModel>
 #include <QStatusBar>
-#include <QTableView>
 #include <QUrl>
 #include <QDesktopServices>
 #include <QStyle>
@@ -128,21 +128,8 @@ XBMPViewer::XBMPViewer(QWidget* pParent)
     m_pSortModel->setSourceModel(m_pFileModel);
     m_pSortModel->setSortRole(Qt::UserRole);
 
-    m_pFileList = new QTableView(this);
+    m_pFileList = new FileListView(this);
     m_pFileList->setModel(m_pSortModel);
-    m_pFileList->setSelectionBehavior(QAbstractItemView::SelectRows);
-    m_pFileList->setSelectionMode(QAbstractItemView::ExtendedSelection);
-    m_pFileList->setSortingEnabled(TRUE);
-    m_pFileList->setShowGrid(FALSE);
-    m_pFileList->setWordWrap(FALSE);
-    m_pFileList->setAlternatingRowColors(TRUE);
-    m_pFileList->setEditTriggers(QAbstractItemView::NoEditTriggers);
-    m_pFileList->horizontalHeader()->setStretchLastSection(TRUE);
-    m_pFileList->horizontalHeader()->setSectionsMovable(TRUE);
-    m_pFileList->horizontalHeader()->setSectionsClickable(TRUE);
-    m_pFileList->horizontalHeader()->setSortIndicatorShown(TRUE);
-    m_pFileList->verticalHeader()->setDefaultSectionSize(18);
-    m_pFileList->setContextMenuPolicy(Qt::CustomContextMenu);
 
     setCentralWidget(m_pFileList);
 
