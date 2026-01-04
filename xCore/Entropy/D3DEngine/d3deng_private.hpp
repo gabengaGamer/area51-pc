@@ -29,6 +29,7 @@
 
 #include "..\3rdParty\DirectX9\D3D11.h"
 #include "..\3rdParty\DirectX9\D3Dcompiler.h"
+#include "..\3rdParty\DirectX9\dxgi1_3.h"
 #include "..\3rdParty\DirectX9\DXGI.h"
 #include "..\3rdParty\DirectXTex\DirectXTex\DirectXTex.h"
 //#include "..\3rdParty\DirectX9\d3dx11tex.h"

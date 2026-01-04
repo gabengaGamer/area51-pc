@@ -68,6 +68,8 @@ ID3D11Device*           g_pd3dDevice = NULL;
 ID3D11DeviceContext*    g_pd3dContext = NULL;
 IDXGISwapChain*         g_pSwapChain = NULL;
 DXGI_SWAP_CHAIN_DESC    g_SwapChainDesc; 
+static HANDLE           s_hSwapChainWaitable = NULL;
+static xbool            s_bSwapChainWaitable = FALSE;
 
 //=========================================================================
 // LOCAL VARIABLES
@@ -129,6 +131,8 @@ static struct eng_locals
     xtimer          CPUTIMER;
     f32             CPUMS;
     f32             IMS;
+    s32             TargetFPS;
+    xtick           FrameLimiterLastTick;
 
     
 } s;
@@ -286,6 +290,9 @@ void eng_Kill( void ) //Deprecated, but i still prefer to maintenance this func
         g_pSwapChain = NULL;
         x_DebugMsg( "Engine: Swap chain released\n" );
     }
+
+    s_hSwapChainWaitable = NULL;
+    s_bSwapChainWaitable = FALSE;
     
     if( g_pd3dContext != NULL )
     {
@@ -361,6 +368,30 @@ f32 eng_GetFPS( void )
 
     return( (f32)(s32)(((8.0f / x_TicksToMs( Sum )) * 1000.0f) + 0.5f) );
 }       
+
+//=========================================================================
+
+// For now let it be static and "d3deng", not eng.
+
+static
+void d3deng_SetTargetFPS( s32 TargetFPS )
+{
+    if( TargetFPS < 0 )
+        TargetFPS = 0;
+
+    s.TargetFPS = TargetFPS;
+    s.FrameLimiterLastTick = 0;
+
+    x_DebugMsg( "Engine: Target FPS set to %d\n", s.TargetFPS );
+}
+
+//=========================================================================
+
+static
+s32 d3deng_GetTargetFPS( void )
+{
+    return s.TargetFPS;
+}
 
 //=========================================================================
 
@@ -506,6 +537,9 @@ xbool d3deng_CreateD3DDevice( HWND hWnd )
 
     x_DebugMsg( "Engine: Creating D3D device (flags=0x%08X)\n", dwFlags );
 
+    s_hSwapChainWaitable = NULL;
+    s_bSwapChainWaitable = FALSE;
+
     // Feature levels to try
     D3D_FEATURE_LEVEL featureLevels[] = {
         D3D_FEATURE_LEVEL_11_0,
@@ -515,8 +549,6 @@ xbool d3deng_CreateD3DDevice( HWND hWnd )
     UINT numFeatureLevels = ARRAYSIZE(featureLevels);
 
     D3D_FEATURE_LEVEL featureLevel;
-    g_SwapChainDesc.OutputWindow = hWnd;
-
     // Determine driver type
     D3D_DRIVER_TYPE driverType = D3D_DRIVER_TYPE_HARDWARE;
     if( s.Mode & ENG_ACT_SOFTWARE )
@@ -529,8 +561,8 @@ xbool d3deng_CreateD3DDevice( HWND hWnd )
         x_DebugMsg( "Engine: Using hardware renderer\n" );
     }
 
-    // Create the D3D device and swap chain
-    Error = D3D11CreateDeviceAndSwapChain(
+    // Create the D3D device
+    Error = D3D11CreateDevice(
         NULL,                       // Use default adapter
         driverType,                 // Hardware or WARP for software
         NULL,                       // No software device
@@ -538,8 +570,6 @@ xbool d3deng_CreateD3DDevice( HWND hWnd )
         featureLevels,              // Feature levels array
         numFeatureLevels,           // Number of feature levels
         D3D11_SDK_VERSION,          // SDK version
-        &g_SwapChainDesc,           // Swap chain description
-        &g_pSwapChain,              // Output swap chain
         &g_pd3dDevice,              // Output device
         &featureLevel,              // Output feature level
         &g_pd3dContext              // Output device context
@@ -553,8 +583,6 @@ xbool d3deng_CreateD3DDevice( HWND hWnd )
         // Cleanup any partial creation
         if( g_pd3dContext ) { g_pd3dContext->Release(); g_pd3dContext = NULL; }
         if( g_pd3dDevice )  { g_pd3dDevice->Release();  g_pd3dDevice = NULL; }
-        if( g_pSwapChain )  { g_pSwapChain->Release();  g_pSwapChain = NULL; }
-        
         MessageBox( d3deng_GetWindowHandle(), 
                    xfs("Error creating device: %d", Error), 
                    "Device Error", MB_OK );
@@ -574,6 +602,109 @@ xbool d3deng_CreateD3DDevice( HWND hWnd )
     }
     
     x_DebugMsg( "Engine: Device created successfully (Feature Level %s)\n", featureLevelStr );
+
+    // Create swap chain
+    IDXGIDevice* pDXGIDevice = NULL;
+    IDXGIAdapter* pAdapter = NULL;
+    IDXGIFactory1* pFactory = NULL;
+    IDXGIFactory2* pFactory2 = NULL;
+    IDXGISwapChain1* pSwapChain1 = NULL;
+
+    Error = g_pd3dDevice->QueryInterface( __uuidof(IDXGIDevice), (void**)&pDXGIDevice );
+    if( SUCCEEDED(Error) )
+    {
+        Error = pDXGIDevice->GetAdapter( &pAdapter );
+    }
+    if( SUCCEEDED(Error) )
+    {
+        Error = pAdapter->GetParent( __uuidof(IDXGIFactory1), (void**)&pFactory );
+    }
+    if( SUCCEEDED(Error) )
+    {
+        pFactory->QueryInterface( __uuidof(IDXGIFactory2), (void**)&pFactory2 );
+    }
+
+    if( pFactory2 )
+    {
+        DXGI_SWAP_CHAIN_DESC1 Desc1;
+        DXGI_SWAP_CHAIN_FULLSCREEN_DESC FullDesc;
+        ZeroMemory( &Desc1, sizeof(Desc1) );
+        ZeroMemory( &FullDesc, sizeof(FullDesc) );
+
+        Desc1.Width = g_SwapChainDesc.BufferDesc.Width;
+        Desc1.Height = g_SwapChainDesc.BufferDesc.Height;
+        Desc1.Format = g_SwapChainDesc.BufferDesc.Format;
+        Desc1.Stereo = FALSE;
+        Desc1.SampleDesc.Count = g_SwapChainDesc.SampleDesc.Count;
+        Desc1.SampleDesc.Quality = g_SwapChainDesc.SampleDesc.Quality;
+        Desc1.BufferUsage = g_SwapChainDesc.BufferUsage;
+        Desc1.BufferCount = 2;
+        Desc1.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
+        Desc1.Scaling = DXGI_SCALING_STRETCH;
+        Desc1.AlphaMode = DXGI_ALPHA_MODE_IGNORE;
+        Desc1.Flags = DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT;
+
+        FullDesc.RefreshRate = g_SwapChainDesc.BufferDesc.RefreshRate;
+        FullDesc.Windowed = g_SwapChainDesc.Windowed;
+        FullDesc.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
+        FullDesc.Scaling = DXGI_MODE_SCALING_UNSPECIFIED;
+
+        Error = pFactory2->CreateSwapChainForHwnd(
+            g_pd3dDevice,
+            hWnd,
+            &Desc1,
+            &FullDesc,
+            NULL,
+            &pSwapChain1 );
+
+        if( SUCCEEDED(Error) )
+        {
+            Error = pSwapChain1->QueryInterface( __uuidof(IDXGISwapChain), (void**)&g_pSwapChain );
+            if( SUCCEEDED(Error) )
+            {
+                IDXGISwapChain2* pSwapChain2 = NULL;
+                if( SUCCEEDED( pSwapChain1->QueryInterface( __uuidof(IDXGISwapChain2), (void**)&pSwapChain2 ) ) )
+                {
+                    if( SUCCEEDED( pSwapChain2->SetMaximumFrameLatency( 1 ) ) )
+                    {
+                        s_hSwapChainWaitable = pSwapChain2->GetFrameLatencyWaitableObject();
+                        s_bSwapChainWaitable = (s_hSwapChainWaitable != NULL);
+                    }
+                    pSwapChain2->Release();
+                }
+            }
+        }
+    }
+
+    if( pSwapChain1 )  { pSwapChain1->Release(); pSwapChain1 = NULL; }
+    if( pFactory2 )    { pFactory2->Release(); pFactory2 = NULL; }
+
+    if( !g_pSwapChain && pFactory )
+    {
+        g_SwapChainDesc.OutputWindow = hWnd;
+        Error = pFactory->CreateSwapChain( g_pd3dDevice, &g_SwapChainDesc, &g_pSwapChain );
+        if( FAILED(Error) )
+        {
+            x_DebugMsg( "Engine: ERROR - Failed to create swap chain (HRESULT=0x%08X)\n", Error );
+        }
+    }
+
+    if( pFactory )    { pFactory->Release(); pFactory = NULL; }
+    if( pAdapter )    { pAdapter->Release(); pAdapter = NULL; }
+    if( pDXGIDevice ) { pDXGIDevice->Release(); pDXGIDevice = NULL; }
+
+    if( !g_pSwapChain )
+    {
+        x_DebugMsg( "Engine: ERROR - Failed to create swap chain\n" );
+        if( g_pd3dContext ) { g_pd3dContext->Release(); g_pd3dContext = NULL; }
+        if( g_pd3dDevice )  { g_pd3dDevice->Release();  g_pd3dDevice = NULL; }
+        return FALSE;
+    }
+
+    if( s_bSwapChainWaitable )
+        x_DebugMsg( "Engine: Waitable swap chain enabled\n" );
+    else
+        x_DebugMsg( "Engine: Waitable swap chain not available, using legacy present path\n" );
 
     return TRUE;
 }
@@ -932,6 +1063,9 @@ void eng_Init( void )
     
     x_DebugMsg( "=== ENGINE INITIALIZATION START ===\n" );
 
+    // Ofc is temp solution.
+    d3deng_SetTargetFPS(60);
+
     if( s.MaxXRes == 0 )
     {
         //TODO: GS: Ofc, made settings and .inl loader, but for now this code is good.
@@ -1121,6 +1255,43 @@ void d3deng_RenderBufferedText( void )
 //=========================================================================
 
 static 
+void d3deng_ThrottleFrame( void )
+{
+    if( s.TargetFPS <= 0 )
+        return;
+
+    s64 TicksPerSec = x_GetTicksPerSecond();
+    if( TicksPerSec <= 0 )
+        return;
+
+    xtick TargetTicks = TicksPerSec / s.TargetFPS;
+    if( TargetTicks <= 0 )
+        return;
+
+    xtick Current = x_GetTime();
+    if( s.FrameLimiterLastTick != 0 )
+    {
+        xtick Elapsed = Current - s.FrameLimiterLastTick;
+        if( Elapsed < TargetTicks )
+        {
+            xtick Remaining = TargetTicks - Elapsed;
+            s64 TicksPerMs = x_GetTicksPerMs();
+            if( TicksPerMs > 0 )
+            {
+                s32 WaitMs = (s32)(Remaining / TicksPerMs);
+                if( WaitMs > 0 )
+                    Sleep( (DWORD)WaitMs );
+            }
+            Current = x_GetTime();
+        }
+    }
+
+    s.FrameLimiterLastTick = Current;
+}
+
+//=========================================================================
+
+static 
 xbool d3deng_PresentFrame( void )
 {
     HRESULT Error;
@@ -1136,6 +1307,17 @@ xbool d3deng_PresentFrame( void )
 
     // Ensure rendering to back buffer before present
     rtarget_SetBackBuffer();
+
+    d3deng_ThrottleFrame();
+
+    if( s_bSwapChainWaitable && s_hSwapChainWaitable )
+    {
+        DWORD waitResult = WaitForSingleObjectEx( s_hSwapChainWaitable, 1000, TRUE );
+        if( waitResult == WAIT_TIMEOUT )
+        {
+            x_DebugMsg( "Engine: WARNING - Waitable swap chain wait timeout\n" );
+        }
+    }
 
     Error = g_pSwapChain->Present( 1, 0 );  // 0 = immediate present, VSYNC
     
