@@ -26,7 +26,7 @@ GeomDiffuseResult GeomEvaluateDiffuse( GEOM_PIXEL_INPUT input, uint materialFlag
 
     if( materialFlags & MATERIAL_FLAG_DETAIL )
     {
-        float  detailScale = (UVAnim.z > 0.0f) ? UVAnim.z : 1.0f;
+        float  detailScale = max( UVAnim.z, 1.0f );
         float4 detailColor = txDetail.Sample( samLinear, input.UV * detailScale );
         result.Color *= detailColor * 2.0;
     }
@@ -89,18 +89,18 @@ void GeomApplyEnvironment( inout GeomDiffuseResult diffuse, uint materialFlags, 
         float envStrength = 1.0f;
         if( materialFlags & MATERIAL_FLAG_ENV_CUBEMAP )
         {
-            envStrength = saturate( EnvParams.y );
+            envStrength = EnvParams.y;
         }
 
         float envBlend = 0.0f;
 
         if( materialFlags & MATERIAL_FLAG_PERPIXEL_ENV )
         {
-            envBlend = saturate( diffuse.Sample.a ) * envStrength;
+            envBlend = diffuse.Sample.a * envStrength;
         }
         else if( materialFlags & MATERIAL_FLAG_PERPOLY_ENV )
         {
-            envBlend = saturate( EnvParams.x ) * envStrength;
+            envBlend = EnvParams.x * envStrength;
         }
 
         if( envBlend > 0.0f )
@@ -153,6 +153,75 @@ float3 GeomComputeLighting( GEOM_PIXEL_INPUT input, uint materialFlags )
 
 //==============================================================================
 
+// Experimental hacky specular.
+
+float3 GeomComputeSpecular( GEOM_PIXEL_INPUT input, uint materialFlags, float diffuseAlpha )
+{
+    float  specBlend    = 0.0f;
+    float3 specular     = float3( 0.0, 0.0, 0.0 );
+
+    if( materialFlags & MATERIAL_FLAG_ENVIRONMENT )
+    {
+        float  envStrength  = 1.0f;
+        
+        if( materialFlags & MATERIAL_FLAG_PERPIXEL_ENV )
+        {
+            if( materialFlags & MATERIAL_FLAG_ENV_CUBEMAP )
+            {
+                envStrength  = 2.0f * EnvParams.y;
+            }
+            else
+            {
+                envStrength  = EnvParams.y;            
+            }
+        }
+    
+        if( materialFlags & MATERIAL_FLAG_PERPIXEL_ENV )
+            specBlend = diffuseAlpha * envStrength;
+        else if( materialFlags & MATERIAL_FLAG_PERPOLY_ENV )
+            specBlend = EnvParams.x * envStrength;
+    
+        float specPower = 4.0f;
+        float3 viewDir = normalize( -input.ViewVector );
+
+    #ifdef GEOM_USE_SKIN_LIGHTING
+        for( uint i = 0; i < LightCount; i++ )
+        {
+            float3 L = normalize( -LightVec[i].xyz );
+            float  ndotl = saturate( dot( input.Normal, L ) );
+            if( ndotl > 0.0f )
+            {
+                float3 H = normalize( L + viewDir );
+                float  specTerm = pow( saturate( dot( input.Normal, H ) ), specPower ) * ndotl;
+                specular += LightCol[i].rgb * specTerm;
+            }
+        }
+    #else
+        for( uint i = 0; i < LightCount; i++ )
+        {
+            float3 L     = LightVec[i].xyz - input.WorldPos;
+            float  dist  = length( L );
+            float  atten = saturate( 1.0 - dist / max( LightVec[i].w, 1e-4f ) );
+            if( atten > 0.0f )
+            {
+                L = normalize( L );
+                float  ndotl = saturate( dot( input.Normal, L ) );
+                if( ndotl > 0.0f )
+                {
+                    float3 H = normalize( L + viewDir );
+                    float  specTerm = pow( saturate( dot( input.Normal, H ) ), specPower ) * ndotl;
+                    specular += LightCol[i].rgb * specTerm * atten;
+                }
+            }
+        }
+    #endif
+    } 
+    
+    return specular * specBlend;
+}
+
+//==============================================================================
+
 float4 GeomComputeGlow( GEOM_PIXEL_INPUT input,
                         uint materialFlags,
                         inout float4 finalColor,
@@ -166,7 +235,7 @@ float4 GeomComputeGlow( GEOM_PIXEL_INPUT input,
         float  intensity = texColor.a;
         float3 emissive  = texColor.rgb;
         float  emissiveStrength = max( max( emissive.r, emissive.g ), emissive.b );
-        float  glowMask         = saturate( max( intensity, emissiveStrength ) );
+        float  glowMask         = max( intensity, emissiveStrength );
 
         float3 maskedEmissive = emissive * glowMask;
 
@@ -182,7 +251,7 @@ float4 GeomComputeGlow( GEOM_PIXEL_INPUT input,
         float  intensity = diffuseColor.a;
         float3 emissive  = diffuseColor.rgb;
         float  emissiveStrength = max( max( emissive.r, emissive.g ), emissive.b );
-        float  glowMask         = saturate( max( intensity, emissiveStrength ) );
+        float  glowMask         = max( intensity, emissiveStrength );
 
         float3 maskedEmissive = emissive * glowMask;
 
@@ -246,7 +315,8 @@ GEOM_PIXEL_OUTPUT ShadeGeometryPixel( GEOM_PIXEL_INPUT input )
 
     float4 baseColor = diffuse.Color;
     float3 totalLight = GeomComputeLighting( input, materialFlags );
-    float4 finalColor = float4( diffuse.Color.rgb * totalLight, diffuse.Color.a );
+    float3 specular = GeomComputeSpecular( input, materialFlags, diffuse.Sample.a );    
+    float4 finalColor = float4( diffuse.Color.rgb * totalLight + specular, diffuse.Color.a );
 
     if( materialFlags & MATERIAL_FLAG_PROJ_LIGHT )
     {
@@ -257,6 +327,8 @@ GEOM_PIXEL_OUTPUT ShadeGeometryPixel( GEOM_PIXEL_INPUT input )
     {
         finalColor.rgb = ApplyProjShadows( finalColor.rgb, input.WorldPos );
     }
+
+    finalColor.rgb = saturate(finalColor.rgb);
 
     output.Glow = GeomComputeGlow( input, materialFlags, finalColor, diffuse.Color );
 
