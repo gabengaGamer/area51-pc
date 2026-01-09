@@ -168,7 +168,7 @@ float3 GeomComputeSpecular( GEOM_PIXEL_INPUT input, uint materialFlags, float di
         {
             if( materialFlags & MATERIAL_FLAG_ENV_CUBEMAP )
             {
-                envStrength  = 2.0f * EnvParams.y;
+                envStrength  = 4.0f * EnvParams.y;
             }
             else
             {
@@ -181,7 +181,7 @@ float3 GeomComputeSpecular( GEOM_PIXEL_INPUT input, uint materialFlags, float di
         else if( materialFlags & MATERIAL_FLAG_PERPOLY_ENV )
             specBlend = EnvParams.x * envStrength;
     
-        float specPower = 4.0f;
+        float specPower = 16.0f;
         float3 viewDir = normalize( -input.ViewVector );
 
     #ifdef GEOM_USE_SKIN_LIGHTING
