@@ -51,20 +51,16 @@ xbool material_mgr::InitRigidShaders( void )
 
     char shaderPath[256];
     x_sprintf( shaderPath, "a51_rigid_simple.hlsl" );
-	
-    m_pRigidVertexShader = (ID3D11VertexShader*)shader_CompileShaderFromFile( shaderPath,
-                                                                              SHADER_TYPE_VERTEX,
-                                                                              "VSMain",
-                                                                              "vs_5_0",
-                                                                              &m_pRigidInputLayout,
-                                                                              rigidLayout,
-                                                                              ARRAYSIZE(rigidLayout) );
 
-    m_pRigidPixelShader = (ID3D11PixelShader*)shader_CompileShaderFromFile( shaderPath, 
-                                                                            SHADER_TYPE_PIXEL, 
-                                                                            "PSMain", 
-                                                                            "ps_5_0" );	
-	
+    m_pRigidVertexShader = shader_CompileVertexFromFileWithLayout( shaderPath,
+                                                                  &m_pRigidInputLayout,
+                                                                  rigidLayout,
+                                                                  ARRAYSIZE(rigidLayout),
+                                                                  "VSMain",
+                                                                  "vs_5_0" );
+
+    m_pRigidPixelShader   = shader_CompilePixelFromFile( shaderPath, "PSMain", "ps_5_0" );
+
     m_pRigidFrameBuffer   = shader_CreateConstantBuffer( sizeof(cb_geom_frame), CB_TYPE_DYNAMIC );
     m_pRigidObjectBuffer  = shader_CreateConstantBuffer( sizeof(cb_geom_object), CB_TYPE_DYNAMIC );
     m_pRigidLightBuffer   = shader_CreateConstantBuffer( sizeof(cb_lighting), CB_TYPE_DYNAMIC );

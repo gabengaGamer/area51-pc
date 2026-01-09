@@ -50,19 +50,15 @@ xbool material_mgr::InitSkinShaders( void )
     char shaderPath[256];
     x_sprintf( shaderPath, "a51_skin_simple.hlsl" );
 
-    m_pSkinVertexShader = (ID3D11VertexShader*)shader_CompileShaderFromFile( shaderPath,
-                                                                             SHADER_TYPE_VERTEX,
-                                                                             "VSMain",
-                                                                             "vs_5_0",
-                                                                             &m_pSkinInputLayout,
-                                                                             skinLayout,
-                                                                             ARRAYSIZE(skinLayout) );
-        
-    m_pSkinPixelShader = (ID3D11PixelShader*)shader_CompileShaderFromFile( shaderPath, 
-                                                                           SHADER_TYPE_PIXEL, 
-                                                                           "PSMain", 
-                                                                           "ps_5_0" );	
-	
+    m_pSkinVertexShader = shader_CompileVertexFromFileWithLayout( shaderPath,
+                                                                 &m_pSkinInputLayout,
+                                                                 skinLayout,
+                                                                 ARRAYSIZE(skinLayout),
+                                                                 "VSMain",
+                                                                 "vs_5_0" );
+
+    m_pSkinPixelShader  = shader_CompilePixelFromFile( shaderPath, "PSMain", "ps_5_0" );
+
     m_pSkinFrameBuffer  = shader_CreateConstantBuffer( sizeof(cb_geom_frame), CB_TYPE_DYNAMIC );
     m_pSkinBoneBuffer   = shader_CreateConstantBuffer( sizeof(cb_skin_bone) * MAX_SKIN_BONES, CB_TYPE_DYNAMIC );
     m_pSkinLightBuffer  = shader_CreateConstantBuffer( sizeof(cb_lighting), CB_TYPE_DYNAMIC );

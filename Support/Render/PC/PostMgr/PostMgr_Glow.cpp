@@ -102,11 +102,11 @@ void post_mgr::glow_resources::Initialize( void )
     if( !pSource )
         return;
 
-    pDownsamplePS = (ID3D11PixelShader*)shader_CompileShader( pSource, SHADER_TYPE_PIXEL, "PS_Downsample", "ps_5_0", shaderPath );      
-    pBlurHPS = (ID3D11PixelShader*)shader_CompileShader( pSource, SHADER_TYPE_PIXEL, "PS_BlurHorizontal", "ps_5_0", shaderPath );       
-    pBlurVPS = (ID3D11PixelShader*)shader_CompileShader( pSource, SHADER_TYPE_PIXEL, "PS_BlurVertical", "ps_5_0", shaderPath );      
-    pCombinePS = (ID3D11PixelShader*)shader_CompileShader( pSource, SHADER_TYPE_PIXEL, "PS_Combine", "ps_5_0", shaderPath );     
-    pCompositePS = (ID3D11PixelShader*)shader_CompileShader( pSource, SHADER_TYPE_PIXEL, "PS_Composite", "ps_5_0", shaderPath );
+    pDownsamplePS = shader_CompilePixel( pSource, "PS_Downsample", "ps_5_0", shaderPath );
+    pBlurHPS      = shader_CompilePixel( pSource, "PS_BlurHorizontal", "ps_5_0", shaderPath );
+    pBlurVPS      = shader_CompilePixel( pSource, "PS_BlurVertical", "ps_5_0", shaderPath );
+    pCombinePS    = shader_CompilePixel( pSource, "PS_Combine", "ps_5_0", shaderPath );
+    pCompositePS  = shader_CompilePixel( pSource, "PS_Composite", "ps_5_0", shaderPath );
     pConstantBuffer = shader_CreateConstantBuffer( sizeof(cb_post_glow), CB_TYPE_DYNAMIC );
 
     x_free( pSource );

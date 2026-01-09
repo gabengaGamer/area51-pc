@@ -380,128 +380,330 @@ xbool shader_CompileShaderInternal( const char* pSource,
 //  SHADER COMPILATION FROM SOURCE
 //==============================================================================
 
-void* shader_CompileShader( const char* pSource,
-                            shader_type Type,
-                            const char* pEntryPoint,
-                            const char* pProfile,
-                            const char* pSourceName,
-                            ID3D11InputLayout** ppLayout,
-                            const D3D11_INPUT_ELEMENT_DESC* pLayoutDesc,
-                            u32 NumElements )
+ID3D11VertexShader* shader_CompileVertex( const char* pSource,
+                                          const char* pEntryPoint,
+                                          const char* pProfile,
+                                          const char* pSourceName )
 {
     ID3DBlob* pBlob = NULL;
     ID3DBlob* pErrorBlob = NULL;
-    
+    ID3D11VertexShader* pShader = NULL;
+
     if( !pEntryPoint )
         pEntryPoint = "main";
-    
+
     if( !pProfile )
-        pProfile = shader_GetDefaultProfile( Type );
-    
+        pProfile = shader_GetDefaultProfile( SHADER_TYPE_VERTEX );
+
     if( !shader_CompileShaderInternal( pSource, pSourceName, pEntryPoint, pProfile, &pBlob, &pErrorBlob ) )
     {
         if( pErrorBlob ) pErrorBlob->Release();
         return NULL;
     }
-    
-    void* pShader = NULL;
-    HRESULT hr = E_FAIL;
-    
-    switch( Type )
-    {
-        case SHADER_TYPE_VERTEX:
-            hr = g_pd3dDevice->CreateVertexShader( pBlob->GetBufferPointer(), 
-                                                   pBlob->GetBufferSize(), 
-                                                   NULL, 
-                                                   (ID3D11VertexShader**)&pShader );
-            break;
-            
-        case SHADER_TYPE_PIXEL:
-            hr = g_pd3dDevice->CreatePixelShader( pBlob->GetBufferPointer(), 
-                                                  pBlob->GetBufferSize(), 
-                                                  NULL, 
-                                                  (ID3D11PixelShader**)&pShader );
-            break;
-            
-        case SHADER_TYPE_GEOMETRY:
-            hr = g_pd3dDevice->CreateGeometryShader( pBlob->GetBufferPointer(), 
-                                                     pBlob->GetBufferSize(), 
-                                                     NULL, 
-                                                     (ID3D11GeometryShader**)&pShader );
-            break;
-            
-        case SHADER_TYPE_COMPUTE:
-            hr = g_pd3dDevice->CreateComputeShader( pBlob->GetBufferPointer(), 
-                                                    pBlob->GetBufferSize(), 
-                                                    NULL, 
-                                                    (ID3D11ComputeShader**)&pShader );
-            break;
-            
-        default:
-            x_DebugMsg( "ShaderMgr: Invalid shader type %d\n", Type );
-            ASSERT(FALSE);
-            pBlob->Release();
-            if( pErrorBlob ) pErrorBlob->Release();
-            return NULL;
-    }
-    
+
+    HRESULT hr = g_pd3dDevice->CreateVertexShader( pBlob->GetBufferPointer(),
+                                                   pBlob->GetBufferSize(),
+                                                   NULL,
+                                                   &pShader );
     if( FAILED(hr) )
     {
-        x_DebugMsg( "ShaderMgr: Failed to create shader, HRESULT 0x%08X\n", hr );
+        x_DebugMsg( "ShaderMgr: Failed to create vertex shader, HRESULT 0x%08X\n", hr );
         ASSERT(FALSE);
         pBlob->Release();
         if( pErrorBlob ) pErrorBlob->Release();
         return NULL;
     }
-    
-    if( ppLayout && pLayoutDesc && NumElements > 0 )
-    {
-        if( Type != SHADER_TYPE_VERTEX )
-        {
-            x_DebugMsg( "ShaderMgr: Input layout can only be created for vertex shaders\n" );
-            ASSERT(FALSE);
-        }
-        else
-        {
-            hr = g_pd3dDevice->CreateInputLayout( pLayoutDesc,
-                                                  NumElements,
-                                                  pBlob->GetBufferPointer(),
-                                                  pBlob->GetBufferSize(),
-                                                  ppLayout );
-            if( FAILED(hr) )
-            {
-                x_DebugMsg( "ShaderMgr: Failed to create input layout, HRESULT 0x%08X\n", hr );
-                ASSERT(FALSE);
-                ((ID3D11VertexShader*)pShader)->Release();
-                pBlob->Release();
-                if( pErrorBlob ) pErrorBlob->Release();
-                return NULL;
-            }
-        }
-    }
-    
+
     pBlob->Release();
     if( pErrorBlob ) pErrorBlob->Release();
-    
-    x_DebugMsg( "ShaderMgr: Shader compiled successfully\n" );
+
+    x_DebugMsg( "ShaderMgr: Vertex shader compiled successfully\n" );
     return pShader;
 }
 
 //==============================================================================
 
-void* shader_CompileShaderFromFile( const char* pFileName,
-                                    shader_type Type,
-                                    const char* pEntryPoint,
-                                    const char* pProfile,
-                                    ID3D11InputLayout** ppLayout,
-                                    const D3D11_INPUT_ELEMENT_DESC* pLayoutDesc,
-                                    u32 NumElements )
+ID3D11PixelShader* shader_CompilePixel( const char* pSource,
+                                        const char* pEntryPoint,
+                                        const char* pProfile,
+                                        const char* pSourceName )
+{
+    ID3DBlob* pBlob = NULL;
+    ID3DBlob* pErrorBlob = NULL;
+    ID3D11PixelShader* pShader = NULL;
+
+    if( !pEntryPoint )
+        pEntryPoint = "main";
+
+    if( !pProfile )
+        pProfile = shader_GetDefaultProfile( SHADER_TYPE_PIXEL );
+
+    if( !shader_CompileShaderInternal( pSource, pSourceName, pEntryPoint, pProfile, &pBlob, &pErrorBlob ) )
+    {
+        if( pErrorBlob ) pErrorBlob->Release();
+        return NULL;
+    }
+
+    HRESULT hr = g_pd3dDevice->CreatePixelShader( pBlob->GetBufferPointer(),
+                                                  pBlob->GetBufferSize(),
+                                                  NULL,
+                                                  &pShader );
+    if( FAILED(hr) )
+    {
+        x_DebugMsg( "ShaderMgr: Failed to create pixel shader, HRESULT 0x%08X\n", hr );
+        ASSERT(FALSE);
+        pBlob->Release();
+        if( pErrorBlob ) pErrorBlob->Release();
+        return NULL;
+    }
+
+    pBlob->Release();
+    if( pErrorBlob ) pErrorBlob->Release();
+
+    x_DebugMsg( "ShaderMgr: Pixel shader compiled successfully\n" );
+    return pShader;
+}
+
+//==============================================================================
+
+ID3D11GeometryShader* shader_CompileGeometry( const char* pSource,
+                                              const char* pEntryPoint,
+                                              const char* pProfile,
+                                              const char* pSourceName )
+{
+    ID3DBlob* pBlob = NULL;
+    ID3DBlob* pErrorBlob = NULL;
+    ID3D11GeometryShader* pShader = NULL;
+
+    if( !pEntryPoint )
+        pEntryPoint = "main";
+
+    if( !pProfile )
+        pProfile = shader_GetDefaultProfile( SHADER_TYPE_GEOMETRY );
+
+    if( !shader_CompileShaderInternal( pSource, pSourceName, pEntryPoint, pProfile, &pBlob, &pErrorBlob ) )
+    {
+        if( pErrorBlob ) pErrorBlob->Release();
+        return NULL;
+    }
+
+    HRESULT hr = g_pd3dDevice->CreateGeometryShader( pBlob->GetBufferPointer(),
+                                                     pBlob->GetBufferSize(),
+                                                     NULL,
+                                                     &pShader );
+    if( FAILED(hr) )
+    {
+        x_DebugMsg( "ShaderMgr: Failed to create geometry shader, HRESULT 0x%08X\n", hr );
+        ASSERT(FALSE);
+        pBlob->Release();
+        if( pErrorBlob ) pErrorBlob->Release();
+        return NULL;
+    }
+
+    pBlob->Release();
+    if( pErrorBlob ) pErrorBlob->Release();
+
+    x_DebugMsg( "ShaderMgr: Geometry shader compiled successfully\n" );
+    return pShader;
+}
+
+//==============================================================================
+
+ID3D11ComputeShader* shader_CompileCompute( const char* pSource,
+                                            const char* pEntryPoint,
+                                            const char* pProfile,
+                                            const char* pSourceName )
+{
+    ID3DBlob* pBlob = NULL;
+    ID3DBlob* pErrorBlob = NULL;
+    ID3D11ComputeShader* pShader = NULL;
+
+    if( !pEntryPoint )
+        pEntryPoint = "main";
+
+    if( !pProfile )
+        pProfile = shader_GetDefaultProfile( SHADER_TYPE_COMPUTE );
+
+    if( !shader_CompileShaderInternal( pSource, pSourceName, pEntryPoint, pProfile, &pBlob, &pErrorBlob ) )
+    {
+        if( pErrorBlob ) pErrorBlob->Release();
+        return NULL;
+    }
+
+    HRESULT hr = g_pd3dDevice->CreateComputeShader( pBlob->GetBufferPointer(),
+                                                    pBlob->GetBufferSize(),
+                                                    NULL,
+                                                    &pShader );
+    if( FAILED(hr) )
+    {
+        x_DebugMsg( "ShaderMgr: Failed to create compute shader, HRESULT 0x%08X\n", hr );
+        ASSERT(FALSE);
+        pBlob->Release();
+        if( pErrorBlob ) pErrorBlob->Release();
+        return NULL;
+    }
+
+    pBlob->Release();
+    if( pErrorBlob ) pErrorBlob->Release();
+
+    x_DebugMsg( "ShaderMgr: Compute shader compiled successfully\n" );
+    return pShader;
+}
+
+//==============================================================================
+//  Compile shader from source with layout
+//==============================================================================
+
+ID3D11VertexShader* shader_CompileVertexWithLayout( const char* pSource,
+                                                    ID3D11InputLayout** ppLayout,
+                                                    const D3D11_INPUT_ELEMENT_DESC* pLayoutDesc,
+                                                    u32 NumElements,
+                                                    const char* pEntryPoint,
+                                                    const char* pProfile,
+                                                    const char* pSourceName )
+{
+    if( !pSource || !ppLayout || !pLayoutDesc || NumElements == 0 )
+    {
+        x_DebugMsg( "ShaderMgr: Invalid parameters for vertex shader with layout\n" );
+        ASSERT(FALSE);
+        return NULL;
+    }
+
+    ID3DBlob* pBlob = NULL;
+    ID3DBlob* pErrorBlob = NULL;
+    ID3D11VertexShader* pShader = NULL;
+
+    if( !pEntryPoint )
+        pEntryPoint = "main";
+
+    if( !pProfile )
+        pProfile = shader_GetDefaultProfile( SHADER_TYPE_VERTEX );
+
+    if( !shader_CompileShaderInternal( pSource, pSourceName, pEntryPoint, pProfile, &pBlob, &pErrorBlob ) )
+    {
+        if( pErrorBlob ) pErrorBlob->Release();
+        return NULL;
+    }
+
+    HRESULT hr = g_pd3dDevice->CreateVertexShader( pBlob->GetBufferPointer(),
+                                                   pBlob->GetBufferSize(),
+                                                   NULL,
+                                                   &pShader );
+    if( FAILED(hr) )
+    {
+        x_DebugMsg( "ShaderMgr: Failed to create vertex shader, HRESULT 0x%08X\n", hr );
+        ASSERT(FALSE);
+        pBlob->Release();
+        if( pErrorBlob ) pErrorBlob->Release();
+        return NULL;
+    }
+
+    hr = g_pd3dDevice->CreateInputLayout( pLayoutDesc,
+                                          NumElements,
+                                          pBlob->GetBufferPointer(),
+                                          pBlob->GetBufferSize(),
+                                          ppLayout );
+    pBlob->Release();
+
+    if( FAILED(hr) )
+    {
+        x_DebugMsg( "ShaderMgr: Failed to create input layout, HRESULT 0x%08X\n", hr );
+        ASSERT(FALSE);
+        if( pShader ) pShader->Release();
+        if( pErrorBlob ) pErrorBlob->Release();
+        return NULL;
+    }
+
+    if( pErrorBlob ) pErrorBlob->Release();
+
+    x_DebugMsg( "ShaderMgr: Vertex shader with layout compiled successfully\n" );
+    return pShader;
+}
+
+//==============================================================================
+//  SHADER COMPILATION FROM FILES
+//==============================================================================
+
+ID3D11VertexShader* shader_CompileVertexFromFile( const char* pFileName,
+                                                  const char* pEntryPoint,
+                                                  const char* pProfile )
 {
     char* pSource = shader_LoadSourceFromFile( pFileName );
     if( !pSource )
         return NULL;
-    
-    void* pShader = shader_CompileShader( pSource, Type, pEntryPoint, pProfile, pFileName, ppLayout, pLayoutDesc, NumElements );
+
+    ID3D11VertexShader* pShader = shader_CompileVertex( pSource, pEntryPoint, pProfile, pFileName );
+    x_free( pSource );
+    return pShader;
+}
+
+//==============================================================================
+
+ID3D11PixelShader* shader_CompilePixelFromFile( const char* pFileName,
+                                                const char* pEntryPoint,
+                                                const char* pProfile )
+{
+    char* pSource = shader_LoadSourceFromFile( pFileName );
+    if( !pSource )
+        return NULL;
+
+    ID3D11PixelShader* pShader = shader_CompilePixel( pSource, pEntryPoint, pProfile, pFileName );
+    x_free( pSource );
+    return pShader;
+}
+
+//==============================================================================
+
+ID3D11GeometryShader* shader_CompileGeometryFromFile( const char* pFileName,
+                                                      const char* pEntryPoint,
+                                                      const char* pProfile )
+{
+    char* pSource = shader_LoadSourceFromFile( pFileName );
+    if( !pSource )
+        return NULL;
+
+    ID3D11GeometryShader* pShader = shader_CompileGeometry( pSource, pEntryPoint, pProfile, pFileName );
+    x_free( pSource );
+    return pShader;
+}
+
+//==============================================================================
+
+ID3D11ComputeShader* shader_CompileComputeFromFile( const char* pFileName,
+                                                    const char* pEntryPoint,
+                                                    const char* pProfile )
+{
+    char* pSource = shader_LoadSourceFromFile( pFileName );
+    if( !pSource )
+        return NULL;
+
+    ID3D11ComputeShader* pShader = shader_CompileCompute( pSource, pEntryPoint, pProfile, pFileName );
+    x_free( pSource );
+    return pShader;
+}
+
+//==============================================================================
+//  Compile vertex shader from file with layout
+//==============================================================================
+
+ID3D11VertexShader* shader_CompileVertexFromFileWithLayout( const char* pFileName,
+                                                            ID3D11InputLayout** ppLayout,
+                                                            const D3D11_INPUT_ELEMENT_DESC* pLayoutDesc,
+                                                            u32 NumElements,
+                                                            const char* pEntryPoint,
+                                                            const char* pProfile )
+{
+    char* pSource = shader_LoadSourceFromFile( pFileName );
+    if( !pSource )
+        return NULL;
+
+    ID3D11VertexShader* pShader = shader_CompileVertexWithLayout( pSource,
+                                                                  ppLayout,
+                                                                  pLayoutDesc,
+                                                                  NumElements,
+                                                                  pEntryPoint,
+                                                                  pProfile,
+                                                                  pFileName );
     x_free( pSource );
     return pShader;
 }
@@ -574,49 +776,97 @@ xbool shader_CompileFileToBlob( const char* pFileName,
 
 //==============================================================================
 
-void* shader_CreateShaderFromBlob( const shader_blob& Blob, shader_type Type )
+ID3D11VertexShader* shader_CreateVertexFromBlob( const shader_blob& Blob )
 {
     if( !Blob.pData || Blob.Size == 0 )
     {
-        x_DebugMsg( "ShaderMgr: Invalid blob for shader creation\n" );
+        x_DebugMsg( "ShaderMgr: Invalid blob for vertex shader creation\n" );
         ASSERT(FALSE);
         return NULL;
     }
-    
-    void* pShader = NULL;
-    HRESULT hr = E_FAIL;
-    
-    switch( Type )
-    {
-        case SHADER_TYPE_VERTEX:
-            hr = g_pd3dDevice->CreateVertexShader( Blob.pData, Blob.Size, NULL, (ID3D11VertexShader**)&pShader );
-            break;
-            
-        case SHADER_TYPE_PIXEL:
-            hr = g_pd3dDevice->CreatePixelShader( Blob.pData, Blob.Size, NULL, (ID3D11PixelShader**)&pShader );
-            break;
-            
-        case SHADER_TYPE_GEOMETRY:
-            hr = g_pd3dDevice->CreateGeometryShader( Blob.pData, Blob.Size, NULL, (ID3D11GeometryShader**)&pShader );
-            break;
-            
-        case SHADER_TYPE_COMPUTE:
-            hr = g_pd3dDevice->CreateComputeShader( Blob.pData, Blob.Size, NULL, (ID3D11ComputeShader**)&pShader );
-            break;
-            
-        default:
-            ASSERT(FALSE);
-            return NULL;
-    }
-    
+
+    ID3D11VertexShader* pShader = NULL;
+    HRESULT hr = g_pd3dDevice->CreateVertexShader( Blob.pData, Blob.Size, NULL, &pShader );
     if( FAILED(hr) )
     {
-        x_DebugMsg( "ShaderMgr: Failed to create shader from blob, HRESULT 0x%08X\n", hr );
+        x_DebugMsg( "ShaderMgr: Failed to create vertex shader from blob, HRESULT 0x%08X\n", hr );
         ASSERT(FALSE);
         return NULL;
     }
-    
-    x_DebugMsg( "ShaderMgr: Shader created from blob successfully\n" );
+
+    x_DebugMsg( "ShaderMgr: Vertex shader created from blob successfully\n" );
+    return pShader;
+}
+
+//==============================================================================
+
+ID3D11PixelShader* shader_CreatePixelFromBlob( const shader_blob& Blob )
+{
+    if( !Blob.pData || Blob.Size == 0 )
+    {
+        x_DebugMsg( "ShaderMgr: Invalid blob for pixel shader creation\n" );
+        ASSERT(FALSE);
+        return NULL;
+    }
+
+    ID3D11PixelShader* pShader = NULL;
+    HRESULT hr = g_pd3dDevice->CreatePixelShader( Blob.pData, Blob.Size, NULL, &pShader );
+    if( FAILED(hr) )
+    {
+        x_DebugMsg( "ShaderMgr: Failed to create pixel shader from blob, HRESULT 0x%08X\n", hr );
+        ASSERT(FALSE);
+        return NULL;
+    }
+
+    x_DebugMsg( "ShaderMgr: Pixel shader created from blob successfully\n" );
+    return pShader;
+}
+
+//==============================================================================
+
+ID3D11GeometryShader* shader_CreateGeometryFromBlob( const shader_blob& Blob )
+{
+    if( !Blob.pData || Blob.Size == 0 )
+    {
+        x_DebugMsg( "ShaderMgr: Invalid blob for geometry shader creation\n" );
+        ASSERT(FALSE);
+        return NULL;
+    }
+
+    ID3D11GeometryShader* pShader = NULL;
+    HRESULT hr = g_pd3dDevice->CreateGeometryShader( Blob.pData, Blob.Size, NULL, &pShader );
+    if( FAILED(hr) )
+    {
+        x_DebugMsg( "ShaderMgr: Failed to create geometry shader from blob, HRESULT 0x%08X\n", hr );
+        ASSERT(FALSE);
+        return NULL;
+    }
+
+    x_DebugMsg( "ShaderMgr: Geometry shader created from blob successfully\n" );
+    return pShader;
+}
+
+//==============================================================================
+
+ID3D11ComputeShader* shader_CreateComputeFromBlob( const shader_blob& Blob )
+{
+    if( !Blob.pData || Blob.Size == 0 )
+    {
+        x_DebugMsg( "ShaderMgr: Invalid blob for compute shader creation\n" );
+        ASSERT(FALSE);
+        return NULL;
+    }
+
+    ID3D11ComputeShader* pShader = NULL;
+    HRESULT hr = g_pd3dDevice->CreateComputeShader( Blob.pData, Blob.Size, NULL, &pShader );
+    if( FAILED(hr) )
+    {
+        x_DebugMsg( "ShaderMgr: Failed to create compute shader from blob, HRESULT 0x%08X\n", hr );
+        ASSERT(FALSE);
+        return NULL;
+    }
+
+    x_DebugMsg( "ShaderMgr: Compute shader created from blob successfully\n" );
     return pShader;
 }
 
