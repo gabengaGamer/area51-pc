@@ -33,7 +33,7 @@
 #endif
 
 //==============================================================================
-//  GLOBAL STATE STORAGE
+//  GLOBAL STATE STORAGE AND CACHE
 //==============================================================================
 
 static ID3D11BlendState*        s_pBlendStates[STATE_BLEND_COUNT]     = { NULL };
@@ -41,23 +41,45 @@ static ID3D11RasterizerState*   s_pRasterStates[STATE_RASTER_COUNT]   = { NULL }
 static ID3D11DepthStencilState* s_pDepthStates[STATE_DEPTH_COUNT]     = { NULL };
 static ID3D11SamplerState*      s_pSamplerStates[STATE_SAMPLER_COUNT] = { NULL };
 
-//==============================================================================
-//  STATE CACHE
-//==============================================================================
+//------------------------------------------------------------------------------
+
+enum
+{
+    STATE_SAMPLER_STAGE_INDEX_PS = 0,
+    STATE_SAMPLER_STAGE_INDEX_VS,
+    STATE_SAMPLER_STAGE_INDEX_GS,
+    STATE_SAMPLER_STAGE_INDEX_CS,
+    STATE_SAMPLER_STAGE_INDEX_COUNT
+};
+
+//------------------------------------------------------------------------------
+
+static const u32 STATE_SAMPLER_MAX_SLOTS = D3D11_COMMONSHADER_SAMPLER_SLOT_COUNT;
+
+//------------------------------------------------------------------------------
 
 static struct state_cache
 {
     state_blend_mode        CurrentBlendMode;
     state_raster_mode       CurrentRasterMode; 
     state_depth_mode        CurrentDepthMode;
-    state_sampler_mode      CurrentSamplerMode;
+    state_sampler_mode      CurrentSamplerMode[STATE_SAMPLER_STAGE_INDEX_COUNT][D3D11_COMMONSHADER_SAMPLER_SLOT_COUNT];
     xbool                   bInitialized;
     
     state_cache( void ) : CurrentBlendMode(STATE_BLEND_NONE), 
                           CurrentRasterMode(STATE_RASTER_SOLID),
                           CurrentDepthMode(STATE_DEPTH_NORMAL),
-                          CurrentSamplerMode(STATE_SAMPLER_LINEAR_WRAP),
-                          bInitialized(FALSE) {}
+                          bInitialized(FALSE)
+    {
+        s32 Stage;
+        s32 Slot;
+
+        for( Stage = 0; Stage < STATE_SAMPLER_STAGE_INDEX_COUNT; Stage++ )
+        {
+            for( Slot = 0; Slot < (s32)STATE_SAMPLER_MAX_SLOTS; Slot++ )
+                CurrentSamplerMode[Stage][Slot] = STATE_SAMPLER_LINEAR_WRAP;
+        }
+    }
 } s_StateCache;
 
 //==============================================================================
@@ -708,7 +730,7 @@ void state_Kill( void )
 //  STATE MANAGEMENT FUNCTIONS
 //==============================================================================
 
-xbool state_SetState( state_type Type, s32 Mode )
+xbool state_SetBlend( state_blend_mode Mode )
 {
     if( !s_StateCache.bInitialized )
     {
@@ -720,162 +742,214 @@ xbool state_SetState( state_type Type, s32 Mode )
     if( !g_pd3dContext )
         return FALSE;
 
-    switch( Type )
+    if( Mode >= STATE_BLEND_COUNT )
     {
-        case STATE_TYPE_BLEND:
-        {
-            if( Mode >= STATE_BLEND_COUNT )
-            {
-                x_DebugMsg( "RStateMgr: Invalid blend mode %d\n", Mode );
-                ASSERT(FALSE);
-                return FALSE;
-            }
-
-            state_blend_mode BlendMode = (state_blend_mode)Mode;
-            
-            // Check cache
-            if( s_StateCache.CurrentBlendMode == BlendMode )
-            {
-                #ifdef STATE_VERBOSE_MODE
-                x_DebugMsg( "RStateMgr: Blend %s CACHED\n", state_GetModeName(STATE_TYPE_BLEND, Mode) );
-                #endif
-                return FALSE;
-            }
-
-
-            if( !s_pBlendStates[Mode] )
-            {
-                x_DebugMsg( "RStateMgr: Blend state %s not created\n", state_GetModeName(STATE_TYPE_BLEND, Mode) );
-                ASSERT(FALSE);
-                return FALSE;
-            }
-
-            // Set the state
-            g_pd3dContext->OMSetBlendState( s_pBlendStates[Mode], NULL, D3D11_DEFAULT_SAMPLE_MASK );
-            s_StateCache.CurrentBlendMode = BlendMode;
-
-            #ifdef STATE_VERBOSE_MODE
-            x_DebugMsg( "RStateMgr: Blend mode set to %s\n", state_GetModeName(STATE_TYPE_BLEND, Mode) );
-            #endif
-            return TRUE;
-        }
-
-        case STATE_TYPE_RASTERIZER:
-        {
-            if( Mode >= STATE_RASTER_COUNT )
-            {
-                x_DebugMsg( "RStateMgr: Invalid rasterizer mode %d\n", Mode );
-                ASSERT(FALSE);
-                return FALSE;
-            }
-
-            state_raster_mode RasterMode = (state_raster_mode)Mode;
-            
-            // Check cache
-            if( s_StateCache.CurrentRasterMode == RasterMode )
-            {
-                #ifdef STATE_VERBOSE_MODE
-                x_DebugMsg( "RStateMgr: Rasterizer %s CACHED\n", state_GetModeName(STATE_TYPE_RASTERIZER, Mode) );
-                #endif
-                return FALSE;
-            }
-
-            if( !s_pRasterStates[Mode] )
-            {
-                x_DebugMsg( "RStateMgr: Rasterizer state %s not created\n", state_GetModeName(STATE_TYPE_RASTERIZER, Mode) );
-                ASSERT(FALSE);
-                return FALSE;
-            }
-
-            // Set the state
-            g_pd3dContext->RSSetState( s_pRasterStates[Mode] );
-            s_StateCache.CurrentRasterMode = RasterMode;
-
-            #ifdef STATE_VERBOSE_MODE
-            x_DebugMsg( "RStateMgr: Rasterizer mode set to %s\n", state_GetModeName(STATE_TYPE_RASTERIZER, Mode) );
-            #endif
-            return TRUE;
-        }
-
-        case STATE_TYPE_DEPTH:
-        {
-            if( Mode >= STATE_DEPTH_COUNT )
-            {
-                x_DebugMsg( "RStateMgr: Invalid depth mode %d\n", Mode );
-                ASSERT(FALSE);
-                return FALSE;
-            }
-
-            state_depth_mode DepthMode = (state_depth_mode)Mode;
-            
-            // Check cache
-            if( s_StateCache.CurrentDepthMode == DepthMode )
-            {
-                #ifdef STATE_VERBOSE_MODE
-                x_DebugMsg( "RStateMgr: Depth %s CACHED\n", state_GetModeName(STATE_TYPE_DEPTH, Mode) );
-                #endif
-                return FALSE;
-            }
-
-            if( !s_pDepthStates[Mode] )
-            {
-                x_DebugMsg( "RStateMgr: Depth state %s not created\n", state_GetModeName(STATE_TYPE_DEPTH, Mode) );
-                ASSERT(FALSE);
-                return FALSE;
-            }
-
-            // Set the state
-            g_pd3dContext->OMSetDepthStencilState( s_pDepthStates[Mode], 0 );
-            s_StateCache.CurrentDepthMode = DepthMode;
-
-            #ifdef STATE_VERBOSE_MODE
-            x_DebugMsg( "RStateMgr: Depth mode set to %s\n", state_GetModeName(STATE_TYPE_DEPTH, Mode) );
-            #endif
-            return TRUE;
-        }
-
-        case STATE_TYPE_SAMPLER:
-        {
-            if( Mode >= STATE_SAMPLER_COUNT )
-            {
-                x_DebugMsg( "RStateMgr: Invalid sampler mode %d\n", Mode );
-                ASSERT(FALSE);
-                return FALSE;
-            }
-
-            state_sampler_mode SamplerMode = (state_sampler_mode)Mode;
-            
-            // Check cache
-            if( s_StateCache.CurrentSamplerMode == SamplerMode )
-            {
-                #ifdef STATE_VERBOSE_MODE
-                x_DebugMsg( "RStateMgr: Sampler %s CACHED\n", state_GetModeName(STATE_TYPE_SAMPLER, Mode) );
-                #endif
-                return FALSE;
-            }
-
-            if( !s_pSamplerStates[Mode] )
-            {
-                x_DebugMsg( "RStateMgr: Sampler state %s not created\n", state_GetModeName(STATE_TYPE_SAMPLER, Mode) );
-                ASSERT(FALSE);
-                return FALSE;
-            }
-
-            // Set the state
-            g_pd3dContext->PSSetSamplers( 0, 1, &s_pSamplerStates[Mode] );
-            s_StateCache.CurrentSamplerMode = SamplerMode;
-
-            #ifdef STATE_VERBOSE_MODE
-            x_DebugMsg( "RStateMgr: Sampler mode set to %s\n", state_GetModeName(STATE_TYPE_SAMPLER, Mode) );
-            #endif
-            return TRUE;
-        }
-
-        default:
-            x_DebugMsg( "RStateMgr: Invalid state type %d\n", Type );
-            ASSERT(FALSE);
-            return FALSE;
+        x_DebugMsg( "RStateMgr: Invalid blend mode %d\n", Mode );
+        ASSERT(FALSE);
+        return FALSE;
     }
+
+    if( s_StateCache.CurrentBlendMode == Mode )
+    {
+        #ifdef STATE_VERBOSE_MODE
+        x_DebugMsg( "RStateMgr: Blend %s CACHED\n", state_GetModeName(STATE_TYPE_BLEND, Mode) );
+        #endif
+        return FALSE;
+    }
+
+    if( !s_pBlendStates[Mode] )
+    {
+        x_DebugMsg( "RStateMgr: Blend state %s not created\n", state_GetModeName(STATE_TYPE_BLEND, Mode) );
+        ASSERT(FALSE);
+        return FALSE;
+    }
+
+    g_pd3dContext->OMSetBlendState( s_pBlendStates[Mode], NULL, D3D11_DEFAULT_SAMPLE_MASK );
+    s_StateCache.CurrentBlendMode = Mode;
+
+    #ifdef STATE_VERBOSE_MODE
+    x_DebugMsg( "RStateMgr: Blend mode set to %s\n", state_GetModeName(STATE_TYPE_BLEND, Mode) );
+    #endif
+    return TRUE;
+}
+
+//==============================================================================
+
+xbool state_SetRasterizer( state_raster_mode Mode )
+{
+    if( !s_StateCache.bInitialized )
+    {
+        x_DebugMsg( "RStateMgr: Not initialized\n" );
+        ASSERT(FALSE);
+        return FALSE;
+    }
+
+    if( !g_pd3dContext )
+        return FALSE;
+
+    if( Mode >= STATE_RASTER_COUNT )
+    {
+        x_DebugMsg( "RStateMgr: Invalid rasterizer mode %d\n", Mode );
+        ASSERT(FALSE);
+        return FALSE;
+    }
+
+    if( s_StateCache.CurrentRasterMode == Mode )
+    {
+        #ifdef STATE_VERBOSE_MODE
+        x_DebugMsg( "RStateMgr: Rasterizer %s CACHED\n", state_GetModeName(STATE_TYPE_RASTERIZER, Mode) );
+        #endif
+        return FALSE;
+    }
+
+    if( !s_pRasterStates[Mode] )
+    {
+        x_DebugMsg( "RStateMgr: Rasterizer state %s not created\n", state_GetModeName(STATE_TYPE_RASTERIZER, Mode) );
+        ASSERT(FALSE);
+        return FALSE;
+    }
+
+    g_pd3dContext->RSSetState( s_pRasterStates[Mode] );
+    s_StateCache.CurrentRasterMode = Mode;
+
+    #ifdef STATE_VERBOSE_MODE
+    x_DebugMsg( "RStateMgr: Rasterizer mode set to %s\n", state_GetModeName(STATE_TYPE_RASTERIZER, Mode) );
+    #endif
+    return TRUE;
+}
+
+//==============================================================================
+
+xbool state_SetDepth( state_depth_mode Mode )
+{
+    if( !s_StateCache.bInitialized )
+    {
+        x_DebugMsg( "RStateMgr: Not initialized\n" );
+        ASSERT(FALSE);
+        return FALSE;
+    }
+
+    if( !g_pd3dContext )
+        return FALSE;
+
+    if( Mode >= STATE_DEPTH_COUNT )
+    {
+        x_DebugMsg( "RStateMgr: Invalid depth mode %d\n", Mode );
+        ASSERT(FALSE);
+        return FALSE;
+    }
+
+    if( s_StateCache.CurrentDepthMode == Mode )
+    {
+        #ifdef STATE_VERBOSE_MODE
+        x_DebugMsg( "RStateMgr: Depth %s CACHED\n", state_GetModeName(STATE_TYPE_DEPTH, Mode) );
+        #endif
+        return FALSE;
+    }
+
+    if( !s_pDepthStates[Mode] )
+    {
+        x_DebugMsg( "RStateMgr: Depth state %s not created\n", state_GetModeName(STATE_TYPE_DEPTH, Mode) );
+        ASSERT(FALSE);
+        return FALSE;
+    }
+
+    g_pd3dContext->OMSetDepthStencilState( s_pDepthStates[Mode], 0 );
+    s_StateCache.CurrentDepthMode = Mode;
+
+    #ifdef STATE_VERBOSE_MODE
+    x_DebugMsg( "RStateMgr: Depth mode set to %s\n", state_GetModeName(STATE_TYPE_DEPTH, Mode) );
+    #endif
+    return TRUE;
+}
+
+//==============================================================================
+
+xbool state_SetSampler( state_sampler_mode Mode, u32 Slot, u32 StageMask )
+{
+    if( !s_StateCache.bInitialized )
+    {
+        x_DebugMsg( "RStateMgr: Not initialized\n" );
+        ASSERT(FALSE);
+        return FALSE;
+    }
+
+    if( !g_pd3dContext )
+        return FALSE;
+
+    if( Mode >= STATE_SAMPLER_COUNT )
+    {
+        x_DebugMsg( "RStateMgr: Invalid sampler mode %d\n", Mode );
+        ASSERT(FALSE);
+        return FALSE;
+    }
+
+    if( Slot >= STATE_SAMPLER_MAX_SLOTS )
+    {
+        x_DebugMsg( "RStateMgr: Invalid sampler slot %d\n", Slot );
+        ASSERT(FALSE);
+        return FALSE;
+    }
+
+    u32 SamplerMask = StageMask & STATE_SAMPLER_STAGE_ALL;
+    if( SamplerMask == 0 )
+    {
+        x_DebugMsg( "RStateMgr: Invalid sampler stage mask 0x%08X\n", StageMask );
+        ASSERT(FALSE);
+        return FALSE;
+    }
+
+    if( !s_pSamplerStates[Mode] )
+    {
+        x_DebugMsg( "RStateMgr: Sampler state %s not created\n", state_GetModeName(STATE_TYPE_SAMPLER, Mode) );
+        ASSERT(FALSE);
+        return FALSE;
+    }
+
+    ID3D11SamplerState* pSamplerState = s_pSamplerStates[Mode];
+    xbool bChanged = FALSE;
+
+    if( SamplerMask & STATE_SAMPLER_STAGE_PS )
+    {
+        if( s_StateCache.CurrentSamplerMode[STATE_SAMPLER_STAGE_INDEX_PS][Slot] != Mode )
+        {
+            g_pd3dContext->PSSetSamplers( Slot, 1, &pSamplerState );
+            s_StateCache.CurrentSamplerMode[STATE_SAMPLER_STAGE_INDEX_PS][Slot] = Mode;
+            bChanged = TRUE;
+        }
+    }
+
+    if( SamplerMask & STATE_SAMPLER_STAGE_VS )
+    {
+        if( s_StateCache.CurrentSamplerMode[STATE_SAMPLER_STAGE_INDEX_VS][Slot] != Mode )
+        {
+            g_pd3dContext->VSSetSamplers( Slot, 1, &pSamplerState );
+            s_StateCache.CurrentSamplerMode[STATE_SAMPLER_STAGE_INDEX_VS][Slot] = Mode;
+            bChanged = TRUE;
+        }
+    }
+
+    if( SamplerMask & STATE_SAMPLER_STAGE_GS )
+    {
+        if( s_StateCache.CurrentSamplerMode[STATE_SAMPLER_STAGE_INDEX_GS][Slot] != Mode )
+        {
+            g_pd3dContext->GSSetSamplers( Slot, 1, &pSamplerState );
+            s_StateCache.CurrentSamplerMode[STATE_SAMPLER_STAGE_INDEX_GS][Slot] = Mode;
+            bChanged = TRUE;
+        }
+    }
+
+    if( SamplerMask & STATE_SAMPLER_STAGE_CS )
+    {
+        if( s_StateCache.CurrentSamplerMode[STATE_SAMPLER_STAGE_INDEX_CS][Slot] != Mode )
+        {
+            g_pd3dContext->CSSetSamplers( Slot, 1, &pSamplerState );
+            s_StateCache.CurrentSamplerMode[STATE_SAMPLER_STAGE_INDEX_CS][Slot] = Mode;
+            bChanged = TRUE;
+        }
+    }
+
+    return bChanged;
 }
 
 //==============================================================================
@@ -890,7 +964,14 @@ void state_FlushCache( void )
     s_StateCache.CurrentBlendMode   = STATE_BLEND_INVALID;
     s_StateCache.CurrentRasterMode  = STATE_RASTER_INVALID;
     s_StateCache.CurrentDepthMode   = STATE_DEPTH_INVALID;
-    s_StateCache.CurrentSamplerMode = STATE_SAMPLER_INVALID;
+    
+    s32 Stage;
+    s32 Slot;
+    for( Stage = 0; Stage < STATE_SAMPLER_STAGE_INDEX_COUNT; Stage++ )
+    {
+        for( Slot = 0; Slot < (s32)STATE_SAMPLER_MAX_SLOTS; Slot++ )
+            s_StateCache.CurrentSamplerMode[Stage][Slot] = STATE_SAMPLER_INVALID;
+    }
 }
 
 //==============================================================================
@@ -909,7 +990,7 @@ s32 state_GetState( state_type Type )
         case STATE_TYPE_BLEND:      return (s32)s_StateCache.CurrentBlendMode;
         case STATE_TYPE_RASTERIZER: return (s32)s_StateCache.CurrentRasterMode;
         case STATE_TYPE_DEPTH:      return (s32)s_StateCache.CurrentDepthMode;
-        case STATE_TYPE_SAMPLER:    return (s32)s_StateCache.CurrentSamplerMode;
+        case STATE_TYPE_SAMPLER:    return (s32)s_StateCache.CurrentSamplerMode[STATE_SAMPLER_STAGE_INDEX_PS][0];
         default:
             x_DebugMsg( "RStateMgr: Invalid state type %d\n", Type );
             ASSERT(FALSE);
@@ -933,7 +1014,7 @@ xbool state_IsState( state_type Type, s32 Mode )
         case STATE_TYPE_BLEND:      return (s_StateCache.CurrentBlendMode   == (state_blend_mode)Mode);
         case STATE_TYPE_RASTERIZER: return (s_StateCache.CurrentRasterMode  == (state_raster_mode)Mode);
         case STATE_TYPE_DEPTH:      return (s_StateCache.CurrentDepthMode   == (state_depth_mode)Mode);
-        case STATE_TYPE_SAMPLER:    return (s_StateCache.CurrentSamplerMode == (state_sampler_mode)Mode);
+        case STATE_TYPE_SAMPLER:    return (s_StateCache.CurrentSamplerMode[STATE_SAMPLER_STAGE_INDEX_PS][0] == (state_sampler_mode)Mode);
         default:
             x_DebugMsg( "RStateMgr: Invalid state type %d\n", Type );
             ASSERT(FALSE);

@@ -363,17 +363,17 @@ xcolor post_mgr::GetFogValue( const vector3& WorldPos, s32 PaletteIndex )
 
 void post_mgr::PrepareFullscreenQuad( void ) const
 {
-    state_SetState( STATE_TYPE_DEPTH, STATE_DEPTH_DISABLED );
-    state_SetState( STATE_TYPE_RASTERIZER, STATE_RASTER_SOLID );
+    state_SetDepth( STATE_DEPTH_DISABLED );
+    state_SetRasterizer( STATE_RASTER_SOLID );
 }
 
 //==============================================================================
 
 void post_mgr::RestoreDefaultState( void ) const
 {
-    state_SetState( STATE_TYPE_DEPTH, STATE_DEPTH_NORMAL );
-    state_SetState( STATE_TYPE_BLEND, STATE_BLEND_NONE );
-    state_SetState( STATE_TYPE_RASTERIZER, STATE_RASTER_SOLID );
+    state_SetDepth( STATE_DEPTH_NORMAL );
+    state_SetBlend( STATE_BLEND_NONE );
+    state_SetRasterizer( STATE_RASTER_SOLID );
 }
 
 //==============================================================================

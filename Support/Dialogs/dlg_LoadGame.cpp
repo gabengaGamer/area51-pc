@@ -1913,12 +1913,12 @@ void dlg_load_game::platform_DrawSprite( const vector2& UpperLeft,
     draw_Begin( DRAW_SPRITES, DrawFlags );
 
     if( Additive )
-        state_SetState( STATE_TYPE_BLEND, STATE_BLEND_ADD );
+        state_SetBlend( STATE_BLEND_ADD );
     else
-        state_SetState( STATE_TYPE_BLEND, STATE_BLEND_ALPHA );
+        state_SetBlend( STATE_BLEND_ALPHA );
     
-    state_SetState( STATE_TYPE_DEPTH, STATE_DEPTH_DISABLED );
-    state_SetState( STATE_TYPE_RASTERIZER, STATE_RASTER_SOLID_NO_CULL );
+    state_SetDepth( STATE_DEPTH_DISABLED );
+    state_SetRasterizer( STATE_RASTER_SOLID_NO_CULL );
     
     draw_SpriteUV( ClippedUL,
                    ClippedSize,
@@ -1980,8 +1980,8 @@ void dlg_load_game::platform_BeginFogRender( void )
                               DRAW_NO_ZWRITE | 
                               DRAW_BLEND_ADD );
 
-    state_SetState( STATE_TYPE_BLEND, STATE_BLEND_ADD );
-    state_SetState( STATE_TYPE_DEPTH, STATE_DEPTH_DISABLED );
+    state_SetBlend( STATE_BLEND_ADD );
+    state_SetDepth( STATE_DEPTH_DISABLED );
     
     draw_SetTexture( m_FogBMP );
 #endif
@@ -2158,9 +2158,9 @@ void dlg_load_game::platform_BeginShaftRender( void )
                             DRAW_U_CLAMP    |
                             DRAW_V_CLAMP    );
 
-    state_SetState( STATE_TYPE_BLEND, STATE_BLEND_ADD );
-    state_SetState( STATE_TYPE_DEPTH, STATE_DEPTH_DISABLED );
-    state_SetState( STATE_TYPE_SAMPLER, STATE_SAMPLER_LINEAR_CLAMP );
+    state_SetBlend( STATE_BLEND_ADD );
+    state_SetDepth( STATE_DEPTH_DISABLED );
+    state_SetSampler( STATE_SAMPLER_LINEAR_CLAMP, 0, STATE_SAMPLER_STAGE_PS );
 #endif
 }
 

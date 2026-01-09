@@ -923,31 +923,31 @@ void draw_ApplyBlendState( u32 Flags )
     if( Flags & DRAW_BLEND_ADD )
     {
         if( draw_IsPremultipliedTargetActive() )
-            state_SetState( STATE_TYPE_BLEND, STATE_BLEND_PREMULT_ADD );
+            state_SetBlend( STATE_BLEND_PREMULT_ADD );
         else
-            state_SetState( STATE_TYPE_BLEND, STATE_BLEND_ADD );
+            state_SetBlend( STATE_BLEND_ADD );
     }
     else if( Flags & DRAW_BLEND_SUB )
     {
         if( draw_IsPremultipliedTargetActive() )
-            state_SetState( STATE_TYPE_BLEND, STATE_BLEND_PREMULT_SUB );
+            state_SetBlend( STATE_BLEND_PREMULT_SUB );
         else
-            state_SetState( STATE_TYPE_BLEND, STATE_BLEND_SUB );
+            state_SetBlend( STATE_BLEND_SUB );
     }
     else if( Flags & DRAW_BLEND_INTENSITY )
     {
-        state_SetState( STATE_TYPE_BLEND, STATE_BLEND_INTENSITY );
+        state_SetBlend( STATE_BLEND_INTENSITY );
     }
     else if( Flags & DRAW_USE_ALPHA )
     {
         if( draw_IsPremultipliedTargetActive() )
-            state_SetState( STATE_TYPE_BLEND, STATE_BLEND_PREMULT_ALPHA );
+            state_SetBlend( STATE_BLEND_PREMULT_ALPHA );
         else
-            state_SetState( STATE_TYPE_BLEND, STATE_BLEND_ALPHA );
+            state_SetBlend( STATE_BLEND_ALPHA );
     }
     else
     {
-        state_SetState( STATE_TYPE_BLEND, STATE_BLEND_NONE );
+        state_SetBlend( STATE_BLEND_NONE );
     }
 }
 
@@ -959,16 +959,16 @@ void draw_ApplyDepthState( u32 Flags )
     if( Flags & DRAW_NO_ZBUFFER )
     {
         if( Flags & DRAW_NO_ZWRITE )
-            state_SetState( STATE_TYPE_DEPTH, STATE_DEPTH_DISABLED_NO_WRITE );
+            state_SetDepth( STATE_DEPTH_DISABLED_NO_WRITE );
         else
-            state_SetState( STATE_TYPE_DEPTH, STATE_DEPTH_DISABLED );
+            state_SetDepth( STATE_DEPTH_DISABLED );
     }
     else
     {
         if( Flags & DRAW_NO_ZWRITE )
-            state_SetState( STATE_TYPE_DEPTH, STATE_DEPTH_NO_WRITE );
+            state_SetDepth( STATE_DEPTH_NO_WRITE );
         else
-            state_SetState( STATE_TYPE_DEPTH, STATE_DEPTH_NORMAL );
+            state_SetDepth( STATE_DEPTH_NORMAL );
     }
 }
 
@@ -980,16 +980,16 @@ void draw_ApplyRasterizerState( u32 Flags )
     if( Flags & DRAW_WIRE_FRAME )
     {
         if( Flags & DRAW_CULL_NONE )
-            state_SetState( STATE_TYPE_RASTERIZER, STATE_RASTER_WIRE_NO_CULL );
+            state_SetRasterizer( STATE_RASTER_WIRE_NO_CULL );
         else
-            state_SetState( STATE_TYPE_RASTERIZER, STATE_RASTER_WIRE );
+            state_SetRasterizer( STATE_RASTER_WIRE );
     }
     else
     {
         if( Flags & DRAW_CULL_NONE )
-            state_SetState( STATE_TYPE_RASTERIZER, STATE_RASTER_SOLID_NO_CULL );
+            state_SetRasterizer( STATE_RASTER_SOLID_NO_CULL );
         else
-            state_SetState( STATE_TYPE_RASTERIZER, STATE_RASTER_SOLID );
+            state_SetRasterizer( STATE_RASTER_SOLID );
     }
 }
 
@@ -1006,16 +1006,16 @@ void draw_ApplySamplerState( u32 Flags )
     if( s_bCurrentBilinear )
     {
         if( clamp )
-            state_SetState( STATE_TYPE_SAMPLER, STATE_SAMPLER_ANISOTROPIC_CLAMP ); //state_SetState( STATE_TYPE_SAMPLER, STATE_SAMPLER_LINEAR_CLAMP );
+            state_SetSampler( STATE_SAMPLER_ANISOTROPIC_CLAMP, 0, STATE_SAMPLER_STAGE_PS ); //state_SetSampler( STATE_SAMPLER_LINEAR_CLAMP );
         else
-            state_SetState( STATE_TYPE_SAMPLER, STATE_SAMPLER_ANISOTROPIC_WRAP ); //state_SetState( STATE_TYPE_SAMPLER, STATE_SAMPLER_LINEAR_WRAP );
+            state_SetSampler( STATE_SAMPLER_ANISOTROPIC_WRAP, 0, STATE_SAMPLER_STAGE_PS ); //state_SetSampler( STATE_SAMPLER_LINEAR_WRAP );
     }
     else
     {
         if( clamp )
-            state_SetState( STATE_TYPE_SAMPLER, STATE_SAMPLER_POINT_CLAMP );
+            state_SetSampler( STATE_SAMPLER_POINT_CLAMP, 0, STATE_SAMPLER_STAGE_PS );
         else
-            state_SetState( STATE_TYPE_SAMPLER, STATE_SAMPLER_POINT_WRAP );
+            state_SetSampler( STATE_SAMPLER_POINT_WRAP, 0, STATE_SAMPLER_STAGE_PS );
     }
 }
 
@@ -1157,7 +1157,7 @@ void draw_End( void )
     }
     
     // Restore depth state
-    state_SetState( STATE_TYPE_DEPTH, STATE_DEPTH_NORMAL );
+    state_SetDepth( STATE_DEPTH_NORMAL );
     
     // Restore standard matrices
     const view* pView = eng_GetView();
@@ -1184,10 +1184,10 @@ void draw_ResetAfterException( void )
         return;
 
     // Reset states to default
-    state_SetState( STATE_TYPE_BLEND, STATE_BLEND_ALPHA );
-    state_SetState( STATE_TYPE_DEPTH, STATE_DEPTH_NORMAL );
-    state_SetState( STATE_TYPE_RASTERIZER, STATE_RASTER_SOLID );
-    state_SetState( STATE_TYPE_SAMPLER, STATE_SAMPLER_LINEAR_WRAP );
+    state_SetBlend( STATE_BLEND_ALPHA );
+    state_SetDepth( STATE_DEPTH_NORMAL );
+    state_SetRasterizer( STATE_RASTER_SOLID );
+    state_SetSampler( STATE_SAMPLER_LINEAR_WRAP, 0, STATE_SAMPLER_STAGE_PS );
 }
 
 //==============================================================================
@@ -1851,7 +1851,7 @@ void draw_DisableBilinear( void )
     if( m_bBegin )
         draw_SetupRenderStates( m_Flags, m_IsTextured );
     else
-        state_SetState( STATE_TYPE_SAMPLER, STATE_SAMPLER_POINT_WRAP );
+        state_SetSampler( STATE_SAMPLER_POINT_WRAP, 0, STATE_SAMPLER_STAGE_PS );
 }
 
 //==============================================================================
@@ -1864,5 +1864,5 @@ void draw_EnableBilinear( void )
     if( m_bBegin )
         draw_SetupRenderStates( m_Flags, m_IsTextured );
     else
-        state_SetState( STATE_TYPE_SAMPLER, STATE_SAMPLER_LINEAR_WRAP );
+        state_SetSampler( STATE_SAMPLER_LINEAR_WRAP, 0, STATE_SAMPLER_STAGE_PS );
 }
