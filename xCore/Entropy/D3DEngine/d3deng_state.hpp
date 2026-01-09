@@ -96,6 +96,20 @@ enum state_sampler_mode
     STATE_SAMPLER_INVALID = 0xFF
 };
 
+//------------------------------------------------------------------------------
+
+enum state_sampler_stage
+{
+    STATE_SAMPLER_STAGE_PS  = (1 << 0),
+    STATE_SAMPLER_STAGE_VS  = (1 << 1),
+    STATE_SAMPLER_STAGE_GS  = (1 << 2),
+    STATE_SAMPLER_STAGE_CS  = (1 << 3),
+    STATE_SAMPLER_STAGE_ALL = (STATE_SAMPLER_STAGE_PS |
+                               STATE_SAMPLER_STAGE_VS |
+                               STATE_SAMPLER_STAGE_GS |
+                               STATE_SAMPLER_STAGE_CS)
+};
+
 //==============================================================================
 //  SYSTEM FUNCTIONS
 //==============================================================================
@@ -108,8 +122,14 @@ void                state_Kill                 ( void );
 //  STATE MANAGEMENT FUNCTIONS
 //==============================================================================
 
-// State setter
-xbool               state_SetState             ( state_type Type, s32 Mode );
+// State setters
+xbool               state_SetBlend             ( state_blend_mode Mode );
+xbool               state_SetRasterizer        ( state_raster_mode Mode );
+xbool               state_SetDepth             ( state_depth_mode Mode );
+xbool               state_SetSampler           ( state_sampler_mode Mode, u32 Slot = 0, u32 StageMask = STATE_SAMPLER_STAGE_PS );
+
+// Legacy state setter
+xbool               state_SetState             ( state_type Type, s32 Mode, u32 Slot = 0, u32 StageMask = STATE_SAMPLER_STAGE_PS );
 
 //==============================================================================
 //  UTILITY FUNCTIONS

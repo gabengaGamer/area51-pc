@@ -293,10 +293,10 @@ void material_mgr::ApplyRenderStates( const material* pMaterial, u32 RenderFlags
     //    samplerMode = STATE_SAMPLER_LINEAR_CLAMP;
     //}
 
-    state_SetState( STATE_TYPE_BLEND,      blendMode );
-    state_SetState( STATE_TYPE_DEPTH,      depthMode );
-    state_SetState( STATE_TYPE_RASTERIZER, rasterMode );
-    state_SetState( STATE_TYPE_SAMPLER,    samplerMode );
+    state_SetBlend(      blendMode );
+    state_SetDepth(      depthMode );
+    state_SetRasterizer( rasterMode );
+    state_SetSampler(    samplerMode, 0, STATE_SAMPLER_STAGE_PS );
 }
 
 //==============================================================================

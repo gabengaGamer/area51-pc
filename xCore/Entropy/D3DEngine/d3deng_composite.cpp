@@ -343,15 +343,15 @@ void composite_Blit( const rtarget& Source,
    }
 
     // Set up for composite rendering
-    state_SetState( STATE_TYPE_DEPTH, STATE_DEPTH_DISABLED_NO_WRITE );
-    state_SetState( STATE_TYPE_RASTERIZER, STATE_RASTER_SOLID_NO_CULL );
+    state_SetDepth( STATE_DEPTH_DISABLED_NO_WRITE );
+    state_SetRasterizer( STATE_RASTER_SOLID_NO_CULL );
 
     // Set blend mode based on composite blend mode
     state_blend_mode HardwareBlendMode = composite_GetHardwareBlendMode( BlendMode );
-    state_SetState( STATE_TYPE_BLEND, HardwareBlendMode );
+    state_SetBlend( HardwareBlendMode );
 
     // Set sampler
-    state_SetState( STATE_TYPE_SAMPLER, SamplerMode );
+    state_SetSampler( SamplerMode, 0, STATE_SAMPLER_STAGE_PS );
 
     // Set vertex buffer
     UINT stride = sizeof(composite_vertex);
@@ -387,6 +387,6 @@ void composite_Blit( const rtarget& Source,
     g_pd3dContext->PSSetShaderResources( 0, 1, &nullSRV );
 
     // Restore states
-    state_SetState( STATE_TYPE_DEPTH, STATE_DEPTH_NORMAL );
-    state_SetState( STATE_TYPE_RASTERIZER, STATE_RASTER_SOLID );
+    state_SetDepth( STATE_DEPTH_NORMAL );
+    state_SetRasterizer( STATE_RASTER_SOLID );
 }

@@ -1048,10 +1048,10 @@ void d3deng_SetDefaultStates( void )
         rtarget_Clear( RTARGET_CLEAR_ALL, clearColor, 1.0f, 0 );
 
         // Set default blend state
-        state_SetState( STATE_TYPE_BLEND, STATE_BLEND_ALPHA );
+        state_SetBlend( STATE_BLEND_ALPHA );
 
         // Set default sampler state
-        state_SetState( STATE_TYPE_SAMPLER, STATE_SAMPLER_ANISOTROPIC_WRAP );
+        state_SetSampler( STATE_SAMPLER_ANISOTROPIC_WRAP, 0, STATE_SAMPLER_STAGE_PS );
     }
 }
 
