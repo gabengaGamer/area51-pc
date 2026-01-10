@@ -928,6 +928,13 @@ ID3D11Buffer* shader_CreateConstantBuffer( u32 Size, constant_buffer_type Type, 
     if( !g_pd3dDevice )
         return NULL;
 
+    if( ( Size & 0x0F ) != 0 )
+    {
+        x_DebugMsg( "ShaderMgr: Constant buffer size (%d) is not 16-byte aligned\n", Size );
+        ASSERT(FALSE);
+        return NULL;
+    }
+
     D3D11_BUFFER_DESC cbd;
     ZeroMemory( &cbd, sizeof(cbd) );
     cbd.ByteWidth = (u32)Size;
@@ -997,8 +1004,16 @@ void shader_UpdateConstantBuffer( ID3D11Buffer* pBuffer, const void* pData, u32 
     if (!g_pd3dContext || !pBuffer || !pData)
         return;
 
+    if( ( Size & 0x0F ) != 0 )
+    {
+        x_DebugMsg( "ShaderMgr: Constant buffer size (%d) is not 16-byte aligned\n", Size );
+        ASSERT(FALSE);
+        return;
+    }
+
     D3D11_BUFFER_DESC desc;
     pBuffer->GetDesc( &desc );
+
     if( Size > desc.ByteWidth )
     {
         x_DebugMsg( "ShaderMgr: Constant buffer update size (%d) exceeds buffer size (%d)\n", Size, desc.ByteWidth );
