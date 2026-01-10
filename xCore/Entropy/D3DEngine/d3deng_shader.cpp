@@ -992,6 +992,28 @@ void shader_UpdateConstantBuffer( ID3D11Buffer* pBuffer, const void* pData, u32 
     if (!g_pd3dContext || !pBuffer || !pData)
         return;
 
+    D3D11_BUFFER_DESC desc;
+    pBuffer->GetDesc( &desc );
+    if( Size > desc.ByteWidth )
+    {
+        x_DebugMsg( "ShaderMgr: Constant buffer update size (%d) exceeds buffer size (%d)\n", Size, desc.ByteWidth );
+        ASSERT(FALSE);
+        return;
+    }
+
+    if( desc.Usage == D3D11_USAGE_IMMUTABLE )
+    {
+        x_DebugMsg( "ShaderMgr: Attempted to update immutable constant buffer\n" );
+        ASSERT(FALSE);
+        return;
+    }
+
+    if( desc.Usage == D3D11_USAGE_DEFAULT )
+    {
+        g_pd3dContext->UpdateSubresource( pBuffer, 0, NULL, pData, 0, 0 );
+        return;
+    }
+
     D3D11_MAPPED_SUBRESOURCE mappedResource;
     HRESULT hr = g_pd3dContext->Map(pBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
     if (SUCCEEDED(hr))
