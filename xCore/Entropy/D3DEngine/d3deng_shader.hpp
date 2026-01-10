@@ -53,7 +53,8 @@ enum constant_buffer_type
     CB_TYPE_DYNAMIC = 0,
     CB_TYPE_DEFAULT,
     CB_TYPE_IMMUTABLE,
-	CB_TYPE_COUNT
+    CB_TYPE_STAGING,
+    CB_TYPE_COUNT
 };
 
 //------------------------------------------------------------------------------

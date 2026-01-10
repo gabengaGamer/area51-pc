@@ -337,9 +337,9 @@ xbool shader_CompileShaderInternal( const char* pSource,
     }
 
     shader_include_handler includeHandler( pSourceName );
-	
+    
     u32 compileFlags = 0;
-	
+    
 #if defined(X_DEBUG)
     compileFlags |= D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION; //| D3DCOMPILE_WARNINGS_ARE_ERRORS;
 #elif defined(X_RETAIL)
@@ -955,11 +955,16 @@ ID3D11Buffer* shader_CreateConstantBuffer( u32 Size, constant_buffer_type Type, 
                 return NULL;
             }
             break;
-            
+
+        case CB_TYPE_STAGING:
+            cbd.Usage = D3D11_USAGE_STAGING;
+            cbd.CPUAccessFlags = D3D11_CPU_ACCESS_READ | D3D11_CPU_ACCESS_WRITE;
+            break; 
+
         default:
             x_DebugMsg( "ShaderMgr: Invalid constant buffer type %d\n", Type );
             ASSERT(FALSE);
-            return NULL;	
+            return NULL;    
     }
 
     D3D11_SUBRESOURCE_DATA* pInitData = NULL;
@@ -1001,31 +1006,40 @@ void shader_UpdateConstantBuffer( ID3D11Buffer* pBuffer, const void* pData, u32 
         return;
     }
 
-    if( desc.Usage == D3D11_USAGE_IMMUTABLE )
+    switch( desc.Usage )
     {
-        x_DebugMsg( "ShaderMgr: Attempted to update immutable constant buffer\n" );
-        ASSERT(FALSE);
-        return;
-    }
+        case D3D11_USAGE_IMMUTABLE:
+            x_DebugMsg( "ShaderMgr: Attempted to update immutable constant buffer\n" );
+            ASSERT(FALSE);
+            return;
 
-    if( desc.Usage == D3D11_USAGE_DEFAULT )
-    {
-        g_pd3dContext->UpdateSubresource( pBuffer, 0, NULL, pData, 0, 0 );
-        return;
-    }
+        case D3D11_USAGE_DEFAULT:
+            g_pd3dContext->UpdateSubresource( pBuffer, 0, NULL, pData, 0, 0 );
+            return;
 
-    D3D11_MAPPED_SUBRESOURCE mappedResource;
-    HRESULT hr = g_pd3dContext->Map(pBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
-    if (SUCCEEDED(hr))
-    {
-        x_memcpy(mappedResource.pData, pData, Size);
-        g_pd3dContext->Unmap(pBuffer, 0);
-        //x_DebugMsg("ShaderMgr: Constant buffer updated (%d bytes)\n", (u32)Size);
-    }
-    else
-    {
-        x_DebugMsg("ShaderMgr: Failed to map constant buffer, HRESULT 0x%08X\n", hr);
-        ASSERT(FALSE);
+        case D3D11_USAGE_DYNAMIC:
+        case D3D11_USAGE_STAGING:
+        {
+            D3D11_MAPPED_SUBRESOURCE mappedResource;
+            HRESULT hr = g_pd3dContext->Map(pBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
+            if (SUCCEEDED(hr))
+            {
+                x_memcpy(mappedResource.pData, pData, Size);
+                g_pd3dContext->Unmap(pBuffer, 0);
+                //x_DebugMsg("ShaderMgr: Constant buffer updated (%d bytes)\n", (u32)Size);
+            }
+            else
+            {
+                x_DebugMsg("ShaderMgr: Failed to map constant buffer, HRESULT 0x%08X\n", hr);
+                ASSERT(FALSE);
+            }
+            return;
+        }
+
+        default:
+            x_DebugMsg( "ShaderMgr: Unsupported constant buffer usage %d\n", desc.Usage );
+            ASSERT(FALSE);
+            return;
     }
 }
 
