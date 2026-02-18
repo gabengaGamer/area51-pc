@@ -1579,7 +1579,7 @@ void alien_glob::SetStage( s32 iNewStage )
         m_hNucleusFX.SetSuspended( FALSE );  
     }
 
-    m_FloorProperties.Init( Radius, 1.0f );
+    m_FloorProperties.Init( Radius, 0.64f );
     m_FloorProperties.ForceUpdate( GetPosition() );
 }
 

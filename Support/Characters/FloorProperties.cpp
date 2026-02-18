@@ -45,7 +45,6 @@ void floor_properties::Update( const vector3& NewPosition, f32 DeltaTime, xbool 
     // Check if object has moved beyond radius
     //
     vector3 HorizDelta = NewPosition - m_LastPosition;
-    HorizDelta.GetY() = 0;
 
     if(( HorizDelta.LengthSquared() > m_RadiusSquared ) && (!bIgnorePosition))
     {

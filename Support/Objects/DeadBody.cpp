@@ -102,7 +102,7 @@ dead_body::dead_body( void ) :
     m_RagdollType(ragdoll::TYPE_CIVILIAN),
 	m_BloodDecalGroup(-1)
 {
-    m_FloorProperties.Init( 100.0f, 0.5f );
+    m_FloorProperties.Init( 100.0f, 0.128f );
     
     // This assumes that the dead body is about 2.5 meters tall.  Then is about 2 
     // meters around.  The bbox is center around the eyes of the player.

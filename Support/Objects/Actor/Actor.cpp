@@ -184,7 +184,7 @@ actor::actor( void ) :
     // Not inactive.
     ClearInactiveTime();
 
-    m_FloorProperties.Init( 100.0f, 0.5f );
+    m_FloorProperties.Init( 100.0f, 0.128f );
 
     m_BigPainTakenTime = (f32)x_GetTimeSec();
     m_pEffects = NULL;    

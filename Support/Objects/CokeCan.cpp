@@ -385,7 +385,7 @@ coke_can::coke_can( void ) :
     m_MaxInitVel        ( 0,0,0 ),  // Max initial velocity
     m_RollAudioID       ( 0 )       // Can rolling audio id
 {
-    m_FloorProperties.Init( 100.0f, 0.5f );
+    m_FloorProperties.Init( 100.0f, 0.128f );
     m_iProfile = PROFILE_CAN;
 }
 

@@ -97,7 +97,7 @@ skin_prop_surface::skin_prop_surface( void )
     m_iMaterial = MAT_TYPE_NULL; 
     m_iBackupAnimString = -1;
 
-    m_FloorProperties.Init( 50.0f, 0.5f );
+    m_FloorProperties.Init( 50.0f, 0.128f );
 }
 
 //=============================================================================
