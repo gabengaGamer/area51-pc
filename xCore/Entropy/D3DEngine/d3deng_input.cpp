@@ -1569,7 +1569,6 @@ xbool input_UpdateState2( s32 Depth = 0 )
             TranslateMessage( &s_Input.Msg );
             DispatchMessage ( &s_Input.Msg );
         }
-        d3deng_ComputeMousePos();
     }
     //
     // Update the timer as well as the type of input query

@@ -29,7 +29,6 @@
 //==============================================================================
 
 static xbool draw_rt_CreateTarget( rtarget& Target, xbool& bValid, const char* pDebugName );
-static xbool draw_rt_ValidateTarget( rtarget& Target, xbool& bValid, const char* pDebugName );
 
 //==============================================================================
 //  UI TARGET STATE
@@ -39,7 +38,6 @@ static rtarget  s_UITarget;
 static xbool    s_bUITargetValid = FALSE;
 
 static xbool draw_rt_CreateUITarget( void );
-static xbool draw_rt_ValidateUITarget( void );
 static void  draw_rt_DestroyUITarget( void );
 
 //==============================================================================
@@ -50,7 +48,6 @@ static rtarget  s_PrimitiveTarget;
 static xbool    s_bPrimitiveTargetValid = FALSE;
 
 static xbool draw_rt_CreatePrimitiveTarget( void );
-static xbool draw_rt_ValidatePrimitiveTarget( void );
 static void  draw_rt_DestroyPrimitiveTarget( void );
 
 //==============================================================================
@@ -63,72 +60,35 @@ xbool draw_rt_CreateTarget( rtarget& Target, xbool& bValid, const char* pDebugNa
     if( !g_pd3dDevice )
         return FALSE;
 
-    // Get current resolution
-    s32 xRes, yRes;
-    eng_GetRes( xRes, yRes );
+    u32 prevWidth = Target.Desc.Width;
+    u32 prevHeight = Target.Desc.Height;
+    rtarget_format prevFormat = Target.Desc.Format;
+    xbool bHadTexture = (Target.pTexture != NULL);
 
-    // Validate resolution
-    if( xRes <= 0 || yRes <= 0 )
-    {
-        x_DebugMsg( "Draw: Invalid resolution %dx%d for %s target\n", xRes, yRes, pDebugName );
-        return FALSE;
-    }
-
-    // Clean up existing target
-    if( bValid )
-    {
-        rtarget_Destroy( Target );
-        bValid = FALSE;
-    }
-
-    // Create render target with current resolution
-    rtarget_desc Desc;
-    Desc.Width = xRes;
-    Desc.Height = yRes;
-    Desc.Format = RTARGET_FORMAT_RGBA8;
-    Desc.SampleCount = 1;
-    Desc.SampleQuality = 0;
-    Desc.bBindAsTexture = TRUE;
-
-    bValid = rtarget_Create( Target, Desc );
+    rtarget_registration Reg;
+    Reg.Policy = RTARGET_SIZE_RELATIVE_TO_VIEW;
+    Reg.ScaleX = 1.0f;
+    Reg.ScaleY = 1.0f;
+    Reg.Format = RTARGET_FORMAT_RGBA8;
+    Reg.SampleCount = 1;
+    Reg.SampleQuality = 0;
+    Reg.bBindAsTexture = TRUE;
+    bValid = rtarget_GetOrCreate( Target, Reg );
 
     if( bValid )
     {
-        x_DebugMsg( "Draw: %s target created with resolution %dx%d\n", pDebugName, xRes, yRes );
-    }
-    else
-    {
-        x_DebugMsg( "Draw: Failed to create %s target with resolution %dx%d\n", pDebugName, xRes, yRes );
-    }
-
-    return bValid;
-}
-
-//==============================================================================
-
-static
-xbool draw_rt_ValidateTarget( rtarget& Target, xbool& bValid, const char* pDebugName )
-{
-    if( !bValid )
-    {
-        return draw_rt_CreateTarget( Target, bValid, pDebugName );
+        if( !bHadTexture ||
+            Target.Desc.Width != prevWidth ||
+            Target.Desc.Height != prevHeight ||
+            Target.Desc.Format != prevFormat )
+        {
+            x_DebugMsg( "Draw: %s target created %dx%d\n", pDebugName, Target.Desc.Width, Target.Desc.Height );
+        }
+        return TRUE;
     }
 
-    s32 xRes, yRes;
-    eng_GetRes( xRes, yRes );
-
-    if( Target.Desc.Width != (u32)xRes || Target.Desc.Height != (u32)yRes )
-    {
-        x_DebugMsg( "Draw: %s target resolution changed from %dx%d to %dx%d, recreating\n",
-                    pDebugName,
-                    Target.Desc.Width,
-                    Target.Desc.Height,
-                    xRes,
-                    yRes );
-        return draw_rt_CreateTarget( Target, bValid, pDebugName );
-    }
-
-    return TRUE;
+    x_DebugMsg( "Draw: Failed to create %s target\n", pDebugName );
+    return FALSE;
 }
 
 //==============================================================================
@@ -168,18 +128,11 @@ xbool draw_rt_CreateUITarget( void )
 //==============================================================================
 
 static
-xbool draw_rt_ValidateUITarget( void )
-{
-    return draw_rt_ValidateTarget( s_UITarget, s_bUITargetValid, "UI" );
-}
-
-//==============================================================================
-
-static
 void draw_rt_DestroyUITarget( void )
 {
     if( s_bUITargetValid )
     {
+        rtarget_Unregister( s_UITarget );
         rtarget_Destroy( s_UITarget );
         s_bUITargetValid = FALSE;
     }
@@ -189,7 +142,7 @@ void draw_rt_DestroyUITarget( void )
 
 xbool draw_rt_BeginUI( void )
 {
-    if( !draw_rt_ValidateUITarget() )
+    if( !draw_rt_CreateUITarget() )
         return FALSE;
 
     rtarget_PushTargets();
@@ -221,18 +174,11 @@ xbool draw_rt_CreatePrimitiveTarget( void )
 //==============================================================================
 
 static
-xbool draw_rt_ValidatePrimitiveTarget( void )
-{
-    return draw_rt_ValidateTarget( s_PrimitiveTarget, s_bPrimitiveTargetValid, "Primitive" );
-}
-
-//==============================================================================
-
-static
 void draw_rt_DestroyPrimitiveTarget( void )
 {
     if( s_bPrimitiveTargetValid )
     {
+        rtarget_Unregister( s_PrimitiveTarget );
         rtarget_Destroy( s_PrimitiveTarget );
         s_bPrimitiveTargetValid = FALSE;
     }
@@ -242,7 +188,7 @@ void draw_rt_DestroyPrimitiveTarget( void )
 
 xbool draw_rt_BeginPrimitive( void )
 {
-    if( !draw_rt_ValidatePrimitiveTarget() )
+    if( !draw_rt_CreatePrimitiveTarget() )
         return FALSE;
 
     rtarget_PushTargets();

@@ -64,6 +64,16 @@ enum rtarget_clear_flags
     RTARGET_CLEAR_ALL     = RTARGET_CLEAR_COLOR | RTARGET_CLEAR_DEPTH | RTARGET_CLEAR_STENCIL
 };
 
+//------------------------------------------------------------------------------
+
+enum rtarget_size_policy
+{
+    RTARGET_SIZE_ABSOLUTE = 0,
+    RTARGET_SIZE_BACKBUFFER,
+    RTARGET_SIZE_RELATIVE_TO_BACKBUFFER,
+    RTARGET_SIZE_RELATIVE_TO_VIEW
+};
+
 //==============================================================================
 //  STRUCTURES
 //==============================================================================
@@ -97,6 +107,31 @@ struct rtarget
                      bIsDepthTarget(FALSE) {}
 };
 
+//------------------------------------------------------------------------------
+
+struct rtarget_registration
+{
+    rtarget_size_policy   Policy;
+    u32                   BaseWidth;
+    u32                   BaseHeight;
+    f32                   ScaleX;
+    f32                   ScaleY;
+    rtarget_format        Format;
+    u32                   SampleCount;
+    u32                   SampleQuality;
+    xbool                 bBindAsTexture;
+
+    rtarget_registration( void ) : Policy(RTARGET_SIZE_ABSOLUTE),
+                                   BaseWidth(0),
+                                   BaseHeight(0),
+                                   ScaleX(1.0f),
+                                   ScaleY(1.0f),
+                                   Format(RTARGET_FORMAT_RGBA8),
+                                   SampleCount(1),
+                                   SampleQuality(0),
+                                   bBindAsTexture(TRUE) {}
+};
+
 //==============================================================================
 //  SYSTEM FUNCTIONS
 //==============================================================================
@@ -113,6 +148,14 @@ void                rtarget_Kill                ( void );
 xbool               rtarget_Create              ( rtarget& Target, const rtarget_desc& Desc );
 xbool               rtarget_CreateFromTexture   ( rtarget& Target, ID3D11Texture2D* pTexture, rtarget_format Format );
 void                rtarget_Destroy             ( rtarget& Target );
+
+// Registration system
+xbool               rtarget_Register            ( rtarget& Target, const rtarget_registration& Reg );
+// Register and create if needed
+xbool               rtarget_GetOrCreate         ( rtarget& Target, const rtarget_registration& Reg );
+void                rtarget_Unregister          ( rtarget& Target );
+void                rtarget_NotifyResolutionChanged( void );
+void                rtarget_ReleaseBackBufferTargets( void );
 
 //==============================================================================
 //  RENDER TARGET MANAGEMENT

@@ -76,56 +76,52 @@ xbool gbuffer_mgr::InitGBuffer( u32 Width, u32 Height )
 {
     if( !g_pd3dDevice )
         return FALSE;
-    
-    if( m_bGBufferValid && m_GBufferWidth == Width && m_GBufferHeight == Height )
-        return TRUE;
-        
-    DestroyGBuffer();
-    
+
     m_GBufferWidth = Width;
     m_GBufferHeight = Height;
     
-    rtarget_desc desc;
-    desc.Width = Width;
-    desc.Height = Height;
-    desc.SampleCount = 1;
-    desc.SampleQuality = 0;
-    desc.bBindAsTexture = TRUE;
+    rtarget_registration reg;
+    reg.Policy = RTARGET_SIZE_RELATIVE_TO_VIEW;
+    reg.ScaleX = 1.0f;
+    reg.ScaleY = 1.0f;
+    reg.SampleCount = 1;
+    reg.SampleQuality = 0;
+    reg.bBindAsTexture = TRUE;
 
     // Create G-Buffer targets
-    desc.Format = GBUFFER_FORMAT_ALBEDO;
-    if( !rtarget_Create( m_GBufferTarget[0], desc ) )
+    reg.Format = GBUFFER_FORMAT_ALBEDO;
+    if( !rtarget_GetOrCreate( m_GBufferTarget[0], reg ) )
     {
         x_throw( "Failed to create GBuffer Albedo target" );
         return FALSE;
     }
 
-    desc.Format = GBUFFER_FORMAT_NORMAL;
-    if( !rtarget_Create( m_GBufferTarget[1], desc ) )
+    reg.Format = GBUFFER_FORMAT_NORMAL;
+    if( !rtarget_GetOrCreate( m_GBufferTarget[1], reg ) )
     {
         DestroyGBuffer();
         x_throw( "Failed to create GBuffer Normal target" );
         return FALSE;
     }
 
-    desc.Format = GBUFFER_FORMAT_DEPTH_INFO;
-    if( !rtarget_Create( m_GBufferTarget[2], desc ) )
+    reg.Format = GBUFFER_FORMAT_DEPTH_INFO;
+    if( !rtarget_GetOrCreate( m_GBufferTarget[2], reg ) )
     {
         DestroyGBuffer();
         x_throw( "Failed to create GBuffer Depth Info target" );
         return FALSE;
     }
 
-    desc.Format = GBUFFER_FORMAT_GLOW;
-    if( !rtarget_Create( m_GBufferTarget[3], desc ) )
+    reg.Format = GBUFFER_FORMAT_GLOW;
+    if( !rtarget_GetOrCreate( m_GBufferTarget[3], reg ) )
     {
         DestroyGBuffer();
         x_throw( "Failed to create GBuffer Glow target" );
         return FALSE;
     }
 
-    desc.Format = RTARGET_FORMAT_DEPTH24_STENCIL8;
-    if( !rtarget_Create( m_GBufferDepth, desc ) )
+    reg.Format = RTARGET_FORMAT_DEPTH24_STENCIL8;
+    if( !rtarget_GetOrCreate( m_GBufferDepth, reg ) )
     {
         DestroyGBuffer();
         x_throw( "Failed to create GBuffer depth-stencil" );
@@ -148,9 +144,11 @@ void gbuffer_mgr::DestroyGBuffer( void )
 
     for( u32 i = 0; i < (GBUFFER_TARGET_COUNT - 2); i++ )
     {
+        rtarget_Unregister( m_GBufferTarget[i] );
         rtarget_Destroy( m_GBufferTarget[i] );
     }
 
+    rtarget_Unregister( m_GBufferDepth );
     rtarget_Destroy( m_GBufferDepth );
 
     ResetState();
@@ -160,10 +158,7 @@ void gbuffer_mgr::DestroyGBuffer( void )
 
 xbool gbuffer_mgr::ResizeGBuffer( u32 Width, u32 Height )
 {
-    if( !m_bGBufferValid || m_GBufferWidth != Width || m_GBufferHeight != Height )
-        return InitGBuffer( Width, Height );
-
-    return TRUE;
+    return InitGBuffer( Width, Height );
 }
 
 //==============================================================================
@@ -210,7 +205,7 @@ xbool gbuffer_mgr::SetGBufferTargets( void )
     m_GBufferTargetSet[GBUFFER_GLOW]        = m_GBufferTarget[3];
     m_GBufferTargetSet[GBUFFER_DEPTH]       = rtarget();
 
-    if( rtarget_SetTargets( m_GBufferTargetSet, GBUFFER_TARGET_COUNT, pDepthTarget ) )
+    if( rtarget_SetTargets( m_GBufferTargetSet, GBUFFER_TARGET_COUNT - 1, pDepthTarget ) )
     {
         m_bGBufferTargetsActive = TRUE;
         return TRUE;

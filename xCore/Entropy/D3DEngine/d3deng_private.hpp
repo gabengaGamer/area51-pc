@@ -21,26 +21,32 @@
 //  INCLUDES
 //==============================================================================
 
+#include "x_files.hpp"
+
+#include <d3d11.h>
+#include <d3dcompiler.h>
+#include <dxgi1_6.h>
+
+//#include "..\3rdParty\DirectX9\D3D11.h"
+//#include "..\3rdParty\DirectX9\D3Dcompiler.h"
+//#include "..\3rdParty\DirectX9\dxgi1_3.h"
+//#include "..\3rdParty\DirectX9\DXGI.h"
+//#include "..\3rdParty\DirectXTex\DirectXTex\DirectXTex.h"
+//#include "..\3rdParty\DirectX9\d3dx11tex.h"
+//#include "..\3rdParty\DirectX9\D3DX11core.h"
+
+#include <windows.h>
+#include <mmsystem.h>
+
+//==============================================================================
+//  DEFINES
+//==============================================================================
+
 // Included this header only one time
 #pragma once
 #ifndef STRICT
 #define STRICT
 #endif
-
-#include "..\3rdParty\DirectX9\D3D11.h"
-#include "..\3rdParty\DirectX9\D3Dcompiler.h"
-#include "..\3rdParty\DirectX9\dxgi1_3.h"
-#include "..\3rdParty\DirectX9\DXGI.h"
-#include "..\3rdParty\DirectXTex\DirectXTex\DirectXTex.h"
-//#include "..\3rdParty\DirectX9\d3dx11tex.h"
-//#include "..\3rdParty\DirectX9\D3DX11core.h"
-#include <windows.h>
-#include <mmsystem.h>
-#include "x_files.hpp"
-
-//==============================================================================
-//  DEFINES
-//==============================================================================
 
 #define WM_MOUSEWHEEL                   0x020A
 
@@ -82,27 +88,18 @@ enum dxerror_enum
 enum d3deng_mode
 {
     ENG_ACT_DEFAULT             = (0),      // Activates nothing
-    ENG_ACT_FULLSCREEN          = (1<<0),   // Default is Window
-    ENG_ACT_SOFTWARE            = (1<<1),   // Default is Hardware
-    ENG_ACT_BACKBUFFER_LOCK     = (1<<2),   // Default is you can't lock back buffer
-    ENG_ACT_STENCILOFF          = (1<<3),   // Default is you will use stencil
-    ENG_ACT_16_BPP              = (1<<4),   // Default is you will use stencil
-    ENG_ACT_SHADERS_IN_SOFTWARE = (1<<5),   // Default is that the shaders are done in hardware
-    ENG_ACT_LOCK_WINDOW_SIZE    = (1<<6),
-    ENG_ACT_MSAA_2X             = (1<<7),
-    ENG_ACT_MSAA_4X             = (1<<8),
-    ENG_ACT_MSAA_8X             = (1<<9),
-    ENG_ACT_MSAA_MASK           = (ENG_ACT_MSAA_2X | ENG_ACT_MSAA_4X | ENG_ACT_MSAA_8X)
+    ENG_ACT_SOFTWARE            = (1<<1)    // Default is Hardware
 };
 
-//------------------------------------------------------------------------------
+//==============================================================================
+//  DISPLAY MODES
+//==============================================================================
 
-enum mouse_mode
+enum d3deng_display_mode
 {
-    MOUSE_MODE_BUTTONS,
-    MOUSE_MODE_NEVER,
-    MOUSE_MODE_ALWAYS,
-    MOUSE_MODE_ABSOLUTE
+    ENG_DISPLAY_WINDOWED        = 0,
+    ENG_DISPLAY_BORDERLESS      = 1
+    //ENG_DISPLAY_FULLSCREEN      = 2 // GS: Note: Honestly, I have no desire to support this old crap, we already have better borderless, okay ?
 };
 
 //==============================================================================
@@ -204,6 +201,7 @@ void        d3deng_EntryPoint           ( s32& argc, char**& argv, HINSTANCE h1,
 s32         d3deng_ExitPoint            ( void );
 void        d3deng_SetPresets           ( u32 Mode = ENG_ACT_DEFAULT );
 u32         d3deng_GetMode              ( void );
+d3deng_display_mode d3deng_GetDisplayMode( void );
 
 //==============================================================================
 //  RTARGET MANAGEMENT
@@ -231,13 +229,6 @@ LRESULT CALLBACK eng_D3DWndProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 
 s32         d3deng_GetMsaa              ( void );
 void        d3deng_SetMsaa              ( s32 SampleCount );
-
-//==============================================================================
-//  INPUT FUNCTIONS
-//==============================================================================
-
-void        d3deng_SetMouseMode         ( mouse_mode Mode );
-void        d3deng_ComputeMousePos      ( void );
 
 //==============================================================================
 //  DEBUG FUNCTIONS

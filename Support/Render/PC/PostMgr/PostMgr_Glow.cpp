@@ -54,6 +54,7 @@ struct cb_post_glow
 
 static void ReleaseGlowTarget( rtarget& Target )
 {
+    rtarget_Unregister( Target );
     rtarget_Destroy( Target );
     Target = rtarget();
 }
@@ -181,19 +182,6 @@ void post_mgr::glow_resources::ResetFrame( void )
     bPendingComposite = FALSE;
 }
 
-//==============================================================================
-
-static xbool CreateGlowTarget( rtarget& Target, const rtarget_desc& Desc )
-{
-    if( rtarget_Create( Target, Desc ) )
-        return TRUE;
-
-    ReleaseGlowTarget( Target );
-    return FALSE;
-}
-
-//==============================================================================
-
 xbool post_mgr::glow_resources::ResizeIfNeeded( u32 SourceWidth, u32 SourceHeight )
 {
     if( SourceWidth == 0 || SourceHeight == 0 )
@@ -220,42 +208,31 @@ xbool post_mgr::glow_resources::ResizeIfNeeded( u32 SourceWidth, u32 SourceHeigh
     u32 eW     = (qW     > 1) ? (qW     / 2) : qW;
     u32 eH     = (qH     > 1) ? (qH     / 2) : qH;
 
-    if( bResourcesValid && (BufferWidth == halfW) && (BufferHeight == halfH) )
-        return TRUE;
+    rtarget_registration regHalf;
+    regHalf.Policy = RTARGET_SIZE_ABSOLUTE;
+    regHalf.BaseWidth = halfW;
+    regHalf.BaseHeight = halfH;
+    regHalf.Format = RTARGET_FORMAT_RGBA16F;
+    regHalf.SampleCount = 1;
+    regHalf.SampleQuality = 0;
+    regHalf.bBindAsTexture = TRUE;
 
-    ReleaseGlowTarget( Downsample[0] );
-    ReleaseGlowTarget( Downsample[1] );
-    ReleaseGlowTarget( Downsample[2] );
-    ReleaseGlowTarget( Blur[0] );
-    ReleaseGlowTarget( Blur[1] );
-    ReleaseGlowTarget( Composite );
-    ReleaseGlowTarget( Accum );
-    ReleaseGlowTarget( History );
+    rtarget_registration regQuarter = regHalf;
+    regQuarter.BaseWidth = qW;
+    regQuarter.BaseHeight = qH;
 
-    rtarget_desc descHalf;
-    descHalf.Width = halfW;
-    descHalf.Height = halfH;
-    descHalf.Format = RTARGET_FORMAT_RGBA16F;
-    descHalf.SampleCount = 1;
-    descHalf.SampleQuality = 0;
-    descHalf.bBindAsTexture = TRUE;
+    rtarget_registration regEighth = regHalf;
+    regEighth.BaseWidth = eW;
+    regEighth.BaseHeight = eH;
 
-    rtarget_desc descQuarter = descHalf;
-    descQuarter.Width = qW;
-    descQuarter.Height = qH;
-
-    rtarget_desc descEighth = descHalf;
-    descEighth.Width = eW;
-    descEighth.Height = eH;
-
-    if( !CreateGlowTarget( Downsample[0], descHalf ) ||
-        !CreateGlowTarget( Downsample[1], descQuarter ) ||
-        !CreateGlowTarget( Downsample[2], descEighth ) ||
-        !CreateGlowTarget( Blur[0], descEighth ) ||
-        !CreateGlowTarget( Blur[1], descEighth ) ||
-        !CreateGlowTarget( Composite, descEighth ) ||
-        !CreateGlowTarget( Accum, descHalf ) ||
-        !CreateGlowTarget( History, descEighth ) )
+    if( !rtarget_GetOrCreate( Downsample[0], regHalf ) ||
+        !rtarget_GetOrCreate( Downsample[1], regQuarter ) ||
+        !rtarget_GetOrCreate( Downsample[2], regEighth ) ||
+        !rtarget_GetOrCreate( Blur[0], regEighth ) ||
+        !rtarget_GetOrCreate( Blur[1], regEighth ) ||
+        !rtarget_GetOrCreate( Composite, regEighth ) ||
+        !rtarget_GetOrCreate( Accum, regHalf ) ||
+        !rtarget_GetOrCreate( History, regEighth ) )
     {
         ResizeIfNeeded( 0, 0 );
         return FALSE;
