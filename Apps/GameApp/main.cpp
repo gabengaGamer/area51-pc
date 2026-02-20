@@ -117,7 +117,8 @@
 
 #define RELEASE_PATH            "C:\\GameData\\A51\\Release"
 
-static f32 GAME_MAX_DELTA_TIME = 0.1f;
+static f32 GAME_MAX_DELTA_TIME  = 0.1f;
+static f32 GAME_DELTA           = 1.0f / 60.0f; // = 1.0f / 30.0f;
 
 #if CONFIG_IS_DEMO
 xtimer g_DemoIdleTimer;
@@ -247,6 +248,7 @@ s32         g_limit                 = 30;
 //==============================================================================
 
 static xtimer s_FrontEndDelta;
+static f32    s_FrontEndLogicAccum = 0.0f;
 
 #if !defined(X_RETAIL)
 static xbool s_ForceGameComplete    = FALSE;
@@ -537,32 +539,38 @@ void Update( f32 DeltaTime )
 
 void UpdateFrontEnd( void )
 {
-    f32 DeltaTime;
-
-    DeltaTime = s_FrontEndDelta.TripSec();
-    if (DeltaTime > 0.25f)
-    {
-        DeltaTime = 1.0f/30.0f;
-    }
+    // Accumulate real elapsed time
+    f32 DeltaTime = s_FrontEndDelta.TripSec();
+    if( DeltaTime > 0.25f )
+        DeltaTime = GAME_DELTA;
+    s_FrontEndLogicAccum += DeltaTime;
 
     ASSERT( g_StateMgr.IsBackgroundThreadRunning() == FALSE );
 
-    input_UpdateState();
+    // run frontend logic at fixed fps, same as game logic.
+    // Input is polled inside the tick so mouse deltas and key events are
+    // consumed exactly once per update, polling every real frame would
+    // cause the second call to overwrite the delta before Update() sees it,
+    // making the cursor half-speed and dropping fast keypresses
+    if( s_FrontEndLogicAccum >= GAME_DELTA )
+    {
+        s_FrontEndLogicAccum -= GAME_DELTA;
+        input_UpdateState();
+        g_StateMgr.CheckControllers();
 
-    g_StateMgr.CheckControllers();
+        #ifdef TARGET_PC
+            // Bail if the app is closed
+            if( input_IsPressed( INPUT_MSG_EXIT ) )
+                return;
+        #endif
 
-    #ifdef TARGET_PC
-    // Bail if the app is closed
-    if( input_IsPressed( INPUT_MSG_EXIT ) )
-        return;
-    #endif
-    g_NetworkMgr.Update(DeltaTime);
-    g_StateMgr.Update(DeltaTime);
+        g_NetworkMgr.Update( GAME_DELTA );
+        g_StateMgr.Update( GAME_DELTA );
+        UpdateAudio( GAME_DELTA );
+    }
+
+    // render and flip every real frame regardless of logic rate
     g_StateMgr.Render();
-
-    // update audio manager
-    UpdateAudio( DeltaTime );
-
     eng_PageFlip();
 }
 
@@ -1209,6 +1217,7 @@ void RunFrontEnd( void )
     // Run the FrontEnd
     s_FrontEndDelta.Reset();
     s_FrontEndDelta.Start();
+    s_FrontEndLogicAccum = 0.0f;
 
     while( (g_StateMgr.GetState() != SM_MULTI_PLAYER_LOAD_MISSION) &&
            (g_StateMgr.GetState() != SM_SINGLE_PLAYER_LOAD_MISSION) &&
@@ -1230,7 +1239,8 @@ void RunFrontEnd( void )
 void RunGame( void )
 {
     MEMORY_OWNER( "INGAME" );
-    f32 GameTime = 0.0f;
+    f32 GameTime   = 0.0f;
+    f32 GameLogicAccum = 0.0f;
 
     #if !defined( CONFIG_RETAIL )
     g_MemoryLowWater = 0x7fffffff;
@@ -1286,12 +1296,6 @@ void RunGame( void )
             // Compute the duration of the last frame.
             DeltaTime = MAX( g_GameTimer.ReadSec(), 0.001f );
 
-            #ifdef TARGET_PC
-            s32 DelayTime = 32 - (s32)(DeltaTime * 1000.0f);
-//          x_DelayThread( DelayTime );
-            DeltaTime = MAX( g_GameTimer.ReadSec(), 0.001f );
-            #endif
-
             g_PerceptionMgr.Update( DeltaTime );
 
             DeltaTime *= g_PerceptionMgr.GetGlobalTimeDialation();
@@ -1305,19 +1309,33 @@ void RunGame( void )
             if( DeltaTime < 0.0f )
             {
                 LOG_ERROR( "RunGame", "NEGATIVE DELTA TIME" );
-                DeltaTime = 33.0f / 1000.0f;
+                DeltaTime = GAME_DELTA;
             }
+
+            // Never advance more than 100ms at once
+            DeltaTime = fMin( DeltaTime, GAME_MAX_DELTA_TIME );
 
             g_GameTimer.Reset();
             g_GameTimer.Start();
 
-            GameTime += DeltaTime;
+            // Accumulate real elapsed time.
+            GameLogicAccum += DeltaTime;
         }
 
         //
-        // We are "behind the times".  Catch up to the present.
+        // Drain the accumulator in a loop so that at low
+        // frame rates (< GAME_DELTA) logic still fires the correct number of times
+        // and the game doesn't run in slow-motion. The GAME_MAX_DELTA_TIME cap
+        // applied above limits how much time can acumulate per real frame, so
+        // this loop is bounded to at most ~6 iterations even at 10 fps - no
+        // spiral of death risk
         //
-        Update( DeltaTime );
+        while( GameLogicAccum >= GAME_DELTA )
+        {
+            GameLogicAccum -= GAME_DELTA;
+            GameTime   += GAME_DELTA;
+            Update( GAME_DELTA );
+        }
 
         //
         // During the logic, the game could have "ended".  If it did, get out
@@ -1553,6 +1571,7 @@ void AppMain( s32 argc, char* argv[] )
 
         s_FrontEndDelta.Reset();
         s_FrontEndDelta.Start();
+        s_FrontEndLogicAccum = 0.0f;
         //
         // We have to wait until the statemgr has said that everything is ready to go. This is what detects whether or
         // not the sync phase has completed.
@@ -1644,6 +1663,7 @@ void AppMain( s32 argc, char* argv[] )
 
         s_FrontEndDelta.Reset();
         s_FrontEndDelta.Start();
+        s_FrontEndLogicAccum = 0.0f;
 
         //
         // We have to wait until the statemgr has said all the subsystems have cooled down. This makes sure
