@@ -365,7 +365,7 @@ s32 net_SetConfiguration( const char *pPath,s32 configindex )
 s32 net_GetAttachStatus( s32 &InterfaceId )
 {
     InterfaceId = 0;
-    return 0;
+    return ATTACH_STATUS_ATTACHED;
 }
 
 //==============================================================================
