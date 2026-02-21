@@ -56,9 +56,9 @@
 
 const s32 A51_MIDWAY_FPS_CATEGORY = 1010000032;
 
-const s32   GAMESPY_PRODUCT_ID  = 10384;
-const char* GAMESPY_GAMENAME    = "area51ps2";
-const char* GAMESPY_SECRETKEY   = "eR48fP";
+const s32   GAMESPY_PRODUCT_ID  = 10588;
+const char* GAMESPY_GAMENAME    = "area51pc";
+const char* GAMESPY_SECRETKEY   = "mW73mq";
 const char* EMAIL_POSTFIX       = "a51";
 
 extern s32 g_Changelist;
@@ -2776,8 +2776,8 @@ void match_mgr::InitiateStatsConnection( void )
     // First step, set our game authentication info
     // We could do:
     //
-    //    strcpy(gcd_gamename,"area51ps2");
-    //    strcpy(gcd_secret_key,"eR48fP");
+    //    strcpy(gcd_gamename,"area51pc");
+    //    strcpy(gcd_secret_key,"mW73mq");
     //
     // ...but this is more secure:
 
@@ -2788,16 +2788,15 @@ void match_mgr::InitiateStatsConnection( void )
     gcd_gamename[4]='5';
     gcd_gamename[5]='1';
     gcd_gamename[6]='p';
-    gcd_gamename[7]='s';
-    gcd_gamename[8]='2';
-    gcd_gamename[9]='\0';
+    gcd_gamename[7]='c';
+    gcd_gamename[8]='\0';
 
-    gcd_secret_key[0]='e';
-    gcd_secret_key[1]='R';
-    gcd_secret_key[2]='4';
-    gcd_secret_key[3]='8';
-    gcd_secret_key[4]='f';
-    gcd_secret_key[5]='P';
+    gcd_secret_key[0]='m';
+    gcd_secret_key[1]='W';
+    gcd_secret_key[2]='7';
+    gcd_secret_key[3]='3';
+    gcd_secret_key[4]='m';
+    gcd_secret_key[5]='q';
     gcd_secret_key[6]='\0';
 
     // Before initializing the connection, check that the backend is available.
