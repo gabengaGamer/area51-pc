@@ -165,6 +165,7 @@ void net_socket::Close( void )
 
     closesocket( m_Socket );
     m_Socket = BAD_SOCKET;
+    m_Address.Clear();
 }
 
 //==============================================================================
