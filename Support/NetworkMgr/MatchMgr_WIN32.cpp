@@ -1140,13 +1140,18 @@ void match_mgr::EnterState( match_mgr_state NewState )
 
     case MATCH_AUTHENTICATE_MACHINE:
         {
+            // Do we really need this for PC platform ?
+            char UniqueId[32];
+            x_sprintf( UniqueId, "%08x", net_GetSystemId() );
+            SetUniqueId( (byte*)UniqueId, x_strlen(UniqueId) );
+            SetAuthStatus( AUTH_STAT_DISCONNECTED );
         }
         break;
 
         //------------------------------------------------------
 
     case MATCH_CONNECT_MATCHMAKER:
-        GSIStartAvailableCheck(_T("gmtest"));
+        m_StartedConnect = FALSE;
         break;
 
         //-----------------------------------------------------
@@ -1168,20 +1173,20 @@ void match_mgr::EnterState( match_mgr_state NewState )
             // Maybe should use different callback for presence error?
             //
 
-            //player_profile& Profile = g_StateMgr.GetActiveProfile(0);
-            //s32         ProfileIdLength;
-            //const byte* pUniqueId;
-            //
-            //pUniqueId = Profile.GetUniqueId( ProfileIdLength );
-            //if( ProfileIdLength )
-            //{
-            //    SetUniqueId( pUniqueId, ProfileIdLength );
-            //}
-            //else
-            //{
-            //    
-            //    Profile.SetUniqueId( m_UniqueId, x_strlen((char*)m_UniqueId) );
-            //}
+            player_profile& Profile = g_StateMgr.GetActiveProfile(0);
+            s32         ProfileIdLength;
+            const byte* pUniqueId;
+            
+            pUniqueId = Profile.GetUniqueId( ProfileIdLength );
+            if( ProfileIdLength )
+            {
+                SetUniqueId( pUniqueId, ProfileIdLength );
+            }
+            else
+            {
+                
+                Profile.SetUniqueId( m_UniqueId, x_strlen((char*)m_UniqueId) );
+            }
 
             SetAuthStatus( AUTH_STAT_CONNECTING );
             x_sprintf( m_DownloadFilename, "%s@%s", m_UniqueId, EMAIL_POSTFIX );
