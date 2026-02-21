@@ -51,7 +51,7 @@ qr2_error_t qr2_initA(/*[out]*/qr2_t *qrec, const char *ip, int baseport, const 
 DEFINES
 ********/
 #define MASTER_PORT 27900
-#define MASTER_ADDR "master.gamespy.com"
+#define MASTER_ADDR "master.openspy.net"
 	//#define MASTER_ADDR "207.199.80.230"
 #define FIRST_HB_TIME 10000 /* 10 sec */
 #define HB_TIME 60000 /* 1 minute */
@@ -200,7 +200,7 @@ qr2_error_t qr2_init_socketA(/*[out]*/qr2_t *qrec, SOCKET s, int boundport, cons
 	{
 		int override = qr2_hostname[0];
 		if(!override)
-			sprintf(hostname, "%s.master.gamespy.com", gamename);
+			sprintf(hostname, "%s.master.openspy.net", gamename);
 		ret = get_sockaddrin(override?qr2_hostname:hostname, MASTER_PORT, &(cr->hbaddr), NULL);
 	}
 	else //don't need to look up

@@ -13,7 +13,7 @@ extern "C" {
 #define GSIStartAvailableCheck   GSIStartAvailableCheckW
 #endif
 
-// the available check contacts a backend server at "<gamename>.available.gamespy.com"
+// the available check contacts a backend server at "<gamename>.available.openspy.net"
 // an app can resolve the hostname itself and store the IP here before starting the check
 extern char GSIACHostname[64];
 

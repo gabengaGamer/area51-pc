@@ -9,7 +9,7 @@ Copyright 1999-2003 GameSpy Industries, Inc
 Irvine, California 92614
 949.798.4200 (Tel)
 949.798.4299 (Fax)
-devsupport@gamespy.com
+devsupport@openspy.net
 
 ***********************************************************************
 Please see the GameSpy Presence SDK documentation for more information

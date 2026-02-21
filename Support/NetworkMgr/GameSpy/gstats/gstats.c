@@ -120,7 +120,7 @@ void GetPersistDataValuesModifiedA(int localid, int profileid, persisttype_t typ
 DEFINES
 ********/
 //#define SSHOST "207.199.80.230"
-#define SSHOST "gamestats.gamespy.com"
+#define SSHOST "gamestats.openspy.net"
 #define SSPORT 29920
 
 #define FIXGAME(g,r) if (g == NULL) g = g_statsgame; if (g == NULL) return r;

@@ -9,7 +9,7 @@ Copyright 1999-2001 GameSpy Industries, Inc
 Irvine, California 92614
 949.798.4200 (Tel)
 949.798.4299 (Fax)
-devsupport@gamespy.com
+devsupport@openspy.net
 
 ***********************************************************************
 Please see the GameSpy Presence SDK documentation for more information
@@ -27,7 +27,7 @@ Please see the GameSpy Presence SDK documentation for more information
 /////////
 // Connection Manager Address.
 //////////////////////////////
-#define GPI_CONNECTION_MANAGER_NAME    "gpcm.gamespy.com"
+#define GPI_CONNECTION_MANAGER_NAME    "gpcm.openspy.net"
 #define GPI_CONNECTION_MANAGER_PORT    29900
 
 // Random String stuff.

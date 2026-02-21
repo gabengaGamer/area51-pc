@@ -3,8 +3,8 @@
 #define _NNINTERNAL_H_
 
 #include "natneg.h"
-#define MATCHUP1_HOSTNAME "natneg1.gamespy.com"
-#define MATCHUP2_HOSTNAME "natneg2.gamespy.com"
+#define MATCHUP1_HOSTNAME "natneg1.openspy.net"
+#define MATCHUP2_HOSTNAME "natneg2.openspy.net"
 #define MATCHUP_PORT 27901
 
 #define FINISHED_NOERROR 0

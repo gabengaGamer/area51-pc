@@ -366,7 +366,7 @@ static SBError ServerListConnect(SBServerList *slist)
 	if (SBOverrideMasterServer != NULL)
 		strcpy(masterHostname, SBOverrideMasterServer);
 	else //use the default format...
-		sprintf(masterHostname,"%s.ms%d.gamespy.com", slist->queryforgamename, masterIndex);
+		sprintf(masterHostname,"%s.ms%d.openspy.net", slist->queryforgamename, masterIndex);
 	saddr.sin_family = AF_INET;
 	saddr.sin_port = htons(MSPORT2);
 	saddr.sin_addr.s_addr = inet_addr(masterHostname);

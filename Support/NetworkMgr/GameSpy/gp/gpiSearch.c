@@ -9,7 +9,7 @@ Copyright 1999-2001 GameSpy Industries, Inc
 Irvine, California 92614
 949.798.4200 (Tel)
 949.798.4299 (Fax)
-devsupport@gamespy.com
+devsupport@openspy.net
 
 ***********************************************************************
 Please see the GameSpy Presence SDK documentation for more information
@@ -25,7 +25,7 @@ Please see the GameSpy Presence SDK documentation for more information
 /////////
 // Search Manager Address.
 //////////////////////////
-#define GPI_SEARCH_MANAGER_NAME        "gpsp.gamespy.com"
+#define GPI_SEARCH_MANAGER_NAME        "gpsp.openspy.net"
 #define GPI_SEARCH_MANAGER_PORT        29901
 
 

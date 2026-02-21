@@ -85,7 +85,7 @@ to the QR2 SDK for processing.
 
 /* The app can resolve the master server hostname for this
 game itself and store the IP here before calling qr2_init.
-For more information, contact devsupport@gamespy.com. */
+For more information, contact devsupport@openspy.net. */
 extern char qr2_hostname[64];
 
 /***********

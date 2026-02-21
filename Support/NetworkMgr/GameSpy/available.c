@@ -1,4 +1,4 @@
-#include "nonport.h"
+	#include "nonport.h"
 #include "available.h"
 #include <stdio.h>
 
@@ -69,7 +69,7 @@ void GSIStartAvailableCheckA(const char * gamename)
 	// setup the hostname
 	override = GSIACHostname[0];
 	if(!override)
-		sprintf(hostname, "%s.available.gamespy.com", gamename);
+		sprintf(hostname, "%s.available.openspy.net", gamename);
 
 	// get the master address
 	rcode = get_sockaddrin(override?GSIACHostname:hostname, MASTER_PORT, &AC.address);
