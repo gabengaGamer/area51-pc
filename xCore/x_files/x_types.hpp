@@ -151,6 +151,9 @@
 #ifdef TARGET_PC
   // Types for PC targets under Microsoft's Visual Studio.
   #ifdef _MSC_VER
+    #ifndef __cplusplus
+    #include <stdint.h>
+    #endif
     typedef uint8_t             u8;
     typedef uint16_t            u16;
     typedef uint32_t            u32;
@@ -163,7 +166,11 @@
     typedef double              f64;
     typedef u8                  byte;
     typedef s32                 xbool;    //bool
+    #ifdef __cplusplus
     typedef char16_t            xwchar;
+    #else
+    typedef unsigned short      xwchar;
+    #endif
     typedef uintptr_t           uaddr;
     typedef ptrdiff_t           saddr;
     typedef size_t              usize;
