@@ -3,11 +3,20 @@
 //  NETLIB.CPP
 //
 //==============================================================================
-#include "x_files.hpp"
 
-#if !defined(TARGET_PC)
-#error This should not be compiled for this target platform. PC only.
+//==============================================================================
+//  PLATFORM CHECK
+//==============================================================================
+
+#include "x_target.hpp"
+
+#ifndef TARGET_PC
+#error This file should only be compiled for PC platform. Please check your exclusions on your project spec.
 #endif
+
+//=========================================================================
+//  INCLUDES
+//=========================================================================
 
 // Auto include WinSock libs in a .NET build
 #if _MSC_VER >= 1300
@@ -33,7 +42,7 @@ static xbool s_Inited = FALSE;
 
 //==============================================================================
 
-void    sys_net_Init( void )
+void sys_net_Init( void )
 {
     ASSERT( !s_Inited );
     s_Inited = TRUE;
@@ -52,7 +61,7 @@ void    sys_net_Init( void )
 
 //==============================================================================
 
-void    sys_net_Kill( void )
+void sys_net_Kill( void )
 {
     ASSERT( s_Inited );
     s_Inited = FALSE;
@@ -62,14 +71,14 @@ void    sys_net_Kill( void )
 
 //==============================================================================
 
-xbool   net_IsInited    ( void )
+xbool net_IsInited( void )
 {
     return s_Inited;
 }
 
 //==============================================================================
 
-xbool    net_socket::Bind( s32 StartPort,s32 Flags )
+xbool    net_socket::Bind( s32 StartPort, s32 Flags )
 {
     ASSERT( s_Inited );
 
@@ -78,6 +87,11 @@ xbool    net_socket::Bind( s32 StartPort,s32 Flags )
     struct sockaddr_in addr;
     SOCKET sd_dg;
 
+    if( StartPort <= 0 )
+    {
+        StartPort = x_irand( 8192, 16384 );
+    }
+
     // create an address and bind it
     x_memset(&addr,0,sizeof(struct sockaddr_in));
     addr.sin_family      = PF_INET;
@@ -85,7 +99,15 @@ xbool    net_socket::Bind( s32 StartPort,s32 Flags )
     addr.sin_addr.s_addr = htonl(INADDR_ANY);
 
     // create a socket
-    sd_dg = socket( PF_INET, SOCK_DGRAM, 0 );
+    if( Flags & NET_FLAGS_VDP )
+    {
+        ASSERT("NOT SUPPORTED FOR PC");
+        sd_dg = socket( PF_INET, SOCK_DGRAM, IPPROTO_UDP );
+    }
+    else
+    {
+        sd_dg = socket( PF_INET, SOCK_DGRAM, IPPROTO_UDP );
+    }
 
     // attempt to bind to the port
     while( bind( sd_dg, (struct sockaddr *)&addr, sizeof(addr) ) == SOCKET_ERROR )
@@ -135,7 +157,7 @@ xbool    net_socket::Bind( s32 StartPort,s32 Flags )
 
 //==============================================================================
 
-void    net_socket::Close      ( void )
+void net_socket::Close( void )
 {
     ASSERT( s_Inited );
 
@@ -147,10 +169,10 @@ void    net_socket::Close      ( void )
 
 //==============================================================================
 
-xbool   sys_net_Receive  ( net_socket&   Local,
-                           net_address&  Remote,
-                           void*         pBuffer,
-                           s32&          BufferSize )
+xbool sys_net_Receive( net_socket&   Local,
+                       net_address&  Remote,
+                       void*         pBuffer,
+                       s32&          BufferSize )
 {
     s32   RetSize;
 
@@ -198,10 +220,10 @@ xbool   sys_net_Receive  ( net_socket&   Local,
 
 //==============================================================================
 
-void    sys_net_Send  (         net_socket&   Local, 
-                          const net_address&  Remote, 
-                          const void*         pBuffer, 
-                          s32                 BufferSize )
+void sys_net_Send  ( net_socket&         Local, 
+                     const net_address&  Remote, 
+                     const void*         pBuffer, 
+                     s32                 BufferSize )
 {
     s32 status;
     ASSERT( s_Inited );
@@ -226,8 +248,7 @@ void    sys_net_Send  (         net_socket&   Local,
 
 //==============================================================================
 
-
-void net_GetInterfaceInfo(s32 id,interface_info &info)
+void net_GetInterfaceInfo( s32 id,interface_info &info )
 {
     INTERFACE_INFO InterfaceList[8];
     unsigned long nBytesReturned;
@@ -278,7 +299,9 @@ void net_GetInterfaceInfo(s32 id,interface_info &info)
     info.Broadcast  = (info.Address & info.Netmask) | ~info.Netmask;
 }
 
-s32     net_ResolveName( const char* pStr )
+//==============================================================================
+
+s32 net_ResolveName( const char* pStr )
 {
     LPHOSTENT hostent;
     struct in_addr in_addrIP;
@@ -292,63 +315,86 @@ s32     net_ResolveName( const char* pStr )
     return in_addrIP.S_un.S_addr;
 }
 
-void    net_ResolveIP( u32 IP, char* pStr )
+//==============================================================================
+
+void net_ResolveIP( u32 IP, char* pStr )
 {      
     net_address Dummy(IP,0);
     x_strcpy( pStr, Dummy.GetStrIP() );
 }
 
-void    net_SetDialupInfo(char *pNumber,char *pUsername,char *pPassword)
+//==============================================================================
+
+void net_SetDialupInfo( char *pNumber, char *pUsername, char *pPassword )
 {
 }
 
-void    net_StartDial       (s32 nRetries,s32 Timeout)
+//==============================================================================
+
+void net_StartDial( s32 nRetries,s32 Timeout )
 {
 }
 
-void    net_ActivateConfig(xbool on)
+//==============================================================================
+
+void net_ActivateConfig( xbool on )
 {
     (void)on;
 }
 
-s32 net_GetConfigList(const char *pPath,net_config_list *pConfigList)
+//==============================================================================
+
+s32 net_GetConfigList( const char *pPath, net_config_list *pConfigList )
 {
     (void)pPath;
     x_memset(pConfigList,0,sizeof(net_config_list));
     return 0;
 }
 
-s32 net_SetConfiguration(const char *pPath,s32 configindex)
+//==============================================================================
+
+s32 net_SetConfiguration( const char *pPath,s32 configindex )
 {
     (void)pPath;
     (void)configindex;
     return 0;
 }
 
-s32 net_GetAttachStatus(s32 &InterfaceId)
+//==============================================================================
+
+s32 net_GetAttachStatus( s32 &InterfaceId )
 {
     InterfaceId = 0;
     return 0;
 }
 
-s32		net_GetSystemId		(void)
+//==============================================================================
+
+s32 net_GetSystemId( void )
 {
     return( x_rand() );
 }
 
-void net_BeginConfig(void)
+//==============================================================================
+
+void net_BeginConfig( void )
 {
 }
 
-void net_EndConfig(void)
+//==============================================================================
+
+void net_EndConfig( void )
 {
 }
 
-void net_GetConnectStatus(connect_status &Status)
+//==============================================================================
+
+void net_GetConnectStatus( connect_status &Status )
 {
 }
 
-//-----------------------------------------------------------------------------
+//==============================================================================
+
 xbool net_socket::CanReceive( void )
 {
 	fd_set          fd;
@@ -371,7 +417,8 @@ xbool net_socket::CanReceive( void )
     return TRUE;
 }
 
-//-----------------------------------------------------------------------------
+//==============================================================================
+
 xbool net_socket::CanSend( void )
 {
 	fd_set          fd;
