@@ -185,7 +185,7 @@ GHTTPBool ghiSocketSelect
 	GHTTPBool * exceptFlag
 )
 {
-#if 0
+#if !defined(ENTROPY_NETWORK)
 	fd_set writeSet;
 	fd_set readSet;
 	fd_set exceptSet;

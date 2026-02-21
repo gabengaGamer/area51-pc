@@ -573,8 +573,7 @@ void match_mgr::UpdateState( f32 DeltaTime)
         //-----------------------------------------------------
 
     case MATCH_AUTHENTICATE_MACHINE:
-        // On PC there is no DNAS - the machine is always authenticated.
-        SetAuthStatus( AUTH_STAT_CONNECTED );
+        SetAuthStatus( AUTH_STAT_CONNECTED );     // HACK
         SetConnectStatus( MATCH_CONN_CONNECTED );
         SetState( MATCH_GET_MESSAGES );
         break;
@@ -587,13 +586,12 @@ void match_mgr::UpdateState( f32 DeltaTime)
         //-----------------------------------------------------
 
     case MATCH_CONNECT_MATCHMAKER:
-        //if( m_StartedConnect == FALSE )
-        //{
-        //    GSIStartAvailableCheck( GAMESPY_GAMENAME );
-        //    m_StartedConnect = TRUE;
-        //    break;
-        //}
-
+        if( m_StartedConnect == FALSE )
+        {
+            GSIStartAvailableCheck( GAMESPY_GAMENAME );
+            m_StartedConnect = TRUE;
+            break;
+        }
         {
             GSIACResult Result;
 

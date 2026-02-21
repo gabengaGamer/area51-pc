@@ -1,17 +1,25 @@
+//==============================================================================
+//
+//  Downloader.cpp
+//
+//  Copyright (c) 2002-2003 Inevitable Entertainment Inc.  All rights reserved.
+//
+//==============================================================================
+
+//=========================================================================
+//  INCLUDES
+//=========================================================================
 
 #include "x_files.hpp"
 #include "Downloader.hpp"
 
-#if defined( TARGET_PS2 )
 #include "NetworkMgr/GameSpy/ghttp/ghttp.h"
 
-GHTTPBool http_completed( GHTTPRequest request, GHTTPResult result, char * buffer, int bufferLen, void * param );
+GHTTPBool http_completed( GHTTPRequest request, GHTTPResult result, char * buffer, GHTTPByteCount bufferLen, void * param );
 void http_progress( GHTTPRequest Request, GHTTPState State, const char* pBuffer, GHTTPByteCount BufferSize, GHTTPByteCount Received, GHTTPByteCount TotalSize, void* userdata );
 
-#endif
+//==============================================================================
 
-//----------------------------------------------------------
-//----------------------------------------------------------
 xbool downloader::Init( const char* URL )
 {
     m_Length    = 0;
@@ -19,7 +27,6 @@ xbool downloader::Init( const char* URL )
     m_Status    = DL_STAT_BUSY;
     m_Progress  = 0.0f;
 
-#if defined(TARGET_PS2)
     ghttpStartup();
     ghttpGetEx(     URL,            // URL
                     NULL,           // headers to post with url
@@ -32,14 +39,13 @@ xbool downloader::Init( const char* URL )
                     http_completed, // Completion callback 
                     this );
     return TRUE;
-#endif
 
     m_Status = DL_STAT_NOT_FOUND;
     return FALSE;
 }
 
-//----------------------------------------------------------
-//----------------------------------------------------------
+//==============================================================================
+
 void downloader::Kill( void )
 {
     if( m_pData )
@@ -48,22 +54,18 @@ void downloader::Kill( void )
         m_pData = NULL;
     }
 
-#if defined(TARGET_PS2)
     ghttpCleanup();
-#endif
 }
 
-//----------------------------------------------------------
-//----------------------------------------------------------
+//==============================================================================
+
 void downloader::Update( f32 )
 {
-#if defined(TARGET_PS2)
     ghttpThink();
-#endif
 }
 
-//----------------------------------------------------------
-//----------------------------------------------------------
+//==============================================================================
+
 void downloader::DownloadComplete( download_status Status, void* pData, s32 Length )
 {
     if( m_pData )
@@ -89,10 +91,9 @@ void downloader::DownloadComplete( download_status Status, void* pData, s32 Leng
     m_Status = Status;
 }
 
-//----------------------------------------------------------
-//----------------------------------------------------------
-#if defined(TARGET_PS2)
-GHTTPBool http_completed( GHTTPRequest request, GHTTPResult result, char * buffer, int bufferLen, void * param )
+//==============================================================================
+
+GHTTPBool http_completed( GHTTPRequest request, GHTTPResult result, char * buffer, GHTTPByteCount bufferLen, void * param )
 {
     downloader* pDownloader = (downloader*)param;
     (void)request;
@@ -106,6 +107,8 @@ GHTTPBool http_completed( GHTTPRequest request, GHTTPResult result, char * buffe
     }
     return GHTTPTrue;
 }
+
+//==============================================================================
 
 void http_progress( GHTTPRequest Request, GHTTPState State, const char* pBuffer, GHTTPByteCount BufferSize, GHTTPByteCount Received, GHTTPByteCount TotalSize, void* userdata )
 {
@@ -128,9 +131,10 @@ void http_progress( GHTTPRequest Request, GHTTPState State, const char* pBuffer,
     pDownloader->SetProgress( Progress );
 
 }
-#endif
 
-#if defined(TARGET_PS2) && defined(X_DEBUG)
+//==============================================================================
+
+#if defined(X_DEBUG)
 const char* GetName( GHTTPResult Result )
 {
     switch( Result )
