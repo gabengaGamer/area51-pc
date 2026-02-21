@@ -573,9 +573,13 @@ void match_mgr::UpdateState( f32 DeltaTime)
         //-----------------------------------------------------
 
     case MATCH_AUTHENTICATE_MACHINE:
-        SetAuthStatus( AUTH_STAT_CONNECTED );     // HACK
-        SetConnectStatus( MATCH_CONN_CONNECTED );
+#if defined(ENABLE_LAN_LOOKUP)
+        SetAuthStatus( AUTH_STAT_CONNECTED );
+        SetState( MATCH_IDLE );
+#else
+        SetAuthStatus( AUTH_STAT_CONNECTED );
         SetState( MATCH_GET_MESSAGES );
+#endif
         break;
 
         //-----------------------------------------------------
@@ -1498,12 +1502,15 @@ void match_mgr::SetState( match_mgr_state NewState )
     //    break;
 
     case MATCH_GET_MESSAGES:
-        if( m_MessageOfTheDayReceived == FALSE )
-        {
-            m_MessageOfTheDay.Clear();
-            x_sprintf(m_DownloadFilename,"%s/%s_%d_Message.txt",MANIFEST_LOCATION, x_GetLocaleString(), g_Changelist );
-            InitDownload( m_DownloadFilename );
-        }
+        //if( m_MessageOfTheDayReceived == FALSE )
+        //{
+        //    m_MessageOfTheDay.Clear();
+        //    x_sprintf(m_DownloadFilename,"%s/%s_%d_Message.txt",MANIFEST_LOCATION, x_GetLocaleString(), g_Changelist );
+        //    InitDownload( m_DownloadFilename );
+        //}
+        // Skip MOTD download
+        m_MessageOfTheDayReceived = TRUE;
+        m_MessageOfTheDay.Clear();
         break;
 
         //------------------------------------------------------
