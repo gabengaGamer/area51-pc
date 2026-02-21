@@ -991,6 +991,9 @@ const char* game_server::GetClientTicket(s32 Client)
 
 void game_server::UpdateVoice( f32 DeltaTime )
 {
+#ifdef TARGET_PC // Завали ебало
+    return;
+#endif
     s32     VoiceDataLength = 0;
     byte    VoiceDataBuffer[ 256 ];
 
