@@ -51,14 +51,10 @@ enum auth_status
     AUTH_STAT_NO_USERS,
     AUTH_STAT_ALREADY_LOGGED_ON,
     AUTH_STAT_SERVER_BUSY,
-    // PC test
-    AUTH_STAT_IDLE,
-    AUTH_STAT_BUSY,
-    AUTH_STAT_OK,
-    AUTH_STAT_FAILED,
 };
 
 //------------------------------------------------------------------------------
+
 enum match_conn_status
 {
     MATCH_CONN_IDLE,
@@ -74,9 +70,6 @@ enum match_conn_status
     MATCH_CONN_REGISTER_FAILED,
     MATCH_CONN_CONNECTING,
     MATCH_CONN_SESSION_ENDED,
-    // PC test
-    MATCH_CONN_INVALID_ACCOUNT,
-    MATCH_CONN_SECURITY_FAILED,
 };
 
 #if defined(ENABLE_XBOX_LIVE)
@@ -531,11 +524,10 @@ enum match_mgr_state
     MATCH_ACQUIRE_LAN_SERVERS,
     MATCH_ACQUIRE_EXTENDED_INFO,
     // PC test
-    MATCH_ACQUIRE_BUDDIES,
-    MATCH_ACQUIRE_LOBBIES,
-    MATCH_ACQUIRE_REGIONS,
-    MATCH_ACQUIRE_EXTENDED_SERVER_INFO,
-    MATCH_INDIRECT_CONNECT,
+   // MATCH_ACQUIRE_BUDDIES,
+   // MATCH_ACQUIRE_LOBBIES,
+   // MATCH_ACQUIRE_REGIONS,
+   // MATCH_INDIRECT_CONNECT,
     // Start being a server
     MATCH_BECOME_SERVER,
     MATCH_VALIDATE_SERVER_NAME,
@@ -600,6 +592,7 @@ public:
                            ~match_mgr                   ( void );
         xbool               Init                        ( net_socket& Local, const net_address Broadcast );
         void                Kill                        ( void );
+        void                Update                      ( f32 DeltaTime );		
         // Returns TRUE if the packet was consumed
         xbool               ReceivePacket               ( net_address& Remote, bitstream& Bitstream );
         xbool               SendLookup                  ( net_address& Remote );
@@ -709,7 +702,6 @@ public:
         void                SendFeedback                ( u64 Identifier, const char* pName, player_feedback Type );   
 
 #if defined(TARGET_XBOX)
-        void                Update                      ( f32 DeltaTime );
         void                Init                        ( void );
         void                SetFilter                   ( game_type GameType, ULONGLONG MinPlayers, ULONGLONG MaxPlayers );
         s32                 GetNotificationFlags        ( void ) { return m_RecvNotifications; }
@@ -876,9 +868,6 @@ enum
 #endif // defined(TARGET_PS2) || defined(TARGET_PC)
 
 private:
-#if !defined(TARGET_XBOX)
-        void                Update                      ( f32 DeltaTime );
-#endif
         void                UpdateState                 ( f32 DeltaTime );
         void                AppendServer                ( const net_address& Remote, const net_lookup_response& Response );
         void                AppendServer                ( const server_info& Response );
