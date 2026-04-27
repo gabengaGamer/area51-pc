@@ -6271,6 +6271,7 @@ xbool world_editor::SaveZoneFile( void )
             ZoneFile.AddS32     ("MinPlayers",      Zone.MinPlayers     );
             ZoneFile.AddS32     ("MaxPlayers",      Zone.MaxPlayers     );
             ZoneFile.AddString  ("FogMap",          Zone.FogMap         );
+            ZoneFile.AddString  ("EnvMap",          Zone.EnvMap         );			
             ZoneFile.AddBool    ("QuickFog",        Zone.QuickFog       );
             ZoneFile.AddEndLine (                                       );
 
