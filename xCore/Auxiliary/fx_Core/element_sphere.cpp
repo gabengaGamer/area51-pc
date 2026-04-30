@@ -708,7 +708,7 @@ void element_sphere::Load( igfmgr& Igf )
 
 //============================================================================
 // Export data
-void element_sphere::ExportData( export::fx_elementhdr& ElemHdr, 
+void element_sphere::ExportData( exporter::fx_elementhdr& ElemHdr, 
                                  xstring& Type,
                                  xbytestream& Stream, 
                                  s32 ExportTarget )
@@ -732,7 +732,7 @@ void element_sphere::ExportData( export::fx_elementhdr& ElemHdr,
     
     // Insert the extra info
     s32 BitmapIndex = g_pTextureMgr->GetTextureIndex( m_BitmapName );
-    TempStream.Insert( sizeof(export::fx_elementhdr), (const u8*)&BitmapIndex, sizeof(s32) );
+    TempStream.Insert( sizeof(exporter::fx_elementhdr), (const u8*)&BitmapIndex, sizeof(s32) );
 
     element_sphere_export ExportData;
 
@@ -759,7 +759,7 @@ void element_sphere::ExportData( export::fx_elementhdr& ElemHdr,
 
     // Adjust the size
     ElemHdr.TotalSize = TempStream.GetLength() / sizeof(s32);
-    TempStream.Replace( 0, (const u8*)&ElemHdr, sizeof(export::fx_elementhdr) );
+    TempStream.Replace( 0, (const u8*)&ElemHdr, sizeof(exporter::fx_elementhdr) );
 
     // Append the new data onto our stream
     Stream.Append( TempStream );

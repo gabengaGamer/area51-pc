@@ -6,7 +6,7 @@ namespace fx_core
 
 class effect;
 
-class export
+class exporter
 {
 
 public:

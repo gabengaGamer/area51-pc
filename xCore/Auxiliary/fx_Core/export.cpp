@@ -35,7 +35,7 @@ void SwapColorEndian( xcolor& Color )
 
 //==============================================================================
 // Build the data from the provided effect
-void export::ConstructData( effect* pEffect, s32 ExportTarget )
+void exporter::ConstructData( effect* pEffect, s32 ExportTarget )
 {
     fx_datahdr  DataHdr;
 
@@ -178,7 +178,7 @@ void export::ConstructData( effect* pEffect, s32 ExportTarget )
 
 //==============================================================================
 // Save the data
-xbool export::SaveData( const char* pFilename, s32 ExportTarget )
+xbool exporter::SaveData( const char* pFilename, s32 ExportTarget )
 {
     xbool Success = m_ExportData.SaveFile( pFilename );
     if( !Success )

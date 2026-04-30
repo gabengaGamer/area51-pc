@@ -42,7 +42,7 @@ public:
     virtual void        Save                ( igfmgr& Igf );
     virtual void        Load                ( igfmgr& Igf );
 
-    virtual void        ExportData          ( export::fx_elementhdr& ElemHdr, 
+    virtual void        ExportData          ( exporter::fx_elementhdr& ElemHdr, 
                                               xstring& Type,
                                               xbytestream& Stream, 
                                               s32 ExportTarget );

@@ -75,7 +75,7 @@ public:
     virtual void        SaveData    ( igfmgr& fp )        const = 0;// controller can save it's own data
     virtual void        LoadData    ( igfmgr& fp )              = 0;// controller can load it's own data
 
-    virtual void        ExportData  ( export::fx_controllerhdr& ContHdr,
+    virtual void        ExportData  ( exporter::fx_controllerhdr& ContHdr,
                                       xstring&                  Type,
                                       xbytestream&              Stream ) = 0;
     
@@ -137,7 +137,7 @@ public:
     virtual void        SaveData            ( igfmgr& Igf )       const ;// controller can save it's own data
     virtual void        LoadData            ( igfmgr& Igf )             ;// controller can load it's own data
 
-    virtual void        ExportData          ( export::fx_controllerhdr& ContHdr,
+    virtual void        ExportData          ( exporter::fx_controllerhdr& ContHdr,
                                               xstring&                  Type,
                                               xbytestream&              Stream ) ;
 
@@ -176,7 +176,7 @@ public:
     xbool               IsSmooth    ( void ) const          { return m_IsSmooth; }
     void                SetSmooth   ( xbool IsSmooth )      { m_IsSmooth = IsSmooth; }
 
-    virtual void        ExportData  ( export::fx_controllerhdr& ContHdr,
+    virtual void        ExportData  ( exporter::fx_controllerhdr& ContHdr,
                                       xstring&                  Type,
                                       xbytestream&              Stream ) ;
 };
@@ -193,7 +193,7 @@ public:
     void                LoadData    ( igfmgr& Igf )            ;           // controller can load it's own data
     controller*         CopyOf      ( void )              const;           // Helper for constructing copies
 
-    virtual void        ExportData  ( export::fx_controllerhdr& ContHdr,
+    virtual void        ExportData  ( exporter::fx_controllerhdr& ContHdr,
                                       xstring&                  Type,
                                       xbytestream&              Stream ) ;
 
@@ -221,7 +221,7 @@ public:
     // save/load my own data
     virtual bool    SaveData        ( text_out& Out, bool WriteHdr );
     virtual bool    LoadData        ( text_in& In );
-    virtual void    ExportData      ( export::fx_controllerhdr& ContHdr, 
+    virtual void    ExportData      ( exporter::fx_controllerhdr& ContHdr, 
                                       xstring& Type,
                                       xbytestream& Stream );
 };
@@ -250,7 +250,7 @@ public:
     // save/load my own data
     virtual bool    SaveData        ( text_out& Out, bool WriteHdr );
     virtual bool    LoadData        ( text_in& In );
-    virtual void    ExportData      ( export::fx_controllerhdr& ContHdr, 
+    virtual void    ExportData      ( exporter::fx_controllerhdr& ContHdr, 
                                       xstring& Type,
                                       xbytestream& Stream );
 
@@ -278,7 +278,7 @@ public:
     // save/load my own data
     virtual bool    SaveData        ( text_out& Out, bool WriteHdr );
     virtual bool    LoadData        ( text_in& In );
-    virtual void    ExportData      ( export::fx_controllerhdr& ContHdr, 
+    virtual void    ExportData      ( exporter::fx_controllerhdr& ContHdr, 
                                       xstring& Type,
                                       xbytestream& Stream );
 

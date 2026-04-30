@@ -384,7 +384,7 @@ void ctrl_key::LoadData( igfmgr& Igf )
 
 //============================================================================
 
-void ctrl_key::ExportData( export::fx_controllerhdr& ContHdr,
+void ctrl_key::ExportData( exporter::fx_controllerhdr& ContHdr,
                            xstring&                  Type,
                            xbytestream&              Stream )
 {
@@ -644,7 +644,7 @@ xbool ctrl_linear::GetValue( f32 T, f32* pVals ) const
 }
 
 //============================================================================
-void ctrl_linear::ExportData( export::fx_controllerhdr& ContHdr,
+void ctrl_linear::ExportData( exporter::fx_controllerhdr& ContHdr,
                               xstring&                  Type,
                               xbytestream&              Stream )
 {
@@ -678,7 +678,7 @@ void ctrl_linear::ExportData( export::fx_controllerhdr& ContHdr,
     ContHdr.LeadOut   = m_OutType;
     //ContHdr.NOutputValues = GetNumFloats();
         
-    TmpStream.Append( (const u8*)(&ContHdr), sizeof(export::fx_controllerhdr) );
+    TmpStream.Append( (const u8*)(&ContHdr), sizeof(exporter::fx_controllerhdr) );
     
     // add the number of keys
     TmpStream.Append( (const u8*)(&Count), sizeof(s32) );
@@ -727,7 +727,7 @@ void ctrl_linear::ExportData( export::fx_controllerhdr& ContHdr,
     }
 
     ContHdr.TotalSize = TmpStream.GetLength() / sizeof(s32);
-    TmpStream.Replace( 0, (const u8*)&ContHdr, sizeof(export::fx_controllerhdr) );
+    TmpStream.Replace( 0, (const u8*)&ContHdr, sizeof(exporter::fx_controllerhdr) );
     Stream.Append( TmpStream );
 
 }
@@ -838,7 +838,7 @@ void ctrl_smooth::LoadData    ( igfmgr& fp )
 {
 }
 
-void ctrl_smooth::ExportData( export::fx_controllerhdr& ContHdr,
+void ctrl_smooth::ExportData( exporter::fx_controllerhdr& ContHdr,
                            xstring&                  Type,
                            xbytestream&              Stream )
 {

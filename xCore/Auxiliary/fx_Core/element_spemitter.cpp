@@ -241,7 +241,7 @@ xbool element_spemitter::GetLocalBBoxAtTime( f32 T, bbox& BBox ) const
 
         // Inflate for particle scale & rotation
         f32 Scale = 1.0f;
-        for( i=0 ; i<m_Keys.GetCount() ; i++ )
+        for( s32 i=0 ; i<m_Keys.GetCount() ; i++ )
         {
             if( m_Keys[i].Scale > Scale )
                 Scale = m_Keys[i].Scale;
@@ -890,7 +890,7 @@ void element_spemitter::Load( igfmgr& Igf )
 
 //============================================================================
 // Export data
-void element_spemitter::ExportData( export::fx_elementhdr& ElemHdr, 
+void element_spemitter::ExportData( exporter::fx_elementhdr& ElemHdr, 
                                     xstring& Type,
                                     xbytestream& Stream, 
                                     s32 ExportTarget )
@@ -988,7 +988,7 @@ void element_spemitter::ExportData( export::fx_elementhdr& ElemHdr,
 
     // Adjust the size
     ElemHdr.TotalSize = TempStream.GetLength() / sizeof(s32);
-    TempStream.Replace( 0, (const byte*)&ElemHdr, sizeof(export::fx_elementhdr) );
+    TempStream.Replace( 0, (const byte*)&ElemHdr, sizeof(exporter::fx_elementhdr) );
 
     // Append the new data onto our stream
     Stream.Append( TempStream );
@@ -1334,7 +1334,7 @@ xbool element_spemitter::GetWorldStaticBBox( bbox& aBBox ) const
 
     // Inflate for particle scale & rotation
     f32 Scale = 1.0f;
-    for( i=0 ; i<m_Keys.GetCount() ; i++ )
+    for( s32 i=0 ; i<m_Keys.GetCount() ; i++ )
     {
         if( m_Keys[i].Scale > Scale )
             Scale = m_Keys[i].Scale;

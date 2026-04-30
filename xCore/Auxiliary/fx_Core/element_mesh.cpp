@@ -254,7 +254,7 @@ void element_mesh::LoadMesh( void )
 
 //============================================================================
 // Export data
-void element_mesh::ExportData( export::fx_elementhdr& ElemHdr, 
+void element_mesh::ExportData( exporter::fx_elementhdr& ElemHdr, 
                                xstring& Type,
                                xbytestream& Stream, 
                                s32 ExportTarget )

@@ -556,7 +556,7 @@ void element::RenderTrajectory( void ) const
 
 //============================================================================
 
-void element::ExportData( export::fx_elementhdr& ElemHdr,
+void element::ExportData( exporter::fx_elementhdr& ElemHdr,
                           xstring& Type,
                           xbytestream& Stream, 
                           s32 ExportTarget )
@@ -780,7 +780,7 @@ void element::ExportData( export::fx_elementhdr& ElemHdr,
     }
 
     //---------------------------------------------------------------------
-    Stream.Append( (const u8*)&ElemHdr, sizeof(export::fx_elementhdr) );
+    Stream.Append( (const u8*)&ElemHdr, sizeof(exporter::fx_elementhdr) );
 
     // strcpy( ID, "SPRITE" );
     // ElemHdr.BitmapIndex = 0;

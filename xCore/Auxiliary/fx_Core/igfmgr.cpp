@@ -65,7 +65,7 @@ void igfmgr::Clear( )
         for ( i = 0; i < m_DictionarySize; i++ )
         {
             pNext = pEntry->m_pNext;
-            IterateFields( NullifyReferences, m_pRoot, (u32)pEntry );
+            IterateFields( &igfmgr::NullifyReferences, m_pRoot, (u32)pEntry );
             if ( pEntry->m_pData )
                 delete[] pEntry->m_pData;
 
@@ -74,7 +74,7 @@ void igfmgr::Clear( )
         }
 
         // now delete all the fields
-        IterateFields( DeleteField, m_pRoot, 0 );
+        IterateFields( &igfmgr::DeleteField, m_pRoot, 0 );
     }
     else
         delete[] m_pLoad;
@@ -1194,9 +1194,9 @@ xbool igfmgr::SaveBinary( const char* pFileName, xbool StripComments )
 
     // step thru all the data fields
     if ( StripComments )
-        IterateFields( AddRefCt_NoComments, m_pRoot, 0 );
+        IterateFields( &igfmgr::AddRefCt_NoComments, m_pRoot, 0 );
     else
-        IterateFields( AddRefCt_WithComments, m_pRoot, 0 );
+        IterateFields( &igfmgr::AddRefCt_WithComments, m_pRoot, 0 );
 
     // count the dictionary entries that have at least one ref ct.
     for ( i = 0; i < m_DictionarySize; i++ )
@@ -1224,7 +1224,7 @@ xbool igfmgr::SaveBinary( const char* pFileName, xbool StripComments )
     }
 
     // Now simply write all the data
-    IterateFields( SaveFields_Binary, m_pRoot, (u32)fp );
+    IterateFields( &igfmgr::SaveFields_Binary, m_pRoot, (u32)fp );
 
     // write a delimiter field
     End.m_Type = igfmgr::UNDEFINED;
@@ -1277,9 +1277,9 @@ xbool igfmgr::SaveText( const char* pFileName, xbool StripComments )
     s_IndentLevel = 0;
     
     if ( !StripComments )
-        IterateFields( SaveFields_Text_WithComments, m_pRoot, (u32)fp );
+        IterateFields( &igfmgr::SaveFields_Text_WithComments, m_pRoot, (u32)fp );
     else
-        IterateFields( SaveFields_Text_NoComments, m_pRoot, (u32)fp );
+        IterateFields( &igfmgr::SaveFields_Text_NoComments, m_pRoot, (u32)fp );
 
     // close the file and return
     x_fclose(fp);
