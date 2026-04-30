@@ -324,16 +324,12 @@ radian  x_MinAngleDiff  ( radian Angle1, radian Angle2 );
 
 //==============================================================================
 
-#ifdef TARGET_PC
 /* fast sine-cosine */
 inline void x_sincos( radian Angle, f32& Sin, f32& Cos )
 {
     Sin = x_sin(Angle);
     Cos = x_cos(Angle);
 }
-#else
-void    x_sincos        ( radian Angle, f32& Sine, f32& Cosine );
-#endif
 
 //==============================================================================
 

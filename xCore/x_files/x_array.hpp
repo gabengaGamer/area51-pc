@@ -203,15 +203,7 @@ protected:
 template< class T >
 inline s32 xharray<T>::CalcGrowth( void )
 {
-    s32 GrowBy = 1;
-
-#ifdef TARGET_PC
-    GrowBy = MAX( 100, (m_Capacity/2) );
-#else
-    GrowBy = 1;
-#endif
-
-    return GrowBy;
+    return MAX( 100, (m_Capacity/2) );
 }
 
 //=========================================================================

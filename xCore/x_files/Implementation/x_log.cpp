@@ -457,7 +457,7 @@ void log_MALLOC( void* Address, u32 Size, const char* pFile, s32 Line )
 
         if( s_Connected )
         {
-            g_Tool.LogMalloc( (u32)Address, Size, pFile, Line );
+            g_Tool.LogMalloc( (uaddr)Address, Size, pFile, Line );
         }
     }
 
@@ -475,7 +475,7 @@ void log_REALLOC( void* Address, void* OldAddress, u32 Size, const char* pFile, 
 
         if( s_Connected )
         {
-            g_Tool.LogRealloc( (u32)Address, (u32)OldAddress, Size, pFile, Line );
+            g_Tool.LogRealloc( (uaddr)Address, (uaddr)OldAddress, Size, pFile, Line );
         }
     }
 
@@ -493,7 +493,7 @@ void log_FREE( void* Address, const char* pFile, s32 Line )
 
         if( s_Connected )
         {
-            g_Tool.LogFree( (u32)Address, pFile, Line );
+            g_Tool.LogFree( (uaddr)Address, pFile, Line );
         }
     }
 

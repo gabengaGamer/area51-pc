@@ -29,6 +29,10 @@
 #include "x_types.hpp"
 #endif
 
+#if defined(TARGET_PC) && defined(_MSC_VER)
+#include <intrin.h>
+#endif
+
 //==============================================================================
 //  RTF Declaration
 //==============================================================================
@@ -95,8 +99,8 @@ x_debug_crash_fn*   x_DebugGetCrashFunction( void );
 
 // If we can implement BREAK properly on any given platform, do it!
 
-#ifdef TARGET_PC
-#define BREAK      { __asm int 3 }
+#if defined(TARGET_PC) && defined(_MSC_VER)
+#define BREAK      __debugbreak()
 #endif
 
 // Generic BREAK to be used if no proper version can be created.
@@ -493,12 +497,12 @@ const char* xExceptionGetErrorString( void );
 //
 //  Functions:
 //
-//  x_DebugGetCallStack         - Get CallStack as an array of u32 values
+//  x_DebugGetCallStack         - Get CallStack as an array of address-sized values
 //  x_DebugGetCallStackString   - Get CallStack as a \ seperated string or NULL
 //
 //==============================================================================
 
-xbool       x_DebugGetCallStack         ( s32& CallStackDepth, u32*& pCallStack );
+xbool       x_DebugGetCallStack         ( s32& CallStackDepth, uaddr*& pCallStack );
 const char* x_DebugGetCallStackString   ( void );
 
 //==============================================================================

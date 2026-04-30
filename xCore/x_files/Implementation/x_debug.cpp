@@ -899,13 +899,29 @@ xbool s_DefaultRTFHandler( const char* pFileName,
 static HANDLE       s_hProcess;
 static xbool        s_DbgHelpInitialized    = FALSE;
 static char*        s_pCallStackString      = NULL;
-PIMAGEHLP_SYMBOL    s_pSymbol               = NULL;
+static const s32    s_MaxCallStackFrames    = 64;
+static const s32    s_CallStackStringBytes  = 1*1024*1024;
+static uaddr        s_CallStack[s_MaxCallStackFrames];
+SYMBOL_INFO*        s_pSymbol               = NULL;
 
-xbool x_DebugGetCallStack( s32& CallStackDepth, u32*& pCallStack )
+xbool x_DebugGetCallStack( s32& CallStackDepth, uaddr*& pCallStack )
 {
+    void*   Frames[s_MaxCallStackFrames];
+    USHORT  FramesCaptured;
+
     CallStackDepth  = 0;
     pCallStack      = NULL;
-    return FALSE;
+
+    FramesCaptured = CaptureStackBackTrace( 0, s_MaxCallStackFrames, Frames, NULL );
+    if( FramesCaptured == 0 )
+        return FALSE;
+
+    for( s32 i = 0; i < (s32)FramesCaptured; i++ )
+        s_CallStack[i] = (uaddr)Frames[i];
+
+    CallStackDepth = (s32)FramesCaptured;
+    pCallStack     = s_CallStack;
+    return TRUE;
 }
 
 const char* x_DebugGetCallStackString( void )
@@ -920,97 +936,56 @@ const char* x_DebugGetCallStackString( void )
         VERIFY( SymInitialize( s_hProcess, "Debug;Release", TRUE ) ); // TODO: Add path to module with GetModuleFileNameEx
 
         // Allocate string to build callstack
-        s_pCallStackString = (char*)x_malloc( 1*1024*1024 );
+        s_pCallStackString = (char*)x_malloc( s_CallStackStringBytes );
         ASSERT( s_pCallStackString );
 
         // Setup symbol
-        s_pSymbol = (PIMAGEHLP_SYMBOL)x_malloc(10000);
-        s_pSymbol->MaxNameLength = 10000-sizeof(IMAGEHLP_SYMBOL);
-        s_pSymbol->SizeOfStruct  = 10000;
+        s_pSymbol = (SYMBOL_INFO*)x_malloc( sizeof(SYMBOL_INFO) + 10000 );
+        ASSERT( s_pSymbol );
+        x_memset( s_pSymbol, 0, sizeof(SYMBOL_INFO) + 10000 );
+        s_pSymbol->MaxNameLen   = 10000;
+        s_pSymbol->SizeOfStruct = sizeof(SYMBOL_INFO);
 
         s_DbgHelpInitialized = TRUE;
     }
 
-    // Get the Thread Context
-    HANDLE hThread = GetCurrentThread();
-    CONTEXT c;
-    x_memset( (void*)&c, 0, sizeof(c) );
-    c.ContextFlags = CONTEXT_FULL;
-    VERIFY( GetThreadContext( hThread, &c ) );
-    
-    // Build STACKFRAME
-    STACKFRAME s;
-    x_memset( (void*)&s, 0, sizeof(s) );
-    s.AddrPC.Offset     = c.Eip;
-    s.AddrStack.Offset  = c.Esp;
-    s.AddrFrame.Offset  = c.Ebp;
-    s.AddrPC.Mode       = AddrModeFlat;
-    s.AddrStack.Mode    = AddrModeFlat;
-    s.AddrFrame.Mode    = AddrModeFlat;
+    s32     CallStackDepth;
+    uaddr*  pCallStack;
+    if( !x_DebugGetCallStack( CallStackDepth, pCallStack ) )
+        return "<callstack unavailable>";
 
     // Clear CallStack string
     s_pCallStackString[0] = 0;
 
-    // Do the stack walk
-    for( s32 iFrame=0 ; ; iFrame++ )
+    // Build a root-to-leaf string and skip the local callstack helper frames.
+    for( s32 iFrame = CallStackDepth - 1; iFrame >= 4; iFrame-- )
     {
-        BOOL Success = StackWalk( IMAGE_FILE_MACHINE_I386,
-                                  s_hProcess,
-                                  hThread,
-                                  &s,
-                                  &c,
-                                  NULL,
-                                  SymFunctionTableAccess,
-                                  SymGetModuleBase,
-                                  NULL );
+        DWORD64 Offset = 0;
+        char    TempString[4096] = {0};
 
-        // Exit loop?
-        if( !Success || (s.AddrPC.Offset == 0) )
-            break;
-
-        // Dump info about current stack level
-        if( iFrame > 0 )
+        if( SymFromAddr( s_hProcess, (DWORD64)pCallStack[iFrame], &Offset, s_pSymbol ) )
         {
-            DWORD   Offset;
-            char    TempString[4096] = {0};
-            if( SymGetSymFromAddr( s_hProcess, s.AddrPC.Offset, &Offset, s_pSymbol ) )
-            {
-                ASSERT( (x_strlen(s_pCallStackString)+x_strlen(s_pSymbol->Name)+2) < 4096 );
-
-                strcpy( TempString, s_pSymbol->Name );
-                if( s_pCallStackString[0] != 0 )
-                {
-                    strcat( TempString, "\\" );
-                    strcat( TempString, s_pCallStackString );
-                }
-                strcpy( s_pCallStackString, TempString );
-            }
-            else
-            {
-                ASSERT( 0 );
-                ASSERT( (x_strlen(s_pCallStackString)+12) < 4096 );
-                x_strcpy( TempString, xfs("\\0x%08x",s.AddrPC.Offset) );
-                if( s_pCallStackString[0] != 0 )
-                {
-                    x_strcat( TempString, "\\" );
-                    x_strcat( TempString, s_pCallStackString );
-                }
-                x_strcpy( s_pCallStackString, TempString );
-            }
+            x_strcpy( TempString, s_pSymbol->Name );
         }
+        else
+        {
+            x_strcpy( TempString, xfs( "%p", (void*)pCallStack[iFrame] ) );
+        }
+
+        ASSERT( (x_strlen(s_pCallStackString) + x_strlen(TempString) + 2) < s_CallStackStringBytes );
+        if( s_pCallStackString[0] != 0 )
+        {
+            x_strcat( s_pCallStackString, "\\" );
+        }
+        x_strcat( s_pCallStackString, TempString );
     }
 
-    // Strip leading info from the CallStack string, it just takes up screen space and isn't useful
-    char* p = strstr( s_pCallStackString, "\\" );
-    p = strstr( p, "\\" );
-    p = strstr( &p[1], "\\" );
-    p = strstr( &p[1], "\\" );
-    return &p[1];
+    return s_pCallStackString[0] ? s_pCallStackString : "<callstack unavailable>";
 }
 
 #else
 
-xbool x_DebugGetCallStack( s32& CallStackDepth, u32*& pCallStack )
+xbool x_DebugGetCallStack( s32& CallStackDepth, uaddr*& pCallStack )
 {
     CallStackDepth  = 0;
     pCallStack      = NULL;

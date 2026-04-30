@@ -222,6 +222,10 @@ xthread::xthread(s32 StackSize, const char* pName)
     //
     s_pThreadVars->m_ThreadTicks = 10000;
     m_Initialized = TRUE;
+    m_Startup.Sentinal  = 0;
+    m_Startup.pEntry    = NULL;
+    m_Startup.argc      = 0;
+    m_Startup.argv      = NULL;
 
     x_memset(m_pStack,m_ThreadId,StackSize);
 
@@ -283,6 +287,10 @@ void xthread::InitIdle( void* pUserStack, s32 StackSize )
     //
     s_pThreadVars->m_ThreadTicks = 10000;
     m_Initialized = TRUE;
+    m_Startup.Sentinal  = 0;
+    m_Startup.pEntry    = NULL;
+    m_Startup.argc      = 0;
+    m_Startup.argv      = NULL;
 
     x_memset(m_pStack,m_ThreadId,StackSize);
 
@@ -939,15 +947,13 @@ void x_WatchdogReset(void)
 void xthread::DumpThreads(void)
 {
     xthread* pThread;
-    s32         count,i;
-    struct ThreadParam threadparam;
+    s32      count,i;
 
     count = xthread::m_MasterThreadList.GetCount();
     for (i=0;i<count;i++)
     {
         pThread = xthread::m_MasterThreadList[i];
-        ReferThreadStatus(pThread->GetSystemId(),&threadparam);
-        x_DebugMsg("Thread %d (%s), pc=0x%08x\n",i,pThread->m_pName,threadparam.entry);
+        x_DebugMsg("Thread %d (%s), entry=%p\n",i,pThread->m_pName,(void*)pThread->m_Startup.pEntry);
     }
 }
 
@@ -1051,7 +1057,6 @@ static void s_ProfileThread(void)
     profile_sample*    pBuffer;
     s32                Count;
     s32                status;
-    ThreadParam        info;
     s32                lastpc;
 
 

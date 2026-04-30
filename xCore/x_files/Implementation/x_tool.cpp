@@ -35,19 +35,35 @@ static u8   s_Buffer[BUFFER_SIZE];
 //  Helper functions
 //==============================================================================
 
-static inline s32 BYTESWAP( s32 a )
+static 
+inline s32 BYTESWAP( s32 a )
 {
     return ENDIAN_SWAP_32(a);
 }
 
-static inline u32 BYTESWAP( u32 a )
+//-----------------------------------------------------------------------------
+
+static 
+inline u32 BYTESWAP( u32 a )
 {
     return ENDIAN_SWAP_32(a);
 }
 
-static inline s64 BYTESWAP( s64 a )
+//-----------------------------------------------------------------------------
+
+static 
+inline s64 BYTESWAP( s64 a )
 {
     return ENDIAN_SWAP_64(a);
+}
+
+//-----------------------------------------------------------------------------
+
+static 
+inline void WriteAddress( u8*& pBuffer, uaddr Address )
+{
+    x_memcpy( pBuffer, &Address, sizeof(Address) );
+    pBuffer += sizeof(Address);
 }
 
 //==============================================================================
@@ -201,7 +217,7 @@ xbool xtool::Init( void )
         Connect.Magic[2]        = 'B';
         Connect.Magic[3]        = 'G';
 #endif
-        Connect.Version         = 1;
+        Connect.Version         = (sizeof(uaddr) > sizeof(u32)) ? 2 : 1;
         Connect.Platform        = TARGET_PLATFORM;
         Connect.HeapStart       = 0;
         Connect.HeapEnd         = 0;    
@@ -636,23 +652,31 @@ void xtool::LogTimerPop( const char* pChannel, f32 TimeLimitMS, const char* pMes
 
 //==============================================================================
 
-void GetCallStack( s32& CallStackDepth, u32*& pCallStack )
+void GetCallStack( s32& CallStackDepth, uaddr*& pCallStack )
 {
-#if defined( X_RETAIL )
-    (void)pCallStack;
     CallStackDepth = 0;
+    pCallStack     = NULL;
+
+#if defined( X_RETAIL )
+    return;
 #else
     x_DebugGetCallStack( CallStackDepth, pCallStack );
-    CallStackDepth -= 4;
-    pCallStack += 4;
-    if( CallStackDepth < 0 )
+    if( (CallStackDepth >= 4) && pCallStack )
+    {
+        CallStackDepth -= 4;
+        pCallStack     += 4;
+    }
+    else
+    {
         CallStackDepth = 0;
+        pCallStack     = NULL;
+    }
 #endif
 }
 
 //==============================================================================
 
-void xtool::LogMalloc( u32 Address, u32 Size, const char* pFile, s32 Line )
+void xtool::LogMalloc( uaddr Address, u32 Size, const char* pFile, s32 Line )
 {
     if( !m_Initialized )
         Init();
@@ -668,7 +692,7 @@ void xtool::LogMalloc( u32 Address, u32 Size, const char* pFile, s32 Line )
 
     // Get CallStack info
     s32     CallStackDepth;
-    u32*    pCallStack;
+    uaddr*  pCallStack;
     GetCallStack( CallStackDepth, pCallStack );
 
     // Get the number of buffer bytes needed
@@ -677,10 +701,10 @@ void xtool::LogMalloc( u32 Address, u32 Size, const char* pFile, s32 Line )
         sizeof(u32) +
         sizeof(xtick) +
         sizeof(u32) +
-        sizeof(u32) +
+        sizeof(uaddr) +
         sizeof(u32) +
         sizeof(s32) +
-        sizeof(s32) + sizeof(u32)*CallStackDepth +
+        sizeof(s32) + sizeof(uaddr)*CallStackDepth +
         LenFile + 1;
     BytesNeeded = (BytesNeeded + 3) & -4;
 
@@ -704,8 +728,7 @@ void xtool::LogMalloc( u32 Address, u32 Size, const char* pFile, s32 Line )
     *(u32*)pBuffer = (u32)x_GetThreadID();
     pBuffer += sizeof(u32);
 
-    *(u32*)pBuffer = Address;
-    pBuffer += sizeof(u32);
+    WriteAddress( pBuffer, Address );
 
     *(u32*)pBuffer = Size;
     pBuffer += sizeof(u32);
@@ -716,8 +739,11 @@ void xtool::LogMalloc( u32 Address, u32 Size, const char* pFile, s32 Line )
     *(s32*)pBuffer = CallStackDepth;
     pBuffer += sizeof(s32);
 
-    x_memcpy( pBuffer, pCallStack, sizeof(u32)*CallStackDepth );
-    pBuffer += sizeof(u32)*CallStackDepth;
+    if( CallStackDepth > 0 )
+    {
+        x_memcpy( pBuffer, pCallStack, sizeof(uaddr)*CallStackDepth );
+        pBuffer += sizeof(uaddr)*CallStackDepth;
+    }
 
     x_memcpy( pBuffer, pFile, LenFile+1 );
     pBuffer += LenFile+1;
@@ -728,7 +754,7 @@ void xtool::LogMalloc( u32 Address, u32 Size, const char* pFile, s32 Line )
 
 //==============================================================================
 
-void xtool::LogRealloc( u32 Address, u32 OldAddress, s32 Size, const char* pFile, s32 Line )
+void xtool::LogRealloc( uaddr Address, uaddr OldAddress, s32 Size, const char* pFile, s32 Line )
 {
     if( !m_Initialized )
         Init();
@@ -744,7 +770,7 @@ void xtool::LogRealloc( u32 Address, u32 OldAddress, s32 Size, const char* pFile
 
     // Get CallStack info
     s32     CallStackDepth;
-    u32*    pCallStack;
+    uaddr*  pCallStack;
     GetCallStack( CallStackDepth, pCallStack );
 
     // Get the number of buffer bytes needed
@@ -753,11 +779,11 @@ void xtool::LogRealloc( u32 Address, u32 OldAddress, s32 Size, const char* pFile
         sizeof(u32) +
         sizeof(xtick) +
         sizeof(u32) +
-        sizeof(u32) +
-        sizeof(u32) +
+        sizeof(uaddr) +
+        sizeof(uaddr) +
         sizeof(u32) +
         sizeof(s32) +
-        sizeof(s32) + sizeof(u32)*CallStackDepth +
+        sizeof(s32) + sizeof(uaddr)*CallStackDepth +
         LenFile + 1;
     BytesNeeded = (BytesNeeded + 3) & -4;
 
@@ -781,11 +807,9 @@ void xtool::LogRealloc( u32 Address, u32 OldAddress, s32 Size, const char* pFile
     *(u32*)pBuffer = (u32)x_GetThreadID();
     pBuffer += sizeof(u32);
 
-    *(u32*)pBuffer = Address;
-    pBuffer += sizeof(u32);
+    WriteAddress( pBuffer, Address );
 
-    *(u32*)pBuffer = OldAddress;
-    pBuffer += sizeof(u32);
+    WriteAddress( pBuffer, OldAddress );
 
     *(u32*)pBuffer = Size;
     pBuffer += sizeof(u32);
@@ -796,8 +820,11 @@ void xtool::LogRealloc( u32 Address, u32 OldAddress, s32 Size, const char* pFile
     *(s32*)pBuffer = CallStackDepth;
     pBuffer += sizeof(s32);
 
-    x_memcpy( pBuffer, pCallStack, sizeof(u32)*CallStackDepth );
-    pBuffer += sizeof(u32)*CallStackDepth;
+    if( CallStackDepth > 0 )
+    {
+        x_memcpy( pBuffer, pCallStack, sizeof(uaddr)*CallStackDepth );
+        pBuffer += sizeof(uaddr)*CallStackDepth;
+    }
 
     x_memcpy( pBuffer, pFile, LenFile+1 );
     pBuffer += LenFile+1;
@@ -808,7 +835,7 @@ void xtool::LogRealloc( u32 Address, u32 OldAddress, s32 Size, const char* pFile
 
 //==============================================================================
 
-void xtool::LogFree( u32 Address, const char* pFile, s32 Line )
+void xtool::LogFree( uaddr Address, const char* pFile, s32 Line )
 {
     if( !m_Initialized )
         Init();
@@ -824,7 +851,7 @@ void xtool::LogFree( u32 Address, const char* pFile, s32 Line )
 
     // Get CallStack info
     s32     CallStackDepth;
-    u32*    pCallStack;
+    uaddr*  pCallStack;
     GetCallStack( CallStackDepth, pCallStack );
 
     // Get the number of buffer bytes needed
@@ -833,9 +860,9 @@ void xtool::LogFree( u32 Address, const char* pFile, s32 Line )
         sizeof(u32) +
         sizeof(xtick) +
         sizeof(u32) +
-        sizeof(u32) +
+        sizeof(uaddr) +
         sizeof(s32) +
-        sizeof(s32) + sizeof(u32)*CallStackDepth +
+        sizeof(s32) + sizeof(uaddr)*CallStackDepth +
         LenFile + 1;
     BytesNeeded = (BytesNeeded + 3) & -4;
 
@@ -859,8 +886,7 @@ void xtool::LogFree( u32 Address, const char* pFile, s32 Line )
     *(u32*)pBuffer = (u32)x_GetThreadID();
     pBuffer += sizeof(u32);
 
-    *(u32*)pBuffer = Address;
-    pBuffer += sizeof(u32);
+    WriteAddress( pBuffer, Address );
 
     *(s32*)pBuffer = Line;
     pBuffer += sizeof(s32);
@@ -868,8 +894,11 @@ void xtool::LogFree( u32 Address, const char* pFile, s32 Line )
     *(s32*)pBuffer = CallStackDepth;
     pBuffer += sizeof(s32);
 
-    x_memcpy( pBuffer, pCallStack, sizeof(u32)*CallStackDepth );
-    pBuffer += sizeof(u32)*CallStackDepth;
+    if( CallStackDepth > 0 )
+    {
+        x_memcpy( pBuffer, pCallStack, sizeof(uaddr)*CallStackDepth );
+        pBuffer += sizeof(uaddr)*CallStackDepth;
+    }
 
     x_memcpy( pBuffer, pFile, LenFile+1 );
     pBuffer += LenFile+1;
@@ -896,7 +925,7 @@ void xtool::LogMemMark( const char* pMarkName )
 
     // Get CallStack info
     s32     CallStackDepth;
-    u32*    pCallStack;
+    uaddr*  pCallStack;
     GetCallStack( CallStackDepth, pCallStack );
 
     // Get the number of buffer bytes needed
@@ -905,7 +934,7 @@ void xtool::LogMemMark( const char* pMarkName )
         sizeof(u32) +
         sizeof(xtick) +
         sizeof(u32) +
-        sizeof(s32) + sizeof(u32)*CallStackDepth +
+        sizeof(s32) + sizeof(uaddr)*CallStackDepth +
         LenMarkName + 1;
     BytesNeeded = (BytesNeeded + 3) & -4;
 
@@ -932,8 +961,11 @@ void xtool::LogMemMark( const char* pMarkName )
     *(s32*)pBuffer = CallStackDepth;
     pBuffer += sizeof(s32);
 
-    x_memcpy( pBuffer, pCallStack, sizeof(u32)*CallStackDepth );
-    pBuffer += sizeof(u32)*CallStackDepth;
+    if( CallStackDepth > 0 )
+    {
+        x_memcpy( pBuffer, pCallStack, sizeof(uaddr)*CallStackDepth );
+        pBuffer += sizeof(uaddr)*CallStackDepth;
+    }
 
     x_memcpy( pBuffer, pMarkName, LenMarkName+1 );
     pBuffer += LenMarkName+1;

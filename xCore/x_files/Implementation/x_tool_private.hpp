@@ -113,9 +113,9 @@ public:
     void        LogTimerPush    ( void );
     void        LogTimerPop     ( const char* pChannel, f32 TimeLimitMS, const char* pMessage );
 
-    void        LogMalloc       ( u32 Address, u32 Size, const char* pFile, s32 Line );
-    void        LogRealloc      ( u32 Address, u32 OldAddress, s32 Size, const char* pFile, s32 Line );
-    void        LogFree         ( u32 Address, const char* pFile, s32 Line );
+    void        LogMalloc       ( uaddr Address, u32 Size, const char* pFile, s32 Line );
+    void        LogRealloc      ( uaddr Address, uaddr OldAddress, s32 Size, const char* pFile, s32 Line );
+    void        LogFree         ( uaddr Address, const char* pFile, s32 Line );
     void        LogMemMark      ( const char* pMarkName );
 
     void        SetAppName      ( const char* pName );

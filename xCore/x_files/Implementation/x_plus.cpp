@@ -1442,6 +1442,8 @@ void* x_memmove( void* pDest, const void* pSrc, s32 Count )
     byte* pFrom;
     byte* pTo;
     s32   t;
+    uaddr FromAddr;
+    uaddr ToAddr;
 
     ASSERT( pDest );
     ASSERT( pSrc  );
@@ -1460,20 +1462,21 @@ void* x_memmove( void* pDest, const void* pSrc, s32 Count )
         // Copy forward.
         //
 
-        t = (s32)pFrom;
+        FromAddr = (uaddr)pFrom;
+        ToAddr   = (uaddr)pTo;
 
-        if( (t | (s32)pTo) & 3 )
+        if( (FromAddr | ToAddr) & 3 )
         {
             // Try to align operands.  This cannot be done unless the low 
             // bits match.
 
-            if( ((t ^ (s32)pTo) & 3) || (Count < 4) )
+            if( ((FromAddr ^ ToAddr) & 3) || (Count < 4) )
             {
                 t = Count;
             }
             else
             {
-                t = 4 - ( t & 3 );
+                t = 4 - (s32)(FromAddr & 3);
             }
 
             Count -= t;
@@ -1519,17 +1522,18 @@ void* x_memmove( void* pDest, const void* pSrc, s32 Count )
         pFrom += Count;
         pTo   += Count;
 
-        t = (s32)pFrom;
+        FromAddr = (uaddr)pFrom;
+        ToAddr   = (uaddr)pTo;
 
-        if( (t | (s32)pTo) & 3 )
+        if( (FromAddr | ToAddr) & 3 )
         {
-            if( ((t ^ (s32)pTo) & 3) || (Count <= 4) )
+            if( ((FromAddr ^ ToAddr) & 3) || (Count <= 4) )
             {
                 t = Count;
             }
             else
             {
-                t &= 3;
+                t = (s32)(FromAddr & 3);
             }
 
             Count -= t;
@@ -1592,7 +1596,7 @@ void* x_memset( void* pBuf, s32 C, s32 Count )
            ( ((u32)C) <<  0 );
 
     // Write starting bytes.
-    while( (p < pEnd) && (((u32)p) & 3) )
+    while( (p < pEnd) && (((uaddr)p) & 3) )
         *p++ = (byte)C;
 
     // Write 4 bytes at a time.
@@ -1653,7 +1657,7 @@ s32 x_memcmp( const void* pBuf1, const void* pBuf2, s32 Count )
     //
     // Compare aligned data 32 bits at a time.
     //
-    if( ( Count >= 4 ) && !((u32)p1 & 3) && !((u32)p2 & 3) )
+    if( ( Count >= 4 ) && !((uaddr)p1 & 3) && !((uaddr)p2 & 3) )
     {
         pEnd -= 4;
         while( p1 <= pEnd )

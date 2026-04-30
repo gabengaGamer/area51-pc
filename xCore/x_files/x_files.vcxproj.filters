@@ -105,9 +105,6 @@
     <ClCompile Include="Implementation\x_tool.cpp">
       <Filter>Implementation</Filter>
     </ClCompile>
-    <ClCompile Include="Implementation\x_deltatime.cpp">
-      <Filter>Implementation</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="x_bitmap.hpp" />
@@ -160,7 +157,6 @@
     <ClInclude Include="Implementation\x_tool_private.hpp">
       <Filter>Implementation\Private</Filter>
     </ClInclude>
-    <ClInclude Include="x_deltatime.hpp" />
     <ClInclude Include="Implementation\x_time_inline.hpp" />
   </ItemGroup>
 </Project>

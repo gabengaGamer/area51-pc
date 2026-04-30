@@ -1147,7 +1147,7 @@ void xbitmap::Setup( format    Format,
     ASSERT( Height > 0 );
     ASSERT( (Format > FMT_NULL) && (Format < FMT_END_OF_LIST) );
     ASSERT( (pClutData != NULL) == (m_FormatInfo[Format].ClutBased) );
-    ASSERT( (u32)pClutData >= (u32)ClutOwned ); // Owned but no clut?
+    ASSERT( !ClutOwned || (pClutData != NULL) ); // Owned but no clut?
 
     if( PhysicalWidth == -1 )
         PhysicalWidth = Width;
@@ -1559,8 +1559,8 @@ byte* xbitmap::GCNSwizzleRGBA8 ( byte* pDestBuffer )
         } 
 
         // Align up for the next mip
-        pDestBuffer = pOrigDest + ALIGN_32((s32)pDest - (s32)pOrigDest);
-        //pDestBuffer = (byte*)ALIGN_32((s32)pDest);
+        usize DestOffset = (usize)(pDest - pOrigDest);
+        pDestBuffer = pOrigDest + ((DestOffset + 31) & ~((usize)31));
         W /= 2;
         H /= 2;
     }
@@ -1604,8 +1604,8 @@ byte* xbitmap::GCNSwizzleRGB565( byte* pDestBuffer )
         } 
 
         // Align up for the next mip
-        pDestBuffer = pOrigDest + ALIGN_32((s32)pDest - (s32)pOrigDest);
-        //pDestBuffer = (byte*)ALIGN_32((s32)pDest);
+        usize DestOffset = (usize)(pDest - pOrigDest);
+        pDestBuffer = pOrigDest + ((DestOffset + 31) & ~((usize)31));
         W /= 2;
         H /= 2;
     }
@@ -1649,8 +1649,8 @@ byte* xbitmap::GCNSwizzleRGBC8 ( byte* pDestBuffer )
         } 
 
         // Align up for the next mip
-        pDestBuffer = pOrigDest + ALIGN_32((s32)pDest - (s32)pOrigDest);
-        //pDestBuffer = (byte*)ALIGN_32((s32)pDest);
+        usize DestOffset = (usize)(pDest - pOrigDest);
+        pDestBuffer = pOrigDest + ((DestOffset + 31) & ~((usize)31));
         W /= 2;
         H /= 2;
     }
@@ -1694,8 +1694,8 @@ byte* xbitmap::GCNSwizzleRGBC4( byte* pDestBuffer )
         } 
 
         // Align up for the next mip
-        pDestBuffer = pOrigDest + ALIGN_32((s32)pDest - (s32)pOrigDest);
-        //pDestBuffer = (byte*)ALIGN_32((s32)pDest);
+        usize DestOffset = (usize)(pDest - pOrigDest);
+        pDestBuffer = pOrigDest + ((DestOffset + 31) & ~((usize)31));
         W /= 2;
         H /= 2;
     }

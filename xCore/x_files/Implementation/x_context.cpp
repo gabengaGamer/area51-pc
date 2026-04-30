@@ -66,11 +66,7 @@ void x_ContextInit( void )
     g_Context.bCommandFilterSubstring           = FALSE;
     x_strcpy(g_Context.SubstringBuffer,"");
 
-    #ifdef TARGET_PC
     g_Context.nFramesBetweenDisplays            = 20;
-    #else
-    g_Context.nFramesBetweenDisplays            = 10;
-    #endif
 
     s_DisplayFrameCount = g_Context.nFramesBetweenDisplays;
 

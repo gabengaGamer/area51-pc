@@ -42,12 +42,7 @@
 #include "implementation/x_threads_private.hpp"
 
 #define X_MAX_THREADS           16
-
-#ifdef TARGET_PC
-    #define THREAD_BASE_PRIORITY    THREAD_PRIORITY_NORMAL
-#else
-    #define THREAD_BASE_PRIORITY    64
-#endif
+#define THREAD_BASE_PRIORITY    THREAD_PRIORITY_NORMAL
 
 #define X_TH_NOBLOCK           (0<<0)
 #define X_TH_BLOCK             (1<<0)

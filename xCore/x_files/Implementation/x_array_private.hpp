@@ -41,21 +41,10 @@
 template< class T >
 inline s32 xarray<T>::CalcGrowth( void )
 {
-    s32 GrowBy = 1;
-
-#ifdef TARGET_PC
     if( m_GrowAmount == 0 )
-        GrowBy = MAX( 128, (m_Capacity/2) );
+        return MAX( 128, (m_Capacity/2) );
     else
-        GrowBy = m_GrowAmount;
-#else
-    if( m_GrowAmount == 0 )
-        GrowBy = 1;
-    else
-        GrowBy = 1;
-#endif
-
-    return GrowBy;
+        return m_GrowAmount;
 }
 
 //==============================================================================
