@@ -100,14 +100,14 @@ x_debug_crash_fn*   x_DebugGetCrashFunction( void );
 // If we can implement BREAK properly on any given platform, do it!
 
 #if defined(TARGET_PC) && defined(_MSC_VER)
-#define BREAK      __debugbreak()
+#define BREAK      do { __debugbreak(); } while(0);
 #endif
 
 // Generic BREAK to be used if no proper version can be created.
 
 #ifndef BREAK
 extern volatile s32 DDBZ;   // Debug Divide By Zero
-#define BREAK  (DDBZ=0,DDBZ=1/DDBZ)
+#define BREAK  do { (DDBZ=0,DDBZ=1/DDBZ); } while(0);
 #endif
 
 //==============================================================================
