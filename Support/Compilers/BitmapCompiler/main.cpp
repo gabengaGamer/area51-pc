@@ -7,9 +7,8 @@
 // VARIABLES
 //=========================================================================
 
-static bool s_ReqPalOnly = false;
-
 static xbool    s_bIsShadow[256];
+static xbool    s_bReqPalOnly[256];
 static xbitmap  s_Bitmap[256];
 
 //=========================================================================
@@ -28,9 +27,6 @@ void ConvertToPaletteOnly( xbitmap& BMP, s32 nColors )
     s32 i;
     ASSERT( (nColors==256) || (nColors==16) );
 
-    // allocate space for the new palette
-    byte* pPalette = (byte*)x_malloc( nColors*4 );
-    x_memset( pPalette, 255, nColors*4 );
     if ( (nColors == 256) && (BMP.GetWidth() != 256) )
     {
         x_throw( "Bitmap must be 256 pixels wide for a Palette Only 8-bit" );
@@ -42,6 +38,10 @@ void ConvertToPaletteOnly( xbitmap& BMP, s32 nColors )
         x_throw( "Bitmap must be 16 pixels wide for a Palette Only 4-bit" );
         return;
     }
+
+    // allocate space for the new palette
+    byte* pPalette = (byte*)x_malloc( nColors*4 );
+    x_memset( pPalette, 255, nColors*4 );
 
     // copy the first row of pixels into our new palette
     xcolor* pCol = (xcolor*)pPalette;
@@ -106,6 +106,7 @@ void ExecuteScript( command_line& CommandLine )
     x_try;
 
     x_memset( s_bIsShadow, 0, sizeof(s_bIsShadow) );
+    x_memset( s_bReqPalOnly, 0, sizeof(s_bReqPalOnly) );
 
     //
     // Parse all the options
@@ -120,9 +121,14 @@ void ExecuteScript( command_line& CommandLine )
         if( OptName == xstring( "APPEND" ) )
         {
             pFileName = (const char*)OptString;
-            bBitmapLoaded = auxbmp_Load( s_Bitmap[Count++], OptString );             
+            if( Count >= 256 )
+                x_throw( "Too many bitmaps. Maximum append count is 256." );
+
+            bBitmapLoaded = auxbmp_Load( s_Bitmap[Count], OptString );
             if( bBitmapLoaded == FALSE )
                 x_throw( xfs("Unable to load bitmap (%s)", (const char*)OptString) );
+
+            Count++;
             continue;
         }
 
@@ -150,7 +156,7 @@ void ExecuteScript( command_line& CommandLine )
                 s32 h = Xbox.GetHeight();
                 s32 w = Xbox.GetWidth ();
 
-                if( ! s_ReqPalOnly )
+                if( !s_bReqPalOnly[i] )
                 {
                     auxbmp_ConvertToD3D( Xbox );
 
@@ -278,14 +284,14 @@ void ExecuteScript( command_line& CommandLine )
         if( OptName == xstring( "PAL8" ) )
         {
             ConvertToPaletteOnly( s_Bitmap[Count-1], 256 );
-            s_ReqPalOnly = true;
+            s_bReqPalOnly[Count-1] = TRUE;
             continue;
         }
 
         if( OptName == xstring( "PAL4" ) )
         {
             ConvertToPaletteOnly( s_Bitmap[Count-1], 16 );
-            s_ReqPalOnly = true;
+            s_bReqPalOnly[Count-1] = TRUE;
             continue;
         }
 
