@@ -71,15 +71,19 @@ const char* CompileBitmap( const char* pOutputPath, const char* pSourceBitmap, u
     // see if the output file is already up-to-date by comparing it to
     // the source bitmap and to the timestamp of this exe
     xbool bOutOfDate = FALSE;
+    intptr_t SrcFindHandle = -1;
+    intptr_t DstFindHandle = -1;
     s_SrcBitmapData.time_write = 0;
     s_DstBitmapData.time_write = 0;
-    if ( _findfirst( pSourceBitmap, &s_SrcBitmapData ) == -1 )
+    SrcFindHandle = _findfirst( pSourceBitmap, &s_SrcBitmapData );
+    if ( SrcFindHandle == -1 )
     {
         x_throw( "Unable to locate source bitmap." );
         return FinalPath;
     }
     
-    if ( _findfirst( FinalPath, &s_DstBitmapData ) == -1 )
+    DstFindHandle = _findfirst( FinalPath, &s_DstBitmapData );
+    if ( DstFindHandle == -1 )
     {
         // the destination bitmap doesn't exist yet, so obviously we need
         // to compile it
@@ -94,6 +98,10 @@ const char* CompileBitmap( const char* pOutputPath, const char* pSourceBitmap, u
         if ( s_DstBitmapData.time_write <= s_ExeData.time_write )
             bOutOfDate = TRUE;
     }
+
+    _findclose( SrcFindHandle );
+    if ( DstFindHandle != -1 )
+        _findclose( DstFindHandle );
 
     // handle the bitmap compilation
     if ( bOutOfDate == TRUE )
@@ -278,8 +286,9 @@ void ExecuteScript( command_line& CommandLine )
                 continue;
 
             xstring ColorString = CommandLine.GetOptionString( i );
-            xcolor  Color = XCOLOR_WHITE;
-            sscanf( ColorString, "%x", &Color );
+            u32     ColorValue = (u32)XCOLOR_WHITE;
+            sscanf( (const char*)ColorString, "%x", &ColorValue );
+            xcolor  Color( ColorValue );
             DecalPkg.SetGroupColor( CurrGroup, Color );
         }
 
@@ -396,7 +405,9 @@ void ExecuteScript( command_line& CommandLine )
 
             decal_definition& DecalDef = DecalPkg.GetDecalDef( CurrDecal );
             xstring           Color    = CommandLine.GetOptionString( i );
-            sscanf( Color, "%x", &DecalDef.m_Color );
+            u32               ColorValue = (u32)DecalDef.m_Color;
+            sscanf( (const char*)Color, "%x", &ColorValue );
+            DecalDef.m_Color = ColorValue;
         }
 
         // max vis
@@ -647,8 +658,11 @@ void main( s32 argc, char* argv[] )
 
     // save out the exe timestamp for doing dependancy checks
     xstring ExePath(argv[0]);
+    intptr_t ExeFindHandle;
     s_ExeData.time_write = 0;
-    _findfirst( ExePath, &s_ExeData );
+    ExeFindHandle = _findfirst( ExePath, &s_ExeData );
+    if ( ExeFindHandle != -1 )
+        _findclose( ExeFindHandle );
 
     command_line CommandLine;
     
