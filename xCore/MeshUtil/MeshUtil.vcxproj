@@ -5,25 +5,41 @@
       <Configuration>Debug</Configuration>
       <Platform>Win32</Platform>
     </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
     <ProjectConfiguration Include="EDITOR-Debug|Win32">
       <Configuration>EDITOR-Debug</Configuration>
       <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="EDITOR-Debug|x64">
+      <Configuration>EDITOR-Debug</Configuration>
+      <Platform>x64</Platform>
     </ProjectConfiguration>
     <ProjectConfiguration Include="OptDebug|Win32">
       <Configuration>OptDebug</Configuration>
       <Platform>Win32</Platform>
     </ProjectConfiguration>
+    <ProjectConfiguration Include="OptDebug|x64">
+      <Configuration>OptDebug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
     <ProjectConfiguration Include="QA|Win32">
       <Configuration>QA</Configuration>
       <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="QA|x64">
+      <Configuration>QA</Configuration>
+      <Platform>x64</Platform>
     </ProjectConfiguration>
     <ProjectConfiguration Include="Release|Win32">
       <Configuration>Release</Configuration>
       <Platform>Win32</Platform>
     </ProjectConfiguration>
-    <ProjectConfiguration Include="VIEWER-Debug|Win32">
-      <Configuration>VIEWER-Debug</Configuration>
-      <Platform>Win32</Platform>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
@@ -33,11 +49,11 @@
     <ProjectGuid>{36FB18DE-FA6A-4093-9BAD-8A025A7F218D}</ProjectGuid>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='VIEWER-Debug|Win32'" Label="Configuration">
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='EDITOR-Debug|Win32'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <PlatformToolset>v143</PlatformToolset>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='EDITOR-Debug|Win32'" Label="Configuration">
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='EDITOR-Debug|x64'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <PlatformToolset>v143</PlatformToolset>
   </PropertyGroup>
@@ -45,7 +61,15 @@
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <PlatformToolset>v143</PlatformToolset>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='QA|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <PlatformToolset>v143</PlatformToolset>
+  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='OptDebug|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <PlatformToolset>v143</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='OptDebug|x64'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <PlatformToolset>v143</PlatformToolset>
   </PropertyGroup>
@@ -53,29 +77,49 @@
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <PlatformToolset>v143</PlatformToolset>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <PlatformToolset>v143</PlatformToolset>
+  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <PlatformToolset>v143</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <PlatformToolset>v143</PlatformToolset>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
   </ImportGroup>
-  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='VIEWER-Debug|Win32'" Label="PropertySheets">
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='EDITOR-Debug|Win32'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
-  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='EDITOR-Debug|Win32'" Label="PropertySheets">
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='EDITOR-Debug|x64'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='QA|Win32'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='QA|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='OptDebug|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='OptDebug|x64'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros">
@@ -88,7 +132,15 @@
     <OutDir>$(ProjectDir)_$(Platform)$(Configuration)\</OutDir>
     <IntDir>$(ProjectDir)_$(Platform)$(Configuration)\</IntDir>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <OutDir>$(ProjectDir)_$(Platform)$(Configuration)\</OutDir>
+    <IntDir>$(ProjectDir)_$(Platform)$(Configuration)\</IntDir>
+  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <OutDir>$(ProjectDir)_$(Platform)$(Configuration)\</OutDir>
+    <IntDir>$(ProjectDir)_$(Platform)$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <OutDir>$(ProjectDir)_$(Platform)$(Configuration)\</OutDir>
     <IntDir>$(ProjectDir)_$(Platform)$(Configuration)\</IntDir>
   </PropertyGroup>
@@ -96,7 +148,15 @@
     <OutDir>$(ProjectDir)_$(Platform)$(Configuration)\</OutDir>
     <IntDir>$(ProjectDir)_$(Platform)$(Configuration)\</IntDir>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='OptDebug|x64'">
+    <OutDir>$(ProjectDir)_$(Platform)$(Configuration)\</OutDir>
+    <IntDir>$(ProjectDir)_$(Platform)$(Configuration)\</IntDir>
+  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='QA|Win32'">
+    <OutDir>$(ProjectDir)_$(Platform)$(Configuration)\</OutDir>
+    <IntDir>$(ProjectDir)_$(Platform)$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='QA|x64'">
     <OutDir>$(ProjectDir)_$(Platform)$(Configuration)\</OutDir>
     <IntDir>$(ProjectDir)_$(Platform)$(Configuration)\</IntDir>
   </PropertyGroup>
@@ -104,11 +164,18 @@
     <OutDir>$(ProjectDir)_$(Platform)$(Configuration)\</OutDir>
     <IntDir>$(ProjectDir)_$(Platform)$(Configuration)\</IntDir>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='VIEWER-Debug|Win32'">
-    <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
-    <IntDir>$(Configuration)\</IntDir>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='EDITOR-Debug|x64'">
+    <OutDir>$(ProjectDir)_$(Platform)$(Configuration)\</OutDir>
+    <IntDir>$(ProjectDir)_$(Platform)$(Configuration)\</IntDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>$(X)\Auxiliary\Parsing;$(X)\..\Support;$(X)\MeshUtil;$(X)\x_files;$(X)\Auxiliary\Bitmap;$(X)\Parsing;$(X);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>TARGET_PC;CONFIG_RETAIL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
       <AdditionalIncludeDirectories>$(X)\Auxiliary\Parsing;$(X)\..\Support;$(X)\MeshUtil;$(X)\x_files;$(X)\Auxiliary\Bitmap;$(X)\Parsing;$(X);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>TARGET_PC;CONFIG_RETAIL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -129,6 +196,20 @@
       <CallingConvention>Cdecl</CallingConvention>
     </ClCompile>
   </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <AdditionalIncludeDirectories>$(X)\Auxiliary\Parsing;$(X)\..\Support;$(X)\MeshUtil;$(X)\x_files;$(X)\Auxiliary\Bitmap;$(X)\Parsing;$(X);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>TARGET_PC;CONFIG_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <StructMemberAlignment>Default</StructMemberAlignment>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
+      <EnableEnhancedInstructionSet>NotSet</EnableEnhancedInstructionSet>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <CallingConvention>Cdecl</CallingConvention>
+    </ClCompile>
+  </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='OptDebug|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
@@ -137,6 +218,16 @@
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='OptDebug|x64'">
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <AdditionalIncludeDirectories>$(X)\Auxiliary\Parsing;$(X)\..\Support;$(X)\MeshUtil;$(X)\x_files;$(X)\Auxiliary\Bitmap;$(X)\Parsing;$(X);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>TARGET_PC;CONFIG_OPTDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='QA|Win32'">
@@ -149,6 +240,16 @@
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
     </ClCompile>
   </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='QA|x64'">
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <AdditionalIncludeDirectories>$(X)\Auxiliary\Parsing;$(X)\..\Support;$(X)\MeshUtil;$(X)\x_files;$(X)\Auxiliary\Bitmap;$(X)\Parsing;$(X);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>TARGET_PC;CONFIG_QA;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+    </ClCompile>
+  </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='EDITOR-Debug|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
@@ -159,14 +260,14 @@
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
     </ClCompile>
   </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='VIEWER-Debug|Win32'">
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='EDITOR-Debug|x64'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
       <AdditionalIncludeDirectories>$(X)\Auxiliary\Parsing;$(X)\..\Support;$(X)\MeshUtil;$(X)\x_files;$(X)\Auxiliary\Bitmap;$(X)\Parsing;$(X);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>TARGET_PC;CONFIG_DEBUG;CONFIG_VIEWER;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>TARGET_PC;CONFIG_DEBUG;X_EDITOR;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
-      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
