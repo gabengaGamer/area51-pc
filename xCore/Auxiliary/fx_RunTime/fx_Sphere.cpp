@@ -308,12 +308,6 @@ void fx_sphere::AdvanceLogic( const fx_effect_base* pEffect, f32 DeltaTime )
 
 //==============================================================================
 
-#ifdef TARGET_GCN
-void SPEmitterGCNSetup( const xbitmap* pAlpha, xbool SubMode );
-#endif
-
-//==============================================================================
-
 void fx_sphere::Render( const fx_effect_base* pEffect ) const
 {
     CONTEXT( "fx_sphere::Render" );
@@ -357,10 +351,6 @@ void fx_sphere::Render( const fx_effect_base* pEffect ) const
     draw_Begin( DRAW_TRIANGLE_STRIPS, DrawFlags );
     draw_SetTexture( *pDiffuse );
 
-    #ifdef TARGET_GCN
-    SPEmitterGCNSetup( pAlpha, (DrawFlags & DRAW_BLEND_SUB) ? TRUE : FALSE );
-    #endif
-
     draw_UVs    ( m_pUV,     m_NVerts );
     draw_Colors ( m_pColor,  m_NVerts );
     draw_Verts  ( m_pVertex, m_NVerts );
@@ -374,10 +364,6 @@ void fx_sphere::Render( const fx_effect_base* pEffect ) const
 
         draw_Begin( DRAW_TRIANGLES, DrawFlags );
         draw_SetTexture( *pDiffuse );
-
-        #ifdef TARGET_GCN
-        SPEmitterGCNSetup( pAlpha, (DrawFlags & DRAW_BLEND_SUB) ? TRUE : FALSE );
-        #endif
 
         draw_UVs    ( m_pUV,     m_NVerts );
         draw_Colors ( m_pColor,  m_NVerts );

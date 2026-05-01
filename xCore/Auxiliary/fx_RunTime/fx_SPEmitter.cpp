@@ -14,10 +14,6 @@
 #include "e_Engine.hpp"
 #include "..\Support\Render\Render.hpp"
 
-#ifdef TARGET_GCN
-#include "dolphin/gx.h"
-#endif
-
 //==============================================================================
 //  DAMN LINKER!
 //==============================================================================
@@ -26,6 +22,14 @@ s32 fx_SPEmitter;
 
 //==============================================================================
 //  FUNCTIONS
+//==============================================================================
+
+inline 
+static byte* Align16Ptr( byte* pData )
+{
+    return (byte*)(((uaddr)pData + 15) & ~((uaddr)15));
+}
+
 //==============================================================================
 
 s32 SPEmitterMemoryFn( const fx_element_def& ElementDef )
@@ -52,13 +56,9 @@ s32 SPEmitterMemoryFn( const fx_element_def& ElementDef )
     Size = ALIGN_16( Size );
     Size += (EmitterDef.Flags & SPE_VELOCITY_ORIENTED) ? 0 : sizeof(vector2) * nParticles;
 
-#ifdef TARGET_PS2
-    return ALIGN_16( Size );
-#else
     // The extra 15 here is because the allocator on the PC is not 16 byte aligned but the preceeding
     // code assumes 16 byte alignment, the 15 gives room for any error.
     return ALIGN_16( Size + 15 );
-#endif
 }
 
 //==============================================================================
@@ -94,26 +94,26 @@ void fx_spemitter::Initialize( const fx_element_def* pElementDef,
     m_Color.Set( 255, 255, 255, (u8)0 );
 
     s32 nParticles = EmitterDef.NParticles;
-    u32 t = (u32)(this+1);
-    m_pParticles    = (fx_sparticle*)t; t += sizeof(fx_sparticle) * nParticles;
-    m_pPositions    = (vector4*     )t; t += sizeof(vector4     ) * nParticles;
-    m_pVelocities   = (vector4*     )t; t += sizeof(vector4     ) * nParticles;
+    byte* pData = (byte*)(this+1);
+    m_pParticles    = (fx_sparticle*)pData; pData += sizeof(fx_sparticle) * nParticles;
+    m_pPositions    = (vector4*     )pData; pData += sizeof(vector4     ) * nParticles;
+    m_pVelocities   = (vector4*     )pData; pData += sizeof(vector4     ) * nParticles;
     
-    t = ALIGN_16( t );
-    m_pStartPos     = (EmitterDef.Flags & SPE_REVERSE_MODE) ? (vector3*)t : (vector3*)0;
-    t += (EmitterDef.Flags & SPE_REVERSE_MODE) ? sizeof(vector3) * nParticles : 0;
+    pData = Align16Ptr( pData );
+    m_pStartPos     = (EmitterDef.Flags & SPE_REVERSE_MODE) ? (vector3*)pData : (vector3*)0;
+    pData += (EmitterDef.Flags & SPE_REVERSE_MODE) ? sizeof(vector3) * nParticles : 0;
 
-    t = ALIGN_16( t );
-    m_pStartVel     = (vector3*)t;
-    t += sizeof(vector3) * nParticles;
+    pData = Align16Ptr( pData );
+    m_pStartVel     = (vector3*)pData;
+    pData += sizeof(vector3) * nParticles;
 
-    t = ALIGN_16( t );
-    m_pColors       = (u32*)t;
-    t += sizeof(u32) * nParticles;
+    pData = Align16Ptr( pData );
+    m_pColors       = (u32*)pData;
+    pData += sizeof(u32) * nParticles;
 
-    t = ALIGN_16( t );
-    m_pRotAndScales = (EmitterDef.Flags & SPE_VELOCITY_ORIENTED) ? (vector2*)0 : (vector2*)t;
-    t += (EmitterDef.Flags & SPE_VELOCITY_ORIENTED) ? 0 : sizeof(vector2) * nParticles;
+    pData = Align16Ptr( pData );
+    m_pRotAndScales = (EmitterDef.Flags & SPE_VELOCITY_ORIENTED) ? (vector2*)0 : (vector2*)pData;
+    pData += (EmitterDef.Flags & SPE_VELOCITY_ORIENTED) ? 0 : sizeof(vector2) * nParticles;
 
     vector4     InactivePos( 0.0f, 0.0f, 0.0f, 0.0f );
     InactivePos.GetIW() = 0x8000;
@@ -140,14 +140,16 @@ void fx_spemitter::AdvanceLogic( const fx_effect_base* pEffect, f32 DeltaTime )
 
 //==============================================================================
 
-static s32 s_Seed = 15827;
-
-inline f32 fast_rand( f32 Min, f32 Max )
+inline 
+f32 fast_rand( f32 Min, f32 Max )
 {
-    s_Seed = s_Seed * 214013 + 2531011;
-    f32 r = (f32)((s_Seed >> 16) & X_RAND_MAX);
+    static s32 Seed = 15827;
+    Seed = Seed * 214013 + 2531011;
+    f32 r = (f32)((Seed >> 16) & X_RAND_MAX);
     return( ((r / (f32)X_RAND_MAX) * (Max-Min)) + Min );
 }
+
+//==============================================================================
 
 void fx_spemitter::EmissionLogic( const fx_effect_base* pEffect, f32 DeltaTime )
 {
@@ -275,69 +277,6 @@ void fx_spemitter::EmissionLogic( const fx_effect_base* pEffect, f32 DeltaTime )
 
 //==============================================================================
 
-#ifdef TARGET_PS2
-
-inline
-static xcolor LerpColor( const xcolor& Color1, const xcolor& Color2, f32 Factor, const xcolor& Color3 )
-{
-    ASSERT( (Factor >= 0.0f) && (Factor <= 1.0f) );
-
-    register s32    factor = (s32)(Factor * 32767);
-    register u32    color1 = *(u32*)&Color1;
-    register u32    color2 = *(u32*)&Color2;
-    register u32    color3 = *(u32*)&Color3;
-    register u32    tmp1;
-    register u32    tmp2;
-
-    asm
-    ("
-        li          tmp1, 0x7fff
-        pcpyh       tmp1, tmp1              # Duplicate the 7fff value over the lower 4 halfwords
-        pcpyh       tmp2, factor            # Duplicate the factor over the lower 4 halfwords
-        psubuh      tmp1, tmp1, tmp2        # 7fff - factor in all 4 lower halfwords
-        pextlh      tmp2, tmp1, tmp2        # Interleave tmp and factor components
-
-        pextlb      color1, $0, color1      # Extend c1 to halfwords
-        pextlb      color2, $0, color2      # Extend c2 to halfwords
-        pextlh      tmp1, color1, color2    # Interleave c1 and c2 components
-
-        phmadh      tmp1, tmp1, tmp2        # Multiply and Add for the lerp
-        psraw       tmp1, tmp1, 15          # Normalize
-
-        pextlb      tmp2, $0, color3        # Extend c3 to halfwords
-        pextlh      tmp2, $0, tmp2          # Extend c3 to words
-
-        phmadh      tmp1, tmp1, tmp2        # Multiply (c1 lerp c2) * c3
-        psraw       tmp1, tmp1, 8           # Normalize
-        ppach       tmp1, $0, tmp1          # Pack result
-        ppacb       tmp1, $0, tmp1          # Pack result
-    "
-    :
-      "=&r tmp1"(tmp1),
-      "=&r tmp2"(tmp2)
-    :
-      "r color1"(color1),
-      "r color2"(color2),
-      "r color3"(color3),
-      "r factor"(factor)
-    );
-
-/*
-        pextlb      color3, $0, color3      # Extend c3 to halfwords
-
-        pmfhl.sh    tmp
-        pmulth      tmp, tmp, color3        # * Color 3
-        pmfhl.sh    tmp
-        ppacb       tmp, $0, tmp
-*/
-
-    return (xcolor)tmp1;
-}
-
-#endif
-
-//==============================================================================
-
 void fx_spemitter::ParticleLogic( const fx_effect_base* pEffect, f32 DeltaTime )
 {
     CONTEXT( "fx_spemitter::ParticleLogic" );
@@ -359,12 +298,11 @@ void fx_spemitter::ParticleLogic( const fx_effect_base* pEffect, f32 DeltaTime )
     }
 
     f32     UniScale  = pEffect->GetUniformScale();
-#ifndef TARGET_PS2
+
     vector4 ElementColor( m_Color.R / 255.0f,
                           m_Color.G / 255.0f,
                           m_Color.B / 255.0f,
                           m_Color.A / 255.0f );
-#endif
 
     if( EmitterDef.Flags & SPE_SCALE_SPRITE_SIZE )
         UniScale *= GetUniformScale();
@@ -425,7 +363,6 @@ void fx_spemitter::ParticleLogic( const fx_effect_base* pEffect, f32 DeltaTime )
 
                 // Calculate Color
                 xcolor Color;
-#ifndef TARGET_PS2
                 Color.R = (u8)(((EmitterDef.Key[Lo].Color.R * LoMix)  + 
                                 (EmitterDef.Key[Hi].Color.R * HiMix)) *
                                 (ElementColor.GetX()));
@@ -441,17 +378,7 @@ void fx_spemitter::ParticleLogic( const fx_effect_base* pEffect, f32 DeltaTime )
                 Color.A = (u8)(((EmitterDef.Key[Lo].Color.A * LoMix)  + 
                                 (EmitterDef.Key[Hi].Color.A * HiMix)) *
                                 (ElementColor.GetW()));
-#else
-                Color = LerpColor( EmitterDef.Key[Lo].Color, EmitterDef.Key[Hi].Color, Frame-Lo, m_Color );
-#endif
 
-#ifdef TARGET_PS2
-                // TODO: Remove this code
-                Color.R = (Color.R==255) ? 0x80 : (Color.R>>1);
-                Color.G = (Color.G==255) ? 0x80 : (Color.G>>1);
-                Color.B = (Color.B==255) ? 0x80 : (Color.B>>1);
-                Color.A = (Color.A==255) ? 0x80 : (Color.A>>1);
-#endif
                 *pColor++ = (Color.A << 24) | (Color.B << 16) | (Color.G << 8) | Color.R;
 
                 // Calculate Scale
@@ -537,142 +464,6 @@ void fx_spemitter::ParticleLogic( const fx_effect_base* pEffect, f32 DeltaTime )
     m_BBox.Inflate( MaxRadius, MaxRadius, MaxRadius );
 }
 
-//==============================================================================
-#ifdef TARGET_GCN
-//==============================================================================
-
-void SPEmitterGCNSetup( const xbitmap* pAlpha, xbool SubMode )
-{
-    if( pAlpha == NULL )
-        return;
-
-    if( SubMode )
-    {   
-        GXSetTevOrder   ( GX_TEVSTAGE0, GCNTEXCoord[ 0 ], GX_TEXMAP1, GX_COLOR0A0 );   
-        GXSetTevOrder   ( GX_TEVSTAGE1, GCNTEXCoord[ 0 ], GX_TEXMAP0, GX_COLOR0A0 );   
-
-        GXSetTevSwapMode( GX_TEVSTAGE0, GX_TEV_SWAP0, GX_TEV_SWAP1 );
-        GXSetTevSwapMode( GX_TEVSTAGE1, GX_TEV_SWAP0, GX_TEV_SWAP0 );
-
-        GXSetTevColorOp( GX_TEVSTAGE0,
-                         GX_TEV_ADD,           
-                         GX_TB_ZERO,           
-                         GX_CS_SCALE_1,        
-                         TRUE,                 
-                         GX_TEVPREV );         
-
-        GXSetTevAlphaOp( GX_TEVSTAGE0,
-                         GX_TEV_ADD,           
-                         GX_TB_ZERO,           
-                         GX_CS_SCALE_1,        
-                         TRUE,                 
-                         GX_TEVPREV );        
-
-        GXSetTevColorOp( GX_TEVSTAGE1,
-                         GX_TEV_ADD,           
-                         GX_TB_ZERO,           
-                         GX_CS_SCALE_1,        
-                         TRUE,                 
-                         GX_TEVPREV );         
-
-        GXSetTevAlphaOp( GX_TEVSTAGE1,
-                         GX_TEV_ADD,           
-                         GX_TB_ZERO,           
-                         GX_CS_SCALE_1,        
-                         TRUE,                 
-                         GX_TEVPREV );        
-
-        //==---------------------
-        //  Stage 0 override
-        //==---------------------
-        GXSetTevColorIn( GX_TEVSTAGE0,
-                         GX_CC_ZERO,
-                         GX_CC_TEXA,
-                         GX_CC_RASA,
-                         GX_CC_ZERO );
-        GXSetTevAlphaIn( GX_TEVSTAGE0,
-                         GX_CA_ZERO,
-                         GX_CA_ZERO,
-                         GX_CA_ZERO,
-                         GX_CA_ONE );       // We can actually ignore alpha
-                                            // if we are doing a subtractive blend
-                                            // since gcn hardware doesn't use it
-
-
-        //==---------------------
-        //  Stage 1
-        //==---------------------
-        GXSetTevColorIn( GX_TEVSTAGE1,
-                         GX_CC_ZERO,
-                         GX_CC_CPREV,
-                         GX_CC_TEXC,
-                         GX_CC_ZERO );
-        GXSetTevAlphaIn( GX_TEVSTAGE1,
-                         GX_CA_ZERO,
-                         GX_CA_ZERO,
-                         GX_CA_ZERO,
-                         GX_CA_ONE );           
-    }
-    else
-    {    
-        // Activate alpha texture on stage 1.
-        vram_Activate( *pAlpha, 1 );
-
-        //==-----------------------------------------
-        //  Setup TEV 1
-        //  
-        //  Use swap1 to get A from R.    
-        //==-----------------------------------------   
-        GXSetTevOrder   ( GX_TEVSTAGE1, GCNTEXCoord[ 0 ], GX_TEXMAP1, GX_COLOR0A0 );   
-        GXSetTevSwapMode( GX_TEVSTAGE1, GX_TEV_SWAP0, GX_TEV_SWAP1 );
-
-        GXSetTevColorOp( GX_TEVSTAGE1,
-                         GX_TEV_ADD,           
-                         GX_TB_ZERO,           
-                         GX_CS_SCALE_1,        
-                         TRUE,                 
-                         GX_TEVPREV );         
-
-        GXSetTevAlphaOp( GX_TEVSTAGE1,
-                         GX_TEV_ADD,           
-                         GX_TB_ZERO,           
-                         GX_CS_SCALE_1,        
-                         TRUE,                 
-                         GX_TEVPREV );        
-
-        //==---------------------
-        //  Color stage
-        //==---------------------
-        // Pass-thru
-        GXSetTevColorIn( GX_TEVSTAGE1,
-                         GX_CC_ZERO,
-                         GX_CC_ZERO,
-                         GX_CC_ZERO,
-                         GX_CC_CPREV );        
-
-        //==---------------------
-        //  Alpha stage
-        //==---------------------
-        GXSetTevAlphaIn( GX_TEVSTAGE1,
-                         GX_CA_ZERO,
-                         GX_CA_TEXA,
-                         GX_CA_RASA,
-                         GX_CA_ZERO );        
-    }
-
-    GXSetNumTevStages(2);
-
-    GXSetAlphaCompare( GX_ALWAYS,
-                       0,
-                       GX_AOP_AND,
-                       GX_ALWAYS, 
-                       0 );
-
-    GXSetZCompLoc( FALSE ); 
-}
-
-//==============================================================================
-#endif // TARGET_GCN
 //==============================================================================
 
 void fx_spemitter::Render( const fx_effect_base* pEffect ) const

@@ -40,6 +40,24 @@ s32                     fx_mgr::m_SpritesThisFrame = 0;
 
 static  char        s_LastDirectory[ X_MAX_PATH ] = ".";
 static  bbox        s_DefaultBounds;
+static  xarray<xbitmap*> s_DefaultBitmaps;
+
+struct fx_file_def
+{
+    s32 TotalSize;
+    u32 Flags;
+    s32 NSAValues;
+    s32 NControllers;
+    s32 NElements;
+    s32 NBitmaps;
+    s32 MasterCopy;
+    s32 NInstances;
+    s32 pEffectName;
+    s32 pCtrlDef;
+    s32 pElementDef;
+    s32 pDiffuseMap;
+    s32 pAlphaMap;
+};
 
 #ifdef DEBUG_FX
         fx_debug    FXDebug;
@@ -47,6 +65,37 @@ static  bbox        s_DefaultBounds;
 
 //==============================================================================
 //  DEFAULT LOAD/UNLOAD FUNCTIONS
+//==============================================================================
+
+static 
+s32 RegisterDefaultBitmap( xbitmap* pBitmap )
+{
+    for( s32 i = 0; i < s_DefaultBitmaps.GetCount(); i++ )
+    {
+        if( s_DefaultBitmaps[i] == NULL )
+        {
+            s_DefaultBitmaps[i] = pBitmap;
+            return i;
+        }
+    }
+
+    s_DefaultBitmaps.Append() = pBitmap;
+    return (s_DefaultBitmaps.GetCount() - 1);
+}
+
+//==============================================================================
+
+static 
+xbitmap* ResolveDefaultBitmap( xhandle Handle )
+{
+    s32 iHandle = (s32)Handle;
+
+    if( (iHandle < 0) || (iHandle >= s_DefaultBitmaps.GetCount()) )
+        return NULL;
+
+    return s_DefaultBitmaps[iHandle];
+}
+
 //==============================================================================
 
 xbool DefaultLoad( const char*    pBitmapName,
@@ -59,7 +108,7 @@ xbool DefaultLoad( const char*    pBitmapName,
     if( pBitmap->Load( (const char*)XFS ) )
     {
         vram_Register( *pBitmap );
-        Handle.Handle = (s32)pBitmap;
+        Handle.Handle = RegisterDefaultBitmap( pBitmap );
         return( TRUE );
     }
     else
@@ -75,14 +124,21 @@ xbool DefaultLoad( const char*    pBitmapName,
 
 void DefaultUnload( xhandle Handle )
 {
-    (void)Handle;
+    xbitmap* pBitmap = ResolveDefaultBitmap( Handle );
+    if( pBitmap == NULL )
+        return;
+
+    vram_Unregister( *pBitmap );
+    delete pBitmap;
+
+    s_DefaultBitmaps[(s32)Handle] = NULL;
 }
 
 //==============================================================================
 
 const xbitmap* DefaultResolve( xhandle Handle )
 {
-    return reinterpret_cast<xbitmap*&>(Handle);
+    return ResolveDefaultBitmap( Handle );
 }
 
 //==============================================================================
@@ -339,6 +395,7 @@ xbool fx_mgr::LoadEffect( const char* pEffectName, X_FILE* pFile )
     s32     Read;
     s32     i;
     s32     Index;
+    s32     NumericDataSize;
     char*   pNameData;
 
     ASSERT( pFile );
@@ -374,6 +431,7 @@ xbool fx_mgr::LoadEffect( const char* pEffectName, X_FILE* pFile )
     //
     {
         s32   Magic;
+        byte* pFileData;
         char* pMagic = (char*)&Magic;
         pMagic[0] = 'F';
         pMagic[1] = 'X';
@@ -393,33 +451,47 @@ xbool fx_mgr::LoadEffect( const char* pEffectName, X_FILE* pFile )
         Read = x_fread( &Size, 4, 1, pFile );
         ASSERT( Read == 1 );
 
-        // Endian swap.
-        #ifdef TARGET_GCN
-        Size = ENDIAN_SWAP_32( Size );
-        #endif
+        NumericDataSize = (Size * 4) - sizeof(fx_file_def);
 
-        // Allocate memory.
+        // Read the file layout into a temporary buffer so x64 can rebuild the
+        // runtime pointers without depending on the old 32-bit header layout.
         {
             MEMORY_OWNER( "EFFECT DEFINITION" );
-            m_pEffectDef[Index] = (fx_def*)x_malloc( (Size * 4) + (x_strlen(pEffectName) + 1) );
-            ASSERT( m_pEffectDef[Index] );
-            m_pEffectDef[Index]->TotalSize = Size;
+            pFileData = (byte*)x_malloc( Size * 4 );
+            ASSERT( pFileData );
         }
 
-        // Read the effect definition data.
-        Read = x_fread( ((s32*)m_pEffectDef[Index])+1, 4, Size-1, pFile );
+        ((fx_file_def*)pFileData)->TotalSize = Size;
+        Read = x_fread( ((s32*)pFileData)+1, 4, Size-1, pFile );
         ASSERT( Read == (Size-1) );
-        ASSERT( Size == m_pEffectDef[Index]->TotalSize );
+        ASSERT( Size == ((fx_file_def*)pFileData)->TotalSize );
 
-        // Endian fixup.
-        #ifdef TARGET_GCN
-        u32* pData = (u32*)m_pEffectDef[Index];
-        for( i = 0; i < Size; i++ )
-            pData[i] = ENDIAN_SWAP_32( pData[i] );
-        #endif
+        // Allocate the runtime effect definition using native pointer sizes.
+		{
+            fx_file_def* pFileDef = (fx_file_def*)pFileData;
+            byte*        pRuntimeData;
+		    
+            MEMORY_OWNER( "EFFECT DEFINITION" );
+            m_pEffectDef[Index] = (fx_def*)x_malloc( sizeof(fx_def) + NumericDataSize + (x_strlen(pEffectName) + 1) );
+            ASSERT( m_pEffectDef[Index] );
+		    
+            m_pEffectDef[Index]->TotalSize    = pFileDef->TotalSize;
+            m_pEffectDef[Index]->Flags        = pFileDef->Flags;
+            m_pEffectDef[Index]->NSAValues    = pFileDef->NSAValues;
+            m_pEffectDef[Index]->NControllers = pFileDef->NControllers;
+            m_pEffectDef[Index]->NElements    = pFileDef->NElements;
+            m_pEffectDef[Index]->NBitmaps     = pFileDef->NBitmaps;
+            m_pEffectDef[Index]->MasterCopy   = pFileDef->MasterCopy;
+            m_pEffectDef[Index]->NInstances   = pFileDef->NInstances;
+		    
+            pRuntimeData = ((byte*)m_pEffectDef[Index]) + sizeof(fx_def);
+            x_memcpy( pRuntimeData, pFileData + sizeof(fx_file_def), NumericDataSize );
+		}
+
+        x_free( pFileData );
 
         // Append the effect name.
-        m_pEffectDef[Index]->pEffectName = ((char*)m_pEffectDef[Index]) + (Size * 4);
+        m_pEffectDef[Index]->pEffectName = ((char*)m_pEffectDef[Index]) + sizeof(fx_def) + NumericDataSize;
         x_strcpy( m_pEffectDef[Index]->pEffectName, pEffectName );        
     }
 
@@ -442,9 +514,8 @@ xbool fx_mgr::LoadEffect( const char* pEffectName, X_FILE* pFile )
     {
         s32* pData;
 
-        // Start data pointer immediately after the fixed portion of the effect 
-        // definition.
-        pData = (s32*)(m_pEffectDef[Index] + 1);
+        // Start data pointer immediately after the native runtime header.
+        pData = (s32*)(((byte*)m_pEffectDef[Index]) + sizeof(fx_def));
 
         // Set the pCtrlDef pointer.
         m_pEffectDef[Index]->pCtrlDef = (fx_ctrl_def**)(pData);
@@ -477,7 +548,7 @@ xbool fx_mgr::LoadEffect( const char* pEffectName, X_FILE* pFile )
         }
 
         // Sanity check.
-        ASSERT( (pData - (s32*)m_pEffectDef[Index]) == Size );
+        ASSERT( (((byte*)pData) - (((byte*)m_pEffectDef[Index]) + sizeof(fx_def))) == NumericDataSize );
     }
 
     //
@@ -487,11 +558,6 @@ xbool fx_mgr::LoadEffect( const char* pEffectName, X_FILE* pFile )
         // Read memory size of string data at end of file.
         Read = x_fread( &Size, 4, 1, pFile );
         ASSERT( Read == 1 );
-        
-        // Endian swap.
-        #ifdef TARGET_GCN
-        Size = ENDIAN_SWAP_32( Size );
-        #endif
 
         // Allocate memory for the strings.
         pNameData = (char*)x_malloc( Size );

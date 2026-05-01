@@ -304,12 +304,6 @@ void fx_shockwave::AdvanceLogic( const fx_effect_base* pEffect, f32 DeltaTime )
 
 //==============================================================================
 
-#ifdef TARGET_GCN
-void SPEmitterGCNSetup( const xbitmap* pAlpha, xbool Sub );
-#endif
-
-//==============================================================================
-
 void fx_shockwave::Render( const fx_effect_base* pEffect ) const
 {
     CONTEXT( "fx_shockwave::Render" );
@@ -355,10 +349,6 @@ void fx_shockwave::Render( const fx_effect_base* pEffect ) const
         draw_Begin( DRAW_TRIANGLE_STRIPS, DrawFlags );
         draw_SetTexture( *pDiffuse );
 
-        #ifdef TARGET_GCN
-        SPEmitterGCNSetup( pAlpha, (DrawFlags & DRAW_BLEND_SUB) ? TRUE : FALSE );
-        #endif
-
         draw_UVs    ( m_pUV,     m_NVerts );
         draw_Colors ( m_pColor,  m_NVerts );
         draw_Verts  ( m_pVertex, m_NVerts );
@@ -383,10 +373,6 @@ void fx_shockwave::Render( const fx_effect_base* pEffect ) const
         draw_SetL2W( L2W );
         draw_Begin( DRAW_TRIANGLE_STRIPS, DrawFlags );
         draw_SetTexture( *pDiffuse );
-
-        #ifdef TARGET_GCN
-        SPEmitterGCNSetup( pAlpha, (DrawFlags & DRAW_BLEND_SUB) ? TRUE : FALSE );
-        #endif
 
         draw_UVs    ( m_pUV,     m_NVerts );
         draw_Colors ( m_pColor,  m_NVerts );
