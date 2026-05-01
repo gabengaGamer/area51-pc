@@ -1,6 +1,6 @@
 //==============================================================================
 //
-//  NETDEFINES.HPP
+//  NetDefines.hpp
 //
 //==============================================================================
 
@@ -15,8 +15,8 @@
 #include "x_time.hpp"
 #include "x_plus.hpp"
 
-#include "Network/netsocket.hpp"
-#include "Network/netaddress.hpp"
+#include "Network/NetSocket.hpp"
+#include "Network/NetAddress.hpp"
 
 //==============================================================================
 //  DEFINITIONS
@@ -25,7 +25,7 @@
 #define STARTING_PORT                       (8000)
 
 #ifndef BAD_SOCKET
-#define BAD_SOCKET                          (s32)(-1)
+#define BAD_SOCKET                          (uaddr)(-1)
 #endif
 
 #ifndef MAX_PACKET_SIZE
@@ -45,6 +45,10 @@
 #define MAX_CONFIG_NAME_COUNT               8
 #define MAX_CONFIG_NAME_LENGTH              128
 
+//==============================================================================
+//  ENUMS
+//==============================================================================
+
 enum {
         CONNECT_STATUS_IDLE = 0,
         CONNECT_STATUS_NOTPRESENT,
@@ -58,6 +62,8 @@ enum {
         CONNECT_STATUS_TIMEDOUT,
 };
 
+//------------------------------------------------------------------------------
+
 enum {
         ATTACH_STATUS_IDLE  =0x0,       // This is not really a valid status but just used during init phase
         ATTACH_STATUS_ATTACHED,         // Interface has attached
@@ -69,6 +75,8 @@ enum {
         ATTACH_STATUS_CONFIGURED,       // Interface was successfully configured
         ATTACH_STATUS_UNKNOWN,          // An undefined event code was encountered
 };
+
+//------------------------------------------------------------------------------
 
 enum net_error
 {
@@ -82,8 +90,9 @@ enum net_error
 };
 
 //==============================================================================
-//  TYPES
+//  STRUCTS
 //==============================================================================
+
 struct interface_info
 {
         s32         Address;
@@ -94,6 +103,7 @@ struct interface_info
         xbool       NeedsServicing;
 };
 
+//------------------------------------------------------------------------------
 
 struct net_config_list
 {
@@ -101,6 +111,8 @@ struct net_config_list
     s8      Available[MAX_CONFIG_NAME_COUNT];
     char    Name[MAX_CONFIG_NAME_COUNT][MAX_CONFIG_NAME_LENGTH];
 };
+
+//------------------------------------------------------------------------------
 
 struct connect_status
 {
@@ -111,6 +123,7 @@ struct connect_status
 	    char	        ErrorText[128];					// Error message
 };
 
+//------------------------------------------------------------------------------
 
 struct internet_settings
 {
@@ -129,6 +142,8 @@ struct internet_settings
     s32             PacketSwapSize;
     random          Random;
 };
+
+//------------------------------------------------------------------------------
 
 struct net_stats
 {

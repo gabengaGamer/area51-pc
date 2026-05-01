@@ -1,22 +1,32 @@
+//=============================================================================
+//
+//  FiFo.cpp
+//
+//=============================================================================
+
+//=============================================================================
+//  INCLUDES
+//=============================================================================
 
 #include "x_files.hpp"
-#include "fifo.hpp"
+#include "FiFo.hpp"
 
-//------------------------------------------------------------------------------
+//==============================================================================
+
 fifo::fifo( void )
 {
     m_Initialized = FALSE;
 }
 
-//------------------------------------------------------------------------------
+//==============================================================================
+
 fifo::~fifo( void )
 {
-#ifndef TARGET_PC
     ASSERT( m_Initialized==FALSE );
-#endif
 }
 
-//------------------------------------------------------------------------------
+//==============================================================================
+
 void fifo::Init( void* pBuffer, s32 Length )
 {
     ASSERT( !m_Initialized );
@@ -28,14 +38,16 @@ void fifo::Init( void* pBuffer, s32 Length )
     m_ValidBytes    = 0;
 }
 
-//------------------------------------------------------------------------------
+//==============================================================================
+
 void fifo::Kill(void)
 {
     ASSERT( m_Initialized );
     m_Initialized = FALSE;
 }
 
-//------------------------------------------------------------------------------
+//==============================================================================
+
 void fifo::Delete( s32 Amount )
 {
     ASSERT( m_ValidBytes >= Amount );
@@ -47,7 +59,8 @@ void fifo::Delete( s32 Amount )
     m_ValidBytes -= Amount;
 }
 
-//------------------------------------------------------------------------------
+//==============================================================================
+
 xbool fifo::Remove( void* pBuffer, s32 nBytes, s32 Modulo )
 {
     (void)Modulo;
@@ -82,7 +95,8 @@ xbool fifo::Remove( void* pBuffer, s32 nBytes, s32 Modulo )
     return TRUE;
 }
 
-//------------------------------------------------------------------------------
+//==============================================================================
+
 xbool fifo::Insert( const void* pBuffer, s32 Length, s32 Modulo )
 {
     s32 BytesToCopy;
@@ -112,19 +126,22 @@ xbool fifo::Insert( const void* pBuffer, s32 Length, s32 Modulo )
     return TRUE;
 }
 
-//------------------------------------------------------------------------------
+//==============================================================================
+
 s32 fifo::GetBytesFree(void)
 {
     return m_Length - m_ValidBytes;
 }
 
-//------------------------------------------------------------------------------
+//==============================================================================
+
 s32     fifo::GetBytesUsed(void)
 {
     return m_ValidBytes;
 }
 
-//------------------------------------------------------------------------------
+//==============================================================================
+
 void    fifo::Clear(void)
 {
     m_WriteIndex = 0;
@@ -133,13 +150,15 @@ void    fifo::Clear(void)
 
 }
 
-//------------------------------------------------------------------------------
+//==============================================================================
+
 byte*   fifo::GetData(void)
 {
     return m_pData;
 }
 
-//------------------------------------------------------------------------------
+//==============================================================================
+
 void fifo::ProvideUpdate( netstream& BitStream, s32 MaxLength, s32 Modulo )
 {
     char    Buffer[256];
@@ -159,22 +178,6 @@ void fifo::ProvideUpdate( netstream& BitStream, s32 MaxLength, s32 Modulo )
     Length = MIN( BytesAvailableInFifo, BytesAvailableInStream );
     BitStream.WriteRangedS32(Length,0,255);
 
-#if defined(TARGET_XBOX)
-    s32     Cursor;
-    Cursor = BitStream.GetCursor();
-    // Align the data fields to a 16 bit boundary
-    if( Cursor & 7 )
-    {
-        s32 Zero=0;
-
-        BitStream.WriteBits( &Zero, 8-(Cursor&7) );
-    }
-
-    Cursor = BitStream.GetCursor();
-    s32 ByteCursor = (Cursor/8)-2;
-
-#endif
-
     if( Length )
     {
         LOG_MESSAGE("fifo::ProvideUpdate","Removed %d bytes from fifo",Length);
@@ -183,20 +186,10 @@ void fifo::ProvideUpdate( netstream& BitStream, s32 MaxLength, s32 Modulo )
     }
 
     BitStream.WriteMarker();
-#if defined(TARGET_XBOX)
-    // The xbox requires the first two bytes within a VDP stream to contain the amount of data that is to be
-    // encrypted. This has to be in little-endian format. The bitstream code deals with everything big-endian.
-    // The way it *should* be. Screw this little-endian crap.
-    ASSERT( ByteCursor >= 0 );
-    ASSERT( (Cursor & 7)==0 );
-    BitStream.SetCursor(0);
-    BitStream.WriteU32( ByteCursor & 0xff, 8 );
-    BitStream.WriteU32( (ByteCursor>>8) & 0xff, 8 );
-    BitStream.SetCursor( Cursor );
-#endif
 }
 
-//------------------------------------------------------------------------------
+//==============================================================================
+
 void fifo::AcceptUpdate( netstream& BitStream, s32 Modulo )
 {
     char    Buffer[256];
@@ -209,12 +202,8 @@ void fifo::AcceptUpdate( netstream& BitStream, s32 Modulo )
     {
         LOG_MESSAGE("fifo::AcceptUpdate","Received %d bytes of data.",Length);
     }
-#if defined(TARGET_XBOX)
-    BitStream.SetCursor( (BitStream.GetCursor()+7)&~7 );
-#endif
     BitStream.ReadBits(Buffer,Length*8);
     Insert( Buffer, Length, Modulo );
 
     BitStream.ReadMarker();
-
 }

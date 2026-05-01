@@ -1,10 +1,15 @@
 //=========================================================================
 //
-//  netstream.CPP
+//  NetStream.cpp
 //
 //=========================================================================
 
-#include "Network/netstream.hpp"
+//=============================================================================
+//  INCLUDES
+//=============================================================================
+
+#include "Network/NetStream.hpp"
+
 #include "x_debug.hpp"
 #include "x_plus.hpp"
 #include "x_color.hpp"
@@ -15,6 +20,9 @@
 #endif
 
 //=========================================================================
+//  FUNCTIONS
+//=========================================================================
+
 netstream::netstream( void )
 {
     Init();
@@ -27,15 +35,16 @@ netstream::~netstream( void )
 }
 
 //=========================================================================
+
 void netstream::Init(void)
 {
     bitstream::Init( m_Buffer, sizeof(m_Buffer) );
 }
 
+//=============================================================================
+// NETWORK HELPER FUNCTIONS
+//=============================================================================
 
-//=============================================================================
-// Bitstream network helper functions
-//=============================================================================
 xbool   netstream::Receive( net_socket&  Socket,
                             net_address& Remote)
 {
@@ -45,6 +54,7 @@ xbool   netstream::Receive( net_socket&  Socket,
 }
 
 //=============================================================================
+
 void    netstream::Send (       net_socket&  Socket, 
                           const net_address& Remote)
 {
@@ -52,6 +62,7 @@ void    netstream::Send (       net_socket&  Socket,
 }
 
 //=============================================================================
+
 xbool   netstream::Validate( void )
 {
     u16     Checksum;
@@ -80,7 +91,9 @@ xbool   netstream::Validate( void )
 
     return TRUE;
 }
+
 //=========================================================================
+
 void netstream::Open( s32 Identifier, s32 PacketType )
 {
     Clear();
@@ -90,6 +103,7 @@ void netstream::Open( s32 Identifier, s32 PacketType )
 }
 
 //=========================================================================
+
 void netstream::Close( void )
 {
     // We need to make sure we pad out the length of the bitstream to 8 byte alignment for
@@ -107,6 +121,5 @@ void netstream::Close( void )
     WriteU16  ((u16)Checksum);
     SetCursor (Cursor);
     // Is this where we would do the diffie hellman encryption?
-
 }
 

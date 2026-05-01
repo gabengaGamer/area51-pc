@@ -1,19 +1,28 @@
 //=============================================================================
 //
-//  NETSOCKET.CPP
+//  NetSocket.cpp
 //
 //=============================================================================
+
+//==============================================================================
+//  INCLUDES
+//==============================================================================
+
 #include "x_files.hpp"
 #include "e_Network.hpp"
 #include "x_bitstream.hpp"
 
-//=============================================================================
+//==============================================================================
+//  FUNCTIONS
+//==============================================================================
+
 net_socket::net_socket(void)
 {
     Clear();
 }
 
 //=============================================================================
+
 void net_socket::Clear( void )
 {
     m_Socket            = BAD_SOCKET;
@@ -25,6 +34,7 @@ void net_socket::Clear( void )
 }
 
 //=============================================================================
+
 void net_socket::SetBlocking(xbool Block)
 {
     if (Block)
@@ -34,19 +44,23 @@ void net_socket::SetBlocking(xbool Block)
 }
 
 //=============================================================================
+
 xbool net_socket::GetBlocking(void) const
 {
     return (m_Flags & NET_FLAGS_BLOCKING) != 0;
 }
 
 //=============================================================================
+
 xbool net_socket::IsClosed( void )
 {
     return (m_Flags & NET_FLAGS_CLOSED) != 0;
 }
 
 //=============================================================================
-typedef struct s_receive_delay_buffer
+
+typedef 
+struct s_receive_delay_buffer
 {
     struct s_receive_delay_buffer *pNext;
     net_socket          Local;
@@ -58,7 +72,6 @@ typedef struct s_receive_delay_buffer
 } receive_delay_buffer;
 
 static receive_delay_buffer *s_DelayBuffer=NULL;
-
 
 //=============================================================================
 xbool net_socket::Receive( net_address& Remote, void* pBuffer, s32& BufferSize )
@@ -236,6 +249,7 @@ xbool net_socket::Receive( net_address& Remote, void* pBuffer, s32& BufferSize )
 // We have a receive on a bitstream struct which has it's own embedded data
 // pointer. So we use reference to that for target data address and the size
 // of the resulting buffer.
+
 xbool net_socket::Receive( net_address& Remote, bitstream& Bitstream)
 {
     s32     Size;
@@ -257,6 +271,7 @@ xbool net_socket::Receive( net_address& Remote, bitstream& Bitstream)
 
 //==============================================================================
 // This receive is for a TCP bound socket only
+
 xbool net_socket::Receive( void* pBuffer, s32& Length )
 {
     net_address Dummy;
@@ -268,6 +283,7 @@ xbool net_socket::Receive( void* pBuffer, s32& Length )
 
 //==============================================================================
 // This send is for a TCP bound socket only
+
 xbool net_socket::Send( const void* pBuffer, s32 Length )
 {
     net_address Dummy(-1,-1);

@@ -1,6 +1,6 @@
 //==============================================================================
 //
-//  NETLIB.CPP
+//  NetLib.cpp
 //
 //==============================================================================
 
@@ -40,6 +40,8 @@ extern xtimer NET_ReceiveTime;
 
 static xbool s_Inited = FALSE;
 
+//==============================================================================
+//  FUNCTIONS
 //==============================================================================
 
 void sys_net_Init( void )
@@ -109,6 +111,11 @@ xbool    net_socket::Bind( s32 StartPort, s32 Flags )
         sd_dg = socket( PF_INET, SOCK_DGRAM, IPPROTO_UDP );
     }
 
+    if( sd_dg == INVALID_SOCKET )
+    {
+        return FALSE;
+    }
+
     // attempt to bind to the port
     while( bind( sd_dg, (struct sockaddr *)&addr, sizeof(addr) ) == SOCKET_ERROR )
     {
@@ -121,6 +128,7 @@ xbool    net_socket::Bind( s32 StartPort, s32 Flags )
         // if some other error, nothing we can do...abort
         else
         {
+            closesocket( sd_dg );
             return FALSE;
             //StartPort = net_NOSLOT;
             //break;
@@ -140,15 +148,21 @@ xbool    net_socket::Bind( s32 StartPort, s32 Flags )
     gethostname( tbuf, 127 );
     pHe = gethostbyname( tbuf );
 
+    if( (pHe == NULL) || (pHe->h_addr == NULL) )
+    {
+        closesocket( sd_dg );
+        return FALSE;
+    }
+
     in_IP = *(struct in_addr *)(pHe->h_addr);
     m_Address.Setup( ntohl(in_IP.s_addr), StartPort );
-    m_Socket = (u32)sd_dg;
+    m_Socket = sd_dg;
 
     if(Flags & NET_FLAGS_BROADCAST)
     {
         u_long dwBroadcast;
         dwBroadcast = TRUE;
-        setsockopt(m_Socket,SOL_SOCKET,SO_BROADCAST,(char *)&dwBroadcast,sizeof(u_long));
+        setsockopt( (SOCKET)m_Socket, SOL_SOCKET, SO_BROADCAST, (char *)&dwBroadcast, sizeof(u_long) );
     }
 
     s_STAT_NAddressesBound++;
@@ -163,7 +177,7 @@ void net_socket::Close( void )
 
     s_STAT_NAddressesBound--;
 
-    closesocket( m_Socket );
+    closesocket( (SOCKET)m_Socket );
     m_Socket = BAD_SOCKET;
     m_Address.Clear();
 }
@@ -183,7 +197,7 @@ xbool sys_net_Receive( net_socket&   Local,
     int addrsize = sizeof(sockaddr_in);
 
     // receive any incoming packet
-    RetSize = recvfrom( Local.m_Socket, 
+    RetSize = recvfrom( (SOCKET)Local.m_Socket, 
                         (char*)pBuffer, 
                         BufferSize, 
                         0, 
@@ -239,7 +253,7 @@ void sys_net_Send  ( net_socket&         Local,
     sockto.sin_family       = PF_INET;
     sockto.sin_port         = htons(Remote.GetPort());
     sockto.sin_addr.s_addr  = htonl( Remote.GetIP() );
-    status = sendto( Local.m_Socket, (const char*)pBuffer, BufferSize, 0, (struct sockaddr*)&sockto, sizeof(sockto) );
+    status = sendto( (SOCKET)Local.m_Socket, (const char*)pBuffer, BufferSize, 0, (struct sockaddr*)&sockto, sizeof(sockto) );
     if (status<=0)
     {
         x_DebugMsg("SendTo returned an error code %d\n",WSAGetLastError());
@@ -404,7 +418,7 @@ xbool net_socket::CanReceive( void )
 
 	// setup the fd set
 	FD_ZERO(&fd);
-	FD_SET(m_Socket, &fd);
+	FD_SET((SOCKET)m_Socket, &fd);
 
 	// setup the timeout
 	timeout.tv_sec = 0;
@@ -428,7 +442,7 @@ xbool net_socket::CanSend( void )
 
 	// setup the fd set
 	FD_ZERO(&fd);
-	FD_SET(m_Socket, &fd);
+	FD_SET((SOCKET)m_Socket, &fd);
 
 	// setup the timeout
 	timeout.tv_sec = 0;

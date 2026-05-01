@@ -3,13 +3,14 @@
 //  NETLIB.CPP
 //
 //=============================================================================
+
 #ifdef WIN32
 #include <winsock.h>
 #endif
 
 #include "x_files.hpp"
 #include "e_Network.hpp"
-#include "network/netstream.hpp"
+#include "Network/NetStream.hpp"
 
 static random  Random;
 
@@ -160,14 +161,15 @@ void net_GetHistory(s32& SentPerSec, s32& ReceivedPerSec)
     ReceivedPerSec  = g_ReceiveAverage;
 }
 
-
 //=============================================================================
+
 void net_SetVersionKey(s32 Version)
 {
     s_VersionKey = Version;
 }
 
 //=============================================================================
+
 s32  net_GetVersionKey(void)
 {
     return s_VersionKey;
@@ -187,18 +189,18 @@ void    net_ClearStats      ( void )
 
 //==============================================================================
 
-void    net_GetStats    ( s32& PacketsSent,
-                          s32& BytesSent, 
-                          s32& PacketsReceived,
-                          s32& BytesReceived,
-                          s32& NAddressesBound,
+void    net_GetStats    ( s64& PacketsSent,
+                          s64& BytesSent, 
+                          s64& PacketsReceived,
+                          s64& BytesReceived,
+                          s64& NAddressesBound,
                           f32& SendTime,
                           f32& ReceiveTime )
 {
-    PacketsSent         = (s32)g_NetStats.PacketsSent;
-    PacketsReceived     = (s32)g_NetStats.PacketsReceived;
-    BytesSent           = (s32)g_NetStats.BytesSent;
-    BytesReceived       = (s32)g_NetStats.BytesReceived;
+    PacketsSent         = g_NetStats.PacketsSent;
+    PacketsReceived     = g_NetStats.PacketsReceived;
+    BytesSent           = g_NetStats.BytesSent;
+    BytesReceived       = g_NetStats.BytesReceived;
     NAddressesBound     = g_NetStats.AddressesBound;
     SendTime            = g_NetStats.SendTime.ReadMs();
     ReceiveTime         = g_NetStats.ReceiveTime.ReadMs();

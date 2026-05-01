@@ -1,6 +1,6 @@
 //==============================================================================
 //
-//  NETLIB.HPP
+//  NetSocket.hpp
 //
 //==============================================================================
 
@@ -37,7 +37,7 @@ public:
         void            SetBlocking         ( xbool Block );
         xbool           GetBlocking         ( void )          const;
 
-        s32             GetHandle           ( void )          const     { return m_Socket;                  };
+        uaddr           GetHandle           ( void )          const     { return m_Socket;                  };
 
   const net_address&    GetAddress          ( void )          const     { return m_Address;                 };
 
@@ -83,7 +83,7 @@ public:
 
 private:
         net_address     m_Address;
-        s32             m_Socket;
+        uaddr           m_Socket;
         s32             m_Flags;
         s64             m_BytesSent;
         s64             m_BytesReceived;
