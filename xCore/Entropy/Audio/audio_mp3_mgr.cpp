@@ -49,7 +49,12 @@ struct audio_mp3_mgr::mp3_decoder_state
     s32                     SamplesAvailable;
     s32                     SampleOffset;
     s32                     Channels;
+    s32                     FrameHz;
+    s32                     FrameChannels;
+    s32                     ExpectedHz;
+    s32                     ExpectedChannels;
     xbool                   EndOfStream;
+    xbool                   HeaderValid;
     s16                     SamplesBuffer[MINIMP3_MAX_SAMPLES_PER_FRAME];
     u8                      InputBuffer[MP3_BUFFER_SIZE * 2];
 };
@@ -123,7 +128,7 @@ s32 audio_mp3_mgr::mp3_fetch_data( audio_stream* pStream, void* pBuffer, s32 nBy
 
     if( Previous <= MP3_BUFFER_SIZE )
     {
-        bTransition = (Current >= MP3_BUFFER_SIZE);
+        bTransition = (Current > MP3_BUFFER_SIZE);
     }
     else
     {
@@ -141,8 +146,10 @@ s32 audio_mp3_mgr::mp3_fetch_data( audio_stream* pStream, void* pBuffer, s32 nBy
 
 //==============================================================================
 
-void audio_mp3_mgr::mp3_state_reset( mp3_decoder_state& State, stream_type Type )
+void audio_mp3_mgr::mp3_state_reset( mp3_decoder_state& State, const audio_stream* pStream )
 {
+    ASSERT( pStream );
+
     mp3dec_init( &State.Decoder );
     x_memset( &State.FrameInfo, 0, sizeof( State.FrameInfo ) );
     State.InputBytes        = 0;
@@ -150,8 +157,13 @@ void audio_mp3_mgr::mp3_state_reset( mp3_decoder_state& State, stream_type Type 
     State.BytesConsumed     = 0;
     State.SamplesAvailable  = 0;
     State.SampleOffset      = 0;
-    State.Channels          = (Type == STEREO_STREAM) ? 2 : 1;
+    State.Channels          = (pStream->Type == STEREO_STREAM) ? 2 : 1;
+    State.FrameHz           = 0;
+    State.FrameChannels     = 0;
+    State.ExpectedHz        = 0;
+    State.ExpectedChannels  = (pStream->Type == STEREO_STREAM) ? 2 : 1;
     State.EndOfStream       = FALSE;
+    State.HeaderValid       = FALSE;
 }
 
 //==============================================================================
@@ -230,6 +242,41 @@ s32 audio_mp3_mgr::mp3_state_available_bytes( const mp3_decoder_state& State )
 
 //==============================================================================
 
+xbool audio_mp3_mgr::mp3_state_validate_frame( const mp3_decoder_state& State )
+{
+    const mp3dec_frame_info_t& FrameInfo = State.FrameInfo;
+
+    if( (FrameInfo.frame_bytes <= 0) ||
+        (FrameInfo.layer != 3) ||
+        (FrameInfo.hz <= 0) )
+    {
+        return FALSE;
+    }
+
+    s32 Channels = FrameInfo.channels ? FrameInfo.channels : State.ExpectedChannels;
+    if( (Channels <= 0) || (Channels > 2) )
+        return FALSE;
+
+    if( (State.ExpectedHz > 0) && (FrameInfo.hz != State.ExpectedHz) )
+        return FALSE;
+
+    if( (State.ExpectedChannels > 0) && (Channels != State.ExpectedChannels) )
+        return FALSE;
+
+    if( State.HeaderValid )
+    {
+        if( (State.FrameHz != FrameInfo.hz) ||
+            (State.FrameChannels != Channels) )
+        {
+            return FALSE;
+        }
+    }
+
+    return TRUE;
+}
+
+//==============================================================================
+
 s32 audio_mp3_mgr::mp3_state_decode_frame( audio_stream* pStream, mp3_decoder_state& State )
 {
     State.SamplesAvailable = 0;
@@ -249,12 +296,14 @@ s32 audio_mp3_mgr::mp3_state_decode_frame( audio_stream* pStream, mp3_decoder_st
         }
 
         s32 BytesLeft      = mp3_state_available_bytes( State );
+        mp3dec_t SavedDecoder = State.Decoder;
         s32 SamplesDecoded = mp3dec_decode_frame( &State.Decoder,
                                                   State.InputBuffer + State.InputCursor,
                                                   BytesLeft,
                                                   State.SamplesBuffer,
                                                   &State.FrameInfo );
         s32 FrameBytes     = State.FrameInfo.frame_bytes;
+        s32 FrameOffset    = State.FrameInfo.frame_offset;
 
         if( FrameBytes <= 0 )
         {
@@ -271,19 +320,43 @@ s32 audio_mp3_mgr::mp3_state_decode_frame( audio_stream* pStream, mp3_decoder_st
             SkipCount = 0;
         }
 
-        State.InputCursor += FrameBytes;
-        if( State.InputCursor > State.InputBytes )
-            State.InputCursor = State.InputBytes;
-
         if( SamplesDecoded > 0 )
         {
-            if( State.FrameInfo.channels )
-                State.Channels = State.FrameInfo.channels;
+            if( !mp3_state_validate_frame( State ) )
+            {
+                // Miles kept searching until headers matched the original stream.
+                State.Decoder = SavedDecoder;
+
+                s32 SkipBytes = FrameOffset + 1;
+                if( SkipBytes <= 0 )
+                    SkipBytes = 1;
+
+                State.InputCursor += x_min( SkipBytes, BytesLeft );
+                if( State.InputCursor > State.InputBytes )
+                    State.InputCursor = State.InputBytes;
+
+                SkipCount++;
+                mp3_state_refill( pStream, State );
+                continue;
+            }
+
+            State.InputCursor += FrameBytes;
+            if( State.InputCursor > State.InputBytes )
+                State.InputCursor = State.InputBytes;
+
+            State.Channels      = State.FrameInfo.channels ? State.FrameInfo.channels : State.ExpectedChannels;
+            State.FrameHz       = State.FrameInfo.hz;
+            State.FrameChannels = State.Channels;
+            State.HeaderValid   = TRUE;
 
             State.SamplesAvailable = SamplesDecoded;
             State.SampleOffset     = 0;
             return SamplesDecoded;
         }
+
+        State.InputCursor += FrameBytes;
+        if( State.InputCursor > State.InputBytes )
+            State.InputCursor = State.InputBytes;
 
         if( State.EndOfStream && (mp3_state_available_bytes( State ) <= 0) )
             break;
@@ -355,7 +428,7 @@ void audio_mp3_mgr::Open( audio_stream* pStream )
     mp3_decoder_state* pState = (mp3_decoder_state*)x_malloc( sizeof( mp3_decoder_state ) );
     ASSERT( pState );
 
-    mp3_state_reset( *pState, pStream->Type );
+    mp3_state_reset( *pState, pStream );
 
     pStream->HandleMP3 = pState;
 }
@@ -391,7 +464,7 @@ void audio_mp3_mgr::Seek( audio_stream* pStream )
     pStream->CursorMP3 = 0;
 
     mp3_decoder_state* pState = (mp3_decoder_state*)pStream->HandleMP3;
-    mp3_state_reset( *pState, pStream->Type );
+    mp3_state_reset( *pState, pStream );
 
     // Unlock it now.
     g_AudioHardware.Unlock();
@@ -433,9 +506,7 @@ void audio_mp3_mgr::Decode( audio_stream* pStream, s16* pBufferL, s16* pBufferR,
     {
         if( pState->SamplesAvailable <= 0 )
         {
-            g_AudioHardware.Unlock();
             s32 Decoded = mp3_state_decode_frame( pStream, *pState );
-            g_AudioHardware.Lock();
             if( Decoded <= 0 )
                 break;
         }
