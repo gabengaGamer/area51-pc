@@ -114,7 +114,7 @@ int main( int argc, char** argv )
 
     DebugOutput = (CommandLine.FindOption( xstring("DEBUG") ) != -1 );
 
-    x_printf(xfs("\nStringTool started on (%s) file.\n",CommandLine.GetArgument( 0 )));
+    x_printf(xfs("\nStringTool started on (%s) file.\n",(const char*)CommandLine.GetArgument( 0 )));
 
     // Loop through all the files
     for( i=0 ; i<CommandLine.GetNumArguments() ; i++ )
@@ -161,7 +161,7 @@ int main( int argc, char** argv )
 
         // Load the string
         if( Text.LoadFile( TextName ) == FALSE )
-            x_printf( "Error Loading File - \"%s\" \n", TextName );
+            x_printf( "Error Loading File - \"%s\" \n", (const char*)TextName );
 
 		StringsID.Clear();
 
@@ -471,7 +471,7 @@ int main( int argc, char** argv )
 		//-- lines of text to the Excel strings file.
 		if( Info )
 		{
-	        x_printf( "Saveing  \"%s\"\n", OutName );			
+	        x_printf( "Saveing  \"%s\"\n", (const char*)OutName );			
 			tOut.AddHeader( "Strings", StringsID.GetCount());
 			for( s32 index = 0 ; index < StringsID.GetCount(); index++ )
 			{
@@ -505,17 +505,17 @@ int main( int argc, char** argv )
 			    // Save the file
 			    if( !Binary.SaveFile( BinName[iPlatform] ) )
 			    {
-				    x_printf( "Error - Saving Binary \"%s\"\n", BinName[iPlatform] );
+				    x_printf( "Error - Saving Binary \"%s\"\n", (const char*)BinName[iPlatform] );
 			    }
 			    else
 			    {
-				    x_printf( "Saving Binary \"%s\"\n", BinName[iPlatform] );
+				    x_printf( "Saving Binary \"%s\"\n", (const char*)BinName[iPlatform] );
 			    }
 		    }
 		    else
 		    {
 			    // Display error
-			    x_printf( "Error - File \"%s\" already exists\n", BinName[iPlatform] );
+			    x_printf( "Error - File \"%s\" already exists\n", (const char*)BinName[iPlatform] );
 		    }
         }
     } 
