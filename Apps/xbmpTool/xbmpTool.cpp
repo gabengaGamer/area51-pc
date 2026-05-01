@@ -1,14 +1,9 @@
 //==============================================================================
-//==============================================================================
-//  xbmpTool
-//==============================================================================
-//==============================================================================
+//
+//  XBMPTool
 //
 //  Bitmap conversion tool
 //
-//
-//
-//==============================================================================
 //==============================================================================
 
 #include "x_files.hpp"
@@ -45,6 +40,8 @@ struct conversion
     const char* FormatName;
     s32         Format;
 };
+
+//------------------------------------------------------------------------------
 
 conversion  ConversionTable[] =
 {
@@ -106,6 +103,8 @@ xstring FormatToString( s32 Format )
     return FormatName;
 }
 
+//==============================================================================
+
 s32 StringToFormat( const xstring& FormatName )
 {
     s32     i;
@@ -121,7 +120,7 @@ s32 StringToFormat( const xstring& FormatName )
 }
 
 //==============================================================================
-//  Display Help
+//  Functions
 //==============================================================================
 
 void DisplayHelp( void )
@@ -193,8 +192,6 @@ void DisplayHelp( void )
 }
 
 //==============================================================================
-//  Execute Script
-//==============================================================================
 
 void ExecuteScript( command_line& CommandLine, xbitmap& Bitmap, const xstring& BitmapName )
 {
@@ -216,13 +213,13 @@ void ExecuteScript( command_line& CommandLine, xbitmap& Bitmap, const xstring& B
         xstring OptName   = CommandLine.GetOptionName( i );
         xstring OptString = CommandLine.GetOptionString( i );
 
-        //==============================================================================
-        //==============================================================================
+        //------------------------------------------------------------------------------
+
         if( OptName == "INFO" )
         {
             x_printf( "\n" );
-            x_printf( "File     = \"%s\"\n", BitmapName );
-            x_printf( "Format   = %s\n", FormatToString( Bitmap.GetFormat() ) );
+            x_printf( "File     = \"%s\"\n", (const char*)BitmapName );
+            x_printf( "Format   = %s\n", (const char*)FormatToString( Bitmap.GetFormat() ) );
             x_printf( "Width    = %d\n", Bitmap.GetWidth() );
             x_printf( "Height   = %d\n", Bitmap.GetHeight() );
             x_printf( "BPP      = %d\n", Bitmap.GetBPP() );
@@ -232,39 +229,39 @@ void ExecuteScript( command_line& CommandLine, xbitmap& Bitmap, const xstring& B
             x_printf( "NMips    = %d\n", Bitmap.GetNMips() );
         }
 
-        //==============================================================================
-        //==============================================================================
+        //------------------------------------------------------------------------------
+
         if( OptName == "PC" )
         {
             Target = BITMAP_TARGET_PC;
             auxbmp_ConvertToD3D( Bitmap );
         }
 
-        //==============================================================================
-        //==============================================================================
+        //------------------------------------------------------------------------------
+
         if( OptName == "PS2" )
         {
             Target = BITMAP_TARGET_PS2;
             auxbmp_ConvertToPS2( Bitmap );
         }
 
-        //==============================================================================
-        //==============================================================================
+        //------------------------------------------------------------------------------
+
         if( OptName == "XBOX" )
         {
             Target = BITMAP_TARGET_XBOX;
             auxbmp_Compress( Bitmap,"Name",4 );
         }
 
-        //==============================================================================
-        //==============================================================================
+        //------------------------------------------------------------------------------
+
         if( OptName == "PS2SWIZZLE" )
         {
             Bitmap.PS2SwizzleClut();
         }
 
-        //==============================================================================
-        //==============================================================================
+        //------------------------------------------------------------------------------
+
         if( OptName == "WRITETGA" )
         {
             xstring PathName = CommandLine.ChangeExtension( BitmapName, "tga" );
@@ -284,22 +281,22 @@ void ExecuteScript( command_line& CommandLine, xbitmap& Bitmap, const xstring& B
                 // Save the file
                 if( !Bitmap.SaveTGA( PathName ) )
                 {
-                    x_printf( "Error - Saving TGA \"%s\"\n", PathName );
+                    x_printf( "Error - Saving TGA \"%s\"\n", (const char*)PathName );
                 }
                 else
                 {
-                    x_printf( "        Saving TGA \"%s\"\n", PathName );
+                    x_printf( "        Saving TGA \"%s\"\n", (const char*)PathName );
                 }
             }
             else
             {
                 // Display error
-                x_printf( "Error - File \"%s\" already exists\n", PathName );
+                x_printf( "Error - File \"%s\" already exists\n", (const char*)PathName );
             }
         }
 
-        //==============================================================================
-        //==============================================================================
+        //------------------------------------------------------------------------------
+
         if( OptName == "WRITEXBMP" )
         {
             xstring PathName = CommandLine.ChangeExtension( BitmapName, "xbmp" );
@@ -319,22 +316,22 @@ void ExecuteScript( command_line& CommandLine, xbitmap& Bitmap, const xstring& B
                 // Save the file
                 if( !Bitmap.Save( PathName ) )
                 {
-                    x_printf( "Error - Saving XBMP \"%s\"\n", PathName );
+                    x_printf( "Error - Saving XBMP \"%s\"\n", (const char*)PathName );
                 }
                 else
                 {
-                    x_printf( "        Saving XBMP \"%s\"\n", PathName );
+                    x_printf( "        Saving XBMP \"%s\"\n", (const char*)PathName );
                 }
             }
             else
             {
                 // Display error
-                x_printf( "Error - File \"%s\" already exists\n", PathName );
+                x_printf( "Error - File \"%s\" already exists\n", (const char*)PathName );
             }
         }
 
-        //==============================================================================
-        //==============================================================================
+        //------------------------------------------------------------------------------
+
         if( OptName == "OUTPUT" )
         {
             // Add a trailing slash to the OptString
@@ -347,16 +344,16 @@ void ExecuteScript( command_line& CommandLine, xbitmap& Bitmap, const xstring& B
             OutputFolderSet = TRUE;
         }
 
-        //==============================================================================
-        //==============================================================================
+        //------------------------------------------------------------------------------
+
         if( OptName == "OVERWRITE" )
         {
             // Set overwrite flag
             Overwrite = TRUE;
         }
 
-        //==============================================================================
-        //==============================================================================
+        //------------------------------------------------------------------------------
+
         if( OptName == "CONVERT" )
         {
             s32 Format = StringToFormat( OptString );
@@ -368,11 +365,12 @@ void ExecuteScript( command_line& CommandLine, xbitmap& Bitmap, const xstring& B
             else
             {
                 // Illegal format
-                x_printf( "Error - Unsupported format \"%s\"\n", OptString );
+                x_printf( "Error - Unsupported format \"%s\"\n", (const char*)OptString );
             }
         }
-        //==============================================================================
-        //==============================================================================
+
+        //------------------------------------------------------------------------------
+
         if( OptName == "MIPS" )
         {
             s32 nMips = x_atoi( OptString );
@@ -390,8 +388,6 @@ void ExecuteScript( command_line& CommandLine, xbitmap& Bitmap, const xstring& B
     }
 }
 
-//==============================================================================
-//  main
 //==============================================================================
 
 int main( int argc, char** argv )
@@ -453,7 +449,7 @@ int main( int argc, char** argv )
         else
         {
             // No - failed to load
-            x_printf( "Error - Can't load bitmap \"%s\"\n", BitmapName );
+            x_printf( "Error - Can't load bitmap \"%s\"\n", (const char*)BitmapName );
         }
     }
 
