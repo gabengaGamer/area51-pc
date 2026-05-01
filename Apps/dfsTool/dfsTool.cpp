@@ -1,7 +1,11 @@
 //==============================================================================
 //
-//  dfsTool - xFileSystem Tool
+//  dfsTool.cpp
 //
+//==============================================================================
+
+//==============================================================================
+//  INCLUDES
 //==============================================================================
 
 #include "x_files.hpp"
@@ -15,7 +19,7 @@
 #include <direct.h>
 
 //==============================================================================
-//  Data
+//  DATA
 //==============================================================================
 
 u32             s_SplitSize     = 240 * 1024*1024;  // Default split size of 240MB
@@ -29,7 +33,7 @@ xbool           s_bEnableCRC    = FALSE;
 xstring         s_RootPath;                         // Base path to strip from inputs
 
 //==============================================================================
-//  Display Help
+//  FUNCTIONS
 //==============================================================================
 
 void DisplayHelp( void )
@@ -60,16 +64,12 @@ void DisplayHelp( void )
 }
 
 //==============================================================================
-//  DoBuild
-//==============================================================================
 
 void DoBuild( void )
 {
     dfs_Build( s_dfsPathName, s_ScriptFiles, s_DoMake, s_SectorSize, s_SplitSize, s_ChunkSize, s_bEnableCRC );
 }
 
-//==============================================================================
-//  DoUpdate
 //==============================================================================
 
 void DoUpdate( void )
@@ -78,16 +78,12 @@ void DoUpdate( void )
 }
 
 //==============================================================================
-//  DoOptimize
-//==============================================================================
 
 void DoOptimize( void )
 {
 // TODO:    dfs_Optimize( s_dfsPathName );
 }
 
-//==============================================================================
-//  DoList
 //==============================================================================
 
 void DoList( void )
@@ -98,20 +94,33 @@ void DoList( void )
         return;
 
     s32 FSize = x_flength(fp);
+    if( FSize < (s32)sizeof(dfs_header) )
+    {
+        x_fclose(fp);
+        return;
+    }
+
     byte* pDFS = (byte*)x_malloc(FSize);
-    if(!pDFS) return;
+    if(!pDFS)
+    {
+        x_fclose(fp);
+        return;
+    }
+
     x_fread( pDFS, FSize, 1, fp );
     x_fclose(fp);
 
     dfs_header* pHeader = dfs_InitHeaderFromRawPtr( pDFS );
-    if( !pHeader ) return;
+    if( !pHeader )
+    {
+        x_free( pDFS );
+        return;
+    }
 
     dfs_DumpFileListing( pHeader, "dfs_listing.txt" );
     x_free( pDFS );
 }
 
-//==============================================================================
-//  DoExtract
 //==============================================================================
 
 void DoExtract( void )
@@ -120,16 +129,12 @@ void DoExtract( void )
 }
 
 //==============================================================================
-//  DoVerify
-//==============================================================================
 
 void DoVerify( void )
 {
     dfs_Verify( s_dfsPathName );
 }
 
-//==============================================================================
-//  main
 //==============================================================================
 
 int main( int argc, char** argv )
@@ -173,7 +178,7 @@ int main( int argc, char** argv )
 
         char Buffer[256];
         GetCurrentDirectory( 256, &Buffer[0] );
-        x_printf( Buffer );
+        x_printf( "%s", Buffer );
     }
 
     // Read B option
@@ -225,7 +230,8 @@ int main( int argc, char** argv )
     if( iOption != -1 )
     {
         s_ExtractPath = CommandLine.GetOptionString( iOption );
-        if (s_ExtractPath.GetAt(s_ExtractPath.GetLength() - 1) != '\\')
+        if( s_ExtractPath.GetLength() &&
+            (s_ExtractPath.GetAt(s_ExtractPath.GetLength() - 1) != '\\') )
         {
             s_ExtractPath += '\\';
         }

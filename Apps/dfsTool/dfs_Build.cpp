@@ -4,6 +4,10 @@
 //
 //==============================================================================
 
+//==============================================================================
+//  INCLUDES
+//==============================================================================
+
 #include "dfs.hpp"
 #include "dictionary.hpp"
 #include "x_bytestream.hpp"
@@ -16,10 +20,6 @@
 
 #include <string.h>
 #include <stdio.h>
-
-//==============================================================================
-//  DEBUG SWITCHES
-//==============================================================================
 
 #define VERIFY_NAME_SPLITTING
 
@@ -51,7 +51,7 @@ xarray<xstring>     s_SectorAligned;            // Sector aligned file extension
 xstring             s_NormalizedRoot;           // Base path to strip from inputs
 
 //==============================================================================
-//  Checksum Helper Class
+//  CHECKSUM HELPER CLASS
 //==============================================================================
 
 extern "C" const u16 crc16Table[256] = {
@@ -154,10 +154,11 @@ public:
 checksummer g_Checksummer;
 
 //==============================================================================
-//  Helper Functions
+//  HELPER FUNCTIONS
 //==============================================================================
 
-static inline s32 TransformChar( s32 c )
+static 
+inline s32 TransformChar( s32 c )
 {
     // Upper Case
     if( (c >= 'a') && (c <= 'z') )
@@ -172,7 +173,7 @@ static inline s32 TransformChar( s32 c )
 }
 
 //==============================================================================
-//  SetChunkSize
+//  FUNCTIONS
 //==============================================================================
 
 void dfs_SetChunkSize( u32 nBytes )
@@ -212,18 +213,12 @@ void dfs_SetRootPath( const char* pRootPath )
 }
 
 //==============================================================================
-//  SectorAlign
-//==============================================================================
-
 void dfs_SectorAlign( const char* pExtension )
 {
     s_SectorAligned.Append() = pExtension;
 }
 
 //==============================================================================
-//  FreeScripts
-//==============================================================================
-
 void dfs_FreeScripts( void )
 {
     // Loop through all allocated scripts
@@ -237,8 +232,6 @@ void dfs_FreeScripts( void )
     s_Scripts.Clear();
 }
 
-//==============================================================================
-//  ReadScripts
 //==============================================================================
 
 void dfs_ReadScripts( const xarray<xstring>& Scripts )
@@ -254,6 +247,12 @@ void dfs_ReadScripts( const xarray<xstring>& Scripts )
         {
             // Get file length
             s32 Length = x_flength( pFile );
+            if( Length < 0 )
+            {
+                x_fclose( pFile );
+                ASSERT( 0 );
+                continue;
+            }
 
             // Allocate storage for the script
             char*& pScript = s_Scripts.Append();
@@ -350,8 +349,6 @@ void dfs_ReadScripts( const xarray<xstring>& Scripts )
 }
 
 //==============================================================================
-//  dfs_AreSourceFilesNewer - Check if source files are newer than the DFS
-//==============================================================================
 
 xbool GetFileTime( const char* pPathName, FILETIME& FileTime )
 {
@@ -378,6 +375,8 @@ xbool GetFileTime( const char* pPathName, FILETIME& FileTime )
     return Found;
 }
 
+//==============================================================================
+
 xbool dfs_AreSourceFilesNewer( const xstring& PathNameDFS, xarray<src_file>& SrcFiles )
 {
     xbool       FoundNewer = TRUE;
@@ -394,32 +393,54 @@ xbool dfs_AreSourceFilesNewer( const xstring& PathNameDFS, xarray<src_file>& Src
             return TRUE;
 
         s32 FSize = x_flength(fp);
+        if( FSize < (s32)sizeof(dfs_header) )
+        {
+            x_fclose(fp);
+            return TRUE;
+        }
+
         byte* pDFS = (byte*)x_malloc(FSize);
         if(!pDFS) 
+        {
+            x_fclose(fp);
             return TRUE;
+        }
+
         x_fread( pDFS, FSize, 1, fp );
         x_fclose(fp);
 
         dfs_header* pHeader = dfs_InitHeaderFromRawPtr( pDFS );
         if( !pHeader ) 
+        {
+            x_free( pDFS );
             return TRUE;
+        }
 
         if( pHeader->nFiles != SrcFiles.GetCount() )
+        {
+            x_free( pDFS );
             return TRUE;
+        }
 
-        dfs_file*   pEntry  = pHeader->pFiles;
+        dfs_file*   pEntry   = dfs_GetFiles( pHeader );
+        const char* pStrings = dfs_GetStrings( pHeader );
         for( s32 i=0 ; i<pHeader->nFiles ; i++, pEntry++ )
         {
             char OldName[256];
             x_sprintf( OldName, "%s%s%s%s", 
-                pHeader->pStrings + (u32)pEntry->PathNameOffset,
-                pHeader->pStrings + (u32)pEntry->FileNameOffset1,
-                pHeader->pStrings + (u32)pEntry->FileNameOffset2,
-                pHeader->pStrings + (u32)pEntry->ExtNameOffset);
+                pStrings + pEntry->PathNameOffset,
+                pStrings + pEntry->FileNameOffset1,
+                pStrings + pEntry->FileNameOffset2,
+                pStrings + pEntry->ExtNameOffset);
 
             if( x_stricmp(OldName,(const char*)SrcFiles[i].pPathName) != 0 )
+            {
+                x_free( pDFS );
                 return TRUE;
+            }
         }
+
+        x_free( pDFS );
     }
 
     // If DFS not found then return TRUE to force a build
@@ -453,8 +474,6 @@ xbool dfs_AreSourceFilesNewer( const xstring& PathNameDFS, xarray<src_file>& Src
     return FoundNewer;
 }
 
-//==============================================================================
-//  FindCommonSubstring
 //==============================================================================
 
 void FindCommonSubstring( const char* pStr0, const char* pStr1, const char* pStr2, char* pSub1, char* pSub2 )
@@ -528,6 +547,8 @@ void io_Init( X_FILE* pDestFile, s32 IOBufferSize )
     s_IOOffset = 0;
 }
 
+//==============================================================================
+
 void io_Flush( void )
 {
     //x_DebugMsg("FLUSH!!!\n");
@@ -537,6 +558,8 @@ void io_Flush( void )
     x_fwrite( s_pIOBuffer, s_IOOffset, 1, s_pDestFile );
     s_IOOffset = 0;
 }
+
+//==============================================================================
 
 void io_Kill( void )
 {
@@ -549,10 +572,14 @@ void io_Kill( void )
     s_IOOffset = 0;
 }
 
+//==============================================================================
+
 s32 io_GetDestOffset( void )
 {
     return s_DestOffset;
 }
+
+//==============================================================================
 
 void io_Read( X_FILE* pSrcFile, s32 nBytes )
 {
@@ -578,6 +605,8 @@ void io_Read( X_FILE* pSrcFile, s32 nBytes )
     }
 }
 
+//==============================================================================
+
 void io_Pad( s32 nPadBytes )
 {
     while( nPadBytes > 0 )
@@ -601,7 +630,6 @@ void io_Pad( s32 nPadBytes )
         }
     }
 }
-
 
 //==============================================================================
 //  dfs_Build
@@ -751,7 +779,14 @@ void dfs_Build( const xstring&          PathName,
                 u32 FileLength;
 
                 // Get length of file
-                FileLength = (u32)x_flength( pFile );
+                s32 FileLengthS32 = x_flength( pFile );
+                if( FileLengthS32 < 0 )
+                {
+                    x_fclose( pFile );
+                    ASSERT( 0 );
+                    continue;
+                }
+                FileLength = (u32)FileLengthS32;
 
                 // Need to pad?
                 if( bSectorAlign && pDataFile )
@@ -928,14 +963,14 @@ void dfs_Build( const xstring&          PathName,
         Header.nFiles           = nFilesOutput;
         Header.nSubFiles        = nDataFiles;
         Header.StringsLength    = Dictionary.GetSaveSize();
-        Header.pSubFileTable    = 0; // Fixup later.
-        Header.pFiles           = 0; // Fixup later.
-        Header.pChecksums       = 0; // Fixup later.
-        Header.pStrings         = 0; // Fixup later.
+        Header.SubFileTableOffset = 0; // Fixup later.
+        Header.FilesOffset        = 0; // Fixup later.
+        Header.ChecksumsOffset    = 0; // Fixup later.
+        Header.StringsOffset      = 0; // Fixup later.
 
         xbytestream Data;
 
-        Header.pSubFileTable = (dfs_subfile*)sizeof(Header);
+        Header.SubFileTableOffset = sizeof(Header);
 
         // Write out the sub file table.
         for( s32 j=0 ; j<s_FileOffsetTable.GetCount(); j++ )
@@ -948,7 +983,7 @@ void dfs_Build( const xstring&          PathName,
         }
 
         // Get offset of the file table
-        Header.pFiles = (dfs_file*)(Data.GetLength() + sizeof(Header));
+        Header.FilesOffset = Data.GetLength() + sizeof(Header);
 
         // Write file table
         Data.Append( FileTable );
@@ -957,20 +992,20 @@ void dfs_Build( const xstring&          PathName,
         if( bEnableCRC )
         {
             // Get offset of the checksum table.
-            Header.pChecksums = (u16*)(Data.GetLength() + sizeof(Header));
+            Header.ChecksumsOffset = Data.GetLength() + sizeof(Header);
 
             // Write checksum table
             Data.Append( Checksums );
         }
 
         // Get offset of the string table.
-        Header.pStrings = (char*)(Data.GetLength() + sizeof(Header));
+        Header.StringsOffset = Data.GetLength() + sizeof(Header);
 
         // Write string table
         Dictionary.Save( Data );
 
         // Get offset of the checksums.
-//        Header.pChecksums = (u16*)(Data.GetLength() + sizeof(Header));
+//        Header.ChecksumsOffset = Data.GetLength() + sizeof(Header);
 
         // Write checksums
 //        Data.Append( Checksums );
@@ -1011,5 +1046,3 @@ void dfs_Build( const xstring&          PathName,
     // Free any scripts allocated
     dfs_FreeScripts();
 }
-
-//==============================================================================

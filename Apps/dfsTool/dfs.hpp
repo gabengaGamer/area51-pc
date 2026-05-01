@@ -30,11 +30,15 @@ struct dfs_file
     u32         Length;             // Length of file
 };
 
+//------------------------------------------------------------------------------
+
 struct dfs_subfile
 {
     u32         Offset;
     u32         ChecksumIndex;
 };
+
+//------------------------------------------------------------------------------
 
 struct dfs_header
 {
@@ -46,30 +50,112 @@ struct dfs_header
     s32             nFiles;             // Total number of files in the filesystem
     s32             nSubFiles;          // Number of sub files (*.000, *.001, etc...)
     s32             StringsLength;      // Length of string table in bytes
-    dfs_subfile*    pSubFileTable;      // Pointer to the sub file table
-    dfs_file*       pFiles;             // Pointer to file entries
-    u16*            pChecksums;         // Pointer to checksum table
-    char*           pStrings;           // Pointer to string table
+    u32             SubFileTableOffset; // Offset to the sub file table
+    u32             FilesOffset;        // Offset to file entries
+    u32             ChecksumsOffset;    // Offset to checksum table
+    u32             StringsOffset;      // Offset to string table
 };
 
 //==============================================================================
 //  FUNCTIONS
 //==============================================================================
 
-dfs_header* dfs_InitHeaderFromRawPtr    ( void* pRawHeaderData  );
-void        dfs_DumpFileListing         ( const dfs_header* pHeader, const char* pFileName );
+dfs_header* dfs_InitHeaderFromRawPtr ( void* pRawHeaderData  );
+void        dfs_DumpFileListing      ( const dfs_header* pHeader, const char* pFileName );
 
-void dfs_Build          ( const xstring& PathName, const xarray<xstring>& Scripts, xbool DoMake, u32 SectorSize, u32 SplitSize, u32 ChunkSize, xbool bEnableCRC );
-void dfs_SetRootPath    ( const char* pRootPath );
-void dfs_Update         ( const xstring& PathName, const xarray<xstring>& Scripts );
-void dfs_Optimize       ( const xstring& PathName );
+void dfs_Build                       ( const xstring& PathName, const xarray<xstring>& Scripts, xbool DoMake, u32 SectorSize, u32 SplitSize, u32 ChunkSize, xbool bEnableCRC );
+void dfs_SetRootPath                 ( const char* pRootPath );
+void dfs_Update                      ( const xstring& PathName, const xarray<xstring>& Scripts );
+void dfs_Optimize                    ( const xstring& PathName );
+                                     
+void dfs_List                        ( const xstring& PathName );
+void dfs_Extract                     ( const xstring& PathName, const xstring& outPath );
+void dfs_Verify                      ( const xstring& PathName );
+                                     
+void dfs_SetChunkSize                ( u32 nBytes );
+void dfs_SectorAlign                 ( const char* pExtension );
 
-void dfs_List           ( const xstring& PathName );
-void dfs_Extract        ( const xstring& PathName, const xstring& outPath );
-void dfs_Verify         ( const xstring& PathName );
+//==============================================================================
+//  INLINE FUNCTIONS
+//==============================================================================
 
-void dfs_SetChunkSize   ( u32 nBytes );
-void dfs_SectorAlign    ( const char* pExtension );
+inline 
+dfs_subfile* dfs_GetSubFileTable( dfs_header* pHeader )
+{
+    if( pHeader->SubFileTableOffset == 0 )
+        return NULL;
+    return (dfs_subfile*)((byte*)pHeader + pHeader->SubFileTableOffset);
+}
+
+//==============================================================================
+
+inline 
+const dfs_subfile* dfs_GetSubFileTable( const dfs_header* pHeader )
+{
+    if( pHeader->SubFileTableOffset == 0 )
+        return NULL;
+    return (const dfs_subfile*)((const byte*)pHeader + pHeader->SubFileTableOffset);
+}
+
+//==============================================================================
+
+inline 
+dfs_file* dfs_GetFiles( dfs_header* pHeader )
+{
+    if( pHeader->FilesOffset == 0 )
+        return NULL;
+    return (dfs_file*)((byte*)pHeader + pHeader->FilesOffset);
+}
+
+//==============================================================================
+
+inline 
+const dfs_file* dfs_GetFiles( const dfs_header* pHeader )
+{
+    if( pHeader->FilesOffset == 0 )
+        return NULL;
+    return (const dfs_file*)((const byte*)pHeader + pHeader->FilesOffset);
+}
+
+//==============================================================================
+
+inline 
+u16* dfs_GetChecksums( dfs_header* pHeader )
+{
+    if( pHeader->ChecksumsOffset == 0 )
+        return NULL;
+    return (u16*)((byte*)pHeader + pHeader->ChecksumsOffset);
+}
+
+//==============================================================================
+
+inline 
+const u16* dfs_GetChecksums( const dfs_header* pHeader )
+{
+    if( pHeader->ChecksumsOffset == 0 )
+        return NULL;
+    return (const u16*)((const byte*)pHeader + pHeader->ChecksumsOffset);
+}
+
+//==============================================================================
+
+inline 
+char* dfs_GetStrings( dfs_header* pHeader )
+{
+    if( pHeader->StringsOffset == 0 )
+        return NULL;
+    return (char*)((byte*)pHeader + pHeader->StringsOffset);
+}
+
+//==============================================================================
+
+inline 
+const char* dfs_GetStrings( const dfs_header* pHeader )
+{
+    if( pHeader->StringsOffset == 0 )
+        return NULL;
+    return (const char*)((const byte*)pHeader + pHeader->StringsOffset);
+}
 
 //==============================================================================
 #endif // DFS_HPP
