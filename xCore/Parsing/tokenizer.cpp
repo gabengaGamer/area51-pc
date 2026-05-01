@@ -48,7 +48,7 @@ char token_stream::CHAR( s32 FilePos )
     }
     else
     {
-        return m_FileBuffer[m_FilePos];
+        return m_FileBuffer[FilePos];
     }
 
 }
@@ -217,7 +217,7 @@ xbool token_stream::OpenFile( X_FILE* fp )
     //ARH I removed this line because it may not be true if the file pointer has been 
     //      partially used.
     //if( x_fread( m_FileBuffer, 1, m_FileSize, fp ) != m_FileSize )
-    if( x_fread( m_FileBuffer, 1, m_FileSize, fp ) < 0 )
+    if( x_fread( m_FileBuffer, 1, m_FileSize, fp ) != m_FileSize )
     {
         x_free(m_FileBuffer);
         return FALSE;
@@ -862,7 +862,7 @@ char* token_stream::ReadLine( void )
         char C = CHAR(m_FilePos++) ;
 
         // End of line reached?
-        if ((C != '\n') || (C != 13))
+        if ((C != '\n') && (C != 13))
            break ;
     }
 

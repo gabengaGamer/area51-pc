@@ -184,7 +184,7 @@ void text_out::AddField( const char* pName, ... )
             }
         case 'g':
             {
-                guid g = (x_va_arg( Args, guid ));
+                u64 g = (x_va_arg( Args, u64 ));
               
                 m_pTypeEntry[m_iTypeEntry].Length       = x_sprintf( &m_pBlock[m_iBlock],"\"%08X:%08X\"", (u32)((g>>32)&0xFFFFFFFF),(u32)((g>>0)&0xFFFFFFFF) );
                 m_pTypeEntry[m_iTypeEntry].bDigit       = true;
@@ -472,7 +472,7 @@ void  text_out::AddBool( const char* pName, xbool Bool )
 
 void  text_out::AddGuid( const char* pName, guid Guid )
 {
-    AddField( xfs("%s:g",pName), Guid );
+    AddField( xfs("%s:g",pName), (u64)Guid );
 }
 
 //=========================================================================
