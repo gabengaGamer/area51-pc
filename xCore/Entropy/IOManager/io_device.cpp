@@ -87,11 +87,13 @@ void ProcessEndOfRequest( io_device* pDevice, s32 Status )
         s32             Index       = (pRequest->m_Offset+pRequest->m_ChunkOffset) / 32768;
 
         // Only if checksums are available...
-        if( pHeader->pChecksums )
+        const u16*         pChecksums = dfs_GetChecksums( pHeader );
+        const dfs_subfile* pSubFiles  = dfs_GetSubFileTable( pHeader );
+        if( pChecksums )
         {
             // Adjust the index based on the sub files index offset.
-            Index += pHeader->pSubFileTable[ pDeviceFile->SubFileIndex ].ChecksumIndex;
-            u16 CheckSum2 = pHeader->pChecksums[ Index ];
+            Index += pSubFiles[ pDeviceFile->SubFileIndex ].ChecksumIndex;
+            u16 CheckSum2 = pChecksums[ Index ];
 
             // Calculate the crc.
             u8* pData    = (u8*)pDeviceFile->pBuffer;
@@ -156,7 +158,7 @@ xbool io_device::ProcessReadComplete( io_request* pRequest )
                 //
 
                 // Set source (bump to actual data in the buffer)
-                pSrc = (void*)((u32)pFile->pBuffer - (u32)pRequest->m_ChunkOffset);
+                pSrc = (void*)((byte*)pFile->pBuffer - pRequest->m_ChunkOffset);
                 
                 // Set destination
                 pDest = (void*)pRequest->m_pBuffer;
@@ -177,7 +179,7 @@ xbool io_device::ProcessReadComplete( io_request* pRequest )
                 pSrc = (void*)pFile->pBuffer;
                 
                 // Set destination
-                pDest = (void*)((u32)pRequest->m_pBuffer + (u32)pRequest->m_ChunkOffset);
+                pDest = (void*)((byte*)pRequest->m_pBuffer + pRequest->m_ChunkOffset);
 
                 // Set length
                 if( pRequest->m_ChunkOffset + pRequest->m_ChunkLength > pRequest->m_Length )
@@ -453,7 +455,7 @@ void io_device::ProcessReadRequest( io_request* pRequest )
         else
         {
                 Success = DeviceRead( pFile,
-                                                                (void*)((s32)pRequest->m_pBuffer+pRequest->m_ChunkOffset),
+                                                                (void*)((byte*)pRequest->m_pBuffer + pRequest->m_ChunkOffset),
                                                                 Length,
                                                                 pRequest->m_Offset+pRequest->m_ChunkOffset,
                                                                 pRequest->m_Destination );

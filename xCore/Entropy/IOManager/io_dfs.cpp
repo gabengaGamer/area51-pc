@@ -27,17 +27,17 @@ dfs_header* dfs_InitHeaderFromRawPtr( void* pRawHeaderData, s32 Length )
     dfs_header* pHeader = (dfs_header*)pRawHeaderData;
 
     // Endian swap the header...
-    pHeader->Magic          = LITTLE_ENDIAN_32( pHeader->Magic          );
-    pHeader->Version        = LITTLE_ENDIAN_32( pHeader->Version        );
-    pHeader->SectorSize     = LITTLE_ENDIAN_32( pHeader->SectorSize     );
-    pHeader->SplitSize      = LITTLE_ENDIAN_32( pHeader->SplitSize      );
-    pHeader->nFiles         = LITTLE_ENDIAN_32( pHeader->nFiles         );
-    pHeader->nSubFiles      = LITTLE_ENDIAN_32( pHeader->nSubFiles      );
-    pHeader->StringsLength  = LITTLE_ENDIAN_32( pHeader->StringsLength  );
-    pHeader->pSubFileTable  = (dfs_subfile*)LITTLE_ENDIAN_32( pHeader->pSubFileTable  );
-    pHeader->pFiles         = (dfs_file*)   LITTLE_ENDIAN_32( pHeader->pFiles         );     
-    pHeader->pChecksums     = (u16*)        LITTLE_ENDIAN_32( pHeader->pChecksums     );     
-    pHeader->pStrings       = (char*)       LITTLE_ENDIAN_32( pHeader->pStrings       );
+    pHeader->Magic              = LITTLE_ENDIAN_32( pHeader->Magic              );
+    pHeader->Version            = LITTLE_ENDIAN_32( pHeader->Version            );
+    pHeader->SectorSize         = LITTLE_ENDIAN_32( pHeader->SectorSize         );
+    pHeader->SplitSize          = LITTLE_ENDIAN_32( pHeader->SplitSize          );
+    pHeader->nFiles             = LITTLE_ENDIAN_32( pHeader->nFiles             );
+    pHeader->nSubFiles          = LITTLE_ENDIAN_32( pHeader->nSubFiles          );
+    pHeader->StringsLength      = LITTLE_ENDIAN_32( pHeader->StringsLength      );
+    pHeader->SubFileTableOffset = LITTLE_ENDIAN_32( pHeader->SubFileTableOffset );
+    pHeader->FilesOffset        = LITTLE_ENDIAN_32( pHeader->FilesOffset        );
+    pHeader->ChecksumsOffset    = LITTLE_ENDIAN_32( pHeader->ChecksumsOffset    );
+    pHeader->StringsOffset      = LITTLE_ENDIAN_32( pHeader->StringsOffset      );
 
     // Make sure its valid!
     if( (pHeader->Version == DFS_VERSION) )
@@ -52,28 +52,21 @@ dfs_header* dfs_InitHeaderFromRawPtr( void* pRawHeaderData, s32 Length )
         if( pHeader->nFiles < 0 || pHeader->nSubFiles < 0 || pHeader->StringsLength < 0 )
             return NULL;
 
-        u32 SubFileEnd = (u32)pHeader->pSubFileTable + (u32)pHeader->nSubFiles * sizeof(dfs_subfile);
-        u32 FilesEnd   = (u32)pHeader->pFiles        + (u32)pHeader->nFiles    * sizeof(dfs_file);
-        u32 StringsEnd = (u32)pHeader->pStrings      + (u32)pHeader->StringsLength;
+        usize SubFileEnd = (usize)pHeader->SubFileTableOffset + (usize)pHeader->nSubFiles * sizeof(dfs_subfile);
+        usize FilesEnd   = (usize)pHeader->FilesOffset        + (usize)pHeader->nFiles    * sizeof(dfs_file);
+        usize StringsEnd = (usize)pHeader->StringsOffset      + (usize)pHeader->StringsLength;
 
-        ASSERT( SubFileEnd <= (u32)Length );
-        ASSERT( FilesEnd   <= (u32)Length );
-        ASSERT( StringsEnd <= (u32)Length );
-        if( SubFileEnd > (u32)Length || FilesEnd > (u32)Length || StringsEnd > (u32)Length )
+        ASSERT( SubFileEnd <= (usize)Length );
+        ASSERT( FilesEnd   <= (usize)Length );
+        ASSERT( StringsEnd <= (usize)Length );
+        if( SubFileEnd > (usize)Length || FilesEnd > (usize)Length || StringsEnd > (usize)Length )
             return NULL;
 
-        // Now fixup the offsets in the header.
-        u32 BaseAddr = (u32)pHeader;
-        pHeader->pSubFileTable  = (dfs_subfile*)(BaseAddr + (u32)pHeader->pSubFileTable  );
-        pHeader->pFiles         = (dfs_file*)   (BaseAddr + (u32)pHeader->pFiles         );
-        if( pHeader->pChecksums )
-        {
-            pHeader->pChecksums = (u16*)        (BaseAddr + (u32)pHeader->pChecksums     );
-        }
-        pHeader->pStrings       = (char*)       (BaseAddr + (u32)pHeader->pStrings       );
+        if( (pHeader->ChecksumsOffset != 0) && ((usize)pHeader->ChecksumsOffset > (usize)Length) )
+            return NULL;
 
         // Byte swap the filesize / checksum index table.
-        dfs_subfile* pTable = pHeader->pSubFileTable;
+        dfs_subfile* pTable = dfs_GetSubFileTable( pHeader );
         for( i=0 ; i<pHeader->nSubFiles ; i++ )
         {
             pTable[i].Offset        = LITTLE_ENDIAN_32( pTable[i].Offset );
@@ -81,7 +74,7 @@ dfs_header* dfs_InitHeaderFromRawPtr( void* pRawHeaderData, s32 Length )
         }
 
         // Byte swap the file entries.
-        for( i=0, pEntry=pHeader->pFiles ; i<pHeader->nFiles ; i++,pEntry++ )
+        for( i=0, pEntry=dfs_GetFiles( pHeader ) ; i<pHeader->nFiles ; i++,pEntry++ )
         {
             // Byte swap the 32-bit values.
             pEntry->FileNameOffset1 = LITTLE_ENDIAN_32( pEntry->FileNameOffset1 );
@@ -109,7 +102,8 @@ void dfs_DumpFileListing( const dfs_header* pHeader, const char* pFileName )
     f = x_fopen( pFileName, "w+t" );
     if( f )
     {
-        dfs_file*   pEntry  = pHeader->pFiles;
+        const dfs_file* pEntry   = dfs_GetFiles( pHeader );
+        const char*     pStrings = dfs_GetStrings( pHeader );
 
         for( s32 i=0 ; i<pHeader->nFiles ; i++, pEntry++ )
         {
@@ -127,10 +121,10 @@ void dfs_DumpFileListing( const dfs_header* pHeader, const char* pFileName )
                 i,
                 pEntry->Length,
                 pEntry->DataOffset,
-                pHeader->pStrings + (u32)pEntry->PathNameOffset,
-                pHeader->pStrings + (u32)pEntry->FileNameOffset1,
-                pHeader->pStrings + (u32)pEntry->FileNameOffset2,
-                pHeader->pStrings + (u32)pEntry->ExtNameOffset);
+                pStrings + pEntry->PathNameOffset,
+                pStrings + pEntry->FileNameOffset1,
+                pStrings + pEntry->FileNameOffset2,
+                pStrings + pEntry->ExtNameOffset);
         }
 
         x_fclose( f );
@@ -143,13 +137,14 @@ void dfs_BuildFileName( const dfs_header* pHeader, s32 iFile, char* pFileName )
 {
     ASSERT( (iFile>=0) && (iFile<pHeader->nFiles) );
 
-    dfs_file*   pEntry  = &pHeader->pFiles[ iFile ];
+    const dfs_file* pEntry   = &dfs_GetFiles( pHeader )[ iFile ];
+    const char*     pStrings = dfs_GetStrings( pHeader );
 
     x_sprintf(pFileName,"%s%s%s%s",
-        pHeader->pStrings + (u32)pEntry->PathNameOffset,
-        pHeader->pStrings + (u32)pEntry->FileNameOffset1,
-        pHeader->pStrings + (u32)pEntry->FileNameOffset2,
-        pHeader->pStrings + (u32)pEntry->ExtNameOffset);
+        pStrings + pEntry->PathNameOffset,
+        pStrings + pEntry->FileNameOffset1,
+        pStrings + pEntry->FileNameOffset2,
+        pStrings + pEntry->ExtNameOffset);
 }
 
 //==============================================================================
@@ -356,29 +351,33 @@ dfs_header* dfs_BuildHeaderFromDirectory( const char* pRootPath )
     pHeader->nSubFiles     = 1;
     pHeader->StringsLength = StringsLength;
 
-    pHeader->pSubFileTable = (dfs_subfile*)(pBuffer + HeaderSize);
-    pHeader->pFiles        = (dfs_file*)  (pBuffer + HeaderSize + SubFileSize);
-    pHeader->pChecksums    = NULL;
-    pHeader->pStrings      = (char*)     (pBuffer + HeaderSize + SubFileSize + FileSize);
+    pHeader->SubFileTableOffset = HeaderSize;
+    pHeader->FilesOffset        = HeaderSize + SubFileSize;
+    pHeader->ChecksumsOffset    = NULL;
+    pHeader->StringsOffset      = HeaderSize + SubFileSize + FileSize;
+
+    dfs_subfile* pSubFiles = dfs_GetSubFileTable( pHeader );
+    dfs_file*    pFiles    = dfs_GetFiles( pHeader );
+    char*        pStrings  = dfs_GetStrings( pHeader );
 
     // Offset is set one past total data size as an end of data sentinel.
-    pHeader->pSubFileTable[0].Offset        = TotalDataSize + 1;
-    pHeader->pSubFileTable[0].ChecksumIndex = 0;
+    pSubFiles[0].Offset        = TotalDataSize + 1;
+    pSubFiles[0].ChecksumIndex = 0;
 
-    pHeader->pStrings[0] = 0;
+    pStrings[0] = 0;
 
     // Write deduplicated string table.
     for( i=0 ; i<StringTable.GetCount() ; i++ )
     {
         const dfs_string_entry& SE = StringTable[i];
-        x_memcpy( pHeader->pStrings + SE.Offset, (const char*)SE.Str, SE.Str.GetLength() + 1 );
+        x_memcpy( pStrings + SE.Offset, (const char*)SE.Str, SE.Str.GetLength() + 1 );
     }
 
     // Write file entries using cached offsets from first pass.
     u32 DataOffset = 0;
     for( i=0 ; i<Entries.GetCount() ; i++ )
     {
-        dfs_file& File = pHeader->pFiles[i];
+        dfs_file& File = pFiles[i];
 
         File.PathNameOffset  = Entries[i].PathOffset;
         File.FileNameOffset1 = Entries[i].Name1Offset;

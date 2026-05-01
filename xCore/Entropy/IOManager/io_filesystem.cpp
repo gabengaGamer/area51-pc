@@ -928,12 +928,13 @@ void io_fs::ReleaseCache( io_cache* pCache )
 xbool io_fs::CompareFile( const char* pPathName, io_device_file* &DeviceFile, u32 &Offset, u32 &Length, s32 SubFile, s32 Index, void* &pRAM )
 {
     dfs_header* pHeader = m_DFS[SubFile].pHeader;
-    dfs_file*   pEntry  = pHeader->pFiles + Index;
+    const dfs_file* pEntry   = dfs_GetFiles( pHeader ) + Index;
+    const char*     pStrings = dfs_GetStrings( pHeader );
     const char* p1      = pPathName;
-    char*       p2;
+    const char* p2;
 
     // Compare the path...
-    p2 = pHeader->pStrings + (u32)pEntry->PathNameOffset;
+    p2 = pStrings + pEntry->PathNameOffset;
     while( *p2 )
     {
         if( *p1++ != *p2++ )
@@ -941,7 +942,7 @@ xbool io_fs::CompareFile( const char* pPathName, io_device_file* &DeviceFile, u3
     }
 
     // Compare the filename (part 1)...
-    p2 = pHeader->pStrings + (u32)pEntry->FileNameOffset1;
+    p2 = pStrings + pEntry->FileNameOffset1;
     while( *p2 )
     {
         if( *p1++ != *p2++ )
@@ -949,7 +950,7 @@ xbool io_fs::CompareFile( const char* pPathName, io_device_file* &DeviceFile, u3
     }
 
     // Compare the filename (part 2)...
-    p2 = pHeader->pStrings + (u32)pEntry->FileNameOffset2;
+    p2 = pStrings + pEntry->FileNameOffset2;
     while( *p2 )
     {
         if( *p1++ != *p2++ )
@@ -957,7 +958,7 @@ xbool io_fs::CompareFile( const char* pPathName, io_device_file* &DeviceFile, u3
     }
 
     // Compare the extension...
-    p2 = pHeader->pStrings + (u32)pEntry->ExtNameOffset;
+    p2 = pStrings + pEntry->ExtNameOffset;
     while( *p2 )
     {
         if( *p1++ != *p2++ )
@@ -995,7 +996,7 @@ xbool io_fs::CompareFile( const char* pPathName, io_device_file* &DeviceFile, u3
 
     // Now figure out which device file.
     s32             nSubFiles = pHeader->nSubFiles;
-    dfs_subfile*    pSubFile  = pHeader->pSubFileTable;
+    const dfs_subfile* pSubFile = dfs_GetSubFileTable( pHeader );
     s32             i         = 0;
     while( i<nSubFiles )
     {
@@ -1277,7 +1278,7 @@ io_open_file* io_fs::Open( const char* pPathName, const char* pMode )
         if( pDeviceFile )
         {
 #ifdef IO_FS_PASS_OPEN_SUCCESS
-            LOG_MESSAGE( IO_FS_PASS_OPEN_SUCCESS, "SUCCESS! Filename: %s (0x%08x)", pPathName, pOpenFile );
+            LOG_MESSAGE( IO_FS_PASS_OPEN_SUCCESS, "SUCCESS! Filename: %s (%p)", pPathName, (void*)pOpenFile );
 #endif // IO_FS_PASS_OPEN_SUCCESS
 
             pOpenFile = AcquireFile();
@@ -1312,7 +1313,7 @@ io_open_file* io_fs::Open( const char* pPathName, const char* pMode )
         else
         {
 #ifdef IO_FS_PASS_OPEN_FAILURE
-            LOG_MESSAGE( IO_FS_PASS_OPEN_FAILURE, "FAILURE! Filename: %s (0x%08x)", pPathName, pOpenFile );
+            LOG_MESSAGE( IO_FS_PASS_OPEN_FAILURE, "FAILURE! Filename: %s (%p)", pPathName, (void*)pOpenFile );
 #endif // IO_FS_PASS_OPEN_SUCCESS
         }
 
@@ -1324,7 +1325,7 @@ io_open_file* io_fs::Open( const char* pPathName, const char* pMode )
     if( pOpenFile )
     {
 #ifdef IO_FS_OPEN_SUCCESS
-        LOG_MESSAGE( IO_FS_OPEN_SUCCESS, "Filename: %s (0x%08x)", pPathName, pOpenFile );
+        LOG_MESSAGE( IO_FS_OPEN_SUCCESS, "Filename: %s (%p)", pPathName, (void*)pOpenFile );
 #endif // IO_FS_OPEN_SUCCESS
     }
     else
@@ -1335,7 +1336,7 @@ io_open_file* io_fs::Open( const char* pPathName, const char* pMode )
     }
 
 #ifdef DEBUG_IO
-    x_DebugMsg( "   Open File: %08x\n", pOpenFile );
+    x_DebugMsg( "   Open File: %p\n", (void*)pOpenFile );
 #endif
 
     // Release it.
@@ -1368,11 +1369,11 @@ void io_fs::Close( io_open_file* pOpenFile )
         m_Mutex.Enter();
 
     #ifdef IO_FS_CLOSE
-        LOG_MESSAGE( IO_FS_CLOSE, "Filename: %s (0x%08x)", pOpenFile->Filename, pOpenFile );
+        LOG_MESSAGE( IO_FS_CLOSE, "Filename: %s (%p)", pOpenFile->Filename, (void*)pOpenFile );
     #endif // IO_FS_CLOSE
 
     #ifdef DEBUG_IO
-        x_DebugMsg( "FS Close: %08x\n", pOpenFile );
+        x_DebugMsg( "FS Close: %p\n", (void*)pOpenFile );
     #endif
         
         if( pOpenFile )
@@ -1418,7 +1419,7 @@ s32 io_fs::Read( io_open_file* pOpenFile, byte* pBuffer, s32 Bytes )
     ASSERT( Bytes >= 0 );
 
 #ifdef DEBUG_IO
-    x_DebugMsg( "FS Read: %08x, Buffer: %08x, Bytes: %d\n", pOpenFile, pBuffer, Bytes );
+    x_DebugMsg( "FS Read: %p, Buffer: %p, Bytes: %d\n", (void*)pOpenFile, (void*)pBuffer, Bytes );
 #endif
 
     g_IOFSReadBytesRequested += Bytes;
@@ -1592,7 +1593,7 @@ s32 io_fs::Write( io_open_file* pOpenFile, const byte* pBuffer, s32 Bytes )
     io_cache* pCache = AcquireCache( pOpenFile );
 
 #ifdef DEBUG_IO
-    x_DebugMsg( "FS Write: %08x, Buffer: %08x, Bytes: %d\n", pOpenFile, pBuffer, Bytes );
+    x_DebugMsg( "FS Write: %p, Buffer: %p, Bytes: %d\n", (void*)pOpenFile, (const void*)pBuffer, Bytes );
 #endif
     
     while( BytesLeft )

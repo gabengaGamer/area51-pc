@@ -42,7 +42,7 @@ void io_cache::Init( void )
     MEMORY_OWNER( "io_cache::Init()" );
     m_CacheSize    = g_IoMgr.m_Devices[ IO_DEVICE_HOST ]->m_CacheSize;
     m_pCacheMemory = (void*)x_malloc( m_CacheSize + 256 );
-    m_pCacheData   = (u8*)(((s32)m_pCacheMemory+255) & -256);
+    m_pCacheData   = (u8*)(((uaddr)m_pCacheMemory + 255) & ~(uaddr)255);
     ASSERTS( m_pCacheMemory, "Failed to allocate Cache buffer" );
 }
 

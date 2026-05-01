@@ -20,11 +20,13 @@
 //  INCLUDES
 //==============================================================================
 
-#include "..\io_mgr.hpp"
-#include "..\io_filesystem.hpp"
 #include "x_memory.hpp"
 #include "x_math.hpp"
+
+#include "..\io_mgr.hpp"
+#include "..\io_filesystem.hpp"
 #include "io_device_host.hpp"
+
 #include <stdio.h>
 
 //==============================================================================
@@ -156,10 +158,32 @@ xbool io_device_host::DeviceOpen( const char* pFilename, io_device_file* pFile, 
     // Open the file on the host filesystem.
     if( pFile->Handle )
     {
+        s32 FileLength;
+
         // Get the length of the file.
-        fseek( (FILE*)pFile->Handle, 0, SEEK_END );
-        pFile->Length = ftell( (FILE*)pFile->Handle );
-        fseek( (FILE*)pFile->Handle,0,SEEK_SET );
+        if( fseek( (FILE*)pFile->Handle, 0, SEEK_END ) != 0 )
+        {
+            fclose( (FILE*)pFile->Handle );
+            pFile->Handle = NULL;
+            return FALSE;
+        }
+
+        FileLength = (s32)ftell( (FILE*)pFile->Handle );
+        if( FileLength < 0 )
+        {
+            fclose( (FILE*)pFile->Handle );
+            pFile->Handle = NULL;
+            return FALSE;
+        }
+
+        pFile->Length = (s32)FileLength;
+
+        if( fseek( (FILE*)pFile->Handle, 0, SEEK_SET ) != 0 )
+        {
+            fclose( (FILE*)pFile->Handle );
+            pFile->Handle = NULL;
+            return FALSE;
+        }
         // Woot!
         return TRUE;
     }
@@ -178,9 +202,14 @@ xbool io_device_host::DeviceRead( io_device_file* pFile, void* pBuffer, s32 Leng
     LogDeviceRead( pFile, Length, Offset );   
 #endif    
 
-    fseek( (FILE*)pFile->Handle, Offset, SEEK_SET );
-    ReadLength = fread(pBuffer,1,Length,(FILE*)pFile->Handle);
-    ReadCallback((ReadLength==Length),pFile->pHardwareData);
+    if( fseek( (FILE*)pFile->Handle, Offset, SEEK_SET ) != 0 )
+    {
+        ReadCallback( -1, pFile->pHardwareData );
+        return FALSE;
+    }
+
+    ReadLength = (s32)fread( pBuffer, 1, Length, (FILE*)pFile->Handle );
+    ReadCallback( (ReadLength == Length) ? ReadLength : -1, pFile->pHardwareData );
 
     // Tell the world.
     return ReadLength == Length;
@@ -203,5 +232,5 @@ xbool io_device_host::DeviceWrite( io_device_file* pFile, void* pBuffer, s32 Len
 
 void io_device_host::DeviceClose ( io_device_file* pFile )
 {
-    fclose((FILE*)pFile->Handle);
+    fclose( (FILE*)pFile->Handle );
 }
