@@ -372,7 +372,7 @@ s32 command_line::Glob( const xstring& Pattern, xarray<xstring>& Results, xbool 
     SplitPath( Pattern, Path, File );
 
 	// Begin find
-	s32 handle = _findfirst( Pattern, &Data );
+	intptr_t handle = _findfirst( Pattern, &Data );
 	if( handle != -1 )
 	{
 		// Loop through all files
@@ -401,7 +401,7 @@ s32 command_line::Glob( const xstring& Pattern, xarray<xstring>& Results, xbool 
         xstring File;
         SplitPath( Pattern, Path, File );
 
-        s32 handle = _findfirst( JoinPath( Path, xstring("*") ), &Data );
+        intptr_t handle = _findfirst( JoinPath( Path, xstring("*") ), &Data );
         if( handle != -1 )
         {
             // Loop through all folders
