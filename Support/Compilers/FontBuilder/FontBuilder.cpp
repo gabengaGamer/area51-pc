@@ -184,7 +184,7 @@ xbool Writemap( command_line& CommandLine, const xstring& BitmapName, xstring& O
     // Check if the file already exists
     if( !CommandLine.FileExists( PathName ) || s_OverWrite )
     {
-        x_printf("Writing character map file (%s)\n", PathName);
+        x_printf("Writing character map file (%s)\n", (const char*)PathName);
 
         // save the file
         s_MapFile = x_fopen( PathName, "wt");
@@ -192,7 +192,7 @@ xbool Writemap( command_line& CommandLine, const xstring& BitmapName, xstring& O
 
         if( !x_fprintf( s_MapFile, "%d\n", s_NumChars ) )
         {
-            x_printf( "Error - Saving MAP \"%s\"\n", PathName );
+            x_printf( "Error - Saving MAP \"%s\"\n", (const char*)PathName );
             x_fclose( s_MapFile );
             return FALSE;
         }
@@ -204,7 +204,7 @@ xbool Writemap( command_line& CommandLine, const xstring& BitmapName, xstring& O
             {
                 if( !x_fprintf( s_MapFile, "0x%04X\t%d\n", s_CMap[c].character, s_CMap[c].count ) )
                 {
-                    x_printf( "Error - Saving MAP \"%s\"\n", PathName );
+                    x_printf( "Error - Saving MAP \"%s\"\n", (const char*)PathName );
                     x_fclose( s_MapFile );
                     return FALSE;
                 }
@@ -216,7 +216,7 @@ xbool Writemap( command_line& CommandLine, const xstring& BitmapName, xstring& O
         // Display error
         if( s_Debug )
         {
-            x_printf( "Error - File \"%s\" already exists\n", PathName );
+            x_printf( "Error - File \"%s\" already exists\n", (const char*)PathName );
             return FALSE;
         }
     }
@@ -349,11 +349,11 @@ xbool Writefont( command_line& CommandLine, const xstring& BitmapName, xstring& 
             }
         }
 
-        x_printf("Writing font file (%s)\n", PathName);
+        x_printf("Writing font file (%s)\n", (const char*)PathName);
 
         if( !b.SaveFile(PathName) )
         {
-            x_printf( "Error - Saving FONT \"%s\"\n", PathName );
+            x_printf( "Error - Saving FONT \"%s\"\n", (const char*)PathName );
             return FALSE;
         }
     }
@@ -362,7 +362,7 @@ xbool Writefont( command_line& CommandLine, const xstring& BitmapName, xstring& 
     {
         // Display error
         if( s_Debug )
-            x_printf( "Error - File \"%s\" already exists\n", PathName );
+            x_printf( "Error - File \"%s\" already exists\n", (const char*)PathName );
     }
 #endif
 
@@ -376,7 +376,7 @@ void WritefontLog( command_line& CommandLine, const xstring& BitmapName, xstring
     xstring Path;
     xstring File;
 
-    x_printf("Writing font log (%s)\n", PathName);
+    x_printf("Writing font log (%s)\n", (const char*)PathName);
 
     CommandLine.SplitPath( PathName, Path, File );
     PathName = CommandLine.JoinPath( OutputFolder, File );
@@ -435,19 +435,19 @@ xbool Writexbmp( command_line& CommandLine, xbitmap& Bitmap, const xstring& Bitm
 	{
 		if( (Bitmap.GetHeight() % 2) || (Bitmap.GetWidth() % 2) )
 		{
-			x_printf( "Warning: Bitmap[%s] is not a power of 2", BitmapName );
+			x_printf( "Warning: Bitmap[%s] is not a power of 2", (const char*)BitmapName );
 		}
 	}
 
     // Check if the file already exists
     //if( !CommandLine.FileExists( PathName ) || s_OverWrite )
     {
-        x_printf("Saving xbmp file (%s)\n", PathName);
+        x_printf("Saving xbmp file (%s)\n", (const char*)PathName);
 
         // Save the file
         if( !Bitmap.Save( PathName ) && s_Debug)
         {
-            x_printf( "Error - Saving XBMP \"%s\"\n", PathName );
+            x_printf( "Error - Saving XBMP \"%s\"\n", (const char*)PathName );
             return FALSE;
         }
     }
@@ -456,7 +456,7 @@ xbool Writexbmp( command_line& CommandLine, xbitmap& Bitmap, const xstring& Bitm
     {
         // Display error
         if( s_Debug )
-			x_printf( "Error - File \"%s\" already exists\n", PathName );
+			x_printf( "Error - File \"%s\" already exists\n", (const char*)PathName );
     }
 #endif
 
@@ -481,19 +481,19 @@ xbool Writetga( command_line& CommandLine, xbitmap& Bitmap, const xstring& Bitma
 	{
 		if( (Bitmap.GetHeight() % 2) || (Bitmap.GetWidth() % 2) )
 		{
-			x_printf( "Warning: Bitmap[%s] is not a power of 2", BitmapName );
+			x_printf( "Warning: Bitmap[%s] is not a power of 2", (const char*)BitmapName );
 		}
 	}
 
     // Check if the file already exists
     if( !CommandLine.FileExists( PathName ) || s_OverWrite )
     {
-        x_printf("Saving TGA file (%s)\n", PathName);
+        x_printf("Saving TGA file (%s)\n", (const char*)PathName);
 
         // Save the file
         if( !Bitmap.SaveTGA( PathName ) && s_Debug)
         {
-            x_printf( "Error - Saving TGA \"%s\"\n", PathName );
+            x_printf( "Error - Saving TGA \"%s\"\n", (const char*)PathName );
             return FALSE;
         }
     }
@@ -502,7 +502,7 @@ xbool Writetga( command_line& CommandLine, xbitmap& Bitmap, const xstring& Bitma
         // Display error
         if( s_Debug )
         {
-            x_printf( "Error - File \"%s\" already exists\n", PathName );
+            x_printf( "Error - File \"%s\" already exists\n", (const char*)PathName );
             return FALSE;
         }
     }
@@ -1213,7 +1213,7 @@ int main( int argc, char** argv )
 
             if( !auxbmp_Load( fbm, BitmapInName ) )
             {
-                x_printf("ERROR: failed loading TGA file %s\n", BitmapInName);
+                x_printf("ERROR: failed loading TGA file %s\n", (const char*)BitmapInName);
                 return 4;
             }
 
@@ -1278,7 +1278,7 @@ int main( int argc, char** argv )
             // read the character map if we have one.
             if (s_ReadFromFile)
             {
-                x_printf("Reading character map file (%s)\n", s_MapName);
+                x_printf("Reading character map file (%s)\n", (const char*)s_MapName);
                 if( !Readmap() )
                 {
                     x_printf("unable to read mapfile, aborting.\n");
