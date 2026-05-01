@@ -30,7 +30,7 @@ void CompileBitmap( const char* Input, const char* Output )
     //
     // Output the info
     //
-    char FileName[256];
+    char FileName[X_MAX_FNAME];
     x_splitpath( Output, NULL, NULL, FileName, NULL );
 
     x_fprintf( FP, "\\ Data From: %s \n", Input );
@@ -45,7 +45,7 @@ void CompileBitmap( const char* Input, const char* Output )
         {
             xcolor Color = Bitmap.GetPixelColor( x, y );
             
-            if( (x-1) == Bitmap.GetWidth() && (y-1) == Bitmap.GetHeight() )
+            if( (x == (Bitmap.GetWidth()-1)) && (y == (Bitmap.GetHeight()-1)) )
                 x_fprintf( FP, "%3d, %3d, %3d, %3d ", Color.B, Color.G, Color.R, Color.A );
             else 
                 x_fprintf( FP, "%3d, %3d, %3d, %3d, ", Color.B, Color.G, Color.R, Color.A );                
@@ -188,8 +188,9 @@ void ExecuteScript( command_line& CommandLine )
 {
     s32             i;
     xbool           sType = 0;
-    char            Output[256]={0};
-    char            Resource[256]={0};
+    xbool           Success = FALSE;
+    char            Output[X_MAX_PATH]={0};
+    char            Resource[X_MAX_PATH]={0};
 
     //
     // Collect all the options
@@ -251,6 +252,8 @@ void ExecuteScript( command_line& CommandLine )
         CompileMesh( Resource, Output );
     }
 
+    Success = TRUE;
+
     //
     // Handle any errors
     //
@@ -258,7 +261,8 @@ void ExecuteScript( command_line& CommandLine )
         x_printf( "Error: %s\n", xExceptionGetErrorString() );
     x_catch_end;
 
-    x_printf( "Done.\n" );
+    if( Success )
+        x_printf( "Done.\n" );
 }
 
 //=========================================================================
