@@ -54,8 +54,7 @@
 #define IAL_MAX_CHANNELS        128
 #define IAL_SAMPLE_RATE         22050
 #define IAL_FRAME_TIME_MS       20
-#define IAL_SAMPLES_PER_FRAME   (IAL_SAMPLE_RATE/(1000/IAL_FRAME_TIME_MS))
-#define IAL_BUFFER_COUNT        4
+#define IAL_SAMPLES_PER_FRAME   (IAL_SAMPLE_RATE/(1000/IAL_FRAME_TIME_MS)*4)
 
 #if (IAL_SAMPLE_RATE/(1000/IAL_FRAME_TIME_MS)*(1000/IAL_FRAME_TIME_MS)) != IAL_SAMPLE_RATE
 #error IAL_SAMPLES_PER_FRAME not integer
@@ -75,11 +74,12 @@ f32                     s_SystemVolume = 1.0f;
 ial_channel IAL_Channels        [IAL_MAX_CHANNELS];
 s32         IAL_MixL            [IAL_SAMPLES_PER_FRAME];
 s32         IAL_MixR            [IAL_SAMPLES_PER_FRAME];
-s16         IAL_Out             [IAL_BUFFER_COUNT][IAL_SAMPLES_PER_FRAME*2];
-s32         IAL_BufferContexts  [IAL_BUFFER_COUNT];
+s16         IAL_Out             [IAL_SAMPLES_PER_FRAME*2];
 s32         IAL_OutputAmplitude [2] = { 0, 0 };
 
 CRITICAL_SECTION    IAL_CriticalSection;
+
+void IAL_MixFrame( void );
 
 struct IAL_VoiceCallback : public IXAudio2VoiceCallback
 {
@@ -87,7 +87,7 @@ struct IAL_VoiceCallback : public IXAudio2VoiceCallback
     STDMETHOD_(void, OnVoiceProcessingPassEnd)() {}
     STDMETHOD_(void, OnStreamEnd)() {}
     STDMETHOD_(void, OnBufferStart)(void*) {}
-    STDMETHOD_(void, OnBufferEnd)(void* pBufferContext);
+    STDMETHOD_(void, OnBufferEnd)(void*) { IAL_MixFrame(); }
     STDMETHOD_(void, OnLoopEnd)(void*) {}
     STDMETHOD_(void, OnVoiceError)(void*, HRESULT) {}
 } s_VoiceCallback;
@@ -226,18 +226,14 @@ void IAL_MixChannel( ial_channel* pChannel, s32* pL, s32* pR, s32 nDstSamples )
 
 //==============================================================================
 
-void IAL_SubmitFrame( s32 BufferIndex )
+void IAL_MixFrame( void )
 {
     s32 iChannel;
     s32 i;
     s32 nSamples;
-    HRESULT hr;
 
     if( !s_Initialized || !s_pSourceVoice )
         return;
-
-    ASSERT( BufferIndex >= 0 );
-    ASSERT( BufferIndex < IAL_BUFFER_COUNT );
 
     IAL_GetMutex();
 
@@ -261,33 +257,24 @@ void IAL_SubmitFrame( s32 BufferIndex )
         s = IAL_MixL[i];
         if( s < -32768 ) s = -32768;
         if( s >  32767 ) s =  32767;
-        IAL_Out[BufferIndex][i*2] = (s16)s;
+        IAL_Out[i*2] = (s16)s;
         s = x_abs( s );
         IAL_OutputAmplitude[0] = max( IAL_OutputAmplitude[0], s );
 
         s = IAL_MixR[i];
         if( s < -32768 ) s = -32768;
         if( s >  32767 ) s =  32767;
-        IAL_Out[BufferIndex][i*2+1] = (s16)s;
+        IAL_Out[i*2+1] = (s16)s;
         s = x_abs( s );
         IAL_OutputAmplitude[1] = max( IAL_OutputAmplitude[1], s );
     }
 
     XAUDIO2_BUFFER Buffer = {0};
     Buffer.AudioBytes = nSamples * sizeof(s16) * 2;
-    Buffer.pAudioData = (const BYTE*)IAL_Out[BufferIndex];
-    Buffer.pContext   = &IAL_BufferContexts[BufferIndex];
-    hr = s_pSourceVoice->SubmitSourceBuffer( &Buffer );
-    ASSERT( SUCCEEDED( hr ) );
+    Buffer.pAudioData = (const BYTE*)IAL_Out;
+    s_pSourceVoice->SubmitSourceBuffer( &Buffer );
 
     IAL_ReleaseMutex();
-}
-
-//==============================================================================
-
-void IAL_VoiceCallback::OnBufferEnd( void* pBufferContext )
-{
-    IAL_SubmitFrame( *(s32*)pBufferContext );
 }
 
 //==============================================================================
@@ -322,12 +309,7 @@ xbool IAL_Init( void )
 
     s_Initialized = TRUE;
 
-    for( s32 i=0 ; i<IAL_BUFFER_COUNT ; i++ )
-    {
-        IAL_BufferContexts[i] = i;
-        IAL_SubmitFrame( i );
-    }
-
+    IAL_MixFrame();
     s_pSourceVoice->Start( 0 );
 
     return TRUE;
