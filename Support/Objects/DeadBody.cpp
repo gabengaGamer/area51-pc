@@ -42,6 +42,7 @@ static struct dead_body_desc : public object_desc
                                         object::ATTR_DAMAGEABLE             |
                                         object::ATTR_NO_RUNTIME_SAVE        |
                                         object::ATTR_RENDERABLE             |
+                                        object::ATTR_CAST_SHADOWS           |
                                         object::ATTR_TRANSPARENT,
 
                                         FLAGS_GENERIC_EDITOR_CREATE | FLAGS_NO_ICON |
