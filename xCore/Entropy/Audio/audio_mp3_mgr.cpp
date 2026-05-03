@@ -39,6 +39,75 @@
 //  STRUCTURES
 //==============================================================================
 
+enum
+{
+    MP3_FINAL_FRAME_PAD_BYTES = 2304,
+};
+
+//------------------------------------------------------------------------------
+
+static xbool mp3_probe_stream_header( const audio_stream* pStream, s32 ExpectedHz, s32 ExpectedChannels )
+{
+    ASSERT( pStream );
+
+    s32 ProbeBytes = x_min( (s32)pStream->WaveformLength, MP3_BUFFER_SIZE );
+    if( ProbeBytes <= 0 )
+        return FALSE;
+
+    const u8* pProbeData = (const u8*)pStream->MainRAM[0];
+    s32       ProbeCursor = 0;
+    s32       SkipCount   = 0;
+    const s32 MAX_SKIP_ATTEMPTS = 100;
+
+    while( (ProbeCursor < ProbeBytes) && (SkipCount <= MAX_SKIP_ATTEMPTS) )
+    {
+        mp3dec_t            ProbeDecoder;
+        mp3dec_frame_info_t ProbeInfo;
+        s32                 SamplesDecoded;
+        s32                 BytesLeft;
+        s32                 Channels;
+
+        mp3dec_init( &ProbeDecoder );
+        x_memset( &ProbeInfo, 0, sizeof( ProbeInfo ) );
+
+        BytesLeft = ProbeBytes - ProbeCursor;
+        SamplesDecoded = mp3dec_decode_frame( &ProbeDecoder,
+                                              pProbeData + ProbeCursor,
+                                              BytesLeft,
+                                              NULL,
+                                              &ProbeInfo );
+
+        Channels = ProbeInfo.channels ? ProbeInfo.channels : ExpectedChannels;
+        if( (SamplesDecoded > 0) &&
+            (ProbeInfo.frame_bytes > 0) &&
+            (ProbeInfo.layer == 3) &&
+            (ProbeInfo.hz > 0) &&
+            ((ExpectedHz <= 0) || (ProbeInfo.hz == ExpectedHz)) &&
+            (Channels == ExpectedChannels) )
+        {
+            return TRUE;
+        }
+
+        s32 SkipBytes = 1;
+        if( (SamplesDecoded > 0) && (ProbeInfo.frame_bytes > 0) )
+        {
+            SkipBytes = ProbeInfo.frame_offset + 1;
+        }
+        else if( ProbeInfo.frame_bytes > 0 )
+        {
+            SkipBytes = ProbeInfo.frame_bytes;
+        }
+
+        if( SkipBytes <= 0 )
+            SkipBytes = 1;
+
+        ProbeCursor += x_min( SkipBytes, BytesLeft );
+        SkipCount++;
+    }
+
+    return FALSE;
+}
+
 struct audio_mp3_mgr::mp3_decoder_state
 {
     mp3dec_t                Decoder;
@@ -56,7 +125,7 @@ struct audio_mp3_mgr::mp3_decoder_state
     xbool                   EndOfStream;
     xbool                   HeaderValid;
     s16                     SamplesBuffer[MINIMP3_MAX_SAMPLES_PER_FRAME];
-    u8                      InputBuffer[MP3_BUFFER_SIZE * 2];
+    u8                      InputBuffer[(MP3_BUFFER_SIZE * 2) + MP3_FINAL_FRAME_PAD_BYTES];
 };
 
 //------------------------------------------------------------------------------
@@ -160,7 +229,7 @@ void audio_mp3_mgr::mp3_state_reset( mp3_decoder_state& State, const audio_strea
     State.Channels          = (pStream->Type == STEREO_STREAM) ? 2 : 1;
     State.FrameHz           = 0;
     State.FrameChannels     = 0;
-    State.ExpectedHz        = 0;
+    State.ExpectedHz        = (pStream->Samples[0].Sample.SampleRate > 0) ? pStream->Samples[0].Sample.SampleRate : 0;
     State.ExpectedChannels  = (pStream->Type == STEREO_STREAM) ? 2 : 1;
     State.EndOfStream       = FALSE;
     State.HeaderValid       = FALSE;
@@ -354,6 +423,49 @@ s32 audio_mp3_mgr::mp3_state_decode_frame( audio_stream* pStream, mp3_decoder_st
             return SamplesDecoded;
         }
 
+        if( (SamplesDecoded <= 0) && State.EndOfStream && (BytesLeft > 0) )
+        {
+            s32 PadBytes = x_min( (s32)MP3_FINAL_FRAME_PAD_BYTES,
+                                  (s32)sizeof( State.InputBuffer ) - (State.InputCursor + BytesLeft) );
+
+            if( PadBytes > 0 )
+            {
+                mp3dec_t            PaddedDecoder = SavedDecoder;
+                mp3dec_frame_info_t OriginalInfo  = State.FrameInfo;
+                mp3dec_frame_info_t PaddedInfo;
+                s32                 PaddedSamples;
+
+                x_memset( State.InputBuffer + State.InputCursor + BytesLeft, 0, PadBytes );
+                x_memset( &PaddedInfo, 0, sizeof( PaddedInfo ) );
+
+                PaddedSamples = mp3dec_decode_frame( &PaddedDecoder,
+                                                     State.InputBuffer + State.InputCursor,
+                                                     BytesLeft + PadBytes,
+                                                     State.SamplesBuffer,
+                                                     &PaddedInfo );
+
+                if( PaddedSamples > 0 )
+                {
+                    State.FrameInfo = PaddedInfo;
+
+                    if( mp3_state_validate_frame( State ) )
+                    {
+                        State.Decoder          = PaddedDecoder;
+                        State.InputCursor      = State.InputBytes;
+                        State.Channels         = State.FrameInfo.channels ? State.FrameInfo.channels : State.ExpectedChannels;
+                        State.FrameHz          = State.FrameInfo.hz;
+                        State.FrameChannels    = State.Channels;
+                        State.HeaderValid      = TRUE;
+                        State.SamplesAvailable = PaddedSamples;
+                        State.SampleOffset     = 0;
+                        return PaddedSamples;
+                    }
+                }
+
+                State.FrameInfo = OriginalInfo;
+            }
+        }
+
         State.InputCursor += FrameBytes;
         if( State.InputCursor > State.InputBytes )
             State.InputCursor = State.InputBytes;
@@ -429,6 +541,12 @@ void audio_mp3_mgr::Open( audio_stream* pStream )
     ASSERT( pState );
 
     mp3_state_reset( *pState, pStream );
+
+    if( !mp3_probe_stream_header( pStream, pState->ExpectedHz, pState->ExpectedChannels ) )
+    {
+        x_free( pState );
+        return;
+    }
 
     pStream->HandleMP3 = pState;
 }
