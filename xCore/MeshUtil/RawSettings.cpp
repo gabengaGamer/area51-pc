@@ -108,7 +108,10 @@ void raw_settings::AddProperty( const xstring&  SectionName,
             &&  ( CheckProp.Type     == PropertyType ) )
         {
             x_throw( xfs( "Duplicate property: %s %s %s found!\nReferenced in settings file [%s]\n\n", 
-                          SectionName, PropertyName, PropertyType, m_pSettingsFile ) );
+                          (const char*)SectionName,
+                          (const char*)PropertyName,
+                          (const char*)PropertyType,
+                          m_pSettingsFile ) );
         }                    
     }
     
@@ -162,7 +165,9 @@ xbool raw_settings::Load( const char* pSettingsFile )
                     // Group not setup?
                     if( GroupName.GetLength() == 0 )
                     {
-                        x_throw( xfs( "Bone group name not specified.\nReferenced in settings file [%s] line %d\n\n", (const char*)BoneName, pSettingsFile, TOK.GetLineNumber() ) );
+                        x_throw( xfs( "Bone group name not specified.\nReferenced in settings file [%s] line %d\n\n",
+                                      pSettingsFile,
+                                      TOK.GetLineNumber() ) );
                     }
                     else
                     {
