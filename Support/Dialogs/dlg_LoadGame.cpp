@@ -25,6 +25,7 @@
 #endif
 
 #ifdef TARGET_PC
+#include "D3DEngine\d3deng_draw_rt.hpp"
 #include "D3DEngine\d3deng_shader.hpp"
 #include "D3DEngine\d3deng_state.hpp"
 #include "e_VRAM.hpp"
@@ -1742,15 +1743,16 @@ void dlg_load_game::platform_SetDstBuffer( vram_buffer BufferID,
 
     if( BufferID == BUFFER_SCREEN )
     {
-        // Set back buffer as render target
-        const rtarget* pBackBuffer = rtarget_GetBackBuffer();
-        if( pBackBuffer && rtarget_SetBackBuffer() )
+        // Screen-space load screen passes belong on the UI target, not on the
+        // swap-chain back buffer. The final UI composite will present them later.
+        const rtarget* pUITarget = draw_GetUITarget();
+        if( pUITarget && rtarget_SetTargets( pUITarget, 1, NULL ) )
         {
-            pTarget = pBackBuffer;
+            pTarget = pUITarget;
         }
         else
         {
-            x_DebugMsg( "DialogLoadGame: Failed to bind back buffer\n" );
+            x_DebugMsg( "DialogLoadGame: Failed to bind UI target\n" );
             return;
         }
     }

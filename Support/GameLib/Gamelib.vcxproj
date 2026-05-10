@@ -863,6 +863,7 @@
     </ClCompile>
     <ClCompile Include="..\Objects\DestructibleObj.cpp" />
     <ClCompile Include="..\Objects\Door.cpp" />
+    <ClCompile Include="..\Objects\Flashlight.cpp" />
     <ClCompile Include="..\Objects\feedbackemitter.cpp" />
     <ClCompile Include="..\Objects\Flag.cpp" />
     <ClCompile Include="..\Objects\FlagBase.cpp" />
@@ -1512,6 +1513,7 @@
     <ClInclude Include="..\Objects\DestructibleObj.hpp" />
     <ClInclude Include="..\Objects\Door.hpp" />
     <ClInclude Include="..\Objects\Event.hpp" />
+    <ClInclude Include="..\Objects\Flashlight.hpp" />
     <ClInclude Include="..\Objects\feedbackemitter.hpp" />
     <ClInclude Include="..\Objects\Flag.hpp" />
     <ClInclude Include="..\Objects\FlagBase.hpp" />

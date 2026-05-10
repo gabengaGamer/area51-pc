@@ -69,9 +69,8 @@ GEOM_PIXEL_INPUT VSMain(VS_INPUT input)
     float3 viewVector = worldPos.xyz - CameraPosition.xyz;
     output.ViewVector = viewVector;
 
-    float2 depthParams = MaterialParams.zw;
-    float nearZ = depthParams.x;
-    float farZ  = depthParams.y;
+    float nearZ = NearZ;
+    float farZ  = FarZ;
     float invRange = rcp(max(farZ - nearZ, 1e-5f));
     float linearDepth = (viewPos.z - nearZ) * invRange;
     output.LinearDepth = saturate(linearDepth);

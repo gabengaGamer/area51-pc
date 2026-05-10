@@ -1,30 +1,30 @@
-//==============================================================================
+//=========================================================================
 //
 //  ProjTextureMgr.hpp
 //
-//==============================================================================
+//=========================================================================
 
 #ifndef PROJTEXTUREMGR_HPP
 #define PROJTEXTUREMGR_HPP
 
-//==============================================================================
+//=========================================================================
 //  INCLUDES
-//==============================================================================
+//=========================================================================
 
 #include "x_math.hpp"
 #include "e_View.hpp"
 #include "Texture.hpp"
 #include "Render.hpp"
 
-//==============================================================================
+//=========================================================================
 //  PROJ TEXTURE MANAGER CLASS
-//==============================================================================
+//=========================================================================
 
 class proj_texture_mgr
 {
 public:
-    enum    { MAX_PROJ_LIGHTS  = 10 };
-    enum    { MAX_PROJ_SHADOWS = 10 };
+    enum    { MAX_PROJ_LIGHTS  = 4 };
+    enum    { MAX_PROJ_SHADOWS = 8 };
 
              proj_texture_mgr( void );
     virtual ~proj_texture_mgr( void );
@@ -45,15 +45,17 @@ public:
     // Functions for getting projections that actually hit an object.
     s32     CollectLights           ( const matrix4& L2W,
                                       const bbox&    B,
-                                      s32            MaxLightCount = 1 );
+                                      s32            MaxLightCount = MAX_PROJ_LIGHTS );
     void    GetCollectedLight       ( matrix4&       LightMatrix,
                                       xbitmap*&      pBitmap );
 
     s32     CollectShadows          ( const matrix4& L2W,
                                       const bbox&    B,
-                                      s32            MaxShadowCount = 1 );
+                                      s32            MaxShadowCount = MAX_PROJ_SHADOWS );
     void    GetCollectedShadow      ( matrix4&       ShadMatrix,
                                       xbitmap*&      pBitmap );
+    u32     CollectProjectionFlags  ( u32            RenderFlags,
+                                      const bbox&    WorldBBox );
 
     xbool   CanReceiveProjTexture   ( material_type  Type,
                                       u16            MaterialFlags ) const;
@@ -74,9 +76,24 @@ protected:
                                       radian          FOV,
                                       f32             Length,
                                       texture::handle Texture );
-									  
+
+    s32         CollectProjections  ( const projection* pProjections,
+                                      s32               NProjections,
+                                      s32*              pCollectedProjections,
+                                      s32&              NCollectedProjections,
+                                      s32&              CurrCollectedProjection,
+                                      const matrix4&    L2W,
+                                      const bbox&       B,
+                                      s32               MaxProjectionCount );
+    void        GetCollectedProjection( const projection* pProjections,
+                                        const s32*        pCollectedProjections,
+                                        s32               NCollectedProjections,
+                                        s32&              CurrCollectedProjection,
+                                        matrix4&          ProjMatrix,
+                                        xbitmap*&         pBitmap );
+
     xbool       ProjectionIntersectsBBox( const projection& Proj,
-                                          const bbox&      B );								  
+                                          const bbox&      B );
 
     // list of projective lights and shadows
     s32         m_NLightProjections;
@@ -93,25 +110,25 @@ protected:
     s32         m_CollectedShadows[MAX_PROJ_SHADOWS];
 };
 
-//==============================================================================
+//=========================================================================
 //  GLOBAL INSTANCE
-//==============================================================================
+//=========================================================================
 
 extern proj_texture_mgr    g_ProjTextureMgr;
 
-//==============================================================================
+//=========================================================================
 //  INLINE FUNCTIONS
-//==============================================================================
+//=========================================================================
 
 inline
 void proj_texture_mgr::ClearProjTextures( void )
 {
-    for( s32 i = 0; i < m_NLightProjections; i++ )
+    for ( s32 i = 0; i < m_NLightProjections; i++ )
     {
         m_LightProjections[i].ProjTexture.Destroy();
     }
 
-    for( s32 i = 0; i < m_NShadowProjections; i++ )
+    for ( s32 i = 0; i < m_NShadowProjections; i++ )
     {
         m_ShadowProjections[i].ProjTexture.Destroy();
     }
@@ -124,6 +141,6 @@ void proj_texture_mgr::ClearProjTextures( void )
     m_CurrCollectedShadow  = 0;
 }
 
-//==============================================================================
+//=========================================================================
 #endif // PROJTEXTUREMGR_HPP
-//==============================================================================
+//=========================================================================

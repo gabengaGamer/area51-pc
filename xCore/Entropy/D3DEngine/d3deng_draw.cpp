@@ -179,6 +179,27 @@ xbool draw_IsPremultipliedTargetActive( void )
 }
 
 //==============================================================================
+ 
+static
+D3D11_PRIMITIVE_TOPOLOGY draw_GetTopology( draw_primitive Primitive )
+{
+    switch( Primitive )
+    {
+        case DRAW_POINTS:          return D3D11_PRIMITIVE_TOPOLOGY_POINTLIST;
+        case DRAW_LINES:           return D3D11_PRIMITIVE_TOPOLOGY_LINELIST;
+        case DRAW_LINE_STRIPS:     return D3D11_PRIMITIVE_TOPOLOGY_LINESTRIP;
+        case DRAW_TRIANGLES:       return D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+        case DRAW_TRIANGLE_STRIPS: return D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP;
+        case DRAW_QUADS:
+        case DRAW_RECTS:
+        case DRAW_SPRITES:         return D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+        default:
+            ASSERT( FALSE );
+            return D3D11_PRIMITIVE_TOPOLOGY_UNDEFINED;
+    }
+}
+
+//==============================================================================
 // FUNCTIONS
 //==============================================================================
 
@@ -520,10 +541,10 @@ void draw_Dispatch( void )
         
         if( m_Is2D && !(m_Flags & DRAW_2D_KEEP_Z) )
         {
-            g_pd3dContext->IASetInputLayout( m_pInputLayout2d );
+            shader_SetInputLayout( m_pInputLayout2d );
             if( !(m_Flags & DRAW_CUSTOM_VS_SHADER) )
             {
-                g_pd3dContext->VSSetShader( m_pVertexShader2d, NULL, 0 );
+                shader_SetVertexShader( m_pVertexShader2d );
             }
             
             // Set vertex buffer
@@ -533,10 +554,10 @@ void draw_Dispatch( void )
         }
         else
         {
-            g_pd3dContext->IASetInputLayout( m_pInputLayout3d );
+            shader_SetInputLayout( m_pInputLayout3d );
             if( !(m_Flags & DRAW_CUSTOM_VS_SHADER) )
             {
-                g_pd3dContext->VSSetShader( m_pVertexShader3d, NULL, 0 );
+                shader_SetVertexShader( m_pVertexShader3d );
             }
             
             // Set vertex buffer
@@ -545,43 +566,44 @@ void draw_Dispatch( void )
             g_pd3dContext->IASetVertexBuffers( 0, 1, &m_pVertexBuffer3d[m_iActiveBuffer], &stride, &offset );
         }
 
+        if( !(m_Flags & DRAW_CUSTOM_GS_SHADER) )
+        {
+            shader_SetGeometryShader( NULL );
+        }
+
         if( !(m_Flags & DRAW_CUSTOM_PS_SHADER) )
         {
-            g_pd3dContext->PSSetShader( m_pPixelShader, NULL, 0 );
+            shader_SetPixelShader( m_pPixelShader );
         }
+
+        shader_SetTopology( draw_GetTopology( m_Primitive ) );
 
         // Set primitive topology and draw
         switch( m_Primitive )
         {
         case DRAW_POINTS:
-            g_pd3dContext->IASetPrimitiveTopology( D3D11_PRIMITIVE_TOPOLOGY_POINTLIST );
             g_pd3dContext->Draw( m_iVertex, 0 );
             break;
 
         case DRAW_LINES:
-            g_pd3dContext->IASetPrimitiveTopology( D3D11_PRIMITIVE_TOPOLOGY_LINELIST );
             g_pd3dContext->Draw( m_iVertex, 0 );
             break;
 
         case DRAW_LINE_STRIPS:
-            g_pd3dContext->IASetPrimitiveTopology( D3D11_PRIMITIVE_TOPOLOGY_LINESTRIP );
             g_pd3dContext->Draw( m_iVertex, 0 );
             break;
 
         case DRAW_TRIANGLES:
-            g_pd3dContext->IASetPrimitiveTopology( D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST );
             g_pd3dContext->Draw( m_iVertex, 0 );
             break;
 
         case DRAW_TRIANGLE_STRIPS:
-            g_pd3dContext->IASetPrimitiveTopology( D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP );
             g_pd3dContext->Draw( m_iVertex, 0 );
             break;
 
         case DRAW_QUADS:
         case DRAW_RECTS:
         case DRAW_SPRITES:
-            g_pd3dContext->IASetPrimitiveTopology( D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST );
             g_pd3dContext->IASetIndexBuffer( m_pIndexQuads, DXGI_FORMAT_R16_UINT, 0 );
             g_pd3dContext->DrawIndexed( (m_iVertex/4)*6, 0, 0 );
             break;
@@ -1173,6 +1195,7 @@ void draw_End( void )
 void draw_ResetAfterException( void )
 {
     m_bBegin = FALSE;
+    shader_FlushCache();
 
     // Exit if we lost the D3D device
     if( !g_pd3dContext )

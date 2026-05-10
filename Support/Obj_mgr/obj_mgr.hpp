@@ -28,6 +28,7 @@
 //==============================================================================
 //  FLAGS
 //==============================================================================
+
 extern xbool g_GameLogicDebug;
 
 //==============================================================================
@@ -38,11 +39,7 @@ class   object;
 
 typedef u16     obj_ref;
 typedef u16     slot_id;
-#ifdef TARGET_PC
 typedef s32     link_id;
-#else
-typedef s16     link_id;
-#endif
 
 #define SLOT_NULL ((u16)0xffff)
 #define LINK_NULL (-1)
@@ -67,21 +64,8 @@ public:
 
     enum 
     {
-#ifndef TARGET_PC
-        MAX_OBJECTS             =   2000,       //  Max number of objects.  62 bytes each (PS2/Xbox)
-#else 
         MAX_OBJECTS             =   60000,      //  Max number of objects.  62 bytes each (PC)
-#endif
         MAX_REF_NODES           =   MAX_OBJECTS
-    };
-
-    enum
-    {
-#ifndef TARGET_PC
-        MAX_VISIBLE_SHADOW_PROJECTORS   =    4,
-#else
-        MAX_VISIBLE_SHADOW_PROJECTORS   =  256,
-#endif
     };
 
     enum query_types
@@ -220,15 +204,11 @@ public:
         void            Render3dObjects             ( xbool DoPortalWalk, const view& PortalView, u8 StartZone );
         void            RenderIcons                 ( void );
 
-#ifdef TARGET_XBOX
-        void            RenderClothObjects          ( object::type type );
-#endif
-
 protected:        
         void            DoVisibilityTests           ( const view& View );
-        void            CollectShadowCasters        ( void );
-        void            CompleteVisAndShadowTests   ( void );
-        void            CreateShadowMap             ( void );
+        void            CollectVisibleLights        ( void );
+        void            CompleteVisibilityTests     ( void );
+        void            CollectShadowCasterCandidates( void );
         void            Render3dPrep                ( xbool DoPortalWalk, const view& PortalView, u8 StartZone );
         void            RenderNormalObjects         ( void );
         void            RenderPlaySurfaces          ( void );
@@ -332,31 +312,10 @@ protected:
         object*         m_pProxyPlaySurface;                            // This is a proxy playsurface for doing collisions, etc.
         xtick           m_GameTime;
         xarray<slot_id> m_DeleteObject;
+        xarray<object*> m_ShadowCasterCandidates;
         f32             m_TimeDilation;
         bbox            m_SafeBBox;
         guid            m_ReservedGuid;
-
-        // shadow information
-        struct shad_projector
-        {
-            matrix4 L2W;
-            bbox    CastWorldBBox;
-            guid    Guid;
-        };
-        struct shad_receiver
-        {
-            guid    Guid;
-            u64     Mask;
-        };
-
-        // TODO: Because we're only doing directional at the moment,
-        // casters and projectors are identical. When we switch to
-        // point (spot) projectors, a single projector could have
-        // several casters
-        xarray<shad_projector>  m_ShadowProjectors;
-        xarray<shad_projector>  m_ShadowCasters;
-        xarray<shad_receiver>   m_ShadowReceivers;
-        xbool                   m_bRenderShadows;
 
         s32                     m_nLogicLoops;
 
@@ -716,16 +675,12 @@ void object_desc::AddObjectCount( s32 N ) const
 //==============================================================================
 
 //==============================================================================
+
 inline 
 f32 obj_mgr::GetGameDeltaTime( xtick LastTime ) const
 {
-    #ifdef TARGET_PS2
-    s32 Delta = (s32)((m_GameTime - LastTime)>>9);
-    f32 Time  = ((f32)Delta) * (512.0f * (1.0f/576.0f) * (1.0f/1000.0f));
-    #else
     s64 Delta = ( m_GameTime - LastTime )/x_GetTicksPerMs();    
     f32 Time  = ((f32)Delta) * (1/1000.0f);
-    #endif
     return Time;
 }
 
@@ -922,19 +877,6 @@ extern obj_mgr g_ObjMgr;
 
 inline
 s32 GetNLogicLoops( void ) { return g_ObjMgr.GetNLogicLoops(); }
-
-//
-//  Pip stuff
-//
-#ifdef TARGET_XBOX
-    enum PipTarget
-    {
-        kTARGET_MAIN,
-        kTARGET_PIP,
-        kTARGET_OFF
-    };
-    void xbox_SetPipTarget( s32 PipTarget,s32 X,s32 Y );
-#endif
 
 //==============================================================================
 // END

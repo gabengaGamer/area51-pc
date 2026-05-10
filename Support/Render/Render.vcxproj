@@ -117,7 +117,7 @@
     <ClCompile>
       <Optimization>MaxSpeed</Optimization>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
-      <AdditionalIncludeDirectories>$(X);$(X)\x_files;$(X)\Entropy;$(X)\..\Support;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(X);$(X)\x_files;$(X)\Entropy;$(X)\..\Support;$(X)\Auxiliary;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>TARGET_PC;CONFIG_RETAIL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
@@ -133,7 +133,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>$(X);$(X)\x_files;$(X)\Entropy;$(X)\..\Support;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(X);$(X)\x_files;$(X)\Entropy;$(X)\..\Support;$(X)\Auxiliary;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>TARGET_PC;CONFIG_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -152,7 +152,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='OptDebug|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>$(X);$(X)\x_files;$(X)\Entropy;$(X)\..\Support;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(X);$(X)\x_files;$(X)\Entropy;$(X)\..\Support;$(X)\Auxiliary;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>TARGET_PC;CONFIG_OPTDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -167,7 +167,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='QA|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>$(X);$(X)\x_files;$(X)\Entropy;$(X)\..\Support;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(X);$(X)\x_files;$(X)\Entropy;$(X)\..\Support;$(X)\Auxiliary;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>TARGET_PC;CONFIG_QA;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -182,7 +182,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='EDITOR-Debug|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>$(X);$(X)\x_files;$(X)\Entropy;$(X)\..\Support;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(X);$(X)\x_files;$(X)\Entropy;$(X)\..\Support;$(X)\Auxiliary;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>TARGET_PC;CONFIG_DEBUG;X_EDITOR;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -197,7 +197,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='VIEWER-Debug|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>$(X);$(X)\x_files;$(X)\Entropy;$(X)\..\Support;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(X);$(X)\x_files;$(X)\Entropy;$(X)\..\Support;$(X)\Auxiliary;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>TARGET_PC;CONFIG_DEBUG;CONFIG_VIEWER;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -224,16 +224,22 @@
     <ClCompile Include="Material.cpp" />
     <ClCompile Include="MaterialArray.cpp" />
     <ClCompile Include="PC\GBufferMgr.cpp" />
-    <ClCompile Include="PC\MaterialMgr\MaterialMgr.cpp" />
-    <ClCompile Include="PC\MaterialMgr\MaterialMgr_ProjTex.cpp" />
-    <ClCompile Include="PC\MaterialMgr\MaterialMgr_Rigid.cpp" />
-    <ClCompile Include="PC\MaterialMgr\MaterialMgr_Skin.cpp" />
+    <ClCompile Include="PC\ShadowMgr.cpp" />
+    <ClCompile Include="PC\GeomMgr\GeomMgr.cpp" />
+    <ClCompile Include="PC\GeomMgr\GeomMgr_ProjTex.cpp" />
+    <ClCompile Include="PC\GeomMgr\GeomMgr_ShadowMaps.cpp" />
+    <ClCompile Include="PC\GeomMgr\GeomMgr_Rigid.cpp" />
+    <ClCompile Include="PC\GeomMgr\GeomMgr_Skin.cpp" />
     <ClCompile Include="PC\PostMgr\PostMgr.cpp" />
+    <ClCompile Include="PC\PostMgr\PostMgr_Fog.cpp" />
     <ClCompile Include="PC\PostMgr\PostMgr_Filters.cpp" />
     <ClCompile Include="PC\PostMgr\PostMgr_Glow.cpp" />
+    <ClCompile Include="PC\PrimitiveMgr\PrimitiveMgr.cpp" />
+    <ClCompile Include="PC\RuntimeVertexMgr.cpp" />
     <ClCompile Include="Pc\SoftVertexMgr.cpp" />
     <ClCompile Include="Pc\VertexMgr.cpp" />
     <ClCompile Include="ProjTextureMgr.cpp" />
+    <ClCompile Include="ShadowMapMgr.cpp" />
     <ClCompile Include="Render.cpp" />
     <ClCompile Include="RigidGeom.cpp" />
     <ClCompile Include="SkinGeom.cpp" />
@@ -248,12 +254,16 @@
     <ClInclude Include="MaterialArray.hpp" />
     <ClInclude Include="Material_Prefs.hpp" />
     <ClInclude Include="PC\GBufferMgr.hpp" />
-    <ClInclude Include="PC\MaterialMgr\MaterialMgr.hpp" />
+    <ClInclude Include="PC\ShadowMgr.hpp" />
+    <ClInclude Include="PC\GeomMgr\GeomMgr.hpp" />
     <ClInclude Include="PC\PostMgr\PostMgr.hpp" />
+    <ClInclude Include="PC\PrimitiveMgr\PrimitiveMgr.hpp" />
+    <ClInclude Include="PC\RuntimeVertexMgr.hpp" />
     <ClInclude Include="Pc\SoftVertexMgr.hpp" />
     <ClInclude Include="Pc\VertexMgr.hpp" />
     <ClInclude Include="platform_Render.hpp" />
     <ClInclude Include="ProjTextureMgr.hpp" />
+    <ClInclude Include="ShadowMapMgr.hpp" />
     <ClInclude Include="Render.hpp" />
     <ClInclude Include="RigidGeom.hpp" />
     <ClInclude Include="SkinGeom.hpp" />

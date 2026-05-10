@@ -709,6 +709,9 @@
     <ClCompile Include="..\Objects\Door.cpp">
       <Filter>Objects</Filter>
     </ClCompile>
+    <ClCompile Include="..\Objects\Flashlight.cpp">
+      <Filter>Objects</Filter>
+    </ClCompile>
     <ClCompile Include="..\Sound\EventSoundEmitter.cpp">
       <Filter>Objects</Filter>
     </ClCompile>
@@ -2035,6 +2038,9 @@
       <Filter>Objects</Filter>
     </ClInclude>
     <ClInclude Include="..\Objects\Event.hpp">
+      <Filter>Objects</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Objects\Flashlight.hpp">
       <Filter>Objects</Filter>
     </ClInclude>
     <ClInclude Include="..\Sound\EventSoundEmitter.hpp">

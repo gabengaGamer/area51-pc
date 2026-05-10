@@ -453,15 +453,14 @@ public:
 #ifdef X_EDITOR
     virtual void            OnEditorRender          ( void );
 #endif // X_EDITOR
+    virtual void            OnCollectLight          ( void );
 
     //=========================================================================
     // FLASHLIGHT STUFF
     //=========================================================================
-            void            InitFlashlight      ( const vector3& rInitPos );
     virtual xbool           IsFlashlightOn      ( void )            { return m_bUsingFlashlight; }
             xbool           IsFlashlightActive  ( void );            
             void            SetFlashlightActive ( xbool bOn );
-            void            MoveFlashlight      ( void );
             void            UpdateFlashlightBattery ( f32 nDeltaTime );
     virtual xbool           AddBattery              ( const f32& nDeltaBattery );
     virtual f32             GetBattery              ( void ) { return m_Battery; }
@@ -1329,7 +1328,6 @@ protected:
     //------------------------------------------------------------------------------
     xbool                   m_bUsingFlashlight;
     xbool                   m_bUsingFlashlightBeforeCinema;
-    guid                    m_FlashlightGuid;                   // guid to a projected texture (attached to the gun)
     f32                     m_BatteryChangeTime;                // what is the accumulated time for changing battery value
     f32                     m_Battery;
     f32                     m_MaxBattery;

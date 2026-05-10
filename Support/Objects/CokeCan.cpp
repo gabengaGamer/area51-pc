@@ -328,6 +328,7 @@ static struct coke_can_desc : public object_desc
                                         object::ATTR_BLOCKS_RAGDOLL         | 
                                         object::ATTR_DAMAGEABLE             |
                                         object::ATTR_NO_RUNTIME_SAVE        |
+										object::ATTR_CAST_SHADOWS           |
                                         object::ATTR_RENDERABLE,
 
                                         FLAGS_GENERIC_EDITOR_CREATE | FLAGS_NO_ICON |
@@ -506,6 +507,39 @@ void coke_can::OnRender( void )
     if( ( DEBUG_COKE_CAN ) && ( GetEnergy() > Profile.ACTIVE_ENERGY ) )
         OnColRender( FALSE );
 #endif
+}
+
+//===============================================================================
+
+void coke_can::OnRenderShadowCast( u64 ProjMask )
+{
+    // Geometry present?
+    skin_geom* pSkinGeom = m_SkinInst.GetSkinGeom();
+    if( !pSkinGeom )
+        return;
+
+    // Can only support 1 boned cans!
+    ASSERTS( pSkinGeom->m_nBones == 1, "Coke cans can only have 1 bone!!" );
+
+    // Compute LOD mask
+    u64 ShadLODMask = m_SkinInst.GetLODMask( 0 );
+    if( ShadLODMask == 0 )
+        return;
+
+    // Setup render flags
+    u32 Flags = ( GetFlagBits() & object::FLAG_CHECK_PLANES ) ? render::CLIPPED : 0;
+
+    // Backup the transform since the render list stores a pointer to the bone array
+    matrix4* pBackedUpMtx = ( matrix4* )smem_BufferAlloc( sizeof( matrix4 ) );
+    ASSERT( pBackedUpMtx );
+    *pBackedUpMtx = GetL2W();
+
+    m_SkinInst.RenderShadowCast( pBackedUpMtx,
+                                 pBackedUpMtx,
+                                 1,
+                                 Flags,
+                                 ShadLODMask,
+                                 ProjMask );
 }
 
 //===============================================================================

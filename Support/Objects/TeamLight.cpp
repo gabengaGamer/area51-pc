@@ -127,6 +127,7 @@ team_light::team_light( void )
 
     m_Radius       = 400.0f;
     m_Intensity    = 1.0f;
+    m_Falloff      = 1.0f;
 
     // Setting it double what it should be because otherwise 
     // it disappears before it should.
@@ -178,8 +179,14 @@ inline xcolor Interpolate( xcolor Color1, xcolor Color2, f32 Percentage )
 
 void team_light::OnRender( void )
 {
+}
+
+//=========================================================================
+
+void team_light::OnCollectLight( void )
+{
 #ifndef X_EDITOR
-    CONTEXT( "team_light::OnRender" );
+    CONTEXT( "team_light::OnCollectLight" );
 
     if( m_Circuit.GetCircuit() == 15 )
     {
@@ -217,8 +224,18 @@ void team_light::OnRender( void )
     xcolor Color  = Interpolate( m_States[ FadePoints[ 0 ] ]->m_Color, 
                                  m_States[ FadePoints[ 1 ] ]->m_Color, 
                                  m_TransitionValue );
+    f32 InnerRadius = MAX( 0.0f, m_Radius * ( 1.0f - m_Falloff ) );
 
-    g_LightMgr.AddDynamicLight( GetPosition(), Color, m_Radius, m_Intensity, FALSE );
+    g_LightMgr.AddDynamicLight( GetPosition(),
+                                Color,
+                                m_Radius,
+                                m_Intensity,
+                                FALSE,
+                                light_mgr::LIGHT_SHAPE_OMNI,
+                                FALSE,
+                                InnerRadius,
+                                vector3( 0.0f, 0.0f, 1.0f ),
+                                m_Falloff );
 #endif
 }
 
@@ -258,6 +275,7 @@ void team_light::OnEnumProp( prop_enum&  rPropList )
 
     rPropList.PropEnumFloat( "TeamLight\\Radius",    "Radius for the dynamic light.",    0 );
     rPropList.PropEnumFloat( "TeamLight\\Intensity", "Intensity for the dynamic light.", 0 );
+    rPropList.PropEnumFloat( "TeamLight\\Falloff",   "Falloff for the dynamic light.",   0 );
 
     const char* Prefixes[]  = { "FriendAll", "Friend", "Foe", "FoeAll" };
     s32 i;
@@ -295,6 +313,7 @@ xbool team_light::OnProperty( prop_query& rPropQuery )
         return TRUE;
     }
     if( rPropQuery.VarFloat     ( "Intensity",  m_Intensity       ) ) return TRUE;
+    if( rPropQuery.VarFloat     ( "Falloff",    m_Falloff, 0.0f, 1.0f ) ) return TRUE;
 
 
     const char* Prefixes[]  = { "FriendAll", "Friend", "Foe", "FoeAll" };

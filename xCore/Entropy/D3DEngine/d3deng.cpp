@@ -392,6 +392,8 @@ void d3deng_ReleaseSwapChain( void )
 static
 void d3deng_ReleaseDevice( void )
 {
+    shader_FlushCache();
+
     if( g_pd3dContext != NULL )
     {
         g_pd3dContext->Release();
@@ -459,6 +461,7 @@ xbool d3deng_CreateD3DDevice( void )
     }
 
     x_DebugMsg( "Engine: D3D11 device created successfully\n" );
+    shader_FlushCache();
     return TRUE;
 }
 
@@ -1089,6 +1092,8 @@ void eng_ResetAfterException( void )
 {
     // Clear the in scene flag	
     s.inRenderPass = FALSE;
+    shader_FlushCache();
+    state_FlushCache();
     smem_ResetAfterException();
 }
 

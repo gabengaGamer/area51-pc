@@ -29,9 +29,7 @@
 #include "Objects\GrenadeProjectile.hpp"
 #include "Objects\GravChargeProjectile.hpp"
 #include "Objects\JumpingBeanProjectile.hpp"
-#include "render\LightMgr.hpp"
 #include "Objects\Door.hpp"
-#include "objects\Projector.hpp"
 #include "objects\WeaponMutation.hpp"
 #include "StateMgr\StateMgr.hpp"
 #include "NetworkMgr\GameMgr.hpp"
@@ -2248,8 +2246,6 @@ void player::OnMoveWeapon( void )
         // update zones
         pWeapon->SetZone1( GetZone1() );
 
-        // move the flashlight if it's active
-        MoveFlashlight();        
     }
 }
 
@@ -2264,8 +2260,6 @@ void player::OnTransformWeapon( const matrix4& L2W )
         // Update 3rd person weapon also so split screen works
         actor::MoveWeapon( FALSE );
 
-        // move the flashlight if it's active
-        MoveFlashlight();        
     }
 }
 
@@ -2559,20 +2553,6 @@ void player::CreateAllWeaponObjects( void )
         }
     }
 
-    //----------------------------------------------------------
-    // HACK: mreed since the flashlight doesn't save/restore,
-    // we're killing it and setting our flashlight guid to
-    // null. Then we call InitFlashlight, and everything works.
-    //----------------------------------------------------------
-    if ( m_FlashlightGuid )
-    {
-        if ( g_ObjMgr.GetObjectByGuid( m_FlashlightGuid ) )
-        {
-            g_ObjMgr.DestroyObject( m_FlashlightGuid );
-        }
-        m_FlashlightGuid = 0;
-    }
-    InitFlashlight( GetPosition() );
 }
 
 //------------------------------------------------------------------------------
@@ -2678,10 +2658,6 @@ void player::DebugEnableWeapons( const char* pLevelName )
     {
         m_bSecondaryMutationFireEnabled = TRUE;
     }
-
-    // initialize flashlight
-    vector3 rInitPos = m_AnimPlayer.GetPosition();
-    InitFlashlight(rInitPos);
 
     // Load tweaks
     LoadAimAssistTweakHandles();

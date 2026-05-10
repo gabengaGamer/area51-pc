@@ -65,6 +65,26 @@ struct shader_blob
     u32     Size;
 };
 
+//------------------------------------------------------------------------------
+
+struct shader_pass
+{
+    ID3D11InputLayout*          pInputLayout;
+    ID3D11VertexShader*         pVertexShader;
+    ID3D11PixelShader*          pPixelShader;
+    ID3D11GeometryShader*       pGeometryShader;
+    D3D11_PRIMITIVE_TOPOLOGY    Topology;
+
+    inline shader_pass( void ) :
+        pInputLayout( NULL ),
+        pVertexShader( NULL ),
+        pPixelShader( NULL ),
+        pGeometryShader( NULL ),
+        Topology( D3D11_PRIMITIVE_TOPOLOGY_UNDEFINED )
+    {
+    }
+};
+
 //==============================================================================
 //  SYSTEM FUNCTIONS
 //==============================================================================
@@ -72,6 +92,20 @@ struct shader_blob
 // Initialize shader system. Useless ? Probably...
 void                shader_Init                     ( void );
 void                shader_Kill                     ( void );
+
+//==============================================================================
+//  RUNTIME BINDING FUNCTIONS
+//==============================================================================
+
+// Centralized runtime binding helpers.
+void                shader_FlushCache               ( void );
+xbool               shader_SetInputLayout           ( ID3D11InputLayout* pLayout );
+xbool               shader_SetVertexShader          ( ID3D11VertexShader* pShader );
+xbool               shader_SetPixelShader           ( ID3D11PixelShader* pShader );
+xbool               shader_SetGeometryShader        ( ID3D11GeometryShader* pShader );
+xbool               shader_SetComputeShader         ( ID3D11ComputeShader* pShader );
+xbool               shader_SetTopology              ( D3D11_PRIMITIVE_TOPOLOGY Topology );
+xbool               shader_ApplyPass                ( const shader_pass& Pass );
 
 //==============================================================================
 //  FILE I/O FUNCTIONS

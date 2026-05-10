@@ -1,3 +1,13 @@
+//=============================================================================
+//  
+//  Texture.cpp  
+//
+//=============================================================================
+
+//=========================================================================
+//  INCLUDES
+//=========================================================================
+
 #include "Texture.hpp"
 #include "x_array.hpp"
 #include "e_VRAM.hpp"
@@ -13,7 +23,7 @@ static s32 s_nTexture   = 0;
 static s32 s_TextureMem = 0;
 
 //=============================================================================
-//    TYPES
+//  TYPES
 //=============================================================================
 
 static struct texture_loader : public rsc_loader
@@ -136,11 +146,6 @@ static struct cubemap_loader : public rsc_loader
 
     #ifdef TARGET_PC
         s32 vramID = vram_Register( pCubemap->m_Bitmap, 6 );
-        if( vramID == 0 )
-        {
-            x_DebugMsg( "cubemap_loader::Resolve: Failed to register cubemap\n" );
-        }
-
         pCubemap->m_hTexture = (void*)vramID;
     #else
         for( s32 i = 0; i < 6; i++ )
@@ -200,5 +205,3 @@ void texture::GetStats( s32* pNumTextureLoaded, s32* pTextureMemorySize )
 cubemap::cubemap( void )
 {
 }
-
-//=============================================================================

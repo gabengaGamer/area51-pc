@@ -12,6 +12,7 @@
 #include "common/frame_constants.hlsl"
 #include "common/lighting_constants.hlsl"
 #include "common/proj_buffers.hlsl"
+#include "common/shadow_buffers.hlsl"
 
 #if defined(GEOM_INCLUDE_OBJECT_BUFFER)
 #include "common/object_constants.hlsl"

@@ -61,6 +61,7 @@ class  render_inst;
 class  pain;
 struct event;
 class  object;
+class  shadow_map_mgr;
 class object_affecter;
 class simple_anim_player;
 
@@ -651,6 +652,7 @@ protected:
 #ifdef TARGET_XBOX
     virtual void                OnRenderCloth           ( void );
 #endif    
+    virtual void                OnCollectLight          ( void );
     virtual void                OnRenderShadowCast      ( u64 ProjMask );
     virtual void                OnRenderShadowReceive   ( u64 ProjMask );
 #ifndef X_RETAIL
@@ -747,6 +749,7 @@ public:
 //------------------------------------------------------------------------------
 
     friend class obj_mgr;
+    friend class shadow_map_mgr;
     friend class collision_mgr;
 };
 
@@ -951,6 +954,13 @@ void object::OnRender( void )
     CONTEXT( "object::OnRender" );
 
     ASSERT( 0 );
+}
+
+//==============================================================================
+
+inline
+void object::OnCollectLight( void )
+{
 }
 
 //==============================================================================

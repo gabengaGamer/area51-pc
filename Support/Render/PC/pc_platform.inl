@@ -8,8 +8,10 @@
 #include "..\platform_Render.hpp"
 #include "..\ProjTextureMgr.hpp"
 #include "..\..\Decals\DecalMgr.hpp"
+#include "..\..\GameLib\RenderContext.hpp"
 #include "VertexMgr.hpp"
 #include "SoftVertexMgr.hpp"
+#include "ShadowMgr.hpp"
 #include "PostMgr/PostMgr.hpp"
 #include "GBufferMgr.hpp"
 #include "Entropy/D3DEngine/d3deng_rtarget.hpp"
@@ -25,21 +27,57 @@ static skin_geom*              s_pSkinGeom        = NULL;
 static const xbitmap*          s_pDrawBitmap      = NULL;
 
 static
+const rtarget* platform_GetFinalColorTarget( void )
+{
+    const rtarget* pFinalColor = g_GBufferMgr.GetGBufferTarget( GBUFFER_FINAL_COLOR );
+    if( pFinalColor )
+        return pFinalColor;
+
+    return rtarget_GetBackBuffer();
+}
+
+//=============================================================================
+
+static
+const rtarget* platform_GetFinalDepthTarget( void )
+{
+    if( g_RenderContext.m_bIsPipRender && g_RenderContext.ArePipTargetsActive() )
+    {
+        pip_render_target_pc* pPipTarget = g_RenderContext.GetActivePipTarget();
+        if( pPipTarget &&
+            pPipTarget->bValid &&
+            pPipTarget->DepthTarget.bIsDepthTarget &&
+            pPipTarget->DepthTarget.pDepthStencilView )
+        {
+            return &pPipTarget->DepthTarget;
+        }
+    }
+
+    return g_GBufferMgr.GetGBufferTarget( GBUFFER_DEPTH );
+}
+
+static
 xbool platform_ApplyGDepthTarget( void )
 {
     if( !g_GBufferMgr.IsGBufferEnabled() )
         return TRUE;
 
-    const rtarget* pGBufferDepth = g_GBufferMgr.GetGBufferTarget( GBUFFER_DEPTH );
-    const rtarget* pBackBuffer   = rtarget_GetBackBuffer();
+    const rtarget* pGBufferDepth = platform_GetFinalDepthTarget();
+    const rtarget* pFinalColor   = platform_GetFinalColorTarget();
 
-    if( pGBufferDepth && pBackBuffer )
+    if( pGBufferDepth && pFinalColor )
     {
-        return rtarget_SetTargets( pBackBuffer, 1, pGBufferDepth );
+        return rtarget_SetTargets( pFinalColor, 1, pGBufferDepth );
     }
 
     return FALSE;
 }
+
+//=============================================================================
+// Distortion implementation
+//=============================================================================
+
+#include "pc_platform_distortion.inl"
 
 //=============================================================================
 // Implementation
@@ -48,8 +86,10 @@ xbool platform_ApplyGDepthTarget( void )
 static
 void platform_Init( void )
 {
+    platform_InitDefaultDistortionMaterial();
     g_GBufferMgr.Init();
-    g_MaterialMgr.Init();
+    g_GeomMgr.Init();
+    g_ShadowMgr.Init();
     g_PostMgr.Init(); 
     g_RigidVertMgr.Init( sizeof( rigid_geom::vertex_pc ) );
     g_SkinVertMgr.Init();
@@ -61,10 +101,12 @@ void platform_Init( void )
 static
 void platform_Kill( void )
 {
+    platform_ReleaseDistortionScene();
     g_SkinVertMgr.Kill(); 
     g_RigidVertMgr.Kill();
     g_PostMgr.Kill();
-    g_MaterialMgr.Kill();
+    g_ShadowMgr.Kill();
+    g_GeomMgr.Kill();
     g_GBufferMgr.Kill();  
 }
 
@@ -97,37 +139,51 @@ void platform_ActivateMaterial( const material& Material )
 
     s_pMaterial = &Material;
 
-    // Get diffuse texture
-    texture* pDiffuse = Material.m_DiffuseMap.GetPointer();
-    const xbitmap* pDiffuseMap = pDiffuse ? &pDiffuse->m_Bitmap : NULL;
-    
-    // Get detail texture
-    texture* pDetail = Material.m_DetailMap.GetPointer();
-    const xbitmap* pDetailMap = pDetail ? &pDetail->m_Bitmap : NULL;
-    
-    // Get env texture
-    texture* pEnvironment = Material.m_EnvironmentMap.GetPointer();
-    const xbitmap* pEnvironmentMap = pEnvironment ? &pEnvironment->m_Bitmap : NULL;
-
-    // Set primary textures through MaterialMgr
-    g_MaterialMgr.SetBitmap( pDiffuseMap, TEXTURE_SLOT_DIFFUSE );
-    g_MaterialMgr.SetBitmap( pDetailMap, TEXTURE_SLOT_DETAIL  );
-    
-    if( Material.m_Flags & geom::material::FLAG_ENV_CUBE_MAP )
+    if( ((Material.m_Type == Material_Distortion) ||
+         (Material.m_Type == Material_Distortion_PerPolyEnv)) &&
+        s_bInDistortionPass )
     {
-        if( !s_pCurrCubeMap )
-        {
-            x_DebugMsg( "MaterialMgr: WARNING - ENV cube map requested but no cubemap bound\n" );
-            ASSERT( s_pCurrCubeMap );
-        }
-
-        g_MaterialMgr.SetBitmap( NULL, TEXTURE_SLOT_ENVIRONMENT );
-        g_MaterialMgr.SetEnvironmentCubemap( s_pCurrCubeMap );
+        radian3 ZeroRot;
+        ZeroRot.Zero();
+        g_GeomMgr.SetDistortionState( ZeroRot );
+        platform_ActivateDistortionTextureBindings( &Material );
     }
     else
     {
-        g_MaterialMgr.SetEnvironmentCubemap( NULL );
-        g_MaterialMgr.SetBitmap( pEnvironmentMap, TEXTURE_SLOT_ENVIRONMENT );
+        g_GeomMgr.ClearDistortionState();
+
+        // Get diffuse texture
+        texture* pDiffuse = Material.m_DiffuseMap.GetPointer();
+        const xbitmap* pDiffuseMap = pDiffuse ? &pDiffuse->m_Bitmap : NULL;
+
+        // Get detail texture
+        texture* pDetail = Material.m_DetailMap.GetPointer();
+        const xbitmap* pDetailMap = pDetail ? &pDetail->m_Bitmap : NULL;
+
+        // Get env texture
+        texture* pEnvironment = Material.m_EnvironmentMap.GetPointer();
+        const xbitmap* pEnvironmentMap = pEnvironment ? &pEnvironment->m_Bitmap : NULL;
+
+        // Set primary textures through MaterialMgr
+        g_GeomMgr.SetBitmap( pDiffuseMap, TEXTURE_SLOT_DIFFUSE );
+        g_GeomMgr.SetBitmap( pDetailMap, TEXTURE_SLOT_DETAIL  );
+
+        if( Material.m_Flags & geom::material::FLAG_ENV_CUBE_MAP )
+        {
+            if( !s_pCurrCubeMap )
+            {
+                x_DebugMsg( "MaterialMgr: WARNING - ENV cube map requested but no cubemap bound\n" );
+                ASSERT( s_pCurrCubeMap );
+            }
+
+            g_GeomMgr.SetBitmap( NULL, TEXTURE_SLOT_ENVIRONMENT );
+            g_GeomMgr.SetEnvironmentCubemap( s_pCurrCubeMap );
+        }
+        else
+        {
+            g_GeomMgr.SetEnvironmentCubemap( NULL );
+            g_GeomMgr.SetBitmap( pEnvironmentMap, TEXTURE_SLOT_ENVIRONMENT );
+        }
     }
 
     x_catch_display;
@@ -136,27 +192,65 @@ void platform_ActivateMaterial( const material& Material )
 //=============================================================================
 
 static
-void platform_ActivateDistortionMaterial( const material* pMaterial, const radian3& NormalRot )
+void platform_ActivateZPrimeMaterial( void )
 {
-    // TODO:    
-    if( !pMaterial )
-    {    
-        (void)pMaterial;
-        (void)NormalRot;
-    }
-    else
-    {
-        platform_ActivateMaterial( *pMaterial );    
-    }
-    
+    s_pMaterial = NULL;
+    g_GeomMgr.ClearDistortionState();
+    g_GeomMgr.InvalidateCache();
 }
 
 //=============================================================================
 
 static
-void platform_ActivateZPrimeMaterial( void )
+xbool platform_ShouldRenderSceneOnly( const material* pMaterial, u32 RenderFlags, u8 MaterialOverride )
 {
-    // TODO:
+    if( MaterialOverride || s_bInDistortionPass || !pMaterial )
+        return FALSE;
+
+    if( rtarget_GetCurrentCount() <= 1 )
+        return FALSE;
+
+    const u32 FadeMask = (render::FADING_ALPHA | render::INSTFLAG_FADING_ALPHA);
+    if( RenderFlags & FadeMask )
+        return TRUE;
+
+    switch( pMaterial->m_Type )
+    {
+        case Material_Alpha:
+        case Material_Alpha_PerPixelIllum:
+        case Material_Alpha_PerPolyIllum:
+        case Material_Alpha_PerPolyEnv:
+            return TRUE;
+
+        default:
+            return FALSE;
+    }
+}
+
+//=============================================================================
+
+static
+xbool platform_BindSceneOnlyTargets( const material* pMaterial, u32 RenderFlags, u8 MaterialOverride )
+{
+    if( !platform_ShouldRenderSceneOnly( pMaterial, RenderFlags, MaterialOverride ) )
+        return FALSE;
+
+    const rtarget* pFinalColor = platform_GetFinalColorTarget();
+    const rtarget* pDepthTarget = platform_GetFinalDepthTarget();
+    if( !pFinalColor || !pDepthTarget )
+        return FALSE;
+
+    // Transparent/fading geometry should not populate auxiliary GBuffer targets.
+    return rtarget_SetTargets( pFinalColor, 1, pDepthTarget );
+}
+
+//=============================================================================
+
+static
+void platform_RestoreGBufferTargets( xbool bSceneOnlyBound )
+{
+    if( bSceneOnlyBound )
+        g_GBufferMgr.SetGBufferTargets();
 }
 
 //=============================================================================
@@ -168,7 +262,7 @@ void platform_BeginRigidGeom( geom* pGeom, s32 iSubMesh )
     ASSERT( s_pRigidGeom == NULL );
     s_pRigidGeom = (rigid_geom*)pGeom;
     g_RigidVertMgr.BeginRender();
-    g_MaterialMgr.InvalidateCache();
+    g_GeomMgr.InvalidateCache();
 }
 
 //=============================================================================
@@ -189,7 +283,7 @@ void platform_BeginSkinGeom( geom* pGeom, s32 iSubMesh )
     ASSERT( s_pSkinGeom == NULL );
     s_pSkinGeom = (skin_geom*)pGeom;
     g_SkinVertMgr.BeginRender();
-    g_MaterialMgr.InvalidateCache();
+    g_GeomMgr.InvalidateCache();
 }
 
 //=============================================================================
@@ -209,7 +303,10 @@ void platform_RenderRigidInstance( render_instance& Inst )
     if( !g_pd3dDevice )
         return;
 
-    g_MaterialMgr.SetRigidMaterial(  Inst.Data.Rigid.pL2W,
+    const u8 MaterialOverride = s_bInDistortionPass ? FALSE : Inst.OverrideMat;
+    const xbool bSceneOnlyBound = platform_BindSceneOnlyTargets( s_pMaterial, Inst.Flags, MaterialOverride );
+
+    g_GeomMgr.SetRigidMaterial(  Inst.Data.Rigid.pL2W,
                                     &Inst.Data.Rigid.pGeom->m_BBox,
                                     (d3d_lighting*)Inst.pLighting,
                                     s_pMaterial,
@@ -217,7 +314,7 @@ void platform_RenderRigidInstance( render_instance& Inst )
                                     Inst.UOffset,
                                     Inst.VOffset,
                                     Inst.Alpha,
-                                    Inst.OverrideMat );
+                                    MaterialOverride );
 
     // TODO: GS: At the moment we use a lightmap every call to platform_RenderRigidInstance. 
     // In theory, this is not the best solution, should definitely come up with something else
@@ -241,7 +338,8 @@ void platform_RenderRigidInstance( render_instance& Inst )
     }
 
     g_RigidVertMgr.DrawDList( Inst.hDList, Inst.Data.Rigid.pL2W, NULL );
-    g_MaterialMgr.ResetProjTextures();    
+    g_GeomMgr.ResetProjTextures();
+    platform_RestoreGBufferTargets( bSceneOnlyBound );
 }
 
 //=============================================================================
@@ -252,7 +350,10 @@ void platform_RenderSkinInstance( render_instance& Inst )
     if( !g_pd3dDevice )
         return;
 
-    g_MaterialMgr.SetSkinMaterial( &Inst.Data.Skin.pBones[0],
+    const u8 MaterialOverride = s_bInDistortionPass ? FALSE : Inst.OverrideMat;
+    const xbool bSceneOnlyBound = platform_BindSceneOnlyTargets( s_pMaterial, Inst.Flags, MaterialOverride );
+
+    g_GeomMgr.SetSkinMaterial( &Inst.Data.Skin.pBones[0],
                                    &Inst.Data.Skin.pGeom->m_BBox,
                                    (d3d_lighting*)Inst.pLighting,
                                    s_pMaterial,
@@ -260,10 +361,11 @@ void platform_RenderSkinInstance( render_instance& Inst )
                                    Inst.UOffset,
                                    Inst.VOffset,
                                    Inst.Alpha,
-                                   Inst.OverrideMat );
+                                   MaterialOverride );
 
     g_SkinVertMgr.DrawDList( Inst.hDList, Inst.Data.Skin.pBones, (d3d_lighting*)Inst.pLighting );
-    g_MaterialMgr.ResetProjTextures();
+    g_GeomMgr.ResetProjTextures();
+    platform_RestoreGBufferTargets( bSceneOnlyBound );
 }
 
 //=============================================================================
@@ -367,7 +469,7 @@ void platform_UnregisterSkinGeom( skin_geom& Geom )
 //
 // VERY IMPORTANT NOTE: README README README README!!!!! 
 //
-// NOTE: platform_SetDiffuseMaterial, platform_SetGlowMaterial, platform_SetEnvMapMaterial, platform_SetDistortionMaterial
+// NOTE: platform_SetDiffuseMaterial, platform_SetGlowMaterial, platform_SetEnvMapMaterial
 // Sets ONLY materials for primitives like sprites and decals! This code NOT for models. 
 //
 // TODO: This shit needs to change its functions name a long time ago because it's so fucking confusing.
@@ -426,16 +528,6 @@ static
 void platform_SetEnvMapMaterial( const xbitmap& Bitmap, s32 BlendMode, xbool ZTestEnabled )
 {
     platform_SetDiffuseMaterial( Bitmap, BlendMode, ZTestEnabled );
-}
-
-//=============================================================================
-
-static
-void platform_SetDistortionMaterial( s32 BlendMode, xbool ZTestEnabled )
-{
-    ASSERTS( FALSE, "Not implemented yet!" );
-    (void)BlendMode;
-    (void)ZTestEnabled;
 }
 
 //=============================================================================
@@ -781,6 +873,7 @@ void* platform_CalculateRigidLighting( const matrix4&   L2W,
     {
         // Try allocate
         d3d_lighting* pLighting = (d3d_lighting*)smem_BufferAlloc( sizeof(d3d_lighting) );
+        x_memset( pLighting, 0, sizeof(d3d_lighting) );
         pLighting->LightCount = NLights;
       
         for( s32 i = 0; i < NLights; i++ )
@@ -788,8 +881,21 @@ void* platform_CalculateRigidLighting( const matrix4&   L2W,
             vector3 Pos;
             f32     Radius;
             xcolor  Col;
+            f32     Falloff;
+            s32     Shape;
+            vector3 Direction;
+            f32     InnerAngle;
+            f32     OuterAngle;
             
-            g_LightMgr.GetCollectedLight( i, Pos, Radius, Col );
+            g_LightMgr.GetCollectedLightInfo( i,
+                                             Pos,
+                                             Radius,
+                                             Col,
+                                             Falloff,
+                                             Shape,
+                                             Direction,
+                                             InnerAngle,
+                                             OuterAngle );
             
             // Setup rigid lights
             pLighting->LightVec[i].Set( Pos.GetX(),
@@ -800,7 +906,17 @@ void* platform_CalculateRigidLighting( const matrix4&   L2W,
             pLighting->LightCol[i].Set( (f32)Col.R / 255.0f,
                                         (f32)Col.G / 255.0f,
                                         (f32)Col.B / 255.0f,
-                                        1.0f );
+                                        Falloff );
+
+            pLighting->LightDir[i].Set( Direction.GetX(),
+                                        Direction.GetY(),
+                                        Direction.GetZ(),
+                                        (Shape == light_mgr::LIGHT_SHAPE_SPOT) ? 1.0f : 0.0f );
+
+            pLighting->LightCone[i].Set( x_cos( DEG_TO_RAD( InnerAngle ) * 0.5f ),
+                                         x_cos( DEG_TO_RAD( OuterAngle ) * 0.5f ),
+                                         0.0f,
+                                         0.0f );
         }
         
         pResult = pLighting;
@@ -828,6 +944,7 @@ void* platform_CalculateSkinLighting( u32            Flags,
     
     // Try allocate
     d3d_lighting* pLighting = (d3d_lighting*)smem_BufferAlloc( sizeof(d3d_lighting) );
+    x_memset( pLighting, 0, sizeof(d3d_lighting) );
     
     // Setup ambient
     pLighting->AmbCol.Set( (f32)Ambient.R / 255.0f,
@@ -998,7 +1115,7 @@ void platform_SetShadowProjectionMatrix( s32 Index, const matrix4& Matrix )
 static
 void platform_SetCustomFogPalette( const texture::handle& Texture, xbool ImmediateSwitch, s32 PaletteIndex )
 {
-    //g_PostMgr.SetCustomFogPalette( Texture, ImmediateSwitch, PaletteIndex );
+    g_PostMgr.SetCustomFogPalette( Texture, ImmediateSwitch, PaletteIndex );
 }
 
 //=============================================================================
@@ -1022,9 +1139,7 @@ void platform_BeginPostEffects( void )
 static
 void platform_AddScreenWarp( const vector3& WorldPos, f32 Radius, f32 WarpAmount )
 {
-    (void)WorldPos;
-    (void)Radius;
-    (void)WarpAmount;
+    g_PostMgr.AddScreenWarp( WorldPos, Radius, WarpAmount );
 }
 
 //=============================================================================
@@ -1129,7 +1244,7 @@ void platform_EndPostEffects( void )
 static
 void platform_BeginShadowShaders( void )
 {
-    // TODO:
+    g_ShadowMgr.BeginShadowShaders();
 }
 
 //=============================================================================
@@ -1137,7 +1252,7 @@ void platform_BeginShadowShaders( void )
 static
 void platform_EndShadowShaders( void )
 {
-    // TODO:
+    g_ShadowMgr.EndShadowShaders();
 }
 
 //=============================================================================
@@ -1145,7 +1260,7 @@ void platform_EndShadowShaders( void )
 static
 void platform_StartShadowCast( void )
 {
-    // TODO:
+    g_ShadowMgr.BeginCastPass();
 }
 
 //=============================================================================
@@ -1153,7 +1268,7 @@ void platform_StartShadowCast( void )
 static
 void platform_EndShadowCast( void )
 {
-    // TODO:
+    g_ShadowMgr.EndCastPass();
 }
 
 //=============================================================================
@@ -1161,7 +1276,6 @@ void platform_EndShadowCast( void )
 static
 void platform_StartShadowReceive( void )
 {
-    // TODO:
 }
 
 //=============================================================================
@@ -1169,40 +1283,44 @@ void platform_StartShadowReceive( void )
 static
 void platform_EndShadowReceive( void )
 {
-    // TODO:
 }
 
 //=============================================================================
 
 static
-void platform_ClearShadowProjectorList( void )
+void platform_ClearShadowSourceList( void )
 {
-    // TODO:
+    g_ShadowMapMgr.ClearSources();
 }
 
 //=============================================================================
 
 static
-void platform_AddPointShadowProjection( const matrix4& L2W, radian FOV, f32 NearZ, f32 FarZ )
+void platform_FinalizeShadowSourceList( void )
 {
-    (void)L2W;
-    (void)FOV;
-    (void)NearZ;
-    (void)FarZ;
-    // TODO:
+    g_ShadowMapMgr.FinalizeSources();
 }
 
 //=============================================================================
 
 static
-void platform_AddDirShadowProjection( const matrix4& L2W, f32 Width, f32 Height, f32 NearZ, f32 FarZ )
+void platform_AddPointShadowMapSource( const matrix4& L2W,
+                                       radian         FOV,
+                                       f32            LightRadius,
+                                       f32            LightFalloff )
 {
-    (void)L2W;
-    (void)Width;
-    (void)Height;
-    (void)NearZ;
-    (void)FarZ;
-    // TODO:
+    g_ShadowMapMgr.AddPointSource( L2W, FOV, LightRadius, LightFalloff );
+}
+
+//=============================================================================
+
+static
+void platform_AddSpotShadowMapSource( const matrix4& L2W,
+                                      radian         FOV,
+                                      f32            LightRadius,
+                                      f32            LightFalloff )
+{
+    g_ShadowMapMgr.AddSpotSource( L2W, FOV, LightRadius, LightFalloff );
 }
 
 //=============================================================================
@@ -1239,17 +1357,14 @@ void platform_BeginShadowCastSkin( geom* pGeom, s32 iSubMesh )
 {
     (void)pGeom;
     (void)iSubMesh;
-    // TODO:
 }
 
 //=============================================================================
 
 static
-void platform_RenderShadowCastSkin( render_instance& Inst, s32 iProj )
+void platform_RenderShadowCastSkin( render_instance& Inst, s32 iShadowSource )
 {
-    (void)Inst;
-    (void)iProj;
-    // TODO:
+    g_ShadowMgr.RenderSkinCaster( Inst.hDList, Inst.Data.Skin.pBones, iShadowSource );
 }
 
 //=============================================================================
@@ -1257,7 +1372,6 @@ void platform_RenderShadowCastSkin( render_instance& Inst, s32 iProj )
 static
 void platform_EndShadowCastSkin( void )
 {
-    // TODO:
 }
 
 //=============================================================================
@@ -1267,17 +1381,15 @@ void platform_BeginShadowReceiveRigid( geom* pGeom, s32 iSubMesh )
 {
     (void)pGeom;
     (void)iSubMesh;
-    // TODO:
 }
 
 //=============================================================================
 
 static
-void platform_RenderShadowReceiveRigid( render_instance& Inst, s32 iProj )
+void platform_RenderShadowReceiveRigid( render_instance& Inst, s32 iShadowSource )
 {
     (void)Inst;
-    (void)iProj;
-    // TODO:
+    (void)iShadowSource;
 }
 
 //=============================================================================
@@ -1285,7 +1397,6 @@ void platform_RenderShadowReceiveRigid( render_instance& Inst, s32 iProj )
 static
 void platform_EndShadowReceiveRigid( void )
 {
-    // TODO:
 }
 
 //=============================================================================
@@ -1295,7 +1406,6 @@ void platform_BeginShadowReceiveSkin( geom* pGeom, s32 iSubMesh )
 {
     (void)pGeom;
     (void)iSubMesh;
-    // TODO:
 }
 
 //=============================================================================
@@ -1304,29 +1414,12 @@ static
 void platform_RenderShadowReceiveSkin( render_instance& Inst )
 {
     (void)Inst;
-    // TODO:
 }
 
 //=============================================================================
 
 static
 void platform_EndShadowReceiveSkin( void )
-{
-    // TODO:
-}
-
-//=============================================================================
-
-static
-void platform_BeginDistortion( void )
-{
-    // TODO:
-}
-
-//=============================================================================
-
-static
-void platform_EndDistortion( void )
 {
 }
 
@@ -1360,7 +1453,7 @@ void platform_BeginNormalRender( void )
 static
 void platform_EndNormalRender( void )
 {
-    g_GBufferMgr.SetBackBufferTarget();
+    g_GBufferMgr.SetFinalColorTarget();
 }
 
 //=============================================================================

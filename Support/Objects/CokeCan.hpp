@@ -68,6 +68,7 @@ public:
             bbox        GetGeomBBox             ( void ) const;
     virtual s32         GetMaterial				( void ) const { return MAT_TYPE_SOLID_METAL; }
     virtual void        OnRender                ( void );
+    virtual void        OnRenderShadowCast      ( u64 ProjMask );
     virtual const char* GetLogicalName          ( void )   { return "COKE_CAN"; }
 
 #ifndef X_RETAIL

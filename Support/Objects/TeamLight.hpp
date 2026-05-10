@@ -40,6 +40,7 @@ public:
 protected:   
     //=========================================================================
 
+    virtual void                OnCollectLight  ( void );
     virtual void                OnRender		( void );                                  
     virtual void                OnAdvanceLogic	( f32     DelaTime );           
     virtual void                OnInit          ( void );                       
@@ -78,6 +79,7 @@ protected:
 
     f32         m_Radius;
     f32         m_Intensity;
+    f32         m_Falloff;
 
     u32         m_OldState;
     u32         m_NewState;

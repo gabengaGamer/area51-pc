@@ -13,6 +13,10 @@
 
 #include "GameLib/RenderContext.hpp"
 
+#if defined(TARGET_PC)
+#include "Render\PC\GBufferMgr.hpp"
+#endif
+
 #if defined(TARGET_PS2)
 #include "Entropy\PS2\ps2_misc.hpp"
 #endif
@@ -401,6 +405,7 @@ void camera::RenderViewBegin( const irect& Viewport, s32 VramID )
 #elif defined(TARGET_PC)
 
     g_RenderContext.MarkPipTargetsActive( FALSE );
+    g_GBufferMgr.SetTargetOverride( NULL, NULL );
 
     if( g_RenderContext.m_bIsPipRender )
     {
@@ -412,6 +417,11 @@ void camera::RenderViewBegin( const irect& Viewport, s32 VramID )
                 if( rtarget_SetTargets( &pTarget->ColorTarget, 1, &pTarget->DepthTarget ) )
                 {
                     g_RenderContext.MarkPipTargetsActive( TRUE );
+
+                    const rtarget* pPipDepth = ( pTarget->DepthTarget.bIsDepthTarget &&
+                                                 pTarget->DepthTarget.pDepthStencilView )
+                                               ? &pTarget->DepthTarget : NULL;
+                    g_GBufferMgr.SetTargetOverride( &pTarget->ColorTarget, pPipDepth );
 
                     f32 ClearColor[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
                     rtarget_Clear( RTARGET_CLEAR_COLOR | RTARGET_CLEAR_DEPTH, ClearColor, 1.0f, 0 );
@@ -691,6 +701,7 @@ void camera::RenderViewEnd( const irect& Viewport, s32 VramID, s32 TexWidth, s32
     {
         rtarget_PopTargets();
         g_RenderContext.MarkPipTargetsActive( FALSE );
+        g_GBufferMgr.SetTargetOverride( NULL, NULL );
     }
 
 #else

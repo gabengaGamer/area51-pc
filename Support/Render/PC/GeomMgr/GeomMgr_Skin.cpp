@@ -1,8 +1,8 @@
 //==============================================================================
 //
-//  MaterialMgr_Skin.cpp
+//  GeomMgr_Skin.cpp
 //
-//  Skin material handling for the PC material manager
+//  Skin material handling for the PC geom manager
 //
 //==============================================================================
 
@@ -20,15 +20,15 @@
 //  INCLUDES
 //==============================================================================
 
-#include "MaterialMgr.hpp"
+#include "GeomMgr.hpp"
 
 //==============================================================================
 //  FUNCTIONS
 //==============================================================================
 
-xbool material_mgr::InitSkinShaders( void )
+xbool geom_mgr::InitSkinShaders( void )
 {
-    x_DebugMsg( "MaterialMgr: Initializing skin shaders\n" );
+    x_DebugMsg( "GeomMgr: Initializing skin shaders\n" );
 
     // Initialize member variables
     m_pSkinVertexShader   = NULL;
@@ -63,13 +63,13 @@ xbool material_mgr::InitSkinShaders( void )
     m_pSkinBoneBuffer   = shader_CreateConstantBuffer( sizeof(cb_skin_bone) * MAX_SKIN_BONES, CB_TYPE_DYNAMIC );
     m_pSkinLightBuffer  = shader_CreateConstantBuffer( sizeof(cb_lighting), CB_TYPE_DYNAMIC );
 
-    x_DebugMsg( "MaterialMgr: Skin shaders initialized successfully\n" );
+    x_DebugMsg( "GeomMgr: Skin shaders initialized successfully\n" );
     return TRUE;
 }
 
 //==============================================================================
 
-void material_mgr::KillSkinShaders( void )
+void geom_mgr::KillSkinShaders( void )
 {
     if( m_pSkinVertexShader )
     {
@@ -107,12 +107,12 @@ void material_mgr::KillSkinShaders( void )
         m_pSkinLightBuffer = NULL;
     }
 
-    x_DebugMsg( "MaterialMgr: Skin shaders released\n" );
+    x_DebugMsg( "GeomMgr: Skin shaders released\n" );
 }
 
 //==============================================================================
 
-void material_mgr::SetSkinMaterial( const matrix4*      pL2W,
+void geom_mgr::SetSkinMaterial( const matrix4*      pL2W,
                                     const bbox*         pBBox,
                                     const d3d_lighting* pLighting,
                                     const material*     pMaterial,
@@ -122,21 +122,32 @@ void material_mgr::SetSkinMaterial( const matrix4*      pL2W,
                                     u8                  Alpha,
                                     u8                  OverrideMat )
 {
+    ResetShadowMaps();
+
     if( !g_pd3dDevice || !g_pd3dContext )
         return;
 
-    g_pd3dContext->IASetInputLayout( m_pSkinInputLayout );
-    g_pd3dContext->VSSetShader( m_pSkinVertexShader, NULL, 0 );
-    g_pd3dContext->PSSetShader( m_pSkinPixelShader, NULL, 0 );
-    g_pd3dContext->IASetPrimitiveTopology( D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST );
+    shader_pass Pass;
+    Pass.pInputLayout    = m_pSkinInputLayout;
+    Pass.pVertexShader   = m_pSkinVertexShader;
+    Pass.pPixelShader    = m_pSkinPixelShader;
+    Pass.pGeometryShader = NULL;
+    Pass.Topology        = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+    shader_ApplyPass( Pass );
 
     if( !UpdateSkinConstants( pLighting, pMaterial, RenderFlags, UOffset, VOffset, Alpha, OverrideMat ) )
     {
-        x_DebugMsg( "MaterialMgr: Failed to update skin constants\n" );
+        x_DebugMsg( "GeomMgr: Failed to update skin constants\n" );
         return;
     }
     
-    ApplyRenderStates( pMaterial, RenderFlags );
+    ApplyRenderStates( pMaterial, RenderFlags, OverrideMat );
+
+    if( OverrideMat )
+    {
+        ResetProjTextures();
+        return;
+    }
 
     if( pL2W && pBBox )
     {
@@ -156,89 +167,62 @@ void material_mgr::SetSkinMaterial( const matrix4*      pL2W,
 
 //==============================================================================
 
-//-------------------------------------------------------------------------------------------------------------------
-// TODO: GS: There's a lot of code here in common with UpdateRigidConstants. 
-// It's worth separating a couple of functions for this and simply calling them from there to avoid code duplication.
-//-------------------------------------------------------------------------------------------------------------------
-
-xbool material_mgr::UpdateSkinConstants( const d3d_lighting* pLighting,
-                                         const material*     pMaterial,
-                                         u32                 RenderFlags,
-                                         u8                  UOffset,
-                                         u8                  VOffset,
-                                         u8                  Alpha,
-                                         u8                  OverrideMat )
+xbool geom_mgr::UpdateSkinConstants( const d3d_lighting* pLighting,
+                                     const material*     pMaterial,
+                                     u32                 RenderFlags,
+                                     u8                  UOffset,
+                                     u8                  VOffset,
+                                     u8                  Alpha,
+                                     u8                  OverrideMat )
 {
-	(void)Alpha;
-    (void)OverrideMat;
-	
-    if( !m_pSkinFrameBuffer || !m_pSkinBoneBuffer|| !m_pSkinLightBuffer  )
+    if( !m_pSkinFrameBuffer || !m_pSkinBoneBuffer || !m_pSkinLightBuffer )
+    {
+        x_DebugMsg( "GeomMgr: UpdateSkinConstants missing buffers (frame=%d bones=%d light=%d)\n",
+                    m_pSkinFrameBuffer ? 1 : 0,
+                    m_pSkinBoneBuffer  ? 1 : 0,
+                    m_pSkinLightBuffer ? 1 : 0 );
         return FALSE;
-    
+    }
+
     if( !g_pd3dDevice || !g_pd3dContext )
-        return FALSE;    
+    {
+        x_DebugMsg( "GeomMgr: UpdateSkinConstants missing D3D state (device=%d context=%d)\n",
+                    g_pd3dDevice  ? 1 : 0,
+                    g_pd3dContext ? 1 : 0 );
+        return FALSE;
+    }
 
     const view* pView = eng_GetView();
     if( !pView )
+    {
+        x_DebugMsg( "GeomMgr: UpdateSkinConstants called without an active view\n" );
         return FALSE;
+    }
 
-    f32 nearZ = 0.0f;
-    f32 farZ  = 0.0f;
-    pView->GetZLimits( nearZ, farZ );
-
-    cb_geom_frame skinFrame;
-    x_memset( &skinFrame, 0, sizeof(cb_geom_frame) );
-    skinFrame.View        = pView->GetW2V();
-    skinFrame.Projection  = pView->GetV2C();
-
-    const f32 invByte = 1.0f / 255.0f;
-
-    f32 detailScale = pMaterial ? pMaterial->m_DetailScale : 1.0f;
-    if( detailScale <= 0.0f )
-        detailScale = 1.0f;
-
-    skinFrame.UVAnim.Set( (f32)UOffset * invByte,
-                          (f32)VOffset * invByte,
-                          detailScale,
-                          0.0f );
-
-    material_constants constants = BuildMaterialFlags( pMaterial, RenderFlags, FALSE );
-    constants.Flags |= BuildInstanceFlags( RenderFlags );	
-	
-    skinFrame.MaterialParams.Set( (f32)constants.Flags,
-                                  constants.AlphaRef,
-                                  nearZ,
-                                  farZ );
-    const vector3& camPos = pView->GetPosition();
-    skinFrame.CameraPosition.Set( camPos.GetX(),
-                                  camPos.GetY(),
-                                  camPos.GetZ(),
-                                  1.0f );
-    f32 fixedAlpha = pMaterial ? pMaterial->m_FixedAlpha : 0.0f;
-    const f32 cubeIntensity = ComputeCubeMapIntensity( pMaterial );
-    skinFrame.EnvParams.Set( fixedAlpha, cubeIntensity, 0.0f, 0.0f );
-
-    const cb_lighting lightMatrices = BuildLightingConstants( pLighting );
+    const cb_geom_frame frameData = BuildFrameConstants( *pView,
+                                                         pMaterial,
+                                                         RenderFlags,
+                                                         UOffset,
+                                                         VOffset,
+                                                         Alpha,
+                                                         FALSE,
+                                                         OverrideMat );
+    const cb_lighting lightData = BuildLightingConstants( pLighting );
 
     const xbool bFrameChanged = ( m_bSkinFrameDirty ||
                                   x_memcmp( &m_CachedSkinFrame,
-                                            &skinFrame,
+                                            &frameData,
                                             sizeof(cb_geom_frame) ) != 0 );
 
     if( bFrameChanged )
     {
-        D3D11_MAPPED_SUBRESOURCE mappedResource;
-        HRESULT hr = g_pd3dContext->Map( m_pSkinFrameBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource );
-        if( FAILED(hr) )
-        {
-            x_DebugMsg( "MaterialMgr: Failed to map skin frame buffer, HRESULT 0x%08X\n", hr );
+        if( !UploadConstantBuffer( m_pSkinFrameBuffer,
+                                   &frameData,
+                                   sizeof(cb_geom_frame),
+                                   "skin frame" ) )
             return FALSE;
-        }
 
-        x_memcpy( mappedResource.pData, &skinFrame, sizeof(cb_geom_frame) );
-        g_pd3dContext->Unmap( m_pSkinFrameBuffer, 0 );
-
-        m_CachedSkinFrame = skinFrame;
+        m_CachedSkinFrame = frameData;
         m_bSkinFrameDirty = FALSE;
     }
 
@@ -248,23 +232,18 @@ xbool material_mgr::UpdateSkinConstants( const d3d_lighting* pLighting,
 
     const xbool bLightingChanged = ( m_bSkinLightingDirty ||
                                      x_memcmp( &m_CachedSkinLighting,
-                                               &lightMatrices,
+                                               &lightData,
                                                sizeof(cb_lighting) ) != 0 );
 
     if( bLightingChanged )
     {
-        D3D11_MAPPED_SUBRESOURCE mappedResource;
-        HRESULT hr = g_pd3dContext->Map( m_pSkinLightBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource );
-        if( FAILED(hr) )
-        {
-            x_DebugMsg( "MaterialMgr: Failed to map skin light buffer, HRESULT 0x%08X\n", hr );
+        if( !UploadConstantBuffer( m_pSkinLightBuffer,
+                                   &lightData,
+                                   sizeof(cb_lighting),
+                                   "skin lighting" ) )
             return FALSE;
-        }
 
-        x_memcpy( mappedResource.pData, &lightMatrices, sizeof(cb_lighting) );
-        g_pd3dContext->Unmap( m_pSkinLightBuffer, 0 );
-
-        m_CachedSkinLighting = lightMatrices;
+        m_CachedSkinLighting = lightData;
         m_bSkinLightingDirty = FALSE;
     }
 

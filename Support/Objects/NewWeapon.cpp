@@ -33,6 +33,7 @@
 
 #if defined(TARGET_PC)
 #include "Entropy/D3DEngine/d3deng_rtarget.hpp"
+#include "Render\PC\GBufferMgr.hpp"
 #endif
 
 #if !defined(X_EDITOR)
@@ -3562,7 +3563,6 @@ void new_weapon::CreateScopeTexture( void )
     gsreg_End();
 	
 #elif defined(TARGET_PC)
-
     if( (m_ScopeTextureVramId <= 0) || (s_bScopeRenderTargetValid == FALSE) )
         return;
 
@@ -3572,8 +3572,8 @@ void new_weapon::CreateScopeTexture( void )
     if( !s_ScopeRenderTarget.pTexture )
         return;
 
-    const rtarget* pBackBuffer = rtarget_GetBackBuffer();
-    if( !pBackBuffer || !pBackBuffer->pTexture )
+    const rtarget* pSceneTarget = g_GBufferMgr.GetGBufferTarget( GBUFFER_FINAL_COLOR );
+    if( !pSceneTarget || !pSceneTarget->pTexture )
         return;
 
     const view* pActiveView = eng_GetView();
@@ -3606,10 +3606,9 @@ void new_weapon::CreateScopeTexture( void )
                                           0,
                                           0,
                                           0,
-                                          pBackBuffer->pTexture,
+                                          pSceneTarget->pTexture,
                                           0,
                                           &SrcBox );	
-
 #elif defined(TARGET_XBOX)
 
     extern void xbox_FrameCopy( s32 VRAMID );

@@ -16,7 +16,6 @@
 #include "player.hpp"
 #include "Characters\character.hpp"
 #include "TemplateMgr\TemplateMgr.hpp"
-#include "Objects\DeadBody.hpp"
 #include "NetworkMgr\NetworkMgr.hpp"
 #include "Characters\GenericNPC\GenericNPC.hpp"
 #include "Objects\Corpse.hpp"

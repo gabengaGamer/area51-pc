@@ -23,7 +23,7 @@
 
 #include "Entropy.hpp"
 #include "x_array.hpp"
-#include "MaterialMgr/MaterialMgr.hpp"
+#include "GeomMgr/GeomMgr.hpp"
 
 //=========================================================================
 // CLASS

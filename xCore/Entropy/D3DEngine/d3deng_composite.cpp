@@ -123,6 +123,7 @@ static struct composite_locals
     // Shaders
     ID3D11VertexShader*     pVertexShader;
     ID3D11PixelShader*      pPixelShader;
+    shader_pass             Pass;
     
     // Constant buffer
     ID3D11Buffer*           pConstantBuffer;
@@ -151,6 +152,7 @@ static state_blend_mode composite_GetHardwareBlendMode( composite_blend_mode Ble
         case COMPOSITE_BLEND_ADDITIVE:  return STATE_BLEND_ADD;
         case COMPOSITE_BLEND_MULTIPLY:  return STATE_BLEND_MULTIPLY;
         case COMPOSITE_BLEND_OVERLAY:   return STATE_BLEND_PREMULT_ALPHA;
+        case COMPOSITE_BLEND_COPY:      return STATE_BLEND_NONE;
         default:                        return STATE_BLEND_ALPHA;
     }
 }
@@ -257,6 +259,12 @@ void composite_Init( void )
         return;
     }
 
+    s.Pass.pInputLayout    = s.pInputLayout;
+    s.Pass.pVertexShader   = s.pVertexShader;
+    s.Pass.pPixelShader    = s.pPixelShader;
+    s.Pass.pGeometryShader = NULL;
+    s.Pass.Topology        = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+
     s.bInitialized = TRUE;
 
     x_DebugMsg( "CompositeMgr: Initialization complete\n" );
@@ -300,44 +308,65 @@ void composite_Blit( const rtarget& Source,
     if( !g_pd3dContext || !Source.pShaderResourceView )
         return;
 
-    // Set viewport for current render target
-    const view* pView = eng_GetView();
-    if( pView )
+    // Composite passes must target the active RT dimensions. Start from the
+    // active view rect, then scale it if the destination RT is downsampled.
+    const rtarget* pCurrentTarget = rtarget_GetCurrentTarget( 0 );
+    if( pCurrentTarget && pCurrentTarget->Desc.Width && pCurrentTarget->Desc.Height )
     {
-        eng_SetViewport( *pView );
-    }
+        const view* pView = eng_GetView();
+        if( pView )
+        {
+            eng_SetViewport( *pView );
+        }
 
-   // Limit the composite blind viewport for better working with downscaled buffers
-   if( g_pd3dContext )
-   {
-       const rtarget* pCurrentTarget = rtarget_GetCurrentTarget( 0 );
-       if( pCurrentTarget && pCurrentTarget->Desc.Width && pCurrentTarget->Desc.Height )
-       {
-           UINT viewportCount = 1;
-           D3D11_VIEWPORT viewport;
-           g_pd3dContext->RSGetViewports( &viewportCount, &viewport );
-   
-           if( viewportCount > 0 )
-           {
-               f32 maxWidth  = (f32)pCurrentTarget->Desc.Width;
-               f32 maxHeight = (f32)pCurrentTarget->Desc.Height;
-               f32 width     = MIN( viewport.Width,  maxWidth );
-               f32 height    = MIN( viewport.Height, maxHeight );
-               f32 topLeftX  = MAX( viewport.TopLeftX, 0.0f );
-               f32 topLeftY  = MAX( viewport.TopLeftY, 0.0f );
-   
-               if( (width != viewport.Width) || (height != viewport.Height) ||
-                   (topLeftX != viewport.TopLeftX) || (topLeftY != viewport.TopLeftY) )
-               {
-                   viewport.TopLeftX = topLeftX;
-                   viewport.TopLeftY = topLeftY;
-                   viewport.Width    = width;
-                   viewport.Height   = height;
-                   g_pd3dContext->RSSetViewports( 1, &viewport );
-               }
-           }
-       }
-   }
+        UINT viewportCount = 1;
+        D3D11_VIEWPORT viewport;
+        g_pd3dContext->RSGetViewports( &viewportCount, &viewport );
+
+        if( viewportCount == 0 )
+        {
+            viewport.TopLeftX = 0.0f;
+            viewport.TopLeftY = 0.0f;
+            viewport.Width    = (f32)pCurrentTarget->Desc.Width;
+            viewport.Height   = (f32)pCurrentTarget->Desc.Height;
+            viewport.MinDepth = 0.0f;
+            viewport.MaxDepth = 1.0f;
+        }
+
+        const rtarget* pBackBuffer = rtarget_GetBackBuffer();
+        if( pBackBuffer && pBackBuffer->Desc.Width && pBackBuffer->Desc.Height )
+        {
+            const f32 scaleX = (f32)pCurrentTarget->Desc.Width  / (f32)pBackBuffer->Desc.Width;
+            const f32 scaleY = (f32)pCurrentTarget->Desc.Height / (f32)pBackBuffer->Desc.Height;
+
+            viewport.TopLeftX *= scaleX;
+            viewport.TopLeftY *= scaleY;
+            viewport.Width    *= scaleX;
+            viewport.Height   *= scaleY;
+        }
+        else
+        {
+            viewport.TopLeftX = 0.0f;
+            viewport.TopLeftY = 0.0f;
+            viewport.Width    = (f32)pCurrentTarget->Desc.Width;
+            viewport.Height   = (f32)pCurrentTarget->Desc.Height;
+            viewport.MinDepth = 0.0f;
+            viewport.MaxDepth = 1.0f;
+        }
+
+        const f32 maxWidth  = (f32)pCurrentTarget->Desc.Width;
+        const f32 maxHeight = (f32)pCurrentTarget->Desc.Height;
+
+        viewport.TopLeftX = x_clamp( viewport.TopLeftX, 0.0f, MAX( maxWidth  - 1.0f, 0.0f ) );
+        viewport.TopLeftY = x_clamp( viewport.TopLeftY, 0.0f, MAX( maxHeight - 1.0f, 0.0f ) );
+        viewport.Width    = x_clamp( viewport.Width,  0.0f, maxWidth  - viewport.TopLeftX );
+        viewport.Height   = x_clamp( viewport.Height, 0.0f, maxHeight - viewport.TopLeftY );
+
+        if( viewport.Width > 0.0f && viewport.Height > 0.0f )
+        {
+            g_pd3dContext->RSSetViewports( 1, &viewport );
+        }
+    }
 
     // Set up for composite rendering
     state_SetDepth( STATE_DEPTH_DISABLED_NO_WRITE );
@@ -355,14 +384,10 @@ void composite_Blit( const rtarget& Source,
     UINT offset = 0;
     g_pd3dContext->IASetVertexBuffers( 0, 1, &s.pVertexBuffer, &stride, &offset );
     g_pd3dContext->IASetIndexBuffer( s.pIndexBuffer, DXGI_FORMAT_R16_UINT, 0 );
-    g_pd3dContext->IASetInputLayout( s.pInputLayout );
-    g_pd3dContext->IASetPrimitiveTopology( D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST );
 
-    // Set shaders
-    g_pd3dContext->VSSetShader( s.pVertexShader, NULL, 0 );
-    
-    ID3D11PixelShader* pPixelShader = pCustomShader ? pCustomShader : s.pPixelShader;
-    g_pd3dContext->PSSetShader( pPixelShader, NULL, 0 );
+    shader_pass Pass = s.Pass;
+    Pass.pPixelShader = pCustomShader ? pCustomShader : s.pPixelShader;
+    shader_ApplyPass( Pass );
 
     // Update constant buffer with proper blend mode
     cb_composite_params cbData;
@@ -384,6 +409,7 @@ void composite_Blit( const rtarget& Source,
     g_pd3dContext->PSSetShaderResources( 0, 1, &nullSRV );
 
     // Restore states
+    state_SetBlend( STATE_BLEND_NONE );
     state_SetDepth( STATE_DEPTH_NORMAL );
     state_SetRasterizer( STATE_RASTER_SOLID );
 }

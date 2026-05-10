@@ -1,12 +1,12 @@
-//==============================================================================
+//=========================================================================
 //  
 //  LightMgr.cpp  
 //
-//==============================================================================
+//=========================================================================
 
-//==============================================================================
+//=========================================================================
 //  INCLUDES
-//==============================================================================
+//=========================================================================
 
 #include "LightMgr.hpp"
 #include "e_ScratchMem.hpp"
@@ -20,6 +20,69 @@ light_mgr   g_LightMgr;
 //=========================================================================
 // FUNCTIONS
 //=========================================================================
+
+static
+f32 ComputeSpotConeAttenuation( const vector3& LightPos,
+                                const vector3& LightDirection,
+                                f32            InnerAngle,
+                                f32            OuterAngle,
+                                const vector3& TargetPos )
+{
+    vector3 SpotDir = LightDirection;
+    if( !SpotDir.SafeNormalize() )
+        SpotDir.Set( 0.0f, 0.0f, 1.0f );
+
+    vector3 ToTarget = TargetPos - LightPos;
+    if( !ToTarget.SafeNormalize() )
+        return 1.0f;
+
+    const f32 CosInner = x_cos( DEG_TO_RAD( InnerAngle ) * 0.5f );
+    const f32 CosOuter = x_cos( DEG_TO_RAD( OuterAngle ) * 0.5f );
+    const f32 CosRange = MAX( CosInner - CosOuter, 0.0001f );
+    const f32 SpotCos  = SpotDir.Dot( ToTarget );
+
+    return MINMAX( 0.0f, ( SpotCos - CosOuter ) / CosRange, 1.0f );
+}
+
+static
+xbool SpotLightAffectsBBox( const vector3& LightPos,
+                            const vector3& LightDirection,
+                            f32            InnerAngle,
+                            f32            OuterAngle,
+                            const bbox&    WorldBBox )
+{
+    const vector3 Center = WorldBBox.GetCenter();
+    if( ComputeSpotConeAttenuation( LightPos,
+                                    LightDirection,
+                                    InnerAngle,
+                                    OuterAngle,
+                                    Center ) > 0.0f )
+    {
+        return TRUE;
+    }
+
+    const vector3 Min = WorldBBox.Min;
+    const vector3 Max = WorldBBox.Max;
+    vector3 TestPoint;
+
+    for( s32 i = 0; i < 8; i++ )
+    {
+        TestPoint.Set( (i & 1) ? Max.GetX() : Min.GetX(),
+                       (i & 2) ? Max.GetY() : Min.GetY(),
+                       (i & 4) ? Max.GetZ() : Min.GetZ() );
+
+        if( ComputeSpotConeAttenuation( LightPos,
+                                        LightDirection,
+                                        InnerAngle,
+                                        OuterAngle,
+                                        TestPoint ) > 0.0f )
+        {
+            return TRUE;
+        }
+    }
+
+    return FALSE;
+}
 
 light_mgr::light_mgr( void ) :
     m_FirstLink             ( -1 ),
@@ -67,8 +130,32 @@ void light_mgr::AddFadingLight( const vector3& Pos, const xcolor& C, f32 Radius,
 
 //=========================================================================
 
-void light_mgr::AddDynamicLight( const vector3& Pos, const xcolor& C, f32 Radius, f32 Intensity, xbool CharOnly )
+void light_mgr::AddDynamicLight( const vector3& Pos,
+                                 const xcolor& C,
+                                 f32 Radius,
+                                 f32 Intensity,
+                                 xbool CharOnly,
+                                 s32 Shape,
+                                 xbool CastShadows,
+                                 f32 InnerRadius,
+                                 const vector3& Direction,
+                                 f32 Falloff,
+                                 f32 InnerAngle,
+                                 f32 OuterAngle,
+                                 s32 ShadowMapResolution,
+                                 s32 ShadowPriority )
 {
+    vector3 LightDirection = Direction;
+
+    InnerRadius = MAX( 0.0f, MIN( InnerRadius, Radius ) );
+    Falloff     = MINMAX( 0.0f, Falloff, 1.0f );
+    InnerAngle  = MAX( 0.0f, InnerAngle );
+    OuterAngle  = MAX( InnerAngle, OuterAngle );
+    if( !LightDirection.SafeNormalize() )
+    {
+        LightDirection.Set( 0.0f, 0.0f, 1.0f );
+    }
+
     if ( CharOnly )
     {
         if ( m_NCharLights >= MAX_CHAR_LIGHTS )
@@ -76,6 +163,7 @@ void light_mgr::AddDynamicLight( const vector3& Pos, const xcolor& C, f32 Radius
             //ASSERT( FALSE );
             return;
         }
+        x_memset( &m_CharLights[m_NCharLights], 0, sizeof(dynamic_light) );
         m_CharLights[m_NCharLights].Pos       = Pos;
         m_CharLights[m_NCharLights].Radius    = Radius;
         m_CharLights[m_NCharLights].Intensity = Intensity;
@@ -93,6 +181,15 @@ void light_mgr::AddDynamicLight( const vector3& Pos, const xcolor& C, f32 Radius
         m_DynamicLights[m_NDynamicLights].Radius    = Radius;
         m_DynamicLights[m_NDynamicLights].Intensity = Intensity;
         m_DynamicLights[m_NDynamicLights].Color     = C;
+        m_DynamicLights[m_NDynamicLights].Direction  = LightDirection;
+        m_DynamicLights[m_NDynamicLights].InnerRadius = InnerRadius;
+        m_DynamicLights[m_NDynamicLights].Falloff    = Falloff;
+        m_DynamicLights[m_NDynamicLights].InnerAngle = InnerAngle;
+        m_DynamicLights[m_NDynamicLights].OuterAngle = OuterAngle;
+        m_DynamicLights[m_NDynamicLights].Shape      = Shape;
+        m_DynamicLights[m_NDynamicLights].ShadowMapResolution = ShadowMapResolution;
+        m_DynamicLights[m_NDynamicLights].ShadowPriority      = ShadowPriority;
+        m_DynamicLights[m_NDynamicLights].CastShadows = CastShadows;
         m_NDynamicLights++;
     }
 }
@@ -316,10 +413,15 @@ void light_mgr::BeginLightCollection( void )
         m_pSpadLights[nLights].Radius    = Light.Radius;
         m_pSpadLights[nLights].Intensity = Light.Intensity;
         m_pSpadLights[nLights].Color     = Light.Color;
+        m_pSpadLights[nLights].Falloff   = Light.Falloff;
         m_pSpadLights[nLights].Score     = x_sqr(Light.Color.R*Light.Intensity) +
                                            x_sqr(Light.Color.G*Light.Intensity) +
                                            x_sqr(Light.Color.B*Light.Intensity);
         m_pSpadLights[nLights].CharOnly  = FALSE;
+        m_pSpadLights[nLights].Shape     = Light.Shape;
+        m_pSpadLights[nLights].Direction = Light.Direction;
+        m_pSpadLights[nLights].InnerAngle= Light.InnerAngle;
+        m_pSpadLights[nLights].OuterAngle= Light.OuterAngle;
         nLights++;
     }
 
@@ -332,10 +434,15 @@ void light_mgr::BeginLightCollection( void )
         m_pSpadLights[nLights].Radius    = Light.Radius;
         m_pSpadLights[nLights].Intensity = Light.Intensity;
         m_pSpadLights[nLights].Color     = Light.CurrentColor;
+        m_pSpadLights[nLights].Falloff   = 1.0f;
         m_pSpadLights[nLights].Score     = x_sqr(Light.CurrentColor.R*Light.Intensity) +
                                            x_sqr(Light.CurrentColor.G*Light.Intensity) +
                                            x_sqr(Light.CurrentColor.B*Light.Intensity);
         m_pSpadLights[nLights].CharOnly  = FALSE;
+        m_pSpadLights[nLights].Shape     = LIGHT_SHAPE_OMNI;
+        m_pSpadLights[nLights].Direction.Set( 0.0f, 0.0f, 1.0f );
+        m_pSpadLights[nLights].InnerAngle= 0.0f;
+        m_pSpadLights[nLights].OuterAngle= 0.0f;
         nLights++;
         
         CurrLink = Light.NextLink;
@@ -353,10 +460,15 @@ void light_mgr::BeginLightCollection( void )
         m_pSpadLights[nLights].Radius    = Light.Radius;
         m_pSpadLights[nLights].Intensity = Light.Intensity;
         m_pSpadLights[nLights].Color     = Light.Color;
+        m_pSpadLights[nLights].Falloff   = 1.0f;
         m_pSpadLights[nLights].Score     = x_sqr(Light.Color.R*Light.Intensity) +
                                            x_sqr(Light.Color.G*Light.Intensity) +
                                            x_sqr(Light.Color.B*Light.Intensity);
         m_pSpadLights[nLights].CharOnly  = TRUE;
+        m_pSpadLights[nLights].Shape     = LIGHT_SHAPE_OMNI;
+        m_pSpadLights[nLights].Direction.Set( 0.0f, 0.0f, 1.0f );
+        m_pSpadLights[nLights].InnerAngle= 0.0f;
+        m_pSpadLights[nLights].OuterAngle= 0.0f;
         nLights++;
     }
 
@@ -407,6 +519,14 @@ s32 light_mgr::CollectLights( const bbox& WorldBBox, s32 MaxLightCount )
         xbool bIntersects;
         
         bIntersects = WorldBBox.Intersect(m_pSpadLights[i].Pos, m_pSpadLights[i].Radius);
+        if( bIntersects && (m_pSpadLights[i].Shape == LIGHT_SHAPE_SPOT) )
+        {
+            bIntersects = SpotLightAffectsBBox( m_pSpadLights[i].Pos,
+                                                m_pSpadLights[i].Direction,
+                                                m_pSpadLights[i].InnerAngle,
+                                                m_pSpadLights[i].OuterAngle,
+                                                WorldBBox );
+        }
         
         if ( bIntersects )
             m_CollectedLights[m_NCollectedLights++] = i;
@@ -434,13 +554,69 @@ void light_mgr::GetCollectedLight( s32 Index, vector3& Pos, f32& Radius, xcolor&
 
 //=========================================================================
 
+void light_mgr::GetCollectedLightInfo( s32 Index,
+                                       vector3& Pos,
+                                       f32& Radius,
+                                       xcolor& C,
+                                       f32& Falloff )
+{
+    ASSERT( Index < m_NCollectedLights );
+    ASSERT( m_bInCollection );
+    ASSERT( m_pSpadLights );
+
+    spad_light& Light = m_pSpadLights[m_CollectedLights[Index]];
+    Pos     = Light.Pos;
+    Radius  = Light.Radius;
+    Falloff = Light.Falloff;
+    C.R     = (u8)MIN(255.0f,Light.Color.R*Light.Intensity);
+    C.G     = (u8)MIN(255.0f,Light.Color.G*Light.Intensity);
+    C.B     = (u8)MIN(255.0f,Light.Color.B*Light.Intensity);
+    C.A     = (u8)MIN(255.0f,Light.Color.A*Light.Intensity);
+}
+
+//=========================================================================
+
+void light_mgr::GetCollectedLightInfo( s32 Index,
+                                       vector3& Pos,
+                                       f32& Radius,
+                                       xcolor& C,
+                                       f32& Falloff,
+                                       s32& Shape,
+                                       vector3& Direction,
+                                       f32& InnerAngle,
+                                       f32& OuterAngle )
+{
+    ASSERT( Index < m_NCollectedLights );
+    ASSERT( m_bInCollection );
+    ASSERT( m_pSpadLights );
+
+    spad_light& Light = m_pSpadLights[m_CollectedLights[Index]];
+    Pos        = Light.Pos;
+    Radius     = Light.Radius;
+    Falloff    = Light.Falloff;
+    Shape      = Light.Shape;
+    Direction  = Light.Direction;
+    InnerAngle = Light.InnerAngle;
+    OuterAngle = Light.OuterAngle;
+    C.R        = (u8)MIN(255.0f,Light.Color.R*Light.Intensity);
+    C.G        = (u8)MIN(255.0f,Light.Color.G*Light.Intensity);
+    C.B        = (u8)MIN(255.0f,Light.Color.B*Light.Intensity);
+    C.A        = (u8)MIN(255.0f,Light.Color.A*Light.Intensity);
+}
+
+//=========================================================================
+
 xbool light_mgr::CalcDirLight( dir_light* pDst,
-                              const matrix4& L2W,
-                              const bbox& B,
-                              const vector3& Pos,
-                              f32 Radius,
-                              f32 Intensity,
-                              xcolor& C )
+                               const matrix4& L2W,
+                               const bbox& B,
+                               const vector3& Pos,
+                               f32 Radius,
+                               f32 Intensity,
+                               xcolor& C,
+                               s32 Shape,
+                               const vector3& Direction,
+                               f32 InnerAngle,
+                               f32 OuterAngle )
 {
     bbox Box = B;
     Box.Transform(L2W);
@@ -512,6 +688,19 @@ xbool light_mgr::CalcDirLight( dir_light* pDst,
             // and the direction of the light should just be based on the
             // bounding box's center point
             vector3 BoxPos = B.GetCenter() + L2W.GetTranslation();
+
+            if( Shape == LIGHT_SHAPE_SPOT )
+            {
+                I *= ComputeSpotConeAttenuation( Pos,
+                                                 Direction,
+                                                 InnerAngle,
+                                                 OuterAngle,
+                                                 BoxPos );
+            }
+
+            if( I <= 0.0f )
+                return FALSE;
+
             vector3 LDir   = BoxPos - Pos;
             if ( !LDir.SafeNormalize() )
             {
@@ -585,7 +774,11 @@ s32 light_mgr::CollectCharLights( const matrix4& L2W, const bbox& B, s32 MaxLigh
                            m_DynamicLights[iDynamicLight].Pos,
                            m_DynamicLights[iDynamicLight].Radius,
                            m_DynamicLights[iDynamicLight].Intensity,
-                           m_DynamicLights[iDynamicLight].Color ) )
+                           m_DynamicLights[iDynamicLight].Color,
+                           m_DynamicLights[iDynamicLight].Shape,
+                           m_DynamicLights[iDynamicLight].Direction,
+                           m_DynamicLights[iDynamicLight].InnerAngle,
+                           m_DynamicLights[iDynamicLight].OuterAngle ) )
         {
             m_NCollectedLights++;
         }
@@ -630,6 +823,42 @@ void light_mgr::GetCollectedCharLight( s32 Index, vector3& Dir, xcolor& C )
     ASSERT( (Index >= 0) && (Index < m_NCollectedLights) );
     Dir = m_CollectedCharLights[Index].Dir;
     C   = m_CollectedCharLights[Index].Col;
+}
+
+//=========================================================================
+
+void light_mgr::GetDynamicLight( s32 Index,
+                                 vector3& Pos,
+                                 f32& Radius,
+                                 xcolor& C,
+                                 s32& Shape,
+                                 xbool& CastShadows,
+                                 f32& InnerRadius,
+                                 vector3& Direction,
+                                 f32& Falloff,
+                                 f32& InnerAngle,
+                                 f32& OuterAngle,
+                                 s32& ShadowMapResolution,
+                                 s32& ShadowPriority ) const
+{
+    ASSERT( (Index >= 0) && (Index < m_NDynamicLights) );
+
+    const dynamic_light& Light = m_DynamicLights[Index];
+    Pos                        = Light.Pos;
+    Radius                     = Light.Radius;
+    InnerRadius                = Light.InnerRadius;
+    Direction                  = Light.Direction;
+    Falloff                    = Light.Falloff;
+    InnerAngle                 = Light.InnerAngle;
+    OuterAngle                 = Light.OuterAngle;
+    Shape                      = Light.Shape;
+    ShadowMapResolution        = Light.ShadowMapResolution;
+    ShadowPriority             = Light.ShadowPriority;
+    CastShadows                = Light.CastShadows;
+    C.R                        = (u8)MIN(255.0f, Light.Color.R * Light.Intensity);
+    C.G                        = (u8)MIN(255.0f, Light.Color.G * Light.Intensity);
+    C.B                        = (u8)MIN(255.0f, Light.Color.B * Light.Intensity);
+    C.A                        = (u8)MIN(255.0f, Light.Color.A * Light.Intensity);
 }
 
 //=========================================================================

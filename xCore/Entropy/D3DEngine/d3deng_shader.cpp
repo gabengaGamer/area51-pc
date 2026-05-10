@@ -25,18 +25,231 @@
 #include "d3deng_shader.hpp"
 
 //==============================================================================
+//  RUNTIME BIND CACHE
+//==============================================================================
+
+static
+struct shader_bind_cache
+{
+    ID3D11InputLayout*          pInputLayout;
+    ID3D11VertexShader*         pVertexShader;
+    ID3D11PixelShader*          pPixelShader;
+    ID3D11GeometryShader*       pGeometryShader;
+    ID3D11ComputeShader*        pComputeShader;
+    D3D11_PRIMITIVE_TOPOLOGY    Topology;
+    xbool                       bInputLayoutValid;
+    xbool                       bVertexShaderValid;
+    xbool                       bPixelShaderValid;
+    xbool                       bGeometryShaderValid;
+    xbool                       bComputeShaderValid;
+    xbool                       bTopologyValid;
+    xbool                       bInitialized;
+
+    inline shader_bind_cache( void ) :
+        pInputLayout( NULL ),
+        pVertexShader( NULL ),
+        pPixelShader( NULL ),
+        pGeometryShader( NULL ),
+        pComputeShader( NULL ),
+        Topology( D3D11_PRIMITIVE_TOPOLOGY_UNDEFINED ),
+        bInputLayoutValid( FALSE ),
+        bVertexShaderValid( FALSE ),
+        bPixelShaderValid( FALSE ),
+        bGeometryShaderValid( FALSE ),
+        bComputeShaderValid( FALSE ),
+        bTopologyValid( FALSE ),
+        bInitialized( FALSE )
+    {
+    }
+} s_ShaderBindCache;
+
+//==============================================================================
+//  INTERNAL HELPERS
+//==============================================================================
+
+static
+xbool shader_IsRuntimeBindingReady( void )
+{
+    if( !s_ShaderBindCache.bInitialized )
+    {
+        x_DebugMsg( "EngShader: Runtime binding system is not initialized\n" );
+        ASSERT(FALSE);
+        return FALSE;
+    }
+
+    if( !g_pd3dContext )
+        return FALSE;
+
+    return TRUE;
+}
+
+//==============================================================================
 //  FUNCTIONS
 //==============================================================================
 
 void shader_Init( void )
 {
+    s_ShaderBindCache.bInitialized = TRUE;
+    shader_FlushCache();
 }
 
 //==============================================================================
 
 void shader_Kill( void )
 {
+    shader_FlushCache();
+    s_ShaderBindCache.bInitialized = FALSE;
     // TODO: GS: Maybe add here kill for all loaded shaders ? Like a x_Kill or something
+}
+
+//==============================================================================
+//  RUNTIME BINDING FUNCTIONS
+//==============================================================================
+
+void shader_FlushCache( void )
+{
+    s_ShaderBindCache.pInputLayout    = NULL;
+    s_ShaderBindCache.pVertexShader   = NULL;
+    s_ShaderBindCache.pPixelShader    = NULL;
+    s_ShaderBindCache.pGeometryShader = NULL;
+    s_ShaderBindCache.pComputeShader  = NULL;
+    s_ShaderBindCache.Topology        = D3D11_PRIMITIVE_TOPOLOGY_UNDEFINED;
+
+    s_ShaderBindCache.bInputLayoutValid    = FALSE;
+    s_ShaderBindCache.bVertexShaderValid   = FALSE;
+    s_ShaderBindCache.bPixelShaderValid    = FALSE;
+    s_ShaderBindCache.bGeometryShaderValid = FALSE;
+    s_ShaderBindCache.bComputeShaderValid  = FALSE;
+    s_ShaderBindCache.bTopologyValid       = FALSE;
+}
+
+//==============================================================================
+
+xbool shader_SetInputLayout( ID3D11InputLayout* pLayout )
+{
+    if( !shader_IsRuntimeBindingReady() )
+        return FALSE;
+
+    if( s_ShaderBindCache.bInputLayoutValid &&
+        (s_ShaderBindCache.pInputLayout == pLayout) )
+    {
+        return FALSE;
+    }
+
+    g_pd3dContext->IASetInputLayout( pLayout );
+    s_ShaderBindCache.pInputLayout = pLayout;
+    s_ShaderBindCache.bInputLayoutValid = TRUE;
+    return TRUE;
+}
+
+//==============================================================================
+
+xbool shader_SetVertexShader( ID3D11VertexShader* pShader )
+{
+    if( !shader_IsRuntimeBindingReady() )
+        return FALSE;
+
+    if( s_ShaderBindCache.bVertexShaderValid &&
+        (s_ShaderBindCache.pVertexShader == pShader) )
+    {
+        return FALSE;
+    }
+
+    g_pd3dContext->VSSetShader( pShader, NULL, 0 );
+    s_ShaderBindCache.pVertexShader = pShader;
+    s_ShaderBindCache.bVertexShaderValid = TRUE;
+    return TRUE;
+}
+
+//==============================================================================
+
+xbool shader_SetPixelShader( ID3D11PixelShader* pShader )
+{
+    if( !shader_IsRuntimeBindingReady() )
+        return FALSE;
+
+    if( s_ShaderBindCache.bPixelShaderValid &&
+        (s_ShaderBindCache.pPixelShader == pShader) )
+    {
+        return FALSE;
+    }
+
+    g_pd3dContext->PSSetShader( pShader, NULL, 0 );
+    s_ShaderBindCache.pPixelShader = pShader;
+    s_ShaderBindCache.bPixelShaderValid = TRUE;
+    return TRUE;
+}
+
+//==============================================================================
+
+xbool shader_SetGeometryShader( ID3D11GeometryShader* pShader )
+{
+    if( !shader_IsRuntimeBindingReady() )
+        return FALSE;
+
+    if( s_ShaderBindCache.bGeometryShaderValid &&
+        (s_ShaderBindCache.pGeometryShader == pShader) )
+    {
+        return FALSE;
+    }
+
+    g_pd3dContext->GSSetShader( pShader, NULL, 0 );
+    s_ShaderBindCache.pGeometryShader = pShader;
+    s_ShaderBindCache.bGeometryShaderValid = TRUE;
+    return TRUE;
+}
+
+//==============================================================================
+
+xbool shader_SetComputeShader( ID3D11ComputeShader* pShader )
+{
+    if( !shader_IsRuntimeBindingReady() )
+        return FALSE;
+
+    if( s_ShaderBindCache.bComputeShaderValid &&
+        (s_ShaderBindCache.pComputeShader == pShader) )
+    {
+        return FALSE;
+    }
+
+    g_pd3dContext->CSSetShader( pShader, NULL, 0 );
+    s_ShaderBindCache.pComputeShader = pShader;
+    s_ShaderBindCache.bComputeShaderValid = TRUE;
+    return TRUE;
+}
+
+//==============================================================================
+
+xbool shader_SetTopology( D3D11_PRIMITIVE_TOPOLOGY Topology )
+{
+    if( !shader_IsRuntimeBindingReady() )
+        return FALSE;
+
+    if( s_ShaderBindCache.bTopologyValid &&
+        (s_ShaderBindCache.Topology == Topology) )
+    {
+        return FALSE;
+    }
+
+    g_pd3dContext->IASetPrimitiveTopology( Topology );
+    s_ShaderBindCache.Topology = Topology;
+    s_ShaderBindCache.bTopologyValid = TRUE;
+    return TRUE;
+}
+
+//==============================================================================
+
+xbool shader_ApplyPass( const shader_pass& Pass )
+{
+    xbool bChanged = FALSE;
+
+    bChanged |= shader_SetInputLayout   ( Pass.pInputLayout );
+    bChanged |= shader_SetVertexShader  ( Pass.pVertexShader );
+    bChanged |= shader_SetPixelShader   ( Pass.pPixelShader );
+    bChanged |= shader_SetGeometryShader( Pass.pGeometryShader );
+    bChanged |= shader_SetTopology      ( Pass.Topology );
+
+    return bChanged;
 }
 
 //==============================================================================
@@ -47,7 +260,7 @@ char* shader_LoadSourceFromFile( const char* pFileName )
 {
     if( !pFileName )
     {
-        x_DebugMsg( "ShaderMgr: NULL filename provided\n" );
+        x_DebugMsg( "EngShader: NULL filename provided\n" );
         ASSERT(FALSE);
         return NULL;
     }
@@ -55,7 +268,7 @@ char* shader_LoadSourceFromFile( const char* pFileName )
     X_FILE* pFile = x_fopen( pFileName, "rb" );
     if( !pFile )
     {
-        x_DebugMsg( "ShaderMgr: Failed to open file '%s'\n", pFileName );
+        x_DebugMsg( "EngShader: Failed to open file '%s'\n", pFileName );
         ASSERT(FALSE);
         return NULL;
     }
@@ -63,7 +276,7 @@ char* shader_LoadSourceFromFile( const char* pFileName )
     u32 FileLength = x_flength( pFile );
     if( FileLength <= 0 )
     {
-        x_DebugMsg( "ShaderMgr: File '%s' is empty or invalid\n", pFileName );
+        x_DebugMsg( "EngShader: File '%s' is empty or invalid\n", pFileName );
         ASSERT(FALSE);
         x_fclose( pFile );
         return NULL;
@@ -73,7 +286,7 @@ char* shader_LoadSourceFromFile( const char* pFileName )
     char* pBuffer = (char*)x_malloc( FileLength + 1 );
     if( !pBuffer )
     {
-        x_DebugMsg( "ShaderMgr: Failed to allocate memory for file '%s'\n", pFileName );
+        x_DebugMsg( "EngShader: Failed to allocate memory for file '%s'\n", pFileName );
         ASSERT(FALSE);
         x_fclose( pFile );
         return NULL;
@@ -84,7 +297,7 @@ char* shader_LoadSourceFromFile( const char* pFileName )
 
     if( BytesRead != FileLength )
     {
-        x_DebugMsg( "ShaderMgr: Failed to read complete file '%s' (%d/%d bytes)\n",
+        x_DebugMsg( "EngShader: Failed to read complete file '%s' (%d/%d bytes)\n",
                     pFileName, BytesRead, FileLength );
         ASSERT(FALSE);
         x_free( pBuffer );
@@ -94,7 +307,7 @@ char* shader_LoadSourceFromFile( const char* pFileName )
     // Null terminate the string
     pBuffer[FileLength] = '\0';
 
-    x_DebugMsg( "ShaderMgr: Successfully loaded source from '%s' (%d bytes)\n",
+    x_DebugMsg( "EngShader: Successfully loaded source from '%s' (%d bytes)\n",
                 pFileName, FileLength );
     return pBuffer;
 }
@@ -105,7 +318,7 @@ xbool shader_LoadBlobFromFile( const char* pFileName, shader_blob& Blob )
 {
     if( !pFileName )
     {
-        x_DebugMsg( "ShaderMgr: NULL filename provided for blob loading\n" );
+        x_DebugMsg( "EngShader: NULL filename provided for blob loading\n" );
         ASSERT(FALSE);
         return FALSE;
     }
@@ -113,7 +326,7 @@ xbool shader_LoadBlobFromFile( const char* pFileName, shader_blob& Blob )
     X_FILE* pFile = x_fopen( pFileName, "rb" );
     if( !pFile )
     {
-        x_DebugMsg( "ShaderMgr: Failed to open blob file '%s'\n", pFileName );
+        x_DebugMsg( "EngShader: Failed to open blob file '%s'\n", pFileName );
         ASSERT(FALSE);
         return FALSE;
     }
@@ -121,7 +334,7 @@ xbool shader_LoadBlobFromFile( const char* pFileName, shader_blob& Blob )
     u32 FileLength = x_flength( pFile );
     if( FileLength <= 0 )
     {
-        x_DebugMsg( "ShaderMgr: Blob file '%s' is empty or invalid\n", pFileName );
+        x_DebugMsg( "EngShader: Blob file '%s' is empty or invalid\n", pFileName );
         ASSERT(FALSE);
         x_fclose( pFile );
         return FALSE;
@@ -130,7 +343,7 @@ xbool shader_LoadBlobFromFile( const char* pFileName, shader_blob& Blob )
     void* pBuffer = x_malloc( FileLength );
     if( !pBuffer )
     {
-        x_DebugMsg( "ShaderMgr: Failed to allocate memory for blob file '%s'\n", pFileName );
+        x_DebugMsg( "EngShader: Failed to allocate memory for blob file '%s'\n", pFileName );
         ASSERT(FALSE);
         x_fclose( pFile );
         return FALSE;
@@ -141,7 +354,7 @@ xbool shader_LoadBlobFromFile( const char* pFileName, shader_blob& Blob )
 
     if( BytesRead != FileLength )
     {
-        x_DebugMsg( "ShaderMgr: Failed to read complete blob file '%s' (%d/%d bytes)\n",
+        x_DebugMsg( "EngShader: Failed to read complete blob file '%s' (%d/%d bytes)\n",
                     pFileName, BytesRead, FileLength );
         ASSERT(FALSE);
         x_free( pBuffer );
@@ -151,7 +364,7 @@ xbool shader_LoadBlobFromFile( const char* pFileName, shader_blob& Blob )
     Blob.pData = pBuffer;
     Blob.Size  = (u32)FileLength;
 
-    x_DebugMsg( "ShaderMgr: Successfully loaded blob from '%s' (%d bytes)\n",
+    x_DebugMsg( "EngShader: Successfully loaded blob from '%s' (%d bytes)\n",
                 pFileName, FileLength );
     return TRUE;
 }
@@ -162,14 +375,14 @@ xbool shader_SaveBlobToFile( const char* pFileName, const shader_blob& Blob )
 {
     if( !pFileName )
     {
-        x_DebugMsg( "ShaderMgr: NULL filename provided for blob saving\n" );
+        x_DebugMsg( "EngShader: NULL filename provided for blob saving\n" );
         ASSERT(FALSE);
         return FALSE;
     }
 
     if( !Blob.pData || Blob.Size == 0 )
     {
-        x_DebugMsg( "ShaderMgr: Invalid blob for saving to file '%s'\n", pFileName );
+        x_DebugMsg( "EngShader: Invalid blob for saving to file '%s'\n", pFileName );
         ASSERT(FALSE);
         return FALSE;
     }
@@ -177,7 +390,7 @@ xbool shader_SaveBlobToFile( const char* pFileName, const shader_blob& Blob )
     X_FILE* pFile = x_fopen( pFileName, "wb" );
     if( !pFile )
     {
-        x_DebugMsg( "ShaderMgr: Failed to create blob file '%s'\n", pFileName );
+        x_DebugMsg( "EngShader: Failed to create blob file '%s'\n", pFileName );
         ASSERT(FALSE);
         return FALSE;
     }
@@ -187,13 +400,13 @@ xbool shader_SaveBlobToFile( const char* pFileName, const shader_blob& Blob )
 
     if( BytesWritten != (u32)Blob.Size )
     {
-        x_DebugMsg( "ShaderMgr: Failed to write complete blob to file '%s' (%d/%d bytes)\n",
+        x_DebugMsg( "EngShader: Failed to write complete blob to file '%s' (%d/%d bytes)\n",
                     pFileName, BytesWritten, (u32)Blob.Size );
         ASSERT(FALSE);
         return FALSE;
     }
 
-    x_DebugMsg( "ShaderMgr: Successfully saved blob to '%s' (%d bytes)\n",
+    x_DebugMsg( "EngShader: Successfully saved blob to '%s' (%d bytes)\n",
                 pFileName, (u32)Blob.Size );
     return TRUE;
 }
@@ -208,7 +421,7 @@ const char* shader_GetDefaultProfile( shader_type Type )
     static const char* s_ShaderTypeNames[] = { "vs_5_0", "ps_5_0", "gs_5_0", "cs_5_0" };
     const char* pTypeName = (Type < SHADER_TYPE_COUNT) ? s_ShaderTypeNames[Type] : "UNKNOWN";
 
-    x_DebugMsg( "ShaderMgr: No profile specified, using default profile for %s shader\n", pTypeName );
+    x_DebugMsg( "EngShader: No profile specified, using default profile for %s shader\n", pTypeName );
 
     switch( Type )
     {
@@ -239,7 +452,7 @@ public:
             char drive[X_MAX_DRIVE], dir[X_MAX_DIR];
             x_splitpath( pSourceName, drive, dir, NULL, NULL );
             m_BasePath = xstring(drive) + dir;
-            //x_DebugMsg( "ShaderMgr: Include handler base path: '%s'\n", (const char*)m_BasePath );
+            //x_DebugMsg( "EngShader: Include handler base path: '%s'\n", (const char*)m_BasePath );
         }
     }
 
@@ -250,20 +463,20 @@ public:
         
         if( !fp )
         {
-            x_DebugMsg( "ShaderMgr: Failed to open include '%s', trying raw path\n", (const char*)path );
+            x_DebugMsg( "EngShader: Failed to open include '%s', trying raw path\n", (const char*)path );
             fp = x_fopen( pFileName, "rb" );
         }
             
         if( !fp )
         {
-            x_DebugMsg( "ShaderMgr: Failed to open include file '%s'\n", pFileName );
+            x_DebugMsg( "EngShader: Failed to open include file '%s'\n", pFileName );
             return E_FAIL;
         }
 
         u32 len = x_flength( fp );
         if( len <= 0 )
         {
-            x_DebugMsg( "ShaderMgr: Include file '%s' is empty or invalid\n", pFileName );
+            x_DebugMsg( "EngShader: Include file '%s' is empty or invalid\n", pFileName );
             x_fclose( fp );
             return E_FAIL;
         }
@@ -271,7 +484,7 @@ public:
         const u32 MAX_INCLUDE_SIZE = 1 * 1024 * 1024;
         if( len > MAX_INCLUDE_SIZE )
         {
-            x_DebugMsg( "ShaderMgr: Include file '%s' too large (%d bytes)\n", pFileName, len );
+            x_DebugMsg( "EngShader: Include file '%s' too large (%d bytes)\n", pFileName, len );
             x_fclose( fp );
             return E_FAIL;
         }
@@ -279,7 +492,7 @@ public:
         char* pBuffer = (char*)x_malloc( len );
         if( !pBuffer )
         {
-            x_DebugMsg( "ShaderMgr: Failed to allocate memory for include '%s'\n", pFileName );
+            x_DebugMsg( "EngShader: Failed to allocate memory for include '%s'\n", pFileName );
             x_fclose( fp );
             return E_OUTOFMEMORY;
         }
@@ -289,7 +502,7 @@ public:
         
         if( bytesRead != len )
         {
-            x_DebugMsg( "ShaderMgr: Failed to read complete include '%s' (%d/%d bytes)\n", 
+            x_DebugMsg( "EngShader: Failed to read complete include '%s' (%d/%d bytes)\n", 
                        pFileName, bytesRead, len );
             x_free( pBuffer );
             return E_FAIL;
@@ -297,7 +510,7 @@ public:
 
         *ppData = pBuffer;
         *pBytes = (u32)len;
-        x_DebugMsg( "ShaderMgr: Successfully loaded include '%s' (%d bytes)\n", pFileName, len );
+        x_DebugMsg( "EngShader: Successfully loaded include '%s' (%d bytes)\n", pFileName, len );
         return S_OK;
     }
 
@@ -322,7 +535,7 @@ xbool shader_CompileShaderInternal( const char* pSource,
 {
     if( !pSource || !pEntryPoint || !pProfile || !ppBlob || !g_pd3dDevice )
     {
-        x_DebugMsg( "ShaderMgr: Invalid parameters for compilation\n" );
+        x_DebugMsg( "EngShader: Invalid parameters for compilation\n" );
         ASSERT(FALSE);
         return FALSE;
     }
@@ -331,7 +544,7 @@ xbool shader_CompileShaderInternal( const char* pSource,
     u32 sourceLen = strlen(pSource);
     if( sourceLen > MAX_SOURCE_SIZE )
     {
-        x_DebugMsg( "ShaderMgr: Source too large (%d bytes)\n", (u32)sourceLen );
+        x_DebugMsg( "EngShader: Source too large (%d bytes)\n", (u32)sourceLen );
         ASSERT(FALSE);
         return FALSE;
     }
@@ -362,12 +575,12 @@ xbool shader_CompileShaderInternal( const char* pSource,
     {
         if( ppErrorBlob && *ppErrorBlob )
         {
-            x_DebugMsg( "ShaderMgr: Compilation failed\n%s\n",
+            x_DebugMsg( "EngShader: Compilation failed\n%s\n",
                        (const char*)(*ppErrorBlob)->GetBufferPointer() );
         }
         else
         {
-            x_DebugMsg( "ShaderMgr: Compilation failed with HRESULT 0x%08X\n", hr );
+            x_DebugMsg( "EngShader: Compilation failed with HRESULT 0x%08X\n", hr );
         }
         ASSERT(FALSE);
         return FALSE;
@@ -407,7 +620,7 @@ ID3D11VertexShader* shader_CompileVertex( const char* pSource,
                                                    &pShader );
     if( FAILED(hr) )
     {
-        x_DebugMsg( "ShaderMgr: Failed to create vertex shader, HRESULT 0x%08X\n", hr );
+        x_DebugMsg( "EngShader: Failed to create vertex shader, HRESULT 0x%08X\n", hr );
         ASSERT(FALSE);
         pBlob->Release();
         if( pErrorBlob ) pErrorBlob->Release();
@@ -417,7 +630,7 @@ ID3D11VertexShader* shader_CompileVertex( const char* pSource,
     pBlob->Release();
     if( pErrorBlob ) pErrorBlob->Release();
 
-    x_DebugMsg( "ShaderMgr: Vertex shader compiled successfully\n" );
+    x_DebugMsg( "EngShader: Vertex shader compiled successfully\n" );
     return pShader;
 }
 
@@ -450,7 +663,7 @@ ID3D11PixelShader* shader_CompilePixel( const char* pSource,
                                                   &pShader );
     if( FAILED(hr) )
     {
-        x_DebugMsg( "ShaderMgr: Failed to create pixel shader, HRESULT 0x%08X\n", hr );
+        x_DebugMsg( "EngShader: Failed to create pixel shader, HRESULT 0x%08X\n", hr );
         ASSERT(FALSE);
         pBlob->Release();
         if( pErrorBlob ) pErrorBlob->Release();
@@ -460,7 +673,7 @@ ID3D11PixelShader* shader_CompilePixel( const char* pSource,
     pBlob->Release();
     if( pErrorBlob ) pErrorBlob->Release();
 
-    x_DebugMsg( "ShaderMgr: Pixel shader compiled successfully\n" );
+    x_DebugMsg( "EngShader: Pixel shader compiled successfully\n" );
     return pShader;
 }
 
@@ -493,7 +706,7 @@ ID3D11GeometryShader* shader_CompileGeometry( const char* pSource,
                                                      &pShader );
     if( FAILED(hr) )
     {
-        x_DebugMsg( "ShaderMgr: Failed to create geometry shader, HRESULT 0x%08X\n", hr );
+        x_DebugMsg( "EngShader: Failed to create geometry shader, HRESULT 0x%08X\n", hr );
         ASSERT(FALSE);
         pBlob->Release();
         if( pErrorBlob ) pErrorBlob->Release();
@@ -503,7 +716,7 @@ ID3D11GeometryShader* shader_CompileGeometry( const char* pSource,
     pBlob->Release();
     if( pErrorBlob ) pErrorBlob->Release();
 
-    x_DebugMsg( "ShaderMgr: Geometry shader compiled successfully\n" );
+    x_DebugMsg( "EngShader: Geometry shader compiled successfully\n" );
     return pShader;
 }
 
@@ -536,7 +749,7 @@ ID3D11ComputeShader* shader_CompileCompute( const char* pSource,
                                                     &pShader );
     if( FAILED(hr) )
     {
-        x_DebugMsg( "ShaderMgr: Failed to create compute shader, HRESULT 0x%08X\n", hr );
+        x_DebugMsg( "EngShader: Failed to create compute shader, HRESULT 0x%08X\n", hr );
         ASSERT(FALSE);
         pBlob->Release();
         if( pErrorBlob ) pErrorBlob->Release();
@@ -546,7 +759,7 @@ ID3D11ComputeShader* shader_CompileCompute( const char* pSource,
     pBlob->Release();
     if( pErrorBlob ) pErrorBlob->Release();
 
-    x_DebugMsg( "ShaderMgr: Compute shader compiled successfully\n" );
+    x_DebugMsg( "EngShader: Compute shader compiled successfully\n" );
     return pShader;
 }
 
@@ -564,7 +777,7 @@ ID3D11VertexShader* shader_CompileVertexWithLayout( const char* pSource,
 {
     if( !pSource || !ppLayout || !pLayoutDesc || NumElements == 0 )
     {
-        x_DebugMsg( "ShaderMgr: Invalid parameters for vertex shader with layout\n" );
+        x_DebugMsg( "EngShader: Invalid parameters for vertex shader with layout\n" );
         ASSERT(FALSE);
         return NULL;
     }
@@ -591,7 +804,7 @@ ID3D11VertexShader* shader_CompileVertexWithLayout( const char* pSource,
                                                    &pShader );
     if( FAILED(hr) )
     {
-        x_DebugMsg( "ShaderMgr: Failed to create vertex shader, HRESULT 0x%08X\n", hr );
+        x_DebugMsg( "EngShader: Failed to create vertex shader, HRESULT 0x%08X\n", hr );
         ASSERT(FALSE);
         pBlob->Release();
         if( pErrorBlob ) pErrorBlob->Release();
@@ -607,7 +820,7 @@ ID3D11VertexShader* shader_CompileVertexWithLayout( const char* pSource,
 
     if( FAILED(hr) )
     {
-        x_DebugMsg( "ShaderMgr: Failed to create input layout, HRESULT 0x%08X\n", hr );
+        x_DebugMsg( "EngShader: Failed to create input layout, HRESULT 0x%08X\n", hr );
         ASSERT(FALSE);
         if( pShader ) pShader->Release();
         if( pErrorBlob ) pErrorBlob->Release();
@@ -616,7 +829,7 @@ ID3D11VertexShader* shader_CompileVertexWithLayout( const char* pSource,
 
     if( pErrorBlob ) pErrorBlob->Release();
 
-    x_DebugMsg( "ShaderMgr: Vertex shader with layout compiled successfully\n" );
+    x_DebugMsg( "EngShader: Vertex shader with layout compiled successfully\n" );
     return pShader;
 }
 
@@ -742,7 +955,7 @@ xbool shader_CompileToBlob( const char* pSource,
     pD3DBlob->Release();
     if( pErrorBlob ) pErrorBlob->Release();
     
-    x_DebugMsg( "ShaderMgr: Compiled to blob successfully (%d bytes)\n", (u32)Blob.Size );
+    x_DebugMsg( "EngShader: Compiled to blob successfully (%d bytes)\n", (u32)Blob.Size );
     return TRUE;
 }
 
@@ -768,7 +981,7 @@ xbool shader_CompileFileToBlob( const char* pFileName,
 
     if( Result )
     {
-        x_DebugMsg( "ShaderMgr: Compiled file '%s' to blob successfully\n", pFileName );
+        x_DebugMsg( "EngShader: Compiled file '%s' to blob successfully\n", pFileName );
     }
     
     return Result;
@@ -780,7 +993,7 @@ ID3D11VertexShader* shader_CreateVertexFromBlob( const shader_blob& Blob )
 {
     if( !Blob.pData || Blob.Size == 0 )
     {
-        x_DebugMsg( "ShaderMgr: Invalid blob for vertex shader creation\n" );
+        x_DebugMsg( "EngShader: Invalid blob for vertex shader creation\n" );
         ASSERT(FALSE);
         return NULL;
     }
@@ -789,12 +1002,12 @@ ID3D11VertexShader* shader_CreateVertexFromBlob( const shader_blob& Blob )
     HRESULT hr = g_pd3dDevice->CreateVertexShader( Blob.pData, Blob.Size, NULL, &pShader );
     if( FAILED(hr) )
     {
-        x_DebugMsg( "ShaderMgr: Failed to create vertex shader from blob, HRESULT 0x%08X\n", hr );
+        x_DebugMsg( "EngShader: Failed to create vertex shader from blob, HRESULT 0x%08X\n", hr );
         ASSERT(FALSE);
         return NULL;
     }
 
-    x_DebugMsg( "ShaderMgr: Vertex shader created from blob successfully\n" );
+    x_DebugMsg( "EngShader: Vertex shader created from blob successfully\n" );
     return pShader;
 }
 
@@ -804,7 +1017,7 @@ ID3D11PixelShader* shader_CreatePixelFromBlob( const shader_blob& Blob )
 {
     if( !Blob.pData || Blob.Size == 0 )
     {
-        x_DebugMsg( "ShaderMgr: Invalid blob for pixel shader creation\n" );
+        x_DebugMsg( "EngShader: Invalid blob for pixel shader creation\n" );
         ASSERT(FALSE);
         return NULL;
     }
@@ -813,12 +1026,12 @@ ID3D11PixelShader* shader_CreatePixelFromBlob( const shader_blob& Blob )
     HRESULT hr = g_pd3dDevice->CreatePixelShader( Blob.pData, Blob.Size, NULL, &pShader );
     if( FAILED(hr) )
     {
-        x_DebugMsg( "ShaderMgr: Failed to create pixel shader from blob, HRESULT 0x%08X\n", hr );
+        x_DebugMsg( "EngShader: Failed to create pixel shader from blob, HRESULT 0x%08X\n", hr );
         ASSERT(FALSE);
         return NULL;
     }
 
-    x_DebugMsg( "ShaderMgr: Pixel shader created from blob successfully\n" );
+    x_DebugMsg( "EngShader: Pixel shader created from blob successfully\n" );
     return pShader;
 }
 
@@ -828,7 +1041,7 @@ ID3D11GeometryShader* shader_CreateGeometryFromBlob( const shader_blob& Blob )
 {
     if( !Blob.pData || Blob.Size == 0 )
     {
-        x_DebugMsg( "ShaderMgr: Invalid blob for geometry shader creation\n" );
+        x_DebugMsg( "EngShader: Invalid blob for geometry shader creation\n" );
         ASSERT(FALSE);
         return NULL;
     }
@@ -837,12 +1050,12 @@ ID3D11GeometryShader* shader_CreateGeometryFromBlob( const shader_blob& Blob )
     HRESULT hr = g_pd3dDevice->CreateGeometryShader( Blob.pData, Blob.Size, NULL, &pShader );
     if( FAILED(hr) )
     {
-        x_DebugMsg( "ShaderMgr: Failed to create geometry shader from blob, HRESULT 0x%08X\n", hr );
+        x_DebugMsg( "EngShader: Failed to create geometry shader from blob, HRESULT 0x%08X\n", hr );
         ASSERT(FALSE);
         return NULL;
     }
 
-    x_DebugMsg( "ShaderMgr: Geometry shader created from blob successfully\n" );
+    x_DebugMsg( "EngShader: Geometry shader created from blob successfully\n" );
     return pShader;
 }
 
@@ -852,7 +1065,7 @@ ID3D11ComputeShader* shader_CreateComputeFromBlob( const shader_blob& Blob )
 {
     if( !Blob.pData || Blob.Size == 0 )
     {
-        x_DebugMsg( "ShaderMgr: Invalid blob for compute shader creation\n" );
+        x_DebugMsg( "EngShader: Invalid blob for compute shader creation\n" );
         ASSERT(FALSE);
         return NULL;
     }
@@ -861,12 +1074,12 @@ ID3D11ComputeShader* shader_CreateComputeFromBlob( const shader_blob& Blob )
     HRESULT hr = g_pd3dDevice->CreateComputeShader( Blob.pData, Blob.Size, NULL, &pShader );
     if( FAILED(hr) )
     {
-        x_DebugMsg( "ShaderMgr: Failed to create compute shader from blob, HRESULT 0x%08X\n", hr );
+        x_DebugMsg( "EngShader: Failed to create compute shader from blob, HRESULT 0x%08X\n", hr );
         ASSERT(FALSE);
         return NULL;
     }
 
-    x_DebugMsg( "ShaderMgr: Compute shader created from blob successfully\n" );
+    x_DebugMsg( "EngShader: Compute shader created from blob successfully\n" );
     return pShader;
 }
 
@@ -878,14 +1091,14 @@ ID3D11InputLayout* shader_CreateInputLayout( const shader_blob& VertexBlob,
 {
     if( !VertexBlob.pData || VertexBlob.Size == 0 )
     {
-        x_DebugMsg( "ShaderMgr: Invalid vertex blob for input layout creation\n" );
+        x_DebugMsg( "EngShader: Invalid vertex blob for input layout creation\n" );
         ASSERT(FALSE);
         return NULL;
     }
 
     if( !pLayoutDesc || NumElements == 0 )
     {
-        x_DebugMsg( "ShaderMgr: Invalid layout description\n" );
+        x_DebugMsg( "EngShader: Invalid layout description\n" );
         ASSERT(FALSE);
         return NULL;
     }
@@ -898,12 +1111,12 @@ ID3D11InputLayout* shader_CreateInputLayout( const shader_blob& VertexBlob,
                                                  &pLayout );
     if( FAILED(hr) )
     {
-        x_DebugMsg( "ShaderMgr: Failed to create input layout, HRESULT 0x%08X\n", hr );
+        x_DebugMsg( "EngShader: Failed to create input layout, HRESULT 0x%08X\n", hr );
         ASSERT(FALSE);
         return NULL;
     }
 
-    x_DebugMsg( "ShaderMgr: Input layout created successfully\n" );
+    x_DebugMsg( "EngShader: Input layout created successfully\n" );
     return pLayout;
 }
 
@@ -930,7 +1143,7 @@ ID3D11Buffer* shader_CreateConstantBuffer( u32 Size, constant_buffer_type Type, 
 
     if( ( Size & 0x0F ) != 0 )
     {
-        x_DebugMsg( "ShaderMgr: Constant buffer size (%d) is not 16-byte aligned\n", Size );
+        x_DebugMsg( "EngShader: Constant buffer size (%d) is not 16-byte aligned\n", Size );
         ASSERT(FALSE);
         return NULL;
     }
@@ -957,7 +1170,7 @@ ID3D11Buffer* shader_CreateConstantBuffer( u32 Size, constant_buffer_type Type, 
             cbd.CPUAccessFlags = 0;
             if( !pInitialData )
             {
-                x_DebugMsg( "ShaderMgr: CB_TYPE_IMMUTABLE requires initial data\n" );
+                x_DebugMsg( "EngShader: CB_TYPE_IMMUTABLE requires initial data\n" );
                 ASSERT(FALSE);
                 return NULL;
             }
@@ -969,7 +1182,7 @@ ID3D11Buffer* shader_CreateConstantBuffer( u32 Size, constant_buffer_type Type, 
             break; 
 
         default:
-            x_DebugMsg( "ShaderMgr: Invalid constant buffer type %d\n", Type );
+            x_DebugMsg( "EngShader: Invalid constant buffer type %d\n", Type );
             ASSERT(FALSE);
             return NULL;    
     }
@@ -988,12 +1201,12 @@ ID3D11Buffer* shader_CreateConstantBuffer( u32 Size, constant_buffer_type Type, 
     HRESULT hr = g_pd3dDevice->CreateBuffer( &cbd, pInitData, &pBuffer );
     if( FAILED(hr) )
     {
-        x_DebugMsg( "ShaderMgr: Failed to create constant buffer, HRESULT 0x%08X\n", hr );
+        x_DebugMsg( "EngShader: Failed to create constant buffer, HRESULT 0x%08X\n", hr );
         ASSERT(FALSE);
         return NULL;
     }
 
-    x_DebugMsg( "ShaderMgr: Constant buffer created (%d bytes, type %d)\n", Size, Type );
+    x_DebugMsg( "EngShader: Constant buffer created (%d bytes, type %d)\n", Size, Type );
     return pBuffer;
 }
 
@@ -1006,7 +1219,7 @@ void shader_UpdateConstantBuffer( ID3D11Buffer* pBuffer, const void* pData, u32 
 
     if( ( Size & 0x0F ) != 0 )
     {
-        x_DebugMsg( "ShaderMgr: Constant buffer size (%d) is not 16-byte aligned\n", Size );
+        x_DebugMsg( "EngShader: Constant buffer size (%d) is not 16-byte aligned\n", Size );
         ASSERT(FALSE);
         return;
     }
@@ -1016,7 +1229,7 @@ void shader_UpdateConstantBuffer( ID3D11Buffer* pBuffer, const void* pData, u32 
 
     if( Size > desc.ByteWidth )
     {
-        x_DebugMsg( "ShaderMgr: Constant buffer update size (%d) exceeds buffer size (%d)\n", Size, desc.ByteWidth );
+        x_DebugMsg( "EngShader: Constant buffer update size (%d) exceeds buffer size (%d)\n", Size, desc.ByteWidth );
         ASSERT(FALSE);
         return;
     }
@@ -1024,7 +1237,7 @@ void shader_UpdateConstantBuffer( ID3D11Buffer* pBuffer, const void* pData, u32 
     switch( desc.Usage )
     {
         case D3D11_USAGE_IMMUTABLE:
-            x_DebugMsg( "ShaderMgr: Attempted to update immutable constant buffer\n" );
+            x_DebugMsg( "EngShader: Attempted to update immutable constant buffer\n" );
             ASSERT(FALSE);
             return;
 
@@ -1041,18 +1254,18 @@ void shader_UpdateConstantBuffer( ID3D11Buffer* pBuffer, const void* pData, u32 
             {
                 x_memcpy(mappedResource.pData, pData, Size);
                 g_pd3dContext->Unmap(pBuffer, 0);
-                //x_DebugMsg("ShaderMgr: Constant buffer updated (%d bytes)\n", (u32)Size);
+                //x_DebugMsg("EngShader: Constant buffer updated (%d bytes)\n", (u32)Size);
             }
             else
             {
-                x_DebugMsg("ShaderMgr: Failed to map constant buffer, HRESULT 0x%08X\n", hr);
+                x_DebugMsg("EngShader: Failed to map constant buffer, HRESULT 0x%08X\n", hr);
                 ASSERT(FALSE);
             }
             return;
         }
 
         default:
-            x_DebugMsg( "ShaderMgr: Unsupported constant buffer usage %d\n", desc.Usage );
+            x_DebugMsg( "EngShader: Unsupported constant buffer usage %d\n", desc.Usage );
             ASSERT(FALSE);
             return;
     }
@@ -1065,6 +1278,6 @@ void shader_ReleaseConstantBuffer( ID3D11Buffer* pBuffer )
     if( pBuffer )
     {
         pBuffer->Release();
-        x_DebugMsg( "ShaderMgr: Constant buffer released successfully\n" );
+        x_DebugMsg( "EngShader: Constant buffer released successfully\n" );
     }
 }

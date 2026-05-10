@@ -136,7 +136,7 @@ void soft_vertex_mgr::DrawDList( xhandle hDList, const matrix4* pBone, const d3d
 
     ActivateStreams( SoftDList.hDList );
 
-    ID3D11Buffer* pBoneBuffer = g_MaterialMgr.GetSkinBoneBuffer();
+    ID3D11Buffer* pBoneBuffer = g_GeomMgr.GetSkinBoneBuffer();
     if( !pBoneBuffer )
         return;
 

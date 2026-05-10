@@ -1,3 +1,12 @@
+//=========================================================================
+//  
+//  CollisionVolume.cpp  
+//
+//=========================================================================
+
+//=========================================================================
+//  INCLUDES
+//=========================================================================
 
 #include "CollisionVolume.hpp"
 
@@ -10,6 +19,8 @@ void collision_data::mat_info::FileIO( fileio& FileIO )
     FileIO.Static( SoundType );
     FileIO.Static( Flags );
 }
+
+//=========================================================================
 
 void collision_data::high_cluster::FileIO( fileio& FileIO )
 {
@@ -89,5 +100,3 @@ void collision_data::FileIO( fileio& FileIO )
     FileIO.Static( pLowVector,  nLowVectors );
     FileIO.Static( pLowQuad,    nLowQuads );
 }
-
-//=========================================================================

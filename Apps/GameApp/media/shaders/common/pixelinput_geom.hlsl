@@ -22,9 +22,8 @@ struct GEOM_PIXEL_INPUT
 #endif
     float3 WorldPos    : TEXCOORD1;
     float3 Normal      : TEXCOORD2;
-    float  LinearDepth : TEXCOORD3;
-    float3 ViewVector  : TEXCOORD4;
-    float3 ViewNormal  : TEXCOORD5;
+    float3 ViewVector  : TEXCOORD3;
+    float3 ViewNormal  : TEXCOORD4;
 };
 
 #endif // GEOM_PIXEL_INPUT_HLSL

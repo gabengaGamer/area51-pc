@@ -67,6 +67,7 @@ protected:
 
     virtual void                OnAdvanceLogic  ( f32 DeltaTime );
     virtual void                OnRender        ( void );
+    virtual void                OnRenderShadowCast( u64 ProjMask );
     virtual void                OnColCheck      ( void );
 
 #ifndef X_RETAIL

@@ -25,13 +25,12 @@
 #include "objects\Corpse.hpp"
 #include "NetworkMgr/NetObjMgr.hpp"
 #include "NetworkMgr/Voice/VoiceMgr.hpp"
+#include "Objects\Flashlight.hpp"
 #include "Objects\Ladders\Ladder_Field.hpp"
 #include "Objects\GrenadeProjectile.hpp"
 #include "Objects\GravChargeProjectile.hpp"
 #include "Objects\JumpingBeanProjectile.hpp"
-#include "render\LightMgr.hpp"
 #include "Objects\Door.hpp"
-#include "objects\Projector.hpp"
 #include "objects\WeaponMutation.hpp"
 #include "StateMgr\StateMgr.hpp"
 #include "NetworkMgr\GameMgr.hpp"
@@ -587,7 +586,6 @@ player::player( void ) :
     m_WeaponCollisionOffset             ( 0.0f, 0.0f, 0.0f ),
     m_LastWeaponCollisionOffsetScalar   ( 0.0f ),
     m_WeaponCollisionOffsetScalar       ( 0.0f ),
-    m_FlashlightGuid                    ( 0 ),
     m_BatteryChangeTime                 ( 0.0f ),
     m_Battery                           ( 100.0f ),
     m_MaxBattery                        ( 100.0f ),
@@ -850,16 +848,6 @@ player::strain_control_modifiers::strain_control_modifiers() :
 player::~player( void )
 {
     SetIsActive( FALSE );
-
-    // Destroy flashlight
-    object* pFlashlight = m_FlashlightGuid != 0 ? g_ObjMgr.GetObjectByGuid( m_FlashlightGuid ) : NULL;
-    
-    if ( pFlashlight != NULL )
-    {
-        g_ObjMgr.DestroyObjectEx( m_FlashlightGuid, TRUE );
-    }
-
-    m_FlashlightGuid = 0;
 
     // Remove the player's ear from the audio manager.
     g_AudioMgr.DestroyEar( m_AudioEarID );
@@ -3098,62 +3086,20 @@ xbool player::GetClosestLoreObjectDist( f32 &ClosestDist )
 }
 
 //==============================================================================
-void player::InitFlashlight( const vector3& rInitPos )
+void player::OnCollectLight( void )
 {
-    // create the flashlight (todo--make this part of the weapon blueprint so artists/designers can play.)
-    if( m_FlashlightGuid != 0 )
-    {
-        // already created
-        return;
-    }
-    else
-    {
-        m_FlashlightGuid = g_ObjMgr.CreateObject( projector_obj::GetObjectType() );
-    }
-
-    object_ptr<projector_obj> ProjObj(m_FlashlightGuid);
-
-    if( ProjObj.IsValid() )
-    {
-        texture::handle Texture;
-
-        // set visuals
-        Texture.SetName( PRELOAD_FILE("Flashlight.xbmp") );
-        ProjObj.m_pObject->SetShadow( FALSE );
-        ProjObj.m_pObject->SetActive( FALSE );
-        ProjObj.m_pObject->SetIsFlashlight( TRUE );
-        ProjObj.m_pObject->SetFOV( R_90 );
-        ProjObj.m_pObject->SetLength( 2000.0f );
-        ProjObj.m_pObject->SetTextureHandle( Texture );
-        ProjObj.m_pObject->OnMove( rInitPos );
-        ProjObj.m_pObject->SetZone1( GetZone1() );
-        ProjObj.m_pObject->SetZone2( GetZone2() );
-    }
-    else
-    {
-        ASSERTS(0, "Invalid Flashlight");
-    }
+    flashlight_Register( *this );
 }
 
 //==============================================================================
 
 xbool player::IsFlashlightActive( void )
 {
-    new_weapon* pWeapon = GetCurrentWeaponPtr();
-    
-    // validate weapon
-    if( pWeapon )
-    {
-        object_ptr<projector_obj> ProjObj(m_FlashlightGuid);
+    if( !m_bUsingFlashlight )
+        return FALSE;
 
-        // is the flashlight object valid and is the bone valid?
-        if ( ProjObj.IsValid() && pWeapon->CheckFlashlightPoint() )
-        {
-            return ProjObj.m_pObject->IsActive();
-        }
-    }
-    
-    return FALSE;
+    matrix4 L2W;
+    return flashlight_CalcTransform( *this, L2W );
 }
 
 //==============================================================================
@@ -3201,56 +3147,33 @@ void player::SetFlashlightActive( xbool bOn )
 
 
     new_weapon* pWeapon = GetCurrentWeaponPtr();
+    const xbool bCanUseFlashlight = ( pWeapon && pWeapon->HasFlashlight() && pWeapon->CheckFlashlightPoint() );
+    const xbool bWasUsingFlashlight = m_bUsingFlashlight;
+    m_bUsingFlashlight = ( bOn && bCanUseFlashlight );
 
-    // validate weapon
-    if( pWeapon )
+    if ( bWasUsingFlashlight != m_bUsingFlashlight )
     {
-        object_ptr<projector_obj> ProjObj(m_FlashlightGuid);
-        
-        // is the flashlight object valid and is the bone valid?
-        if ( ProjObj.IsValid() && pWeapon->CheckFlashlightPoint() )
+        actor_effects* pActorEffects = GetActorEffects( TRUE );
+
+        if ( m_bUsingFlashlight )
         {
-            ProjObj.m_pObject->SetActive(bOn);
-        }
-
-        MoveFlashlight();
-
-        const xbool bWasUsingFlashlight = m_bUsingFlashlight;
-        m_bUsingFlashlight = bOn;
-
-        if ( bWasUsingFlashlight != m_bUsingFlashlight )
-        {
-            actor_effects* pActorEffects = GetActorEffects( TRUE );
-
-            if ( m_bUsingFlashlight )
+            if ( pActorEffects )
             {
-                if ( pActorEffects )
-                {
-                    pActorEffects->InitEffect( actor_effects::FX_FLASHLIGHT, this );
-                }
-            }
-            else
-            {
-                if( pActorEffects )
-                {
-                    pActorEffects->KillEffect( actor_effects::FX_FLASHLIGHT );
-                }
+                pActorEffects->InitEffect( actor_effects::FX_FLASHLIGHT, this );
             }
         }
-
-        #ifndef X_EDITOR
-        m_NetDirtyBits |= FLASHLIGHT_BIT;
-        #endif
+        else
+        {
+            if( pActorEffects )
+            {
+                pActorEffects->KillEffect( actor_effects::FX_FLASHLIGHT );
+            }
+        }
     }
-    else
-    {
-        // set using flashlight to false because weapon is invalid
-        m_bUsingFlashlight = FALSE;
 
-        #ifndef X_EDITOR
-        m_NetDirtyBits |= FLASHLIGHT_BIT;
-        #endif
-    }
+    #ifndef X_EDITOR
+    m_NetDirtyBits |= FLASHLIGHT_BIT;
+    #endif
 
     // flashlight is off, reset flashlight timeout
     if( m_bUsingFlashlight == FALSE )
@@ -3322,46 +3245,6 @@ xbool player::AddBattery( const f32& nDeltaBattery )
     }
 
     return FALSE;
-}
-
-//==============================================================================
-
-void player::MoveFlashlight( void )
-{
-    if( IsFlashlightActive() )
-    {
-        new_weapon* pWeapon = GetCurrentWeaponPtr();
-    
-        // validate weapon
-        if( pWeapon )
-        {
-            object_ptr<projector_obj> ProjObj(m_FlashlightGuid);
-            
-            // validate flashlight object and flashlight bone
-            if ( ProjObj.IsValid() && pWeapon->CheckFlashlightPoint() )
-            {
-                matrix4 L2W;
-                vector3 Vect;
-                
-                // transform if we are in the proper state
-                if( pWeapon->GetFlashlightTransformInfo(L2W, Vect) )
-                {
-                    L2W.PreTranslate(Vect);
-                    L2W.PreRotateY(R_180);
-                    L2W.PreTranslate( vector3(0.0f, 0.0f, -100.0f) );
-                    ProjObj.m_pObject->OnTransform( L2W );
-
-                    // set flashlight zones to the player's zones
-                    ProjObj.m_pObject->SetZones(GetZones());
-                }
-            }
-            else
-            {
-                // kill flashlight if we don't have a weapon
-                ProjObj.m_pObject->SetActive(FALSE);
-            }            
-        }
-    }    
 }
 
 //==============================================================================

@@ -33,6 +33,12 @@ public:
     enum    { MAX_FADING_LIGHTS    = 64 };
     enum    { MAX_COLLECTED_LIGHTS = 16 };
 
+    enum light_shape
+    {
+        LIGHT_SHAPE_OMNI = 0,
+        LIGHT_SHAPE_SPOT,
+    };
+
              light_mgr( void );
     virtual ~light_mgr( void );
 
@@ -52,7 +58,16 @@ public:
                                       const xcolor&  C,
                                       f32            Radius,
                                       f32            Intensity,
-                                      xbool          CharOnly );
+                                      xbool          CharOnly,
+                                      s32            Shape = LIGHT_SHAPE_OMNI,
+                                      xbool          CastShadows = TRUE,
+                                      f32            InnerRadius = 0.0f,
+                                      const vector3& Direction = vector3( 0.0f, 0.0f, 1.0f ),
+                                      f32            Falloff = 1.0f,
+                                      f32            InnerAngle = 30.0f,
+                                      f32            OuterAngle = 45.0f,
+                                      s32            ShadowMapResolution = 512,
+                                      s32            ShadowPriority = 1 );
 
     // Here are the functions for getting lights that actually hit an object. You should
     // make sure you are in the begin/end pair before asking for lights. Also, make
@@ -68,12 +83,40 @@ public:
                                       vector3&       Pos,
                                       f32&           Radius,
                                       xcolor&        C );
+    void    GetCollectedLightInfo   ( s32            Index,
+                                      vector3&       Pos,
+                                      f32&           Radius,
+                                      xcolor&        C,
+                                      f32&           Falloff );
+    void    GetCollectedLightInfo   ( s32            Index,
+                                      vector3&       Pos,
+                                      f32&           Radius,
+                                      xcolor&        C,
+                                      f32&           Falloff,
+                                      s32&           Shape,
+                                      vector3&       Direction,
+                                      f32&           InnerAngle,
+                                      f32&           OuterAngle );
     s32     CollectCharLights       ( const matrix4& L2W,
                                       const bbox&    B,
                                       s32            MaxLightCount = 3 );
     void    GetCollectedCharLight   ( s32            Index,
                                       vector3&       Dir,
                                       xcolor&        C );
+    s32     GetNDynamicLights       ( void ) const;
+    void    GetDynamicLight         ( s32            Index,
+                                      vector3&       Pos,
+                                      f32&           Radius,
+                                      xcolor&        C,
+                                      s32&           Shape,
+                                      xbool&         CastShadows,
+                                      f32&           InnerRadius,
+                                      vector3&       Direction,
+                                      f32&           Falloff,
+                                      f32&           InnerAngle,
+                                      f32&           OuterAngle,
+                                      s32&           ShadowMapResolution,
+                                      s32&           ShadowPriority ) const;
     s32     GetNNonCharLights       ( void ) const;
     void    GetLight                ( s32            Index,
                                       vector3&       Pos,
@@ -103,6 +146,15 @@ protected:
         f32     Radius;
         xcolor  Color;
         f32     Intensity;
+        vector3 Direction;
+        f32     InnerRadius;
+        f32     Falloff;
+        f32     InnerAngle;
+        f32     OuterAngle;
+        s32     Shape;
+        s32     ShadowMapResolution;
+        s32     ShadowPriority;
+        xbool   CastShadows;
     };
 
     struct dir_light
@@ -121,8 +173,13 @@ protected:
         f32     Radius;
         xcolor  Color;
         f32     Intensity;
+        f32     Falloff;
         f32     Score;
         xbool   CharOnly;
+        s32     Shape;
+        vector3 Direction;
+        f32     InnerAngle;
+        f32     OuterAngle;
     };
 
     // internal helper routines
@@ -135,7 +192,11 @@ protected:
                                       const vector3& Pos,
                                       f32            Radius,
                                       f32            Intensity,
-                                      xcolor&        C );
+                                      xcolor&        C,
+                                      s32            Shape = LIGHT_SHAPE_OMNI,
+                                      const vector3& Direction = vector3( 0.0f, 0.0f, 1.0f ),
+                                      f32            InnerAngle = 30.0f,
+                                      f32            OuterAngle = 45.0f );
     friend s32 SpadLightSortFn      ( const void* pA,
                                       const void* pB );
 
@@ -188,6 +249,14 @@ s32 light_mgr::GetNNonCharLights( void ) const
     ASSERT( m_bInCollection );
 
     return m_nNonCharLightsInSpad;
+}
+
+//==============================================================================
+
+inline
+s32 light_mgr::GetNDynamicLights( void ) const
+{
+    return m_NDynamicLights;
 }
 
 //==============================================================================
