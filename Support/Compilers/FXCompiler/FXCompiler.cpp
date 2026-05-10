@@ -146,7 +146,7 @@ void ExportFile( const char* pFileName )
     // Export to PC
     if( !Effect.m_ExportPC.IsEmpty() )
     {
-        export Export;
+        exporter Export;
         Export.ConstructData( &Effect, EXPORT_TARGET_PC );
         Export.SaveData( (const char*)Effect.m_ExportPC, EXPORT_TARGET_PC );
         x_printf( " -PC  : %s\n", Effect.m_ExportPC );
@@ -155,7 +155,7 @@ void ExportFile( const char* pFileName )
     // Export to PS2
     if( !Effect.m_ExportPS2.IsEmpty() )
     {
-        export Export;
+        exporter Export;
         Export.ConstructData( &Effect, EXPORT_TARGET_PS2 );
         Export.SaveData( (const char*)Effect.m_ExportPS2, EXPORT_TARGET_PS2 );
         x_printf( " -PS2 : %s\n", Effect.m_ExportPS2 );
@@ -164,7 +164,7 @@ void ExportFile( const char* pFileName )
     // Export to GCN
     if( !Effect.m_ExportGCN.IsEmpty() )
     {   
-        export Export;
+        exporter Export;
         Export.ConstructData( &Effect, EXPORT_TARGET_GCN );
         Export.SaveData( (const char*)Effect.m_ExportGCN, EXPORT_TARGET_GCN );
         x_printf( " -GCN : %s\n", Effect.m_ExportGCN );
@@ -173,7 +173,7 @@ void ExportFile( const char* pFileName )
     // Export to XBOX
     if( !Effect.m_ExportXBOX.IsEmpty() )
     {
-        export Export;
+        exporter Export;
         Export.ConstructData( &Effect, EXPORT_TARGET_XBOX );
         Export.SaveData( (const char*)Effect.m_ExportXBOX, EXPORT_TARGET_XBOX );
         x_printf( " -XBOX: %s\n", Effect.m_ExportXBOX );
