@@ -22,7 +22,7 @@
 //==============================================================================
 
 // define our target buttons
-#if defined( TARGET_PS2 ) || defined( TARGET_PC )
+#if defined TARGET_PS2
 #define NEXT_PAGE_BTN   INPUT_PS2_BTN_R1
 #define PREV_PAGE_BTN   INPUT_PS2_BTN_L1
 #define NEXT_ITEM_BTN   INPUT_PS2_BTN_L_DOWN
@@ -42,6 +42,16 @@
 #define SELECT_BTN      INPUT_XBOX_BTN_BACK
 #define START_BTN       INPUT_XBOX_BTN_START
 #define ACTION_BTN      INPUT_XBOX_BTN_X
+#elif defined TARGET_PC
+#define NEXT_PAGE_BTN   INPUT_KBD_PRIOR
+#define PREV_PAGE_BTN   INPUT_KBD_NEXT
+#define NEXT_ITEM_BTN   INPUT_KBD_DOWN
+#define PREV_ITEM_BTN   INPUT_KBD_UP
+#define NEXT_STATE_BTN  INPUT_KBD_RIGHT
+#define PREV_STATE_BTN  INPUT_KBD_LEFT
+#define SELECT_BTN      INPUT_KBD_TAB
+#define START_BTN       INPUT_KBD_RETURN
+#define ACTION_BTN      INPUT_KBD_SPACE
 #endif 
 
 //==============================================================================

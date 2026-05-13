@@ -864,7 +864,7 @@ const char* input_pad::GetGadgetIDNames( s32 iPlatform )
                 "MEDIASELECT\0";
     }
     x_throw ("Alert! Unexpected platfrom!!!" );
-    //return "";
+    return "";
 }
 
 //==============================================================================

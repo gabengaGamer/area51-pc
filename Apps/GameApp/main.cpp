@@ -282,6 +282,17 @@ void        Render                  ( void );
 //  INPUT HANDLING FUNCTIONS
 //==============================================================================
 
+#if defined TARGET_PS2
+#define SELECT_BTN      INPUT_PS2_BTN_SELECT
+#define START_BTN       INPUT_PS2_BTN_START
+#elif defined TARGET_XBOX
+#define SELECT_BTN      INPUT_XBOX_BTN_BACK
+#define START_BTN       INPUT_XBOX_BTN_START
+#elif defined TARGET_PC
+#define SELECT_BTN      INPUT_KBD_TAB
+#define START_BTN       INPUT_KBD_RETURN
+#endif 
+
 xbool HandleInput( f32 DeltaTime )
 {
     CONTEXT( "HandleInput" );
@@ -327,8 +338,8 @@ xbool HandleInput( f32 DeltaTime )
         }
         
     #if defined( ENABLE_DEBUG_MENU )
-        if( input_IsPressed(INPUT_PS2_BTN_SELECT) && 
-            input_WasPressed(INPUT_PS2_BTN_START ) &&
+        if( input_IsPressed( SELECT_BTN ) && 
+            input_WasPressed( START_BTN ) &&
             g_StateMgr.IsPaused() != TRUE ) 
         {
             g_DebugMenu.Enable();
