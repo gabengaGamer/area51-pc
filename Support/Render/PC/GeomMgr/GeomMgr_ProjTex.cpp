@@ -109,10 +109,7 @@ void geom_mgr::ResetProjTextures( void )
 
 //==============================================================================
 
-xbool geom_mgr::UpdateProjTextures( const matrix4& L2W,
-                                        const bbox&    B,
-                                        u32            Slot,
-                                        u32            RenderFlags )
+xbool geom_mgr::UpdateProjTextures( u32 Slot )
 {
     if( !m_pProjTextureBuffer || !g_pd3dContext )
         return FALSE;
@@ -123,55 +120,41 @@ xbool geom_mgr::UpdateProjTextures( const matrix4& L2W,
     ID3D11ShaderResourceView* shadSRV [proj_texture_mgr::MAX_PROJ_SHADOWS] = { NULL };
 
     s32 nAppliedLights = 0;
-    if( !(RenderFlags & render::DISABLE_SPOTLIGHT) &&
-        (RenderFlags & render::INSTFLAG_SPOTLIGHT) )
+    const s32 nProjLights = MIN( g_ProjTextureMgr.GetProjLightCount(), proj_texture_mgr::MAX_PROJ_LIGHTS );
+    for( s32 i = 0; i < nProjLights; i++ )
     {
-        const s32 nCollectedLights = g_ProjTextureMgr.CollectLights( L2W,
-                                                                     B,
-                                                                     proj_texture_mgr::MAX_PROJ_LIGHTS );
+        matrix4  ProjMtx;
+        xbitmap* pBMP = NULL;
+        g_ProjTextureMgr.GetProjLight( i, ProjMtx, pBMP );
+        if( !pBMP )
+            continue;
 
-        for( s32 i = 0; i < nCollectedLights; i++ )
-        {
-            matrix4  ProjMtx;
-            xbitmap* pBMP = NULL;
-            g_ProjTextureMgr.GetCollectedLight( ProjMtx, pBMP );
-            if( !pBMP )
-                continue;
+        ID3D11ShaderResourceView* pSRV = vram_GetSRV( *pBMP );
+        if( !pSRV )
+            continue;
 
-            ID3D11ShaderResourceView* pSRV = vram_GetSRV( *pBMP );
-            if( !pSRV )
-                continue;
-
-            cb.ProjLightMatrix[nAppliedLights] = ProjMtx;
-            lightSRV[nAppliedLights] = pSRV;
-            nAppliedLights++;
-        }
+        cb.ProjLightMatrix[nAppliedLights] = ProjMtx;
+        lightSRV[nAppliedLights] = pSRV;
+        nAppliedLights++;
     }
 
     s32 nAppliedShadows = 0;
-    if( !(RenderFlags & render::DISABLE_PROJ_SHADOWS) &&
-        (RenderFlags & render::INSTFLAG_PROJ_SHADOW) )
+    const s32 nProjShadows = MIN( g_ProjTextureMgr.GetProjShadowCount(), proj_texture_mgr::MAX_PROJ_SHADOWS );
+    for( s32 i = 0; i < nProjShadows; i++ )
     {
-        const s32 nCollectedShadows = g_ProjTextureMgr.CollectShadows( L2W,
-                                                                       B,
-                                                                       proj_texture_mgr::MAX_PROJ_SHADOWS );
+        matrix4  ShadMtx;
+        xbitmap* pBMP = NULL;
+        g_ProjTextureMgr.GetProjShadow( i, ShadMtx, pBMP );
+        if( !pBMP )
+            continue;
 
-        for( s32 i = 0; i < nCollectedShadows; i++ )
-        {
-            matrix4  ShadMtx;
-            xbitmap* pBMP = NULL;
-            g_ProjTextureMgr.GetCollectedShadow( ShadMtx, pBMP );
-            if( !pBMP )
-                continue;
+        ID3D11ShaderResourceView* pSRV = vram_GetSRV( *pBMP );
+        if( !pSRV )
+            continue;
 
-            ID3D11ShaderResourceView* pSRV = vram_GetSRV( *pBMP );
-            if( !pSRV )
-                continue;
-
-            cb.ProjShadowMatrix[nAppliedShadows] = ShadMtx;
-            shadSRV[nAppliedShadows] = pSRV;
-            nAppliedShadows++;
-        }
+        cb.ProjShadowMatrix[nAppliedShadows] = ShadMtx;
+        shadSRV[nAppliedShadows] = pSRV;
+        nAppliedShadows++;
     }
 
     cb.ProjLightCount  = nAppliedLights;

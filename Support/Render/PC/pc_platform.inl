@@ -25,6 +25,8 @@ static const material*         s_pMaterial        = NULL;
 static rigid_geom*             s_pRigidGeom       = NULL;
 static skin_geom*              s_pSkinGeom        = NULL;
 static const xbitmap*          s_pDrawBitmap      = NULL;
+static s32                     s_iRigidSubMesh    = -1;
+static s32                     s_iSkinSubMesh     = -1;
 
 static
 const rtarget* platform_GetFinalColorTarget( void )
@@ -256,11 +258,52 @@ void platform_RestoreGBufferTargets( xbool bSceneOnlyBound )
 //=============================================================================
 
 static
+void platform_FlushRigidBatch( void )
+{
+    if( !g_GeomMgr.HasRigidBatch() )
+    {
+        g_GeomMgr.FlushRigidBatch( s_pMaterial, FALSE );
+        return;
+    }
+
+    const u8 MaterialOverride = s_bInDistortionPass ? FALSE : g_GeomMgr.GetRigidBatchOverrideMat();
+    const xbool bSceneOnlyBound = platform_BindSceneOnlyTargets( s_pMaterial,
+                                                                 g_GeomMgr.GetRigidBatchFlags(),
+                                                                 MaterialOverride );
+
+    g_GeomMgr.FlushRigidBatch( s_pMaterial, MaterialOverride );
+    platform_RestoreGBufferTargets( bSceneOnlyBound );
+}
+
+//=============================================================================
+
+static
+void platform_FlushSkinBatch( void )
+{
+    if( !g_GeomMgr.HasSkinBatch() )
+    {
+        g_GeomMgr.FlushSkinBatch( s_pMaterial, FALSE );
+        return;
+    }
+
+    const u8 MaterialOverride = s_bInDistortionPass ? FALSE : g_GeomMgr.GetSkinBatchOverrideMat();
+    const xbool bSceneOnlyBound = platform_BindSceneOnlyTargets( s_pMaterial,
+                                                                 g_GeomMgr.GetSkinBatchFlags(),
+                                                                 MaterialOverride );
+
+    g_GeomMgr.FlushSkinBatch( s_pMaterial, MaterialOverride );
+    platform_RestoreGBufferTargets( bSceneOnlyBound );
+}
+
+//=============================================================================
+
+static
 void platform_BeginRigidGeom( geom* pGeom, s32 iSubMesh )
 {
-    (void)iSubMesh;
     ASSERT( s_pRigidGeom == NULL );
     s_pRigidGeom = (rigid_geom*)pGeom;
+    s_iRigidSubMesh = iSubMesh;
+    g_GeomMgr.BeginRigidBatch();
     g_RigidVertMgr.BeginRender();
     g_GeomMgr.InvalidateCache();
 }
@@ -271,7 +314,9 @@ static
 void platform_EndRigidGeom( void )
 {
     ASSERT( s_pRigidGeom );
+    platform_FlushRigidBatch();
     s_pRigidGeom = NULL;
+    s_iRigidSubMesh = -1;
 }
 
 //=============================================================================
@@ -279,9 +324,10 @@ void platform_EndRigidGeom( void )
 static
 void platform_BeginSkinGeom( geom* pGeom, s32 iSubMesh )
 {
-    (void)iSubMesh;
     ASSERT( s_pSkinGeom == NULL );
     s_pSkinGeom = (skin_geom*)pGeom;
+    s_iSkinSubMesh = iSubMesh;
+    g_GeomMgr.BeginSkinBatch();
     g_SkinVertMgr.BeginRender();
     g_GeomMgr.InvalidateCache();
 }
@@ -292,7 +338,9 @@ static
 void platform_EndSkinGeom( void )
 {
     ASSERT( s_pSkinGeom );
+    platform_FlushSkinBatch();
     s_pSkinGeom = NULL;
+    s_iSkinSubMesh = -1;
 }
 
 //=============================================================================
@@ -300,46 +348,28 @@ void platform_EndSkinGeom( void )
 static
 void platform_RenderRigidInstance( render_instance& Inst )
 {
-    if( !g_pd3dDevice )
+    if( !g_pd3dDevice || !s_pRigidGeom )
         return;
 
-    const u8 MaterialOverride = s_bInDistortionPass ? FALSE : Inst.OverrideMat;
-    const xbool bSceneOnlyBound = platform_BindSceneOnlyTargets( s_pMaterial, Inst.Flags, MaterialOverride );
+    ASSERT( s_iRigidSubMesh == Inst.SortKey.GeomSubMesh );
 
-    g_GeomMgr.SetRigidMaterial(  Inst.Data.Rigid.pL2W,
-                                    &Inst.Data.Rigid.pGeom->m_BBox,
-                                    (d3d_lighting*)Inst.pLighting,
-                                    s_pMaterial,
-                                    Inst.Flags,
-                                    Inst.UOffset,
-                                    Inst.VOffset,
-                                    Inst.Alpha,
-                                    MaterialOverride );
+    desc_rigid_batch Batch;
+    Batch.pGeom        = Inst.Data.Rigid.pGeom;
+    Batch.pL2W         = Inst.Data.Rigid.pL2W;
+    Batch.pLighting    = (const cb_geom_lighting*)Inst.pLighting;
+    Batch.pColorInfo   = (const u32*)Inst.Data.Rigid.pColInfo;
+    Batch.hDList       = Inst.hDList;
+    Batch.iSubMesh     = Inst.SortKey.GeomSubMesh;
+    Batch.RenderFlags  = Inst.Flags;
+    Batch.UOffset      = Inst.UOffset;
+    Batch.VOffset      = Inst.VOffset;
+    Batch.Alpha        = Inst.Alpha;
+    Batch.OverrideMat  = Inst.OverrideMat;
 
-    // TODO: GS: At the moment we use a lightmap every call to platform_RenderRigidInstance. 
-    // In theory, this is not the best solution, should definitely come up with something else
+    if( !g_GeomMgr.CanAppendRigidBatch( Batch ) )
+        platform_FlushRigidBatch();
 
-    if( Inst.Data.Rigid.pColInfo )
-    {
-        // Get the geometry to determine vertex count and submesh info
-        rigid_geom* pGeom = Inst.Data.Rigid.pGeom;
-        if( pGeom )
-        {
-            // Get submesh info  
-            geom::submesh& SubMesh = pGeom->m_pSubMesh[Inst.SortKey.GeomSubMesh];
-            rigid_geom::dlist_pc& DList = pGeom->m_System.pPC[SubMesh.iDList];
-            
-            // Apply lightmap colors
-            g_RigidVertMgr.ApplyLightmapColors( Inst.hDList,
-                                                (const u32*)Inst.Data.Rigid.pColInfo,
-                                                DList.nVerts,
-                                                DList.iColor );
-        }
-    }
-
-    g_RigidVertMgr.DrawDList( Inst.hDList, Inst.Data.Rigid.pL2W, NULL );
-    g_GeomMgr.ResetProjTextures();
-    platform_RestoreGBufferTargets( bSceneOnlyBound );
+    g_GeomMgr.AddRigidBatchInstance( Batch );
 }
 
 //=============================================================================
@@ -347,25 +377,27 @@ void platform_RenderRigidInstance( render_instance& Inst )
 static
 void platform_RenderSkinInstance( render_instance& Inst )
 {
-    if( !g_pd3dDevice )
+    if( !g_pd3dDevice || !s_pSkinGeom )
         return;
 
-    const u8 MaterialOverride = s_bInDistortionPass ? FALSE : Inst.OverrideMat;
-    const xbool bSceneOnlyBound = platform_BindSceneOnlyTargets( s_pMaterial, Inst.Flags, MaterialOverride );
+    ASSERT( s_iSkinSubMesh == Inst.SortKey.GeomSubMesh );
 
-    g_GeomMgr.SetSkinMaterial( &Inst.Data.Skin.pBones[0],
-                                   &Inst.Data.Skin.pGeom->m_BBox,
-                                   (d3d_lighting*)Inst.pLighting,
-                                   s_pMaterial,
-                                   Inst.Flags,
-                                   Inst.UOffset,
-                                   Inst.VOffset,
-                                   Inst.Alpha,
-                                   MaterialOverride );
+    desc_skin_batch Batch;
+    Batch.pGeom        = Inst.Data.Skin.pGeom;
+    Batch.pBones       = Inst.Data.Skin.pBones;
+    Batch.pLighting    = (const cb_geom_lighting*)Inst.pLighting;
+    Batch.hDList       = Inst.hDList;
+    Batch.iSubMesh     = Inst.SortKey.GeomSubMesh;
+    Batch.RenderFlags  = Inst.Flags;
+    Batch.UOffset      = Inst.UOffset;
+    Batch.VOffset      = Inst.VOffset;
+    Batch.Alpha        = Inst.Alpha;
+    Batch.OverrideMat  = Inst.OverrideMat;
 
-    g_SkinVertMgr.DrawDList( Inst.hDList, Inst.Data.Skin.pBones, (d3d_lighting*)Inst.pLighting );
-    g_GeomMgr.ResetProjTextures();
-    platform_RestoreGBufferTargets( bSceneOnlyBound );
+    if( !g_GeomMgr.CanAppendSkinBatch( Batch ) )
+        platform_FlushSkinBatch();
+
+    g_GeomMgr.AddSkinBatchInstance( Batch );
 }
 
 //=============================================================================
@@ -382,8 +414,41 @@ void platform_RegisterMaterial( material& Mat )
 static
 void platform_RegisterRigidGeom( rigid_geom& Geom )
 {
-    (void)Geom;
-    // TODO:
+    private_geom& PrivateGeom = s_lRegisteredGeoms(Geom.m_hGeom);
+    PrivateGeom.RigidDList.Clear();
+
+    rigid_geom::dlist_pc* pPCDList = Geom.m_System.pPC;
+
+    s32 nVerts = Geom.GetNVerts();
+    rigid_geom::vertex_pc* pBuffer = new rigid_geom::vertex_pc[nVerts];
+    rigid_geom::vertex_pc* pVertex = pBuffer;
+    rigid_geom::vertex_pc* pEnd    = (pVertex + nVerts);
+
+    for ( s32 iSubMesh = 0; iSubMesh < Geom.m_nSubMeshes; iSubMesh++ )
+    {
+        geom::submesh&        GeomSubMesh = Geom.m_pSubMesh[iSubMesh];
+        rigid_geom::dlist_pc& DList       = pPCDList[GeomSubMesh.iDList];
+
+        for ( s32 iVert = 0; iVert < DList.nVerts; iVert++ )
+        {
+            pVertex[iVert].Pos    = DList.pVert[iVert].Pos;
+            pVertex[iVert].UV     = DList.pVert[iVert].UV;
+            pVertex[iVert].Normal = DList.pVert[iVert].Normal;
+            pVertex[iVert].Color  = xcolor( 128, 128, 128, 255 );
+        }
+
+        xhandle& hDList = PrivateGeom.RigidDList.Append();
+        hDList = g_RigidVertMgr.AddDList( pVertex,
+                                          DList.nVerts,
+                                          DList.pIndices,
+                                          DList.nIndices,
+                                          DList.nIndices / 3 );
+
+        pVertex += DList.nVerts;
+    }
+
+    delete []pBuffer;
+    ASSERT( pVertex == pEnd );
 }
 
 //=============================================================================
@@ -391,8 +456,12 @@ void platform_RegisterRigidGeom( rigid_geom& Geom )
 static
 void platform_UnregisterRigidGeom( rigid_geom& Geom )
 {
-    (void)Geom;
-    // TODO:
+    private_geom& PrivateGeom = s_lRegisteredGeoms(Geom.m_hGeom);
+    for ( s32 i = 0; i < PrivateGeom.RigidDList.GetCount(); i++ )
+    {
+        g_RigidVertMgr.DelDList( PrivateGeom.RigidDList[i] );
+    }
+    PrivateGeom.RigidDList.Clear();
 }
 
 //=============================================================================
@@ -872,8 +941,8 @@ void* platform_CalculateRigidLighting( const matrix4&   L2W,
     if( NLights )
     {
         // Try allocate
-        d3d_lighting* pLighting = (d3d_lighting*)smem_BufferAlloc( sizeof(d3d_lighting) );
-        x_memset( pLighting, 0, sizeof(d3d_lighting) );
+        cb_geom_lighting* pLighting = (cb_geom_lighting*)smem_BufferAlloc( sizeof(cb_geom_lighting) );
+        x_memset( pLighting, 0, sizeof(cb_geom_lighting) );
         pLighting->LightCount = NLights;
       
         for( s32 i = 0; i < NLights; i++ )
@@ -943,8 +1012,8 @@ void* platform_CalculateSkinLighting( u32            Flags,
     s32 NLights = g_LightMgr.CollectCharLights( L2W, BBox, MAX_GEOM_LIGHTS );
     
     // Try allocate
-    d3d_lighting* pLighting = (d3d_lighting*)smem_BufferAlloc( sizeof(d3d_lighting) );
-    x_memset( pLighting, 0, sizeof(d3d_lighting) );
+    cb_geom_lighting* pLighting = (cb_geom_lighting*)smem_BufferAlloc( sizeof(cb_geom_lighting) );
+    x_memset( pLighting, 0, sizeof(cb_geom_lighting) );
     
     // Setup ambient
     pLighting->AmbCol.Set( (f32)Ambient.R / 255.0f,
@@ -989,10 +1058,27 @@ void* platform_CalculateSkinLighting( u32            Flags,
 #ifdef X_EDITOR
 
 static
+xhandle pc_GetRigidDList( render::hgeom_inst hInst, s32 iSubMesh )
+{
+    ASSERT( hInst.IsNonNull() );
+
+    private_instance& PrivateInst = s_lRegisteredInst(hInst);
+    rigid_geom*       pGeom       = (rigid_geom*)PrivateInst.pGeom;
+    ASSERT( PrivateInst.Type == TYPE_RIGID );
+    ASSERT( (iSubMesh >= 0) && (iSubMesh < pGeom->m_nSubMeshes) );
+
+    geom::submesh& SubMesh     = pGeom->m_pSubMesh[iSubMesh];
+    private_geom&  PrivateGeom = s_lRegisteredGeoms(pGeom->m_hGeom);
+    return PrivateGeom.RigidDList[(s32)SubMesh.iDList];
+}
+
+//=============================================================================
+
+static
 void* platform_LockRigidDListVertex( render::hgeom_inst hInst, s32 iSubMesh )
 {
     xhandle Handle = pc_GetRigidDList( hInst, iSubMesh );
-    return s_RigidVertMgr.LockDListVerts( Handle );
+    return g_RigidVertMgr.LockDListVerts( Handle );
 }
 
 //=============================================================================
@@ -1001,7 +1087,7 @@ static
 void platform_UnlockRigidDListVertex( render::hgeom_inst hInst, s32 iSubMesh )
 {
     xhandle Handle = pc_GetRigidDList( hInst, iSubMesh );
-    s_RigidVertMgr.UnlockDListVerts( Handle );
+    g_RigidVertMgr.UnlockDListVerts( Handle );
 }
 
 //=============================================================================
@@ -1010,7 +1096,7 @@ static
 void* platform_LockRigidDListIndex( render::hgeom_inst hInst, s32 iSubMesh,  s32& VertexOffset )
 {
     xhandle Handle = pc_GetRigidDList( hInst, iSubMesh );
-    return s_RigidVertMgr.LockDListIndices( Handle, VertexOffset );
+    return g_RigidVertMgr.LockDListIndices( Handle, VertexOffset );
 }
 
 //=============================================================================
@@ -1019,7 +1105,7 @@ static
 void platform_UnlockRigidDListIndex( render::hgeom_inst hInst, s32 iSubMesh )
 {
     xhandle Handle = pc_GetRigidDList( hInst, iSubMesh );
-    s_RigidVertMgr.UnlockDListIndices( Handle );
+    g_RigidVertMgr.UnlockDListIndices( Handle );
 }
 
 #endif
@@ -1307,9 +1393,10 @@ static
 void platform_AddPointShadowMapSource( const matrix4& L2W,
                                        radian         FOV,
                                        f32            LightRadius,
-                                       f32            LightFalloff )
+                                       f32            LightFalloff,
+                                       s32            ShadowMapResolution )
 {
-    g_ShadowMapMgr.AddPointSource( L2W, FOV, LightRadius, LightFalloff );
+    g_ShadowMapMgr.AddPointSource( L2W, FOV, LightRadius, LightFalloff, ShadowMapResolution );
 }
 
 //=============================================================================
@@ -1318,9 +1405,10 @@ static
 void platform_AddSpotShadowMapSource( const matrix4& L2W,
                                       radian         FOV,
                                       f32            LightRadius,
-                                      f32            LightFalloff )
+                                      f32            LightFalloff,
+                                      s32            ShadowMapResolution )
 {
-    g_ShadowMapMgr.AddSpotSource( L2W, FOV, LightRadius, LightFalloff );
+    g_ShadowMapMgr.AddSpotSource( L2W, FOV, LightRadius, LightFalloff, ShadowMapResolution );
 }
 
 //=============================================================================
@@ -1461,53 +1549,8 @@ void platform_EndNormalRender( void )
 static
 void platform_RegisterRigidInstance( rigid_geom& Geom, render::hgeom_inst hInst )
 {
-    private_instance& PrivateInst = s_lRegisteredInst(hInst);
-    PrivateInst.RigidDList.Clear();
-    PrivateInst.IsLit = FALSE;
-
-    // Copy the instance over (the pc renderer isn't really instance based, so
-    // we need to make a copy of the verts)
-    rigid_geom::dlist_pc* pPCDList = Geom.m_System.pPC;
-
-    // Allocate work memory and setup pointers for the copy loop
-    s32 nVerts = Geom.GetNVerts();
-    rigid_geom::vertex_pc* pBuffer = new rigid_geom::vertex_pc[nVerts];
-    rigid_geom::vertex_pc* pVertex = pBuffer;
-    rigid_geom::vertex_pc* pEnd    = (pVertex + nVerts);
-
-    // Loop through all SubMeshs
-    for ( s32 iSubMesh = 0; iSubMesh < Geom.m_nSubMeshes; iSubMesh++ )
-    {
-        // Get the DList for this submesh
-        geom::submesh&        GeomSubMesh = Geom.m_pSubMesh[iSubMesh];
-        rigid_geom::dlist_pc& DList       = pPCDList[GeomSubMesh.iDList];
-
-        // Copy vertex data
-        for ( s32 iVert = 0; iVert < DList.nVerts; iVert++ )
-        {
-            pVertex[iVert].Pos    = DList.pVert[iVert].Pos;
-            pVertex[iVert].UV     = DList.pVert[iVert].UV;
-            pVertex[iVert].Normal = DList.pVert[iVert].Normal;
-            pVertex[iVert].Color  = xcolor( 128, 128, 128, 255 );
-        }
-
-        // create a new handle in the private instance
-        xhandle& hDList = PrivateInst.RigidDList.Append();
-
-        // create the dlist and store the handle out
-        hDList = g_RigidVertMgr.AddDList( pVertex,
-                                          DList.nVerts,
-                                          DList.pIndices,
-                                          DList.nIndices,
-                                          DList.nIndices/3 );
-
-        // advance the ptr
-        pVertex += DList.nVerts;
-    }
-
-    // Free the work memory
-    delete []pBuffer;
-    ASSERT( pVertex == pEnd );
+    (void)Geom;
+    (void)hInst;
 }
 
 //=============================================================================
@@ -1517,7 +1560,6 @@ void platform_RegisterSkinInstance( skin_geom& Geom, render::hgeom_inst hInst )
 {
     (void)Geom;
     (void)hInst;
-    // TODO:
 }
 
 //=============================================================================
@@ -1525,12 +1567,7 @@ void platform_RegisterSkinInstance( skin_geom& Geom, render::hgeom_inst hInst )
 static
 void platform_UnregisterRigidInstance( render::hgeom_inst hInst )
 {
-    private_instance& PrivateInst = s_lRegisteredInst(hInst);
-    for ( s32 i = 0; i < PrivateInst.RigidDList.GetCount(); i++ )
-    {
-        g_RigidVertMgr.DelDList( PrivateInst.RigidDList[i] );
-    }
-    PrivateInst.RigidDList.Clear();
+    (void)hInst;
 }
 
 //=============================================================================
@@ -1539,5 +1576,4 @@ static
 void platform_UnregisterSkinInstance( render::hgeom_inst hInst )
 {
     (void)hInst;
-    // TODO:
 }

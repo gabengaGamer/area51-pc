@@ -153,11 +153,13 @@ static void     platform_FinalizeShadowSourceList   ( void )                    
 static void     platform_AddPointShadowMapSource    ( const matrix4&         L2W,
                                                       radian                 FOV,
                                                       f32                    LightRadius,
-                                                      f32                    LightFalloff ) X_SECTION( render_add_shadow );
+                                                      f32                    LightFalloff,
+                                                      s32                    ShadowMapResolution ) X_SECTION( render_add_shadow );
 static void     platform_AddSpotShadowMapSource     ( const matrix4&         L2W,
                                                       radian                 FOV,
                                                       f32                    LightRadius,
-                                                      f32                    LightFalloff ) X_SECTION( render_add_shadow );
+                                                      f32                    LightFalloff,
+                                                      s32                    ShadowMapResolution ) X_SECTION( render_add_shadow );
 static void     platform_BeginShadowShaders         ( void )                            X_SECTION( render_infrequent );
 static void     platform_EndShadowShaders           ( void )                            X_SECTION( render_infrequent );
 static void     platform_StartShadowCast            ( void )                            X_SECTION( render_infrequent );

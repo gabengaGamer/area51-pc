@@ -14,13 +14,13 @@ SamplerState samLinear : register(s0);
 
 cbuffer FilterParams : register(b4)
 {
-    float4 FilterParams0; // x = motion intensity, y = zoom, z = sin(angle), w = cos(angle)
-    float4 FilterParams1; // x = alpha sub / 255, y = alpha scale / 255
-    float4 FilterParams2; // x = warp count, y = 1 / width, z = 1 / height
-    float4 FilterParams3; // x/y/z = color scale, w = alpha/intensity scale
-    float4 FilterParams4; // x = falloff fn, y = param1, z = param2, w = mip offset
-    float4 FilterParams5; // x = near z, y = far z, z = 1 / width, w = 1 / height
-    float4 FilterParams6; // x = aux0, y = aux1, z = aux2, w = aux3
+    float4 FilterParams0;  // x = motion intensity, y = zoom, z = sin(angle), w = cos(angle)
+    float4 FilterParams1;  // x = alpha sub / 255, y = alpha scale / 255
+    float4 FilterParams2;  // x = warp count, y = 1 / width, z = 1 / height
+    float4 FilterParams3;  // x/y/z = color scale, w = alpha/intensity scale
+    float4 FilterParams4;  // x = falloff fn, y = param1, z = param2, w = mip offset
+    float4 FilterParams5;  // x = near z, y = far z, z = 1 / width, w = 1 / height
+    float4 FilterParams6;  // x = aux0, y = aux1, z = aux2, w = aux3
     float4 ScreenWarps[8]; // xy = center in pixels, z = radius in pixels, w = warp amount
 };
 
@@ -194,5 +194,3 @@ float4 PS_Noise( float4 Pos : SV_POSITION, float2 UV : TEXCOORD0 ) : SV_Target
 
     return float4( grainColor, alpha );
 }
-
-//==============================================================================

@@ -60,6 +60,7 @@ public:
         s32     Type;
         s32     PointLightIndex;
         s32     FaceIndex;
+        s32     RequestedResolution;
         matrix4 WorldToClip;
         matrix4 WorldToAtlas;
         vector4 LightPosRadius;
@@ -91,11 +92,13 @@ public:
     xbool       AddPointSource          ( const matrix4& L2W,
                                           radian         FOV,
                                           f32            LightRadius,
-                                          f32            LightFalloff );
+                                          f32            LightFalloff,
+                                          s32            ShadowMapResolution );
     xbool       AddSpotSource           ( const matrix4& L2W,
                                           radian         FOV,
                                           f32            LightRadius,
-                                          f32            LightFalloff );
+                                          f32            LightFalloff,
+                                          s32            ShadowMapResolution );
 
     //--------------------------------------------------------------------------
     // Source Queries
@@ -119,6 +122,7 @@ public:
                 GetSource               ( s32 SourceIndex ) const;
     s32         GetSourceCount          ( void ) const;
     s32         GetPointLightCount      ( void ) const;
+    s32         GetSpotAtlasSize        ( void ) const;
     s32         GetSpotSourceCount      ( void ) const;
     xbool       HasActiveSources        ( void ) const;
 
@@ -149,7 +153,8 @@ private:
                                           const matrix4&  L2W,
                                           radian          FOV,
                                           f32             LightRadius,
-                                          f32             LightFalloff ) const;
+                                          f32             LightFalloff,
+                                          s32             ShadowMapResolution ) const;
     void        UpdateAtlasLayout       ( void );
 
 private:
@@ -162,6 +167,7 @@ private:
     s32             m_PointFaceCount;
     s32             m_PointLightCount;
     s32             m_SpotSourceCount;
+    s32             m_SpotAtlasSize;
     xbool           m_AtlasLayoutDirty;
     s32             m_NCollectedSources;
     s32             m_CollectedSources[MAX_SHADOW_SOURCES];

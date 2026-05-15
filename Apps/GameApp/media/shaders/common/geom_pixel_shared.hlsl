@@ -28,6 +28,130 @@ static float4 GeomEncodeLinearDepth( GEOM_PIXEL_INPUT input )
 
 //==============================================================================
 
+#if defined(GEOM_USE_RIGID_INSTANCE_DATA)
+uint GeomGetMaterialFlags( GEOM_PIXEL_INPUT input )
+{
+    return MaterialFlags | RigidInstances[input.InstanceID].ShaderFlags;
+}
+
+float GeomGetFadeAlpha( GEOM_PIXEL_INPUT input )
+{
+    return saturate( RigidInstances[input.InstanceID].FadeAlpha );
+}
+
+uint GeomGetLightCount( GEOM_PIXEL_INPUT input )
+{
+    return min( RigidInstances[input.InstanceID].LightCount, (uint)MAX_GEOM_LIGHTS );
+}
+
+float4 GeomGetLightVec( GEOM_PIXEL_INPUT input, uint lightIndex )
+{
+    return RigidInstances[input.InstanceID].LightVec[lightIndex];
+}
+
+float4 GeomGetLightCol( GEOM_PIXEL_INPUT input, uint lightIndex )
+{
+    return RigidInstances[input.InstanceID].LightCol[lightIndex];
+}
+
+float4 GeomGetLightDir( GEOM_PIXEL_INPUT input, uint lightIndex )
+{
+    return RigidInstances[input.InstanceID].LightDir[lightIndex];
+}
+
+float4 GeomGetLightCone( GEOM_PIXEL_INPUT input, uint lightIndex )
+{
+    return RigidInstances[input.InstanceID].LightCone[lightIndex];
+}
+
+float4 GeomGetLightAmbCol( GEOM_PIXEL_INPUT input )
+{
+    return RigidInstances[input.InstanceID].LightAmbCol;
+}
+#elif defined(GEOM_USE_SKIN_INSTANCE_DATA)
+uint GeomGetMaterialFlags( GEOM_PIXEL_INPUT input )
+{
+    return MaterialFlags | SkinInstances[input.InstanceID].ShaderFlags;
+}
+
+float GeomGetFadeAlpha( GEOM_PIXEL_INPUT input )
+{
+    return saturate( SkinInstances[input.InstanceID].FadeAlpha );
+}
+
+uint GeomGetLightCount( GEOM_PIXEL_INPUT input )
+{
+    return min( SkinInstances[input.InstanceID].LightCount, (uint)MAX_GEOM_LIGHTS );
+}
+
+float4 GeomGetLightVec( GEOM_PIXEL_INPUT input, uint lightIndex )
+{
+    return SkinInstances[input.InstanceID].LightVec[lightIndex];
+}
+
+float4 GeomGetLightCol( GEOM_PIXEL_INPUT input, uint lightIndex )
+{
+    return SkinInstances[input.InstanceID].LightCol[lightIndex];
+}
+
+float4 GeomGetLightDir( GEOM_PIXEL_INPUT input, uint lightIndex )
+{
+    return SkinInstances[input.InstanceID].LightDir[lightIndex];
+}
+
+float4 GeomGetLightCone( GEOM_PIXEL_INPUT input, uint lightIndex )
+{
+    return SkinInstances[input.InstanceID].LightCone[lightIndex];
+}
+
+float4 GeomGetLightAmbCol( GEOM_PIXEL_INPUT input )
+{
+    return SkinInstances[input.InstanceID].LightAmbCol;
+}
+#else
+uint GeomGetMaterialFlags( GEOM_PIXEL_INPUT input )
+{
+    return MaterialFlags;
+}
+
+float GeomGetFadeAlpha( GEOM_PIXEL_INPUT input )
+{
+    return saturate( EnvParams.z );
+}
+
+uint GeomGetLightCount( GEOM_PIXEL_INPUT input )
+{
+    return LightCount;
+}
+
+float4 GeomGetLightVec( GEOM_PIXEL_INPUT input, uint lightIndex )
+{
+    return LightVec[lightIndex];
+}
+
+float4 GeomGetLightCol( GEOM_PIXEL_INPUT input, uint lightIndex )
+{
+    return LightCol[lightIndex];
+}
+
+float4 GeomGetLightDir( GEOM_PIXEL_INPUT input, uint lightIndex )
+{
+    return LightDir[lightIndex];
+}
+
+float4 GeomGetLightCone( GEOM_PIXEL_INPUT input, uint lightIndex )
+{
+    return LightCone[lightIndex];
+}
+
+float4 GeomGetLightAmbCol( GEOM_PIXEL_INPUT input )
+{
+    return LightAmbCol;
+}
+#endif
+
+//==============================================================================
+
 float3 GeomGetDistortionViewNormal( float3 worldNormal )
 {
     float3 distortionViewNormal = mul( (float3x3)DistortionNormalMatrix, normalize( worldNormal ) );
@@ -219,12 +343,13 @@ float GeomComputeRadialAttenuation( float lightDistance, float lightRadius, floa
 
 //==============================================================================
 
-float GeomComputeSpotAttenuation( uint lightIndex, float3 lightToPointDir )
+float GeomComputeSpotAttenuation( GEOM_PIXEL_INPUT input, uint lightIndex, float3 lightToPointDir )
 {
-    if( LightDir[lightIndex].w < 0.5f )
+    float4 lightDir = GeomGetLightDir( input, lightIndex );
+    if( lightDir.w < 0.5f )
         return 1.0f;
 
-    float3 spotDir = LightDir[lightIndex].xyz;
+    float3 spotDir = lightDir.xyz;
     const float spotDirLenSq = dot( spotDir, spotDir );
     if( spotDirLenSq <= 1e-8f )
         return 1.0f;
@@ -232,8 +357,9 @@ float GeomComputeSpotAttenuation( uint lightIndex, float3 lightToPointDir )
     spotDir *= rsqrt( spotDirLenSq );
 
     const float coneCos  = dot( spotDir, lightToPointDir );
-    const float cosInner = LightCone[lightIndex].x;
-    const float cosOuter = LightCone[lightIndex].y;
+    float4 lightCone     = GeomGetLightCone( input, lightIndex );
+    const float cosInner = lightCone.x;
+    const float cosOuter = lightCone.y;
     const float cosRange = max( cosInner - cosOuter, 1e-4f );
 
     return saturate( ( coneCos - cosOuter ) / cosRange );
@@ -241,9 +367,11 @@ float GeomComputeSpotAttenuation( uint lightIndex, float3 lightToPointDir )
 
 //==============================================================================
 
-float GeomComputeLocalLightAttenuation( uint lightIndex, float3 worldPos, out float3 pointToLightDir )
+float GeomComputeLocalLightAttenuation( GEOM_PIXEL_INPUT input, uint lightIndex, float3 worldPos, out float3 pointToLightDir )
 {
-    const float3 toLight = LightVec[lightIndex].xyz - worldPos;
+    float4 lightVec      = GeomGetLightVec( input, lightIndex );
+    float4 lightCol      = GeomGetLightCol( input, lightIndex );
+    const float3 toLight = lightVec.xyz - worldPos;
     const float  distSq  = dot( toLight, toLight );
 
     if( distSq <= 1e-8f )
@@ -253,7 +381,7 @@ float GeomComputeLocalLightAttenuation( uint lightIndex, float3 worldPos, out fl
     }
 
     const float dist   = sqrt( distSq );
-    const float radial = GeomComputeRadialAttenuation( dist, LightVec[lightIndex].w, LightCol[lightIndex].a );
+    const float radial = GeomComputeRadialAttenuation( dist, lightVec.w, lightCol.a );
     if( radial <= 0.0f )
     {
         pointToLightDir = 0.0f;
@@ -261,7 +389,7 @@ float GeomComputeLocalLightAttenuation( uint lightIndex, float3 worldPos, out fl
     }
 
     pointToLightDir = toLight / dist;
-    return radial * GeomComputeSpotAttenuation( lightIndex, -pointToLightDir );
+    return radial * GeomComputeSpotAttenuation( input, lightIndex, -pointToLightDir );
 }
 
 //==============================================================================
@@ -270,22 +398,24 @@ float3 GeomComputeLighting( GEOM_PIXEL_INPUT input, uint materialFlags )
 {
 #ifdef GEOM_USE_SKIN_LIGHTING
     float3 dynLight = float3( 0.0, 0.0, 0.0 );
-    for( uint i = 0; i < LightCount; i++ )
+    const uint lightCount = GeomGetLightCount( input );
+    for( uint i = 0; i < lightCount; i++ )
     {
-        float ndotl = saturate( dot( input.Normal, -LightVec[i].xyz ) );
-        dynLight += LightCol[i].rgb * ndotl;
+        float ndotl = saturate( dot( input.Normal, -GeomGetLightVec( input, i ).xyz ) );
+        dynLight += GeomGetLightCol( input, i ).rgb * ndotl;
     }
-    float3 totalLight = LightAmbCol.rgb + dynLight;
+    float3 totalLight = GeomGetLightAmbCol( input ).rgb + dynLight;
 #else
     float3 perPixelLight = float3( 0.0, 0.0, 0.0 );
-    for( uint i = 0; i < LightCount; i++ )
+    const uint lightCount = GeomGetLightCount( input );
+    for( uint i = 0; i < lightCount; i++ )
     {
         float3 L;
-        float  atten = GeomComputeLocalLightAttenuation( i, input.WorldPos, L );
+        float  atten = GeomComputeLocalLightAttenuation( input, i, input.WorldPos, L );
         if( atten > 0.0f )
         {
             float ndotl = saturate( dot( input.Normal, L ) );
-            perPixelLight += LightCol[i].rgb * ( atten * ndotl );
+            perPixelLight += GeomGetLightCol( input, i ).rgb * ( atten * ndotl );
         }
     }
     float3 totalLight = perPixelLight;
@@ -333,22 +463,24 @@ float3 GeomComputeSpecular( GEOM_PIXEL_INPUT input, uint materialFlags, float di
         float3 viewDir = normalize( -input.ViewVector );
 
     #ifdef GEOM_USE_SKIN_LIGHTING
-        for( uint i = 0; i < LightCount; i++ )
+        const uint lightCount = GeomGetLightCount( input );
+        for( uint i = 0; i < lightCount; i++ )
         {
-            float3 L = normalize( -LightVec[i].xyz );
+            float3 L = normalize( -GeomGetLightVec( input, i ).xyz );
             float  ndotl = saturate( dot( input.Normal, L ) );
             if( ndotl > 0.0f )
             {
                 float3 H = normalize( L + viewDir );
                 float  specTerm = pow( saturate( dot( input.Normal, H ) ), specPower ) * ndotl;
-                specular += LightCol[i].rgb * specTerm;
+                specular += GeomGetLightCol( input, i ).rgb * specTerm;
             }
         }
     #else
-        for( uint i = 0; i < LightCount; i++ )
+        const uint lightCount = GeomGetLightCount( input );
+        for( uint i = 0; i < lightCount; i++ )
         {
             float3 L;
-            float  atten = GeomComputeLocalLightAttenuation( i, input.WorldPos, L );
+            float  atten = GeomComputeLocalLightAttenuation( input, i, input.WorldPos, L );
             if( atten > 0.0f )
             {
                 float  ndotl = saturate( dot( input.Normal, L ) );
@@ -356,7 +488,7 @@ float3 GeomComputeSpecular( GEOM_PIXEL_INPUT input, uint materialFlags, float di
                 {
                     float3 H = normalize( L + viewDir );
                     float  specTerm = pow( saturate( dot( input.Normal, H ) ), specPower ) * ndotl;
-                    specular += LightCol[i].rgb * specTerm * atten;
+                    specular += GeomGetLightCol( input, i ).rgb * specTerm * atten;
                 }
             }
         }
@@ -577,14 +709,34 @@ float ComputePointShadowCompareDepth( float faceDepth, float nearZ, float farZ )
 
 //==============================================================================
 
+float SamplePointShadowBucket( uint bucketIndex, float3 lightDir, float cubeIndex, float compareDepth )
+{
+    const float4 shadowCoord = float4( lightDir, cubeIndex );
+
+    if( bucketIndex == 0u )
+        return txPointShadowCube[0].SampleCmpLevelZero( samPointShadowCmp, shadowCoord, compareDepth );
+
+    if( bucketIndex == 1u )
+        return txPointShadowCube[1].SampleCmpLevelZero( samPointShadowCmp, shadowCoord, compareDepth );
+
+    if( bucketIndex == 2u )
+        return txPointShadowCube[2].SampleCmpLevelZero( samPointShadowCmp, shadowCoord, compareDepth );
+
+    return txPointShadowCube[3].SampleCmpLevelZero( samPointShadowCmp, shadowCoord, compareDepth );
+}
+
+//==============================================================================
+
 float SamplePointShadowLight(uint lightIndex, float3 worldPos, float3 worldNormal)
 {
     const float3 lightPos     = PointShadowLightPosRadius[lightIndex].xyz;
     const float  lightRadius  = PointShadowLightPosRadius[lightIndex].w;
     const float  lightFalloff = PointShadowLightData[lightIndex].x;
-    const float  cubeIndex    = PointShadowLightData[lightIndex].y;
-    const float  nearZ        = PointShadowLightData[lightIndex].z;
-    const float  farZ         = PointShadowLightData[lightIndex].w;
+    const float  nearZ        = PointShadowLightData[lightIndex].y;
+    const float  farZ         = PointShadowLightData[lightIndex].z;
+    const float  cubeIndex    = PointShadowLightData[lightIndex].w;
+    const uint   bucketIndex  = min( (uint)PointShadowLightParams[lightIndex].x,
+                                     (uint)( POINT_SHADOW_BUCKET_COUNT - 1 ) );
     const float3 toLight      = worldPos - lightPos;
     const float  lightDistanceSq = dot( toLight, toLight );
 
@@ -609,9 +761,10 @@ float SamplePointShadowLight(uint lightIndex, float3 worldPos, float3 worldNorma
     const float compareDepth = ComputePointShadowCompareDepth( max( faceDepth - depthBias, nearZ ),
                                                                nearZ,
                                                                farZ );
-    const float visibility   = txPointShadowCube.SampleCmpLevelZero( samPointShadowCmp,
-                                                                     float4( lightDir, cubeIndex ),
-                                                                     compareDepth );
+    const float visibility   = SamplePointShadowBucket( bucketIndex,
+                                                        lightDir,
+                                                        cubeIndex,
+                                                        compareDepth );
 
     return lerp( 1.0f, visibility, shadowInfluence );
 }
@@ -660,9 +813,9 @@ GEOM_PIXEL_OUTPUT ShadeGeometryPixel( GEOM_PIXEL_INPUT input )
     output.LinearDepth= GeomEncodeLinearDepth( input );
     output.Glow       = 0.0f;
 
-    uint  materialFlags = MaterialFlags;
+    uint  materialFlags = GeomGetMaterialFlags( input );
     float alphaRef      = AlphaRef;
-    float fadeAlpha     = saturate( EnvParams.z );
+    float fadeAlpha     = GeomGetFadeAlpha( input );
 
     if( EnvParams.w > 0.5f )
     {

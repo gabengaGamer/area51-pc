@@ -19,6 +19,8 @@ cbuffer FogParams : register(b4)
     float4 FogParams0; // x = near, y = far, z = use polynomial, w = fog start
 };
 
+//==============================================================================
+
 float4 PSMain( float4 Pos : SV_POSITION, float2 UV : TEXCOORD0 ) : SV_Target
 {
     const int2   depthTexel   = int2( Pos.xy );

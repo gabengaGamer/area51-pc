@@ -48,12 +48,20 @@ public:
                                       s32            MaxLightCount = MAX_PROJ_LIGHTS );
     void    GetCollectedLight       ( matrix4&       LightMatrix,
                                       xbitmap*&      pBitmap );
+    s32     GetProjLightCount       ( void ) const;
+    void    GetProjLight            ( s32            Index,
+                                      matrix4&       LightMatrix,
+                                      xbitmap*&      pBitmap ) const;
 
     s32     CollectShadows          ( const matrix4& L2W,
                                       const bbox&    B,
                                       s32            MaxShadowCount = MAX_PROJ_SHADOWS );
     void    GetCollectedShadow      ( matrix4&       ShadMatrix,
                                       xbitmap*&      pBitmap );
+    s32     GetProjShadowCount      ( void ) const;
+    void    GetProjShadow           ( s32            Index,
+                                      matrix4&       ShadMatrix,
+                                      xbitmap*&      pBitmap ) const;
     u32     CollectProjectionFlags  ( u32            RenderFlags,
                                       const bbox&    WorldBBox );
 
@@ -139,6 +147,54 @@ void proj_texture_mgr::ClearProjTextures( void )
     m_NCollectedShadows    = 0;
     m_CurrCollectedLight   = 0;
     m_CurrCollectedShadow  = 0;
+}
+
+//=========================================================================
+
+inline
+s32 proj_texture_mgr::GetProjLightCount( void ) const
+{
+    return m_NLightProjections;
+}
+
+//=========================================================================
+
+inline
+void proj_texture_mgr::GetProjLight( s32      Index,
+                                     matrix4& LightMatrix,
+                                     xbitmap*& pBitmap ) const
+{
+    ASSERT( (Index >= 0) && (Index < m_NLightProjections) );
+
+    const projection& Proj = m_LightProjections[Index];
+    LightMatrix = Proj.ProjMatrix;
+
+    texture* pTexture = Proj.ProjTexture.GetPointer();
+    pBitmap = pTexture ? &pTexture->m_Bitmap : NULL;
+}
+
+//=========================================================================
+
+inline
+s32 proj_texture_mgr::GetProjShadowCount( void ) const
+{
+    return m_NShadowProjections;
+}
+
+//=========================================================================
+
+inline
+void proj_texture_mgr::GetProjShadow( s32      Index,
+                                      matrix4& ShadMatrix,
+                                      xbitmap*& pBitmap ) const
+{
+    ASSERT( (Index >= 0) && (Index < m_NShadowProjections) );
+
+    const projection& Proj = m_ShadowProjections[Index];
+    ShadMatrix = Proj.ProjMatrix;
+
+    texture* pTexture = Proj.ProjTexture.GetPointer();
+    pBitmap = pTexture ? &pTexture->m_Bitmap : NULL;
 }
 
 //=========================================================================

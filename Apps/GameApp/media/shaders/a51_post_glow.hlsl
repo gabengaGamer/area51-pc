@@ -3,8 +3,6 @@
 //  post_glow.hlsl
 //
 //  Post-processing shaders for glow extraction and filtering.
-//  Xbox-style glow: 9-tap separable blur, single-res accumulation,
-//  artifact wipe, and alpha-masked composite.
 //
 //==============================================================================
 
@@ -21,8 +19,6 @@ Texture2D GlowAux     : register(t1);
 
 SamplerState samPoint : register(s0);
 
-//==============================================================================
-//  Xbox-style 9-tap separable blur weights
 //==============================================================================
 
 static const float kHorzWeightsRaw[5] = { 24.0f, 20.0f, 16.0f, 10.0f, 8.0f };
@@ -115,8 +111,6 @@ float4 PS_BlurVertical( float4 Pos : SV_POSITION, float2 UV : TEXCOORD0 ) : SV_T
 }
 
 //==============================================================================
-//  Accumulate + Xbox-style streak & artifact wipe
-//==============================================================================
 
 float4 PS_Accumulate( float4 Pos : SV_POSITION, float2 UV : TEXCOORD0 ) : SV_Target
 {
@@ -127,8 +121,6 @@ float4 PS_Accumulate( float4 Pos : SV_POSITION, float2 UV : TEXCOORD0 ) : SV_Tar
     return glow;
 }
 
-//==============================================================================
-//  Motion-blur blend for glow (kept for compatibility, unused in Xbox-style path)
 //==============================================================================
 
 float4 PS_Combine( float4 Pos : SV_POSITION, float2 UV : TEXCOORD0 ) : SV_Target
@@ -144,19 +136,18 @@ float4 PS_Combine( float4 Pos : SV_POSITION, float2 UV : TEXCOORD0 ) : SV_Target
 }
 
 //==============================================================================
-//  Final composite with Xbox-style glow cutoff
-//==============================================================================
 
 float4 PS_Composite( float4 Pos : SV_POSITION, float2 UV : TEXCOORD0 ) : SV_Target
 {
     float4 glow      = GlowSource.SampleLevel( samPoint, UV, 0.0 );
     float  frameMask = GlowAux.SampleLevel( samPoint, UV, 0.0 ).a;
     float  cutoff    = GlowParams0.x;
-    // Old smooth gate:
+
+    // Old smooth gate
     //float  gate      = max( glow.a, frameMask );
     //float  apply     = saturate( (gate - cutoff) * 2.0f );
 
-    // DX9 PS0009-style gate: branch on frame alpha cutoff, then x2 the glow contribution.
+    // Branch on frame alpha cutoff, then x2 the glow contribution.
     float  gate      = frameMask - cutoff;
     float  apply     = (gate >= 0.0f) ? 1.0f : 0.0f;
 
@@ -165,5 +156,3 @@ float4 PS_Composite( float4 Pos : SV_POSITION, float2 UV : TEXCOORD0 ) : SV_Targ
 
     return glow;
 }
-
-//==============================================================================

@@ -14,6 +14,7 @@
 //==============================================================================
 
 #include "x_types.hpp"
+#include "x_array.hpp"
 
 #if !defined(TARGET_PC)
 #error "This is only for the PC target platform. Please check build exclusion rules"
@@ -109,7 +110,7 @@ enum instance_flags
 //  CONSTANT BUFFER STRUCTURES
 //==============================================================================
 
-struct d3d_lighting
+struct cb_geom_lighting
 {
     s32     LightCount;
     vector4 LightVec[MAX_GEOM_LIGHTS];
@@ -139,13 +140,6 @@ struct cb_geom_frame
 
 //------------------------------------------------------------------------------
 
-struct cb_geom_object
-{
-    matrix4 World;                         // Local to world matrix
-};
-
-//------------------------------------------------------------------------------
-
 struct cb_proj_textures
 {
     matrix4 ProjLightMatrix[proj_texture_mgr::MAX_PROJ_LIGHTS];
@@ -158,22 +152,79 @@ struct cb_proj_textures
 
 //------------------------------------------------------------------------------
 
-struct cb_lighting
+struct cb_skin_bone
+{
+    matrix4 L2W;                           // Local to world matrix
+};
+
+//------------------------------------------------------------------------------
+
+struct cb_rigid_instance
+{
+    matrix4 World;
+    vector4 LightVec[MAX_GEOM_LIGHTS];
+    vector4 LightCol[MAX_GEOM_LIGHTS];
+    vector4 LightDir[MAX_GEOM_LIGHTS];
+    vector4 LightCone[MAX_GEOM_LIGHTS];
+    vector4 LightAmbCol;
+    u32     ShaderFlags;
+    u32     ColorOffset;
+    u32     BaseVertex;
+    u32     LightCount;
+    f32     FadeAlpha;
+    f32     Padding[3];
+};
+
+//------------------------------------------------------------------------------
+
+struct cb_skin_instance
 {
     vector4 LightVec[MAX_GEOM_LIGHTS];
     vector4 LightCol[MAX_GEOM_LIGHTS];
     vector4 LightDir[MAX_GEOM_LIGHTS];
     vector4 LightCone[MAX_GEOM_LIGHTS];
     vector4 LightAmbCol;
+    u32     ShaderFlags;
+    u32     BoneOffset;
     u32     LightCount;
+    u32     Padding0;
+    f32     FadeAlpha;
     f32     Padding[3];
+};
+
+//==============================================================================
+//  BATCH DESCRIPTOR STRUCTURES
+//==============================================================================
+
+struct desc_rigid_batch
+{
+    const rigid_geom*       pGeom;
+    const matrix4*          pL2W;
+    const cb_geom_lighting* pLighting;
+    const u32*              pColorInfo;
+    xhandle                 hDList;
+    s32                     iSubMesh;
+    u32                     RenderFlags;
+    u8                      UOffset;
+    u8                      VOffset;
+    u8                      Alpha;
+    u8                      OverrideMat;
 };
 
 //------------------------------------------------------------------------------
 
-struct cb_skin_bone
+struct desc_skin_batch
 {
-    matrix4 L2W;                           // Local to world matrix
+    const skin_geom*        pGeom;
+    const matrix4*          pBones;
+    const cb_geom_lighting* pLighting;
+    xhandle                 hDList;
+    s32                     iSubMesh;
+    u32                     RenderFlags;
+    u8                      UOffset;
+    u8                      VOffset;
+    u8                      Alpha;
+    u8                      OverrideMat;
 };
 
 //==============================================================================
@@ -220,8 +271,12 @@ enum texture_slot
     TEXTURE_SLOT_DIFFUSE              = 0,
     TEXTURE_SLOT_DETAIL               = 1,
     TEXTURE_SLOT_ENVIRONMENT          = 2,
-    TEXTURE_SLOT_ENVIRONMENT_CUBE     = TEXTURE_SLOT_ENVIRONMENT + 1,
-    TEXTURE_SLOT_DISTORTION_SCENE     = 18,
+    TEXTURE_SLOT_ENVIRONMENT_CUBE     = 3,
+    TEXTURE_SLOT_DISTORTION_SCENE     = 21,
+    TEXTURE_SLOT_RIGID_INSTANCE_DATA  = 22,
+    TEXTURE_SLOT_RIGID_COLOR_DATA     = 23,
+    TEXTURE_SLOT_SKIN_INSTANCE_DATA   = 24,
+    TEXTURE_SLOT_SKIN_BONE_DATA       = 25,
 };
 
 //==============================================================================
@@ -243,23 +298,15 @@ public:
     // Material Binding
     //--------------------------------------------------------------------------
 
-    void        SetRigidMaterial            ( const matrix4*      pL2W,
-                                              const bbox*         pBBox,
-                                              const d3d_lighting* pLighting,
-                                              const material*     pMaterial,
+    void        SetRigidMaterial            ( const material*     pMaterial,
                                               u32                 RenderFlags,
                                               u8                  UOffset,
                                               u8                  VOffset,
-                                              u8                  Alpha = 255,
                                               u8                  OverrideMat = FALSE );
-    void        SetSkinMaterial             ( const matrix4*      pL2W,
-                                              const bbox*         pBBox,
-                                              const d3d_lighting* pLighting,
-                                              const material*     pMaterial,
+    void        SetSkinMaterial             ( const material*     pMaterial,
                                               u32                 RenderFlags,
                                               u8                  UOffset,
                                               u8                  VOffset,
-                                              u8                  Alpha = 255,
                                               u8                  OverrideMat = FALSE );
 
     //--------------------------------------------------------------------------
@@ -279,6 +326,33 @@ public:
                                               texture_slot   Slot );
     void        SetEnvironmentCubemap       ( const cubemap* pCubemap );
     void        InvalidateCache             ( void );
+    xbool       SetRigidInstanceData        ( const cb_rigid_instance* pInstances,
+                                              s32                      nInstances,
+                                              const u32*               pColors,
+                                              s32                      nColors );
+    void        ResetRigidInstanceData      ( void );
+    xbool       SetSkinInstanceData         ( const cb_skin_instance* pInstances,
+                                              s32                     nInstances,
+                                              const matrix4*          pBones,
+                                              s32                     nBones );
+    void        ResetSkinInstanceData       ( void );
+    xbool       SetSkinSectionRemap         ( const u16* pBoneRemap );
+    void        BeginRigidBatch             ( void );
+    xbool       HasRigidBatch               ( void ) const;
+    xbool       CanAppendRigidBatch         ( const desc_rigid_batch& Desc ) const;
+    u32         GetRigidBatchFlags          ( void ) const;
+    u8          GetRigidBatchOverrideMat    ( void ) const;
+    void        AddRigidBatchInstance       ( const desc_rigid_batch& Desc );
+    void        FlushRigidBatch             ( const material* pMaterial,
+                                              u8              MaterialOverride );
+    void        BeginSkinBatch              ( void );
+    xbool       HasSkinBatch                ( void ) const;
+    xbool       CanAppendSkinBatch          ( const desc_skin_batch& Desc ) const;
+    u32         GetSkinBatchFlags           ( void ) const;
+    u8          GetSkinBatchOverrideMat     ( void ) const;
+    void        AddSkinBatchInstance        ( const desc_skin_batch& Desc );
+    void        FlushSkinBatch              ( const material* pMaterial,
+                                              u8              MaterialOverride );
 
     //--------------------------------------------------------------------------
     // Resource Access
@@ -320,27 +394,23 @@ protected:
     // Internal Helpers
     //--------------------------------------------------------------------------
 
-    xbool       UpdateRigidConstants        ( const matrix4*      pL2W,
-                                              const material*     pMaterial,
-                                              u32                 RenderFlags,
-                                              const d3d_lighting* pLighting,
+    xbool       UpdateRigidConstants        ( const material*     pMaterial,
                                               u8                  UOffset,
                                               u8                  VOffset,
-                                              u8                  Alpha = 255,
                                               u8                  OverrideMat = FALSE );
-    xbool       UpdateSkinConstants         ( const d3d_lighting* pLighting,
-                                              const material*     pMaterial,
-                                              u32                 RenderFlags,
+    xbool       UpdateSkinConstants         ( const material*     pMaterial,
                                               u8                  UOffset,
                                               u8                  VOffset,
-                                              u8                  Alpha = 255,
                                               u8                  OverrideMat = FALSE );
-    xbool       UpdateProjTextures          ( const matrix4& L2W,
-                                              const bbox&    B,
-                                              u32            Slot,
-                                              u32            RenderFlags );
-    xbool       UpdateShadowMaps            ( const matrix4& L2W,
-                                              const bbox&    B );
+    xbool       UpdateProjTextures          ( u32 Slot );
+    xbool       UpdateShadowMaps            ( void );
+    static u32  BuildInstanceFlags          ( u32 RenderFlags );
+    static f32  BuildInstanceFadeAlpha      ( u32 RenderFlags,
+                                              u8  Alpha );
+    static void FillRigidInstanceLighting   ( cb_rigid_instance&  Instance,
+                                              const cb_geom_lighting* pLighting );
+    static void FillSkinInstanceLighting    ( cb_skin_instance&   Instance,
+                                              const cb_geom_lighting* pLighting );
     material_constants
                 BuildMaterialFlags          ( const material* pMaterial,
                                               xbool           IncludeVertexColor ) const;
@@ -348,17 +418,15 @@ protected:
                                               const void*     pData,
                                               u32             Size,
                                               const char*     pBufferName ) const;
+    void        ResetRigidBatch             ( void );
+    void        ResetSkinBatch              ( void );
     cb_geom_frame
                 BuildFrameConstants         ( const view&     View,
                                               const material* pMaterial,
-                                              u32             RenderFlags,
                                               u8              UOffset,
                                               u8              VOffset,
-                                              u8              Alpha,
                                               xbool           IncludeVertexColor,
                                               u8              OverrideMat ) const;
-    u32         BuildInstanceFlags          ( u32 RenderFlags ) const;
-    cb_lighting BuildLightingConstants      ( const d3d_lighting* pLighting ) const;
 
 protected:
 
@@ -372,12 +440,23 @@ protected:
     // Rigid Geometry Resources
     //--------------------------------------------------------------------------
 
-    ID3D11VertexShader*     m_pRigidVertexShader;
-    ID3D11PixelShader*      m_pRigidPixelShader;
-    ID3D11InputLayout*      m_pRigidInputLayout;
-    ID3D11Buffer*           m_pRigidFrameBuffer;
-    ID3D11Buffer*           m_pRigidObjectBuffer;
-    ID3D11Buffer*           m_pRigidLightBuffer;
+    ID3D11VertexShader*       m_pRigidVertexShader;
+    ID3D11PixelShader*        m_pRigidPixelShader;
+    ID3D11InputLayout*        m_pRigidInputLayout;
+    ID3D11Buffer*             m_pRigidFrameBuffer;
+    ID3D11Buffer*             m_pRigidInstanceDataBuffer;
+    ID3D11ShaderResourceView* m_pRigidInstanceDataSRV;
+    ID3D11Buffer*             m_pRigidColorBuffer;
+    ID3D11ShaderResourceView* m_pRigidColorSRV;
+    u32                       m_RigidInstanceCapacity;
+    u32                       m_RigidColorCapacity;
+    xarray<cb_rigid_instance> m_lRigidBatchInstances;
+    xarray<u32>               m_lRigidBatchColors;
+    xhandle                   m_hRigidBatchDList;
+    u32                       m_RigidBatchFlags;
+    u8                        m_RigidBatchUOffset;
+    u8                        m_RigidBatchVOffset;
+    u8                        m_RigidBatchOverrideMat;
 
     //--------------------------------------------------------------------------
     // Projection And Shadow Resources
@@ -393,12 +472,25 @@ protected:
     // Skin Geometry Resources
     //--------------------------------------------------------------------------
 
-    ID3D11VertexShader*     m_pSkinVertexShader;
-    ID3D11PixelShader*      m_pSkinPixelShader;
-    ID3D11InputLayout*      m_pSkinInputLayout;
-    ID3D11Buffer*           m_pSkinFrameBuffer;
-    ID3D11Buffer*           m_pSkinBoneBuffer;
-    ID3D11Buffer*           m_pSkinLightBuffer;
+    ID3D11VertexShader*       m_pSkinVertexShader;
+    ID3D11PixelShader*        m_pSkinPixelShader;
+    ID3D11InputLayout*        m_pSkinInputLayout;
+    ID3D11Buffer*             m_pSkinFrameBuffer;
+    ID3D11Buffer*             m_pSkinBoneBuffer;
+    ID3D11Buffer*             m_pSkinSectionBuffer;
+    ID3D11Buffer*             m_pSkinInstanceDataBuffer;
+    ID3D11ShaderResourceView* m_pSkinInstanceDataSRV;
+    ID3D11Buffer*             m_pSkinBoneDataBuffer;
+    ID3D11ShaderResourceView* m_pSkinBoneDataSRV;
+    u32                       m_SkinInstanceCapacity;
+    u32                       m_SkinBoneCapacity;
+    xarray<cb_skin_instance>  m_lSkinBatchInstances;
+    xarray<matrix4>           m_lSkinBatchBones;
+    xhandle                   m_hSkinBatchDList;
+    u32                       m_SkinBatchFlags;
+    u8                        m_SkinBatchUOffset;
+    u8                        m_SkinBatchVOffset;
+    u8                        m_SkinBatchOverrideMat;
 
     //--------------------------------------------------------------------------
     // Cached Bind State
@@ -416,17 +508,11 @@ protected:
     //--------------------------------------------------------------------------
 
     cb_geom_frame           m_CachedRigidFrame;
-    cb_geom_object          m_CachedRigidObject;
-    cb_lighting             m_CachedRigidLighting;
     cb_geom_frame           m_CachedSkinFrame;
-    cb_lighting             m_CachedSkinLighting;
     u32                     m_LastProjLightCount;
     u32                     m_LastProjShadowCount;
     xbool                   m_bRigidFrameDirty;
-    xbool                   m_bRigidObjectDirty;
-    xbool                   m_bRigidLightingDirty;
     xbool                   m_bSkinFrameDirty;
-    xbool                   m_bSkinLightingDirty;
 };
 
 //==============================================================================

@@ -151,11 +151,6 @@ struct private_instance
 {
     geom*       pGeom;
     geom_type   Type;
-
-#ifdef TARGET_PC
-    xarray<xhandle> RigidDList;
-    xbool           IsLit;
-#endif // TARGET_PC
 };
 
 //-----------------------------------------------------------------------------
@@ -167,6 +162,7 @@ struct private_geom
     geom*       pGeom;
 
 #ifdef TARGET_PC
+    xarray<xhandle> RigidDList;
     xarray<xhandle> SkinDList;
 #endif // TARGET_PC
 };
@@ -1568,7 +1564,8 @@ void render::AddRigidInstanceSimple( hgeom_inst     hInst,
                 Inst.Flags |= ProjFlags;
 
             #ifdef TARGET_PC
-            Inst.hDList = RegisteredInst.RigidDList[(s32)SubMesh.iDList];
+            private_geom& PrivateGeom = s_lRegisteredGeoms(pGeom->m_hGeom);
+            Inst.hDList               = PrivateGeom.RigidDList[(s32)SubMesh.iDList];
             #endif
         }
     }
@@ -1710,7 +1707,8 @@ void render::AddRigidInstance( hgeom_inst     hInst,
                 Inst.Flags |= ProjFlags;
 
             #ifdef TARGET_PC
-            Inst.hDList = RegisteredInst.RigidDList[(s32)SubMesh.iDList];
+            private_geom& PrivateGeom = s_lRegisteredGeoms(pGeom->m_hGeom);
+            Inst.hDList               = PrivateGeom.RigidDList[(s32)SubMesh.iDList];
             #endif
 
             // handle fading geometry
@@ -1883,7 +1881,8 @@ void render::AddRigidInstance( hgeom_inst        hInst,
                 Inst.Flags |= ProjFlags;
 
             #ifdef TARGET_PC
-            Inst.hDList = RegisteredInst.RigidDList[(s32)SubMesh.iDList];
+            private_geom& PrivateGeom = s_lRegisteredGeoms(pGeom->m_hGeom);
+            Inst.hDList               = PrivateGeom.RigidDList[(s32)SubMesh.iDList];
             #endif
 
             // handle fading geometry
@@ -2580,11 +2579,12 @@ void render::EndShadowCreation( void )
 void render::AddPointShadowMapSource( const matrix4&         L2W,
                                       radian                 FOV,
                                       f32                    LightRadius,
-                                      f32                    LightFalloff )
+                                      f32                    LightFalloff,
+                                      s32                    ShadowMapResolution )
 {
     ASSERT( s_InShadowBegin );
     ASSERT( s_nShadowSources < MAX_SHADOW_CASTERS );
-    platform_AddPointShadowMapSource( L2W, FOV, LightRadius, LightFalloff );
+    platform_AddPointShadowMapSource( L2W, FOV, LightRadius, LightFalloff, ShadowMapResolution );
     s_nShadowSources++;
 }
 
@@ -2593,11 +2593,12 @@ void render::AddPointShadowMapSource( const matrix4&         L2W,
 void render::AddSpotShadowMapSource( const matrix4&         L2W,
                                      radian                 FOV,
                                      f32                    LightRadius,
-                                     f32                    LightFalloff )
+                                     f32                    LightFalloff,
+                                     s32                    ShadowMapResolution )
 {
     ASSERT( s_InShadowBegin );
     ASSERT( s_nShadowSources < MAX_SHADOW_CASTERS );
-    platform_AddSpotShadowMapSource( L2W, FOV, LightRadius, LightFalloff );
+    platform_AddSpotShadowMapSource( L2W, FOV, LightRadius, LightFalloff, ShadowMapResolution );
     s_nShadowSources++;
 }
 
@@ -2775,7 +2776,8 @@ void render::AddRigidReceiverSimple( render::hgeom_inst hInst,
             Inst.Data.Rigid.pL2W  = pL2W;
 
             #ifdef TARGET_PC
-            Inst.hDList = RegisteredInst.RigidDList[(s32)SubMesh.iDList];
+            private_geom& PrivateGeom = s_lRegisteredGeoms(pGeom->m_hGeom);
+            Inst.hDList               = PrivateGeom.RigidDList[(s32)SubMesh.iDList];
             #endif
         }
     }

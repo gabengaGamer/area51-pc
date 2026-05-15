@@ -14,8 +14,4 @@
 #include "common/proj_buffers.hlsl"
 #include "common/shadow_buffers.hlsl"
 
-#if defined(GEOM_INCLUDE_OBJECT_BUFFER)
-#include "common/object_constants.hlsl"
-#endif
-
 #endif // GEOM_BUFFERS_HLSL

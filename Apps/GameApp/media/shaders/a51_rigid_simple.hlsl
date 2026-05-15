@@ -12,14 +12,34 @@
 //  GEOMETRY RESOURCES
 //==============================================================================
 
-#define GEOM_INPUT_TYPE GEOM_INPUT_RIGID
-#include "common/vertexinput_geom.hlsl"
-
-#define GEOM_INCLUDE_OBJECT_BUFFER
+#define GEOM_USE_RIGID_INSTANCE_DATA 1
 #include "common/geom_buffers.hlsl"
+#include "common/rigid_instance_buffers.hlsl"
 
 #define GEOM_HAS_VERTEX_COLOR 1
-#include "common/pixelinput_geom.hlsl"
+
+struct VS_INPUT
+{
+    float3 Position   : POSITION;
+    float3 Normal     : NORMAL;
+    float4 Color      : COLOR0;
+    float2 UV         : TEXCOORD0;
+    uint   VertexID   : SV_VertexID;
+    uint   InstanceID : SV_InstanceID;
+};
+
+struct GEOM_PIXEL_INPUT
+{
+    float4 Pos         : SV_POSITION;
+    float2 UV          : TEXCOORD0;
+    float4 Color       : COLOR0;
+    float3 WorldPos    : TEXCOORD1;
+    float3 Normal      : TEXCOORD2;
+    float3 ViewVector  : TEXCOORD3;
+    float3 ViewNormal  : TEXCOORD4;
+    nointerpolation uint InstanceID : TEXCOORD5;
+};
+
 #include "common/pixel_structs.hlsl"
 #include "common/geom_textures.hlsl"
 #include "common/geom_pixel_shared.hlsl"
@@ -28,33 +48,30 @@
 //  VERTEX SHADER
 //==============================================================================
 
-GEOM_PIXEL_INPUT VSMain(VS_INPUT input)
+GEOM_PIXEL_INPUT VSMain( VS_INPUT input )
 {
     GEOM_PIXEL_INPUT output;
+    const uint instanceID = input.InstanceID;
 
-    // Transform position through matrices
-    float4 worldPos = mul(World, float4(input.Position, 1.0));
-    float4 viewPos  = mul(View, worldPos);
-    output.Pos      = mul(Projection, viewPos);
+    float4 worldPos    = mul( RigidInstances[instanceID].World, float4( input.Position, 1.0f ) );
+    float4 viewPos     = mul( View, worldPos );
+    float3 worldNormal = normalize( mul( (float3x3)RigidInstances[instanceID].World, input.Normal ) );
+    float3 viewNormal  = normalize( mul( (float3x3)View, worldNormal ) );
 
-    // Pass through vertex attributes
-    float3 worldNormal = normalize(mul((float3x3)World, input.Normal));
-    float3 viewNormal  = normalize(mul((float3x3)View, worldNormal));
-    output.WorldPos    = worldPos.xyz;
-    output.Normal      = worldNormal;
-    output.ViewNormal  = viewNormal;
+    output.Pos        = mul( Projection, viewPos );
+    output.UV         = input.UV + UVAnim.xy;
+    output.WorldPos   = worldPos.xyz;
+    output.Normal     = worldNormal;
+    output.ViewVector = worldPos.xyz - CameraPosition.xyz;
+    output.ViewNormal = viewNormal;
+    output.InstanceID = instanceID;
 
-    float3 viewVector = worldPos.xyz - CameraPosition.xyz;
-    output.ViewVector = viewVector;
-
-    float nearZ = NearZ;
-    float farZ  = FarZ;
-    float invRange = rcp(max(farZ - nearZ, 1e-5f));
-    float linearDepth = (viewPos.z - nearZ) * invRange;
-    output.LinearDepth = saturate(linearDepth);
-    float2 uvAnimOffset = UVAnim.xy;
-    output.UV          = input.UV + uvAnimOffset;
-    output.Color       = input.Color;
+    output.Color = input.Color;
+    if( RigidInstances[instanceID].ColorOffset != 0xFFFFFFFFu )
+    {
+        const uint localVertex = input.VertexID - RigidInstances[instanceID].BaseVertex;
+        output.Color = DecodeRigidVertexColor( RigidVertexColors[RigidInstances[instanceID].ColorOffset + localVertex] );
+    }
 
     return output;
 }

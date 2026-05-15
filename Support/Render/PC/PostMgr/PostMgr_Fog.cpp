@@ -186,7 +186,7 @@ void post_mgr::fog_resources::Initialize( void )
         return;
 
     char shaderPath[256];
-    x_sprintf( shaderPath, "post_fog.hlsl" );
+    x_sprintf( shaderPath, "a51_post_fog.hlsl" );
 
     char* pSource = shader_LoadSourceFromFile( shaderPath );
     if( !pSource )

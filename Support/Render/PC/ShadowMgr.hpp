@@ -37,10 +37,12 @@
 
 enum
 {
+    POINT_SHADOW_BUCKET_COUNT  = 4,
     PC_PROJ_LIGHT_TEX_SLOT     = 4,
     PC_PROJ_SHADOW_TEX_SLOT    = PC_PROJ_LIGHT_TEX_SLOT + proj_texture_mgr::MAX_PROJ_LIGHTS,
     PC_POINT_SHADOW_TEX_SLOT   = PC_PROJ_SHADOW_TEX_SLOT + proj_texture_mgr::MAX_PROJ_SHADOWS,
-    PC_SPOT_SHADOW_TEX_SLOT    = PC_POINT_SHADOW_TEX_SLOT + 1,
+    PC_POINT_SHADOW_TEX_COUNT  = POINT_SHADOW_BUCKET_COUNT,
+    PC_SPOT_SHADOW_TEX_SLOT    = PC_POINT_SHADOW_TEX_SLOT + PC_POINT_SHADOW_TEX_COUNT,
     PC_POINT_SHADOW_SAMP_SLOT  = 7,
     PC_SPOT_SHADOW_SAMP_SLOT   = 8,
     PC_SHADOW_BUFFER_SLOT      = 5,
@@ -65,6 +67,7 @@ struct cb_shadow_maps
     vector4 FaceShadowLightData[MAX_SHADOW_SOURCES];
     vector4 PointShadowLightPosRadius[MAX_SHADOW_LIGHTS];
     vector4 PointShadowLightData[MAX_SHADOW_LIGHTS];
+    vector4 PointShadowLightParams[MAX_SHADOW_LIGHTS];
     u32     FaceShadowCount;
     u32     PointShadowLightCount;
     f32     Padding[2];
@@ -105,7 +108,10 @@ public:
     // Runtime Queries
     //--------------------------------------------------------------------------
 
-    ID3D11ShaderResourceView* GetPointShadowSRV ( void ) const;
+    ID3D11ShaderResourceView* GetPointShadowSRV ( s32 BucketIndex ) const;
+    xbool       GetPointShadowBinding   ( s32 PointLightIndex,
+                                          s32& BucketIndex,
+                                          s32& LocalLightIndex ) const;
     ID3D11ShaderResourceView* GetSpotShadowSRV  ( void ) const;
     f32         GetShadowBias            ( void ) const;
     f32         GetShadowStrength        ( void ) const;
@@ -116,12 +122,28 @@ public:
 
 private:
 
+    struct point_shadow_bucket
+    {
+        s32                     FaceSize;
+        s32                     LightCount;
+        ID3D11Texture2D*        pTexture;
+        ID3D11ShaderResourceView* pSRV;
+        ID3D11DepthStencilView* pDSV[MAX_SHADOW_LIGHTS * POINT_SHADOW_FACE_COUNT];
+    };
+
+    struct point_shadow_binding
+    {
+        s32 BucketIndex;
+        s32 LocalLightIndex;
+    };
+
     //--------------------------------------------------------------------------
     // Internal Helpers
     //--------------------------------------------------------------------------
 
     void        EnsureAtlas              ( void );
     void        EnsurePointShadows       ( void );
+    void        ReleasePointShadowBucket ( s32 BucketIndex );
     void        ApplySource              ( s32 SourceIndex );
     void        BlurAtlas                ( void );
     void        UnbindShadowSRVs         ( void );
@@ -138,6 +160,7 @@ private:
     u32                     m_SavedViewportCount;
     D3D11_VIEWPORT          m_SavedViewport;
     s32                     m_CurrentSource;
+    s32                     m_ShadowAtlasSize;
     xbool                   m_SourceCleared[MAX_SHADOW_SOURCES];
 
     //--------------------------------------------------------------------------
@@ -147,9 +170,8 @@ private:
     rtarget                 m_ShadowAtlas;
     rtarget                 m_ShadowBlurAtlas;
     rtarget                 m_ShadowDepthAtlas;
-    ID3D11Texture2D*        m_pPointShadowTexture;
-    ID3D11ShaderResourceView* m_pPointShadowSRV;
-    ID3D11DepthStencilView* m_pPointShadowDSV[MAX_SHADOW_LIGHTS * POINT_SHADOW_FACE_COUNT];
+    point_shadow_bucket     m_PointShadowBuckets[POINT_SHADOW_BUCKET_COUNT];
+    point_shadow_binding    m_PointLightBindings[MAX_SHADOW_LIGHTS];
     ID3D11VertexShader*     m_pSkinVertexShader;
     ID3D11PixelShader*      m_pMomentPixelShader;
     ID3D11PixelShader*      m_pBlurHPixelShader;

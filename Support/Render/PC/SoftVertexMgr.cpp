@@ -14,8 +14,6 @@
 #error "This is only for the PC target platform. Please check build exclusion rules"
 #endif
 
-//#define X_BONE_DEBUG
-
 //=========================================================================
 // INCLUDES
 //=========================================================================
@@ -48,10 +46,10 @@ void soft_vertex_mgr::Kill( void )
     // Clear all the soft dlists
     for( s32 i=0; i<m_lSoftDList.GetCount(); i++ )
     {
-        if( m_lSoftDList[i].pCmd ) 
+        if( m_lSoftDList[i].pSection ) 
         {
-            delete[]m_lSoftDList[i].pCmd;
-            m_lSoftDList[i].pCmd = NULL;
+            delete[]m_lSoftDList[i].pSection;
+            m_lSoftDList[i].pSection = NULL;
         }
     }
 
@@ -71,14 +69,67 @@ xhandle soft_vertex_mgr::AddDList(
 {
     xhandle     hSoftDList;
     soft_dlist& SoftDList = m_lSoftDList.Add( hSoftDList );
+    xarray<soft_section> Sections;
 
     x_try;
 
     SoftDList.hDList    = vertex_mgr::AddDList( pVertex, nVertices, pIndex, nIndices, nPrims );
-    SoftDList.nCommands = nCmds;
-    SoftDList.pCmd      = new skin_geom::command_pc[ nCmds ];
+    SoftDList.nSections = 0;
+    SoftDList.pSection  = NULL;
 
-    x_memcpy( SoftDList.pCmd, pCmd, sizeof(skin_geom::command_pc)*nCmds );
+    {
+        u16 BoneRemap[MAX_SKIN_BONES];
+
+        for( s32 i = 0; i < MAX_SKIN_BONES; ++i )
+            BoneRemap[i] = INVALID_BONE_REMAP;
+
+        for( s32 c = 0; c < nCmds; ++c )
+        {
+            const skin_geom::command_pc& Cmd = pCmd[c];
+
+            switch( Cmd.Cmd )
+            {
+                case skin_geom::PC_CMD_UPLOAD_MATRIX:
+                {
+                    const s16 BoneID  = Cmd.Arg1;
+                    const s16 CacheID = Cmd.Arg2;
+
+                    ASSERT( BoneID >= 0 );
+                    ASSERT( CacheID >= 0 );
+                    ASSERT( CacheID < MAX_SKIN_BONES );
+
+                    BoneRemap[CacheID] = (u16)BoneID;
+                }
+                break;
+
+                case skin_geom::PC_CMD_DRAW_SECTION:
+                {
+                    soft_section& Section = Sections.Append();
+                    Section.Start = Cmd.Arg1;
+                    Section.End   = Cmd.Arg2;
+                    x_memcpy( Section.BoneRemap, BoneRemap, sizeof(BoneRemap) );
+                }
+                break;
+
+                case skin_geom::PC_CMD_END:
+                    goto sections_done;
+
+                case skin_geom::PC_CMD_NULL:
+                default:
+                    break;
+            }
+        }
+        sections_done:;
+    }
+
+    SoftDList.nSections = Sections.GetCount();
+    if( SoftDList.nSections > 0 )
+    {
+        SoftDList.pSection = new soft_section[ SoftDList.nSections ];
+        x_memcpy( SoftDList.pSection,
+                  &Sections[0],
+                  sizeof(soft_section) * SoftDList.nSections );
+    }
 
     x_catch_begin;
 
@@ -97,10 +148,10 @@ void soft_vertex_mgr::DelDList( xhandle hDList )
 
     vertex_mgr::DelDList( SoftDList.hDList );
 
-    if(SoftDList.pCmd) 
+    if(SoftDList.pSection) 
     {
-        delete []SoftDList.pCmd;
-        SoftDList.pCmd = NULL;
+        delete []SoftDList.pSection;
+        SoftDList.pSection = NULL;
     }
  
     m_lSoftDList.DeleteByHandle( hDList );
@@ -122,17 +173,14 @@ void soft_vertex_mgr::BeginRender( void )
 
 //=========================================================================
 
-void soft_vertex_mgr::DrawDList( xhandle hDList, const matrix4* pBone, const d3d_lighting* pLighting )
+void soft_vertex_mgr::DrawDList( xhandle hDList, const matrix4* pBone )
 {
     if( !g_pd3dDevice || !g_pd3dContext )
         return;
 
     soft_dlist& SoftDList = m_lSoftDList( hDList );
-    dlist&      DList     = m_lDList    ( SoftDList.hDList  );
-    node&       DLVert    = m_lNode     ( DList.hVertexNode );
-    node&       DLIndex   = m_lNode     ( DList.hIndexNode  );
-
-    (void)pLighting;
+    dlist&      DList     = m_lDList    ( SoftDList.hDList );
+    node&       DLIndex   = m_lNode     ( DList.hIndexNode );
 
     ActivateStreams( SoftDList.hDList );
 
@@ -140,106 +188,65 @@ void soft_vertex_mgr::DrawDList( xhandle hDList, const matrix4* pBone, const d3d
     if( !pBoneBuffer )
         return;
 
-    cb_skin_bone BoneCache[MAX_SKIN_BONES];
-    for( s32 i = 0; i < MAX_SKIN_BONES; ++i )
+    for( s32 s = 0; s < SoftDList.nSections; ++s )
     {
-        BoneCache[i].L2W.Identity();
-    }
+        cb_skin_bone BoneCache[MAX_SKIN_BONES];
+        const soft_section& Section = SoftDList.pSection[s];
 
-#ifdef X_BONE_DEBUG
-    skin_geom::vertex_pc* pVertData = (skin_geom::vertex_pc*)LockDListVerts( SoftDList.hDList );
-    xbool BoneLoaded[MAX_SKIN_BONES];
-    x_memset( BoneLoaded, 0, sizeof(BoneLoaded) );
-#endif
-
-    for( s32 c = 0; c < SoftDList.nCommands; ++c )
-    {
-        skin_geom::command_pc& Cmd = SoftDList.pCmd[c];
-
-        switch( Cmd.Cmd )
+        for( s32 i = 0; i < MAX_SKIN_BONES; ++i )
         {
-            case skin_geom::PC_CMD_UPLOAD_MATRIX:
+            BoneCache[i].L2W.Identity();
+
+            const u16 BoneID = Section.BoneRemap[i];
+            if( pBone && ( BoneID != INVALID_BONE_REMAP ) )
             {
-                s16 BoneID  = Cmd.Arg1;
-                s16 CacheID = Cmd.Arg2;
-
-                ASSERT( BoneID  >= 0 );
-                ASSERT( CacheID >= 0 );
-                ASSERT( CacheID < MAX_SKIN_BONES );
-
-                BoneCache[CacheID].L2W = pBone[BoneID];
-
-#ifdef X_BONE_DEBUG
-                BoneLoaded[CacheID] = TRUE;
-#endif
+                BoneCache[i].L2W = pBone[BoneID];
             }
-            break;
-
-            case skin_geom::PC_CMD_DRAW_SECTION:
-            {
-                D3D11_MAPPED_SUBRESOURCE mappedResource;
-                HRESULT hr = g_pd3dContext->Map( pBoneBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource );
-                if( SUCCEEDED( hr ) )
-                {
-                    x_memcpy( mappedResource.pData, BoneCache, sizeof(BoneCache) );
-                    g_pd3dContext->Unmap( pBoneBuffer, 0 );
-                }
-                else
-                {
-                    x_DebugMsg( "SoftVertexMgr: failed to map skin bone buffer (0x%08X)\n", hr );
-                    break;
-                }
-
-                s16 Start = Cmd.Arg1;
-                s16 End   = Cmd.Arg2;
-
-#ifdef X_BONE_DEBUG
-                if( pVertData )
-                {
-                    for( s32 v = Start; v < End; v++ )
-                    {
-                        s32 i1 = (s32)pVertData[v].Position.GetW();
-                        s32 i2 = (s32)pVertData[v].Normal.GetW();
-                        f32 w1 = pVertData[v].UVWeights.GetZ();
-                        f32 w2 = pVertData[v].UVWeights.GetW();
-
-                        if( (i1 < 0) || (i1 >= MAX_SKIN_BONES) ||
-                            (i2 < 0) || (i2 >= MAX_SKIN_BONES) ||
-                            !BoneLoaded[i1] || !BoneLoaded[i2] )
-                        {
-                            x_DebugMsg( "SoftVertexMgr: invalid bones v=%d b1=%d b2=%d\n", v, i1, i2 );
-                        }
-
-                        if( x_abs( (w1 + w2) - 1.0f ) > 0.01f )
-                        {
-                            x_DebugMsg( "SoftVertexMgr: weights != 1 v=%d w1=%f w2=%f\n", v, w1, w2 );
-                        }
-                    }
-                }
-#endif
-
-                g_pd3dContext->DrawIndexed( (End - Start) * 3,
-                                             DLIndex.Offset + (Start*3),
-                                             0 );
-            }
-            break;
-
-            case skin_geom::PC_CMD_NULL:
-                break;
-
-            case skin_geom::PC_CMD_END:
-                c = SoftDList.nCommands;
-                break;
-
-            default:
-                break;
         }
-    }
 
-#ifdef X_BONE_DEBUG
-    if( pVertData )
-        UnlockDListVerts( SoftDList.hDList );
-#endif
+        D3D11_MAPPED_SUBRESOURCE mappedResource;
+        HRESULT hr = g_pd3dContext->Map( pBoneBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource );
+        if( SUCCEEDED( hr ) )
+        {
+            x_memcpy( mappedResource.pData, BoneCache, sizeof(BoneCache) );
+            g_pd3dContext->Unmap( pBoneBuffer, 0 );
+        }
+        else
+        {
+            x_DebugMsg( "SoftVertexMgr: failed to map skin bone buffer (0x%08X)\n", hr );
+            break;
+        }
+
+        g_pd3dContext->VSSetConstantBuffers( 2, 1, &pBoneBuffer );
+        g_pd3dContext->DrawIndexed( ( Section.End - Section.Start ) * 3,
+                                    DLIndex.Offset + ( Section.Start * 3 ),
+                                    0 );
+    }
 }
 
 //=========================================================================
+
+void soft_vertex_mgr::DrawDListInstanced( xhandle hDList, s32 nInstances )
+{
+    if( !g_pd3dDevice || !g_pd3dContext || ( nInstances <= 0 ) )
+        return;
+
+    soft_dlist& SoftDList = m_lSoftDList( hDList );
+    dlist&      DList     = m_lDList    ( SoftDList.hDList );
+    node&       DLIndex   = m_lNode     ( DList.hIndexNode );
+
+    ActivateStreams( SoftDList.hDList );
+
+    for( s32 s = 0; s < SoftDList.nSections; ++s )
+    {
+        const soft_section& Section = SoftDList.pSection[s];
+        if( !g_GeomMgr.SetSkinSectionRemap( Section.BoneRemap ) )
+            break;
+
+        g_pd3dContext->DrawIndexedInstanced( ( Section.End - Section.Start ) * 3,
+                                             nInstances,
+                                             DLIndex.Offset + ( Section.Start * 3 ),
+                                             0,
+                                             0 );
+    }
+}

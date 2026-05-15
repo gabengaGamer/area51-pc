@@ -41,13 +41,14 @@ public:
     xhandle     AddDList            ( void* pVertex, s32 nVertices, u16* pIndex, s32 nIndices, s32 nPrims );
     void        DelDList            ( xhandle hDList );
     void        BeginRender         ( void );
-    void        DrawDList           ( xhandle hDList, const matrix4* pWorld = NULL, const d3d_lighting* pLighting = NULL );
+    void        DrawDList           ( xhandle hDList, const matrix4* pWorld = NULL );
+    void        DrawDListInstanced  ( xhandle hDList, s32 nInstances );
     void*       LockDListVerts      ( xhandle hDList );
     void        UnlockDListVerts    ( xhandle hDList );
     void*       LockDListIndices    ( xhandle hDList, s32& Index );
     void        UnlockDListIndices  ( xhandle hDList );
     void        InvalidateCache     ( void );
-    void        ApplyLightmapColors ( xhandle hDList, const u32* pColors, s32 nColors, s32 iColor = 0 );
+    s32         GetDListVertexOffset( xhandle hDList ) const;
 
 //=========================================================================
 

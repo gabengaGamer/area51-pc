@@ -184,75 +184,47 @@ geom_mgr::material_constants geom_mgr::BuildMaterialFlags( const material* pMate
 
 //==============================================================================
 
-u32 geom_mgr::BuildInstanceFlags( u32 RenderFlags ) const
+u32 geom_mgr::BuildInstanceFlags( u32 RenderFlags )
 {
-    u32 flags = 0;
-
-    //static f32 fDist = 1200.0f;
-    //if( s_DetailMapPresent && (pc_CalcDistance( *Inst.Data.Rigid.pL2W,s_CurrentBBox ) < fDist) )
-    //    flags |= INSTANCE_FLAG_DETAIL;
-
-    //if( render::IsFilterLightEnabled() && !(RenderFlags & render::DISABLE_FILTERLIGHT) )
-    //    flags |= INSTANCE_FLAG_FILTERLIGHT;
-	//
-    //if( RenderFlags & render::CLIPPED )
-    //    flags |= INSTANCE_FLAG_CLIPPED;
-
-    //if ( ( RenderFlags & render::SHADOW_PASS ) && s_bMatCanReceiveShadow )
-    //    flags |= INSTANCE_FLAG_SHADOW_PASS;
+    u32 ShaderFlags = 0;
 
     if( RenderFlags & render::GLOWING )
-        flags |= INSTANCE_FLAG_GLOWING;
+        ShaderFlags |= INSTANCE_FLAG_GLOWING;
 
     if( RenderFlags & render::INSTFLAG_SPOTLIGHT )
-        flags |= INSTANCE_FLAG_PROJ_LIGHT;
+        ShaderFlags |= INSTANCE_FLAG_PROJ_LIGHT;
 
     if( RenderFlags & render::INSTFLAG_PROJ_SHADOW )
-        flags |= INSTANCE_FLAG_PROJ_SHADOW;
+        ShaderFlags |= INSTANCE_FLAG_PROJ_SHADOW;
 
-	//
-    //if( RenderFlags & render::FADING_ALPHA )
-	//{
-    //    flags |= INSTANCE_FLAG_FADING_ALPHA;
-	//	//flags &= ~(INSTANCE_FLAG_DETAIL | INSTANCE_FLAG_SHADOW_PASS);
-	//}
+    if( RenderFlags & render::INSTFLAG_FADING_ALPHA )
+        ShaderFlags |= INSTANCE_FLAG_FADING_ALPHA;
 
-    return flags;
+    if( RenderFlags & render::INSTFLAG_DYNAMICLIGHT )
+        ShaderFlags |= INSTANCE_FLAG_DYNAMIC_LIGHT;
+
+    if( RenderFlags & render::INSTFLAG_FILTERLIGHT )
+        ShaderFlags |= INSTANCE_FLAG_FILTERLIGHT;
+
+    return ShaderFlags;
 }
 
 //==============================================================================
 
-cb_lighting geom_mgr::BuildLightingConstants( const d3d_lighting* pLighting ) const
+f32 geom_mgr::BuildInstanceFadeAlpha( u32 RenderFlags, u8 Alpha )
 {
-    cb_lighting lighting;
-    x_memset( &lighting, 0, sizeof(cb_lighting) );
+    if( ( RenderFlags & ( render::FADING_ALPHA | render::INSTFLAG_FADING_ALPHA ) ) || ( Alpha != 255 ) )
+        return (f32)Alpha / 255.0f;
 
-    if( pLighting )
-    {
-        const s32 lightCount = MIN( pLighting->LightCount, MAX_GEOM_LIGHTS );
-
-        for( s32 i = 0; i < lightCount; i++ )
-        {
-            lighting.LightVec[i] = pLighting->LightVec[i];
-            lighting.LightCol[i] = pLighting->LightCol[i];
-            lighting.LightDir[i] = pLighting->LightDir[i];
-            lighting.LightCone[i] = pLighting->LightCone[i];
-        }
-
-        lighting.LightCount  = lightCount;
-        lighting.LightAmbCol = pLighting->AmbCol;
-    }
-    return lighting;
+    return 1.0f;
 }
 
 //==============================================================================
 
 cb_geom_frame geom_mgr::BuildFrameConstants( const view&     View,
                                              const material* pMaterial,
-                                             u32             RenderFlags,
                                              u8              UOffset,
                                              u8              VOffset,
-                                             u8              Alpha,
                                              xbool           IncludeVertexColor,
                                              u8              OverrideMat ) const
 {
@@ -299,20 +271,16 @@ cb_geom_frame geom_mgr::BuildFrameConstants( const view&     View,
     else
     {
         constants = BuildMaterialFlags( pMaterial, IncludeVertexColor );
-        constants.Flags |= BuildInstanceFlags( RenderFlags );
     }
 
     frameData.MaterialFlags = constants.Flags;
     frameData.AlphaRef      = constants.AlphaRef;
 
-    const u32   FadeMask      = (render::FADING_ALPHA | render::INSTFLAG_FADING_ALPHA);
-    const xbool bFadingAlpha  = !bOverrideMaterial && !!(RenderFlags & FadeMask);
-    const f32   fadeAlpha     = bFadingAlpha ? ((f32)Alpha * kInvByte) : 1.0f;
     const f32   fixedAlpha    = (bOverrideMaterial || !pMaterial) ? 0.0f : pMaterial->m_FixedAlpha;
     const f32   cubeIntensity = bOverrideMaterial ? 0.0f : ComputeCubeMapIntensity( pMaterial );
     frameData.EnvParams.Set( fixedAlpha,
                              cubeIntensity,
-                             fadeAlpha,
+                             1.0f,
                              bOverrideMaterial ? 1.0f : 0.0f );
 
     matrix4 distortionNormalMatrix( viewMatrix );
@@ -671,11 +639,8 @@ void geom_mgr::InvalidateCache( void )
     m_pCurrentDetailTexture = NULL;
     m_pCurrentEnvironmentTexture = NULL;
     m_pCurrentEnvCubemap = NULL;
-    m_bRigidFrameDirty   = TRUE;
-    m_bRigidObjectDirty  = TRUE;
-    m_bRigidLightingDirty = TRUE;
+    m_bRigidFrameDirty  = TRUE;
     m_bSkinFrameDirty   = TRUE;
-    m_bSkinLightingDirty = TRUE;
 }
 
 //==============================================================================

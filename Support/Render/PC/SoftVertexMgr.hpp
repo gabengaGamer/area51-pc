@@ -44,16 +44,33 @@ public:
 
     void        DelDList            ( xhandle hDList );
     void        BeginRender         ( void );
-    void        DrawDList           ( xhandle hDList, const matrix4* pBone, const d3d_lighting* pLighting );
+    void        DrawDList           ( xhandle hDList, const matrix4* pBone );
+    void        DrawDListInstanced  ( xhandle hDList, s32 nInstances );
     void        InvalidateCache     ( void );
 
 protected:
 
+    enum
+    {
+        INVALID_BONE_REMAP = 0xFFFF
+    };
+
+    //----------------------------------------
+
+    struct soft_section
+    {
+        s16 Start;
+        s16 End;
+        u16 BoneRemap[MAX_SKIN_BONES];
+    };
+
+    //----------------------------------------
+
     struct soft_dlist
     {   
-        xhandle                 hDList;                         // Display List
-        s32                     nCommands;                      // Commands            
-        skin_geom::command_pc*  pCmd;                           // List of commands
+        xhandle         hDList;      // Display List
+        s32             nSections;   // Draw sections
+        soft_section*   pSection;    // Section descriptors
     };
 
 protected:

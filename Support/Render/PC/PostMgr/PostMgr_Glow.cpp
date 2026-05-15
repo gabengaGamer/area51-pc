@@ -96,7 +96,7 @@ void post_mgr::glow_resources::Initialize( void )
         return;
 
     char shaderPath[256];
-    x_sprintf( shaderPath, "post_glow.hlsl" );
+    x_sprintf( shaderPath, "a51_post_glow.hlsl" );
 
     char* pSource = shader_LoadSourceFromFile( shaderPath );
     if( !pSource )
