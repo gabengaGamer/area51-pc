@@ -50,6 +50,7 @@ namespace
         f32     Falloff;
         radian  FOV;
         s32     ShadowMapResolution;
+        s32     ShadowPriority;
         s32     SourceCount;
         s32     RelevantCasterStart;
         s32     RelevantCasterCount;
@@ -70,13 +71,17 @@ namespace
 
     //---------------------------------------------------------------------
 
-    const radian kPointShadowFOV           = R_90;
-    const radian kMinSpotShadowFOV         = DEG_TO_RAD( 1.0f );
-    const f32    kPointFaceCoverageCos     = 0.57735026919f; // 1/sqrt(3), covers the face corners of a 90-degree cube face.
-    const f32    kShadowAtlasFilterRadius  = 2.0f;
-    const f32    kShadowCasterScoreWeight  = 4096.0f;
-    const f32    kPlayerShadowScoreBonus   = 8192.0f;
-    const f32    kShadowRadiusScorePenalty = 0.25f;
+    const radian kPointShadowFOV                     = R_90;
+    const radian kMinSpotShadowFOV                   = DEG_TO_RAD( 1.0f );
+    const s32    kMinShadowPriority                  = 0;
+    const s32    kMaxShadowPriority                  = 4;
+    const f32    kPointShadowProjectionOverlapTexels = 0.0f;
+    const f32    kShadowAtlasFilterRadius            = 2.0f;
+    const f32    kShadowCasterScoreWeight            = 4096.0f;
+    const f32    kPlayerShadowScoreBonus             = 8192.0f;
+    const f32    kShadowRadiusScorePenalty           = 0.25f;
+    const f32    kShadowSourceTypeSpot               = 0.0f;
+    const f32    kShadowSourceTypePointFace          = 1.0f;
 
     //---------------------------------------------------------------------
 
@@ -127,6 +132,51 @@ namespace
 
     //---------------------------------------------------------------------
 
+    s32 ClampShadowPriority( s32 ShadowPriority )
+    {
+        if( ShadowPriority < kMinShadowPriority )
+            return kMinShadowPriority;
+        if( ShadowPriority > kMaxShadowPriority )
+            return kMaxShadowPriority;
+        return ShadowPriority;
+    }
+
+    //---------------------------------------------------------------------
+
+    f32 ComputePointFaceCoverageCos( s32 ShadowMapResolution )
+    {
+        const s32 ClampedResolution = ClampShadowMapResolution( ShadowMapResolution );
+        const f32 CoverageScale     = (f32)ClampedResolution /
+                                      ( (f32)ClampedResolution + kPointShadowProjectionOverlapTexels );
+        const f32 SafeScale         = MAX( CoverageScale, 0.0001f );
+        const f32 TanHalfFOV        = x_tan( kPointShadowFOV * 0.5f ) / SafeScale;
+        const f32 CornerLengthSq    = 1.0f + ( 2.0f * TanHalfFOV * TanHalfFOV );
+        return 1.0f / x_sqrt( CornerLengthSq );
+    }
+
+    //---------------------------------------------------------------------
+
+    f32 ComputePointShadowNearZ( f32 LightRadius )
+    {
+        return MAX( 0.5f, LightRadius * 0.0025f );
+    }
+
+    //---------------------------------------------------------------------
+
+    f32 ComputePointShadowReceiveNearZ( f32 LightRadius )
+    {
+        return MAX( 0.05f, LightRadius * 0.00025f );
+    }
+
+    //---------------------------------------------------------------------
+
+    f32 ComputeSpotShadowReceiveNearZ( f32 LightRadius )
+    {
+        return MAX( 0.05f, LightRadius * 0.0005f );
+    }
+
+    //---------------------------------------------------------------------
+
     s32 ReduceShadowMapResolution( s32 ShadowMapResolution )
     {
         if( ShadowMapResolution > 1024 )
@@ -140,21 +190,23 @@ namespace
 
     //---------------------------------------------------------------------
 
-    struct spot_atlas_entry
+    struct shadow_atlas_entry
     {
         s32 SourceIndex;
         s32 TileSize;
+        s32 ShadowPriority;
+        f32 ShadowScore;
         s32 AtlasTileX;
         s32 AtlasTileY;
     };
 
     //---------------------------------------------------------------------
 
-    void SortSpotAtlasEntries( spot_atlas_entry* pEntries, s32 NEntries )
+    void SortShadowAtlasEntries( shadow_atlas_entry* pEntries, s32 NEntries )
     {
         for( s32 i = 1; i < NEntries; i++ )
         {
-            const spot_atlas_entry Entry = pEntries[i];
+            const shadow_atlas_entry Entry = pEntries[i];
             s32 j = i - 1;
             while( j >= 0 )
             {
@@ -162,6 +214,21 @@ namespace
                     break;
 
                 if( ( pEntries[j].TileSize == Entry.TileSize ) &&
+                    ( pEntries[j].ShadowPriority > Entry.ShadowPriority ) )
+                {
+                    break;
+                }
+
+                if( ( pEntries[j].TileSize == Entry.TileSize ) &&
+                    ( pEntries[j].ShadowPriority == Entry.ShadowPriority ) &&
+                    ( pEntries[j].ShadowScore > Entry.ShadowScore ) )
+                {
+                    break;
+                }
+
+                if( ( pEntries[j].TileSize == Entry.TileSize ) &&
+                    ( pEntries[j].ShadowPriority == Entry.ShadowPriority ) &&
+                    ( pEntries[j].ShadowScore == Entry.ShadowScore ) &&
                     ( pEntries[j].SourceIndex < Entry.SourceIndex ) )
                 {
                     break;
@@ -177,11 +244,11 @@ namespace
 
     //---------------------------------------------------------------------
 
-    xbool TryPackSpotAtlasEntries( spot_atlas_entry* pEntries,
-                                   s32               NEntries,
-                                   s32               AtlasSize )
+    xbool TryPackShadowAtlasEntries( shadow_atlas_entry* pEntries,
+                                     s32                 NEntries,
+                                     s32                 AtlasSize )
     {
-        SortSpotAtlasEntries( pEntries, NEntries );
+        SortShadowAtlasEntries( pEntries, NEntries );
 
         s32 CursorX   = 0;
         s32 CursorY   = 0;
@@ -216,11 +283,11 @@ namespace
 
     //---------------------------------------------------------------------
 
-    s32 GetSpotAtlasSizeForEntries( spot_atlas_entry* pEntries, s32 NEntries )
+    s32 GetShadowAtlasSizeForEntries( shadow_atlas_entry* pEntries, s32 NEntries )
     {
         for( s32 AtlasSize = 256; AtlasSize <= SHADOW_ATLAS_SIZE; AtlasSize *= 2 )
         {
-            if( TryPackSpotAtlasEntries( pEntries, NEntries, AtlasSize ) )
+            if( TryPackShadowAtlasEntries( pEntries, NEntries, AtlasSize ) )
                 return AtlasSize;
         }
 
@@ -229,25 +296,79 @@ namespace
 
     //---------------------------------------------------------------------
 
-    f32 ComputeSourceConeCoverage( const vector3& LightPos,
-                                   const vector3& LightDirection,
-                                   f32            CosOuter,
-                                   const vector3& TargetPos )
+    xbool SortsBeforeShadowLight( const shadow_light& A,
+                                  const shadow_light& B )
     {
-        if( CosOuter <= -1.0f )
-            return 1.0f;
+        if( A.ShadowPriority != B.ShadowPriority )
+            return ( A.ShadowPriority > B.ShadowPriority );
 
-        vector3 SourceDir = LightDirection;
-        if( !SourceDir.SafeNormalize() )
-            SourceDir.Set( 0.0f, 0.0f, 1.0f );
+        if( A.Score != B.Score )
+            return ( A.Score > B.Score );
 
-        vector3 ToTarget = TargetPos - LightPos;
-        if( !ToTarget.SafeNormalize() )
-            return 1.0f;
+        if( A.ShadowMapResolution != B.ShadowMapResolution )
+            return ( A.ShadowMapResolution > B.ShadowMapResolution );
 
-        const f32 CosRange = MAX( 1.0f - CosOuter, 0.0001f );
-        const f32 SourceCos = SourceDir.Dot( ToTarget );
-        return MINMAX( 0.0f, ( SourceCos - CosOuter ) / CosRange, 1.0f );
+        if( A.SourceCount != B.SourceCount )
+            return ( A.SourceCount < B.SourceCount );
+
+        return FALSE;
+    }
+
+    //---------------------------------------------------------------------
+
+    f32 ComputeBBoxBoundingSphereRadius( const bbox& WorldBBox )
+    {
+        const vector3 Extents = ( WorldBBox.Max - WorldBBox.Min ) * 0.5f;
+        return x_sqrt( Extents.Dot( Extents ) );
+    }
+
+    //---------------------------------------------------------------------
+
+    xbool SphereIntersectsFiniteCone( const vector3& SphereCenter,
+                                      f32            SphereRadius,
+                                      const vector3& ConeApex,
+                                      const vector3& ConeDirection,
+                                      f32            ConeOuterCos,
+                                      f32            ConeLength )
+    {
+        if( ConeOuterCos <= -1.0f )
+            return TRUE;
+
+        vector3 Axis = ConeDirection;
+        if( !Axis.SafeNormalize() )
+            Axis.Set( 0.0f, 0.0f, 1.0f );
+
+        const vector3 ToCenter      = SphereCenter - ConeApex;
+        const f32     CenterDistSq  = ToCenter.Dot( ToCenter );
+        const f32     AxialDistance = Axis.Dot( ToCenter );
+        const f32     SafeCosOuter  = MAX( ConeOuterCos, 0.0001f );
+        const f32     SinOuter      = x_sqrt( MAX( 1.0f - ( SafeCosOuter * SafeCosOuter ), 0.0f ) );
+        const f32     TanOuter      = SinOuter / SafeCosOuter;
+        const f32     SphereRadiusSq= SphereRadius * SphereRadius;
+
+        if( AxialDistance < -SphereRadius )
+            return FALSE;
+
+        if( AxialDistance > ( ConeLength + SphereRadius ) )
+            return FALSE;
+
+        if( AxialDistance <= 0.0f )
+            return ( CenterDistSq <= SphereRadiusSq );
+
+        const f32 RadialDistanceSq = MAX( CenterDistSq - ( AxialDistance * AxialDistance ), 0.0f );
+        const f32 RadialDistance   = x_sqrt( RadialDistanceSq );
+
+        if( AxialDistance < ConeLength )
+        {
+            const f32 SideDistance = ( RadialDistance * SafeCosOuter ) - ( AxialDistance * SinOuter );
+            if( SideDistance <= SphereRadius )
+                return TRUE;
+        }
+
+        const f32 ConeCapRadius  = ConeLength * TanOuter;
+        const f32 CapAxialDelta  = MAX( AxialDistance - ConeLength, 0.0f );
+        const f32 CapRadialDelta = MAX( RadialDistance - ConeCapRadius, 0.0f );
+        return ( ( CapAxialDelta * CapAxialDelta ) + ( CapRadialDelta * CapRadialDelta ) ) <= SphereRadiusSq;
     }
 
     //---------------------------------------------------------------------
@@ -255,40 +376,20 @@ namespace
     xbool SourceConeAffectsBBox( const vector3& LightPos,
                                  const vector3& LightDirection,
                                  f32            CosOuter,
+                                 f32            LightRadius,
                                  const bbox&    WorldBBox )
     {
-        if( CosOuter <= -1.0f )
+        if( CosOuter <= 0.0f )
             return TRUE;
 
-        const vector3 Center = WorldBBox.GetCenter();
-        if( ComputeSourceConeCoverage( LightPos,
-                                       LightDirection,
-                                       CosOuter,
-                                       Center ) > 0.0f )
-        {
-            return TRUE;
-        }
-
-        const vector3 Min = WorldBBox.Min;
-        const vector3 Max = WorldBBox.Max;
-        vector3 TestPoint;
-
-        for( s32 i = 0; i < 8; i++ )
-        {
-            TestPoint.Set( (i & 1) ? Max.GetX() : Min.GetX(),
-                           (i & 2) ? Max.GetY() : Min.GetY(),
-                           (i & 4) ? Max.GetZ() : Min.GetZ() );
-
-            if( ComputeSourceConeCoverage( LightPos,
+        // Conservative box-vs-spot test: keep casters whose bounding sphere intersects
+        // the finite cone instead of rejecting them on center/corner sampling.
+        return SphereIntersectsFiniteCone( WorldBBox.GetCenter(),
+                                           ComputeBBoxBoundingSphereRadius( WorldBBox ),
+                                           LightPos,
                                            LightDirection,
                                            CosOuter,
-                                           TestPoint ) > 0.0f )
-            {
-                return TRUE;
-            }
-        }
-
-        return FALSE;
+                                           LightRadius );
     }
 
     //---------------------------------------------------------------------
@@ -324,6 +425,7 @@ namespace
             return SourceConeAffectsBBox( LightPos,
                                           *pLightDirection,
                                           LightConeOuterCos,
+                                          LightRadius,
                                           CasterBBox );
         }
 
@@ -360,7 +462,7 @@ namespace
         f32                  UnusedInnerRadius;
         f32                  UnusedInnerAngle;
         s32                  ShadowMapResolution;
-        s32                  UnusedShadowPriority;
+        s32                  ShadowPriority;
 
         g_LightMgr.GetDynamicLight( LightIndex,
                                     DynamicLight.Pos,
@@ -374,11 +476,10 @@ namespace
                                     UnusedInnerAngle,
                                     DynamicLight.OuterAngle,
                                     ShadowMapResolution,
-                                    UnusedShadowPriority );
+                                    ShadowPriority );
 
         (void)UnusedInnerRadius;
         (void)UnusedInnerAngle;
-        (void)UnusedShadowPriority;
 
         if( !CastShadows || ( DynamicLight.Radius <= 0.0f ) )
             return FALSE;
@@ -417,6 +518,7 @@ namespace
         ShadowLight.Falloff     = DynamicLight.Falloff;
         ShadowLight.FOV         = GetShadowLightFOV( DynamicLight );
         ShadowLight.ShadowMapResolution = DynamicLight.ShadowMapResolution;
+        ShadowLight.ShadowPriority = ClampShadowPriority( ShadowPriority );
         ShadowLight.SourceCount = GetShadowLightSourceCount( DynamicLight.Shape );
         ShadowLight.RelevantCasterStart = RelevantCasterStart;
         ShadowLight.RelevantCasterCount = LocalCasterCount;
@@ -499,7 +601,9 @@ namespace
     void AddPointShadowSources( const vector3& LightPos,
                                 f32            LightRadius,
                                 f32            LightFalloff,
-                                s32            ShadowMapResolution )
+                                s32            ShadowMapResolution,
+                                s32            ShadowPriority,
+                                f32            ShadowScore )
     {
         for( s32 iFace = 0; iFace < ARRAYSIZE(kPointShadowFaces); iFace++ )
         {
@@ -514,7 +618,9 @@ namespace
                                              kPointShadowFOV,
                                              LightRadius,
                                              LightFalloff,
-                                             ShadowMapResolution );
+                                             ShadowMapResolution,
+                                             ShadowPriority,
+                                             ShadowScore );
         }
     }
 
@@ -525,7 +631,9 @@ namespace
                               radian         ShadowFOV,
                               f32            LightRadius,
                               f32            LightFalloff,
-                              s32            ShadowMapResolution )
+                              s32            ShadowMapResolution,
+                              s32            ShadowPriority,
+                              f32            ShadowScore )
     {
         matrix4 SpotL2W;
         SpotL2W.Setup( vector3( 1.0f, 1.0f, 1.0f ),
@@ -536,7 +644,9 @@ namespace
                                         ShadowFOV,
                                         LightRadius,
                                         LightFalloff,
-                                        ShadowMapResolution );
+                                        ShadowMapResolution,
+                                        ShadowPriority,
+                                        ShadowScore );
     }
 
     //---------------------------------------------------------------------
@@ -553,7 +663,9 @@ namespace
                 AddPointShadowSources( ShadowLight.Pos,
                                        ShadowLight.Radius,
                                        ShadowLight.Falloff,
-                                       ShadowLight.ShadowMapResolution );
+                                       ShadowLight.ShadowMapResolution,
+                                       ShadowLight.ShadowPriority,
+                                       ShadowLight.Score );
             }
             else
             {
@@ -562,7 +674,9 @@ namespace
                                      ShadowLight.FOV,
                                      ShadowLight.Radius,
                                      ShadowLight.Falloff,
-                                     ShadowLight.ShadowMapResolution );
+                                     ShadowLight.ShadowMapResolution,
+                                     ShadowLight.ShadowPriority,
+                                     ShadowLight.Score );
             }
         }
     }
@@ -575,7 +689,7 @@ namespace
     {
         if( NLights >= light_mgr::MAX_DYNAMIC_LIGHTS )
         {
-            if( Light.Score <= pLights[NLights - 1].Score )
+            if( !SortsBeforeShadowLight( Light, pLights[NLights - 1] ) )
                 return;
 
             NLights--;
@@ -584,7 +698,7 @@ namespace
         s32 InsertAt = NLights;
         while( InsertAt > 0 )
         {
-            if( pLights[InsertAt - 1].Score >= Light.Score )
+            if( !SortsBeforeShadowLight( Light, pLights[InsertAt - 1] ) )
                 break;
 
             pLights[InsertAt] = pLights[InsertAt - 1];
@@ -630,6 +744,164 @@ namespace
 
     //---------------------------------------------------------------------
 
+    xbool AtlasFitsShadowLights( const shadow_light* pShadowLights,
+                                 s32                 NShadowLights )
+    {
+        shadow_atlas_entry Entries[MAX_SHADOW_SOURCES];
+        s32              NEntries = 0;
+
+        for( s32 iLight = 0; iLight < NShadowLights; iLight++ )
+        {
+            const shadow_light& ShadowLight = pShadowLights[iLight];
+            for( s32 iSource = 0; iSource < ShadowLight.SourceCount; iSource++ )
+            {
+                ASSERT( NEntries < MAX_SHADOW_SOURCES );
+                Entries[NEntries].SourceIndex    = NEntries;
+                Entries[NEntries].TileSize       = ClampShadowMapResolution( ShadowLight.ShadowMapResolution );
+                Entries[NEntries].ShadowPriority = ShadowLight.ShadowPriority;
+                Entries[NEntries].ShadowScore    = ShadowLight.Score;
+                Entries[NEntries].AtlasTileX     = 0;
+                Entries[NEntries].AtlasTileY     = 0;
+                NEntries++;
+            }
+        }
+
+        if( NEntries <= 0 )
+            return TRUE;
+
+        return ( GetShadowAtlasSizeForEntries( Entries, NEntries ) > 0 );
+    }
+
+    //---------------------------------------------------------------------
+
+    s32 FindShadowLightForResolutionDrop( const shadow_light* pShadowLights,
+                                          s32                 NShadowLights,
+                                          s32                 ShadowPriority )
+    {
+        s32 iBestLight = -1;
+
+        for( s32 iLight = 0; iLight < NShadowLights; iLight++ )
+        {
+            const shadow_light& ShadowLight = pShadowLights[iLight];
+            if( ShadowLight.ShadowPriority != ShadowPriority )
+                continue;
+            if( ShadowLight.ShadowMapResolution <= 256 )
+                continue;
+
+            if( iBestLight < 0 )
+            {
+                iBestLight = iLight;
+                continue;
+            }
+
+            const shadow_light& BestLight = pShadowLights[iBestLight];
+            if( ShadowLight.Score < BestLight.Score )
+            {
+                iBestLight = iLight;
+                continue;
+            }
+
+            if( ( ShadowLight.Score == BestLight.Score ) &&
+                ( ShadowLight.ShadowMapResolution > BestLight.ShadowMapResolution ) )
+            {
+                iBestLight = iLight;
+            }
+        }
+
+        return iBestLight;
+    }
+
+    //---------------------------------------------------------------------
+
+    s32 FindShadowLightForRemoval( const shadow_light* pShadowLights,
+                                   s32                 NShadowLights,
+                                   s32                 ShadowPriority )
+    {
+        s32 iBestLight = -1;
+
+        for( s32 iLight = 0; iLight < NShadowLights; iLight++ )
+        {
+            const shadow_light& ShadowLight = pShadowLights[iLight];
+            if( ShadowLight.ShadowPriority != ShadowPriority )
+                continue;
+
+            if( iBestLight < 0 )
+            {
+                iBestLight = iLight;
+                continue;
+            }
+
+            const shadow_light& BestLight = pShadowLights[iBestLight];
+            if( ShadowLight.Score < BestLight.Score )
+            {
+                iBestLight = iLight;
+                continue;
+            }
+
+            if( ( ShadowLight.Score == BestLight.Score ) &&
+                ( ShadowLight.ShadowMapResolution > BestLight.ShadowMapResolution ) )
+            {
+                iBestLight = iLight;
+            }
+        }
+
+        return iBestLight;
+    }
+
+    //---------------------------------------------------------------------
+
+    void RemoveShadowLight( shadow_light* pShadowLights,
+                            s32&          NShadowLights,
+                            s32           RemoveIndex )
+    {
+        ASSERT( ( RemoveIndex >= 0 ) && ( RemoveIndex < NShadowLights ) );
+
+        for( s32 iLight = RemoveIndex + 1; iLight < NShadowLights; iLight++ )
+            pShadowLights[iLight - 1] = pShadowLights[iLight];
+
+        NShadowLights--;
+    }
+
+    //---------------------------------------------------------------------
+
+    void ResolveAtlasBudget( shadow_light* pShadowLights,
+                             s32&          NShadowLights )
+    {
+        for( s32 ShadowPriority = kMinShadowPriority;
+             ShadowPriority <= kMaxShadowPriority;
+             ShadowPriority++ )
+        {
+            while( !AtlasFitsShadowLights( pShadowLights, NShadowLights ) )
+            {
+                const s32 iLightToReduce = FindShadowLightForResolutionDrop( pShadowLights,
+                                                                              NShadowLights,
+                                                                              ShadowPriority );
+                if( iLightToReduce >= 0 )
+                {
+                    pShadowLights[iLightToReduce].ShadowMapResolution =
+                        ReduceShadowMapResolution( pShadowLights[iLightToReduce].ShadowMapResolution );
+                    continue;
+                }
+
+                const s32 iLightToRemove = FindShadowLightForRemoval( pShadowLights,
+                                                                      NShadowLights,
+                                                                      ShadowPriority );
+                if( iLightToRemove >= 0 )
+                {
+                    RemoveShadowLight( pShadowLights, NShadowLights, iLightToRemove );
+                    continue;
+                }
+
+                break;
+            }
+
+            if( AtlasFitsShadowLights( pShadowLights, NShadowLights ) )
+                return;
+        }
+    }
+
+    //---------------------------------------------------------------------
+
     s32 GetAtlasGuardTexels( f32 FilterRadius )
     {
         const s32 GuardTexels = (s32)x_ceil( ( FilterRadius * 4.0f ) + 2.0f );
@@ -638,103 +910,6 @@ namespace
 
     //---------------------------------------------------------------------
 
-    xbool ShadowSourceAffectsBBox( const shadow_map_mgr::shadow_source& Source,
-                                   const bbox&                          WorldBBox )
-    {
-        if( !Source.WorldBBox.Intersect( WorldBBox ) )
-            return FALSE;
-
-        const vector3 LightPos( Source.LightPosRadius.GetX(),
-                                Source.LightPosRadius.GetY(),
-                                Source.LightPosRadius.GetZ() );
-        const vector3 LightDirection( Source.FaceLightDirFalloff.GetX(),
-                                      Source.FaceLightDirFalloff.GetY(),
-                                      Source.FaceLightDirFalloff.GetZ() );
-        return SourceConeAffectsBBox( LightPos,
-                                      LightDirection,
-                                      Source.FaceLightData.GetX(),
-                                      WorldBBox );
-    }
-
-    //---------------------------------------------------------------------
-
-    f32 ComputeShadowSourceScore( const shadow_map_mgr::shadow_source& Source,
-                                  const bbox&                          WorldBBox )
-    {
-        const vector3 LightPos( Source.LightPosRadius.GetX(),
-                                Source.LightPosRadius.GetY(),
-                                Source.LightPosRadius.GetZ() );
-        const vector3 LightDirection( Source.FaceLightDirFalloff.GetX(),
-                                      Source.FaceLightDirFalloff.GetY(),
-                                      Source.FaceLightDirFalloff.GetZ() );
-        const vector3 BBoxCenter = WorldBBox.GetCenter();
-        const vector3 ToCenter   = BBoxCenter - LightPos;
-        const f32     DistanceSq = ToCenter.Dot( ToCenter );
-        const f32     Radius     = Source.LightPosRadius.GetW();
-
-        if( Radius <= 0.0f )
-            return 0.0f;
-
-        f32 Distance = 0.0f;
-        if( DistanceSq > 1e-8f )
-            Distance = x_sqrt( DistanceSq );
-
-        const f32 Falloff     = MINMAX( 0.0f, Source.LightFalloff, 1.0f );
-        const f32 InnerRadius = Radius * ( 1.0f - Falloff );
-        const f32 RadialScore = 1.0f - MINMAX( 0.0f,
-                                               ( Distance - InnerRadius ) / MAX( Radius - InnerRadius, 0.0001f ),
-                                               1.0f );
-        const f32 ConeScore   = ComputeSourceConeCoverage( LightPos,
-                                                           LightDirection,
-                                                           Source.FaceLightData.GetX(),
-                                                           BBoxCenter );
-
-        return MAX( 0.0001f, RadialScore * ConeScore );
-    }
-
-    //---------------------------------------------------------------------
-
-    void InsertCollectedSourceByScore( s32   SourceIndex,
-                                       f32   Score,
-                                       s32   MaxSourceCount,
-                                       s32*  pCollectedSources,
-                                       f32*  pCollectedScores,
-                                       s32&  NCollectedSources )
-    {
-        ASSERT( MaxSourceCount > 0 );
-
-        if( NCollectedSources >= MaxSourceCount )
-        {
-            if( Score <= pCollectedScores[NCollectedSources - 1] )
-                return;
-        }
-
-        s32 InsertAt = NCollectedSources;
-        if( NCollectedSources < MaxSourceCount )
-        {
-            NCollectedSources++;
-        }
-        else
-        {
-            InsertAt = MaxSourceCount - 1;
-        }
-
-        while( InsertAt > 0 )
-        {
-            if( pCollectedScores[InsertAt - 1] >= Score )
-                break;
-
-            if( InsertAt < MaxSourceCount )
-            {
-                pCollectedScores[InsertAt]  = pCollectedScores[InsertAt - 1];
-                pCollectedSources[InsertAt] = pCollectedSources[InsertAt - 1];
-            }
-            InsertAt--;
-        }
-
-        pCollectedScores [InsertAt] = Score;
-        pCollectedSources[InsertAt] = SourceIndex;
-    }
 }
 
 //=========================================================================
@@ -745,12 +920,10 @@ shadow_map_mgr::shadow_map_mgr( void ) :
     m_SourceCount      ( 0 ),
     m_PointFaceCount   ( 0 ),
     m_PointLightCount  ( 0 ),
-    m_SpotSourceCount  ( 0 ),
-    m_SpotAtlasSize    ( 0 ),
-    m_AtlasLayoutDirty ( FALSE ),
-    m_NCollectedSources( 0 )
+    m_AtlasSourceCount ( 0 ),
+    m_AtlasSize        ( 0 ),
+    m_AtlasLayoutDirty ( FALSE )
 {
-    x_memset( m_CollectedSources, 0, sizeof(m_CollectedSources) );
     x_memset( m_Sources, 0, sizeof(m_Sources) );
 }
 
@@ -768,10 +941,9 @@ void shadow_map_mgr::ClearSources( void )
     m_SourceCount       = 0;
     m_PointFaceCount    = 0;
     m_PointLightCount   = 0;
-    m_SpotSourceCount   = 0;
-    m_SpotAtlasSize     = 0;
+    m_AtlasSourceCount  = 0;
+    m_AtlasSize         = 0;
     m_AtlasLayoutDirty  = FALSE;
-    m_NCollectedSources = 0;
 }
 
 //=========================================================================
@@ -797,10 +969,17 @@ void shadow_map_mgr::ComputePerspectiveSource( shadow_source&  Dest,
 {
     ShadowMapResolution = ClampShadowMapResolution( ShadowMapResolution );
 
-    f32 NearZ = MAX( 0.5f, LightRadius * 0.01f );
-    f32 FarZ  = MAX( NearZ + 1.0f, LightRadius );
-    // TODO: Fix this double clamp 
+    f32       ReceiveNearZ = ComputeSpotShadowReceiveNearZ( LightRadius );
+    f32       NearZ        = MAX( 0.5f, LightRadius * 0.01f );
+    if( SourceType == SHADOW_SOURCE_POINT_FACE )
+    {
+        ReceiveNearZ = ComputePointShadowReceiveNearZ( LightRadius );
+        NearZ        = ComputePointShadowNearZ( LightRadius );
+    }
+
     NearZ = MAX( 0.01f, NearZ );
+
+    f32 FarZ  = MAX( NearZ + 1.0f, LightRadius );
 
     matrix4 W2Proj = L2W;
     W2Proj.InvertRT();
@@ -811,7 +990,7 @@ void shadow_map_mgr::ComputePerspectiveSource( shadow_source&  Dest,
     if( SourceType == SHADOW_SOURCE_POINT_FACE )
     {
         const f32 CoverageScale = (f32)ShadowMapResolution /
-                                  ( (f32)ShadowMapResolution + 1.0f );
+                                  ( (f32)ShadowMapResolution + kPointShadowProjectionOverlapTexels );
         Scale *= CoverageScale;
     }
 
@@ -832,12 +1011,15 @@ void shadow_map_mgr::ComputePerspectiveSource( shadow_source&  Dest,
     Dest.PointLightIndex= -1;
     Dest.FaceIndex      = -1;
     Dest.RequestedResolution = ShadowMapResolution;
+    Dest.ShadowPriority = kMinShadowPriority;
+    Dest.ShadowScore    = 0.0f;
     Dest.WorldToClip    = Proj2Clip * W2Proj;
     Dest.WorldToAtlas   = Dest.WorldToClip;
     Dest.FaceLightDirFalloff.Zero();
     Dest.FaceLightData.Zero();
     Dest.LightFalloff   = LightFalloff;
     Dest.NearZ          = NearZ;
+    Dest.ReceiveNearZ   = ReceiveNearZ;
     Dest.FarZ           = FarZ;
     Dest.AtlasX         = 0;
     Dest.AtlasY         = 0;
@@ -855,31 +1037,30 @@ void shadow_map_mgr::ComputePerspectiveSource( shadow_source&  Dest,
 
 void shadow_map_mgr::UpdateAtlasLayout( void )
 {
-    m_SpotAtlasSize = 0;
+    m_AtlasSize = 0;
 
-    if( m_SpotSourceCount <= 0 )
+    if( m_AtlasSourceCount <= 0 )
         return;
 
-    const s32 GuardTexels = ( m_SpotSourceCount > 1 ) ? GetAtlasGuardTexels( kShadowAtlasFilterRadius ) : 0;
-    spot_atlas_entry Entries[MAX_SHADOW_SOURCES];
+    const s32 GuardTexels = ( m_AtlasSourceCount > 1 ) ? GetAtlasGuardTexels( kShadowAtlasFilterRadius ) : 0;
+    shadow_atlas_entry Entries[MAX_SHADOW_SOURCES];
     s32             NEntries = 0;
 
     for( s32 i = 0; i < m_SourceCount; i++ )
     {
         const shadow_source& Source = m_Sources[i];
-        if( Source.Type != SHADOW_SOURCE_SPOT )
-            continue;
-
         ASSERT( NEntries < MAX_SHADOW_SOURCES );
-        Entries[NEntries].SourceIndex = i;
-        Entries[NEntries].TileSize    = ClampShadowMapResolution( Source.RequestedResolution );
-        Entries[NEntries].AtlasTileX  = 0;
-        Entries[NEntries].AtlasTileY  = 0;
+        Entries[NEntries].SourceIndex    = i;
+        Entries[NEntries].TileSize       = ClampShadowMapResolution( Source.RequestedResolution );
+        Entries[NEntries].ShadowPriority = Source.ShadowPriority;
+        Entries[NEntries].ShadowScore    = Source.ShadowScore;
+        Entries[NEntries].AtlasTileX     = 0;
+        Entries[NEntries].AtlasTileY     = 0;
         NEntries++;
     }
 
-    s32 SpotAtlasSize = GetSpotAtlasSizeForEntries( Entries, NEntries );
-    while( SpotAtlasSize <= 0 )
+    s32 AtlasSize = GetShadowAtlasSizeForEntries( Entries, NEntries );
+    while( AtlasSize <= 0 )
     {
         s32 iLargestEntry = -1;
         for( s32 i = 0; i < NEntries; i++ )
@@ -887,8 +1068,31 @@ void shadow_map_mgr::UpdateAtlasLayout( void )
             if( Entries[i].TileSize <= 256 )
                 continue;
 
-            if( ( iLargestEntry < 0 ) || ( Entries[i].TileSize > Entries[iLargestEntry].TileSize ) )
+            if( iLargestEntry < 0 )
+            {
                 iLargestEntry = i;
+                continue;
+            }
+
+            if( Entries[i].ShadowPriority < Entries[iLargestEntry].ShadowPriority )
+            {
+                iLargestEntry = i;
+                continue;
+            }
+
+            if( ( Entries[i].ShadowPriority == Entries[iLargestEntry].ShadowPriority ) &&
+                ( Entries[i].ShadowScore < Entries[iLargestEntry].ShadowScore ) )
+            {
+                iLargestEntry = i;
+                continue;
+            }
+
+            if( ( Entries[i].ShadowPriority == Entries[iLargestEntry].ShadowPriority ) &&
+                ( Entries[i].ShadowScore == Entries[iLargestEntry].ShadowScore ) &&
+                ( Entries[i].TileSize > Entries[iLargestEntry].TileSize ) )
+            {
+                iLargestEntry = i;
+            }
         }
 
         if( iLargestEntry < 0 )
@@ -898,10 +1102,10 @@ void shadow_map_mgr::UpdateAtlasLayout( void )
         }
 
         Entries[iLargestEntry].TileSize = ReduceShadowMapResolution( Entries[iLargestEntry].TileSize );
-        SpotAtlasSize = GetSpotAtlasSizeForEntries( Entries, NEntries );
+        AtlasSize = GetShadowAtlasSizeForEntries( Entries, NEntries );
     }
 
-    m_SpotAtlasSize = SpotAtlasSize;
+    m_AtlasSize = AtlasSize;
 
     for( s32 i = 0; i < NEntries; i++ )
     {
@@ -926,14 +1130,19 @@ void shadow_map_mgr::UpdateAtlasLayout( void )
             Source.AtlasHeight -= GuardY * 2;
         }
 
+        if( Source.Type == SHADOW_SOURCE_POINT_FACE )
+        {
+            Source.FaceLightData.GetX() = ComputePointFaceCoverageCos( Source.AtlasWidth );
+        }
+
         Source.WorldToAtlas = Source.WorldToClip;
         Source.WorldToAtlas.Scale( vector3( 0.5f, -0.5f, 1.0f ) );
         Source.WorldToAtlas.Translate( vector3( 0.5f, 0.5f, 0.0f ) );
-        Source.WorldToAtlas.Scale( vector3( (f32)Source.AtlasWidth  / (f32)m_SpotAtlasSize,
-                                            (f32)Source.AtlasHeight / (f32)m_SpotAtlasSize,
+        Source.WorldToAtlas.Scale( vector3( (f32)Source.AtlasWidth  / (f32)m_AtlasSize,
+                                            (f32)Source.AtlasHeight / (f32)m_AtlasSize,
                                             1.0f ) );
-        Source.WorldToAtlas.Translate( vector3( (f32)Source.AtlasX / (f32)m_SpotAtlasSize,
-                                                (f32)Source.AtlasY / (f32)m_SpotAtlasSize,
+        Source.WorldToAtlas.Translate( vector3( (f32)Source.AtlasX / (f32)m_AtlasSize,
+                                                (f32)Source.AtlasY / (f32)m_AtlasSize,
                                                 0.0f ) );
     }
 }
@@ -944,7 +1153,9 @@ xbool shadow_map_mgr::AddPointSource( const matrix4& L2W,
                                       radian         FOV,
                                       f32            LightRadius,
                                       f32            LightFalloff,
-                                      s32            ShadowMapResolution )
+                                      s32            ShadowMapResolution,
+                                      s32            ShadowPriority,
+                                      f32            ShadowScore )
 {
     if( m_SourceCount >= MAX_SHADOW_SOURCES )
         return FALSE;
@@ -971,14 +1182,17 @@ xbool shadow_map_mgr::AddPointSource( const matrix4& L2W,
                                     FaceDirection.GetY(),
                                     FaceDirection.GetZ(),
                                     LightFalloff );
-    Source.FaceLightData.Set( kPointFaceCoverageCos,
+    Source.FaceLightData.Set( ComputePointFaceCoverageCos( ShadowMapResolution ),
                               Source.NearZ,
                               Source.FarZ,
-                              0.0f );
+                              kShadowSourceTypePointFace );
+    Source.ShadowPriority = ClampShadowPriority( ShadowPriority );
+    Source.ShadowScore    = ShadowScore;
     Source.PointLightIndex = m_PointFaceCount / POINT_SHADOW_FACE_COUNT;
     Source.FaceIndex       = m_PointFaceCount % POINT_SHADOW_FACE_COUNT;
     m_SourceCount++;
     m_PointFaceCount++;
+    m_AtlasSourceCount++;
     m_AtlasLayoutDirty = TRUE;	
 
     if( Source.FaceIndex == 0 )
@@ -993,7 +1207,9 @@ xbool shadow_map_mgr::AddSpotSource( const matrix4& L2W,
                                      radian         FOV,
                                      f32            LightRadius,
                                      f32            LightFalloff,
-                                     s32            ShadowMapResolution )
+                                     s32            ShadowMapResolution,
+                                     s32            ShadowPriority,
+                                     f32            ShadowScore )
 {
     if( m_SourceCount >= MAX_SHADOW_SOURCES )
         return FALSE;
@@ -1018,112 +1234,13 @@ xbool shadow_map_mgr::AddSpotSource( const matrix4& L2W,
     Source.FaceLightData.Set( x_cos( FOV * 0.5f ),
                               Source.NearZ,
                               Source.FarZ,
-                              0.0f );
+                              kShadowSourceTypeSpot );
+    Source.ShadowPriority = ClampShadowPriority( ShadowPriority );
+    Source.ShadowScore    = ShadowScore;
     m_SourceCount++;
-    m_SpotSourceCount++;
+    m_AtlasSourceCount++;
     m_AtlasLayoutDirty = TRUE;
     return TRUE;
-}
-
-//=========================================================================
-
-s32 shadow_map_mgr::CollectSources( const matrix4& L2W, const bbox& B, s32 MaxSourceCount )
-{
-    ASSERT( MaxSourceCount >= 0 );
-
-    FinalizeSources();
-    m_NCollectedSources = 0;
-
-    if( MaxSourceCount <= 0 )
-        return 0;
-
-    if( MaxSourceCount > MAX_SHADOW_SOURCES )
-        MaxSourceCount = MAX_SHADOW_SOURCES;
-
-    bbox WorldBBox = B;
-    WorldBBox.Transform( L2W );
-
-    f32 CollectedScores[MAX_SHADOW_SOURCES];
-    s32 BestPointSources[MAX_SHADOW_LIGHTS];
-    f32 BestPointScores[MAX_SHADOW_LIGHTS];
-
-    for( s32 iPointLight = 0; iPointLight < MAX_SHADOW_LIGHTS; iPointLight++ )
-    {
-        BestPointSources[iPointLight] = -1;
-        BestPointScores [iPointLight] = -1.0f;
-    }
-
-    for( s32 i = 0; i < m_SourceCount; i++ )
-    {
-        const shadow_source& Source = m_Sources[i];
-        if( !ShadowSourceAffectsBBox( Source, WorldBBox ) )
-            continue;
-
-        const f32 Score = ComputeShadowSourceScore( Source, WorldBBox );
-        if( Source.Type == SHADOW_SOURCE_POINT_FACE )
-        {
-            const s32 PointLightIndex = Source.PointLightIndex;
-            if( ( PointLightIndex < 0 ) || ( PointLightIndex >= MAX_SHADOW_LIGHTS ) )
-                continue;
-
-            if( Score > BestPointScores[PointLightIndex] )
-            {
-                BestPointScores [PointLightIndex] = Score;
-                BestPointSources[PointLightIndex] = i;
-            }
-        }
-        else
-        {
-            InsertCollectedSourceByScore( i,
-                                          Score,
-                                          MaxSourceCount,
-                                          m_CollectedSources,
-                                          CollectedScores,
-                                          m_NCollectedSources );
-        }
-    }
-
-    for( s32 iPointLight = 0; iPointLight < MAX_SHADOW_LIGHTS; iPointLight++ )
-    {
-        if( BestPointSources[iPointLight] < 0 )
-            continue;
-
-        InsertCollectedSourceByScore( BestPointSources[iPointLight],
-                                      BestPointScores[iPointLight],
-                                      MaxSourceCount,
-                                      m_CollectedSources,
-                                      CollectedScores,
-                                      m_NCollectedSources );
-    }
-
-    return m_NCollectedSources;
-}
-
-//=========================================================================
-
-void shadow_map_mgr::GetCollectedSource( s32      CollectedIndex,
-                                         s32&     SourceIndex,
-                                         s32&     Type,
-                                         matrix4& ShadowMatrix,
-                                         vector4& LightPosRadius,
-                                         f32&     Falloff,
-                                         f32&     NearZ,
-                                         f32&     FarZ,
-                                         s32&     PointLightIndex,
-                                         s32&     FaceIndex ) const
-{
-    ASSERT( ( CollectedIndex >= 0 ) && ( CollectedIndex < m_NCollectedSources ) );
-    ASSERT( !m_AtlasLayoutDirty );
-    SourceIndex      = m_CollectedSources[CollectedIndex];
-    const shadow_source& Source = m_Sources[SourceIndex];
-    Type            = Source.Type;
-    ShadowMatrix    = Source.WorldToAtlas;
-    LightPosRadius  = Source.LightPosRadius;
-    Falloff         = Source.LightFalloff;
-    NearZ           = Source.NearZ;
-    FarZ            = Source.FarZ;
-    PointLightIndex = Source.PointLightIndex;
-    FaceIndex       = Source.FaceIndex;
 }
 
 //=========================================================================
@@ -1144,23 +1261,16 @@ s32 shadow_map_mgr::GetSourceCount( void ) const
 
 //=========================================================================
 
-s32 shadow_map_mgr::GetPointLightCount( void ) const
+s32 shadow_map_mgr::GetAtlasSize( void ) const
 {
-    return m_PointLightCount;
+    return ( m_AtlasSize > 0 ) ? m_AtlasSize : SHADOW_ATLAS_SIZE;
 }
 
 //=========================================================================
 
-s32 shadow_map_mgr::GetSpotAtlasSize( void ) const
+s32 shadow_map_mgr::GetAtlasSourceCount( void ) const
 {
-    return ( m_SpotAtlasSize > 0 ) ? m_SpotAtlasSize : SHADOW_ATLAS_SIZE;
-}
-
-//=========================================================================
-
-s32 shadow_map_mgr::GetSpotSourceCount( void ) const
-{
-    return m_SpotSourceCount;
+    return m_AtlasSourceCount;
 }
 
 //=========================================================================
@@ -1239,9 +1349,11 @@ void shadow_map_mgr::CreateShadowMap( object* const* ppCasterCandidates,
                            ShadowLight );
     }
 
-    const s32 NShadowLights = SelectShadowLights( ShadowLightCandidates,
-                                                  NCandidateShadowLights,
-                                                  ShadowLights );
+    s32 NShadowLights = SelectShadowLights( ShadowLightCandidates,
+                                            NCandidateShadowLights,
+                                            ShadowLights );
+
+    ResolveAtlasBudget( ShadowLights, NShadowLights );
 
     if( NShadowLights <= 0 )
         return;

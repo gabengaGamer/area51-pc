@@ -1394,9 +1394,17 @@ void platform_AddPointShadowMapSource( const matrix4& L2W,
                                        radian         FOV,
                                        f32            LightRadius,
                                        f32            LightFalloff,
-                                       s32            ShadowMapResolution )
+                                       s32            ShadowMapResolution,
+                                       s32            ShadowPriority,
+                                       f32            ShadowScore )
 {
-    g_ShadowMapMgr.AddPointSource( L2W, FOV, LightRadius, LightFalloff, ShadowMapResolution );
+    g_ShadowMapMgr.AddPointSource( L2W,
+                                   FOV,
+                                   LightRadius,
+                                   LightFalloff,
+                                   ShadowMapResolution,
+                                   ShadowPriority,
+                                   ShadowScore );
 }
 
 //=============================================================================
@@ -1406,9 +1414,17 @@ void platform_AddSpotShadowMapSource( const matrix4& L2W,
                                       radian         FOV,
                                       f32            LightRadius,
                                       f32            LightFalloff,
-                                      s32            ShadowMapResolution )
+                                      s32            ShadowMapResolution,
+                                      s32            ShadowPriority,
+                                      f32            ShadowScore )
 {
-    g_ShadowMapMgr.AddSpotSource( L2W, FOV, LightRadius, LightFalloff, ShadowMapResolution );
+    g_ShadowMapMgr.AddSpotSource( L2W,
+                                  FOV,
+                                  LightRadius,
+                                  LightFalloff,
+                                  ShadowMapResolution,
+                                  ShadowPriority,
+                                  ShadowScore );
 }
 
 //=============================================================================

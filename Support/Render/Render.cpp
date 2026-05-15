@@ -2580,11 +2580,19 @@ void render::AddPointShadowMapSource( const matrix4&         L2W,
                                       radian                 FOV,
                                       f32                    LightRadius,
                                       f32                    LightFalloff,
-                                      s32                    ShadowMapResolution )
+                                      s32                    ShadowMapResolution,
+                                      s32                    ShadowPriority,
+                                      f32                    ShadowScore )
 {
     ASSERT( s_InShadowBegin );
     ASSERT( s_nShadowSources < MAX_SHADOW_CASTERS );
-    platform_AddPointShadowMapSource( L2W, FOV, LightRadius, LightFalloff, ShadowMapResolution );
+    platform_AddPointShadowMapSource( L2W,
+                                      FOV,
+                                      LightRadius,
+                                      LightFalloff,
+                                      ShadowMapResolution,
+                                      ShadowPriority,
+                                      ShadowScore );
     s_nShadowSources++;
 }
 
@@ -2594,11 +2602,19 @@ void render::AddSpotShadowMapSource( const matrix4&         L2W,
                                      radian                 FOV,
                                      f32                    LightRadius,
                                      f32                    LightFalloff,
-                                     s32                    ShadowMapResolution )
+                                     s32                    ShadowMapResolution,
+                                     s32                    ShadowPriority,
+                                     f32                    ShadowScore )
 {
     ASSERT( s_InShadowBegin );
     ASSERT( s_nShadowSources < MAX_SHADOW_CASTERS );
-    platform_AddSpotShadowMapSource( L2W, FOV, LightRadius, LightFalloff, ShadowMapResolution );
+    platform_AddSpotShadowMapSource( L2W,
+                                     FOV,
+                                     LightRadius,
+                                     LightFalloff,
+                                     ShadowMapResolution,
+                                     ShadowPriority,
+                                     ShadowScore );
     s_nShadowSources++;
 }
 

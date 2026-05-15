@@ -580,29 +580,6 @@ float3 ApplyProjShadows(float3 color, float3 worldPos)
 
 //==============================================================================
 
-static const float kFaceShadowPositiveExponent = 5.0f;
-static const float kFaceShadowNegativeExponent = 5.0f;
-
-float WarpFaceShadowPositive( float depth )
-{
-    return exp( kFaceShadowPositiveExponent * depth );
-}
-
-float WarpFaceShadowNegative( float depth )
-{
-    return -exp( -kFaceShadowNegativeExponent * depth );
-}
-
-float ComputeFaceShadowVisibility( float2 moments, float depth )
-{
-    const float lit = ( depth <= moments.x ) ? 1.0f : 0.0f;
-    const float variance = max( moments.y - ( moments.x * moments.x ), ShadowParams.z );
-    const float delta    = depth - moments.x;
-    float visibility     = variance / ( variance + ( delta * delta ) );
-    visibility           = saturate( ( visibility - ShadowParams.w ) / max( 1.0f - ShadowParams.w, 1e-4f ) );
-    return max( lit, visibility );
-}
-
 float SampleFaceShadowAtlas(float3 shadowUVW, float depthBias)
 {
     if( shadowUVW.x < 0.0 || shadowUVW.x > 1.0 ||
@@ -613,12 +590,71 @@ float SampleFaceShadowAtlas(float3 shadowUVW, float depthBias)
     }
 
     const float depth = saturate( shadowUVW.z - depthBias );
-    const float4 moments = txFaceShadowAtlas.Sample( samFaceShadow, shadowUVW.xy );
-    const float positiveDepth = WarpFaceShadowPositive( depth );
-    const float negativeDepth = WarpFaceShadowNegative( depth );
-    const float positiveVisibility = ComputeFaceShadowVisibility( moments.xy, positiveDepth );
-    const float negativeVisibility = ComputeFaceShadowVisibility( moments.zw, negativeDepth );
-    return min( positiveVisibility, negativeVisibility );
+    const float shadowDepth = txFaceShadowAtlas.Sample( samFaceShadow, shadowUVW.xy );
+    return ( depth <= shadowDepth ) ? 1.0f : 0.0f;
+}
+
+//==============================================================================
+
+bool ComputeFaceShadowUVW(uint sourceIndex, float3 shadowWorldPos, out float3 shadowUVW)
+{
+    shadowUVW = 0.0f;
+
+    float4 shadowPos = mul(FaceShadowMatrix[sourceIndex], float4(shadowWorldPos, 1.0));
+    if( shadowPos.w <= 0.0f )
+        return false;
+
+    shadowUVW.xy = shadowPos.xy / shadowPos.w;
+    shadowUVW.z  = shadowPos.z  / shadowPos.w;
+
+    return true;
+}
+
+//==============================================================================
+
+bool ProjectFaceShadowSource(uint sourceIndex, float3 shadowWorldPos, out float3 shadowUVW)
+{
+    if( !ComputeFaceShadowUVW( sourceIndex, shadowWorldPos, shadowUVW ) )
+        return false;
+
+    if( shadowUVW.x < 0.0f || shadowUVW.x > 1.0f ||
+        shadowUVW.y < 0.0f || shadowUVW.y > 1.0f ||
+        shadowUVW.z < 0.0f || shadowUVW.z > 1.0f )
+    {
+        return false;
+    }
+
+    return true;
+}
+
+float SampleFaceShadowAtlasRaw(uint sourceIndex, float3 shadowWorldPos, float depthBias)
+{
+    float3 shadowUVW;
+    if( !ProjectFaceShadowSource( sourceIndex, shadowWorldPos, shadowUVW ) )
+        return 1.0f;
+
+    return SampleFaceShadowAtlas( shadowUVW, depthBias );
+}
+
+//==============================================================================
+
+bool FaceShadowIsPointFace(uint sourceIndex)
+{
+    static const float kFaceShadowSourceTypePointFace = 1.0f;
+    return FaceShadowLightData[sourceIndex].w == kFaceShadowSourceTypePointFace;
+}
+
+float ComputeShadowNearInfluence(float lightDistance, float nearZ, float lightRadius)
+{
+    // Keep the receiver fade local to the light source instead of scaling it with
+    // the full light radius, otherwise large-radius lights detach the shadow.
+    const float nearFadeRange = max( nearZ, 0.05f );
+    return saturate( ( lightDistance - nearZ ) / nearFadeRange );
+}
+
+float ComputeShadowReceiverBiasDistance(float ndotl, float lightDistance)
+{
+    return ShadowParams.x * lightDistance * ( 1.0f + ( 2.0f * ( 1.0f - saturate( ndotl ) ) ) );
 }
 
 //==============================================================================
@@ -634,8 +670,12 @@ float SampleFaceShadowSource(uint sourceIndex, float3 worldPos, float3 worldNorm
     const float  lightFalloff  = FaceShadowLightDirFalloff[sourceIndex].w;
     const float  cosOuter      = FaceShadowLightData[sourceIndex].x;
     const float  nearZ         = FaceShadowLightData[sourceIndex].y;
+    const bool   isPointFace   = FaceShadowIsPointFace( sourceIndex );
     const float3 toLight       = lightPos - worldPos;
     const float  lightDistanceSq = dot( toLight, toLight );
+
+    if( isPointFace )
+        return 1.0f;
 
     if( lightDistanceSq <= 1e-8f )
         return 1.0f;
@@ -652,8 +692,7 @@ float SampleFaceShadowSource(uint sourceIndex, float3 worldPos, float3 worldNorm
     if( coneInfluence <= 0.0f )
         return 1.0f;
 
-    const float  nearFadeRange   = max( nearZ, lightRadius * 0.02f );
-    const float  nearInfluence   = saturate( ( lightDistance - nearZ ) / nearFadeRange );
+    const float  nearInfluence   = ComputeShadowNearInfluence( lightDistance, nearZ, lightRadius );
     if( nearInfluence <= 0.0f )
         return 1.0f;
 
@@ -662,70 +701,20 @@ float SampleFaceShadowSource(uint sourceIndex, float3 worldPos, float3 worldNorm
     if( ndotl <= 0.0f )
         return 1.0f;
 
-    const float  visibilityScale = shadowInfluence * coneInfluence * nearInfluence;
-    const float  normalBias      = ShadowParams.x * lightRadius * ( 0.5f + ( 1.5f * ( 1.0f - saturate( ndotl ) ) ) );
-    const float  depthBias       = ShadowParams.x * ( 1.0f + ( 2.0f * ( 1.0f - saturate( ndotl ) ) ) );
-    const float3 shadowWorldPos  = worldPos + normal * normalBias;
-
-    float4 shadowPos = mul(FaceShadowMatrix[sourceIndex], float4(shadowWorldPos, 1.0));
-    if( shadowPos.w <= 0.0f )
-        return 1.0f;
-
-    float3 shadowUVW;
-    shadowUVW.xy = shadowPos.xy / shadowPos.w;
-    shadowUVW.z  = shadowPos.z  / shadowPos.w;
-
-    if( shadowUVW.x < 0.0f || shadowUVW.x > 1.0f ||
-        shadowUVW.y < 0.0f || shadowUVW.y > 1.0f ||
-        shadowUVW.z < 0.0f || shadowUVW.z > 1.0f )
-    {
-        return 1.0f;
-    }
-
-    const float visibility = SampleFaceShadowAtlas( shadowUVW, depthBias );
+    const float  visibilityScale   = shadowInfluence * coneInfluence * nearInfluence;
+    const float  receiverBiasDist  = ComputeShadowReceiverBiasDistance( ndotl, lightDistance );
+    const float3 shadowWorldPos    = worldPos + ( pointToLightDir * receiverBiasDist );
+    const float  visibility        = SampleFaceShadowAtlasRaw( sourceIndex, shadowWorldPos, 0.0f );
     return lerp( 1.0f, visibility, visibilityScale );
 }
 
 //==============================================================================
 
-float ComputePointShadowInfluence( float lightDistance, float lightRadius, float lightFalloff )
+float ComputePointShadowFaceAlignment( uint sourceIndex, float3 lightDir )
 {
-    if( lightRadius <= 0.0f || lightDistance >= lightRadius )
-        return 0.0f;
-
-    const float falloff     = saturate( lightFalloff );
-    const float innerRadius = lightRadius * ( 1.0f - falloff );
-    return 1.0f - saturate( ( lightDistance - innerRadius ) / max( lightRadius - innerRadius, 1e-4f ) );
+    const float3 faceDir = normalize( FaceShadowLightDirFalloff[sourceIndex].xyz );
+    return dot( faceDir, lightDir );
 }
-
-//==============================================================================
-
-float ComputePointShadowCompareDepth( float faceDepth, float nearZ, float farZ )
-{
-    const float safeDepth = max( faceDepth, 1e-4f );
-    const float denom     = max( farZ - nearZ, 1e-4f );
-    return saturate( ( farZ / denom ) - ( ( nearZ * farZ ) / ( denom * safeDepth ) ) );
-}
-
-//==============================================================================
-
-float SamplePointShadowBucket( uint bucketIndex, float3 lightDir, float cubeIndex, float compareDepth )
-{
-    const float4 shadowCoord = float4( lightDir, cubeIndex );
-
-    if( bucketIndex == 0u )
-        return txPointShadowCube[0].SampleCmpLevelZero( samPointShadowCmp, shadowCoord, compareDepth );
-
-    if( bucketIndex == 1u )
-        return txPointShadowCube[1].SampleCmpLevelZero( samPointShadowCmp, shadowCoord, compareDepth );
-
-    if( bucketIndex == 2u )
-        return txPointShadowCube[2].SampleCmpLevelZero( samPointShadowCmp, shadowCoord, compareDepth );
-
-    return txPointShadowCube[3].SampleCmpLevelZero( samPointShadowCmp, shadowCoord, compareDepth );
-}
-
-//==============================================================================
 
 float SamplePointShadowLight(uint lightIndex, float3 worldPos, float3 worldNormal)
 {
@@ -733,10 +722,14 @@ float SamplePointShadowLight(uint lightIndex, float3 worldPos, float3 worldNorma
     const float  lightRadius  = PointShadowLightPosRadius[lightIndex].w;
     const float  lightFalloff = PointShadowLightData[lightIndex].x;
     const float  nearZ        = PointShadowLightData[lightIndex].y;
-    const float  farZ         = PointShadowLightData[lightIndex].z;
-    const float  cubeIndex    = PointShadowLightData[lightIndex].w;
-    const uint   bucketIndex  = min( (uint)PointShadowLightParams[lightIndex].x,
-                                     (uint)( POINT_SHADOW_BUCKET_COUNT - 1 ) );
+    const uint   firstFaceIndex = min( (uint)PointShadowLightParams[lightIndex].x,
+                                       (uint)MAX_SHADOW_SOURCES );
+    const uint   faceCount      = min( (uint)PointShadowLightParams[lightIndex].y,
+                                       (uint)POINT_SHADOW_FACE_COUNT );
+
+    if( ( faceCount == 0u ) || ( firstFaceIndex >= FaceShadowCount ) )
+        return 1.0f;
+
     const float3 toLight      = worldPos - lightPos;
     const float  lightDistanceSq = dot( toLight, toLight );
 
@@ -744,29 +737,55 @@ float SamplePointShadowLight(uint lightIndex, float3 worldPos, float3 worldNorma
         return 1.0f;
 
     const float lightDistance   = sqrt( lightDistanceSq );
-    const float shadowInfluence = ComputePointShadowInfluence( lightDistance, lightRadius, lightFalloff );
+    const float shadowInfluence = GeomComputeRadialAttenuation( lightDistance, lightRadius, lightFalloff );
     if( shadowInfluence <= 0.0f )
         return 1.0f;
 
-    const float3 lightDir = toLight / lightDistance;
+    const float nearInfluence = ComputeShadowNearInfluence( lightDistance, nearZ, lightRadius );
+    if( nearInfluence <= 0.0f )
+        return 1.0f;
+
     const float3 normal   = normalize( worldNormal );
-    const float  ndotl    = dot( normal, -lightDir );
+    const float  ndotl    = dot( normal, -( toLight / lightDistance ) );
 
     // Do not project point-light shadows onto the receiver back side.
     if( ndotl <= 0.0f )
         return 1.0f;
 
-    const float faceDepth    = max( abs( toLight.x ), max( abs( toLight.y ), abs( toLight.z ) ) );
-    const float depthBias    = ShadowParams.x * farZ;
-    const float compareDepth = ComputePointShadowCompareDepth( max( faceDepth - depthBias, nearZ ),
-                                                               nearZ,
-                                                               farZ );
-    const float visibility   = SamplePointShadowBucket( bucketIndex,
-                                                        lightDir,
-                                                        cubeIndex,
-                                                        compareDepth );
+    const float3 pointToLightDir= -( toLight / lightDistance );
+    const float  receiverBiasDist = ComputeShadowReceiverBiasDistance( ndotl, lightDistance );
+    const float3 shadowWorldPos = worldPos + ( pointToLightDir * receiverBiasDist );
+    const float3 lightDir       = toLight / lightDistance;
+    uint         bestSourceIndex = MAX_SHADOW_SOURCES;
+    float        bestAlignment   = -2.0f;
 
-    return lerp( 1.0f, visibility, shadowInfluence );
+    [unroll]
+    for( uint iFace = 0; iFace < POINT_SHADOW_FACE_COUNT; iFace++ )
+    {
+        if( iFace >= faceCount )
+            break;
+
+        const uint sourceIndex = firstFaceIndex + iFace;
+        if( sourceIndex >= FaceShadowCount )
+            break;
+
+        if( !FaceShadowIsPointFace( sourceIndex ) )
+            continue;
+
+        const float faceAlignment = ComputePointShadowFaceAlignment( sourceIndex, lightDir );
+        if( faceAlignment > bestAlignment )
+        {
+            bestAlignment   = faceAlignment;
+            bestSourceIndex = sourceIndex;
+        }
+    }
+
+    if( bestSourceIndex >= FaceShadowCount )
+        return 1.0f;
+
+    const float visibility = SampleFaceShadowAtlasRaw( bestSourceIndex, shadowWorldPos, 0.0f );
+
+    return lerp( 1.0f, visibility, shadowInfluence * nearInfluence );
 }
 
 //==============================================================================

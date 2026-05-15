@@ -27,7 +27,6 @@ enum
     POINT_SHADOW_FACE_COUNT = 6,
     MAX_SHADOW_LIGHTS       = 8,
     MAX_SHADOW_SOURCES      = 64,
-    POINT_SHADOW_FACE_SIZE  = 256,
     SHADOW_ATLAS_SIZE       = 2048,
 };
 
@@ -61,6 +60,8 @@ public:
         s32     PointLightIndex;
         s32     FaceIndex;
         s32     RequestedResolution;
+        s32     ShadowPriority;
+        f32     ShadowScore;
         matrix4 WorldToClip;
         matrix4 WorldToAtlas;
         vector4 LightPosRadius;
@@ -68,6 +69,7 @@ public:
         vector4 FaceLightData;
         f32     LightFalloff;
         f32     NearZ;
+        f32     ReceiveNearZ;
         f32     FarZ;
         bbox    WorldBBox;
         s32     AtlasX;
@@ -93,37 +95,26 @@ public:
                                           radian         FOV,
                                           f32            LightRadius,
                                           f32            LightFalloff,
-                                          s32            ShadowMapResolution );
+                                          s32            ShadowMapResolution,
+                                          s32            ShadowPriority,
+                                          f32            ShadowScore );
     xbool       AddSpotSource           ( const matrix4& L2W,
                                           radian         FOV,
                                           f32            LightRadius,
                                           f32            LightFalloff,
-                                          s32            ShadowMapResolution );
+                                          s32            ShadowMapResolution,
+                                          s32            ShadowPriority,
+                                          f32            ShadowScore );
 
     //--------------------------------------------------------------------------
     // Source Queries
     //--------------------------------------------------------------------------
 
-    s32         CollectSources          ( const matrix4& L2W,
-                                          const bbox&    B,
-                                          s32            MaxSourceCount = MAX_SHADOW_SOURCES );
-    void        GetCollectedSource      ( s32      CollectedIndex,
-                                          s32&     SourceIndex,
-                                          s32&     Type,
-                                          matrix4& ShadowMatrix,
-                                          vector4& LightPosRadius,
-                                          f32&     Falloff,
-                                          f32&     NearZ,
-                                          f32&     FarZ,
-                                          s32&     PointLightIndex,
-                                          s32&     FaceIndex ) const;
-
     const shadow_source&
                 GetSource               ( s32 SourceIndex ) const;
     s32         GetSourceCount          ( void ) const;
-    s32         GetPointLightCount      ( void ) const;
-    s32         GetSpotAtlasSize        ( void ) const;
-    s32         GetSpotSourceCount      ( void ) const;
+    s32         GetAtlasSize            ( void ) const;
+    s32         GetAtlasSourceCount     ( void ) const;
     xbool       HasActiveSources        ( void ) const;
 
     //--------------------------------------------------------------------------
@@ -166,11 +157,9 @@ private:
     s32             m_SourceCount;
     s32             m_PointFaceCount;
     s32             m_PointLightCount;
-    s32             m_SpotSourceCount;
-    s32             m_SpotAtlasSize;
+    s32             m_AtlasSourceCount;
+    s32             m_AtlasSize;
     xbool           m_AtlasLayoutDirty;
-    s32             m_NCollectedSources;
-    s32             m_CollectedSources[MAX_SHADOW_SOURCES];
     shadow_source   m_Sources[MAX_SHADOW_SOURCES];
 };
 

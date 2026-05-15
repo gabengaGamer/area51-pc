@@ -144,12 +144,16 @@ namespace render
                                       radian                 FOV,
                                       f32                    LightRadius,
                                       f32                    LightFalloff,
-                                      s32                    ShadowMapResolution ) X_SECTION( render_add_shadow );
+                                      s32                    ShadowMapResolution,
+                                      s32                    ShadowPriority,
+                                      f32                    ShadowScore ) X_SECTION( render_add_shadow );
     void    AddSpotShadowMapSource  ( const matrix4&         L2W,
                                       radian                 FOV,
                                       f32                    LightRadius,
                                       f32                    LightFalloff,
-                                      s32                    ShadowMapResolution ) X_SECTION( render_add_shadow );
+                                      s32                    ShadowMapResolution,
+                                      s32                    ShadowPriority,
+                                      f32                    ShadowScore ) X_SECTION( render_add_shadow );
     void    AddRigidCasterSimple    ( hgeom_inst             hInst,
                                       const matrix4*         pL2W,  // will be DMA ref'd to!
                                       u64                    ShadowSourceMask ) X_SECTION( render_add_shadow );

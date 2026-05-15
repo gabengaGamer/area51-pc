@@ -465,8 +465,7 @@ protected:
     ID3D11Buffer*           m_pProjTextureBuffer;
     ID3D11SamplerState*     m_pProjSampler;
     ID3D11Buffer*           m_pShadowBuffer;
-    ID3D11SamplerState*     m_pPointShadowSampler;
-    ID3D11SamplerState*     m_pSpotShadowSampler;
+    ID3D11SamplerState*     m_pShadowAtlasSampler;
 
     //--------------------------------------------------------------------------
     // Skin Geometry Resources

@@ -34,34 +34,34 @@ extern ID3D11DeviceContext* g_pd3dContext;
 
 xbool geom_mgr::InitShadowMaps( void )
 {
-    m_pShadowBuffer        = shader_CreateConstantBuffer( sizeof(cb_shadow_maps), CB_TYPE_DYNAMIC );
-    m_pPointShadowSampler  = NULL;
-    m_pSpotShadowSampler   = NULL;
+    m_pShadowBuffer       = shader_CreateConstantBuffer( sizeof(cb_shadow_maps), CB_TYPE_DYNAMIC );
+    m_pShadowAtlasSampler = NULL;
 
-    if( g_pd3dDevice )
+    if( !m_pShadowBuffer )
+        return FALSE;
+
+    if( !g_pd3dDevice )
     {
-        D3D11_SAMPLER_DESC PointSamplerDesc;
-        x_memset( &PointSamplerDesc, 0, sizeof(PointSamplerDesc) );
-        PointSamplerDesc.Filter         = D3D11_FILTER_COMPARISON_MIN_MAG_LINEAR_MIP_POINT;
-        PointSamplerDesc.AddressU       = D3D11_TEXTURE_ADDRESS_CLAMP;
-        PointSamplerDesc.AddressV       = D3D11_TEXTURE_ADDRESS_CLAMP;
-        PointSamplerDesc.AddressW       = D3D11_TEXTURE_ADDRESS_CLAMP;
-        PointSamplerDesc.MaxAnisotropy  = 1;
-        PointSamplerDesc.ComparisonFunc = D3D11_COMPARISON_LESS_EQUAL;
-        PointSamplerDesc.MinLOD         = 0.0f;
-        PointSamplerDesc.MaxLOD         = D3D11_FLOAT32_MAX;
-        g_pd3dDevice->CreateSamplerState( &PointSamplerDesc, &m_pPointShadowSampler );
+        m_pShadowBuffer->Release();
+        m_pShadowBuffer = NULL;
+        return FALSE;
+    }
 
-        D3D11_SAMPLER_DESC SpotSamplerDesc;
-        x_memset( &SpotSamplerDesc, 0, sizeof(SpotSamplerDesc) );
-        SpotSamplerDesc.Filter        = D3D11_FILTER_MIN_MAG_LINEAR_MIP_POINT;
-        SpotSamplerDesc.AddressU      = D3D11_TEXTURE_ADDRESS_CLAMP;
-        SpotSamplerDesc.AddressV      = D3D11_TEXTURE_ADDRESS_CLAMP;
-        SpotSamplerDesc.AddressW      = D3D11_TEXTURE_ADDRESS_CLAMP;
-        SpotSamplerDesc.MaxAnisotropy = 1;
-        SpotSamplerDesc.MinLOD        = 0.0f;
-        SpotSamplerDesc.MaxLOD        = D3D11_FLOAT32_MAX;
-        g_pd3dDevice->CreateSamplerState( &SpotSamplerDesc, &m_pSpotShadowSampler );
+    D3D11_SAMPLER_DESC ShadowSamplerDesc;
+    x_memset( &ShadowSamplerDesc, 0, sizeof(ShadowSamplerDesc) );
+    ShadowSamplerDesc.Filter        = D3D11_FILTER_MIN_MAG_MIP_POINT;
+    ShadowSamplerDesc.AddressU      = D3D11_TEXTURE_ADDRESS_CLAMP;
+    ShadowSamplerDesc.AddressV      = D3D11_TEXTURE_ADDRESS_CLAMP;
+    ShadowSamplerDesc.AddressW      = D3D11_TEXTURE_ADDRESS_CLAMP;
+    ShadowSamplerDesc.MaxAnisotropy = 1;
+    ShadowSamplerDesc.MinLOD        = 0.0f;
+    ShadowSamplerDesc.MaxLOD        = D3D11_FLOAT32_MAX;
+    if( FAILED( g_pd3dDevice->CreateSamplerState( &ShadowSamplerDesc, &m_pShadowAtlasSampler ) ) ||
+        !m_pShadowAtlasSampler )
+    {
+        m_pShadowBuffer->Release();
+        m_pShadowBuffer = NULL;
+        return FALSE;
     }
 
     return TRUE;
@@ -77,16 +77,10 @@ void geom_mgr::KillShadowMaps( void )
         m_pShadowBuffer = NULL;
     }
 
-    if( m_pPointShadowSampler )
+    if( m_pShadowAtlasSampler )
     {
-        m_pPointShadowSampler->Release();
-        m_pPointShadowSampler = NULL;
-    }
-
-    if( m_pSpotShadowSampler )
-    {
-        m_pSpotShadowSampler->Release();
-        m_pSpotShadowSampler = NULL;
+        m_pShadowAtlasSampler->Release();
+        m_pShadowAtlasSampler = NULL;
     }
 }
 
@@ -112,24 +106,21 @@ void geom_mgr::ResetShadowMaps( void )
 
     g_pd3dContext->PSSetConstantBuffers( PC_SHADOW_BUFFER_SLOT, 1, &m_pShadowBuffer );
 
-    ID3D11ShaderResourceView* pNullSRV[PC_POINT_SHADOW_TEX_COUNT + 1] = { NULL };
-    ID3D11SamplerState*       pNullSamp[2] = { NULL, NULL };
-    g_pd3dContext->PSSetShaderResources( PC_POINT_SHADOW_TEX_SLOT, ARRAYSIZE(pNullSRV), pNullSRV );
-    g_pd3dContext->PSSetSamplers( PC_POINT_SHADOW_SAMP_SLOT, 2, pNullSamp );
+    ID3D11ShaderResourceView* pNullSRV = NULL;
+    ID3D11SamplerState*       pNullSamp = NULL;
+    g_pd3dContext->PSSetShaderResources( PC_SHADOW_ATLAS_TEX_SLOT, 1, &pNullSRV );
+    g_pd3dContext->PSSetSamplers( PC_SHADOW_ATLAS_SAMP_SLOT, 1, &pNullSamp );
 }
 
 //==============================================================================
 
 xbool geom_mgr::UpdateShadowMaps( void )
 {
-    if( !g_pd3dContext )
+    if( !g_pd3dContext || !m_pShadowBuffer )
         return FALSE;
 
     cb_shadow_maps cb;
     x_memset( &cb, 0, sizeof(cb) );
-
-    s32 PointLightSlots[MAX_SHADOW_LIGHTS];
-    x_memset( PointLightSlots, 0xFF, sizeof(PointLightSlots) );
 
     s32 nFaceShadows = 0;
     s32 nPointLights = 0;
@@ -138,55 +129,47 @@ xbool geom_mgr::UpdateShadowMaps( void )
     {
         const shadow_map_mgr::shadow_source& Source = g_ShadowMapMgr.GetSource( i );
 
-        if( Source.Type == shadow_map_mgr::SHADOW_SOURCE_POINT_FACE )
-        {
-            if( ( Source.PointLightIndex < 0 ) || ( Source.PointLightIndex >= MAX_SHADOW_LIGHTS ) )
-                continue;
+        if( nFaceShadows >= MAX_SHADOW_SOURCES )
+            continue;
 
-            if( PointLightSlots[Source.PointLightIndex] != -1 )
-                continue;
+        const s32 PackedFaceIndex = nFaceShadows;
+        cb.FaceShadowMatrix[PackedFaceIndex] = Source.WorldToAtlas;
+        cb.FaceShadowLightPosRadius[PackedFaceIndex] = Source.LightPosRadius;
+        cb.FaceShadowLightDirFalloff[PackedFaceIndex] = Source.FaceLightDirFalloff;
+        cb.FaceShadowLightData[PackedFaceIndex] = Source.FaceLightData;
+        nFaceShadows++;
 
-            s32 BucketIndex = -1;
-            s32 LocalLightIndex = -1;
-            if( !g_ShadowMgr.GetPointShadowBinding( Source.PointLightIndex, BucketIndex, LocalLightIndex ) )
-            {
-                PointLightSlots[Source.PointLightIndex] = -2;
-                continue;
-            }
+        if( Source.Type != shadow_map_mgr::SHADOW_SOURCE_POINT_FACE )
+            continue;
 
-            const s32 PackedLightIndex = nPointLights;
-            if( PackedLightIndex >= MAX_SHADOW_LIGHTS )
-                continue;
+        if( Source.FaceIndex != 0 )
+            continue;
 
-            PointLightSlots[Source.PointLightIndex] = PackedLightIndex;
-            cb.PointShadowLightPosRadius[PackedLightIndex] = Source.LightPosRadius;
-            cb.PointShadowLightData[PackedLightIndex].Set( Source.LightFalloff,
-                                                           Source.NearZ,
-                                                           Source.FarZ,
-                                                           (f32)LocalLightIndex );
-            cb.PointShadowLightParams[PackedLightIndex].Set( (f32)BucketIndex,
-                                                             0.0f,
-                                                             0.0f,
-                                                             0.0f );
-            nPointLights++;
-        }
-        else
-        {
-            if( nFaceShadows >= MAX_SHADOW_SOURCES )
-                continue;
+        if( ( Source.PointLightIndex < 0 ) || ( Source.PointLightIndex >= MAX_SHADOW_LIGHTS ) )
+            continue;
 
-            cb.FaceShadowMatrix[nFaceShadows] = Source.WorldToAtlas;
-            cb.FaceShadowLightPosRadius[nFaceShadows] = Source.LightPosRadius;
-            cb.FaceShadowLightDirFalloff[nFaceShadows] = Source.FaceLightDirFalloff;
-            cb.FaceShadowLightData[nFaceShadows] = Source.FaceLightData;
-            nFaceShadows++;
-        }
+        if( nPointLights >= MAX_SHADOW_LIGHTS )
+            continue;
+
+        cb.PointShadowLightPosRadius[nPointLights] = Source.LightPosRadius;
+        cb.PointShadowLightData[nPointLights].Set( Source.LightFalloff,
+                                                   Source.ReceiveNearZ,
+                                                   Source.FarZ,
+                                                   0.0f );
+        cb.PointShadowLightParams[nPointLights].Set( (f32)PackedFaceIndex,
+                                                     (f32)POINT_SHADOW_FACE_COUNT,
+                                                     0.0f,
+                                                     0.0f );
+        nPointLights++;
     }
 
-    ID3D11ShaderResourceView* pFaceShadowSRV  = ( nFaceShadows > 0 ) ? g_ShadowMgr.GetSpotShadowSRV()  : NULL;
+    ID3D11ShaderResourceView* pFaceShadowSRV  = ( nFaceShadows > 0 ) ? g_ShadowMgr.GetShadowAtlasSRV() : NULL;
+    ID3D11SamplerState*       pShadowSampler  = ( pFaceShadowSRV && m_pShadowAtlasSampler ) ? m_pShadowAtlasSampler : NULL;
+    if( !pShadowSampler )
+        pFaceShadowSRV = NULL;
 
-    cb.FaceShadowCount       = pFaceShadowSRV  ? nFaceShadows : 0;
-    cb.PointShadowLightCount = nPointLights;
+    cb.FaceShadowCount       = pShadowSampler ? nFaceShadows : 0;
+    cb.PointShadowLightCount = pShadowSampler ? nPointLights : 0;
 
     cb.ShadowParams.Set( g_ShadowMgr.GetShadowBias(),
                          g_ShadowMgr.GetShadowStrength(),
@@ -205,20 +188,9 @@ xbool geom_mgr::UpdateShadowMaps( void )
 
     g_pd3dContext->PSSetConstantBuffers( PC_SHADOW_BUFFER_SLOT, 1, &m_pShadowBuffer );
 
-    ID3D11ShaderResourceView* pShadowSRV[PC_POINT_SHADOW_TEX_COUNT + 1] = { NULL };
-    for( s32 iBucket = 0; iBucket < PC_POINT_SHADOW_TEX_COUNT; iBucket++ )
-        pShadowSRV[iBucket] = g_ShadowMgr.GetPointShadowSRV( iBucket );
+    g_pd3dContext->PSSetShaderResources( PC_SHADOW_ATLAS_TEX_SLOT, 1, &pFaceShadowSRV );
 
-    pShadowSRV[PC_POINT_SHADOW_TEX_COUNT] = pFaceShadowSRV;
-
-    ID3D11SamplerState* pShadowSampler[2] =
-    {
-        ( nPointLights > 0 ) ? m_pPointShadowSampler : NULL,
-        pFaceShadowSRV  ? m_pSpotShadowSampler  : NULL
-    };
-
-    g_pd3dContext->PSSetShaderResources( PC_POINT_SHADOW_TEX_SLOT, ARRAYSIZE(pShadowSRV), pShadowSRV );
-    g_pd3dContext->PSSetSamplers( PC_POINT_SHADOW_SAMP_SLOT, 2, pShadowSampler );
+    g_pd3dContext->PSSetSamplers( PC_SHADOW_ATLAS_SAMP_SLOT, 1, &pShadowSampler );
 
     return ( cb.FaceShadowCount > 0 ) || ( cb.PointShadowLightCount > 0 );
 }
