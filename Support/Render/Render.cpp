@@ -2649,6 +2649,9 @@ void render::AddRigidCasterSimple( render::hgeom_inst hInst,
             if ( IsAlphaMaterial( (material_type)Material.Type ) )
                 continue;
 
+            xhandle hMat = pGeom->m_pVirtualMaterials[Material.iVirtualMat].MatHandle;
+            ASSERT( (hMat>=0) && (hMat<kMaxRegisteredMaterials) );
+
             shad_sortkey SortKey;
             SortKey.Bits              = 0;
             SortKey.ShadowSourceIndex = iShadowSource;
@@ -2660,9 +2663,8 @@ void render::AddRigidCasterSimple( render::hgeom_inst hInst,
             render_instance& Inst = AddToHashHybrid( SortKey.Bits );
             Inst.ShadSortKey      = SortKey;
             Inst.Flags            = 0;
-            Inst.UOffset          = 0;
-            Inst.VOffset          = 0;
             Inst.OverrideMat      = FALSE;
+            GetUVOffset( Inst.UOffset, Inst.VOffset, pGeom, s_lRegisteredMaterials(hMat) );
 
             Inst.Data.Rigid.pGeom    = pGeom;
             Inst.Data.Rigid.pL2W     = pL2W;
@@ -2716,6 +2718,9 @@ void render::AddRigidCaster( render::hgeom_inst hInst,
             if ( IsAlphaMaterial( (material_type)Material.Type ) )
                 continue;
 
+            xhandle hMat = pGeom->m_pVirtualMaterials[Material.iVirtualMat].MatHandle;
+            ASSERT( (hMat>=0) && (hMat<kMaxRegisteredMaterials) );
+
             ASSERT( (pGeom->m_hGeom>=0) && (pGeom->m_hGeom<kMaxRegisteredGeoms) );
             ASSERT( (iSubMesh      >=0) && (iSubMesh      <256                ) );
 
@@ -2747,9 +2752,8 @@ void render::AddRigidCaster( render::hgeom_inst hInst,
                 render_instance& Inst = AddToHashHybrid( SortKey.Bits );
                 Inst.ShadSortKey      = SortKey;
                 Inst.Flags            = 0;
-                Inst.UOffset          = 0;
-                Inst.VOffset          = 0;
                 Inst.OverrideMat      = FALSE;
+                GetUVOffset( Inst.UOffset, Inst.VOffset, pGeom, s_lRegisteredMaterials(hMat) );
 
                 Inst.Data.Rigid.pGeom    = pGeom;
                 Inst.Data.Rigid.pL2W     = pMat;
@@ -2817,6 +2821,9 @@ void render::AddSkinCaster( render::hgeom_inst hInst,
                 if ( IsAlphaMaterial( (material_type)Material.Type ) )
                     continue;
 
+                xhandle hMat = pGeom->m_pVirtualMaterials[Material.iVirtualMat].MatHandle;
+                ASSERT( (hMat>=0) && (hMat<kMaxRegisteredMaterials) );
+
                 // build the sort key
                 shad_sortkey SortKey;
                 SortKey.Bits           = 0;
@@ -2830,9 +2837,8 @@ void render::AddSkinCaster( render::hgeom_inst hInst,
                 render_instance& Inst = AddToHashHybrid( SortKey.Bits );
                 Inst.ShadSortKey      = SortKey;
                 Inst.Flags            = 0;
-                Inst.UOffset          = 0;
-                Inst.VOffset          = 0;
                 Inst.OverrideMat      = FALSE;
+                GetUVOffset( Inst.UOffset, Inst.VOffset, pGeom, s_lRegisteredMaterials(hMat) );
 
                 // fill in the skin geom instance info
                 Inst.Data.Skin.pGeom  = pGeom;

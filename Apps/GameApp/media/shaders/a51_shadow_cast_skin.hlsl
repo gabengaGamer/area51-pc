@@ -26,10 +26,19 @@ struct VS_INPUT
     float4 UVWeights : TEXCOORD0;
 };
 
+//------------------------------------------------------------------------------
+
+struct VS_OUTPUT
+{
+    float4 Position : SV_POSITION;
+    float2 UV       : TEXCOORD0;
+};
+
 //==============================================================================
 
-float4 VSMain( VS_INPUT input ) : SV_Position
+VS_OUTPUT VSMain( VS_INPUT input )
 {
+    VS_OUTPUT output;
     int   index1  = (int)input.PosIndex.w;
     int   index2  = (int)input.NormIndex.w;
     float weight1 = input.UVWeights.z;
@@ -39,5 +48,7 @@ float4 VSMain( VS_INPUT input ) : SV_Position
     float3 pos2 = mul( Bones[index2].L2W, float4( input.PosIndex.xyz, 1.0 ) ).xyz;
     float3 skinnedPos = pos1 * weight1 + pos2 * weight2;
 
-    return mul( ShadowViewProjection, float4( skinnedPos, 1.0 ) );
+    output.Position = mul( ShadowViewProjection, float4( skinnedPos, 1.0 ) );
+    output.UV       = input.UVWeights.xy;
+    return output;
 }

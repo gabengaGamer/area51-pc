@@ -150,7 +150,6 @@ protected:
         xcolor  Color;
         f32     Intensity;
         vector3 Direction;
-        f32     InnerRadius;
         f32     Falloff;
         f32     InnerAngle;
         f32     OuterAngle;
@@ -188,7 +187,8 @@ protected:
     // internal helper routines
     s32     AddLight                ( void );
     void    RemoveLight             ( s32            LightIndex );
-    void    ReduceCollectedLights   ( s32            MaxLightCount );
+    void    ReduceCollectedSpadLights( s32           MaxLightCount );
+    void    ReduceCollectedCharLights( s32           MaxLightCount );
     xbool   CalcDirLight            ( dir_light*     pDst,
                                       const matrix4& L2W,
                                       const bbox&    Box,

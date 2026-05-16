@@ -1485,10 +1485,37 @@ void platform_BeginShadowCastRigid( geom* pGeom, s32 iSubMesh )
 //=============================================================================
 
 static
+const material* platform_GetShadowCastMaterial( const render_instance& Inst )
+{
+    const geom* pGeom = ( Inst.ShadSortKey.GeomType == 0 ) ?
+                        (const geom*)Inst.Data.Rigid.pGeom :
+                        (const geom*)Inst.Data.Skin.pGeom;
+    if( !pGeom )
+        return NULL;
+
+    const s32 iSubMesh = Inst.ShadSortKey.GeomSubMesh;
+    if( (iSubMesh < 0) || (iSubMesh >= pGeom->m_nSubMeshes) )
+        return NULL;
+
+    const geom::submesh&  SubMesh = pGeom->m_pSubMesh[iSubMesh];
+    const geom::material& GeomMat = pGeom->m_pMaterial[SubMesh.iMaterial];
+    const xhandle         hMat    = pGeom->m_pVirtualMaterials[GeomMat.iVirtualMat].MatHandle;
+    if( (hMat < 0) || (hMat >= kMaxRegisteredMaterials) )
+        return NULL;
+
+    return &s_lRegisteredMaterials(hMat);
+}
+
+//=============================================================================
+
+static
 void platform_RenderShadowCastRigid( render_instance& Inst )
 {
     g_ShadowMgr.RenderRigidCaster( Inst.hDList,
                                    Inst.Data.Rigid.pL2W,
+                                   platform_GetShadowCastMaterial( Inst ),
+                                   Inst.UOffset,
+                                   Inst.VOffset,
                                    Inst.ShadSortKey.ShadowSourceIndex );
 }
 
@@ -1515,6 +1542,9 @@ void platform_RenderShadowCastSkin( render_instance& Inst, s32 iShadowSource )
 {
     g_ShadowMgr.RenderSkinCaster( Inst.hDList, 
                                   Inst.Data.Skin.pBones, 
+                                  platform_GetShadowCastMaterial( Inst ),
+                                  Inst.UOffset,
+                                  Inst.VOffset,
                                   iShadowSource );
 }
 

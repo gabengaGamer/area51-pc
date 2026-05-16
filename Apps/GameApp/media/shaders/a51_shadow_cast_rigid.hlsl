@@ -22,10 +22,21 @@ struct VS_INPUT
     float2 UV       : TEXCOORD0;
 };
 
+//------------------------------------------------------------------------------
+
+struct VS_OUTPUT
+{
+    float4 Position : SV_POSITION;
+    float2 UV       : TEXCOORD0;
+};
+
 //==============================================================================
 
-float4 VSMain( VS_INPUT input ) : SV_Position
+VS_OUTPUT VSMain( VS_INPUT input )
 {
+    VS_OUTPUT output;
     float4 worldPos = mul( World, float4( input.Position, 1.0f ) );
-    return mul( ShadowViewProjection, worldPos );
+    output.Position = mul( ShadowViewProjection, worldPos );
+    output.UV       = input.UV;
+    return output;
 }

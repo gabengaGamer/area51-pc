@@ -31,6 +31,8 @@
 #include "Entropy/D3DEngine/d3deng_rtarget.hpp"
 #include "Entropy/D3DEngine/d3deng_shader.hpp"
 
+class material;
+
 //==============================================================================
 //  CONSTANTS
 //==============================================================================
@@ -52,6 +54,15 @@ struct cb_shadow_cast
 {
     matrix4 ShadowViewProjection;
     matrix4 World;
+};
+
+//------------------------------------------------------------------------------
+
+struct cb_shadow_alpha
+{
+    u32     MaterialFlags;
+    f32     AlphaRef;
+    f32     UVOffset[2];
 };
 
 //------------------------------------------------------------------------------
@@ -99,9 +110,15 @@ public:
     void        EndCastPass              ( void );
     void        RenderRigidCaster        ( xhandle         hDList,
                                            const matrix4*  pL2W,
+                                           const material* pMaterial,
+                                           u8              UOffset,
+                                           u8              VOffset,
                                            s32             SourceIndex );
     void        RenderSkinCaster         ( xhandle         hDList,
                                            const matrix4*  pBones,
+                                           const material* pMaterial,
+                                           u8              UOffset,
+                                           u8              VOffset,
                                            s32             SourceIndex );
 
     //--------------------------------------------------------------------------
@@ -123,6 +140,9 @@ private:
     void        EnsureAtlas              ( void );
     xbool       SetShadowCastConstants   ( const matrix4&  ShadowViewProjection,
                                            const matrix4*  pWorld = NULL );
+    xbool       SetShadowAlphaConstants  ( const material* pMaterial,
+                                           u8              UOffset,
+                                           u8              VOffset );
     void        ApplySource              ( s32 SourceIndex,
                                            s32             CasterShader );
     void        BlurAtlas                ( void );
@@ -160,6 +180,7 @@ private:
     ID3D11InputLayout*      m_pRigidInputLayout;
     ID3D11InputLayout*      m_pSkinInputLayout;
     ID3D11Buffer*           m_pShadowCastBuffer;
+    ID3D11Buffer*           m_pShadowAlphaBuffer;
     ID3D11Buffer*           m_pShadowBlurBuffer;
     ID3D11RasterizerState*  m_pShadowCasterRasterizer;
 
