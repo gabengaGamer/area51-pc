@@ -286,7 +286,7 @@ namespace
 
     s32 GetShadowAtlasSizeForEntries( shadow_atlas_entry* pEntries, s32 NEntries )
     {
-        for( s32 AtlasSize = 256; AtlasSize <= SHADOW_ATLAS_SIZE; AtlasSize *= 2 )
+        for( s32 AtlasSize = 256; AtlasSize <= MAX_SHADOW_ATLAS_SIZE; AtlasSize *= 2 )
         {
             if( TryPackShadowAtlasEntries( pEntries, NEntries, AtlasSize ) )
                 return AtlasSize;
@@ -1304,7 +1304,7 @@ s32 shadow_map_mgr::GetSourceCount( void ) const
 
 s32 shadow_map_mgr::GetAtlasSize( void ) const
 {
-    return ( m_AtlasSize > 0 ) ? m_AtlasSize : SHADOW_ATLAS_SIZE;
+    return ( m_AtlasSize > 0 ) ? m_AtlasSize : MAX_SHADOW_ATLAS_SIZE;
 }
 
 //=========================================================================

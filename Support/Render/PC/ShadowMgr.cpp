@@ -292,7 +292,7 @@ void shadow_mgr::EnsureAtlas( void )
 {
     s32 ShadowAtlasSize = g_ShadowMapMgr.GetAtlasSize();
     if( ShadowAtlasSize <= 0 )
-        ShadowAtlasSize = SHADOW_ATLAS_SIZE;
+        ShadowAtlasSize = MAX_SHADOW_ATLAS_SIZE;
 
     if( m_ShadowAtlas.pTexture &&
         ( m_ShadowAtlasSize == ShadowAtlasSize ) &&
@@ -740,6 +740,6 @@ f32 shadow_mgr::GetShadowLightBleedReduction( void ) const
 
 f32 shadow_mgr::GetAtlasTexelSize( void ) const
 {
-    const s32 ShadowAtlasSize = ( m_ShadowAtlasSize > 0 ) ? m_ShadowAtlasSize : SHADOW_ATLAS_SIZE;
+    const s32 ShadowAtlasSize = ( m_ShadowAtlasSize > 0 ) ? m_ShadowAtlasSize : MAX_SHADOW_ATLAS_SIZE;
     return 1.0f / (f32)ShadowAtlasSize;
 }
