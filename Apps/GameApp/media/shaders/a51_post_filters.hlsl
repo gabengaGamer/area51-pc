@@ -56,7 +56,8 @@ float4 PS_ScreenWarp( float4 Pos : SV_POSITION, float2 UV : TEXCOORD0 ) : SV_Tar
 {
     float4 color = FilterSource1.SampleLevel( samLinear, UV, 0.0f );
 
-    [unroll]
+    [fastopt]
+    [loop]
     for( int i = 0; i < 8; ++i )
     {
         if( i >= (int)FilterParams2.x )

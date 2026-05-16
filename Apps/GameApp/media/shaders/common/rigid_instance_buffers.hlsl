@@ -25,8 +25,12 @@ struct RigidInstanceData
     float3   Padding;
 };
 
+//==============================================================================
+
 StructuredBuffer<RigidInstanceData> RigidInstances    : register(t22);
 StructuredBuffer<uint>              RigidVertexColors : register(t23);
+
+//==============================================================================
 
 float4 DecodeRigidVertexColor( uint packedColor )
 {
@@ -36,4 +40,6 @@ float4 DecodeRigidVertexColor( uint packedColor )
                    (float)(( packedColor >> 24 ) & 0xFFu) ) * (1.0f / 255.0f);
 }
 
+//==============================================================================
 #endif // RIGID_INSTANCE_BUFFERS_HLSL
+//==============================================================================

@@ -70,16 +70,18 @@ static struct turret_desc : public object_desc
             object::TYPE_TURRET, 
             "Turret", 
             "AI",
-            object::ATTR_COLLIDABLE       | 
-            object::ATTR_BLOCKS_ALL_PROJECTILES | 
-            object::ATTR_BLOCKS_ALL_ACTORS | 
-            object::ATTR_BLOCKS_RAGDOLL | 
-            object::ATTR_BLOCKS_CHARACTER_LOS | 
-            object::ATTR_BLOCKS_PLAYER_LOS | 
-            object::ATTR_BLOCKS_SMALL_DEBRIS | 
-            object::ATTR_RENDERABLE       |
-            object::ATTR_NEEDS_LOGIC_TIME |
-            object::ATTR_DAMAGEABLE |
+            object::ATTR_COLLIDABLE             |
+            object::ATTR_BLOCKS_ALL_PROJECTILES |
+            object::ATTR_BLOCKS_ALL_ACTORS      |
+            object::ATTR_BLOCKS_RAGDOLL         |
+            object::ATTR_BLOCKS_CHARACTER_LOS   |
+            object::ATTR_BLOCKS_PLAYER_LOS      |
+            object::ATTR_BLOCKS_SMALL_DEBRIS    |
+            object::ATTR_RENDERABLE             |
+            object::ATTR_NEEDS_LOGIC_TIME       |
+            object::ATTR_DAMAGEABLE             |
+            object::ATTR_CAST_SHADOWS           |
+            object::ATTR_RECEIVE_SHADOWS        |
             object::ATTR_SPACIAL_ENTRY,
 
 
@@ -1228,6 +1230,18 @@ void turret::OnRender( void )
     }
 
 #endif // X_EDITOR
+}
+
+//=============================================================================
+
+void turret::OnRenderShadowCast( u64 ProjMask )
+{
+    CONTEXT( "turret::OnRenderShadowCast" );
+
+    if( m_IsHidden )
+        return;
+
+    object::OnRenderShadowCast( ProjMask );
 }
 
 //=============================================================================

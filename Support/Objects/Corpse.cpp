@@ -127,8 +127,8 @@ static struct corpse_desc : public object_desc
                                         "AI",
 
                                         object::ATTR_SPACIAL_ENTRY          |
-										object::ATTR_NEEDS_LOGIC_TIME		|
-                                        object::ATTR_SOUND_SOURCE			|
+                                        object::ATTR_NEEDS_LOGIC_TIME       |
+                                        object::ATTR_SOUND_SOURCE           |
                                         object::ATTR_COLLIDABLE             | 
                                         object::ATTR_BLOCKS_ALL_PROJECTILES | 
                                         object::ATTR_BLOCKS_RAGDOLL         | 
@@ -137,6 +137,7 @@ static struct corpse_desc : public object_desc
                                         object::ATTR_NO_RUNTIME_SAVE        |
                                         object::ATTR_RENDERABLE             |
                                         object::ATTR_CAST_SHADOWS           |
+                                        object::ATTR_RECEIVE_SHADOWS        |
                                         object::ATTR_TRANSPARENT,
 
                                         FLAGS_GENERIC_EDITOR_CREATE | FLAGS_NO_ICON |
@@ -198,7 +199,7 @@ corpse::corpse( void ) :
     m_AnimFrame         (  0    ),
     m_SimulationTime    ( 0.0f  ),
     m_Material          ( object::MAT_TYPE_FLESH ),
-	m_BloodDecalGroup   ( -1    ),
+    m_BloodDecalGroup   ( -1    ),
     m_CorpseName        ( CORPSE_GENERIC ),
     m_ImpactSfxTimer    ( 0.0f )
 {
@@ -648,13 +649,13 @@ xbool corpse::InitializeEditorPlaced( void )
 
 void corpse::OnRenderShadowCast( u64 ProjMask )
 {
-    // Compute LOD mask for the shadow render (by putting zero in for screen size
-    // we force the lowest lod)
+    // Compute LOD mask for the shadow render (by forcing 0 for the screen size
+    // we are sure to get the lowest LOD)
     u64 ShadLODMask = GetSkinInst().GetLODMask(0);
     if( ShadLODMask == 0 )
         return;
 
-    // Compute matrices
+    // Compute bones
     u64 LODMask;
     s32 nActiveBones;
     const matrix4* pMatrices = m_PhysicsInst.GetBoneL2Ws( LODMask, nActiveBones );
@@ -664,7 +665,7 @@ void corpse::OnRenderShadowCast( u64 ProjMask )
     // Setup render flags
     u32 Flags = (GetFlagBits() & object::FLAG_CHECK_PLANES) ? render::CLIPPED : 0;
 
-    // Render that puppy!
+    // Render
     GetSkinInst().RenderShadowCast( &GetL2W(), 
                              pMatrices, 
                              nActiveBones,

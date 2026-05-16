@@ -576,6 +576,7 @@ public:
     virtual const char*         GetGeomName           ( void );
 
     virtual simple_anim_player* GetSimpleAnimPlayer   ( void ) { return NULL; }
+    virtual const matrix4*      GetBoneL2Ws           ( void ) { return NULL; }
     virtual anim_group::handle* GetAnimGroupHandlePtr ( void ) { return NULL; }
     virtual anim_group*         GetAnimGroupPtr       ( void );
     virtual const char*         GetAnimGroupName      ( void );
@@ -979,21 +980,6 @@ void object::OnRenderCloth( void )
 
 //==============================================================================
 
-inline
-void object::OnRenderShadowCast( u64 ProjMask )
-{
-    (void)ProjMask;
-}
-
-//==============================================================================
-
-inline
-void object::OnRenderShadowReceive( u64 ProjMask )
-{
-    (void)ProjMask;
-}
-
-//==============================================================================
 inline
 xbool object::NeedsClipping( void )
 {

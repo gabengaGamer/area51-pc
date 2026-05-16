@@ -82,18 +82,20 @@ static struct super_destructible_obj_desc : public object_desc
             "Super Destructible Object", 
             "PROPS",
 
-            object::ATTR_COLLIDABLE         | 
-            object::ATTR_BLOCKS_ALL_PROJECTILES | 
-            object::ATTR_BLOCKS_ALL_ACTORS | 
-            object::ATTR_BLOCKS_RAGDOLL | 
-            object::ATTR_BLOCKS_CHARACTER_LOS | 
-            object::ATTR_BLOCKS_PLAYER_LOS | 
-            object::ATTR_BLOCKS_PAIN_LOS | 
-            object::ATTR_BLOCKS_SMALL_DEBRIS | 
-            object::ATTR_RENDERABLE         |
-            object::ATTR_NEEDS_LOGIC_TIME   |
-            object::ATTR_SPACIAL_ENTRY      |
-            object::ATTR_DESTRUCTABLE_OBJECT|
+            object::ATTR_COLLIDABLE             |
+            object::ATTR_BLOCKS_ALL_PROJECTILES |
+            object::ATTR_BLOCKS_ALL_ACTORS      |
+            object::ATTR_BLOCKS_RAGDOLL         |
+            object::ATTR_BLOCKS_CHARACTER_LOS   |
+            object::ATTR_BLOCKS_PLAYER_LOS      |
+            object::ATTR_BLOCKS_PAIN_LOS        |
+            object::ATTR_BLOCKS_SMALL_DEBRIS    |
+            object::ATTR_RENDERABLE             |
+            object::ATTR_NEEDS_LOGIC_TIME       |
+            object::ATTR_SPACIAL_ENTRY          |
+            object::ATTR_DESTRUCTABLE_OBJECT    |
+            object::ATTR_CAST_SHADOWS           |
+            object::ATTR_RECEIVE_SHADOWS        |
             object::ATTR_DAMAGEABLE, 
 
             FLAGS_GENERIC_EDITOR_CREATE | 
@@ -588,6 +590,16 @@ void  super_destructible_obj::OnRender( void )
         draw_BBox( GetBBox() );
 #endif
     }
+}
+
+//=============================================================================
+
+void super_destructible_obj::OnRenderShadowCast( u64 ProjMask )
+{
+    if( m_Stages.GetCount() <= 0 )
+        return;
+    
+    object::OnRenderShadowCast( ProjMask );
 }
 
 //=============================================================================

@@ -1007,9 +1007,8 @@ void* platform_CalculateSkinLighting( u32            Flags,
     CONTEXT( "platform_CalculateSkinLighting" );
     
     void* pResult = NULL;
-    
-    // Grab lights
-    s32 NLights = g_LightMgr.CollectCharLights( L2W, BBox, MAX_GEOM_LIGHTS );
+    bbox WorldBBox = BBox;
+    WorldBBox.Transform( L2W );
     
     // Try allocate
     cb_geom_lighting* pLighting = (cb_geom_lighting*)smem_BufferAlloc( sizeof(cb_geom_lighting) );
@@ -1020,30 +1019,77 @@ void* platform_CalculateSkinLighting( u32            Flags,
                            (f32)Ambient.G / 255.0f,
                            (f32)Ambient.B / 255.0f,
                            1.0f );
-    
-    pLighting->LightCount = NLights;
-    
-    if( NLights )
+
+    s32 NSceneLights = g_LightMgr.CollectLights( WorldBBox, MAX_GEOM_LIGHTS );
+    s32 LightIndex   = 0;
+
+    for( s32 i = 0; ( i < NSceneLights ) && ( LightIndex < MAX_GEOM_LIGHTS ); i++, LightIndex++ )
     {
-        for( s32 i = 0; i < NLights; i++ )
-        {
-            vector3 Dir;
-            xcolor  Col;
-            
-            g_LightMgr.GetCollectedCharLight( i, Dir, Col );
-            
-            // Setup skin lights
-            pLighting->LightVec[i].Set( Dir.GetX(),
-                                        Dir.GetY(),
-                                        Dir.GetZ(),
-                                        0.0f );
-            
-            pLighting->LightCol[i].Set( (f32)Col.R / 255.0f,
-                                        (f32)Col.G / 255.0f,
-                                        (f32)Col.B / 255.0f,
-                                        (f32)Col.A / 255.0f );
-        }
+        vector3 Pos;
+        f32     Radius;
+        xcolor  Col;
+        f32     Falloff;
+        s32     Shape;
+        vector3 Direction;
+        f32     InnerAngle;
+        f32     OuterAngle;
+
+        g_LightMgr.GetCollectedLightInfo( i,
+                                          Pos,
+                                          Radius,
+                                          Col,
+                                          Falloff,
+                                          Shape,
+                                          Direction,
+                                          InnerAngle,
+                                          OuterAngle );
+
+        pLighting->LightVec[LightIndex].Set( Pos.GetX(),
+                                             Pos.GetY(),
+                                             Pos.GetZ(),
+                                             Radius );
+
+        pLighting->LightCol[LightIndex].Set( (f32)Col.R / 255.0f,
+                                             (f32)Col.G / 255.0f,
+                                             (f32)Col.B / 255.0f,
+                                             Falloff );
+
+        pLighting->LightDir[LightIndex].Set( Direction.GetX(),
+                                             Direction.GetY(),
+                                             Direction.GetZ(),
+                                             (Shape == light_mgr::LIGHT_SHAPE_SPOT) ? 1.0f : 0.0f );
+
+        pLighting->LightCone[LightIndex].Set( x_cos( DEG_TO_RAD( InnerAngle ) * 0.5f ),
+                                              x_cos( DEG_TO_RAD( OuterAngle ) * 0.5f ),
+                                              0.0f,
+                                              0.0f );
     }
+
+    s32 NCharLights = g_LightMgr.CollectCharLightsOnly( L2W, BBox, MAX_GEOM_LIGHTS );
+    for( s32 i = 0; ( i < NCharLights ) && ( LightIndex < MAX_GEOM_LIGHTS ); i++, LightIndex++ )
+    {
+        vector3 Dir;
+        xcolor  Col;
+
+        g_LightMgr.GetCollectedCharLight( i, Dir, Col );
+
+        pLighting->LightVec[LightIndex].Set( Dir.GetX(),
+                                             Dir.GetY(),
+                                             Dir.GetZ(),
+                                             0.0f );
+
+        pLighting->LightCol[LightIndex].Set( (f32)Col.R / 255.0f,
+                                             (f32)Col.G / 255.0f,
+                                             (f32)Col.B / 255.0f,
+                                             0.0f );
+
+        pLighting->LightDir[LightIndex].Set( 0.0f,
+                                             0.0f,
+                                             0.0f,
+                                             2.0f );
+    }
+
+    pLighting->LightCount = LightIndex;
     
     pResult = pLighting;
     
@@ -1434,7 +1480,6 @@ void platform_BeginShadowCastRigid( geom* pGeom, s32 iSubMesh )
 {
     (void)pGeom;
     (void)iSubMesh;
-    // TODO:
 }
 
 //=============================================================================
@@ -1442,8 +1487,9 @@ void platform_BeginShadowCastRigid( geom* pGeom, s32 iSubMesh )
 static
 void platform_RenderShadowCastRigid( render_instance& Inst )
 {
-    (void)Inst;
-    // TODO:
+    g_ShadowMgr.RenderRigidCaster( Inst.hDList,
+                                   Inst.Data.Rigid.pL2W,
+                                   Inst.ShadSortKey.ShadowSourceIndex );
 }
 
 //=============================================================================
@@ -1451,7 +1497,6 @@ void platform_RenderShadowCastRigid( render_instance& Inst )
 static
 void platform_EndShadowCastRigid( void )
 {
-    // TODO:
 }
 
 //=============================================================================
@@ -1468,7 +1513,9 @@ void platform_BeginShadowCastSkin( geom* pGeom, s32 iSubMesh )
 static
 void platform_RenderShadowCastSkin( render_instance& Inst, s32 iShadowSource )
 {
-    g_ShadowMgr.RenderSkinCaster( Inst.hDList, Inst.Data.Skin.pBones, iShadowSource );
+    g_ShadowMgr.RenderSkinCaster( Inst.hDList, 
+                                  Inst.Data.Skin.pBones, 
+                                  iShadowSource );
 }
 
 //=============================================================================

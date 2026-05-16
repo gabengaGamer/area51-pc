@@ -57,5 +57,7 @@ void flashlight_Register( player& Player )
                                 Direction,
                                 s_FlashlightFalloff,
                                 InnerAngle,
-                                OuterAngle );
+                                OuterAngle,
+                                1024,
+                                4 );
 }

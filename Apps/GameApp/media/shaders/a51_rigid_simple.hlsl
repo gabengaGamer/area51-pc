@@ -13,10 +13,15 @@
 //==============================================================================
 
 #define GEOM_USE_RIGID_INSTANCE_DATA 1
-#include "common/geom_buffers.hlsl"
+#include "common/frame_constants.hlsl"
+#include "common/lighting_constants.hlsl"
+#include "common/proj_buffers.hlsl"
+#include "common/shadow_buffers.hlsl"
 #include "common/rigid_instance_buffers.hlsl"
 
 #define GEOM_HAS_VERTEX_COLOR 1
+
+//------------------------------------------------------------------------------
 
 struct VS_INPUT
 {
@@ -27,6 +32,8 @@ struct VS_INPUT
     uint   VertexID   : SV_VertexID;
     uint   InstanceID : SV_InstanceID;
 };
+
+//------------------------------------------------------------------------------
 
 struct GEOM_PIXEL_INPUT
 {
@@ -40,9 +47,12 @@ struct GEOM_PIXEL_INPUT
     nointerpolation uint InstanceID : TEXCOORD5;
 };
 
+//------------------------------------------------------------------------------
+
 #include "common/pixel_structs.hlsl"
 #include "common/geom_textures.hlsl"
 #include "common/geom_pixel_shared.hlsl"
+#include "common/geom_local_shadow_maps.hlsl"
 
 //==============================================================================
 //  VERTEX SHADER

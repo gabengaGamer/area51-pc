@@ -24,18 +24,26 @@ struct SkinInstanceData
     float3 Padding;
 };
 
+//------------------------------------------------------------------------------
+
 struct SkinBoneMatrix
 {
     float4x4 L2W;
 };
 
+//------------------------------------------------------------------------------
+
 StructuredBuffer<SkinInstanceData> SkinInstances    : register(t24);
 StructuredBuffer<SkinBoneMatrix>   SkinBoneMatrices : register(t25);
+
+//==============================================================================
 
 cbuffer cbSkinSection : register(b2)
 {
     uint4 SkinSectionBoneRemapPacked[MAX_SKIN_BONES / 4];
 };
+
+//==============================================================================
 
 uint SkinGetSectionBoneIndex( uint cacheIndex )
 {
@@ -49,10 +57,14 @@ uint SkinGetSectionBoneIndex( uint cacheIndex )
     return packed.w;
 }
 
+//==============================================================================
+
 float4x4 SkinGetBoneL2W( uint instanceID, uint cacheIndex )
 {
     uint boneIndex = SkinGetSectionBoneIndex( cacheIndex );
     return SkinBoneMatrices[SkinInstances[instanceID].BoneOffset + boneIndex].L2W;
 }
 
+//==============================================================================
 #endif // SKIN_INSTANCE_BUFFERS_HLSL
+//==============================================================================

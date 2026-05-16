@@ -6,7 +6,6 @@
 //
 //==============================================================================
 
-Texture2D DummySource : register(t0);
 Texture2D LinearDepthSource : register(t1);
 Texture2D FogPalette  : register(t2);
 

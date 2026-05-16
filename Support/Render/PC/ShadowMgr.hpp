@@ -51,6 +51,7 @@ enum
 struct cb_shadow_cast
 {
     matrix4 ShadowViewProjection;
+    matrix4 World;
 };
 
 //------------------------------------------------------------------------------
@@ -96,6 +97,9 @@ public:
     void        EndShadowShaders         ( void );
     void        BeginCastPass            ( void );
     void        EndCastPass              ( void );
+    void        RenderRigidCaster        ( xhandle         hDList,
+                                           const matrix4*  pL2W,
+                                           s32             SourceIndex );
     void        RenderSkinCaster         ( xhandle         hDList,
                                            const matrix4*  pBones,
                                            s32             SourceIndex );
@@ -106,7 +110,6 @@ public:
 
     ID3D11ShaderResourceView* GetShadowAtlasSRV ( void ) const;
     f32         GetShadowBias            ( void ) const;
-    f32         GetShadowStrength        ( void ) const;
     f32         GetShadowFilterRadius    ( void ) const;
     f32         GetShadowMinVariance     ( void ) const;
     f32         GetShadowLightBleedReduction( void ) const;
@@ -119,7 +122,10 @@ private:
     //--------------------------------------------------------------------------
 
     void        EnsureAtlas              ( void );
-    void        ApplySource              ( s32 SourceIndex );
+    xbool       SetShadowCastConstants   ( const matrix4&  ShadowViewProjection,
+                                           const matrix4*  pWorld = NULL );
+    void        ApplySource              ( s32 SourceIndex,
+                                           s32             CasterShader );
     void        BlurAtlas                ( void );
     void        UnbindShadowSRVs         ( void );
 
@@ -135,6 +141,7 @@ private:
     u32                     m_SavedViewportCount;
     D3D11_VIEWPORT          m_SavedViewport;
     s32                     m_CurrentSource;
+    s32                     m_CurrentCasterShader;
     s32                     m_ShadowAtlasSize;
 
     //--------------------------------------------------------------------------
@@ -144,10 +151,12 @@ private:
     rtarget                 m_ShadowAtlas;
     rtarget                 m_ShadowBlurAtlas;
     rtarget                 m_ShadowDepthAtlas;
+    ID3D11VertexShader*     m_pRigidVertexShader;
     ID3D11VertexShader*     m_pSkinVertexShader;
     ID3D11PixelShader*      m_pMomentPixelShader;
     ID3D11PixelShader*      m_pBlurHPixelShader;
     ID3D11PixelShader*      m_pBlurVPixelShader;
+    ID3D11InputLayout*      m_pRigidInputLayout;
     ID3D11InputLayout*      m_pSkinInputLayout;
     ID3D11Buffer*           m_pShadowCastBuffer;
     ID3D11Buffer*           m_pShadowBlurBuffer;
@@ -157,7 +166,6 @@ private:
     //--------------------------------------------------------------------------
 
     f32                     m_ShadowBias;
-    f32                     m_ShadowStrength;
     f32                     m_ShadowFilterRadius;
     f32                     m_ShadowMinVariance;
     f32                     m_ShadowLightBleedReduction;

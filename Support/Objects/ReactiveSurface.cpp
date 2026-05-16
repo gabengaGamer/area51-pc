@@ -16,16 +16,18 @@ static struct reactive_surface_desc : public object_desc
         object::TYPE_REACTIVE_SURFACE, 
         "Reactive Surface", 
         "PROPS",
-        object::ATTR_COLLIDABLE       | 
+        object::ATTR_COLLIDABLE             | 
         object::ATTR_BLOCKS_ALL_PROJECTILES | 
-        object::ATTR_BLOCKS_ALL_ACTORS | 
-        object::ATTR_BLOCKS_RAGDOLL | 
-        object::ATTR_BLOCKS_CHARACTER_LOS | 
-        object::ATTR_BLOCKS_PLAYER_LOS | 
-        object::ATTR_BLOCKS_PAIN_LOS | 
-        object::ATTR_BLOCKS_SMALL_DEBRIS | 
-        object::ATTR_RENDERABLE       |
-        object::ATTR_SPACIAL_ENTRY    |
+        object::ATTR_BLOCKS_ALL_ACTORS      | 
+        object::ATTR_BLOCKS_RAGDOLL         | 
+        object::ATTR_BLOCKS_CHARACTER_LOS   | 
+        object::ATTR_BLOCKS_PLAYER_LOS      | 
+        object::ATTR_BLOCKS_PAIN_LOS        | 
+        object::ATTR_BLOCKS_SMALL_DEBRIS    | 
+        object::ATTR_RENDERABLE             |
+        object::ATTR_SPACIAL_ENTRY          |
+        object::ATTR_CAST_SHADOWS           |
+        object::ATTR_RECEIVE_SHADOWS        |
         object::ATTR_NEEDS_LOGIC_TIME, 
 
         FLAGS_GENERIC_EDITOR_CREATE | 

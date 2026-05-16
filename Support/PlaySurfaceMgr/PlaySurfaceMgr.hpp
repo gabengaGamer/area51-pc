@@ -97,6 +97,7 @@ public:
     // Rendering routines
     //---------------------------------------------------------------------
     void RenderPlaySurfaces ( void );
+    void RenderShadowCasters( void );
     void RenderPlaySurfacesCollision ( xbool bRenderHi );
 
     //---------------------------------------------------------------------

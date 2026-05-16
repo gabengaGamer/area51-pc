@@ -32,6 +32,7 @@ static struct play_surface_desc : public object_desc
             object::ATTR_BLOCKS_PAIN_LOS        | 
             object::ATTR_BLOCKS_SMALL_DEBRIS    | 
             object::ATTR_RENDERABLE             |
+            object::ATTR_CAST_SHADOWS           |
             object::ATTR_RECEIVE_SHADOWS        |
             object::ATTR_EDITOR_TEMP_OBJECT     |
             object::ATTR_SPACIAL_ENTRY,

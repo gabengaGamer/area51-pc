@@ -63,14 +63,16 @@ static struct bomb_object_desc : public object_desc
         object::TYPE_BOMB, 
         "Bomb Object",
         "PROPS",
-        object::ATTR_RENDERABLE             | 
-        object::ATTR_COLLIDABLE             | 
-        object::ATTR_BLOCKS_ALL_PROJECTILES | 
-        object::ATTR_BLOCKS_ALL_ACTORS      | 
-        object::ATTR_BLOCKS_RAGDOLL         | 
-        object::ATTR_BLOCKS_SMALL_DEBRIS    | 
+        object::ATTR_RENDERABLE             |
+        object::ATTR_COLLIDABLE             |
+        object::ATTR_BLOCKS_ALL_PROJECTILES |
+        object::ATTR_BLOCKS_ALL_ACTORS      |
+        object::ATTR_BLOCKS_RAGDOLL         |
+        object::ATTR_BLOCKS_SMALL_DEBRIS    |
         object::ATTR_DAMAGEABLE             |
         object::ATTR_SPACIAL_ENTRY          |
+        object::ATTR_CAST_SHADOWS           |
+        object::ATTR_RECEIVE_SHADOWS        |
         object::ATTR_NEEDS_LOGIC_TIME,
 
         FLAGS_IS_DYNAMIC | FLAGS_TARGETS_OBJS | FLAGS_GENERIC_EDITOR_CREATE |

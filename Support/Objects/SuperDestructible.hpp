@@ -45,6 +45,7 @@ public:
     virtual xbool           OnProperty                  ( prop_query&   I           );
     virtual void            OnPain                      ( const pain& Pain          ); 
     virtual void            OnRender                    ( void                      );
+    virtual void            OnRenderShadowCast          ( u64 ProjMask              );
     virtual void            OnMove                      ( const vector3& NewPos     );      
     virtual void            OnTransform                 ( const matrix4& L2W        );
     virtual void            OnAdvanceLogic              ( f32 DeltaTime             );

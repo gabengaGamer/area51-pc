@@ -1213,6 +1213,39 @@ void object::OnAttachedMove(       s32      iAttachPt,
 
 //=============================================================================
 
+void object::OnRenderShadowCast( u64 ProjMask )
+{
+    render_inst* pRenderInst = GetRenderInstPtr();
+    if( !pRenderInst )
+        return;
+
+    const matrix4* pMatrices = GetBoneL2Ws();
+    const matrix4* pL2W      = &GetL2W();
+    geom*          pGeom     = pRenderInst->GetGeom();
+
+    if( pGeom && ( pGeom->m_nBones > 1 ) )
+    {
+        if( !pMatrices || ( pMatrices == pL2W ) )
+            return;
+    }
+    else if( !pMatrices )
+    {
+        pMatrices = pL2W;
+    }
+
+    const u32 Flags = NeedsClipping() ? render::CLIPPED : 0;
+    pRenderInst->RenderShadowCast( pMatrices, Flags, ProjMask );
+}
+
+//=============================================================================
+
+void object::OnRenderShadowReceive( u64 ProjMask )
+{
+    (void)ProjMask;
+}
+
+//=============================================================================
+
 xbool object::GetAttachPointData( s32      iAttachPt,
                                   matrix4& L2W,
                                   u32      Flags )

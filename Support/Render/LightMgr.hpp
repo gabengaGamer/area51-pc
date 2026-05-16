@@ -100,6 +100,9 @@ public:
     s32     CollectCharLights       ( const matrix4& L2W,
                                       const bbox&    B,
                                       s32            MaxLightCount = 3 );
+    s32     CollectCharLightsOnly   ( const matrix4& L2W,
+                                      const bbox&    B,
+                                      s32            MaxLightCount = 3 );
     void    GetCollectedCharLight   ( s32            Index,
                                       vector3&       Dir,
                                       xcolor&        C );

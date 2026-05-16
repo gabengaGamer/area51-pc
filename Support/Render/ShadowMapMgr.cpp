@@ -14,6 +14,7 @@
 
 #include "..\Objects\Object.hpp"
 #include "..\Objects\player.hpp"
+#include "..\PlaySurfaceMgr\PlaySurfaceMgr.hpp"
 #include "..\ZoneMgr\ZoneMgr.hpp"
 
 #include "LightMgr.hpp"
@@ -417,6 +418,12 @@ namespace
         //    return FALSE;
         //}
 
+        if( !g_ZoneMgr.IsZoneVisible( (u8)pCaster->GetZone1() ) &&
+            !g_ZoneMgr.IsZoneVisible( (u8)pCaster->GetZone2() ) )
+        {
+            return FALSE;
+        }
+
         if( !CasterBBox.Intersect( LightPos, LightRadius ) )
             return FALSE;
 
@@ -446,6 +453,34 @@ namespace
             LightScore += kPlayerShadowScoreBonus;
 
         return LightScore;
+    }
+
+    //---------------------------------------------------------------------
+
+    xbool ShadowLightHasRelevantPlaySurface( const dynamic_shadow_light& DynamicLight,
+                                             f32                         LightConeOuterCos )
+    {
+        g_PlaySurfaceMgr.CollectSurfaces( bbox( DynamicLight.Pos, DynamicLight.Radius ),
+                                          object::ATTR_ALL,
+                                          0 );
+
+        playsurface_mgr::surface* pSurface = g_PlaySurfaceMgr.GetNextSurface();
+        while( pSurface )
+        {
+            if( ( DynamicLight.Shape != light_mgr::LIGHT_SHAPE_SPOT ) ||
+                SourceConeAffectsBBox( DynamicLight.Pos,
+                                       DynamicLight.Direction,
+                                       LightConeOuterCos,
+                                       DynamicLight.Radius,
+                                       pSurface->WorldBBox ) )
+            {
+                return TRUE;
+            }
+
+            pSurface = g_PlaySurfaceMgr.GetNextSurface();
+        }
+
+        return FALSE;
     }
 
     //---------------------------------------------------------------------
@@ -492,6 +527,7 @@ namespace
 
         const s32 RelevantCasterStart = RelevantCasterIndices.GetCount();
         s32       LocalCasterCount    = 0;
+        xbool     HasPlaySurfaceCaster= FALSE;
 
         for( s32 iCandidate = 0; iCandidate < NCasterCandidates; iCandidate++ )
         {
@@ -509,6 +545,9 @@ namespace
         }
 
         if( LocalCasterCount <= 0 )
+            HasPlaySurfaceCaster = ShadowLightHasRelevantPlaySurface( DynamicLight, LightConeOuterCos );
+
+        if( ( LocalCasterCount <= 0 ) && !HasPlaySurfaceCaster )
             return FALSE;
 
         ShadowLight.Shape       = DynamicLight.Shape;
@@ -522,7 +561,9 @@ namespace
         ShadowLight.SourceCount = GetShadowLightSourceCount( DynamicLight.Shape );
         ShadowLight.RelevantCasterStart = RelevantCasterStart;
         ShadowLight.RelevantCasterCount = LocalCasterCount;
-        ShadowLight.Score       = GetShadowLightScore( DynamicLight, LocalCasterCount, pActivePlayer );
+        ShadowLight.Score       = GetShadowLightScore( DynamicLight,
+                                                       LocalCasterCount + ( HasPlaySurfaceCaster ? 1 : 0 ),
+                                                       pActivePlayer );
         return TRUE;
     }
 
@@ -1318,8 +1359,8 @@ void shadow_map_mgr::CreateShadowMap( object* const* ppCasterCandidates,
 {
     ClearSources();
 
-    if( !ppCasterCandidates || ( NCasterCandidates <= 0 ) )
-        return;
+    if( !ppCasterCandidates )
+        NCasterCandidates = 0;
 
     object*      ppCasters[render::MAX_SHADOW_CASTERS];
     u64          CasterMasks[render::MAX_SHADOW_CASTERS];
@@ -1365,9 +1406,6 @@ void shadow_map_mgr::CreateShadowMap( object* const* ppCasterCandidates,
                                               ppCasters,
                                               CasterMasks );
 
-    if( NCasters <= 0 )
-        return;
-
     if( eng_Begin( "Shadow Map" ) )
     {
         render::BeginShadowCreation();
@@ -1376,6 +1414,8 @@ void shadow_map_mgr::CreateShadowMap( object* const* ppCasterCandidates,
 
         for( s32 i = 0; i < NCasters; i++ )
             ppCasters[i]->OnRenderShadowCast( CasterMasks[i] );
+
+        g_PlaySurfaceMgr.RenderShadowCasters();
 
         render::EndShadowCreation();
         eng_End();

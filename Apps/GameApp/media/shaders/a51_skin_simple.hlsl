@@ -13,9 +13,13 @@
 //==============================================================================
 
 #define GEOM_USE_SKIN_INSTANCE_DATA 1
-#define GEOM_USE_SKIN_LIGHTING
-#include "common/geom_buffers.hlsl"
+#include "common/frame_constants.hlsl"
+#include "common/lighting_constants.hlsl"
+#include "common/proj_buffers.hlsl"
+#include "common/shadow_buffers.hlsl"
 #include "common/skin_instance_buffers.hlsl"
+
+//------------------------------------------------------------------------------
 
 struct VS_INPUT
 {
@@ -24,6 +28,8 @@ struct VS_INPUT
     float4 UVWeights : TEXCOORD0;
     uint   InstanceID : SV_InstanceID;
 };
+
+//------------------------------------------------------------------------------
 
 struct GEOM_PIXEL_INPUT
 {
@@ -36,9 +42,12 @@ struct GEOM_PIXEL_INPUT
     nointerpolation uint InstanceID : TEXCOORD5;
 };
 
+//------------------------------------------------------------------------------
+
 #include "common/pixel_structs.hlsl"
 #include "common/geom_textures.hlsl"
 #include "common/geom_pixel_shared.hlsl"
+#include "common/geom_local_shadow_maps.hlsl"
 
 //==============================================================================
 //  VERTEX SHADER

@@ -34,6 +34,9 @@ public:
 
     void                SetColorTable       ( const void* pColorTable, s32 iColor, s32 nColors );
     virtual void        LoadColorTable      ( const char* pFileName );
+    virtual void        RenderShadowCast    ( const matrix4* pL2W,
+                                              u32            Flags,
+                                              u64            ProjMask );
 
     void                Render              ( const matrix4* pL2W, u32 Flags );
     void                Render              ( const matrix4* pL2W, u32 Flags, u64 Mask );

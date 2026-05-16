@@ -169,6 +169,7 @@ protected:
 
     virtual void                OnImport        ( text_in& TIn );
     virtual void                OnRender        ( void );
+    virtual void                OnRenderShadowCast( u64 ProjMask );
     virtual void                OnRenderTransparent ( void );
 
 #ifndef X_RETAIL

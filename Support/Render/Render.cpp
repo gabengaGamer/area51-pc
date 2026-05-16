@@ -2624,11 +2624,56 @@ void render::AddRigidCasterSimple( render::hgeom_inst hInst,
                                    const matrix4*     pL2W,  // will be DMA ref'd to!
                                    u64                ShadowSourceMask )
 {
+    #ifndef X_RETAIL
+    if( g_RenderDebug.RenderSkinOnly )
+        return;
+    #endif
+
     ASSERT( s_InShadowBegin );
-    ASSERT( FALSE );
-    (void)hInst;
-    (void)pL2W;
-    (void)ShadowSourceMask;
+    ASSERT( pL2W );
+    ASSERT( pL2W->IsValid() );
+
+    private_instance& RegisteredInst = s_lRegisteredInst( hInst );
+    ASSERT( RegisteredInst.Type == TYPE_RIGID );
+    rigid_geom* pGeom = (rigid_geom*)RegisteredInst.pGeom;
+
+    for ( s32 iShadowSource = 0; iShadowSource < s_nShadowSources; iShadowSource++ )
+    {
+        if ( (ShadowSourceMask & ((u64)1 << iShadowSource)) == 0 )
+            continue;
+
+        for ( s32 iSubMesh = 0; iSubMesh < pGeom->m_nSubMeshes; iSubMesh++ )
+        {
+            geom::submesh&  SubMesh  = pGeom->m_pSubMesh[iSubMesh];
+            geom::material& Material = pGeom->m_pMaterial[SubMesh.iMaterial];
+            if ( IsAlphaMaterial( (material_type)Material.Type ) )
+                continue;
+
+            shad_sortkey SortKey;
+            SortKey.Bits              = 0;
+            SortKey.ShadowSourceIndex = iShadowSource;
+            SortKey.GeomSubMesh       = iSubMesh;
+            SortKey.GeomHandle        = pGeom->m_hGeom;
+            SortKey.GeomType          = 0;
+            SortKey.ShadType          = 0;
+
+            render_instance& Inst = AddToHashHybrid( SortKey.Bits );
+            Inst.ShadSortKey      = SortKey;
+            Inst.Flags            = 0;
+            Inst.UOffset          = 0;
+            Inst.VOffset          = 0;
+            Inst.OverrideMat      = FALSE;
+
+            Inst.Data.Rigid.pGeom    = pGeom;
+            Inst.Data.Rigid.pL2W     = pL2W;
+            Inst.Data.Rigid.pColInfo = NULL;
+
+            #ifdef TARGET_PC
+            private_geom& PrivateGeom = s_lRegisteredGeoms(pGeom->m_hGeom);
+            Inst.hDList               = PrivateGeom.RigidDList[(s32)SubMesh.iDList];
+            #endif
+        }
+    }
 }
 
 //=============================================================================
@@ -2638,11 +2683,88 @@ void render::AddRigidCaster( render::hgeom_inst hInst,
                              u64                Mask,
                              u64                ShadowSourceMask )
 {
+    #ifndef X_RETAIL
+    if( g_RenderDebug.RenderSkinOnly )
+        return;
+    #endif
+
     ASSERT( s_InShadowBegin );
-    (void)hInst;
-    (void)pL2W;
-    (void)Mask;
-    (void)ShadowSourceMask;
+    ASSERT( pL2W );
+    ASSERT( pL2W->IsValid() );
+
+    private_instance& RegisteredInst = s_lRegisteredInst( hInst );
+    ASSERT( RegisteredInst.Type == TYPE_RIGID );
+    rigid_geom* pGeom = (rigid_geom*)RegisteredInst.pGeom;
+
+    geom::mesh* pMesh    = pGeom->m_pMesh;
+    geom::mesh* pEndMesh = pMesh + pGeom->m_nMeshes;
+    while ( pMesh < pEndMesh )
+    {
+        if( (Mask & 1) == 0 )
+        {
+            pMesh++;
+            Mask >>= 1;
+            continue;
+        }
+
+        for ( s32 iSubMesh = pMesh->iSubMesh;
+              iSubMesh < pMesh->iSubMesh+pMesh->nSubMeshes;
+              iSubMesh++ )
+        {
+            geom::submesh&  SubMesh  = pGeom->m_pSubMesh[iSubMesh];
+            geom::material& Material = pGeom->m_pMaterial[SubMesh.iMaterial];
+            if ( IsAlphaMaterial( (material_type)Material.Type ) )
+                continue;
+
+            ASSERT( (pGeom->m_hGeom>=0) && (pGeom->m_hGeom<kMaxRegisteredGeoms) );
+            ASSERT( (iSubMesh      >=0) && (iSubMesh      <256                ) );
+
+            #ifdef TARGET_PC
+            s32 iBone = pGeom->m_System.pPC[SubMesh.iDList].iBone;
+            #else
+            #error Unknown Target!
+            #endif
+
+            matrix4* pMat = (matrix4*)smem_BufferAlloc(sizeof(matrix4));
+            {
+                *pMat = *(pL2W + iBone);
+                ASSERT( pMat->IsValid() );
+            }
+
+            for ( s32 iShadowSource = 0; iShadowSource < s_nShadowSources; iShadowSource++ )
+            {
+                if ( (ShadowSourceMask & ((u64)1 << iShadowSource)) == 0 )
+                    continue;
+
+                shad_sortkey SortKey;
+                SortKey.Bits              = 0;
+                SortKey.ShadowSourceIndex = iShadowSource;
+                SortKey.GeomSubMesh       = iSubMesh;
+                SortKey.GeomHandle        = pGeom->m_hGeom;
+                SortKey.GeomType          = 0;
+                SortKey.ShadType          = 0;
+
+                render_instance& Inst = AddToHashHybrid( SortKey.Bits );
+                Inst.ShadSortKey      = SortKey;
+                Inst.Flags            = 0;
+                Inst.UOffset          = 0;
+                Inst.VOffset          = 0;
+                Inst.OverrideMat      = FALSE;
+
+                Inst.Data.Rigid.pGeom    = pGeom;
+                Inst.Data.Rigid.pL2W     = pMat;
+                Inst.Data.Rigid.pColInfo = NULL;
+
+                #ifdef TARGET_PC
+                private_geom& PrivateGeom = s_lRegisteredGeoms(pGeom->m_hGeom);
+                Inst.hDList               = PrivateGeom.RigidDList[(s32)SubMesh.iDList];
+                #endif
+            }
+        }
+
+        pMesh++;
+        Mask >>= 1;
+    }
 }
 
 //=============================================================================

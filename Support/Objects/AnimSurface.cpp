@@ -37,6 +37,8 @@ static struct anim_surface_desc : public object_desc
             object::ATTR_RENDERABLE             |
             object::ATTR_NEEDS_LOGIC_TIME       |
             object::ATTR_SPACIAL_ENTRY          |
+            object::ATTR_CAST_SHADOWS           |
+            object::ATTR_RECEIVE_SHADOWS        |			
             object::ATTR_ACTOR_RIDEABLE,
 
             FLAGS_GENERIC_EDITOR_CREATE | 

@@ -513,15 +513,16 @@ void coke_can::OnRender( void )
 
 void coke_can::OnRenderShadowCast( u64 ProjMask )
 {
-    // Geometry present?
+    // Lookup skin geometry
     skin_geom* pSkinGeom = m_SkinInst.GetSkinGeom();
     if( !pSkinGeom )
         return;
 
-    // Can only support 1 boned cans!
+    // Coke cans can only support a single bone.
     ASSERTS( pSkinGeom->m_nBones == 1, "Coke cans can only have 1 bone!!" );
 
-    // Compute LOD mask
+    // Compute LOD mask for the shadow render (by forcing 0 for the screen size
+    // we are sure to get the lowest LOD)
     u64 ShadLODMask = m_SkinInst.GetLODMask( 0 );
     if( ShadLODMask == 0 )
         return;
@@ -534,6 +535,7 @@ void coke_can::OnRenderShadowCast( u64 ProjMask )
     ASSERT( pBackedUpMtx );
     *pBackedUpMtx = GetL2W();
 
+    // Render
     m_SkinInst.RenderShadowCast( pBackedUpMtx,
                                  pBackedUpMtx,
                                  1,

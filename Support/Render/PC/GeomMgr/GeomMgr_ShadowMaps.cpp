@@ -172,7 +172,7 @@ xbool geom_mgr::UpdateShadowMaps( void )
     cb.PointShadowLightCount = pShadowSampler ? nPointLights : 0;
 
     cb.ShadowParams.Set( g_ShadowMgr.GetShadowBias(),
-                         g_ShadowMgr.GetShadowStrength(),
+                         0.0f,
                          g_ShadowMgr.GetShadowMinVariance(),
                          g_ShadowMgr.GetShadowLightBleedReduction() );
 

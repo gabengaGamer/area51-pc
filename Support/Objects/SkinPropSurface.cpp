@@ -33,17 +33,18 @@ static struct skin_prop_surface_desc : public object_desc
         "PROPS",
 
             // Object flags
-            object::ATTR_RENDERABLE             | 
+            object::ATTR_RENDERABLE             |
             object::ATTR_NEEDS_LOGIC_TIME       |
-            object::ATTR_COLLIDABLE             | 
-            object::ATTR_BLOCKS_ALL_PROJECTILES | 
-            object::ATTR_BLOCKS_ALL_ACTORS      | 
-            object::ATTR_BLOCKS_RAGDOLL         | 
-            object::ATTR_BLOCKS_CHARACTER_LOS   | 
-            object::ATTR_BLOCKS_PLAYER_LOS      | 
-            object::ATTR_BLOCKS_PAIN_LOS        | 
-            object::ATTR_BLOCKS_SMALL_DEBRIS    | 
-            object::ATTR_CAST_SHADOWS           |			
+            object::ATTR_COLLIDABLE             |
+            object::ATTR_BLOCKS_ALL_PROJECTILES |
+            object::ATTR_BLOCKS_ALL_ACTORS      |
+            object::ATTR_BLOCKS_RAGDOLL         |
+            object::ATTR_BLOCKS_CHARACTER_LOS   |
+            object::ATTR_BLOCKS_PLAYER_LOS      |
+            object::ATTR_BLOCKS_PAIN_LOS        |
+            object::ATTR_BLOCKS_SMALL_DEBRIS    |
+            object::ATTR_CAST_SHADOWS           |
+            object::ATTR_RECEIVE_SHADOWS        |
             object::ATTR_SPACIAL_ENTRY,
 
             // Editor flags
@@ -181,26 +182,36 @@ void skin_prop_surface::OnRender( void )
 
 void skin_prop_surface::OnRenderShadowCast( u64 ProjMask )
 {
-    if( m_Inst.GetSkinGeom() && (m_hAnimGroup.IsLoaded() == TRUE) )
-    {
-        u64 ShadLODMask = m_Inst.GetLODMask( 0 );
-        if( ShadLODMask == 0 )
-            return;
+    // Lookup skin geometry
+    if( !m_Inst.GetSkinGeom() )
+        return;
 
-        u32 Flags = (GetFlagBits() & object::FLAG_CHECK_PLANES) ? render::CLIPPED : 0;
+    // Make sure animation data is loaded.
+    if( m_hAnimGroup.IsLoaded() != TRUE )
+        return;
 
-        s32 nActiveBones = m_AnimPlayer.GetNBones();
-        const matrix4* pMatrices = m_AnimPlayer.GetBoneL2Ws();
-        if( !pMatrices )
-            return;
+    // Compute LOD mask for the shadow render (by forcing 0 for the screen size
+    // we are sure to get the lowest LOD)
+    u64 ShadLODMask = m_Inst.GetLODMask( 0 );
+    if( ShadLODMask == 0 )
+        return;
 
-        m_Inst.RenderShadowCast( &GetL2W(),
-                                 pMatrices,
-                                 nActiveBones,
-                                 Flags,
-                                 ShadLODMask,
-                                 ProjMask );
-    }
+    // Setup render flags
+    u32 Flags = (GetFlagBits() & object::FLAG_CHECK_PLANES) ? render::CLIPPED : 0;
+
+    // Compute bones
+    s32 nActiveBones = m_AnimPlayer.GetNBones();
+    const matrix4* pMatrices = m_AnimPlayer.GetBoneL2Ws();
+    if( !pMatrices )
+        return;
+
+    // Render
+    m_Inst.RenderShadowCast( &GetL2W(),
+                             pMatrices,
+                             nActiveBones,
+                             Flags,
+                             ShadLODMask,
+                             ProjMask );
 }
 
 //=============================================================================

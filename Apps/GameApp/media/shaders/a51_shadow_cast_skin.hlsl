@@ -10,10 +10,14 @@
 
 #include "common/skin_bones.hlsl"
 
+//------------------------------------------------------------------------------
+
 cbuffer cbShadowCast : register(b0)
 {
     float4x4 ShadowViewProjection;
 };
+
+//------------------------------------------------------------------------------
 
 struct VS_INPUT
 {
@@ -21,6 +25,8 @@ struct VS_INPUT
     float4 NormIndex : NORMAL;
     float4 UVWeights : TEXCOORD0;
 };
+
+//==============================================================================
 
 float4 VSMain( VS_INPUT input ) : SV_Position
 {

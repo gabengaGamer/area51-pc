@@ -24,6 +24,7 @@
 
 #include "GeomMgr/GeomMgr.hpp"
 #include "SoftVertexMgr.hpp"
+#include "VertexMgr.hpp"
 
 #include "Entropy/D3DEngine/d3deng_composite.hpp"
 #include "Entropy/D3DEngine/d3deng_state.hpp"
@@ -40,6 +41,13 @@ extern ID3D11DeviceContext* g_pd3dContext;
 
 namespace
 {
+    enum
+    {
+        SHADOW_CASTER_NONE  = -1,
+        SHADOW_CASTER_RIGID = 0,
+        SHADOW_CASTER_SKIN  = 1,
+    };
+
     static
     void ReleaseShadowTarget( rtarget& Target )
     {
@@ -77,16 +85,18 @@ shadow_mgr::shadow_mgr( void ) :
     m_bViewportSaved           ( FALSE ),
     m_SavedViewportCount       ( 0 ),
     m_CurrentSource            ( -1 ),
+    m_CurrentCasterShader      ( SHADOW_CASTER_NONE ),
     m_ShadowAtlasSize          ( 0 ),
+    m_pRigidVertexShader       ( NULL ),
     m_pSkinVertexShader        ( NULL ),
     m_pMomentPixelShader       ( NULL ),
     m_pBlurHPixelShader        ( NULL ),
     m_pBlurVPixelShader        ( NULL ),
+    m_pRigidInputLayout        ( NULL ),
     m_pSkinInputLayout         ( NULL ),
     m_pShadowCastBuffer        ( NULL ),
     m_pShadowBlurBuffer        ( NULL ),
     m_ShadowBias               ( 0.0025f ),
-    m_ShadowStrength           ( 0.32f ),
     m_ShadowFilterRadius       ( 2.0f ),
     m_ShadowMinVariance        ( 0.0001f ),
     m_ShadowLightBleedReduction( 0.20f )
@@ -108,6 +118,14 @@ void shadow_mgr::Init( void )
     if( m_bInitialized )
         return;
 
+    D3D11_INPUT_ELEMENT_DESC RigidLayout[] =
+    {
+        { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0,  D3D11_INPUT_PER_VERTEX_DATA, 0 },
+        { "NORMAL",   0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+        { "COLOR",    0, DXGI_FORMAT_B8G8R8A8_UNORM,  0, 24, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+        { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,    0, 28, D3D11_INPUT_PER_VERTEX_DATA, 0 }
+    };
+
     D3D11_INPUT_ELEMENT_DESC SkinLayout[] =
     {
         { "POSITION", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 0,  D3D11_INPUT_PER_VERTEX_DATA, 0 },
@@ -115,6 +133,12 @@ void shadow_mgr::Init( void )
         { "TEXCOORD", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 32, D3D11_INPUT_PER_VERTEX_DATA, 0 }
     };
 
+    m_pRigidVertexShader = shader_CompileVertexFromFileWithLayout( "a51_shadow_cast_rigid.hlsl",
+                                                                   &m_pRigidInputLayout,
+                                                                   RigidLayout,
+                                                                   ARRAYSIZE(RigidLayout),
+                                                                   "VSMain",
+                                                                   "vs_5_0" );
     m_pSkinVertexShader = shader_CompileVertexFromFileWithLayout( "a51_shadow_cast_skin.hlsl",
                                                                   &m_pSkinInputLayout,
                                                                   SkinLayout,
@@ -127,8 +151,22 @@ void shadow_mgr::Init( void )
     m_pShadowCastBuffer = shader_CreateConstantBuffer( sizeof(cb_shadow_cast), CB_TYPE_DYNAMIC );
     m_pShadowBlurBuffer = NULL;
 
-    if( !m_pSkinVertexShader || !m_pMomentPixelShader || !m_pSkinInputLayout ||
-        !m_pShadowCastBuffer )
+    const xbool bHasRigidCaster = ( m_pRigidVertexShader && m_pRigidInputLayout );
+    const xbool bHasSkinCaster  = ( m_pSkinVertexShader && m_pSkinInputLayout );
+
+    if( !bHasRigidCaster )
+    {
+        ReleaseCOM( m_pRigidInputLayout );
+        ReleaseCOM( m_pRigidVertexShader );
+    }
+
+    if( !bHasSkinCaster )
+    {
+        ReleaseCOM( m_pSkinInputLayout );
+        ReleaseCOM( m_pSkinVertexShader );
+    }
+
+    if( !m_pMomentPixelShader || !m_pShadowCastBuffer || !( bHasRigidCaster || bHasSkinCaster ) )
     {
         if( m_pShadowCastBuffer )
         {
@@ -142,10 +180,22 @@ void shadow_mgr::Init( void )
             m_pMomentPixelShader = NULL;
         }
 
+        if( m_pRigidInputLayout )
+        {
+            m_pRigidInputLayout->Release();
+            m_pRigidInputLayout = NULL;
+        }
+
         if( m_pSkinInputLayout )
         {
             m_pSkinInputLayout->Release();
             m_pSkinInputLayout = NULL;
+        }
+
+        if( m_pRigidVertexShader )
+        {
+            m_pRigidVertexShader->Release();
+            m_pRigidVertexShader = NULL;
         }
 
         if( m_pSkinVertexShader )
@@ -169,7 +219,9 @@ void shadow_mgr::Kill( void )
     ReleaseCOM( m_pBlurVPixelShader );
     ReleaseCOM( m_pBlurHPixelShader );
     ReleaseCOM( m_pMomentPixelShader );
+    ReleaseCOM( m_pRigidInputLayout );
     ReleaseCOM( m_pSkinInputLayout );
+    ReleaseCOM( m_pRigidVertexShader );
     ReleaseCOM( m_pSkinVertexShader );
 
     ReleaseShadowTarget( m_ShadowAtlas );
@@ -180,6 +232,7 @@ void shadow_mgr::Kill( void )
     m_bViewportSaved      = FALSE;
     m_SavedViewportCount  = 0;
     m_CurrentSource       = -1;
+    m_CurrentCasterShader = SHADOW_CASTER_NONE;
     m_ShadowAtlasSize     = 0;
     m_bInitialized        = FALSE;
 }
@@ -302,9 +355,7 @@ void shadow_mgr::BeginCastPass( void )
     if( !m_bInitialized ||
         !g_ShadowMapMgr.HasActiveSources() ||
         !g_pd3dContext ||
-        !m_pSkinVertexShader ||
         !m_pMomentPixelShader ||
-        !m_pSkinInputLayout ||
         !m_pShadowCastBuffer )
     {
         return;
@@ -333,33 +384,77 @@ void shadow_mgr::BeginCastPass( void )
         g_pd3dContext->VSSetConstantBuffers( 2, 1, &pBoneBuffer );
     }
 
+    g_RigidVertMgr.BeginRender();
     g_SkinVertMgr.BeginRender();
-    m_CurrentSource = -1;
+    m_CurrentSource       = -1;
+    m_CurrentCasterShader = SHADOW_CASTER_NONE;
 }
 
 //==============================================================================
 
 void shadow_mgr::EndCastPass( void )
 {
-    m_CurrentSource = -1;
+    m_CurrentSource       = -1;
+    m_CurrentCasterShader = SHADOW_CASTER_NONE;
 }
 
 //==============================================================================
 
-void shadow_mgr::ApplySource( s32 SourceIndex )
+xbool shadow_mgr::SetShadowCastConstants( const matrix4& ShadowViewProjection,
+                                          const matrix4* pWorld )
+{
+    if( !g_pd3dContext || !m_pShadowCastBuffer )
+        return FALSE;
+
+    cb_shadow_cast CBData;
+    CBData.ShadowViewProjection = ShadowViewProjection;
+    CBData.World.Identity();
+    if( pWorld )
+        CBData.World = *pWorld;
+
+    D3D11_MAPPED_SUBRESOURCE MappedResource;
+    if( FAILED( g_pd3dContext->Map( m_pShadowCastBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &MappedResource ) ) )
+        return FALSE;
+
+    x_memcpy( MappedResource.pData, &CBData, sizeof(CBData) );
+    g_pd3dContext->Unmap( m_pShadowCastBuffer, 0 );
+    g_pd3dContext->VSSetConstantBuffers( 0, 1, &m_pShadowCastBuffer );
+    return TRUE;
+}
+
+//==============================================================================
+
+void shadow_mgr::ApplySource( s32 SourceIndex, s32 CasterShader )
 {
     ASSERT( SourceIndex >= 0 );
     ASSERT( SourceIndex < g_ShadowMapMgr.GetSourceCount() );
 
-    if( SourceIndex == m_CurrentSource )
+    if( ( SourceIndex == m_CurrentSource ) && ( CasterShader == m_CurrentCasterShader ) )
         return;
 
     const shadow_map_mgr::shadow_source& Source = g_ShadowMapMgr.GetSource( SourceIndex );
 
+    ID3D11InputLayout*  pInputLayout  = NULL;
+    ID3D11VertexShader* pVertexShader = NULL;
+
+    if( CasterShader == SHADOW_CASTER_RIGID )
+    {
+        pInputLayout  = m_pRigidInputLayout;
+        pVertexShader = m_pRigidVertexShader;
+    }
+    else if( CasterShader == SHADOW_CASTER_SKIN )
+    {
+        pInputLayout  = m_pSkinInputLayout;
+        pVertexShader = m_pSkinVertexShader;
+    }
+
+    if( !pInputLayout || !pVertexShader || !m_pMomentPixelShader )
+        return;
+
     shader_pass Pass;
     x_memset( &Pass, 0, sizeof(Pass) );
-    Pass.pInputLayout  = m_pSkinInputLayout;
-    Pass.pVertexShader = m_pSkinVertexShader;
+    Pass.pInputLayout  = pInputLayout;
+    Pass.pVertexShader = pVertexShader;
     Pass.Topology      = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
 
     D3D11_VIEWPORT Viewport;
@@ -378,17 +473,44 @@ void shadow_mgr::ApplySource( s32 SourceIndex )
 
     shader_ApplyPass( Pass );
 
-    cb_shadow_cast CBData;
-    CBData.ShadowViewProjection = Source.WorldToClip;
-
-    D3D11_MAPPED_SUBRESOURCE MappedResource;
-    if( SUCCEEDED( g_pd3dContext->Map( m_pShadowCastBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &MappedResource ) ) )
+    if( CasterShader == SHADOW_CASTER_SKIN )
     {
-        x_memcpy( MappedResource.pData, &CBData, sizeof(CBData) );
-        g_pd3dContext->Unmap( m_pShadowCastBuffer, 0 );
-        g_pd3dContext->VSSetConstantBuffers( 0, 1, &m_pShadowCastBuffer );
-        m_CurrentSource = SourceIndex;
+        if( !SetShadowCastConstants( Source.WorldToClip ) )
+            return;
     }
+
+    m_CurrentSource       = SourceIndex;
+    m_CurrentCasterShader = CasterShader;
+}
+
+//==============================================================================
+
+void shadow_mgr::RenderRigidCaster( xhandle hDList, const matrix4* pL2W, s32 SourceIndex )
+{
+    if( !m_bInitialized ||
+        !g_ShadowMapMgr.HasActiveSources() ||
+        !g_pd3dContext ||
+        !m_pRigidVertexShader ||
+        !m_pRigidInputLayout ||
+        !m_pShadowCastBuffer ||
+        !pL2W )
+    {
+        return;
+    }
+
+    if( ( SourceIndex < 0 ) || ( SourceIndex >= g_ShadowMapMgr.GetSourceCount() ) )
+        return;
+
+    ApplySource( SourceIndex, SHADOW_CASTER_RIGID );
+
+    if( ( SourceIndex != m_CurrentSource ) || ( m_CurrentCasterShader != SHADOW_CASTER_RIGID ) )
+        return;
+
+    const shadow_map_mgr::shadow_source& Source = g_ShadowMapMgr.GetSource( SourceIndex );
+    if( !SetShadowCastConstants( Source.WorldToClip, pL2W ) )
+        return;
+
+    g_RigidVertMgr.DrawDList( hDList );
 }
 
 //==============================================================================
@@ -408,9 +530,9 @@ void shadow_mgr::RenderSkinCaster( xhandle hDList, const matrix4* pBones, s32 So
     if( ( SourceIndex < 0 ) || ( SourceIndex >= g_ShadowMapMgr.GetSourceCount() ) )
         return;
 
-    ApplySource( SourceIndex );
+    ApplySource( SourceIndex, SHADOW_CASTER_SKIN );
 
-    if( SourceIndex != m_CurrentSource )
+    if( ( SourceIndex != m_CurrentSource ) || ( m_CurrentCasterShader != SHADOW_CASTER_SKIN ) )
         return;
 
     g_SkinVertMgr.DrawDList( hDList, pBones );
@@ -446,7 +568,8 @@ void shadow_mgr::EndShadowShaders( void )
         shader_SetPixelShader( NULL );
     }
 
-    m_CurrentSource = -1;
+    m_CurrentSource       = -1;
+    m_CurrentCasterShader = SHADOW_CASTER_NONE;
 }
 
 //==============================================================================
@@ -463,13 +586,6 @@ ID3D11ShaderResourceView* shadow_mgr::GetShadowAtlasSRV( void ) const
 f32 shadow_mgr::GetShadowBias( void ) const
 {
     return m_ShadowBias;
-}
-
-//==============================================================================
-
-f32 shadow_mgr::GetShadowStrength( void ) const
-{
-    return m_ShadowStrength;
 }
 
 //==============================================================================

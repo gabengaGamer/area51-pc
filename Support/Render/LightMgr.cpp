@@ -818,6 +818,78 @@ s32 light_mgr::CollectCharLights( const matrix4& L2W, const bbox& B, s32 MaxLigh
 
 //=========================================================================
 
+s32 light_mgr::CollectCharLightsOnly( const matrix4& L2W, const bbox& B, s32 MaxLightCount )
+{
+    m_NCollectedLights = 0;
+
+    // walk the list collecting fading lights that may intersect
+    s32 CurrLink = m_FirstLink;
+    while ( (CurrLink != -1) && (m_NCollectedLights < MAX_COLLECTED_LIGHTS) )
+    {
+        if ( CalcDirLight( &m_CollectedCharLights[m_NCollectedLights],
+                           L2W,
+                           B,
+                           m_FadingLights[CurrLink].Pos,
+                           m_FadingLights[CurrLink].Radius,
+                           m_FadingLights[CurrLink].Intensity,
+                           m_FadingLights[CurrLink].CurrentColor ) )
+        {
+            m_NCollectedLights++;
+        }
+        CurrLink = m_FadingLights[CurrLink].NextLink;
+    }
+
+    // now go through only the normal character lights
+    for ( s32 iCharLight = 0;
+          (iCharLight < m_NCharLights) && (m_NCollectedLights < MAX_COLLECTED_LIGHTS);
+          iCharLight++ )
+    {
+        if ( CalcDirLight( &m_CollectedCharLights[m_NCollectedLights],
+                           L2W,
+                           B,
+                           m_CharLights[iCharLight].Pos,
+                           m_CharLights[iCharLight].Radius,
+                           m_CharLights[iCharLight].Intensity,
+                           m_CharLights[iCharLight].Color ) )
+        {
+            m_NCollectedLights++;
+        }
+    }
+
+    // reduce the lights if necessary
+    while ( m_NCollectedLights > MaxLightCount )
+    {
+        s32 iLightToDrop = -1;
+        s32 LowestI = 255*255+255*255+255*255+1;
+        
+        for ( s32 iLight = 0; iLight < m_NCollectedLights; iLight++ )
+        {
+            // grab the light intensity
+            s32 R = m_CollectedCharLights[iLight].Col.R;
+            s32 G = m_CollectedCharLights[iLight].Col.G;
+            s32 B = m_CollectedCharLights[iLight].Col.B;
+            s32 I = R*R + G*G + B*B;
+
+            if ( (iLightToDrop == -1) || (I < LowestI) )
+            {
+                iLightToDrop = iLight;
+                LowestI      = I;
+            }
+        }
+
+        // remove a light
+        ASSERT( iLightToDrop >= 0 );
+        m_NCollectedLights--;
+        x_memmove( &m_CollectedCharLights[iLightToDrop],
+                   &m_CollectedCharLights[iLightToDrop+1],
+                   sizeof(s32)*(m_NCollectedLights-iLightToDrop) );
+    }
+
+    return m_NCollectedLights;
+}
+
+//=========================================================================
+
 void light_mgr::GetCollectedCharLight( s32 Index, vector3& Dir, xcolor& C )
 {
     ASSERT( (Index >= 0) && (Index < m_NCollectedLights) );

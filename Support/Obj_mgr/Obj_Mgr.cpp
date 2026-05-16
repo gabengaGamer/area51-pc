@@ -2376,8 +2376,9 @@ void obj_mgr::CollectShadowCasterCandidates( void )
             if( !pCaster )
                 continue;
 
-            if( ( pCaster->GetAttrBits() & object::ATTR_CAST_SHADOWS ) == 0 )
-                continue;
+            // TODO: GS: REMOVE ME WHEN ALL LEVEL WILL BE PATCHED!!!!
+            //if( ( pCaster->GetAttrBits() & object::ATTR_CAST_SHADOWS ) == 0 )
+            //    continue;
 
             m_ShadowCasterCandidates.Append( pCaster );
         }
