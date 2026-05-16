@@ -34,6 +34,7 @@
 //==============================================================================
 
 extern ID3D11DeviceContext* g_pd3dContext;
+extern ID3D11Device*        g_pd3dDevice;
 
 //==============================================================================
 //  FILE-LOCAL HELPERS
@@ -47,6 +48,10 @@ namespace
         SHADOW_CASTER_RIGID = 0,
         SHADOW_CASTER_SKIN  = 1,
     };
+
+    static const s32 kShadowDepthBias            = 16;
+    static const f32 kShadowSlopeScaledDepthBias = 2.0f;
+    static const f32 kShadowDepthBiasClamp       = 0.0f;
 
     static
     void ReleaseShadowTarget( rtarget& Target )
@@ -83,7 +88,9 @@ shadow_mgr::shadow_mgr( void ) :
     m_bInitialized             ( FALSE ),
     m_bTargetsPushed           ( FALSE ),
     m_bViewportSaved           ( FALSE ),
+    m_bRasterizerSaved         ( FALSE ),
     m_SavedViewportCount       ( 0 ),
+    m_pSavedRasterizerState    ( NULL ),
     m_CurrentSource            ( -1 ),
     m_CurrentCasterShader      ( SHADOW_CASTER_NONE ),
     m_ShadowAtlasSize          ( 0 ),
@@ -96,7 +103,7 @@ shadow_mgr::shadow_mgr( void ) :
     m_pSkinInputLayout         ( NULL ),
     m_pShadowCastBuffer        ( NULL ),
     m_pShadowBlurBuffer        ( NULL ),
-    m_ShadowBias               ( 0.0025f ),
+    m_pShadowCasterRasterizer  ( NULL ),
     m_ShadowFilterRadius       ( 2.0f ),
     m_ShadowMinVariance        ( 0.0001f ),
     m_ShadowLightBleedReduction( 0.20f )
@@ -151,6 +158,28 @@ void shadow_mgr::Init( void )
     m_pShadowCastBuffer = shader_CreateConstantBuffer( sizeof(cb_shadow_cast), CB_TYPE_DYNAMIC );
     m_pShadowBlurBuffer = NULL;
 
+    if( g_pd3dDevice )
+    {
+        D3D11_RASTERIZER_DESC RasterDesc;
+        x_memset( &RasterDesc, 0, sizeof(RasterDesc) );
+        RasterDesc.FillMode              = D3D11_FILL_SOLID;
+        RasterDesc.CullMode              = D3D11_CULL_NONE;
+        RasterDesc.FrontCounterClockwise = FALSE;
+        RasterDesc.DepthBias             = kShadowDepthBias;
+        RasterDesc.DepthBiasClamp        = kShadowDepthBiasClamp;
+        RasterDesc.SlopeScaledDepthBias  = kShadowSlopeScaledDepthBias;
+        RasterDesc.DepthClipEnable       = TRUE;
+        RasterDesc.ScissorEnable         = FALSE;
+        RasterDesc.MultisampleEnable     = FALSE;
+        RasterDesc.AntialiasedLineEnable = FALSE;
+
+        HRESULT hr = g_pd3dDevice->CreateRasterizerState( &RasterDesc, &m_pShadowCasterRasterizer );
+        if( FAILED(hr) )
+        {
+            x_DebugMsg( "ShadowMgr: failed to create shadow rasterizer state, HRESULT = 0x%08X\n", hr );
+        }
+    }
+
     const xbool bHasRigidCaster = ( m_pRigidVertexShader && m_pRigidInputLayout );
     const xbool bHasSkinCaster  = ( m_pSkinVertexShader && m_pSkinInputLayout );
 
@@ -166,8 +195,14 @@ void shadow_mgr::Init( void )
         ReleaseCOM( m_pSkinVertexShader );
     }
 
-    if( !m_pMomentPixelShader || !m_pShadowCastBuffer || !( bHasRigidCaster || bHasSkinCaster ) )
+    if( !m_pMomentPixelShader || !m_pShadowCastBuffer || !m_pShadowCasterRasterizer || !( bHasRigidCaster || bHasSkinCaster ) )
     {
+        if( m_pShadowCasterRasterizer )
+        {
+            m_pShadowCasterRasterizer->Release();
+            m_pShadowCasterRasterizer = NULL;
+        }
+
         if( m_pShadowCastBuffer )
         {
             m_pShadowCastBuffer->Release();
@@ -214,6 +249,8 @@ void shadow_mgr::Init( void )
 
 void shadow_mgr::Kill( void )
 {
+    ReleaseCOM( m_pSavedRasterizerState );
+    ReleaseCOM( m_pShadowCasterRasterizer );
     ReleaseCOM( m_pShadowBlurBuffer );
     ReleaseCOM( m_pShadowCastBuffer );
     ReleaseCOM( m_pBlurVPixelShader );
@@ -230,6 +267,7 @@ void shadow_mgr::Kill( void )
 
     m_bTargetsPushed      = FALSE;
     m_bViewportSaved      = FALSE;
+    m_bRasterizerSaved    = FALSE;
     m_SavedViewportCount  = 0;
     m_CurrentSource       = -1;
     m_CurrentCasterShader = SHADOW_CASTER_NONE;
@@ -356,7 +394,8 @@ void shadow_mgr::BeginCastPass( void )
         !g_ShadowMapMgr.HasActiveSources() ||
         !g_pd3dContext ||
         !m_pMomentPixelShader ||
-        !m_pShadowCastBuffer )
+        !m_pShadowCastBuffer ||
+        !m_pShadowCasterRasterizer )
     {
         return;
     }
@@ -376,7 +415,13 @@ void shadow_mgr::BeginCastPass( void )
 
     state_SetBlend( STATE_BLEND_NONE );
     state_SetDepth( STATE_DEPTH_NORMAL );
-    state_SetRasterizer( STATE_RASTER_SOLID_NO_CULL );
+
+    if( !m_bRasterizerSaved )
+    {
+        g_pd3dContext->RSGetState( &m_pSavedRasterizerState );
+        m_bRasterizerSaved = TRUE;
+    }
+    g_pd3dContext->RSSetState( m_pShadowCasterRasterizer );
 
     ID3D11Buffer* pBoneBuffer = g_GeomMgr.GetSkinBoneBuffer();
     if( pBoneBuffer )
@@ -553,8 +598,15 @@ void shadow_mgr::EndShadowShaders( void )
         g_pd3dContext->RSSetViewports( m_SavedViewportCount, &m_SavedViewport );
     }
 
+    if( g_pd3dContext && m_bRasterizerSaved )
+    {
+        g_pd3dContext->RSSetState( m_pSavedRasterizerState );
+    }
+
     m_bViewportSaved     = FALSE;
+    m_bRasterizerSaved   = FALSE;
     m_SavedViewportCount = 0;
+    ReleaseCOM( m_pSavedRasterizerState );
 
     if( m_bTargetsPushed )
     {
@@ -579,13 +631,6 @@ void shadow_mgr::EndShadowShaders( void )
 ID3D11ShaderResourceView* shadow_mgr::GetShadowAtlasSRV( void ) const
 {
     return m_ShadowAtlas.pShaderResourceView;
-}
-
-//==============================================================================
-
-f32 shadow_mgr::GetShadowBias( void ) const
-{
-    return m_ShadowBias;
 }
 
 //==============================================================================

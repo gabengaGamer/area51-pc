@@ -47,13 +47,10 @@ float SampleFaceShadowSource( uint sourceIndex, float3 worldPos, float3 worldNor
         return 1.0f;
 
     const float3 normal = normalize( worldNormal );
-    const float  ndotl  = dot( normal, pointToLightDir );
-    if( ndotl <= 0.0f )
+    if( dot( normal, pointToLightDir ) <= 0.0f )
         return 1.0f;
 
-    const float  receiverBiasDist = ComputeShadowReceiverBiasDistance( ndotl, lightDistance );
-    const float3 shadowWorldPos   = worldPos + ( pointToLightDir * receiverBiasDist );
-    const float  visibility       = SampleFaceShadowAtlasRaw( sourceIndex, shadowWorldPos, 0.0f );
+    const float visibility = SampleFaceShadowAtlasRaw( sourceIndex, worldPos );
     return lerp( 1.0f, visibility, nearInfluence );
 }
 

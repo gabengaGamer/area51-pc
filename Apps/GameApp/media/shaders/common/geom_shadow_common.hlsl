@@ -9,7 +9,7 @@
 #ifndef GEOM_SHADOW_COMMON_HLSL
 #define GEOM_SHADOW_COMMON_HLSL
 
-float SampleFaceShadowAtlas( float3 shadowUVW, float depthBias )
+float SampleFaceShadowAtlas( float3 shadowUVW )
 {
     if( shadowUVW.x < 0.0 || shadowUVW.x > 1.0 ||
         shadowUVW.y < 0.0 || shadowUVW.y > 1.0 ||
@@ -18,7 +18,7 @@ float SampleFaceShadowAtlas( float3 shadowUVW, float depthBias )
         return 1.0;
     }
 
-    const float depth       = saturate( shadowUVW.z - depthBias );
+    const float depth       = saturate( shadowUVW.z );
     const float shadowDepth = txFaceShadowAtlas.SampleLevel( samFaceShadow, shadowUVW.xy, 0.0f );
     return ( depth <= shadowDepth ) ? 1.0f : 0.0f;
 }
@@ -58,13 +58,13 @@ bool ProjectFaceShadowSource( uint sourceIndex, float3 shadowWorldPos, out float
 
 //==============================================================================
 
-float SampleFaceShadowAtlasRaw( uint sourceIndex, float3 shadowWorldPos, float depthBias )
+float SampleFaceShadowAtlasRaw( uint sourceIndex, float3 shadowWorldPos )
 {
     float3 shadowUVW;
     if( !ProjectFaceShadowSource( sourceIndex, shadowWorldPos, shadowUVW ) )
         return 1.0f;
 
-    return SampleFaceShadowAtlas( shadowUVW, depthBias );
+    return SampleFaceShadowAtlas( shadowUVW );
 }
 
 //==============================================================================
@@ -85,11 +85,5 @@ float ComputeShadowNearInfluence( float lightDistance, float nearZ, float lightR
 
 //==============================================================================
 
-float ComputeShadowReceiverBiasDistance( float ndotl, float lightDistance )
-{
-    return ShadowParams.x * lightDistance * ( 1.0f + ( 2.0f * ( 1.0f - saturate( ndotl ) ) ) );
-}
-
-//==============================================================================
 #endif // GEOM_SHADOW_COMMON_HLSL
 //==============================================================================

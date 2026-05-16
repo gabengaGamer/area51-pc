@@ -68,7 +68,7 @@ struct cb_shadow_maps
     u32     FaceShadowCount;
     u32     PointShadowLightCount;
     f32     Padding[2];
-    vector4 ShadowParams;
+    vector4 ShadowParams;                          // z = min variance, w = light bleed reduction
 };
 
 //==============================================================================
@@ -109,7 +109,6 @@ public:
     //--------------------------------------------------------------------------
 
     ID3D11ShaderResourceView* GetShadowAtlasSRV ( void ) const;
-    f32         GetShadowBias            ( void ) const;
     f32         GetShadowFilterRadius    ( void ) const;
     f32         GetShadowMinVariance     ( void ) const;
     f32         GetShadowLightBleedReduction( void ) const;
@@ -138,8 +137,10 @@ private:
     xbool                   m_bInitialized;
     xbool                   m_bTargetsPushed;
     xbool                   m_bViewportSaved;
+    xbool                   m_bRasterizerSaved;
     u32                     m_SavedViewportCount;
     D3D11_VIEWPORT          m_SavedViewport;
+    ID3D11RasterizerState*  m_pSavedRasterizerState;
     s32                     m_CurrentSource;
     s32                     m_CurrentCasterShader;
     s32                     m_ShadowAtlasSize;
@@ -160,12 +161,12 @@ private:
     ID3D11InputLayout*      m_pSkinInputLayout;
     ID3D11Buffer*           m_pShadowCastBuffer;
     ID3D11Buffer*           m_pShadowBlurBuffer;
+    ID3D11RasterizerState*  m_pShadowCasterRasterizer;
 
     //--------------------------------------------------------------------------
     // Shadow Tuning
     //--------------------------------------------------------------------------
 
-    f32                     m_ShadowBias;
     f32                     m_ShadowFilterRadius;
     f32                     m_ShadowMinVariance;
     f32                     m_ShadowLightBleedReduction;

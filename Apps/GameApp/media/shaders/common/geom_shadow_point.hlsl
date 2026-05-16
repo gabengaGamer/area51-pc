@@ -46,15 +46,12 @@ float SamplePointShadowLight( uint lightIndex, float3 worldPos, float3 worldNorm
     if( nearInfluence <= 0.0f )
         return 1.0f;
 
-    const float3 normal = normalize( worldNormal );
-    const float  ndotl  = dot( normal, -( toLight / lightDistance ) );
-    if( ndotl <= 0.0f )
+    const float3 lightDir        = toLight / lightDistance;
+    const float3 pointToLightDir = -lightDir;
+    const float3 normal          = normalize( worldNormal );
+    if( dot( normal, pointToLightDir ) <= 0.0f )
         return 1.0f;
 
-    const float3 pointToLightDir  = -( toLight / lightDistance );
-    const float  receiverBiasDist = ComputeShadowReceiverBiasDistance( ndotl, lightDistance );
-    const float3 shadowWorldPos   = worldPos + ( pointToLightDir * receiverBiasDist );
-    const float3 lightDir         = toLight / lightDistance;
     uint         bestSourceIndex  = MAX_SHADOW_SOURCES;
     float        bestAlignment    = -2.0f;
 
@@ -83,7 +80,7 @@ float SamplePointShadowLight( uint lightIndex, float3 worldPos, float3 worldNorm
     if( bestSourceIndex >= FaceShadowCount )
         return 1.0f;
 
-    const float visibility = SampleFaceShadowAtlasRaw( bestSourceIndex, shadowWorldPos, 0.0f );
+    const float visibility = SampleFaceShadowAtlasRaw( bestSourceIndex, worldPos );
     return lerp( 1.0f, visibility, nearInfluence );
 }
 

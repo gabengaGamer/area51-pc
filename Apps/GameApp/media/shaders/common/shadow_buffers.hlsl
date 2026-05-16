@@ -27,7 +27,7 @@ cbuffer cbShadowMaps : register(b5)
     uint     FaceShadowCount;
     uint     PointShadowLightCount;
     float2   ShadowPadding;
-    float4   ShadowParams;
+    float4   ShadowParams;                         // z = min variance, w = light bleed reduction
 };
 
 //==============================================================================
