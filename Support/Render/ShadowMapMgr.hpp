@@ -26,7 +26,7 @@ enum
 {
     POINT_SHADOW_FACE_COUNT = 6,
     MAX_SHADOW_LIGHTS       = 8,
-    MAX_SHADOW_SOURCES      = 63,
+    MAX_SHADOW_SOURCES      = 64,
     MAX_SHADOW_ATLAS_SIZE   = 4096,
 };
 
