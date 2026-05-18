@@ -577,7 +577,7 @@ namespace
         //g_ObjMgr.SelectBBox( object::ATTR_CAST_SHADOWS,
         //                     LightBBox,
         //                     object::TYPE_ALL_TYPES );
-        g_ObjMgr.SelectBBox( object::ATTR_RENDERABLE, //ATTR_ALL
+        g_ObjMgr.SelectBBox( object::ATTR_ALL,
                              LightBBox,
                              object::TYPE_ALL_TYPES );
 
@@ -609,7 +609,7 @@ namespace
         //                                  object::ATTR_CAST_SHADOWS,
         //                                  0 );
         g_PlaySurfaceMgr.CollectSurfaces( LightBBox,
-                                          object::ATTR_RENDERABLE,  //ATTR_ALL
+                                          object::ATTR_ALL,
                                           0 );
 
         playsurface_mgr::surface* pSurface = g_PlaySurfaceMgr.GetNextSurface();
