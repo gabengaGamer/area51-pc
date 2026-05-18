@@ -25,6 +25,7 @@
 enum
 {
     POINT_SHADOW_FACE_COUNT = 6,
+	// NOTE: GS: Keep in mind that they all must be a power of two!
     MAX_SHADOW_LIGHTS       = 8,
     MAX_SHADOW_SOURCES      = 64,
     MAX_SHADOW_ATLAS_SIZE   = 16384,

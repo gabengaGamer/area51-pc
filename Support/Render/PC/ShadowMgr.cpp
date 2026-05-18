@@ -294,6 +294,27 @@ void shadow_mgr::EnsureAtlas( void )
     if( ShadowAtlasSize <= 0 )
         ShadowAtlasSize = MAX_SHADOW_ATLAS_SIZE;
 
+    ASSERT( ShadowAtlasSize > 0 );
+    ASSERT( ( ShadowAtlasSize & ( ShadowAtlasSize - 1 ) ) == 0 );
+    ASSERT( ShadowAtlasSize <= D3D11_REQ_TEXTURE2D_U_OR_V_DIMENSION );
+    if( ShadowAtlasSize <= 0 )
+    {
+        x_DebugMsg( "ShadowMgr: invalid shadow atlas size %d\n", ShadowAtlasSize );
+        return;
+    }
+    if( ( ShadowAtlasSize & ( ShadowAtlasSize - 1 ) ) != 0 )
+    {
+        x_DebugMsg( "ShadowMgr: shadow atlas size %d is not a power of two\n", ShadowAtlasSize );
+        return;
+    }
+    if( ShadowAtlasSize > D3D11_REQ_TEXTURE2D_U_OR_V_DIMENSION )
+    {
+        x_DebugMsg( "ShadowMgr: shadow atlas size %d exceeds D3D11 max %d\n",
+                    ShadowAtlasSize,
+                    D3D11_REQ_TEXTURE2D_U_OR_V_DIMENSION );
+        return;
+    }
+
     if( m_ShadowAtlas.pTexture &&
         ( m_ShadowAtlasSize == ShadowAtlasSize ) &&
         ( m_ShadowAtlas.Desc.Format == RTARGET_FORMAT_R32F ) )

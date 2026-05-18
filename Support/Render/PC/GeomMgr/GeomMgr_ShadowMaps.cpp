@@ -34,6 +34,16 @@ extern ID3D11DeviceContext* g_pd3dContext;
 
 xbool geom_mgr::InitShadowMaps( void )
 {
+    const s32 MaxConstantBufferSize = D3D11_REQ_CONSTANT_BUFFER_ELEMENT_COUNT * 16;
+    ASSERT( sizeof(cb_shadow_maps) <= (size_t)MaxConstantBufferSize );
+    if( sizeof(cb_shadow_maps) > (size_t)MaxConstantBufferSize )
+    {
+        x_DebugMsg( "GeomMgr: cb_shadow_maps size %d exceeds D3D11 constant buffer limit %d\n",
+                    (s32)sizeof(cb_shadow_maps),
+                    MaxConstantBufferSize );
+        return FALSE;
+    }
+
     m_pShadowBuffer       = shader_CreateConstantBuffer( sizeof(cb_shadow_maps), CB_TYPE_DYNAMIC );
     m_pShadowAtlasSampler = NULL;
 

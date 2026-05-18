@@ -255,6 +255,63 @@ namespace
 
     //---------------------------------------------------------------------
 
+    xbool IsPowerOfTwo( s32 Value )
+    {
+        return ( Value > 0 ) && ( ( Value & ( Value - 1 ) ) == 0 );
+    }
+
+    //---------------------------------------------------------------------
+
+    struct shadow_atlas_free_node
+    {
+        s32 AtlasTileX;
+        s32 AtlasTileY;
+        s32 TileSize;
+    };
+
+    //---------------------------------------------------------------------
+
+    s32 GetShadowAtlasSplitCount( s32 AtlasSize, s32 MinTileSize )
+    {
+        ASSERT( AtlasSize > 0 );
+        ASSERT( MinTileSize > 0 );
+        ASSERT( IsPowerOfTwo( AtlasSize ) );
+        ASSERT( IsPowerOfTwo( MinTileSize ) );
+        ASSERT( AtlasSize >= MinTileSize );
+
+        s32 SplitCount = 0;
+        while( AtlasSize > MinTileSize )
+        {
+            AtlasSize /= 2;
+            SplitCount++;
+        }
+
+        return SplitCount;
+    }
+
+    //---------------------------------------------------------------------
+
+    s32 GetMaxShadowAtlasFreeNodeCount( s32 AtlasSize, s32 NEntries )
+    {
+        const s32 SplitCount = GetShadowAtlasSplitCount( AtlasSize, 256 );
+        return 1 + ( MAX( NEntries, 0 ) * SplitCount * 3 );
+    }
+
+    //---------------------------------------------------------------------
+
+    void AppendShadowAtlasFreeNode( xarray<shadow_atlas_free_node>& FreeNodes,
+                                    s32                             AtlasTileX,
+                                    s32                             AtlasTileY,
+                                    s32                             TileSize )
+    {
+        shadow_atlas_free_node& Node = FreeNodes.Append();
+        Node.AtlasTileX = AtlasTileX;
+        Node.AtlasTileY = AtlasTileY;
+        Node.TileSize   = TileSize;
+    }
+
+    //---------------------------------------------------------------------
+
     void SortShadowAtlasEntries( shadow_atlas_entry* pEntries, s32 NEntries )
     {
         for( s32 i = 1; i < NEntries; i++ )
@@ -303,32 +360,92 @@ namespace
     {
         SortShadowAtlasEntries( pEntries, NEntries );
 
-        s32 CursorX   = 0;
-        s32 CursorY   = 0;
-        s32 RowHeight = 0;
+        ASSERT( IsPowerOfTwo( AtlasSize ) );
+        if( !IsPowerOfTwo( AtlasSize ) )
+            return FALSE;
+
+        xarray<shadow_atlas_free_node> FreeNodes;
+        FreeNodes.SetCapacity( GetMaxShadowAtlasFreeNodeCount( AtlasSize, NEntries ) );
+        AppendShadowAtlasFreeNode( FreeNodes, 0, 0, AtlasSize );
 
         for( s32 i = 0; i < NEntries; i++ )
         {
             const s32 TileSize = pEntries[i].TileSize;
+            ASSERT( IsPowerOfTwo( TileSize ) );
+            if( !IsPowerOfTwo( TileSize ) )
+                return FALSE;
             if( ( TileSize <= 0 ) || ( TileSize > AtlasSize ) )
                 return FALSE;
 
-            if( ( CursorX + TileSize ) > AtlasSize )
+            s32 iBestNode = -1;
+            for( s32 iNode = 0; iNode < FreeNodes.GetCount(); iNode++ )
             {
-                CursorX   = 0;
-                CursorY  += RowHeight;
-                RowHeight = 0;
+                const shadow_atlas_free_node& Node = FreeNodes[iNode];
+                if( Node.TileSize < TileSize )
+                    continue;
+
+                if( iBestNode < 0 )
+                {
+                    iBestNode = iNode;
+                    continue;
+                }
+
+                const shadow_atlas_free_node& BestNode = FreeNodes[iBestNode];
+                if( Node.TileSize < BestNode.TileSize )
+                {
+                    iBestNode = iNode;
+                    continue;
+                }
+
+                if( ( Node.TileSize == BestNode.TileSize ) &&
+                    ( Node.AtlasTileY < BestNode.AtlasTileY ) )
+                {
+                    iBestNode = iNode;
+                    continue;
+                }
+
+                if( ( Node.TileSize == BestNode.TileSize ) &&
+                    ( Node.AtlasTileY == BestNode.AtlasTileY ) &&
+                    ( Node.AtlasTileX < BestNode.AtlasTileX ) )
+                {
+                    iBestNode = iNode;
+                }
             }
 
-            if( ( CursorY + TileSize ) > AtlasSize )
+            if( iBestNode < 0 )
                 return FALSE;
 
-            pEntries[i].AtlasTileX = CursorX;
-            pEntries[i].AtlasTileY = CursorY;
-            CursorX += TileSize;
+            shadow_atlas_free_node Node = FreeNodes[iBestNode];
+            FreeNodes[iBestNode] = FreeNodes[FreeNodes.GetCount() - 1];
+            FreeNodes.SetCount( FreeNodes.GetCount() - 1 );
 
-            if( TileSize > RowHeight )
-                RowHeight = TileSize;
+            while( Node.TileSize > TileSize )
+            {
+                const s32 ChildTileSize = Node.TileSize / 2;
+
+                if( ( ChildTileSize <= 0 ) || ( ChildTileSize < TileSize ) )
+                {
+                    return FALSE;
+                }
+
+                AppendShadowAtlasFreeNode( FreeNodes,
+                                           Node.AtlasTileX + ChildTileSize,
+                                           Node.AtlasTileY,
+                                           ChildTileSize );
+                AppendShadowAtlasFreeNode( FreeNodes,
+                                           Node.AtlasTileX,
+                                           Node.AtlasTileY + ChildTileSize,
+                                           ChildTileSize );
+                AppendShadowAtlasFreeNode( FreeNodes,
+                                           Node.AtlasTileX + ChildTileSize,
+                                           Node.AtlasTileY + ChildTileSize,
+                                           ChildTileSize );
+
+                Node.TileSize = ChildTileSize;
+            }
+
+            pEntries[i].AtlasTileX = Node.AtlasTileX;
+            pEntries[i].AtlasTileY = Node.AtlasTileY;
         }
 
         return TRUE;
