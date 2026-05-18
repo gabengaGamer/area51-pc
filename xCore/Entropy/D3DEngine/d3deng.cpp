@@ -1019,7 +1019,7 @@ xbool d3deng_PresentFrame( void )
     // Ensure rendering to back buffer before present
     rtarget_SetBackBuffer();
 
-    HRESULT Error = g_pSwapChain->Present( 1, 0 );  // 0 = immediate present, VSYNC
+    HRESULT Error = g_pSwapChain->Present( 0, 0 );  // 0 = immediate present, VSYNC
     frameCount++;
 
     if( Error != S_OK )
@@ -1275,3 +1275,18 @@ xbool eng_ScreenShotActive( void )
     return FALSE;
 }
 #endif  // !defined( X_RETAIL ) || defined( X_QA )
+
+//=========================================================================
+
+// Editor code
+void d3deng_SetResolution( s32 Width, s32 Height )
+{
+    ASSERT( Width  > 0 );
+    ASSERT( Width  < 40000 );
+    ASSERT( Height > 0 );
+    ASSERT( Height < 40000 );
+
+    d3deng_ChangeDisplayMode( Width, Height,
+        g_SwapChainDesc.BufferDesc.Format,
+        s.DisplayMode );
+}

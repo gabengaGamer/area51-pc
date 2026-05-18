@@ -105,9 +105,6 @@ int CEditorWatchView::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	m_Watch.InsertColumn(2, "Type",  LVCFMT_LEFT, 60);
 	m_Watch.InsertColumn(3, "Value", LVCFMT_LEFT, 130);
 	m_Watch.SetExtendedStyle(LVS_EX_GRIDLINES | LVS_EX_FULLROWSELECT);
-	m_Watch.SubclassHeader();
-	m_Watch.GetFlatHeaderCtrl()->ShowSortArrow(TRUE);
-    m_Watch.SetSortImage(0, false);	
 
 	return 0;
 }
@@ -236,7 +233,7 @@ void CEditorWatchView::RefreshView( void )
     }
 
     //refresh properties
-    for (i = 0; i < m_propsList.GetCount(); i++)
+    for (s32 i = 0; i < m_propsList.GetCount(); i++)
     {
         watch_obj_props &PropItem = m_propsList.GetAt(i);
 

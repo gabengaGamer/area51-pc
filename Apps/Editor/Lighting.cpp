@@ -13,6 +13,11 @@
 #include <windows.h>
 #include "3rdParty/DirectX9/d3d9.h"
 
+// APP_EDITOR defines __PLACEMENT_NEW_INLINE, so keep a TU-local placement new
+// for the rigid-geom preload path instead of touching shared x_files headers.
+inline void* operator new( size_t, void* pData ) noexcept { return pData; }
+inline void  operator delete( void*, void* ) noexcept {}
+
 
 //=============================================================================
 
@@ -29,6 +34,42 @@ static vector3              s_LightDir( 0.3f, 1.0f, 0.8f );
 static raycast_lighting     s_RayCastSystem;
 static void*                s_pPlaySurfaceColors = NULL;
 static xcolor               s_ZoneColors[256];
+
+//=============================================================================
+static rigid_geom* LoadRigidGeomEditor( const char* pFileName )
+{
+    fileio  File;
+    X_FILE* Fp = x_fopen( pFileName, "rb" );
+    if( Fp == NULL )
+        x_throw( xfs( "Unable to open file %s", pFileName ) );
+
+    fileio::resolve* pResolve = File.PreLoad( Fp );
+    x_fclose( Fp );
+
+    for( s32 i = 0; i < pResolve->nPointers; i++ )
+    {
+        const fileio::ref& Ref = pResolve->pTable[i];
+        switch( Ref.Flags )
+        {
+        case 3:
+            *((void**)&pResolve->pStatic[ Ref.OffSet ])  = &pResolve->pStatic[ Ref.PointingAT ];
+            break;
+        case 0:
+            *((void**)&pResolve->pDynamic[ Ref.OffSet ]) = &pResolve->pDynamic[ Ref.PointingAT ];
+            break;
+        case 1:
+            *((void**)&pResolve->pStatic[ Ref.OffSet ])  = &pResolve->pDynamic[ Ref.PointingAT ];
+            break;
+        default:
+            ASSERT( 0 );
+            break;
+        }
+    }
+
+    rigid_geom* pRigidGeom = ::new (static_cast<void*>(pResolve->pStatic)) rigid_geom( File );
+    delete[] pResolve->pDynamic;
+    return pRigidGeom;
+}
 
 //=============================================================================
 static 
@@ -399,9 +440,8 @@ void lighting_LightObject( platform       Platform,
         rigid_geom::submesh&  GeomSubMesh = RigidGeom.m_pSubMesh[iSubMesh];
         rigid_geom::dlist_pc& DList       = RigidGeom.m_System.pPC[GeomSubMesh.iDList];
 
-        // Get the vertex buffer
-        rigid_geom::vertex_pc* pVertex =
-            (rigid_geom::vertex_pc*)render::LockRigidDListVertex( Info.pRigidInst->GetInst(), iSubMesh );
+        // Legacy runtime vertex-buffer lock removed; use the CPU rigid-geom data directly.
+        rigid_geom::vertex_pc* pVertex = DList.pVert;
 
         s32 iVert;
         switch ( Mode )
@@ -477,8 +517,8 @@ void lighting_LightObject( platform       Platform,
                     break;
                 }
 
-                s32     IndexVOffset;
-                u16*    pIndex = (u16*)render::LockRigidDListIndex( Info.pRigidInst->GetInst(), iSubMesh, IndexVOffset );
+                s32     IndexVOffset = 0;
+                u16*    pIndex = DList.pIndices;
                 for ( s32 j = 0; j < DList.nIndices; j++ )
                 {
                     const s32   iFacet = j;
@@ -507,8 +547,6 @@ void lighting_LightObject( platform       Platform,
                         CastShadow ? raycast_lighting::FLAG_CAST_SHADOW : 0,
                         iSubMesh, iFacet );
                 }
-                
-                render::UnlockRigidDListIndex( Info.pRigidInst->GetInst(), iSubMesh );
             }
             break;
      
@@ -527,9 +565,6 @@ void lighting_LightObject( platform       Platform,
             x_throw( "Unknown lighting mode!" );
             break;
         }
-
-        // unlock the vertex buffer
-        render::UnlockRigidDListVertex( Info.pRigidInst->GetInst(), iSubMesh );
     }
 }
 
@@ -639,22 +674,19 @@ void lighting_LightObjects( platform            Platform,
                 if( GetInfo( Platform, Guid, Info ) == FALSE )
                     continue;
 
-                // Invalidate previous cache (If this is not the first time)
-                if( GuidCache )
-                {
-                    ASSERT( hInstCache.IsNonNull() );
-                    render::UnlockRigidDListVertex( hInstCache, iSubMeshCache );
-                    render::UnlockRigidDListIndex ( hInstCache, iSubMeshCache );
-                }
-
                 // Set the cache entries
                 hInstCache    = Info.pRigidInst->GetInst();
                 iSubMeshCache = UserData[0];
                 GuidCache     = Guid;
 
-                // Lock vertex and Index buffers
-                pVertex = (rigid_geom::vertex_pc*)render::LockRigidDListVertex( hInstCache, iSubMeshCache );
-                pIndex  = (u16*)render::LockRigidDListIndex( hInstCache, iSubMeshCache, IndexVOffset );
+                rigid_geom&         RigidGeom    = *(rigid_geom*)Info.pGeom;
+                rigid_geom::submesh& GeomSubMesh = RigidGeom.m_pSubMesh[iSubMeshCache];
+                rigid_geom::dlist_pc& DList      = RigidGeom.m_System.pPC[GeomSubMesh.iDList];
+
+                // Legacy runtime buffer locks removed; use the CPU rigid-geom arrays directly.
+                IndexVOffset = 0;
+                pVertex      = DList.pVert;
+                pIndex       = DList.pIndices;
             }
 
             //
@@ -669,15 +701,6 @@ void lighting_LightObjects( platform            Platform,
 
         // Tell raycast system it is finished
         s_RayCastSystem.Clear();
-
-        //
-        // Make sure that the last dlist gets also unlock
-        //
-        if( GuidCache )
-        {
-            render::UnlockRigidDListVertex( hInstCache, iSubMeshCache );
-            render::UnlockRigidDListIndex ( hInstCache, iSubMeshCache );
-        }
     }
 }
 
@@ -702,8 +725,7 @@ static s32 LoadPlatformGeom( platform Platform, const info& InfoPC, xarray<rigid
 
             // Load the Xbox Rigid Geom
             xstring FileNameXbox( xfs( "%s\\Xbox\\%s.rigidgeom", g_Settings.GetReleasePath(), pFileName ) );
-            fileio File;
-            File.Load( FileNameXbox, pRigidGeomXbox );
+            pRigidGeomXbox = LoadRigidGeomEditor( FileNameXbox );
             if( pRigidGeomXbox == NULL )
                 x_throw( xfs( "Unable to load Rigid Geom [%s]", (const char*)FileNameXbox ) );
 
@@ -735,8 +757,7 @@ static s32 LoadPlatformGeom( platform Platform, const info& InfoPC, xarray<rigid
 
             // Load the PS2 Rigid Geom
             xstring FileNamePS2( xfs( "%s\\PS2\\%s.rigidgeom", g_Settings.GetReleasePath(), pFileName ) );
-            fileio File;
-            File.Load( FileNamePS2, pRigidGeomPS2 );
+            pRigidGeomPS2 = LoadRigidGeomEditor( FileNamePS2 );
 
             if( pRigidGeomPS2 == NULL )
                 x_throw( xfs( "Unable to load Rigid Geom [%s]", (const char*)FileNamePS2 ) );
@@ -834,11 +855,7 @@ static s32 CopyColors( platform Platform, const info& InfoPC, const rigid_geom* 
                 geom::submesh&        GeomSubMesh = RigidGeomPC.m_pSubMesh[i];
                 rigid_geom::dlist_pc& DListPC     = RigidGeomPC.m_System.pPC[ GeomSubMesh.iDList ];
 
-                // Get the instance handle
-                render::hgeom_inst hInst = InfoPC.pRigidInst->GetInst();
-
-                // Get the vertex buffer
-                rigid_geom::vertex_pc* pVertex = (rigid_geom::vertex_pc*)render::LockRigidDListVertex( hInst, i );
+                rigid_geom::vertex_pc* pVertex = DListPC.pVert;
 
                 // Loop through all the vertices in the display list
                 for( s32 j=0; j<DListPC.nVerts; j++ )
@@ -850,8 +867,6 @@ static s32 CopyColors( platform Platform, const info& InfoPC, const rigid_geom* 
                 }
 
                 nColors += DListPC.nVerts;
-
-                render::UnlockRigidDListVertex( hInst, i );
             }
             
             ASSERT( nColors == RigidGeomPC.GetNVerts() );
@@ -866,14 +881,11 @@ static s32 CopyColors( platform Platform, const info& InfoPC, const rigid_geom* 
         
             for( s32 i=0; i<RigidGeomPS2.m_nSubMeshes; i++ )
             {
-                // Get the instance handle
-                render::hgeom_inst hInst = InfoPC.pRigidInst->GetInst();
                 geom::submesh&         GeomSubMesh = RigidGeomPS2.m_pSubMesh[i];
                 rigid_geom::dlist_pc&  DListPC     = RigidGeomPC.m_System.pPC  [ GeomSubMesh.iDList ];
                 rigid_geom::dlist_ps2& DListPS2    = RigidGeomPS2.m_System.pPS2[ GeomSubMesh.iDList ];
 
-                // Get the vertex buffer
-                rigid_geom::vertex_pc* pVertex = (rigid_geom::vertex_pc*)render::LockRigidDListVertex( hInst, i );
+                rigid_geom::vertex_pc* pVertex = DListPC.pVert;
 
                 s32 nColorWrites = 0;
 
@@ -886,8 +898,6 @@ static s32 CopyColors( platform Platform, const info& InfoPC, const rigid_geom* 
                     x_DebugMsg(xfs("Color count < number of vertices:   %s\n",pRigidGeom->GetMeshName( 0 ) ) );
 
                 nColors += ALIGN_16( sizeof( u16 ) * DListPS2.nVerts ) / sizeof( u16 );
-
-                render::UnlockRigidDListVertex( hInst, i );
             }
 
             ASSERT( nColors >= RigidGeomPS2.GetNVerts() );
@@ -904,11 +914,7 @@ static s32 CopyColors( platform Platform, const info& InfoPC, const rigid_geom* 
                 geom::submesh&        GeomSubMesh = RigidGeomPC.m_pSubMesh[i];
                 rigid_geom::dlist_pc& DListPC     = RigidGeomPC.m_System.pPC[ GeomSubMesh.iDList ];
 
-                // Get the instance handle
-                render::hgeom_inst hInst = InfoPC.pRigidInst->GetInst();
-                
-                // Get the vertex buffer
-                rigid_geom::vertex_pc* pVertex = (rigid_geom::vertex_pc*)render::LockRigidDListVertex( hInst, i );
+                rigid_geom::vertex_pc* pVertex = DListPC.pVert;
             
                 // Loop through all the vertices in the display list
                 for( s32 j=0; j<DListPC.nVerts; j++ )
@@ -925,8 +931,6 @@ static s32 CopyColors( platform Platform, const info& InfoPC, const rigid_geom* 
                 }
             
                 nColors += DListPC.nVerts;
-                
-                render::UnlockRigidDListVertex( hInst, i );
             }
             
             ASSERT( nColors == RigidGeomPC.GetNVerts() );
@@ -1024,15 +1028,12 @@ void lighting_ExportTo3DMax( const xarray<guid>& lGuid, const char* pFileName )
                 rigid_geom::submesh&  GeomSubMesh = RigidGeom.m_pSubMesh[i];
                 rigid_geom::dlist_pc& DList       = RigidGeom.m_System.pPC[ GeomSubMesh.iDList ];
         
-                // Get the vertex buffer
-                render::hgeom_inst hInst = Info.pRigidInst->GetInst();
-                rigid_geom::vertex_pc* pVertex = 
-                    (rigid_geom::vertex_pc*)render::LockRigidDListVertex( hInst, i );
+                rigid_geom::vertex_pc* pVertex = DList.pVert;
                 s32 j;
 
                 // Go throw all the facets
-                s32     IndexVOffset;
-                u16*    pIndex = (u16*)render::LockRigidDListIndex( hInst, i, IndexVOffset );
+                s32     IndexVOffset = 0;
+                u16*    pIndex = DList.pIndices;
 
                 for( j=0; j<DList.nIndices; j++ )
                 {
@@ -1063,9 +1064,6 @@ void lighting_ExportTo3DMax( const xarray<guid>& lGuid, const char* pFileName )
                     // After v we are too far sice we are about to increment in the next loop
                     j--;
                 }
-                
-                render::UnlockRigidDListIndex( hInst, i );
-                render::UnlockRigidDListVertex( hInst, i );
             }
         }
     }

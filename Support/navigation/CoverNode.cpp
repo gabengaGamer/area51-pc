@@ -71,26 +71,26 @@ enum_table<cover_node::eCoverWeaponType>  s_CoverNodeWeaponEnumTable(s_CoverNode
 
 void PrepD3DForStencil( void )
 {
-	g_pd3dDevice->SetTextureStageState( 0, D3DTSS_COLOROP,   D3DTOP_SELECTARG1  );
-	g_pd3dDevice->SetTextureStageState( 0, D3DTSS_COLORARG1, D3DTA_DIFFUSE      );
-    g_pd3dDevice->SetTextureStageState( 1, D3DTSS_COLOROP,   D3DTOP_DISABLE     );
-    g_pd3dDevice->SetTextureStageState( 0, D3DTSS_ALPHAOP,   D3DTOP_SELECTARG1  );
-    g_pd3dDevice->SetTextureStageState( 0, D3DTSS_ALPHAARG1, D3DTA_DIFFUSE      );
-    g_pd3dDevice->SetTextureStageState( 1, D3DTSS_ALPHAOP,   D3DTOP_DISABLE     );
-
-    g_pd3dDevice->SetRenderState( D3DRS_STENCILENABLE,  TRUE );
-    g_pd3dDevice->SetRenderState( D3DRS_STENCILFUNC,    D3DCMP_ALWAYS );
-    g_pd3dDevice->SetRenderState( D3DRS_STENCILMASK,    0xFFFFFFFF );
-    g_pd3dDevice->SetRenderState( D3DRS_STENCILFAIL,    D3DSTENCILOP_KEEP );
-    g_pd3dDevice->SetRenderState( D3DRS_STENCILZFAIL,   D3DSTENCILOP_KEEP );
-    g_pd3dDevice->SetRenderState( D3DRS_STENCILPASS,    D3DSTENCILOP_REPLACE  );
-
-    g_pd3dDevice->SetRenderState( D3DRS_COLORWRITEENABLE, 0x0 );
-    g_pd3dDevice->SetRenderState( D3DRS_ZWRITEENABLE, FALSE );
-    g_pd3dDevice->SetRenderState( D3DRS_ALPHABLENDENABLE, FALSE );
-    g_pd3dDevice->SetRenderState( D3DRS_ALPHATESTENABLE, FALSE );
-    g_pd3dDevice->SetRenderState( D3DRS_SRCBLEND,         D3DBLEND_ONE );
-    g_pd3dDevice->SetRenderState( D3DRS_DESTBLEND,        D3DBLEND_ZERO );
+	//g_pd3dDevice->SetTextureStageState( 0, D3DTSS_COLOROP,   D3DTOP_SELECTARG1  );
+	//g_pd3dDevice->SetTextureStageState( 0, D3DTSS_COLORARG1, D3DTA_DIFFUSE      );
+    //g_pd3dDevice->SetTextureStageState( 1, D3DTSS_COLOROP,   D3DTOP_DISABLE     );
+    //g_pd3dDevice->SetTextureStageState( 0, D3DTSS_ALPHAOP,   D3DTOP_SELECTARG1  );
+    //g_pd3dDevice->SetTextureStageState( 0, D3DTSS_ALPHAARG1, D3DTA_DIFFUSE      );
+    //g_pd3dDevice->SetTextureStageState( 1, D3DTSS_ALPHAOP,   D3DTOP_DISABLE     );
+	//
+    //g_pd3dDevice->SetRenderState( D3DRS_STENCILENABLE,  TRUE );
+    //g_pd3dDevice->SetRenderState( D3DRS_STENCILFUNC,    D3DCMP_ALWAYS );
+    //g_pd3dDevice->SetRenderState( D3DRS_STENCILMASK,    0xFFFFFFFF );
+    //g_pd3dDevice->SetRenderState( D3DRS_STENCILFAIL,    D3DSTENCILOP_KEEP );
+    //g_pd3dDevice->SetRenderState( D3DRS_STENCILZFAIL,   D3DSTENCILOP_KEEP );
+    //g_pd3dDevice->SetRenderState( D3DRS_STENCILPASS,    D3DSTENCILOP_REPLACE  );
+	//
+    //g_pd3dDevice->SetRenderState( D3DRS_COLORWRITEENABLE, 0x0 );
+    //g_pd3dDevice->SetRenderState( D3DRS_ZWRITEENABLE, FALSE );
+    //g_pd3dDevice->SetRenderState( D3DRS_ALPHABLENDENABLE, FALSE );
+    //g_pd3dDevice->SetRenderState( D3DRS_ALPHATESTENABLE, FALSE );
+    //g_pd3dDevice->SetRenderState( D3DRS_SRCBLEND,         D3DBLEND_ONE );
+    //g_pd3dDevice->SetRenderState( D3DRS_DESTBLEND,        D3DBLEND_ZERO );
 }
 
 void RenderFullScreenQuad( void )
@@ -141,8 +141,8 @@ void RenderFrustum( const vector3* pInnerFrame, const vector3* pOuterFrame, xboo
                 draw_Begin( DRAW_TRIANGLES );
                 draw_Color(xcolor(64,64,64,0));
                 PrepD3DForStencil();
-                g_pd3dDevice->SetRenderState( D3DRS_STENCILREF,     0xFFFFFFFF );
-                g_pd3dDevice->SetRenderState( D3DRS_CULLMODE, D3DCULL_CW );
+                //g_pd3dDevice->SetRenderState( D3DRS_STENCILREF,     0xFFFFFFFF );
+                //g_pd3dDevice->SetRenderState( D3DRS_CULLMODE, D3DCULL_CW );
                 RenderFullScreenQuad();
             }
 
@@ -151,8 +151,8 @@ void RenderFrustum( const vector3* pInnerFrame, const vector3* pOuterFrame, xboo
                 draw_Begin( DRAW_TRIANGLES );
                 draw_Color(xcolor(64,64,64,0));
                 PrepD3DForStencil();
-                g_pd3dDevice->SetRenderState( D3DRS_STENCILREF,     0x0 );
-                g_pd3dDevice->SetRenderState( D3DRS_CULLMODE, D3DCULL_CCW );
+               //g_pd3dDevice->SetRenderState( D3DRS_STENCILREF,     0x0 );
+               //g_pd3dDevice->SetRenderState( D3DRS_CULLMODE, D3DCULL_CCW );
                 draw_Verts( (vector3*)VertexList, sizeof(VertexList)/sizeof(vector3) );
                 draw_Execute( IndexList, sizeof(IndexList)/sizeof(s16) );
                 draw_End();
@@ -165,8 +165,8 @@ void RenderFrustum( const vector3* pInnerFrame, const vector3* pOuterFrame, xboo
                 draw_Begin( DRAW_TRIANGLES );
                 draw_Color(xcolor(64,64,64,0));
                 PrepD3DForStencil();
-                g_pd3dDevice->SetRenderState( D3DRS_STENCILREF,     0x0 );
-                g_pd3dDevice->SetRenderState( D3DRS_CULLMODE, D3DCULL_CW );
+                //g_pd3dDevice->SetRenderState( D3DRS_STENCILREF,     0x0 );
+                //g_pd3dDevice->SetRenderState( D3DRS_CULLMODE, D3DCULL_CW );
                 RenderFullScreenQuad();
             }
 
@@ -175,8 +175,8 @@ void RenderFrustum( const vector3* pInnerFrame, const vector3* pOuterFrame, xboo
                 draw_Begin( DRAW_TRIANGLES );
                 draw_Color(xcolor(64,64,64,0));
                 PrepD3DForStencil();
-                g_pd3dDevice->SetRenderState( D3DRS_STENCILREF,     0xFFFFFFFF );
-                g_pd3dDevice->SetRenderState( D3DRS_CULLMODE, D3DCULL_CW );
+                //g_pd3dDevice->SetRenderState( D3DRS_STENCILREF,     0xFFFFFFFF );
+                //g_pd3dDevice->SetRenderState( D3DRS_CULLMODE, D3DCULL_CW );
                 draw_Verts( (vector3*)VertexList, sizeof(VertexList)/sizeof(vector3) );
                 draw_Execute( IndexList, sizeof(IndexList)/sizeof(s16) );
                 draw_End();
@@ -187,8 +187,8 @@ void RenderFrustum( const vector3* pInnerFrame, const vector3* pOuterFrame, xboo
                 draw_Begin( DRAW_TRIANGLES );
                 draw_Color(xcolor(0,0,0,0));
                 PrepD3DForStencil();
-                g_pd3dDevice->SetRenderState( D3DRS_STENCILREF,     0x0 );
-                g_pd3dDevice->SetRenderState( D3DRS_CULLMODE, D3DCULL_CCW );
+                //g_pd3dDevice->SetRenderState( D3DRS_STENCILREF,     0x0 );
+                //g_pd3dDevice->SetRenderState( D3DRS_CULLMODE, D3DCULL_CCW );
                 draw_Verts( (vector3*)VertexList, sizeof(VertexList)/sizeof(vector3) );
                 draw_Execute( IndexList, sizeof(IndexList)/sizeof(s16) );
                 draw_End();
@@ -201,14 +201,14 @@ void RenderFrustum( const vector3* pInnerFrame, const vector3* pOuterFrame, xboo
             draw_Color(xcolor(64,64,64,255));
     	    
             PrepD3DForStencil();
-            g_pd3dDevice->SetRenderState( D3DRS_ZWRITEENABLE,       FALSE );
-            g_pd3dDevice->SetRenderState( D3DRS_COLORWRITEENABLE,   0x0F );
-            g_pd3dDevice->SetRenderState( D3DRS_STENCILFUNC,        D3DCMP_EQUAL );
-            g_pd3dDevice->SetRenderState( D3DRS_STENCILREF,         0 );
-            g_pd3dDevice->SetRenderState( D3DRS_ALPHABLENDENABLE,   TRUE );
-            g_pd3dDevice->SetRenderState( D3DRS_SRCBLEND,           D3DBLEND_ZERO );
-            g_pd3dDevice->SetRenderState( D3DRS_DESTBLEND,          D3DBLEND_SRCCOLOR );
-            g_pd3dDevice->SetRenderState( D3DRS_CULLMODE,           D3DCULL_CW );
+            //g_pd3dDevice->SetRenderState( D3DRS_ZWRITEENABLE,       FALSE );
+            //g_pd3dDevice->SetRenderState( D3DRS_COLORWRITEENABLE,   0x0F );
+            //g_pd3dDevice->SetRenderState( D3DRS_STENCILFUNC,        D3DCMP_EQUAL );
+            //g_pd3dDevice->SetRenderState( D3DRS_STENCILREF,         0 );
+            //g_pd3dDevice->SetRenderState( D3DRS_ALPHABLENDENABLE,   TRUE );
+            //g_pd3dDevice->SetRenderState( D3DRS_SRCBLEND,           D3DBLEND_ZERO );
+            //g_pd3dDevice->SetRenderState( D3DRS_DESTBLEND,          D3DBLEND_SRCCOLOR );
+            //g_pd3dDevice->SetRenderState( D3DRS_CULLMODE,           D3DCULL_CW );
 
             RenderFullScreenQuad();
         }
@@ -219,23 +219,23 @@ void RenderFrustum( const vector3* pInnerFrame, const vector3* pOuterFrame, xboo
             draw_Color(xcolor(45,45,45,255));
     	    
             PrepD3DForStencil();
-            g_pd3dDevice->SetRenderState( D3DRS_ZWRITEENABLE,       FALSE );
-            g_pd3dDevice->SetRenderState( D3DRS_COLORWRITEENABLE,   0x0F );
-            g_pd3dDevice->SetRenderState( D3DRS_STENCILFUNC,        D3DCMP_EQUAL );
-            g_pd3dDevice->SetRenderState( D3DRS_STENCILREF,         0xFFFFFFFF );
-            g_pd3dDevice->SetRenderState( D3DRS_ALPHABLENDENABLE,   TRUE );
-            g_pd3dDevice->SetRenderState( D3DRS_SRCBLEND,           D3DBLEND_ONE );
-            g_pd3dDevice->SetRenderState( D3DRS_DESTBLEND,          D3DBLEND_ONE );
-            g_pd3dDevice->SetRenderState( D3DRS_CULLMODE,           D3DCULL_CW );
+            //g_pd3dDevice->SetRenderState( D3DRS_ZWRITEENABLE,       FALSE );
+            //g_pd3dDevice->SetRenderState( D3DRS_COLORWRITEENABLE,   0x0F );
+            //g_pd3dDevice->SetRenderState( D3DRS_STENCILFUNC,        D3DCMP_EQUAL );
+            //g_pd3dDevice->SetRenderState( D3DRS_STENCILREF,         0xFFFFFFFF );
+            //g_pd3dDevice->SetRenderState( D3DRS_ALPHABLENDENABLE,   TRUE );
+            //g_pd3dDevice->SetRenderState( D3DRS_SRCBLEND,           D3DBLEND_ONE );
+            //g_pd3dDevice->SetRenderState( D3DRS_DESTBLEND,          D3DBLEND_ONE );
+            //g_pd3dDevice->SetRenderState( D3DRS_CULLMODE,           D3DCULL_CW );
 
             RenderFullScreenQuad();
         }
 
-        g_pd3dDevice->SetRenderState( D3DRS_STENCILENABLE,  FALSE );
-        g_pd3dDevice->SetRenderState( D3DRS_ZWRITEENABLE, TRUE );
-        g_pd3dDevice->SetRenderState( D3DRS_CULLMODE, D3DCULL_CW );
-        g_pd3dDevice->SetRenderState( D3DRS_ALPHABLENDENABLE, FALSE );
-        g_pd3dDevice->SetRenderState( D3DRS_COLORWRITEENABLE, 0x0F );
+        //g_pd3dDevice->SetRenderState( D3DRS_STENCILENABLE,  FALSE );
+        //g_pd3dDevice->SetRenderState( D3DRS_ZWRITEENABLE, TRUE );
+        //g_pd3dDevice->SetRenderState( D3DRS_CULLMODE, D3DCULL_CW );
+        //g_pd3dDevice->SetRenderState( D3DRS_ALPHABLENDENABLE, FALSE );
+        //g_pd3dDevice->SetRenderState( D3DRS_COLORWRITEENABLE, 0x0F );
     }
     
     // Render cage

@@ -13,14 +13,15 @@
 #ifndef __AFXEXT_H__
 #include <afxext.h>
 #endif
+#include <afxhtml.h>
 
-class CBugBase : public CXTHtmlView
+class CBugBase : public CHtmlView
 {
 protected:
 	CBugBase();           // protected constructor used by dynamic creation
 	DECLARE_DYNCREATE(CBugBase)
 
-    CXTToolBar          m_wndToolBar;
+    CToolBar            m_wndToolBar;
     BOOL                m_bFirstTimeVisible;
     BOOL                m_bInitialize;
     CAnimateCtrl	    m_wndAnimateBar;

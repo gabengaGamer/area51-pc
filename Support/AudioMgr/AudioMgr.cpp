@@ -98,106 +98,106 @@ void* audiopkg_loader::PreLoad( X_FILE*& Fp, const char* pFileName )
     //
     // We want to try to emulated the the memory footprint for the PS2 in the editor.
     //
-#ifdef X_EDITOR
-
-    X_FILE* pPS2File = NULL;
-            
-    x_try;
-
-        xstring FullPathName( pFileName );
-        s32 i = 0;
-        for( i = FullPathName.GetLength()-1; i >= 0; i-- )
-        {
-            if( (FullPathName[i] == '/') || (FullPathName[i] == '\\') )
-                break;
-        }
-        xstring FileName( FullPathName.Right( (FullPathName.GetLength()-1)-i ) );
-
-        char PS2FilePath[256];
-        x_sprintf( PS2FilePath, "%s\\PS2\\%s", g_Settings.GetReleasePath(), FileName );
-
-        pPS2File = x_fopen( PS2FilePath, "rb" );
-        
-        if( pPS2File == NULL )
-            x_throw( xfs("Unable to open file [%s]", PS2FilePath) );
-
-        package_identifier  PackageID;
-        package_header      PackageHeader;
-        s32                 MRAM = 0;
-        s32                 ARAM = 0;
-
-        // Read in the package identifier.
-        x_fread( &PackageID, sizeof(package_identifier), 1, pPS2File );
-
-        // Correct version?
-        if( !x_strncmp( PackageID.VersionID, PS2_PACKAGE_VERSION, VERSION_ID_SIZE ) )
-        {
-            // Correct platform?
-            if( !x_strncmp( PackageID.TargetID, PS2_TARGET_ID, TARGET_ID_SIZE ) )
-            {
-
-                // Now read in the header.
-                x_fread( &PackageHeader, sizeof(package_header), 1, pPS2File );
-                
-                MRAM    += PackageHeader.StringTableFootprint;
-                MRAM    += PackageHeader.MusicDataFootprint;
-                MRAM    += PackageHeader.LipSyncTableFootprint;
-                MRAM    += PackageHeader.BreakPointTableFootprint;
-                MRAM    += PackageHeader.nIdentifiers * sizeof(descriptor_identifier);
-                MRAM    += PackageHeader.nDescriptors * sizeof(u32*);
-                MRAM    += PackageHeader.DescriptorFootprint;
-
-                // For each temperature...
-                for( i=0 ; i<NUM_TEMPERATURES ; i++ )
-                {
-                    if( PackageHeader.nSampleIndices[ i ] )
-                    {
-                        // Allocate memory for sample header index table.
-                        MRAM += (PackageHeader.nSampleIndices[ i ]+1) * sizeof(u16);
-                    }
-                }
-
-                // Allocate memory for the hot and cold samples
-                if( PackageHeader.nSampleHeaders[ HOT ] )
-                {
-                    MRAM +=  PackageHeader.nSampleHeaders[ HOT ] * PackageHeader.HeaderSizes[ HOT ];
-                }
-
-                if( PackageHeader.nSampleHeaders[ COLD ] )
-                {
-                    MRAM += PackageHeader.nSampleHeaders[ COLD ] * PackageHeader.HeaderSizes[ COLD ];
-                }
-                
-                ARAM    += PackageHeader.Aram;
-            }
-            else
-            {
-                x_throw( xfs("Incorrect audio package PLATFORM [%s]\nlast compile by [%s]", PS2FilePath, PackageID.UserId) );
-            }
-        }
-        else
-        {
-            x_throw( xfs("Incorrect audio package VERSION [%s]\nlast compile by [%s]", PS2FilePath, PackageID.UserId) );
-        }
-
-        extern xbool g_IncludeInAudioBudget;
-        if( g_IncludeInAudioBudget )
-            s_PS2MemorySize -= ARAM;
-
-        LOG_MESSAGE( "audiopkg_loader::PreLoad", "[%s] MainRam: %d, AudioRam: %d, Total ARAM Free: %d", pFileName, MRAM, ARAM, s_PS2MemorySize );
-
-        x_fclose( pPS2File );
-
-    x_catch_begin;
-        
-        x_display_exception_msg(xfs("Could not load audiopkg:\n%s",pFileName));
-
-        if( pPS2File )
-            x_fclose( pPS2File );
-
-    x_catch_end;
-
-#endif // X_EDITOR
+//#ifdef X_EDITOR
+//
+//    X_FILE* pPS2File = NULL;
+//            
+//    x_try;
+//
+//        xstring FullPathName( pFileName );
+//        s32 i = 0;
+//        for( i = FullPathName.GetLength()-1; i >= 0; i-- )
+//        {
+//            if( (FullPathName[i] == '/') || (FullPathName[i] == '\\') )
+//                break;
+//        }
+//        xstring FileName( FullPathName.Right( (FullPathName.GetLength()-1)-i ) );
+//
+//        char PS2FilePath[256];
+//        x_sprintf( PS2FilePath, "%s\\PS2\\%s", g_Settings.GetReleasePath(), FileName );
+//
+//        pPS2File = x_fopen( PS2FilePath, "rb" );
+//        
+//        if( pPS2File == NULL )
+//            x_throw( xfs("Unable to open file [%s]", PS2FilePath) );
+//
+//        package_identifier  PackageID;
+//        package_header      PackageHeader;
+//        s32                 MRAM = 0;
+//        s32                 ARAM = 0;
+//
+//        // Read in the package identifier.
+//        x_fread( &PackageID, sizeof(package_identifier), 1, pPS2File );
+//
+//        // Correct version?
+//        if( !x_strncmp( PackageID.VersionID, PS2_PACKAGE_VERSION, VERSION_ID_SIZE ) )
+//        {
+//            // Correct platform?
+//            if( !x_strncmp( PackageID.TargetID, PS2_TARGET_ID, TARGET_ID_SIZE ) )
+//            {
+//
+//                // Now read in the header.
+//                x_fread( &PackageHeader, sizeof(package_header), 1, pPS2File );
+//                
+//                MRAM    += PackageHeader.StringTableFootprint;
+//                MRAM    += PackageHeader.MusicDataFootprint;
+//                MRAM    += PackageHeader.LipSyncTableFootprint;
+//                MRAM    += PackageHeader.BreakPointTableFootprint;
+//                MRAM    += PackageHeader.nIdentifiers * sizeof(descriptor_identifier);
+//                MRAM    += PackageHeader.nDescriptors * sizeof(u32*);
+//                MRAM    += PackageHeader.DescriptorFootprint;
+//
+//                // For each temperature...
+//                for( i=0 ; i<NUM_TEMPERATURES ; i++ )
+//                {
+//                    if( PackageHeader.nSampleIndices[ i ] )
+//                    {
+//                        // Allocate memory for sample header index table.
+//                        MRAM += (PackageHeader.nSampleIndices[ i ]+1) * sizeof(u16);
+//                    }
+//                }
+//
+//                // Allocate memory for the hot and cold samples
+//                if( PackageHeader.nSampleHeaders[ HOT ] )
+//                {
+//                    MRAM +=  PackageHeader.nSampleHeaders[ HOT ] * PackageHeader.HeaderSizes[ HOT ];
+//                }
+//
+//                if( PackageHeader.nSampleHeaders[ COLD ] )
+//                {
+//                    MRAM += PackageHeader.nSampleHeaders[ COLD ] * PackageHeader.HeaderSizes[ COLD ];
+//                }
+//                
+//                ARAM    += PackageHeader.Aram;
+//            }
+//            else
+//            {
+//                x_throw( xfs("Incorrect audio package PLATFORM [%s]\nlast compile by [%s]", PS2FilePath, PackageID.UserId) );
+//            }
+//        }
+//        else
+//        {
+//            x_throw( xfs("Incorrect audio package VERSION [%s]\nlast compile by [%s]", PS2FilePath, PackageID.UserId) );
+//        }
+//
+//        extern xbool g_IncludeInAudioBudget;
+//        if( g_IncludeInAudioBudget )
+//            s_PS2MemorySize -= ARAM;
+//
+//        LOG_MESSAGE( "audiopkg_loader::PreLoad", "[%s] MainRam: %d, AudioRam: %d, Total ARAM Free: %d", pFileName, MRAM, ARAM, s_PS2MemorySize );
+//
+//        x_fclose( pPS2File );
+//
+//    x_catch_begin;
+//        
+//        x_display_exception_msg(xfs("Could not load audiopkg:\n%s",pFileName));
+//
+//        if( pPS2File )
+//            x_fclose( pPS2File );
+//
+//    x_catch_end;
+//
+//#endif // X_EDITOR
 
     if( Fp )
     {

@@ -37,7 +37,7 @@
 
 #include <afxsock.h>		// MFC socket extensions
 
-#include <XTToolKit.h>      // Xtreme Toolkit MFC Extensions
+#include "XTToolKit.h"      // Xtreme Toolkit MFC Extensions
 
 //=========================================================================
 // X_FILES

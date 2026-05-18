@@ -95,6 +95,8 @@ void axis3d::Render( void )
 {
     ASSERT( eng_InBeginEnd() );
 
+    // Legacy DX9 render path kept as a reference for the DX11 port.
+    /*
     s32     i;
     vertex  LineBuff[ARROW_VERTEX_COUNT*2];
 
@@ -103,9 +105,6 @@ void axis3d::Render( void )
 
     g_pd3dDevice->SetTransform( D3DTS_WORLDMATRIX(0), (D3DMATRIX*)&L2W );
 
-    //
-    // Set somce basic render modes
-    //
     g_pd3dDevice->SetRenderState( D3DRS_LIGHTING,           FALSE   );
     g_pd3dDevice->SetRenderState( D3DRS_ALPHABLENDENABLE,   FALSE   );
     g_pd3dDevice->SetRenderState( D3DRS_SRCBLEND,           D3DBLEND_ONE  );
@@ -117,55 +116,41 @@ void axis3d::Render( void )
 
     g_pd3dDevice->SetTextureStageState( 0, D3DTSS_COLOROP,      D3DTOP_SELECTARG1 );
     g_pd3dDevice->SetTextureStageState( 0, D3DTSS_COLORARG1,    D3DTA_TFACTOR     );
-
     g_pd3dDevice->SetTextureStageState( 0, D3DTSS_ALPHAOP,      D3DTOP_SELECTARG1 );
     g_pd3dDevice->SetTextureStageState( 0, D3DTSS_ALPHAARG1,    D3DTA_TFACTOR     );
-
     g_pd3dDevice->SetTextureStageState( 1, D3DTSS_COLOROP,      D3DTOP_DISABLE    );
     g_pd3dDevice->SetTextureStageState( 1, D3DTSS_ALPHAOP,      D3DTOP_DISABLE    );
 
-
-    //
-    // Render the axis line
-    //
     g_pd3dDevice->SetRenderState( D3DRS_TEXTUREFACTOR,      xcolor(255,0,0,255) );
     LineBuff[0].Pos.Set( 0, 0, 0 );
     LineBuff[1].Pos = s_Arrow[0][0];
     g_pd3dDevice->DrawPrimitiveUP( D3DPT_LINELIST, 1, LineBuff, sizeof(vertex) );
-
 
     g_pd3dDevice->SetRenderState( D3DRS_TEXTUREFACTOR,      xcolor(0,255,0,255) );
     LineBuff[0].Pos.Set( 0, 0, 0 );
     LineBuff[1].Pos = s_Arrow[1][0];
     g_pd3dDevice->DrawPrimitiveUP( D3DPT_LINELIST, 1, LineBuff, sizeof(vertex) );
 
-
     g_pd3dDevice->SetRenderState( D3DRS_TEXTUREFACTOR,      xcolor(0,0,255,255) );
     LineBuff[0].Pos.Set( 0, 0, 0 );
     LineBuff[1].Pos = s_Arrow[2][0];
     g_pd3dDevice->DrawPrimitiveUP( D3DPT_LINELIST, 1, LineBuff, sizeof(vertex) );
 
-    //
-    // Render the axis arrows
-    //
     g_pd3dDevice->SetRenderState( D3DRS_TEXTUREFACTOR, xcolor(255,0,0,255) );
-    for( i=1; i<(ARROW_VERTEX_COUNT+2); i++ ) 
+    for( i=1; i<(ARROW_VERTEX_COUNT+2); i++ )
         LineBuff[i-1].Pos = s_Arrow[0][i];
     g_pd3dDevice->DrawPrimitiveUP( D3DPT_TRIANGLEFAN, ARROW_TRIANGLE_COUNT-1, LineBuff, sizeof(vertex) );
 
-
     g_pd3dDevice->SetRenderState( D3DRS_TEXTUREFACTOR, xcolor(0,255,0,255) );
-    for( i=1; i<(ARROW_VERTEX_COUNT+2); i++ ) 
+    for( i=1; i<(ARROW_VERTEX_COUNT+2); i++ )
         LineBuff[i-1].Pos = s_Arrow[1][i];
     g_pd3dDevice->DrawPrimitiveUP( D3DPT_TRIANGLEFAN, ARROW_TRIANGLE_COUNT-1, LineBuff, sizeof(vertex) );
 
-
     g_pd3dDevice->SetRenderState( D3DRS_TEXTUREFACTOR, xcolor(0,0,255,255) );
-    for( i=1; i<(ARROW_VERTEX_COUNT+2); i++ ) 
+    for( i=1; i<(ARROW_VERTEX_COUNT+2); i++ )
         LineBuff[i-1].Pos = s_Arrow[2][i];
     g_pd3dDevice->DrawPrimitiveUP( D3DPT_TRIANGLEFAN, ARROW_TRIANGLE_COUNT-1, LineBuff, sizeof(vertex) );
-    
 
-    // Clean up
     g_pd3dDevice->SetRenderState( D3DRS_CULLMODE, D3DCULL_CW );
+    */
 }

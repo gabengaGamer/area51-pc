@@ -15,9 +15,9 @@ static char THIS_FILE[] = __FILE__;
 /////////////////////////////////////////////////////////////////////////////
 // CChildFrame
 
-IMPLEMENT_DYNCREATE(CChildFrame, CXTMDIChildWnd)
+IMPLEMENT_DYNCREATE(CChildFrame, CMDIChildWnd)
 
-BEGIN_MESSAGE_MAP(CChildFrame, CXTMDIChildWnd)
+BEGIN_MESSAGE_MAP(CChildFrame, CMDIChildWnd)
 	//{{AFX_MSG_MAP(CChildFrame)
 		// NOTE - the ClassWizard will add and remove mapping macros here.
 		//    DO NOT EDIT what you see in these blocks of generated code !
@@ -50,7 +50,7 @@ BOOL CChildFrame::PreCreateWindow(CREATESTRUCT& cs)
 {
 	// TODO: Modify the Window class or styles here by modifying
 	//  the CREATESTRUCT cs
-	if( !CXTMDIChildWnd::PreCreateWindow(cs) )
+	if( !CMDIChildWnd::PreCreateWindow(cs) )
 		return FALSE;
 
 	cs.style |= WS_CLIPCHILDREN;
@@ -64,7 +64,7 @@ BOOL CChildFrame::PreCreateWindow(CREATESTRUCT& cs)
 void CChildFrame::ActivateFrame(int nCmdShow)
 {
     nCmdShow = SW_SHOWMAXIMIZED;
-	CXTMDIChildWnd::ActivateFrame(nCmdShow);
+	CMDIChildWnd::ActivateFrame(nCmdShow);
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -73,12 +73,12 @@ void CChildFrame::ActivateFrame(int nCmdShow)
 #ifdef _DEBUG
 void CChildFrame::AssertValid() const
 {
-	CXTMDIChildWnd::AssertValid();
+	CMDIChildWnd::AssertValid();
 }
 
 void CChildFrame::Dump(CDumpContext& dc) const
 {
-	CXTMDIChildWnd::Dump(dc);
+	CMDIChildWnd::Dump(dc);
 }
 
 #endif //_DEBUG
@@ -88,7 +88,7 @@ void CChildFrame::Dump(CDumpContext& dc) const
 
 int CChildFrame::OnCreate(LPCREATESTRUCT lpCreateStruct) 
 {
-	if (CXTMDIChildWnd::OnCreate(lpCreateStruct) == -1)
+	if (CMDIChildWnd::OnCreate(lpCreateStruct) == -1)
 		return -1;
 
     /*
@@ -108,8 +108,8 @@ int CChildFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 		return -1;      // fail to create
 	}
 
-	m_wndToolBar     .EnableDockingEx(CBRS_ALIGN_ANY, CBRS_XT_ALL_FLAT);
-	EnableDockingEx(CBRS_ALIGN_ANY, CBRS_XT_ALL_FLAT);
+	m_wndToolBar     .EnableDocking(CBRS_ALIGN_ANY);
+	EnableDocking(CBRS_ALIGN_ANY);
 	DockControlBar      ( &m_wndToolBar );
 */
 	return 0;

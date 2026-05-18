@@ -10,7 +10,7 @@
 #endif // _MSC_VER > 1000
 
 
-class CChildFrame : public CXTMDIChildWnd
+class CChildFrame : public CMDIChildWnd
 {
 	DECLARE_DYNCREATE(CChildFrame)
 public:

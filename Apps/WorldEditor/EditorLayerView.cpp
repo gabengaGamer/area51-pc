@@ -269,7 +269,6 @@ void CEditorLayerView::LoadLayers()
         {
             HTREEITEM hZone = m_tcLayer.InsertItem( ListZones.GetAt(k), IMG_LIST_ZONE, IMG_LIST_ZONE+1, hRoot, TVI_SORT );
             m_tcLayer.SetItemData(hZone, 0);
-            m_tcLayer.SetItemColor(hZone,RGB(0,0,0));
         }
 
         m_tcLayer.SetItemData(hRoot, 0);
@@ -470,7 +469,6 @@ void CEditorLayerView::OnLvtbAddLayer()
         GetDocument()->GetFramePointer()->OnLoadLayers();
         HTREEITEM hRoot = m_tcLayer.InsertItem( strItemName, IMG_LIST_LAYER_LOADED, IMG_LIST_LAYER_LOADED+1, TVI_ROOT, TVI_SORT );
         m_tcLayer.SetItemData(hRoot, 0);
-        m_tcLayer.SetItemColor(hRoot,RGB(200,0,0));
         m_tcLayer.EnsureVisible( hRoot );
     }
 }
@@ -493,7 +491,6 @@ void CEditorLayerView::OnLvtbAddFolder()
 
         HTREEITEM hFolder = m_tcLayer.InsertItem( strItemName, IMG_LIST_FOLDER, IMG_LIST_FOLDER+1, hItem, TVI_SORT );
         m_tcLayer.SetItemData(hFolder, 0);
-        m_tcLayer.SetItemColor(hFolder,RGB(0,0,0));
         m_tcLayer.EnsureVisible(hFolder);
     }
 }
@@ -534,7 +531,6 @@ void CEditorLayerView::OnLvtbAddZone()
         {
             HTREEITEM hZone = m_tcLayer.InsertItem( strItemName, IMG_LIST_ZONE, IMG_LIST_ZONE+1, hItem, TVI_SORT );
             m_tcLayer.SetItemData(hZone, g_WorldEditor.GetZoneId(strItemName));
-            m_tcLayer.SetItemColor(hZone, RGB(0,0,0));
             m_tcLayer.EnsureVisible(hZone);
             g_WorldEditor.MarkLayerDirty(m_tcLayer.GetItemText(hItem));
 //            m_tcLayer.SetItemColor(hItem,RGB(200,0,0));
@@ -574,7 +570,6 @@ void CEditorLayerView::OnLvtbAddPortal()
             HTREEITEM hPortal = m_tcLayer.InsertItem( strItemName, IMG_LIST_PORTAL, IMG_LIST_PORTAL+1, hItem, TVI_SORT );
             xhandle xh = AddObjectGuidToStorageArray( PortalGuid );
             m_tcLayer.SetItemData(hPortal, xh);
-            m_tcLayer.SetItemColor(hPortal,RGB(0,0,0));
             m_tcLayer.EnsureVisible(hPortal);  
             
             GetDocument()->GetFramePointer()->GetEditorView()->EnterMovementMode();
@@ -1177,7 +1172,7 @@ void CEditorLayerView::OnLvtbLightLayer()
 //    CXTCoolMenu CoolMenu;
 //    CoolMenu.HookWindow( this );
 
-	CXTMenu menu;
+	CMenu menu;
     menu.CreatePopupMenu();
 
     menu.AppendMenu(MF_STRING|MF_ENABLED, IDR_LEVEL_LIGHT_NORMAL,   "Light::Distance");
@@ -1753,7 +1748,6 @@ HTREEITEM CEditorLayerView::AddObjectToLayer(CString strLayer, CString strPath, 
                     hParent = m_tcLayer.InsertItem( strFolder, IMG_LIST_FOLDER, IMG_LIST_FOLDER+1, hParent, TVI_SORT );
                     SetFolderImageForItem(hParent);
                     m_tcLayer.SetItemData(hParent, 0);
-                    m_tcLayer.SetItemColor(hParent,RGB(0,0,0));
                 }
 
                 strSubPath = strSubPath.Right(strSubPath.GetLength() - iFind - 1);
@@ -1791,7 +1785,6 @@ HTREEITEM CEditorLayerView::AddObjectToTree(HTREEITEM hParent, guid ObjGuid)
 
     xhandle xh = AddObjectGuidToStorageArray( ObjGuid );
     m_tcLayer.SetItemData(hItem, xh);
-    m_tcLayer.SetItemColor(hItem,RGB(0,0,0));
 
     return hItem;
 }
@@ -1883,7 +1876,6 @@ HTREEITEM CEditorLayerView::AddResourceToLayer(CString strLayer, CString strPath
                     hParent = m_tcLayer.InsertItem( strFolder, IMG_LIST_FOLDER, IMG_LIST_FOLDER+1, hParent, TVI_SORT );
                     SetFolderImageForItem(hParent);
                     m_tcLayer.SetItemData(hParent, 1);
-                    m_tcLayer.SetItemColor(hParent,RGB(0,0,0));
                 }
 
                 strSubPath = strSubPath.Right(strSubPath.GetLength() - iFind - 1);
@@ -1893,7 +1885,6 @@ HTREEITEM CEditorLayerView::AddResourceToLayer(CString strLayer, CString strPath
             HTREEITEM hItem = m_tcLayer.InsertItem( strRes, IMG_LIST_RESOURCE, IMG_LIST_RESOURCE+1, hParent, TVI_SORT );
 
             m_tcLayer.SetItemData(hItem, 0);
-            m_tcLayer.SetItemColor(hItem,RGB(0,0,0));
 
             return hItem;
         }
@@ -1996,7 +1987,6 @@ HTREEITEM CEditorLayerView::AddBlueprintToLayer(CString strLayer, CString strPat
                     hParent = m_tcLayer.InsertItem( strFolder, IMG_LIST_FOLDER, IMG_LIST_FOLDER+1, hParent, TVI_SORT );
                     SetFolderImageForItem(hParent);
                     m_tcLayer.SetItemData(hParent, 0);
-                    m_tcLayer.SetItemColor(hParent,RGB(0,0,0));
                 }
 
                 strSubPath = strSubPath.Right(strSubPath.GetLength() - iFind - 1);
@@ -2027,7 +2017,6 @@ HTREEITEM CEditorLayerView::AddBlueprintToTree(HTREEITEM hParent, guid BPGuid)
 
     xhandle xh = AddBlueprintGuidToStorageArray( BPGuid );
     m_tcLayer.SetItemData(hItem, xh);
-    m_tcLayer.SetItemColor(hItem,RGB(0,0,0));
 
     return hItem;
 }
@@ -2239,23 +2228,18 @@ BOOL CEditorLayerView::SetLayerDirtyColor(CString strLayer, HTREEITEM hLayerItem
             //set layer color
             if (bDirty && bReadOnly)
             {
-                m_tcLayer.SetItemColor(hLayerItem,RGB(255,128,64));
             }
             else if (bReadOnly)
             {
-                m_tcLayer.SetItemColor(hLayerItem,RGB(100,100,150));
             }   
             else if (bDirty)
             {
-                m_tcLayer.SetItemColor(hLayerItem,RGB(200,0,0));
             }       
             else if (!bLoaded)
             {
-                m_tcLayer.SetItemColor(hLayerItem,RGB(180,180,180));
             }
             else
             {
-                m_tcLayer.SetItemColor(hLayerItem,RGB(0,0,0));
             }
             
             return TRUE;
@@ -2704,7 +2688,7 @@ void CEditorLayerView::OnNMRclick(NMHDR *pNMHDR, LRESULT *pResult)
         m_tcLayer.GetItemImage( hItem, nItemImage, nItemSelectedImage );
 
         // Create the menu
-        CXTMenu Menu;
+        CMenu Menu;
         Menu.CreatePopupMenu();
 
         SetMenuSelectionType( nItemImage);
@@ -3040,7 +3024,32 @@ void CEditorLayerView::UpdateTreeFolders( void )
  
         for( int bb = 0; bb < FolderCount; bb++)
         {
-            hCurrent = m_tcLayer.FindItem(Folders.GetAt( bb),FALSE,TRUE,TRUE,hCurrent);
+            hCurrent = NULL;
+            HTREEITEM hSearchItem = m_tcLayer.GetChildItem(hCurrent ? hCurrent : m_tcLayer.GetRootItem());
+            if (hSearchItem == NULL)
+                hSearchItem = m_tcLayer.GetRootItem();
+            while (hSearchItem)
+            {
+                if (m_tcLayer.GetItemText(hSearchItem).CompareNoCase(Folders.GetAt(bb)) == 0)
+                {
+                    hCurrent = hSearchItem;
+                    break;
+                }
+
+                HTREEITEM hChild = m_tcLayer.GetChildItem(hSearchItem);
+                if (hChild)
+                {
+                    hSearchItem = hChild;
+                    continue;
+                }
+
+                while (hSearchItem && (m_tcLayer.GetNextSiblingItem(hSearchItem) == NULL))
+                {
+                    hSearchItem = m_tcLayer.GetParentItem(hSearchItem);
+                }
+
+                hSearchItem = hSearchItem ? m_tcLayer.GetNextSiblingItem(hSearchItem) : NULL;
+            }
             if(hCurrent)
             {
                 if(m_tcLayer.ItemHasChildren(hCurrent))
@@ -3133,7 +3142,7 @@ void CEditorLayerView::CollectAllObjectsInFolder( xarray<guid>& ObjList)
     {
         if( m_tcLayer.ItemHasChildren(hItem) )
         {
-            hItem = m_tcLayer.GetNextItem( hItem );
+            hItem = m_tcLayer.GetNextItem( hItem, TVGN_NEXT );
             if(!hItem)
                 SkipDirectory = FALSE;
         }
@@ -3171,7 +3180,7 @@ void CEditorLayerView::CollectAllObjectsInFolder( xarray<guid>& ObjList)
         }
  
 
-        hItem = m_tcLayer.GetNextItem(hItem);
+        hItem = m_tcLayer.GetNextItem(hItem, TVGN_NEXT);
         if(m_tcLayer.ItemHasChildren(hItem))
             break;
     }
@@ -3770,4 +3779,3 @@ BOOL CEditorLayerView::DoesZoneExist(CString strLayer, CString strZone)
     }
     return FALSE;
 }
-

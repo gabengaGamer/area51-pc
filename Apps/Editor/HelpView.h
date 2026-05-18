@@ -13,13 +13,14 @@
 #ifndef __AFXEXT_H__
 #include <afxext.h>
 #endif
+#include <afxhtml.h>
 
-class CHelpView : public CXTHtmlView
+class CHelpView : public CHtmlView
 {
 protected:
 	CHelpView();           // protected constructor used by dynamic creation
 	DECLARE_DYNCREATE(CHelpView)
-    CXTToolBar          m_wndToolBar;
+    CToolBar            m_wndToolBar;
     BOOL                m_bFirstTimeVisible;
     BOOL                m_bInitialize;
     CAnimateCtrl	    m_wndAnimateBar;

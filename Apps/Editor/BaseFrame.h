@@ -11,7 +11,7 @@ class CBaseDocument;
 /////////////////////////////////////////////////////////////////////////////
 // CBaseFrame frame
 
-class CBaseFrame : public CXTMDIChildWnd
+class CBaseFrame : public CMDIChildWnd
 {
 	DECLARE_DYNCREATE(CBaseFrame)
 public:

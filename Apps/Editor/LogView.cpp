@@ -21,7 +21,7 @@ static char THIS_FILE[] = __FILE__;
 /////////////////////////////////////////////////////////////////////////////
 // CLogView
 
-IMPLEMENT_DYNCREATE(CLogView, CXTListCtrl)
+IMPLEMENT_DYNCREATE(CLogView, CListCtrl)
 
 CLogView::CLogView()
 {
@@ -32,7 +32,7 @@ CLogView::~CLogView()
 }
 
 
-BEGIN_MESSAGE_MAP(CLogView, CXTListCtrl)
+BEGIN_MESSAGE_MAP(CLogView, CListCtrl)
 	//{{AFX_MSG_MAP(CLogView)
     ON_NOTIFY_REFLECT(LVN_ITEMCHANGED, OnItemChanged)
     ON_NOTIFY_REFLECT(NM_DBLCLK, OnDoubleClick)
@@ -43,26 +43,22 @@ END_MESSAGE_MAP()
 
 //     ON_NOTIFY(LVN_ITEMCHANGED, 0, OnItemChanged)
 
-/////////////////////////////////////////////////////////////////////////////
-// CLogView drawing
-
-void CLogView::OnDraw(CDC* pDC)
+enum COLUMN_DATA_TYPE
 {
-	// TODO: add draw code here
-}
-
-/////////////////////////////////////////////////////////////////////////////
-// CLogView diagnostics
+    DT_INT = 1,
+    DT_STRING,
+    DT_DATETIME
+};
 
 #ifdef _DEBUG
 void CLogView::AssertValid() const
 {
-	CXTListCtrl::AssertValid();
+	CListCtrl::AssertValid();
 }
 
 void CLogView::Dump(CDumpContext& dc) const
 {
-	CXTListCtrl::Dump(dc);
+	CListCtrl::Dump(dc);
 }
 #endif //_DEBUG
 
@@ -123,14 +119,9 @@ void Log_Display( const char* pChannel, log_type Type, const char* pMsg,
 
 void CLogView::OnInitialUpdate() 
 {
-//	CXTListCtrl::OnInitialUpdate();
-	
     InsertColumns( columns, 6 );
 
 	SetExtendedStyle(LVS_EX_GRIDLINES | LVS_EX_FULLROWSELECT | LVS_NOSCROLL );
-	SubclassHeader();
-	GetFlatHeaderCtrl()->ShowSortArrow(TRUE);
-    SetSortImage(0, false);	
 
     //
     // Register the call back
@@ -147,7 +138,7 @@ BOOL CLogView::PreCreateWindow(CREATESTRUCT& cs)
 {
 	// TODO: Add your specialized code here and/or call the base class
 	cs.style |= LVS_EX_GRIDLINES | LVS_REPORT;
-	return CXTListCtrl::PreCreateWindow(cs);
+	return CListCtrl::PreCreateWindow(cs);
 }
 
 //=========================================================================
@@ -159,19 +150,9 @@ bool CLogView::SortList(
 	// be ascending.
 	bool bAscending )
 {
-	CXTSortClass csc (this, nCol);
-	csc.Sort(bAscending, columns[nCol].type);
+    UNREFERENCED_PARAMETER(nCol);
+    UNREFERENCED_PARAMETER(bAscending);
 	return true;
-}
-
-//=========================================================================
-
-void CLogView::OnUpdate( CView* pSender, LPARAM lHint, CObject* pHint )
-{
-    if( lHint )
-    {
-        //UpdateAll();
-    }
 }
 
 //=========================================================================

@@ -16,14 +16,14 @@ struct col_data
 	LPCTSTR name; 
 	int width; 
 	int fmt;
-    XT_DATA_TYPE type;
+    int type;
 };
 
 
 /////////////////////////////////////////////////////////////////////////////
 // CLogViewview
 
-class CLogView: public CXTListCtrl
+class CLogView: public CListCtrl
 {
 protected:
     bool SortList( int nCol, bool bAscending );
@@ -47,10 +47,8 @@ public:
 	// ClassWizard generated virtual function overrides
 	//{{AFX_VIRTUAL(CLogView)
 	public:
-	virtual void OnInitialUpdate();
-    virtual void OnUpdate( CView* pSender, LPARAM lHint, CObject* pHint );
+    void OnInitialUpdate();
 	protected:
-	virtual void OnDraw(CDC* pDC);      // overridden to draw this view
     virtual BOOL PreCreateWindow(CREATESTRUCT& cs);
 	//}}AFX_VIRTUAL
 

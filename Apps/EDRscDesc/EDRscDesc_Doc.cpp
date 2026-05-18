@@ -13,8 +13,8 @@
 #include "MainFrm.h"
 
 #include "../Editor/Project.hpp"
-#include "../MeshViewer/RigidDesc.hpp"
-#include "../MeshViewer/SkinDesc.hpp"
+//#include "../MeshViewer/RigidDesc.hpp"
+//#include "../MeshViewer/SkinDesc.hpp"
 
 
 
@@ -196,7 +196,7 @@ void EDRscDesc_Doc::Build( void )
     //
     // toggle the mips building
     //
-    geom_rsc_desc::SetColoredMips(m_bColorMipsMode);
+    //geom_rsc_desc::SetColoredMips(m_bColorMipsMode);
 
     //
     // Do we have anything to compile?
@@ -437,7 +437,8 @@ void EDRscDesc_Doc::SetActiveDesc( const char* pDescName )
 {
     rsc_desc& Desc = g_RescDescMGR.GetRscDescByString( pDescName );
 
-    for( s32 i=0; i<m_LocalEdited.GetCount(); i++ )
+    s32 i;
+    for( i=0; i<m_LocalEdited.GetCount(); i++ )
     {
         if( &Desc == m_LocalEdited[i] )
             break;
@@ -667,4 +668,3 @@ void EDRscDesc_Doc::RebuildAll( void )
  
     x_catch_display;
 }
-

@@ -1509,7 +1509,7 @@ void CEditorDoc::OnProjectImport( void )
 
                     //find and update Zone2 
                     u8 Zone2ID = pPortal->GetZone2();
-                    for ( k = 0; k < ZoneList.GetCount(); k++)
+                    for ( int k = 0; k < ZoneList.GetCount(); k++)
                     {
                         editor_zone_ref& Zone = ZoneList.GetAt(k);
                         if (Zone.Id == Zone2ID)
@@ -3186,6 +3186,5 @@ int CEditorDoc::UpdateTreeView( void )
     }
     return g_LoadUpdateUserSettings.TreeView.GetCount();
 }
-
 
 

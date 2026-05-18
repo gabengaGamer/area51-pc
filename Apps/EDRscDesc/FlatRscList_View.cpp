@@ -19,10 +19,12 @@ static char THIS_FILE[] = __FILE__;
 /////////////////////////////////////////////////////////////////////////////
 // CFlatRscList_View
 
-IMPLEMENT_DYNCREATE(CFlatRscList_View, CXTListView)
+IMPLEMENT_DYNCREATE(CFlatRscList_View, CListView)
 
 CFlatRscList_View::CFlatRscList_View()
 {
+    m_nSortedCol = 0;
+    m_bAscending = true;
 }
 
 CFlatRscList_View::~CFlatRscList_View()
@@ -30,10 +32,9 @@ CFlatRscList_View::~CFlatRscList_View()
 }
 
 
-BEGIN_MESSAGE_MAP(CFlatRscList_View, CXTListView)
+BEGIN_MESSAGE_MAP(CFlatRscList_View, CListView)
 	//{{AFX_MSG_MAP(CFlatRscList_View)
-	ON_WM_LBUTTONUP()
-	ON_WM_CAPTURECHANGED()
+    ON_NOTIFY_REFLECT(LVN_COLUMNCLICK, OnColumnClick)
     ON_NOTIFY_REFLECT(LVN_ITEMCHANGED, OnItemChanged)
     ON_NOTIFY_REFLECT(NM_DBLCLK, OnDoubleClick)
 	//}}AFX_MSG_MAP
@@ -48,6 +49,7 @@ void CFlatRscList_View::OnDraw(CDC* pDC)
 {
 	CDocument* pDoc = GetDocument();
 	// TODO: add draw code here
+    UNUSED_ALWAYS( pDoc );
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -56,12 +58,12 @@ void CFlatRscList_View::OnDraw(CDC* pDC)
 #ifdef _DEBUG
 void CFlatRscList_View::AssertValid() const
 {
-	CXTListView::AssertValid();
+	CListView::AssertValid();
 }
 
 void CFlatRscList_View::Dump(CDumpContext& dc) const
 {
-	CXTListView::Dump(dc);
+	CListView::Dump(dc);
 }
 #endif //_DEBUG
 
@@ -111,6 +113,7 @@ void CFlatRscList_View::UpdateAll( void )
         Node.pDesc->GetFullName(FullName);
 
         SetDetails(i, FullName, Node.Theme);
+        listCtrl.SetItemData( i, i );
     }
 
     SortList( m_nSortedCol, m_bAscending );
@@ -170,14 +173,11 @@ void CFlatRscList_View::SetDetails( s32 i, const char* pPath, const char* pTheme
 
 void CFlatRscList_View::OnInitialUpdate() 
 {
-	CXTListView::OnInitialUpdate();
+	CListView::OnInitialUpdate();
 	
     InsertColumns( columns, 5 );
 
-	SetExtendedStyle(LVS_EX_GRIDLINES | LVS_EX_FULLROWSELECT);
-	SubclassHeader();
-	GetFlatHeaderCtrl()->ShowSortArrow(TRUE);
-    SetSortImage(0, false);	
+	GetListCtrl().SetExtendedStyle(LVS_EX_GRIDLINES | LVS_EX_FULLROWSELECT);
 
     //
     // Add all the items in the grid
@@ -191,7 +191,7 @@ BOOL CFlatRscList_View::PreCreateWindow(CREATESTRUCT& cs)
 {
 	// TODO: Add your specialized code here and/or call the base class
 	cs.style |= LVS_EX_GRIDLINES | LVS_REPORT;
-	return CXTListView::PreCreateWindow(cs);
+	return CListView::PreCreateWindow(cs);
 }
 
 //=========================================================================
@@ -203,9 +203,51 @@ bool CFlatRscList_View::SortList(
 	// be ascending.
 	bool bAscending )
 {
-	CXTSortClass csc (&GetListCtrl(), nCol);
-	csc.Sort(bAscending, columns[nCol].type);
+    m_nSortedCol = nCol;
+    m_bAscending = bAscending;
+
+    sort_context SortContext;
+    SortContext.pView      = this;
+    SortContext.nCol       = nCol;
+    SortContext.bAscending = bAscending;
+
+    GetListCtrl().SortItemsEx( CompareItems, (DWORD_PTR)&SortContext );
 	return true;
+}
+
+//=========================================================================
+
+int CALLBACK CFlatRscList_View::CompareItems( LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort )
+{
+    sort_context* pSort = (sort_context*)lParamSort;
+    ASSERT( pSort );
+    ASSERT( pSort->pView );
+
+    CListCtrl& ListCtrl = pSort->pView->GetListCtrl();
+
+    LVFINDINFO FindInfo;
+    x_memset( &FindInfo, 0, sizeof(FindInfo) );
+    FindInfo.flags = LVFI_PARAM;
+
+    FindInfo.lParam = lParam1;
+    s32 Item1 = ListCtrl.FindItem( &FindInfo, -1 );
+
+    FindInfo.lParam = lParam2;
+    s32 Item2 = ListCtrl.FindItem( &FindInfo, -1 );
+
+    if( (Item1 == -1) || (Item2 == -1) )
+        return 0;
+
+    CString Text1 = ListCtrl.GetItemText( Item1, pSort->nCol );
+    CString Text2 = ListCtrl.GetItemText( Item2, pSort->nCol );
+
+    s32 Result = Text1.CompareNoCase( Text2 );
+    if( Result == 0 )
+    {
+        Result = Item1 - Item2;
+    }
+
+    return pSort->bAscending ? Result : -Result;
 }
 
 //=========================================================================
@@ -288,6 +330,27 @@ void CFlatRscList_View::InsertColumns( col_data* pColumns, s32 ColCount )
 
 //=========================================================================
 
+void CFlatRscList_View::OnColumnClick( NMHDR* pNMHDR, LRESULT* pResult )
+{
+	NMLISTVIEW* lphdi = (NMLISTVIEW*)pNMHDR;
+
+    if( lphdi )
+    {
+        bool bAscending = true;
+        if( m_nSortedCol == lphdi->iSubItem )
+        {
+            bAscending = !m_bAscending;
+        }
+
+        SortList( lphdi->iSubItem, bAscending );
+    }
+
+    if( pResult )
+        *pResult = 0;
+}
+
+//=========================================================================
+
 void CFlatRscList_View::OnDoubleClick( NMHDR* pNMHDR, LRESULT* pResult )
 {
 	NMLISTVIEW* lphdi = (NMLISTVIEW*)pNMHDR;
@@ -316,6 +379,9 @@ void CFlatRscList_View::OnDoubleClick( NMHDR* pNMHDR, LRESULT* pResult )
 
         x_catch_display;
     }
+
+    if( pResult )
+        *pResult = 0;
 }
 
 //=========================================================================
@@ -324,7 +390,9 @@ void CFlatRscList_View::OnItemChanged( NMHDR* pNMHDR, LRESULT* pResult )
 {
 	NMLISTVIEW* lphdi = (NMLISTVIEW*)pNMHDR;
 
-    if( lphdi->uNewState == 3 )
+    if( lphdi &&
+        (lphdi->uChanged & LVIF_STATE) &&
+        (lphdi->uNewState & LVIS_SELECTED) )
     {
         x_try;
 
@@ -340,6 +408,7 @@ void CFlatRscList_View::OnItemChanged( NMHDR* pNMHDR, LRESULT* pResult )
 
         x_catch_display;
     }
+
+    if( pResult )
+        *pResult = 0;
 }
-
-

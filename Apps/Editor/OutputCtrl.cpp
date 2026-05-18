@@ -38,10 +38,10 @@ void COutputCtrl::OnRButtonDown(UINT nFlags, CPoint point)
 {
 	CRichEditCtrl::OnRButtonDown(nFlags, point);
 
-	CXTMenu menu;
+	CMenu menu;
     menu.CreatePopupMenu();
 
-    menu.AppendMenu(MF_STRING|MF_ENABLED, ID_EDIT_COPY, "Copy");
+    menu.AppendMenu(MF_STRING|MF_ENABLED, ID_EDIT_COPY, _T("Copy"));
 
 	CPoint pt;
 	GetCursorPos( &pt );

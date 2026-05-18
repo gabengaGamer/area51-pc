@@ -105,9 +105,6 @@ int CEditorTriggerView::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	m_TriggerLst.InsertColumn(8, "State",       LVCFMT_LEFT, 80);
 	m_TriggerLst.InsertColumn(9, "Dialog",      LVCFMT_LEFT, 40);
     m_TriggerLst.SetExtendedStyle(LVS_EX_GRIDLINES | LVS_EX_FULLROWSELECT);
-	m_TriggerLst.SubclassHeader();
-	m_TriggerLst.GetFlatHeaderCtrl()->ShowSortArrow(TRUE);
-    m_TriggerLst.SetSortImage(0, false);	
 
 	return 0;
 }

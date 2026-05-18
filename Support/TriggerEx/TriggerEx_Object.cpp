@@ -3069,7 +3069,7 @@ void trigger_ex_object::OnAdvanceLogic( f32 DeltaTime )
 //===========================================================================
 // return TRUE to continue, FALSE to end advance
 #ifdef X_EDITOR
-extern g_EditorBreakpoint;
+extern xbool g_EditorBreakpoint;
 #endif // X_EDITOR
 
 xbool trigger_ex_object::ExecuteIndividualAction ( actions_ex_base* pAction, s32 ActionIndex, f32 DeltaTime )

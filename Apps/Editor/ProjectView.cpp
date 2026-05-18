@@ -74,7 +74,7 @@ int CProjectView::OnCreate(LPCREATESTRUCT lpCreateStruct)
     m_Frame.Create( NULL, "", WS_CHILD|WS_VISIBLE, CRect(0,0,0,0), this );
 /*
 	if( !m_TabCtrl.Create(this, IDW_PROJ_VIEWTAB_BAR, _T("Properties"),
-		CSize(200, 150), CBRS_TOP, CBRS_XT_DEFAULT ))
+		CSize(200, 150), CBRS_TOP, 0 ))
 	{
 		TRACE0("Failed to create property dock window\n");
 		return -1;		// fail to create

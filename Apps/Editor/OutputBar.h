@@ -12,45 +12,26 @@
 #include "..\EDRscDesc\CompErrorDisplayCtrl.h"
 #include "..\Editor\OutputCtrl.h"
 #include "LogView.h"
+#include "WorkspaceTabCtrl.h"
 
 /////////////////////////////////////////////////////////////////////////////
 // COutputBar dock window class
 
-class COutputBar : public CXTDockWindow
+class COutputBar : public CEditorWorkspaceTabCtrl
 {
-	DECLARE_DYNAMIC(COutputBar)
-
-
-// Construction / destruction
 public:
 	COutputBar();
 	virtual ~COutputBar();
+    BOOL Create(CWnd* pParentWnd, UINT nID, LPCTSTR pWindowName, CSize SizeDefault, DWORD dwAlignStyle, DWORD dwStyle);
 
 // Attributes
 public:
-
-	CXTFlatTabCtrl	        m_flatTabCtrl;
-	CXTListBox		        m_sheet2;
+	CListBox		        m_sheet2;
     CFont                   m_Font;
     CompErrorDisplayCtrl    m_CompileOutput;
     COutputCtrl             m_DebugMsgOutput;
     CLogView                m_LogMsgOutput;
     COutputCtrl             m_SelectionsOutput;
-
-
-// Operations
-public:
-
-// Overrides
-	// ClassWizard generated virtual function overrides
-	//{{AFX_VIRTUAL(COutputBar)
-	//}}AFX_VIRTUAL
-
-protected:
-	//{{AFX_MSG(COutputBar)
-	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
-	//}}AFX_MSG
-	DECLARE_MESSAGE_MAP()
 };
 
 /////////////////////////////////////////////////////////////////////////////

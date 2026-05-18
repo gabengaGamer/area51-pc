@@ -35,7 +35,8 @@
 #include "GameTextMgr\GameTextMgr.hpp"
 #include "AI\AIMgr.hpp"
 #include "Decals\DecalMgr.hpp"
-#include "SMTP\smtp.h"
+// Legacy SMTP mailer disabled during the MFC migration.
+// #include "SMTP\\smtp.h"
 
 #include "..\WorldEditor\nav_connection2_editor.hpp"
 #include "..\WorldEditor\nav_connection2_anchor.hpp"
@@ -48,12 +49,7 @@ void SYMBOL( void );                                                    \
 static struct SYMBOL##_force_link                                       \
 { SYMBOL##_force_link(void){ SYMBOL(); } } s_##SYMBOL##_ForceLink;      \
 
-FORCELINK( LinkBitmapEditor );
-FORCELINK( LinkLocoEditor );
 FORCELINK( LinkResourceEditor );
-//FORCELINK( LinkEventEditor );
-FORCELINK( LinkAudioEditor );
-FORCELINK( LinkMeshViewer );
 
 
 /////////////////////////////////////////////////////////////////////////////
@@ -381,6 +377,8 @@ void EditorRTFMailer( const char* pSubject, const char* pReport )
         Body += pReport;
         Body += "\r\n";
 
+        // Legacy SMTP crash-mail path kept as a reference.
+        /*
         CPJNSMTPConnection smtp;
         smtp.Connect( "hermes.inevitable.com" );
         CSMTPMessage m;
@@ -389,6 +387,7 @@ void EditorRTFMailer( const char* pSubject, const char* pReport )
         m.m_sSubject    = Subject;
         m.AddTextBody( Body );
         smtp.SendMessage( m );
+        */
     }
 #endif
 }
@@ -447,8 +446,6 @@ CEditorApp::CEditorApp()
 	// Place all significant initialization in InitInstance
     m_pConfigFile  = "EditorConfigs.ini" ;
     m_pSettingFile = "EditorSettings.settings";
-
-    LinkMeshViewer();
 }
 
 //===========================================================================

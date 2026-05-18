@@ -11,7 +11,6 @@
 #include "..\WinControls\FileSearch.h"
 #include "..\Editor\Resource.h"
 #include "..\Editor\Project.hpp"
-#include "GenericDialog\GenericDialog.hpp"
 #include "EditorPaletteDoc.h"
 #include "EditorView.h"
 #include "EditorDoc.h"
@@ -165,7 +164,6 @@ BEGIN_MESSAGE_MAP(CEditorFrame, CBaseFrame)
 	ON_UPDATE_COMMAND_UI(ID_BUTTON_CONNECT_MODE, OnUpdateButtonConnectMode)
 	ON_UPDATE_COMMAND_UI(ID_BUTTON_CHECK_ALL_NODES, OnUpdateButtonCheckAllNodes)
 	ON_UPDATE_COMMAND_UI(ID_BUTTON_CHAIN_NODES, OnUpdateButtonChainNodes)
-    ON_MESSAGE(CBRN_XT_DROPDOWN, OnToolBarDropDown)
     ON_COMMAND(ID_CFM_ADD, OnCameraFavoriteAdd)
     ON_COMMAND_RANGE(ID_CFM_FAVORITE_1,ID_CFM_FAVORITE_10, OnCameraFavorite)
     ON_COMMAND(ID_CFM_MORE, OnCameraFavoriteMore)
@@ -311,7 +309,7 @@ void CEditorFrame::Dump(CDumpContext& dc) const
 
 //=========================================================================
 
-CWnd* CEditorFrame::FindViewFromTab( CXTTabCtrlBar& Bar, CRuntimeClass *pViewClass )
+CWnd* CEditorFrame::FindViewFromTab( CWorkspaceTabCtrl& Bar, CRuntimeClass *pViewClass )
 {
     CWnd* pWnd=NULL;
     for( s32 i=0; pWnd=Bar.GetView(i); i++ )
@@ -359,22 +357,43 @@ int CEditorFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	// Turn on toolbar customization.
 	//m_wndToolBar.SetCustomBar(TRUE);
 
-    // Set DropDowns on ToolBar
-    m_wndToolBar.AddDropDownButton( ID_WETB_CAMERA_FAVORITES );
+    m_wndToolBar.GetToolBarCtrl().SetExtendedStyle(TBSTYLE_EX_DRAWDDARROWS);
+    {
+        const int FavoriteIndex = m_wndToolBar.CommandToIndex(ID_WETB_CAMERA_FAVORITES);
+        if (FavoriteIndex != -1)
+        {
+            m_wndToolBar.SetButtonStyle(FavoriteIndex, m_wndToolBar.GetButtonStyle(FavoriteIndex) | TBSTYLE_DROPDOWN);
+        }
+    }
+
+    {
+        const int ComboIndex = m_wndToolBar.CommandToIndex(IDC_COMBOBOX_ACTIVE_LAYER);
+        if (ComboIndex != -1)
+        {
+            m_wndToolBar.SetButtonInfo(ComboIndex, IDC_COMBOBOX_ACTIVE_LAYER, TBBS_SEPARATOR, 200);
+        }
+    }
+
+    CRect ComboRect;
+    const int ComboIndex = m_wndToolBar.CommandToIndex(IDC_COMBOBOX_ACTIVE_LAYER);
+    if (ComboIndex == -1)
+    {
+        TRACE0("Failed to locate toolbar combo placeholder.\n");
+        return -1;
+    }
+    m_wndToolBar.GetItemRect(ComboIndex, &ComboRect);
 
 	if (!m_wndComboBox.Create( WS_CHILD|WS_VISIBLE|CBS_DROPDOWNLIST|CBS_SORT|WS_CLIPCHILDREN,
-		CRect(0,0,200,150), &m_wndToolBar, IDC_COMBOBOX_ACTIVE_LAYER ))
+		ComboRect, &m_wndToolBar, IDC_COMBOBOX_ACTIVE_LAYER ))
 	{
 		TRACE0("Failed to create flat toolbar.\n");
 		return -1;      // fail to create
 	}
-    m_wndToolBar.InsertControl(&m_wndComboBox);
-	// Autosize the toolbar.
-	m_wndToolBar.AutoSizeToolbar();
+	m_wndToolBar.GetToolBarCtrl().AutoSize();
 
 	// Create the property bar.
 	if( !m_wndProperty.Create(this, IDW_PROPERTY_BAR, _T("Property"),
-		CSize(350, 150), CBRS_LEFT, CBRS_XT_BUTTONS | CBRS_XT_GRIPPER | CBRS_XT_CLIENT_STATIC)) //|(AFX_IDW_TOOLBAR + 6) ))
+		CSize(350, 150), CBRS_LEFT, 0)) //|(AFX_IDW_TOOLBAR + 6) ))
 	{
 		TRACE0("Failed to create property dock window\n");
 		return -1;		// fail to create
@@ -382,25 +401,21 @@ int CEditorFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 
 	// Create the workspace bar.
 	if( !m_wndWrkspBar.Create(this, IDW_WORKSPBAR, _T("Workspace"),
-		CSize(350, 150), CBRS_LEFT, CBRS_TOOLTIPS | CBRS_FLYBY | CBRS_XT_BUTTONS | CBRS_XT_GRIPPER | CBRS_XT_CLIENT_STATIC)) //|(AFX_IDW_TOOLBAR + 7) ))
+		CSize(350, 150), CBRS_LEFT, CBRS_TOOLTIPS | CBRS_FLYBY)) //|(AFX_IDW_TOOLBAR + 7) ))
 	{
 		TRACE0("Failed to create workspace dock window\n");
 		return -1;		// fail to create
 	}
     m_wndWrkspBar.EnableToolTips( TRUE );
 
-	m_wndToolBar.EnableDockingEx(CBRS_ALIGN_TOP|CBRS_ALIGN_BOTTOM, CBRS_XT_ALL_FLAT);
-	m_wndWrkspBar.EnableDockingEx(CBRS_ALIGN_ANY, CBRS_XT_ALL_FLAT|CBRS_XT_GRIPPER_GRAD);
-	m_wndProperty.EnableDockingEx(CBRS_ALIGN_ANY, CBRS_XT_ALL_FLAT|CBRS_XT_GRIPPER_GRAD);
-	EnableDockingEx(CBRS_ALIGN_ANY, CBRS_XT_ALL_FLAT);
-
-    m_wndWrkspBar.ModifyXTBarStyle(CBRS_XT_CLOSEBTN, 0);
-    m_wndProperty.ModifyXTBarStyle(CBRS_XT_CLOSEBTN, 0);
+	m_wndToolBar.EnableDocking(CBRS_ALIGN_TOP|CBRS_ALIGN_BOTTOM);
+	m_wndWrkspBar.EnableDocking(CBRS_ALIGN_ANY);
+	m_wndProperty.EnableDocking(CBRS_ALIGN_ANY);
+	EnableDocking(CBRS_ALIGN_ANY);
 
 	DockControlBar( &m_wndToolBar,AFX_IDW_DOCKBAR_TOP );
 	DockControlBar(&m_wndWrkspBar,AFX_IDW_DOCKBAR_LEFT);
 	DockControlBar(&m_wndProperty,AFX_IDW_DOCKBAR_LEFT);
-	DockControlBarLeftOf(&m_wndWrkspBar, &m_wndProperty);
 
 	// TODO: Add your own view and documents to the workspace window.
     m_pPaletteDoc = new CEditorPaletteDoc();
@@ -466,10 +481,14 @@ int CEditorFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 //        m_wndWrkspBar.AddControl(_T("Triggers"), pFrameWnd);
         m_wndWrkspBar.AddControl(_T(""), pFrameWnd);
 
-        CXTTabCtrl& TabCtrl = m_wndWrkspBar.GetTabCtrl();
+        CTabCtrl& TabCtrl = m_wndWrkspBar.GetTabCtrl();
         for( s32 i=0 ; i<TabCtrl.GetItemCount() ; i++ )
         {
-            TabCtrl.SetTabText( i, "" );
+            TCITEM Item;
+            x_memset(&Item, 0, sizeof(Item));
+            Item.mask    = TCIF_TEXT;
+            Item.pszText = _T("");
+            TabCtrl.SetItem(i, &Item);
         }
 
         //layers is the default view
@@ -486,8 +505,7 @@ int CEditorFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	// Associate the image list with the tab control bar.
     m_wndWrkspBar.SetTabImageList(&m_imageList);
 
-    m_wndWrkspBar.GetTabCtrl().SetMinTabWidth( 16 );
-    m_wndWrkspBar.GetTabCtrl().SetPadding( CSize(2,4) );
+    m_wndWrkspBar.GetTabCtrl().SetItemSize(CSize(16, 18));
     m_wndWrkspBar.SetActiveView(0);
 
     m_pPropertyEditorDoc = new CPropertyEditorDoc();
@@ -758,7 +776,7 @@ void CEditorFrame::OnUpdateWetbRenderPreview(CCmdUI* pCmdUI)
 
 void CEditorFrame::OnWetbLightLevel()
 {
-	CXTMenu menu;
+	CMenu menu;
     menu.CreatePopupMenu();
 
     menu.AppendMenu(MF_STRING|MF_ENABLED, IDR_LEVEL_LIGHT_NORMAL,   "Light::Distance");
@@ -1182,7 +1200,7 @@ void CEditorFrame::OnWetbCopyObjects()
             guid& ObjGuid = lstItems.GetAt(i);
             AddObjectToActiveLayerView(ObjGuid);
         }
-        for (i=0; i<lstBPRefs.GetCount(); i++)
+        for (int i=0; i<lstBPRefs.GetCount(); i++)
         {
             guid& BPGuid = lstBPRefs.GetAt(i);
             AddBlueprintToActiveLayerView(BPGuid);
@@ -1256,7 +1274,7 @@ void CEditorFrame::OnWetbMoveObjectsToActiveLayer()
             //added to avoid tree view doing a switch on us
             g_WorldEditor.UnSelectZone();
             g_WorldEditor.ClearSelectedObjectList();
-            for (i=0; i<lstItems.GetCount(); i++)
+            for (int i=0; i<lstItems.GetCount(); i++)
             {
                 editor_item_descript& ItemInfo = lstItems.GetAt(i);
 
@@ -1306,52 +1324,29 @@ void CEditorFrame::OnWetbRunGame()
             g_WorldEditor.GetListOfPortals(PortalList);
             if(PortalList.GetCount() == 0)
             {
-                generic_dialog Dialog;
-                Dialog.SetTitle( "ERROR! No Portal in Level" );
-                Dialog.SetMessage( "Level will not export and will not run correctly without a Portal");
-                Dialog.AppendButton( "Edit Level" );
-                Dialog.AppendButton( "Ignore" );
-                switch( Dialog.Execute() )
+                if( AfxMessageBox( "Level will not export and will not run correctly without a Portal.\n\nEdit level now?",
+                                   MB_ICONERROR | MB_YESNO ) == IDYES )
                 {
-                    // Edit Level?
-                case 0:
-                    {
-                        return;
-                        break;
-                    }
-                    // Ignore?
-                case 1:
-                    break;
+                    return;
                 }
             }
             // Check for bad properties
             xarray<property_error> Errors;
             if( g_WorldEditor.ValidateObjectProperties( Errors, "RunGame" ) )
             {
-                // Setup dialog
-                generic_dialog Dialog;
-                Dialog.SetTitle( "OBJECT PROPERTY ERROR! - Level will not export and may not run correctly!" );
-                Dialog.AppendButton( "Edit Object" );
-                Dialog.AppendButton( "Ignore" );
-                Dialog.AppendButton( "Ignore All" );
-                Dialog.AppendButton( "Cancel" );
-
-                // Loop through all errors
-                s32 bIgnoreAll = FALSE;
-                for( s32 i = 0 ; ( i < Errors.GetCount() ) && ( bIgnoreAll == FALSE ) ; i++ )
+                for( s32 i = 0 ; i < Errors.GetCount() ; i++ )
                 {
                     // Lookup error
                     property_error& Error = Errors[i];
 
                     // Set dialog error message
                     Error.m_ErrorMsg = "\n" + Error.m_ErrorMsg ;
-                    Dialog.SetMessage( Error.m_ErrorMsg );
                     
                     // What does user want to do?
-                    switch( Dialog.Execute() )
+                    switch( AfxMessageBox( Error.m_ErrorMsg, MB_ICONERROR | MB_YESNOCANCEL ) )
                     {
                         // Edit object?
-                        case 0:
+                        case IDYES:
                         {
                             // Get object
                             object* pObject = g_ObjMgr.GetObjectByGuid( Error.m_ObjectGuid );
@@ -1398,28 +1393,19 @@ void CEditorFrame::OnWetbRunGame()
                             }
                             else
                             {
-                                generic_dialog Dialog;
-                                Dialog.SetTitle( "Couldn't locate the object!" );
                                 xstring Msg;
                                 Msg.Format( "GUID \"%08X:%08X\" could not be found", Error.m_ObjectGuid.GetHigh(), Error.m_ObjectGuid.GetLow() );
-                                Dialog.SetMessage( (const char*)Msg );
-                                Dialog.AppendButton( "OK" );
-                                Dialog.Execute();
+                                AfxMessageBox( (const char*)Msg, MB_ICONERROR | MB_OK );
                             }
                         }
                         return;
 
                         // Ignore?
-                        case 1:
-                            break;
-
-                        // Ignore All?
-                        case 2:
-                            bIgnoreAll = TRUE;
+                        case IDNO:
                             break;
 
                         // Cancel?
-                        case 3:
+                        case IDCANCEL:
                             return;
                     }
                 }
@@ -1591,123 +1577,124 @@ void CEditorFrame::OnWetbPortalWalk()
 
 void CEditorFrame::OnWetbSoundDebugStats() 
 {
-    if (GetEditorDoc()->IsGameRunning())
-    {   
-        xarray<xstring> LoadedPackages;
-        extern xarray<xstring> g_AuditionPackages;
-
-        g_AudioMgr.GetLoadedPackages( LoadedPackages );
-        if( g_AuditionPackages.GetCount() && LoadedPackages.GetCount() )
-        {
-            for( s32 i=0 ; i<g_AuditionPackages.GetCount() ; i++ )
-            {
-                s32 j;
-                if( (j = LoadedPackages.Find( g_AuditionPackages[i] )) != -1 )
-                {
-                    LoadedPackages.Delete( j );
-                }
-            }
-        }
-
-        if( LoadedPackages.GetCount() )
-        {
-            x_DebugMsg( "********** Loaded Audio Packages **********\n" );
-            x_DebugMsg( "\n" );
-            s32 TotalRamFootprint = 0;
-            for( s32 j=0 ; j<LoadedPackages.GetCount() ; j++ )
-            {
-                X_FILE* pPS2File = NULL;
-                char PS2FilePath[256];
-
-                x_try;
-
-                x_sprintf( PS2FilePath, "%s\\PS2\\%s", g_Settings.GetReleasePath(), (const char*)LoadedPackages[j] );
-
-                pPS2File = x_fopen( PS2FilePath, "rb" );
-
-                if( pPS2File == NULL )
-                    x_throw( xfs("Unable to open file [%s]", (const char*)LoadedPackages[j]) );
-
-                package_identifier  PackageID;
-                package_header      PackageHeader;
-                s32                 MRAM = 0;
-                s32                 ARAM = 0;
-                s32                 i    = 0;
-
-                // Read in the package identifier.
-                x_fread( &PackageID, sizeof(package_identifier), 1, pPS2File );
-
-                // Correct version?
-                if( !x_strncmp( PackageID.VersionID, PS2_PACKAGE_VERSION, VERSION_ID_SIZE ) )
-                {
-                    // Correct platform?
-                    if( !x_strncmp( PackageID.TargetID, PS2_TARGET_ID, TARGET_ID_SIZE ) )
-                    {
-
-                        // Now read in the header.
-                        x_fread( &PackageHeader, sizeof(package_header), 1, pPS2File );
-
-                        MRAM    += PackageHeader.StringTableFootprint;
-                        MRAM    += PackageHeader.MusicDataFootprint;
-                        MRAM    += PackageHeader.LipSyncTableFootprint;
-                        MRAM    += PackageHeader.BreakPointTableFootprint;
-                        MRAM    += PackageHeader.nIdentifiers * sizeof(descriptor_identifier);
-                        MRAM    += PackageHeader.nDescriptors * sizeof(u32*);
-                        MRAM    += PackageHeader.DescriptorFootprint;
-
-                        // For each temperature...
-                        for( i=0 ; i<NUM_TEMPERATURES ; i++ )
-                        {
-                            if( PackageHeader.nSampleIndices[ i ] )
-                            {
-                                // Allocate memory for sample header index table.
-                                MRAM += (PackageHeader.nSampleIndices[ i ]+1) * sizeof(u16);
-                            }
-                        }
-
-                        // Allocate memory for the hot and cold samples
-                        if( PackageHeader.nSampleHeaders[ HOT ] )
-                        {
-                            MRAM +=  PackageHeader.nSampleHeaders[ HOT ] * PackageHeader.HeaderSizes[ HOT ];
-                        }
-
-                        if( PackageHeader.nSampleHeaders[ COLD ] )
-                        {
-                            MRAM += PackageHeader.nSampleHeaders[ COLD ] * PackageHeader.HeaderSizes[ COLD ];
-                        }
-
-                        ARAM    += PackageHeader.Aram;
-                    }
-                    else
-                    {
-                        x_throw( xfs("Incorrect audio package PLATFORM [%s]", (const char*)LoadedPackages[j]) );
-                    }
-                }
-                else
-                {
-                    x_throw( xfs("Incorrect audio package VERSION [%s]", (const char*)LoadedPackages[j]) );
-                }
-
-                TotalRamFootprint += ARAM;
-
-                x_DebugMsg( "%7d %s\n", ARAM, (const char*)LoadedPackages[j] );
-                x_fclose( pPS2File );
-
-                x_catch_begin;
-
-                x_display_exception_msg( xfs("Could not load audiopkg for PS2 memory scan:\n%s",PS2FilePath) );
-
-                if( pPS2File )
-                    x_fclose( pPS2File );
-
-                x_catch_end;
-            }
-
-            x_DebugMsg( "=======\n" );
-            x_DebugMsg( "%7d Total [%dk]\n", TotalRamFootprint, (TotalRamFootprint + 1023) / 1024 );
-            x_DebugMsg( "%7d FREE [%dk]\n", (5000*1024 - TotalRamFootprint), (5000*1024 - TotalRamFootprint + 1023) / 1024 );
-        }
-    }
+	// TODO: GS: Do with this something later.
+    //if (GetEditorDoc()->IsGameRunning())
+    //{   
+    //    xarray<xstring> LoadedPackages;
+    //    extern xarray<xstring> g_AuditionPackages;
+	//
+    //    g_AudioMgr.GetLoadedPackages( LoadedPackages );
+    //    if( g_AuditionPackages.GetCount() && LoadedPackages.GetCount() )
+    //    {
+    //        for( s32 i=0 ; i<g_AuditionPackages.GetCount() ; i++ )
+    //        {
+    //            s32 j;
+    //            if( (j = LoadedPackages.Find( g_AuditionPackages[i] )) != -1 )
+    //            {
+    //                LoadedPackages.Delete( j );
+    //            }
+    //        }
+    //    }
+	//
+    //    if( LoadedPackages.GetCount() )
+    //    {
+    //        x_DebugMsg( "********** Loaded Audio Packages **********\n" );
+    //        x_DebugMsg( "\n" );
+    //        s32 TotalRamFootprint = 0;
+    //        for( s32 j=0 ; j<LoadedPackages.GetCount() ; j++ )
+    //        {
+    //            X_FILE* pPS2File = NULL;
+    //            char PS2FilePath[256];
+	//
+    //            x_try;
+	//
+    //            x_sprintf( PS2FilePath, "%s\\PS2\\%s", g_Settings.GetReleasePath(), (const char*)LoadedPackages[j] );
+	//
+    //            pPS2File = x_fopen( PS2FilePath, "rb" );
+	//
+    //            if( pPS2File == NULL )
+    //                x_throw( xfs("Unable to open file [%s]", (const char*)LoadedPackages[j]) );
+	//
+    //            package_identifier  PackageID;
+    //            package_header      PackageHeader;
+    //            s32                 MRAM = 0;
+    //            s32                 ARAM = 0;
+    //            s32                 i    = 0;
+	//
+    //            // Read in the package identifier.
+    //            x_fread( &PackageID, sizeof(package_identifier), 1, pPS2File );
+	//
+    //            // Correct version?
+    //            if( !x_strncmp( PackageID.VersionID, PS2_PACKAGE_VERSION, VERSION_ID_SIZE ) )
+    //            {
+    //                // Correct platform?
+    //                if( !x_strncmp( PackageID.TargetID, PS2_TARGET_ID, TARGET_ID_SIZE ) )
+    //                {
+	//
+    //                    // Now read in the header.
+    //                    x_fread( &PackageHeader, sizeof(package_header), 1, pPS2File );
+	//
+    //                    MRAM    += PackageHeader.StringTableFootprint;
+    //                    MRAM    += PackageHeader.MusicDataFootprint;
+    //                    MRAM    += PackageHeader.LipSyncTableFootprint;
+    //                    MRAM    += PackageHeader.BreakPointTableFootprint;
+    //                    MRAM    += PackageHeader.nIdentifiers * sizeof(descriptor_identifier);
+    //                    MRAM    += PackageHeader.nDescriptors * sizeof(u32*);
+    //                    MRAM    += PackageHeader.DescriptorFootprint;
+	//
+    //                    // For each temperature...
+    //                    for( i=0 ; i<NUM_TEMPERATURES ; i++ )
+    //                    {
+    //                        if( PackageHeader.nSampleIndices[ i ] )
+    //                        {
+    //                            // Allocate memory for sample header index table.
+    //                            MRAM += (PackageHeader.nSampleIndices[ i ]+1) * sizeof(u16);
+    //                        }
+    //                    }
+	//
+    //                    // Allocate memory for the hot and cold samples
+    //                    if( PackageHeader.nSampleHeaders[ HOT ] )
+    //                    {
+    //                        MRAM +=  PackageHeader.nSampleHeaders[ HOT ] * PackageHeader.HeaderSizes[ HOT ];
+    //                    }
+	//
+    //                    if( PackageHeader.nSampleHeaders[ COLD ] )
+    //                    {
+    //                        MRAM += PackageHeader.nSampleHeaders[ COLD ] * PackageHeader.HeaderSizes[ COLD ];
+    //                    }
+	//
+    //                    ARAM    += PackageHeader.Aram;
+    //                }
+    //                else
+    //                {
+    //                    x_throw( xfs("Incorrect audio package PLATFORM [%s]", (const char*)LoadedPackages[j]) );
+    //                }
+    //            }
+    //            else
+    //            {
+    //                x_throw( xfs("Incorrect audio package VERSION [%s]", (const char*)LoadedPackages[j]) );
+    //            }
+	//
+    //            TotalRamFootprint += ARAM;
+	//
+    //            x_DebugMsg( "%7d %s\n", ARAM, (const char*)LoadedPackages[j] );
+    //            x_fclose( pPS2File );
+	//
+    //            x_catch_begin;
+	//
+    //            x_display_exception_msg( xfs("Could not load audiopkg for PS2 memory scan:\n%s",PS2FilePath) );
+	//
+    //            if( pPS2File )
+    //                x_fclose( pPS2File );
+	//
+    //            x_catch_end;
+    //        }
+	//
+    //        x_DebugMsg( "=======\n" );
+    //        x_DebugMsg( "%7d Total [%dk]\n", TotalRamFootprint, (TotalRamFootprint + 1023) / 1024 );
+    //        x_DebugMsg( "%7d FREE [%dk]\n", (5000*1024 - TotalRamFootprint), (5000*1024 - TotalRamFootprint + 1023) / 1024 );
+    //    }
+    //}
 }
 
 //=========================================================================
@@ -1940,7 +1927,7 @@ void CEditorFrame::OnUpdateWetbGridToObject(CCmdUI* pCmdUI)
 // FindMenuItem() will find a menu item string from the specified
 // popup menu and returns its position (0-based) in the specified 
 // popup menu. It returns -1 if no such menu item string is found.
-int FindMenuItem(CXTMenu& Menu, LPCTSTR MenuString)
+int FindMenuItem(CMenu& Menu, LPCTSTR MenuString)
 {
    ASSERT(Menu);
    ASSERT(::IsMenu(Menu.GetSafeHmenu()));
@@ -1968,8 +1955,8 @@ void CEditorFrame::OnCreateObject()
     else if (m_pWorldEditView->IsStandardMode())
     {
         s32     Count = 0;
-	    CXTMenu menu;
-        CXTMenu SubmenuArray[64];
+	    CMenu menu;
+        CMenu SubmenuArray[64];
         s32     iSubMenu=0;
         menu.CreatePopupMenu();
 
@@ -1991,7 +1978,7 @@ void CEditorFrame::OnCreateObject()
             if( pos == -1 )
             {   
                 ASSERT( iSubMenu < 64 );
-                CXTMenu& Submenu = SubmenuArray[iSubMenu];
+                CMenu& Submenu = SubmenuArray[iSubMenu];
                 iSubMenu++;
 
                 Submenu.CreatePopupMenu();
@@ -2077,7 +2064,7 @@ void CEditorFrame::OnWetbDeleteSelected()
         xfs("Deleting %d Object(s)",g_WorldEditor.GetSelectedCount())));
 
 	g_WorldEditor.DeleteSelectedObjects(lstItems);
-    for (i=0; i<lstItems.GetCount(); i++)
+    for (int i=0; i<lstItems.GetCount(); i++)
     {
         editor_item_descript Description = lstItems.GetAt(i);
         CString strName;
@@ -2693,19 +2680,21 @@ void CEditorFrame::OnMDIActivate(BOOL bActivate, CWnd* pActivateWnd, CWnd* pDeac
     else
         SetWindowText("WorldEditor");
    
-    CXTMenuBar* pMenuBar = CMainFrame::s_pMainFrame->GetMenuBar();
-    if( pMenuBar )
+    CMainFrame* pMainFrame = CMainFrame::s_pMainFrame;
+    if( pMainFrame )
     {
         if( bActivate ) //&& (m_MenuResource != 0) )
         {
             CMenu menu;
             menu.LoadMenu( IDR_MENU_WORLD );
-            HMENU hMenu = menu.Detach();
-            m_hPreviousMenu = pMenuBar->LoadMenu( hMenu, hMenu );
+            m_hPreviousMenu = ::GetMenu(pMainFrame->GetSafeHwnd());
+            ::SetMenu(pMainFrame->GetSafeHwnd(), menu.Detach());
+            pMainFrame->DrawMenuBar();
         }
         else if( !bActivate && (m_hPreviousMenu != 0) )
         {
-            pMenuBar->LoadMenu( m_hPreviousMenu, NULL );
+            ::SetMenu(pMainFrame->GetSafeHwnd(), m_hPreviousMenu);
+            pMainFrame->DrawMenuBar();
             m_hPreviousMenu = 0;
         }
     }
@@ -2790,7 +2779,7 @@ LRESULT CEditorFrame::OnToolBarDropDown(WPARAM wParam, LPARAM lParam)
     ASSERT( pRect != NULL );
 
     // Create the menu
-    CXTMenu Menu;
+    CMenu Menu;
     Menu.CreatePopupMenu();
 
     // Add the "Add Favorite option"

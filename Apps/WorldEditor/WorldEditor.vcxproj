@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="Current" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="EDITOR-Debug|Win32">
+      <Configuration>EDITOR-Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>17.0</VCProjectVersion>
+    <ProjectGuid>{7176B5C2-38B2-4AD3-A540-826D121FF366}</ProjectGuid>
+    <SccProjectName>Perforce Project</SccProjectName>
+    <SccAuxPath />
+    <SccLocalPath>..\..</SccLocalPath>
+    <SccProvider>MSSCCI:Perforce SCM</SccProvider>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='EDITOR-Debug|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <PlatformToolset>v143</PlatformToolset>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='EDITOR-Debug|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_ProjectFileVersion>17.0.36414.14</_ProjectFileVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='EDITOR-Debug|Win32'">
+    <OutDir>$(ProjectDir)_$(Platform)$(Configuration)\</OutDir>
+    <IntDir>$(ProjectDir)_$(Platform)$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='EDITOR-Debug|Win32'">
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <AdditionalIncludeDirectories>$(X);$(X)/x_Files;$(X)/Entropy;$(X)/MeshUtil;$(X)\..\Support;$(X)\Auxiliary;$(X)\Auxiliary\Bitmap;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>TARGET_PC;CONFIG_DEBUG;APP_EDITOR;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <BasicRuntimeChecks>Default</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <PrecompiledHeader />
+      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="AI_Editor.cpp" />
+    <ClCompile Include="AnimPkgDialog.cpp" />
+    <ClCompile Include="AudioPkgDialog.cpp" />
+    <ClCompile Include="blueprint_anchor.cpp" />
+    <ClCompile Include="BuildDFS.cpp" />
+    <ClCompile Include="ConnectionAttributeDialog.cpp" />
+    <ClCompile Include="DialogTextEntry.cpp" />
+    <ClCompile Include="EditorAIView.cpp" />
+    <ClCompile Include="EditorBlueprintView.cpp" />
+    <ClCompile Include="EditorDebuggerView.cpp" />
+    <ClCompile Include="EditorDecalView.cpp" />
+    <ClCompile Include="EditorDoc.cpp" />
+    <ClCompile Include="EditorDocGridMngr.cpp" />
+    <ClCompile Include="EditorDocInputMngr.cpp" />
+    <ClCompile Include="EditorFrame.cpp" />
+    <ClCompile Include="EditorGlobalView.cpp" />
+    <ClCompile Include="EditorLayerView.cpp" />
+    <ClCompile Include="EditorObjectView.cpp" />
+    <ClCompile Include="EditorPaletteDoc.cpp" />
+    <ClCompile Include="EditorSettingsView.cpp" />
+    <ClCompile Include="EditorSoundView.cpp" />
+    <ClCompile Include="EditorTriggerView.cpp" />
+    <ClCompile Include="EditorView.cpp" />
+    <ClCompile Include="EditorWatchView.cpp" />
+    <ClCompile Include="nav_connection2_anchor.cpp" />
+    <ClCompile Include="nav_connection2_editor.cpp" />
+    <ClCompile Include="NewGlobalDlg.cpp" />
+    <ClCompile Include="ptr_list.cpp" />
+    <ClCompile Include="ResourceBrowserDlg.cpp" />
+    <ClCompile Include="ResourcePreview.cpp" />
+    <ClCompile Include="static_decal.cpp" />
+    <ClCompile Include="StdAfx.cpp" />
+    <ClCompile Include="TransactionStackDlg.cpp" />
+    <ClCompile Include="transaction_bpref_data.cpp" />
+    <ClCompile Include="transaction_entry.cpp" />
+    <ClCompile Include="transaction_file_data.cpp" />
+    <ClCompile Include="transaction_layer_data.cpp" />
+    <ClCompile Include="transaction_mgr.cpp" />
+    <ClCompile Include="transaction_object_data.cpp" />
+    <ClCompile Include="transaction_selection_data.cpp" />
+    <ClCompile Include="transaction_zone_data.cpp" />
+    <ClCompile Include="ValueGrid.cpp" />
+    <ClCompile Include="WE_Decals.cpp" />
+    <ClCompile Include="WorkspaceTabCtrl.cpp" />
+    <ClCompile Include="WorldEditor.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="AI_editor.hpp" />
+    <ClInclude Include="AnimPkgDialog.h" />
+    <ClInclude Include="AudioPkgDialog.h" />
+    <ClInclude Include="blueprint_anchor.hpp" />
+    <ClInclude Include="ConnectionAttributeDialog.h" />
+    <ClInclude Include="DialogTextEntry.h" />
+    <ClInclude Include="EditorAIView.h" />
+    <ClInclude Include="EditorBlueprintView.h" />
+    <ClInclude Include="EditorDebuggerView.h" />
+    <ClInclude Include="EditorDecalView.h" />
+    <ClInclude Include="EditorDoc.h" />
+    <ClInclude Include="EditorDocGridMngr.h" />
+    <ClInclude Include="EditorDocInputMngr.h" />
+    <ClInclude Include="EditorFrame.h" />
+    <ClInclude Include="EditorGlobalView.h" />
+    <ClInclude Include="EditorLayerView.h" />
+    <ClInclude Include="EditorObjectView.h" />
+    <ClInclude Include="EditorPaletteDoc.h" />
+    <ClInclude Include="EditorSettingsView.h" />
+    <ClInclude Include="EditorSoundView.h" />
+    <ClInclude Include="EditorTriggerView.h" />
+    <ClInclude Include="EditorView.h" />
+    <ClInclude Include="EditorWatchView.h" />
+    <ClInclude Include="nav_connection2_anchor.hpp" />
+    <ClInclude Include="nav_connection2_editor.hpp" />
+    <ClInclude Include="NewGlobalDlg.h" />
+    <ClInclude Include="ptr_list.hpp" />
+    <ClInclude Include="resource.h" />
+    <ClInclude Include="ResourceBrowserDlg.h" />
+    <ClInclude Include="ResourcePreview.h" />
+    <ClInclude Include="static_decal.hpp" />
+    <ClInclude Include="StdAfx.h" />
+    <ClInclude Include="TransactionStackDlg.h" />
+    <ClInclude Include="transaction_bpref_data.hpp" />
+    <ClInclude Include="transaction_data.hpp" />
+    <ClInclude Include="transaction_entry.hpp" />
+    <ClInclude Include="transaction_file_data.hpp" />
+    <ClInclude Include="transaction_layer_data.hpp" />
+    <ClInclude Include="transaction_mgr.hpp" />
+    <ClInclude Include="transaction_object_data.hpp" />
+    <ClInclude Include="transaction_selection_data.hpp" />
+    <ClInclude Include="transaction_zone_data.hpp" />
+    <ClInclude Include="ValueGrid.h" />
+    <ClInclude Include="WorkspaceTabCtrl.h" />
+    <ClInclude Include="WorldEditor.hpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="res\ai_view_toolbar.bmp" />
+    <Image Include="res\blueprin.bmp" />
+    <Image Include="res\decal_pal.bmp" />
+    <Image Include="res\global_f.bmp" />
+    <Image Include="res\layerlist_icons.bmp" />
+    <Image Include="res\layervie.bmp" />
+    <Image Include="res\obj_Pal.bmp" />
+    <Image Include="res\palettev_filter.bmp" />
+    <Image Include="res\PAL_ImgTab.bmp" />
+    <Image Include="res\SoundViewFilter.bmp" />
+    <Image Include="res\tb_guidd.bmp" />
+    <Image Include="res\tb_worldEditor.bmp" />
+    <Image Include="res\triggerview.bmp" />
+    <Image Include="res\watchwindow.bmp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="WorldEditor.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="Readme.txt" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+  <ProjectExtensions>
+    <VisualStudio>
+      <UserProperties RESOURCE_FILE="WorldEditor.rc" />
+    </VisualStudio>
+  </ProjectExtensions>
+</Project>

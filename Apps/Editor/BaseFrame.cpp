@@ -15,7 +15,7 @@ static char THIS_FILE[] = __FILE__;
 /////////////////////////////////////////////////////////////////////////////
 // CBaseFrame
 
-IMPLEMENT_DYNCREATE(CBaseFrame, CXTMDIChildWnd)
+IMPLEMENT_DYNCREATE(CBaseFrame, CMDIChildWnd)
 
 CBaseFrame::CBaseFrame()
 {
@@ -27,7 +27,7 @@ CBaseFrame::~CBaseFrame()
 }
 
 
-BEGIN_MESSAGE_MAP(CBaseFrame, CXTMDIChildWnd)
+BEGIN_MESSAGE_MAP(CBaseFrame, CMDIChildWnd)
 	//{{AFX_MSG_MAP(CBaseFrame)
 	ON_WM_MDIACTIVATE()
 	ON_WM_CREATE()
@@ -40,7 +40,7 @@ BOOL CBaseFrame::PreCreateWindow(CREATESTRUCT& cs)
 {
 	// TODO: Modify the Window class or styles here by modifying
 	//  the CREATESTRUCT cs
-	if( !CXTMDIChildWnd::PreCreateWindow(cs) )
+	if( !CMDIChildWnd::PreCreateWindow(cs) )
 		return FALSE;
 
 	cs.style |= WS_CLIPCHILDREN;
@@ -54,7 +54,7 @@ BOOL CBaseFrame::PreCreateWindow(CREATESTRUCT& cs)
 void CBaseFrame::ActivateFrame(int nCmdShow)
 {
     nCmdShow = SW_SHOWMAXIMIZED;
-	CXTMDIChildWnd::ActivateFrame(nCmdShow);
+	CMDIChildWnd::ActivateFrame(nCmdShow);
     if( m_pBaseDoc == NULL )
     {
         m_pBaseDoc = (CBaseDocument*)GetActiveDocument();
@@ -63,7 +63,7 @@ void CBaseFrame::ActivateFrame(int nCmdShow)
 
 int CBaseFrame::OnCreate(LPCREATESTRUCT lpCreateStruct) 
 {
-	if (CXTMDIChildWnd::OnCreate(lpCreateStruct) == -1)
+	if (CMDIChildWnd::OnCreate(lpCreateStruct) == -1)
 		return -1;
 
     /*
@@ -83,8 +83,8 @@ int CBaseFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 		return -1;      // fail to create
 	}
 
-	m_wndToolBar     .EnableDockingEx(CBRS_ALIGN_ANY, CBRS_XT_ALL_FLAT);
-	EnableDockingEx(CBRS_ALIGN_ANY, CBRS_XT_ALL_FLAT);
+	m_wndToolBar     .EnableDocking(CBRS_ALIGN_ANY);
+	EnableDocking(CBRS_ALIGN_ANY);
 	DockControlBar      ( &m_wndToolBar );
 */
 	return 0;
@@ -93,7 +93,7 @@ int CBaseFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 
 void CBaseFrame::OnMDIActivate(BOOL bActivate, CWnd* pActivateWnd, CWnd* pDeactivateWnd) 
 {
-	CXTMDIChildWnd::OnMDIActivate(bActivate, pActivateWnd, pDeactivateWnd);
+	CMDIChildWnd::OnMDIActivate(bActivate, pActivateWnd, pDeactivateWnd);
 	
     if( GetBaseDocument() )
     {

@@ -10,7 +10,7 @@
 /////////////////////////////////////////////////////////////////////////////
 // RscView view
 
-class RscView : public CXTListView //CListView
+class RscView : public CListView
 {
 protected:
 	RscView();           // protected constructor used by dynamic creation

@@ -26,18 +26,18 @@ public:
 
     //CXTStatusBar    m_wndStatusBar;
 
-    CXTToolBar		        m_wndToolBar;
+    CToolBar                m_wndToolBar;
     CWorkspaceTabCtrl       m_wndWrkspBar;
-	CXTTabCtrlBar           m_wndProperty;
+	CWorkspaceTabCtrl       m_wndProperty;
 	CImageList              m_imageList;
     CEditorView*            m_pWorldEditView;
     CEditorPaletteDoc*      m_pPaletteDoc;
-	CXTFlatComboBox         m_wndComboBox;
+	CComboBox               m_wndComboBox;
     CString                 m_strCurrentLevel;
 
 // Attributes
 public:
-    CWnd*                  FindViewFromTab( CXTTabCtrlBar& Bar, CRuntimeClass *pViewClass );
+    CWnd*                  FindViewFromTab( CWorkspaceTabCtrl& Bar, CRuntimeClass *pViewClass );
     
     CPropertyEditorDoc*    GetPropertyEditorDoc();
     CPropertyEditorDoc*    GetSettingsEditorDoc();

@@ -10,6 +10,7 @@
 
 #include "EDRscDesc_Doc.h"
 #include "BaseFrame.h"
+#include "..\Editor\WorkspaceTabCtrl.h"
 
 class EDRscDesc_View;
 class EDRscDesc_Doc;
@@ -24,13 +25,15 @@ class EDRscDesc_Frame : public CBaseFrame
 protected:
 
     void                OnAddItem   ( int Num );
+    void                DockControlBarLeftOf( CControlBar* pBar, CControlBar* pLeftOf );
 
 /////////////////////////////////////////////////////////////////////////////
 protected:
 
-    CXTToolBar          m_BuildToolBar;
-    CXTToolBar          m_EditToolBar;
-    CXTTabCtrlBar       m_TabCtrl;
+    CToolBar            m_BuildToolBar;
+    CToolBar            m_EditToolBar;
+    CEditorWorkspaceTabCtrl
+                        m_TabCtrl;
     CPropertyEditorDoc* m_pPropEditor;
     EDRscDesc_Doc*      m_pDoc;
     xbool               m_Init;

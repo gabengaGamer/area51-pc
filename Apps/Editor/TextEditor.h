@@ -82,13 +82,14 @@ protected:
     void ImportText ( CString filename );
 
     CMyRichEditCtrl                m_rtf;
-    CXTToolBar                     m_wndToolBar;
+    CToolBar                       m_wndToolBar;
     CString                        m_strFilename;
 
-	CNotifyCombo <CXTFontCombo>    m_wndComboFont;
-	CNotifyCombo <CXTFlatComboBox> m_wndComboSize;
+	CNotifyCombo <CComboBox>       m_wndComboFont;
+	CNotifyCombo <CComboBox>       m_wndComboSize;
 	CString                        m_strFontSize;
 	CString                        m_strFontName;
+    COLORREF                       m_CurrentTextColor;
 
     bool InitComboFont();
     bool InitComboSize();

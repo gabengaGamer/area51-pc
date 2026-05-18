@@ -56,7 +56,7 @@ protected:
 	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()
 
-    CXTTreeCtrl     m_tcDebugger;
+    CTreeCtrl       m_tcDebugger;
 	CImageList	    m_imageList;
     CString         m_strDebugItem;
     xharray<guid>   m_lstObjectGuidStorage;

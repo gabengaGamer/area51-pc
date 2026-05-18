@@ -65,16 +65,16 @@ int CProjectFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	
     SetWindowText("Empty Project");
 
-	EnableDockingEx(CBRS_ALIGN_ANY, CBRS_XT_ALL_FLAT);
+	EnableDocking(CBRS_ALIGN_ANY);
 
 	// Create the property bar.
 	if( !m_TabCtrl.Create(this, IDW_PROJ_PROPERTY_BAR, _T("Properties"),
-		CSize(200, 150), CBRS_LEFT, CBRS_XT_BUTTONS | CBRS_XT_GRIPPER | CBRS_XT_CLIENT_STATIC)) //(AFX_IDW_TOOLBAR + 6) ))
+		CSize(200, 150), CBRS_LEFT, 0)) //(AFX_IDW_TOOLBAR + 6) ))
 	{
 		TRACE0("Failed to create property dock window\n");
 		return -1;		// fail to create
 	}
-	m_TabCtrl.EnableDockingEx(CBRS_ALIGN_ANY, CBRS_XT_ALL_FLAT|CBRS_XT_GRIPPER_GRAD);
+	m_TabCtrl.EnableDocking(CBRS_ALIGN_ANY);
 	DockControlBar(&m_TabCtrl,AFX_IDW_DOCKBAR_LEFT);
 
 	if (!m_wndToolBar.CreateEx(this, TBSTYLE_FLAT, WS_CHILD | WS_VISIBLE | CBRS_TOP
@@ -84,7 +84,7 @@ int CProjectFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 		TRACE0("Failed to create toolbar\n");
 		return -1;      // fail to create
 	}
-    m_wndToolBar.EnableDockingEx(CBRS_ALIGN_ANY, CBRS_XT_ALL_FLAT);
+    m_wndToolBar.EnableDocking(CBRS_ALIGN_ANY);
     DockControlBar(&m_wndToolBar );
 
 	// Associate the image list with the tab control bar.
@@ -112,10 +112,6 @@ int CProjectFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
         RUNTIME_CLASS(CFrameWnd), RUNTIME_CLASS(CPropertyEditorView), m_pProjectProp);
     m_TabCtrl.AddControl(_T("Project"), pFrameWnd);
     m_pProjectProp->GetView()->LoadColumnState( "BarState - Project" );
-
-    m_TabCtrl.ModifyXTBarStyle(CBRS_XT_CLOSEBTN, 0);
-
-	//m_TabCtrl.ModifyTabStyle(TCS_BOTTOM, 0);	
 
     // Load control bar postion.
     LoadBarState(_T("BarState - Project"));

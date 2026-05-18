@@ -52,10 +52,8 @@
 
 #include "Decals\DecalMgr.hpp"
 #include "static_decal.hpp"
-#include "GenericDialog\GenericDialog.hpp"
 
-#include "..\Apps\FxEditor\FxEditor.hpp"
-#include "..\Apps\DecalEditor\DecalEditor.hpp"
+#include "..\Apps\EDRscDesc\RSCDesc.hpp"
 #include "GameTextMgr\GameTextMgr.hpp"
 #include <io.h>
 
@@ -101,10 +99,6 @@ const char* DifficultyText[] = { "Easy", "Medium", "Hard" };
 //GLOBAL VARIABLE USED FOR ANONYMOUS REGISTERATION OF THE FX SYSTEM
 //=========================================================================
 
-extern s32 g_fx_link;
-extern s32 g_stringbin_link;
-extern s32 g_decal_link;
-extern s32 g_font_link;
 extern s32 s_PS2MemorySize;
 extern xbool g_bAutoLoad;
 
@@ -118,22 +112,6 @@ extern xbool g_bAutoLoad;
 
 editor_layer::editor_layer( ) 
 { 
-    //=========================================================================
-    //anonymous linking variable for fx subsystems..
-    g_fx_link   = 0;
-
-    //=========================================================================
-    // Link the binary string system.
-    g_stringbin_link    = 0;
-
-    //=========================================================================
-    // Link the decal system.
-    g_decal_link    = 0;
-
-    //=========================================================================
-    // Link the font system.
-    g_font_link     =0;
-
     IsDirty     = FALSE; 
     IsLoaded    = FALSE; 
     IsEditable  = TRUE; 
@@ -1859,7 +1837,8 @@ void world_editor::AdvanceLogic( f32 DeltaTime )
 {
     g_InputMgr.Update( DeltaTime );
 
-    d3deng_SetMouseMode( MOUSE_MODE_NEVER );
+    // DX9 reference for the DX11 port:
+    // d3deng_SetMouseMode( MOUSE_MODE_NEVER );
 
     g_ObjMgr.AdvanceAllLogic(DeltaTime);
 
@@ -2881,7 +2860,7 @@ void world_editor::CollectGuidsToExport( xarray<guid>& lstGuidsToExport )
             for (s32 k=0; k < lstBPRef.GetCount(); k++)
             {
                 editor_blueprint_ref& BPRef = lstBPRef.GetAt(k);
-                for (j=0; j < BPRef.ObjectsInBlueprint.GetCount(); j++)
+                for (s32 j=0; j < BPRef.ObjectsInBlueprint.GetCount(); j++)
                 {
                     guid ObjGuid = BPRef.ObjectsInBlueprint.GetAt(j);
                     object *pObject = g_ObjMgr.GetObjectByGuid(ObjGuid);
@@ -2933,7 +2912,7 @@ void world_editor::CollectPlaySurfacesToExport( xarray<guid>& lstPlaySurfaces )
             for (s32 k=0; k < lstBPRef.GetCount(); k++)
             {
                 editor_blueprint_ref& BPRef = lstBPRef.GetAt(k);
-                for (j=0; j < BPRef.ObjectsInBlueprint.GetCount(); j++)
+                for (s32 j=0; j < BPRef.ObjectsInBlueprint.GetCount(); j++)
                 {
                     guid ObjGuid = BPRef.ObjectsInBlueprint.GetAt(j);
                     object *pObject = g_ObjMgr.GetObjectByGuid(ObjGuid);
@@ -2983,7 +2962,7 @@ void world_editor::CollectDecalsToExport( xarray<guid>& lstDecals )
             for (s32 k=0; k < lstBPRef.GetCount(); k++)
             {
                 editor_blueprint_ref& BPRef = lstBPRef.GetAt(k);
-                for (j=0; j < BPRef.ObjectsInBlueprint.GetCount(); j++)
+                for (s32 j=0; j < BPRef.ObjectsInBlueprint.GetCount(); j++)
                 {
                     guid ObjGuid = BPRef.ObjectsInBlueprint.GetAt(j);
                     object *pObject = g_ObjMgr.GetObjectByGuid(ObjGuid);
@@ -4095,7 +4074,7 @@ xbool world_editor::ExportToLevel( const char* pName )
                 nLevels = TextIn.GetHeaderCount();
 
                 // Read in the level names.
-                for( i=0; i < nLevels; i++ )
+                for( s32 i=0; i < nLevels; i++ )
                 {
                     char l[128]; // Level buffer.
                     TextIn.ReadFields();
@@ -4119,7 +4098,7 @@ xbool world_editor::ExportToLevel( const char* pName )
                 text_out TextOut;
                 TextOut.OpenFile( (const char*)ConfigFile );
                 TextOut.AddHeader( "Settings", LevelNames.GetCount()+1 );
-                for( i=0; i < LevelNames.GetCount(); i++ )
+                for( s32 i=0; i < LevelNames.GetCount(); i++ )
                 {
                     TextOut.AddString( "Level", (const char*)LevelNames[i] );
                     TextOut.AddEndLine();
@@ -4342,18 +4321,16 @@ xbool world_editor::ExportSanityCheck( void )
         CleanDVDFilename( g_Project.m_DFSDirectory );
         if( (x_strlen(g_Project.m_DFSDirectory)==0) || (x_strlen(g_Project.m_DFSDirectory)>8) )
         {
-            generic_dialog Dialog;
-            Dialog.Execute_OK("Level DFS Directory Name Invalid",
-                "The level directory name listed in the project settings must be specified and be 8 characters or less.\nThe level cannot be exported until the directory is correct.");
+            AfxMessageBox( "The level directory name listed in the project settings must be specified and be 8 characters or less.\nThe level cannot be exported until the directory is correct.",
+                           MB_ICONERROR | MB_OK );
             return FALSE;
         }
 
         CleanDVDFilename( g_Project.m_DFSName );
         if( (x_strlen(g_Project.m_DFSName)==0) || (x_strlen(g_Project.m_DFSName)>8) )
         {
-            generic_dialog Dialog;
-            Dialog.Execute_OK("Level DFS Name Invalid",
-                "The level name listed in the project settings must be specified and be 8 characters or less.\nThe level cannot be exported until the level name is correct.");
+            AfxMessageBox( "The level name listed in the project settings must be specified and be 8 characters or less.\nThe level cannot be exported until the level name is correct.",
+                           MB_ICONERROR | MB_OK );
             return FALSE;
         }
     }
@@ -4491,7 +4468,7 @@ xbool world_editor::ExportSanityCheck( void )
     //CHECK - Zone Details
     //      - No more than 800 objects
     //      - Check vert and poly limits
-    for( i = 0; i < 256; i++)
+    for( s32 i = 0; i < 256; i++)
     {
         debug_zone_details& DZD = DZDList[i];
 
@@ -4592,11 +4569,10 @@ xbool world_editor::ExportSanityCheck( void )
     //CHECK - Sound Memory
     if (s_PS2MemorySize <= 0)
     {
-        extern g_bAutoBuild;
+        extern xbool g_bAutoBuild;
         if( !g_bAutoBuild )
         {
-            generic_dialog Dialog;
-            Dialog.Execute_OK("Audio Memory Exceeded","Some audio packages will not fit on the PS2!!!");
+            AfxMessageBox( "Some audio packages will not fit on the PS2!!!", MB_ICONERROR | MB_OK );
         }
         LOG_ERROR("Export","Audio Memory Exceeded (%dk).", (s_PS2MemorySize/1024));
     }
@@ -6271,7 +6247,6 @@ xbool world_editor::SaveZoneFile( void )
             ZoneFile.AddS32     ("MinPlayers",      Zone.MinPlayers     );
             ZoneFile.AddS32     ("MaxPlayers",      Zone.MaxPlayers     );
             ZoneFile.AddString  ("FogMap",          Zone.FogMap         );
-            ZoneFile.AddString  ("EnvMap",          Zone.EnvMap         );			
             ZoneFile.AddBool    ("QuickFog",        Zone.QuickFog       );
             ZoneFile.AddEndLine (                                       );
 
@@ -6468,7 +6443,7 @@ void world_editor::ZoneSanityCheck( void )
         }
 
         //check all Blueprints
-        for ( j = 0; j < Layer.Blueprints.GetCount(); j++)
+        for (s32 j = 0; j < Layer.Blueprints.GetCount(); j++)
 		{
             editor_blueprint_ref& BPRef = Layer.Blueprints.GetAt(j);
             xstring xstrPath(BPRef.LayerPath);
@@ -7061,7 +7036,7 @@ void world_editor::UpdateAllChildrenOfPortal( guid PortalGuid )
             SetObjectsZone(ObjRef.Guid, Zone1, Zone2);
         }
     }
-    for ( i=0; i < Layer.Blueprints.GetCount(); i++)
+    for (s32 i=0; i < Layer.Blueprints.GetCount(); i++)
     {
         editor_blueprint_ref &BPRef = Layer.Blueprints.GetAt(i);
         u8 Zone1 = 0;
@@ -8414,7 +8389,7 @@ void world_editor::CopySelectedObjects( xarray<guid>& lstObjects, xarray<guid>& 
     //must clear to manipulate blueprints correctly
     ClearSelectedObjectList();
 
-    for ( i = 0; i < lstAnchors.GetCount(); i++)
+    for (s32 i = 0; i < lstAnchors.GetCount(); i++)
     {
         //now use each anchor to copy the blueprints
         guid& AnchorGuid = lstAnchors.GetAt(i);
@@ -8441,9 +8416,8 @@ void world_editor::CopySelectedObjects( xarray<guid>& lstObjects, xarray<guid>& 
             }
             else
             {
-                generic_dialog Dialog;
-                Dialog.Execute_OK( "Blueprint not found",
-                                   xfs( "Can't locate the blueprint for anchor %08x:%08x.", AnchorGuid.GetHigh(), AnchorGuid.GetLow() ) );
+                AfxMessageBox( xfs( "Can't locate the blueprint for anchor %08x:%08x.", AnchorGuid.GetHigh(), AnchorGuid.GetLow() ),
+                               MB_ICONERROR | MB_OK );
             }
         }
     }
@@ -8452,14 +8426,14 @@ void world_editor::CopySelectedObjects( xarray<guid>& lstObjects, xarray<guid>& 
     ClearSelectedObjectList();
     if (bKeepCurrentSelection)
     {
-        for ( i = 0; i < OldSelection.GetCount(); i++)
+        for (s32 i = 0; i < OldSelection.GetCount(); i++)
         {
             SelectObject(OldSelection.GetAt(i),FALSE);
         }
     }
     else
     {
-        for ( i = 0; i < NewSelection.GetCount(); i++)
+        for (s32 i = 0; i < NewSelection.GetCount(); i++)
         {
             SelectObject(NewSelection.GetAt(i),FALSE);
         }
@@ -10067,7 +10041,7 @@ xbool world_editor::GetAllObjectsInAllBluePrints( xarray<guid> &lstGuids )
             {
                 editor_blueprint_ref& BPRef = lstBPRef.GetAt(k);
                 lstGuids.Append(BPRef.Anchor);
-                for (j=0; j < BPRef.ObjectsInBlueprint.GetCount(); j++)
+                for (s32 j=0; j < BPRef.ObjectsInBlueprint.GetCount(); j++)
                 {
                     guid ObjGuid = BPRef.ObjectsInBlueprint.GetAt(j);
                     lstGuids.Append(ObjGuid);
@@ -10100,7 +10074,7 @@ xbool world_editor::GetAllObjectsInLayer( const char* pLayer, xarray<guid> &lstG
         {
             editor_blueprint_ref& BPRef = lstBPRef.GetAt(k);
             lstGuids.Append(BPRef.Anchor);
-            for (j=0; j < BPRef.ObjectsInBlueprint.GetCount(); j++)
+            for (s32 j=0; j < BPRef.ObjectsInBlueprint.GetCount(); j++)
             {
                 guid ObjGuid = BPRef.ObjectsInBlueprint.GetAt(j);
                 lstGuids.Append(ObjGuid);
@@ -10882,7 +10856,7 @@ void world_editor::ComputeLightLayer( const char* pLayer, s32 iType )
                 for (s32 k=0; k < lstBPRef.GetCount(); k++)
                 {
                     editor_blueprint_ref& BPRef = lstBPRef.GetAt(k);
-                    for (j=0; j < BPRef.ObjectsInBlueprint.GetCount(); j++)
+                    for (s32 j=0; j < BPRef.ObjectsInBlueprint.GetCount(); j++)
                     {
                         guid ObjGuid = BPRef.ObjectsInBlueprint.GetAt(j);
                         lstGuids.Append(ObjGuid);
@@ -11423,7 +11397,7 @@ void world_editor::WriteRigidGeomReport( const char* pFile, xarray<xstring> &lst
         RigidGeoms.Append(rgd);
     }
 
-    for( i = 0; i < object::TYPE_END_OF_LIST; i++ )
+    for( s32 i = 0; i < object::TYPE_END_OF_LIST; i++ )
     {
         for( slot_id SlotID = g_ObjMgr.GetFirst( (object::type)i ); 
                      SlotID != SLOT_NULL; 
@@ -11508,7 +11482,7 @@ void world_editor::WriteRigidGeomReport( const char* pFile, xarray<xstring> &lst
                 geom* pGeom = pRigidInst->GetGeom();
                 if ( pGeom )
                 {
-                    for ( j = 0; j < pGeom->m_nTextures; j++)
+                    for (s32 j = 0; j < pGeom->m_nTextures; j++)
                     {
                         xbool bFoundTex = FALSE;
                         const char* pName = pGeom->GetTextureName( j );
@@ -11550,7 +11524,7 @@ void world_editor::WriteRigidGeomReport( const char* pFile, xarray<xstring> &lst
 
         Report.AddHeader("RigidGeom Usage Data",RigidGeoms.GetCount());
 
-        for ( i = 0; i < RigidGeoms.GetCount(); i++)
+        for (s32 i = 0; i < RigidGeoms.GetCount(); i++)
         {
             RigidGeomData& rgd = RigidGeoms.GetAt(i);
             Report.AddString    ("Name",        rgd.xstrName);
@@ -11568,7 +11542,7 @@ void world_editor::WriteRigidGeomReport( const char* pFile, xarray<xstring> &lst
         Report.AddHeader("Texture Usage Data",Textures.GetCount());
 
 
-        for ( i = 0; i < Textures.GetCount(); i++)
+        for (s32 i = 0; i < Textures.GetCount(); i++)
         {
             TextureData& td = Textures.GetAt(i);
             Report.AddString    ("Name",        td.xstrName);
@@ -11595,8 +11569,7 @@ void world_editor::WriteRigidGeomReport( const char* pFile, xarray<xstring> &lst
     }
     else
     {
-        generic_dialog Dialog;
-        Dialog.Execute_OK( "Can't open file for write, report will be invalid!", pFile );
+        AfxMessageBox( pFile, MB_ICONERROR | MB_OK );
     }
 }
 
@@ -11966,7 +11939,7 @@ void world_editor::CreateResourceLoadList(
         if( pObject == NULL )
         {
             x_DebugMsg( "WARNING:  Invalid object GUID:%X:%X", 
-                            lstGuidsToExport[i].GetHigh, lstGuidsToExport[i].GetLow() );
+                            lstGuidsToExport[i].GetHigh(), lstGuidsToExport[i].GetLow() );
             return;
         }
 
@@ -11985,7 +11958,7 @@ void world_editor::CreateResourceLoadList(
         if( pObject == NULL )
         {
             x_DebugMsg( "WARNING:  Invalid object GUID:%X:%X", 
-                            lstPlaySurfaces[i].GetHigh, lstPlaySurfaces[i].GetLow() );
+                            lstPlaySurfaces[i].GetHigh(), lstPlaySurfaces[i].GetLow() );
             return;
         }
 
@@ -12004,7 +11977,7 @@ void world_editor::CreateResourceLoadList(
         if( pObject == NULL )
         {
             x_DebugMsg( "WARNING:  Invalid object GUID:%X:%X", 
-                            lstDecals[i].GetHigh, lstDecals[i].GetLow() );
+                            lstDecals[i].GetHigh(), lstDecals[i].GetLow() );
             return;
         }
 

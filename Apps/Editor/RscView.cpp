@@ -14,7 +14,7 @@ static char THIS_FILE[] = __FILE__;
 /////////////////////////////////////////////////////////////////////////////
 // RscView
 
-IMPLEMENT_DYNCREATE(RscView, CXTListView)
+IMPLEMENT_DYNCREATE(RscView, CListView)
 
 RscView::RscView()
 {
@@ -25,7 +25,7 @@ RscView::~RscView()
 }
 
 
-BEGIN_MESSAGE_MAP(RscView, CXTListView)
+BEGIN_MESSAGE_MAP(RscView, CListView)
 	//{{AFX_MSG_MAP(RscView)
 		// NOTE - the ClassWizard will add and remove mapping macros here.
 	//}}AFX_MSG_MAP
@@ -46,24 +46,31 @@ void RscView::OnDraw(CDC* pDC)
 #ifdef _DEBUG
 void RscView::AssertValid() const
 {
-	CXTListView::AssertValid();
+	CListView::AssertValid();
 }
 
 void RscView::Dump(CDumpContext& dc) const
 {
-	CXTListView::Dump(dc);
+	CListView::Dump(dc);
 }
 #endif //_DEBUG
 
 /////////////////////////////////////////////////////////////////////////////
 // RscView message handlers
 
+enum COLUMN_DATA_TYPE
+{
+    DT_INT = 1,
+    DT_STRING,
+    DT_DATETIME
+};
+
 struct col_data 
 { 
 	LPCTSTR name; 
 	int width; 
 	int fmt;
-    XT_DATA_TYPE type;
+    COLUMN_DATA_TYPE type;
 };
 
 static col_data columns[] =
@@ -127,7 +134,7 @@ static file_info infoarr[] =
 
 void RscView::OnInitialUpdate() 
 {
-	CXTListView::OnInitialUpdate();
+	CListView::OnInitialUpdate();
 
 	// TODO: Add your specialized code here and/or call the base class
     CListCtrl& listCtrl = GetListCtrl();
@@ -139,7 +146,7 @@ void RscView::OnInitialUpdate()
 			columns[i].width);
 	}
 
-	SetExtendedStyle(LVS_EX_GRIDLINES | LVS_EX_FULLROWSELECT);
+	listCtrl.SetExtendedStyle(LVS_EX_GRIDLINES | LVS_EX_FULLROWSELECT);
 
     // Fill in fake data
 	int j;
@@ -152,17 +159,14 @@ void RscView::OnInitialUpdate()
 		}
 	}
 
-	SubclassHeader();
-	GetFlatHeaderCtrl()->ShowSortArrow(TRUE);
     SortList(0, false);
-    SetSortImage(0, false);
 }
 
 BOOL RscView::PreCreateWindow(CREATESTRUCT& cs) 
 {
 	// TODO: Add your specialized code here and/or call the base class
 	cs.style |= LVS_EX_GRIDLINES | LVS_REPORT;
-	return CXTListView::PreCreateWindow(cs);
+	return CListView::PreCreateWindow(cs);
 }
 
 bool RscView::SortList(
@@ -172,7 +176,7 @@ bool RscView::SortList(
 	// be ascending.
 	bool bAscending )
 {
-	CXTSortClass csc (&GetListCtrl(), nCol);
-	csc.Sort(bAscending, columns[nCol].type);
+    UNREFERENCED_PARAMETER(nCol);
+    UNREFERENCED_PARAMETER(bAscending);
 	return true;
 }

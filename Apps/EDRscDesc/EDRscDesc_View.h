@@ -7,14 +7,17 @@
 // EDRscDesc_View.h : header file
 //
 
+#include "..\Editor\WorkspaceTabCtrl.h"
+
 /////////////////////////////////////////////////////////////////////////////
 // EDRscDesc_View view
 
-class EDRscDesc_View : public CXTTabView
+class EDRscDesc_View : public CView
 {
 protected:
 	EDRscDesc_View();           // protected constructor used by dynamic creation
 	DECLARE_DYNCREATE(EDRscDesc_View)
+    CEditorWorkspaceTabCtrl m_TabCtrl;
 
 // Attributes
 public:
@@ -42,6 +45,7 @@ protected:
 	//{{AFX_MSG(EDRscDesc_View)
 	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
 	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
+	afx_msg void OnSize(UINT nType, int cx, int cy);
 	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()
 };

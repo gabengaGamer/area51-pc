@@ -548,7 +548,8 @@ xbool mp_settings::OnProperty( prop_query& Query )
                     for( s32 t = 0; t < MAX_CIRCUIT_GAMES; t++ )
                     {
                         const char* pString = Query.GetVarEnum();
-                        for( s32 V = 0; V < 4; V++ )
+                        s32 V;
+                        for( V = 0; V < 4; V++ )
                         {
                             if( x_strcmp( s_ValueName[V], pString ) == 0 )
                                 break;

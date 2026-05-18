@@ -15,6 +15,11 @@
 #include "..\Editor\project.hpp"
 #endif
 
+// APP_EDITOR defines __PLACEMENT_NEW_INLINE, so keep a TU-local placement new
+// for the MFC templates used by this editor instead of changing shared x_files headers.
+inline void* operator new( size_t, void* pData ) noexcept { return pData; }
+inline void  operator delete( void*, void* ) noexcept {}
+
 //=========================================================================
 // DATA
 //=========================================================================
@@ -298,7 +303,8 @@ const rsc_desc_type& rsc_desc_mgr::GetType( const char* pType ) const
 {
     ASSERT( pType );
 
-    for( const rsc_desc_type* pLoop = GetFirstType(); pLoop; pLoop = GetNextType( pLoop ) )
+    const rsc_desc_type* pLoop = GetFirstType();
+    for( ; pLoop; pLoop = GetNextType( pLoop ) )
     {
         if ( x_stricmp( pType, pLoop->GetName() ) == 0 )
             return *pLoop;
@@ -306,7 +312,7 @@ const rsc_desc_type& rsc_desc_mgr::GetType( const char* pType ) const
 
     x_throw( xfs("unable to find [%s] RscDesc", pType ) );
 
-    return *(const rsc_desc_type*)NULL;
+    return *pLoop;
 }
 
 
@@ -781,14 +787,14 @@ void rsc_desc_mgr::AddExternalRsc( const char* pExternalInfo, s32 Index )
     char        RscName[128];
     xstring     CompilerRules;
     xhandle     hHandle;
+    s32         i;
 
     //
     // parse 
     //
     ParseExternalRsc( pExternalInfo, RscName, CompilerRules );
 
-    // Find whether the external resource already exits
-    s32 i;
+    // Find whether the external resource already exits 
     for( i=0; i<m_lRscDesc.GetCount(); i++ )
     {
         if( x_stricmp( RscName, m_lRscDesc[i].pDesc->GetName() ) == 0 )
@@ -820,16 +826,17 @@ void rsc_desc_mgr::AddExternalRsc( const char* pExternalInfo, s32 Index )
         hHandle    = m_lRscDesc.GetHandleByIndex(i);
 
         // Check to make sure we don't add duplicates.
-        for( i=0; i<Node.nExternals; i++) 
+        s32 ExternalIndex;
+        for( ExternalIndex=0; ExternalIndex<Node.nExternals; ExternalIndex++ ) 
         {
-            if( Node.External[i] == hHandle )
+            if( Node.External[ExternalIndex] == hHandle )
                 break;
         }
 
-        if( i == Node.nExternals )
+        if( ExternalIndex == Node.nExternals )
         {
-            if( i >= 32 ) 
-                x_throw( xfs("Internal Error. The resource [%s] Had too many dependencies", m_lRscDesc[i].pDesc->GetName() ));
+            if( ExternalIndex >= 32 ) 
+                x_throw( xfs("Internal Error. The resource [%s] Had too many dependencies", m_lRscDesc[Index].pDesc->GetName() ));
 
             m_lRscDesc(hHandle).RefCount++;
         }
@@ -1024,7 +1031,8 @@ xbool rsc_desc_mgr::IsCompiling( void )
 rsc_desc& rsc_desc_mgr::GetRscDescByString( const char* pName )
 {
     s32 n = m_lRscDesc.GetCount();
-    for( s32 i=0; i<n; i++ )
+    s32 i;
+    for( i=0; i<n; i++ )
     {
         char Name[256];
         char Ext[256];
@@ -1039,7 +1047,7 @@ rsc_desc& rsc_desc_mgr::GetRscDescByString( const char* pName )
 
     x_throw( xfs("unable to find [%s] RscDesc", pName ) );
 
-    return *(rsc_desc*)NULL;
+    return *m_lRscDesc[i].pDesc;
 }
 
 //=========================================================================
@@ -1841,4 +1849,3 @@ void rsc_desc_mgr::ScanResources( void )
 #endif
 
 //=========================================================================
-

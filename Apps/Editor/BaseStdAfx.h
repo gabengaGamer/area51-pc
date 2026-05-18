@@ -6,9 +6,16 @@
 #if !defined(AFX_STDAFX_H__7F20BC63_3C1A_4AEB_AB58_A6DB2750F851__INCLUDED_)
 #define AFX_STDAFX_H__7F20BC63_3C1A_4AEB_AB58_A6DB2750F851__INCLUDED_
 
+#ifdef _DEBUG
+#define _CRTDBG_MAP_ALLOC
+#include <crtdbg.h>
+#endif
+
 #if _MSC_VER > 1000
 #pragma once
 #endif // _MSC_VER > 1000
+
+#include <new>
 
 // Build for Windows XP
 #if _MSC_VER >= 1300
@@ -27,7 +34,9 @@
 
 #include <afxwin.h>         // MFC core and standard components
 #include <afxext.h>         // MFC extensions
-#include <afxdisp.h>        // MFC Automation classes
+#include <afxadv.h>         // MFC advanced classes
+#include <afxcview.h>       // MFC common views
+
 #if _MSC_VER >= 1200
 #include <afxdtctl.h>		// MFC support for Internet Explorer 4 Common Controls
 #endif
@@ -36,8 +45,6 @@
 #endif // _AFX_NO_AFXCMN_SUPPORT
 
 #include <afxsock.h>		// MFC socket extensions
-
-#include <XTToolKit.h>      // Xtreme Toolkit MFC Extensions
 
 //=========================================================================
 // X_FILES

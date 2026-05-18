@@ -1,0 +1,348 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{e571edd1-b7a2-4bac-97b6-2e45a43ce327}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl;cpp;c;cxx;rc;def;r;odl;idl;hpj;bat</Extensions>
+    </Filter>
+    <Filter Include="Source Files\SubPalette">
+      <UniqueIdentifier>{8548a8bc-011d-42fc-afd0-ace811c8a17a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Dialogs">
+      <UniqueIdentifier>{60dbc86f-72c6-4069-a85b-e8c8f36d8fde}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resources">
+      <UniqueIdentifier>{4cef25e3-c8cb-42f1-8ab2-ce9f15947ad1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="EditorObjs">
+      <UniqueIdentifier>{f1f8d4e1-573e-4a68-aa6c-569f92dc12d7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="TransactionSystem">
+      <UniqueIdentifier>{de55489c-cf2a-4745-a819-5666ba2c97db}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="AI_Editor.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="BuildDFS.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="EditorDoc.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="EditorDocGridMngr.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="EditorDocInputMngr.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="EditorFrame.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="EditorView.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="StdAfx.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ValueGrid.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="WE_Decals.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="WorldEditor.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="EditorAIView.cpp">
+      <Filter>Source Files\SubPalette</Filter>
+    </ClCompile>
+    <ClCompile Include="EditorBlueprintView.cpp">
+      <Filter>Source Files\SubPalette</Filter>
+    </ClCompile>
+    <ClCompile Include="EditorDebuggerView.cpp">
+      <Filter>Source Files\SubPalette</Filter>
+    </ClCompile>
+    <ClCompile Include="EditorDecalView.cpp">
+      <Filter>Source Files\SubPalette</Filter>
+    </ClCompile>
+    <ClCompile Include="EditorGlobalView.cpp">
+      <Filter>Source Files\SubPalette</Filter>
+    </ClCompile>
+    <ClCompile Include="EditorLayerView.cpp">
+      <Filter>Source Files\SubPalette</Filter>
+    </ClCompile>
+    <ClCompile Include="EditorObjectView.cpp">
+      <Filter>Source Files\SubPalette</Filter>
+    </ClCompile>
+    <ClCompile Include="EditorPaletteDoc.cpp">
+      <Filter>Source Files\SubPalette</Filter>
+    </ClCompile>
+    <ClCompile Include="EditorSettingsView.cpp">
+      <Filter>Source Files\SubPalette</Filter>
+    </ClCompile>
+    <ClCompile Include="EditorSoundView.cpp">
+      <Filter>Source Files\SubPalette</Filter>
+    </ClCompile>
+    <ClCompile Include="EditorTriggerView.cpp">
+      <Filter>Source Files\SubPalette</Filter>
+    </ClCompile>
+    <ClCompile Include="EditorWatchView.cpp">
+      <Filter>Source Files\SubPalette</Filter>
+    </ClCompile>
+    <ClCompile Include="WorkspaceTabCtrl.cpp">
+      <Filter>Source Files\SubPalette</Filter>
+    </ClCompile>
+    <ClCompile Include="AnimPkgDialog.cpp">
+      <Filter>Source Files\Dialogs</Filter>
+    </ClCompile>
+    <ClCompile Include="AudioPkgDialog.cpp">
+      <Filter>Source Files\Dialogs</Filter>
+    </ClCompile>
+    <ClCompile Include="ConnectionAttributeDialog.cpp">
+      <Filter>Source Files\Dialogs</Filter>
+    </ClCompile>
+    <ClCompile Include="DialogTextEntry.cpp">
+      <Filter>Source Files\Dialogs</Filter>
+    </ClCompile>
+    <ClCompile Include="NewGlobalDlg.cpp">
+      <Filter>Source Files\Dialogs</Filter>
+    </ClCompile>
+    <ClCompile Include="ResourceBrowserDlg.cpp">
+      <Filter>Source Files\Dialogs</Filter>
+    </ClCompile>
+    <ClCompile Include="ResourcePreview.cpp">
+      <Filter>Source Files\Dialogs</Filter>
+    </ClCompile>
+    <ClCompile Include="blueprint_anchor.cpp">
+      <Filter>EditorObjs</Filter>
+    </ClCompile>
+    <ClCompile Include="nav_connection2_anchor.cpp">
+      <Filter>EditorObjs</Filter>
+    </ClCompile>
+    <ClCompile Include="nav_connection2_editor.cpp">
+      <Filter>EditorObjs</Filter>
+    </ClCompile>
+    <ClCompile Include="static_decal.cpp">
+      <Filter>EditorObjs</Filter>
+    </ClCompile>
+    <ClCompile Include="ptr_list.cpp">
+      <Filter>TransactionSystem</Filter>
+    </ClCompile>
+    <ClCompile Include="transaction_bpref_data.cpp">
+      <Filter>TransactionSystem</Filter>
+    </ClCompile>
+    <ClCompile Include="transaction_entry.cpp">
+      <Filter>TransactionSystem</Filter>
+    </ClCompile>
+    <ClCompile Include="transaction_file_data.cpp">
+      <Filter>TransactionSystem</Filter>
+    </ClCompile>
+    <ClCompile Include="transaction_layer_data.cpp">
+      <Filter>TransactionSystem</Filter>
+    </ClCompile>
+    <ClCompile Include="transaction_mgr.cpp">
+      <Filter>TransactionSystem</Filter>
+    </ClCompile>
+    <ClCompile Include="transaction_object_data.cpp">
+      <Filter>TransactionSystem</Filter>
+    </ClCompile>
+    <ClCompile Include="transaction_selection_data.cpp">
+      <Filter>TransactionSystem</Filter>
+    </ClCompile>
+    <ClCompile Include="transaction_zone_data.cpp">
+      <Filter>TransactionSystem</Filter>
+    </ClCompile>
+    <ClCompile Include="TransactionStackDlg.cpp">
+      <Filter>TransactionSystem</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="AI_editor.hpp">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="EditorDoc.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="EditorDocGridMngr.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="EditorDocInputMngr.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="EditorFrame.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="EditorView.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="StdAfx.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ValueGrid.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="WorldEditor.hpp">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="EditorAIView.h">
+      <Filter>Source Files\SubPalette</Filter>
+    </ClInclude>
+    <ClInclude Include="EditorBlueprintView.h">
+      <Filter>Source Files\SubPalette</Filter>
+    </ClInclude>
+    <ClInclude Include="EditorDebuggerView.h">
+      <Filter>Source Files\SubPalette</Filter>
+    </ClInclude>
+    <ClInclude Include="EditorDecalView.h">
+      <Filter>Source Files\SubPalette</Filter>
+    </ClInclude>
+    <ClInclude Include="EditorGlobalView.h">
+      <Filter>Source Files\SubPalette</Filter>
+    </ClInclude>
+    <ClInclude Include="EditorLayerView.h">
+      <Filter>Source Files\SubPalette</Filter>
+    </ClInclude>
+    <ClInclude Include="EditorObjectView.h">
+      <Filter>Source Files\SubPalette</Filter>
+    </ClInclude>
+    <ClInclude Include="EditorPaletteDoc.h">
+      <Filter>Source Files\SubPalette</Filter>
+    </ClInclude>
+    <ClInclude Include="EditorSettingsView.h">
+      <Filter>Source Files\SubPalette</Filter>
+    </ClInclude>
+    <ClInclude Include="EditorSoundView.h">
+      <Filter>Source Files\SubPalette</Filter>
+    </ClInclude>
+    <ClInclude Include="EditorTriggerView.h">
+      <Filter>Source Files\SubPalette</Filter>
+    </ClInclude>
+    <ClInclude Include="EditorWatchView.h">
+      <Filter>Source Files\SubPalette</Filter>
+    </ClInclude>
+    <ClInclude Include="WorkspaceTabCtrl.h">
+      <Filter>Source Files\SubPalette</Filter>
+    </ClInclude>
+    <ClInclude Include="AnimPkgDialog.h">
+      <Filter>Source Files\Dialogs</Filter>
+    </ClInclude>
+    <ClInclude Include="AudioPkgDialog.h">
+      <Filter>Source Files\Dialogs</Filter>
+    </ClInclude>
+    <ClInclude Include="ConnectionAttributeDialog.h">
+      <Filter>Source Files\Dialogs</Filter>
+    </ClInclude>
+    <ClInclude Include="DialogTextEntry.h">
+      <Filter>Source Files\Dialogs</Filter>
+    </ClInclude>
+    <ClInclude Include="NewGlobalDlg.h">
+      <Filter>Source Files\Dialogs</Filter>
+    </ClInclude>
+    <ClInclude Include="ResourceBrowserDlg.h">
+      <Filter>Source Files\Dialogs</Filter>
+    </ClInclude>
+    <ClInclude Include="ResourcePreview.h">
+      <Filter>Source Files\Dialogs</Filter>
+    </ClInclude>
+    <ClInclude Include="resource.h">
+      <Filter>Resources</Filter>
+    </ClInclude>
+    <ClInclude Include="blueprint_anchor.hpp">
+      <Filter>EditorObjs</Filter>
+    </ClInclude>
+    <ClInclude Include="nav_connection2_anchor.hpp">
+      <Filter>EditorObjs</Filter>
+    </ClInclude>
+    <ClInclude Include="nav_connection2_editor.hpp">
+      <Filter>EditorObjs</Filter>
+    </ClInclude>
+    <ClInclude Include="static_decal.hpp">
+      <Filter>EditorObjs</Filter>
+    </ClInclude>
+    <ClInclude Include="ptr_list.hpp">
+      <Filter>TransactionSystem</Filter>
+    </ClInclude>
+    <ClInclude Include="transaction_bpref_data.hpp">
+      <Filter>TransactionSystem</Filter>
+    </ClInclude>
+    <ClInclude Include="transaction_data.hpp">
+      <Filter>TransactionSystem</Filter>
+    </ClInclude>
+    <ClInclude Include="transaction_entry.hpp">
+      <Filter>TransactionSystem</Filter>
+    </ClInclude>
+    <ClInclude Include="transaction_file_data.hpp">
+      <Filter>TransactionSystem</Filter>
+    </ClInclude>
+    <ClInclude Include="transaction_layer_data.hpp">
+      <Filter>TransactionSystem</Filter>
+    </ClInclude>
+    <ClInclude Include="transaction_mgr.hpp">
+      <Filter>TransactionSystem</Filter>
+    </ClInclude>
+    <ClInclude Include="transaction_object_data.hpp">
+      <Filter>TransactionSystem</Filter>
+    </ClInclude>
+    <ClInclude Include="transaction_selection_data.hpp">
+      <Filter>TransactionSystem</Filter>
+    </ClInclude>
+    <ClInclude Include="transaction_zone_data.hpp">
+      <Filter>TransactionSystem</Filter>
+    </ClInclude>
+    <ClInclude Include="TransactionStackDlg.h">
+      <Filter>TransactionSystem</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="res\ai_view_toolbar.bmp">
+      <Filter>Resources</Filter>
+    </Image>
+    <Image Include="res\blueprin.bmp">
+      <Filter>Resources</Filter>
+    </Image>
+    <Image Include="res\decal_pal.bmp">
+      <Filter>Resources</Filter>
+    </Image>
+    <Image Include="res\global_f.bmp">
+      <Filter>Resources</Filter>
+    </Image>
+    <Image Include="res\layerlist_icons.bmp">
+      <Filter>Resources</Filter>
+    </Image>
+    <Image Include="res\layervie.bmp">
+      <Filter>Resources</Filter>
+    </Image>
+    <Image Include="res\obj_Pal.bmp">
+      <Filter>Resources</Filter>
+    </Image>
+    <Image Include="res\PAL_ImgTab.bmp">
+      <Filter>Resources</Filter>
+    </Image>
+    <Image Include="res\palettev_filter.bmp">
+      <Filter>Resources</Filter>
+    </Image>
+    <Image Include="res\SoundViewFilter.bmp">
+      <Filter>Resources</Filter>
+    </Image>
+    <Image Include="res\tb_guidd.bmp">
+      <Filter>Resources</Filter>
+    </Image>
+    <Image Include="res\tb_worldEditor.bmp">
+      <Filter>Resources</Filter>
+    </Image>
+    <Image Include="res\watchwindow.bmp">
+      <Filter>Resources</Filter>
+    </Image>
+    <Image Include="res\triggerview.bmp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="WorldEditor.rc">
+      <Filter>Resources</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="Readme.txt" />
+  </ItemGroup>
+</Project>
