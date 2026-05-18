@@ -46,6 +46,7 @@ static  f32    CORPSE_BLEND_CONSTRAINTS_TIME    = 1.0f;
 //=========================================================================
 
 s32 corpse::m_ActiveCount = 0;          // # of active (moving) corpses
+corpse* corpse::s_pFirstRenderCorpse = NULL;
 
 // Workspace data for corpses for initialization. Using scratchmem would
 // be preferable, but this needs to be used in the loading screen where
@@ -201,7 +202,8 @@ corpse::corpse( void ) :
     m_Material          ( object::MAT_TYPE_FLESH ),
     m_BloodDecalGroup   ( -1    ),
     m_CorpseName        ( CORPSE_GENERIC ),
-    m_ImpactSfxTimer    ( 0.0f )
+    m_ImpactSfxTimer    ( 0.0f ),
+    m_RenderInterpActive( FALSE )
 {
     PHYSICS_DEBUG_DYNAMIC_MEM_ALLOC( sizeof( corpse ) );
     
@@ -213,6 +215,16 @@ corpse::corpse( void ) :
                                  vector3(  100,   50,  100 ) ) );
 
     m_FadeOutTime = CORPSE_FADEOUT_TIME;
+
+    m_pNextRenderCorpse = s_pFirstRenderCorpse;
+    m_pPrevRenderCorpse = NULL;
+    if( s_pFirstRenderCorpse )
+        s_pFirstRenderCorpse->m_pPrevRenderCorpse = this;
+    s_pFirstRenderCorpse = this;
+
+    InitSimpleAnimRenderState( m_RenderPrev );
+    InitSimpleAnimRenderState( m_RenderCurr );
+    InitSimpleAnimRenderState( m_RenderInterp );
 }
 
 //=========================================================================
@@ -220,6 +232,14 @@ corpse::corpse( void ) :
 corpse::~corpse()
 {
     PHYSICS_DEBUG_DYNAMIC_MEM_FREE( sizeof( corpse ) );
+
+    if( m_pPrevRenderCorpse )
+        m_pPrevRenderCorpse->m_pNextRenderCorpse = m_pNextRenderCorpse;
+    else
+        s_pFirstRenderCorpse = m_pNextRenderCorpse;
+
+    if( m_pNextRenderCorpse )
+        m_pNextRenderCorpse->m_pPrevRenderCorpse = m_pPrevRenderCorpse;
 
     if( m_pActorEffects )
     {
@@ -416,6 +436,99 @@ xbool corpse::ReachedMaxActiveLimit( void )
 {
     return ( m_ActiveCount >= CORPSE_MAX_ACTIVE_COUNT ) ||
            ( g_PhysicsMgr.GetAwakeInstanceCount() > CORPSE_MAX_ACTIVE_COUNT );
+}
+
+//===========================================================================
+
+void corpse::CaptureRenderStates( void )
+{
+    corpse* pCorpse = s_pFirstRenderCorpse;
+    while( pCorpse )
+    {
+        corpse* pNextCorpse = pCorpse->m_pNextRenderCorpse;
+        pCorpse->CaptureRenderState();
+        pCorpse = pNextCorpse;
+    }
+}
+
+//===========================================================================
+
+void corpse::UpdateRenderStates( f32 Alpha )
+{
+    corpse* pCorpse = s_pFirstRenderCorpse;
+    while( pCorpse )
+    {
+        corpse* pNextCorpse = pCorpse->m_pNextRenderCorpse;
+        pCorpse->UpdateRenderState( Alpha );
+        pCorpse = pNextCorpse;
+    }
+}
+
+//===========================================================================
+
+void corpse::ClearRenderStates( void )
+{
+    corpse* pCorpse = s_pFirstRenderCorpse;
+    while( pCorpse )
+    {
+        corpse* pNextCorpse = pCorpse->m_pNextRenderCorpse;
+        pCorpse->ClearRenderState();
+        pCorpse = pNextCorpse;
+    }
+}
+
+//===========================================================================
+
+void corpse::CaptureRenderState( void )
+{
+    simple_anim_render_state Snapshot;
+    InitSimpleAnimRenderState( Snapshot );
+    m_PhysicsInst.CaptureRenderState( Snapshot );
+
+    if( !Snapshot.Valid )
+    {
+        InitSimpleAnimRenderState( m_RenderPrev );
+        InitSimpleAnimRenderState( m_RenderCurr );
+        InitSimpleAnimRenderState( m_RenderInterp );
+        m_RenderInterpActive = FALSE;
+        return;
+    }
+
+    if( !m_RenderCurr.Valid )
+    {
+        m_RenderPrev = Snapshot;
+        m_RenderCurr = Snapshot;
+        m_RenderInterp = Snapshot;
+        m_RenderInterpActive = FALSE;
+        return;
+    }
+
+    m_RenderPrev = m_RenderCurr;
+    m_RenderCurr = Snapshot;
+
+    if( ShouldSnapSimpleAnimRenderState( m_RenderPrev, m_RenderCurr ) )
+        m_RenderPrev = m_RenderCurr;
+}
+
+//===========================================================================
+
+void corpse::UpdateRenderState( f32 Alpha )
+{
+    if( !m_RenderCurr.Valid )
+    {
+        m_RenderInterpActive = FALSE;
+        return;
+    }
+
+    UpdateSimpleAnimRenderState( m_RenderPrev, m_RenderCurr, m_RenderInterp, Alpha );
+    m_RenderInterpActive = TRUE;
+}
+
+//===========================================================================
+
+void corpse::ClearRenderState( void )
+{
+    m_RenderInterpActive = FALSE;
 }
 
 //===========================================================================
@@ -655,6 +768,24 @@ void corpse::OnRenderShadowCast( u64 ProjMask )
     if( ShadLODMask == 0 )
         return;
 
+    // Setup render flags
+    u32 Flags = (GetFlagBits() & object::FLAG_CHECK_PLANES) ? render::CLIPPED : 0;
+
+    if( m_RenderInterpActive && m_RenderInterp.Valid )
+    {
+        s32 nActiveBones = MIN( GetSkinInst().GetNActiveBones( ShadLODMask ), m_RenderInterp.NBones );
+        if( nActiveBones <= 0 )
+            return;
+
+        GetSkinInst().RenderShadowCast( &m_RenderInterp.L2W,
+                                        m_RenderInterp.Bones,
+                                        nActiveBones,
+                                        Flags,
+                                        ShadLODMask,
+                                        ProjMask );
+        return;
+    }
+
     // Compute bones
     u64 LODMask;
     s32 nActiveBones;
@@ -662,16 +793,13 @@ void corpse::OnRenderShadowCast( u64 ProjMask )
     if( !pMatrices )
         return;
 
-    // Setup render flags
-    u32 Flags = (GetFlagBits() & object::FLAG_CHECK_PLANES) ? render::CLIPPED : 0;
-
     // Render
-    GetSkinInst().RenderShadowCast( &GetL2W(), 
-                             pMatrices, 
-                             nActiveBones,
-                             Flags,
-                             ShadLODMask,
-                             ProjMask );
+    GetSkinInst().RenderShadowCast( &GetL2W(),
+                                    pMatrices,
+                                    nActiveBones,
+                                    Flags,
+                                    ShadLODMask,
+                                    ProjMask );
 }
 
 //===============================================================================
@@ -711,8 +839,32 @@ void corpse::OnRender( void )
         Ambient.A  = (u8)(Alpha*255.0f);
     }
 
-    // Render that puppy!
-    m_PhysicsInst.Render( Flags, Ambient );
+    if( m_RenderInterpActive && m_RenderInterp.Valid )
+    {
+        const matrix4& RenderL2W = m_RenderInterp.L2W;
+        const u64 LODMask = GetSkinInst().GetLODMask( RenderL2W );
+        if( LODMask )
+        {
+            s32 nActiveBones = MIN( GetSkinInst().GetNActiveBones( LODMask ), m_RenderInterp.NBones );
+            if( nActiveBones > 0 )
+            {
+                GetSkinInst().Render( &RenderL2W,
+                                      m_RenderInterp.Bones,
+                                      nActiveBones,
+                                      Flags,
+                                      LODMask,
+                                      Ambient );
+            }
+        }
+
+        if( m_bActiveWhenVisible )
+            m_PhysicsInst.Activate();
+    }
+    else
+    {
+        // Render that puppy!
+        m_PhysicsInst.Render( Flags, Ambient );
+    }
 }
 
 //===============================================================================

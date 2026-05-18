@@ -16,6 +16,7 @@
 #include "Objects\PlaySurface.hpp"
 #include "Debris\debris_mgr.hpp"
 #include "Decals\DecalPackage.hpp"
+#include "Objects\Render\SimpleAnimRenderState.hpp"
 #include "Animation\AnimPlayer.hpp"
 #include "ZoneMgr\ZoneMgr.hpp"
 #include "Objects\Render\VirtualMeshMask.hpp"
@@ -37,6 +38,10 @@ public:
 
                             super_destructible_obj      ( void );
                             ~super_destructible_obj     ( void );
+
+    static  void            CaptureRenderStates          ( void );
+    static  void            UpdateRenderStates           ( f32 Alpha );
+    static  void            ClearRenderStates            ( void );
 
     virtual const object_desc&  GetTypeDesc             ( void ) const;
     static  const object_desc&  GetObjectType           ( void );
@@ -68,6 +73,12 @@ public:
     virtual anim_group::handle* GetAnimGroupHandlePtr   ( void );
 
     const matrix4*          GetBoneL2Ws                 ( void );
+    void                    CaptureRenderState          ( void );
+    void                    UpdateRenderState           ( f32 Alpha );
+    void                    ClearRenderState            ( void );
+    void                    InvalidateRenderState       ( void );
+    const matrix4&          GetRenderL2W                ( void ) const;
+    xbool                   GetRenderBoneL2W            ( s32 iBone, matrix4& L2W );
     virtual bbox            GetLocalBBox                ( void ) const;      
             s32             GetNumStages                ( void ) { return( m_Stages.GetCount() ); }
 
@@ -98,8 +109,15 @@ public:
     virtual guid            GetParentGuid               ( void )            { return m_ParentGuid; }
                                                         
 protected:                                              
+    static  super_destructible_obj* s_pFirstRenderSuper;
+            super_destructible_obj* m_pNextRenderSuper;
+            super_destructible_obj* m_pPrevRenderSuper;
     anim_group::handle      m_hAnimGroup;
     simple_anim_player      m_AnimPlayer;
+    simple_anim_render_state m_RenderPrev;
+    simple_anim_render_state m_RenderCurr;
+    simple_anim_render_state m_RenderInterp;
+    xbool                    m_RenderInterpActive;
     rhandle<char>           m_hAudioPackage;
     rhandle<decal_package>  m_hDecalPackage;
     zone_mgr::tracker       m_ZoneTracker;

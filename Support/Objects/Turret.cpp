@@ -43,6 +43,8 @@
 inline 
 void debug_log_msg_fn(...) {}
 
+turret* turret::s_pFirstRenderTurret = NULL;
+
 
 //void draw_Cylinder  ( const vector3& Center, f32 Radius, f32 Height, s32 nSteps, xcolor Color, xbool bCapped, const vector3& Up);
 //==============================================================================
@@ -148,6 +150,14 @@ turret::turret( void ) :
     m_UpperBoundary( NULL_GUID ),
     m_LowerBoundary( NULL_GUID )
 {
+    m_pNextRenderTurret = s_pFirstRenderTurret;
+    m_pPrevRenderTurret = NULL;
+    if( s_pFirstRenderTurret )
+        s_pFirstRenderTurret->m_pPrevRenderTurret = this;
+    s_pFirstRenderTurret = this;
+
+    InvalidateRenderState();
+
    m_ProjectileTemplateID   = -1;
     
     m_State                 = STATE_IDLE;
@@ -276,6 +286,114 @@ turret::turret( void ) :
 
 turret::~turret( void )
 {
+    if( m_pNextRenderTurret )
+        m_pNextRenderTurret->m_pPrevRenderTurret = m_pPrevRenderTurret;
+    if( m_pPrevRenderTurret )
+        m_pPrevRenderTurret->m_pNextRenderTurret = m_pNextRenderTurret;
+    if( s_pFirstRenderTurret == this )
+        s_pFirstRenderTurret = m_pNextRenderTurret;
+}
+
+//=============================================================================
+
+void turret::CaptureRenderStates( void )
+{
+    for( turret* pTurret = s_pFirstRenderTurret; pTurret; pTurret = pTurret->m_pNextRenderTurret )
+        pTurret->CaptureRenderState();
+}
+
+//=============================================================================
+
+void turret::UpdateRenderStates( f32 Alpha )
+{
+    for( turret* pTurret = s_pFirstRenderTurret; pTurret; pTurret = pTurret->m_pNextRenderTurret )
+        pTurret->UpdateRenderState( Alpha );
+}
+
+//=============================================================================
+
+void turret::ClearRenderStates( void )
+{
+    for( turret* pTurret = s_pFirstRenderTurret; pTurret; pTurret = pTurret->m_pNextRenderTurret )
+        pTurret->ClearRenderState();
+}
+
+//=============================================================================
+
+void turret::InvalidateRenderState( void )
+{
+    InitSimpleAnimRenderState( m_RenderPrev );
+    m_RenderCurr = m_RenderPrev;
+    m_RenderInterp = m_RenderPrev;
+    m_RenderInterpActive = FALSE;
+}
+
+//=============================================================================
+
+void turret::CaptureRenderState( void )
+{
+    simple_anim_render_state Snapshot;
+    CaptureSimpleAnimRenderState( Snapshot, GetL2W(), m_AnimPlayer );
+
+    m_RenderPrev = m_RenderCurr;
+    m_RenderCurr = Snapshot;
+
+    if( !m_RenderPrev.Valid )
+    {
+        m_RenderPrev = m_RenderCurr;
+        return;
+    }
+
+    if( ShouldSnapSimpleAnimRenderState( m_RenderPrev, m_RenderCurr ) )
+        m_RenderPrev = m_RenderCurr;
+}
+
+//=============================================================================
+
+void turret::UpdateRenderState( f32 Alpha )
+{
+    m_RenderInterpActive = FALSE;
+
+    if( !m_RenderCurr.Valid )
+        return;
+
+    UpdateSimpleAnimRenderState( m_RenderPrev.Valid ? m_RenderPrev : m_RenderCurr,
+                                 m_RenderCurr,
+                                 m_RenderInterp,
+                                 Alpha );
+    m_RenderInterpActive = TRUE;
+}
+
+//=============================================================================
+
+void turret::ClearRenderState( void )
+{
+    m_RenderInterpActive = FALSE;
+}
+
+//=============================================================================
+
+const matrix4& turret::GetRenderL2W( void ) const
+{
+    if( m_RenderInterpActive )
+        return m_RenderInterp.L2W;
+
+    return GetL2W();
+}
+
+//=============================================================================
+
+xbool turret::GetRenderBoneL2W( s32 iBone, matrix4& L2W )
+{
+    if( m_RenderInterpActive && GetSimpleAnimRenderBoneL2W( m_RenderInterp, iBone, L2W ) )
+        return TRUE;
+
+    const matrix4* pBone = m_AnimPlayer.GetBoneL2W( iBone, FALSE );
+    if( !pBone )
+        return FALSE;
+
+    L2W = *pBone;
+    return TRUE;
 }
 
 //=============================================================================
@@ -1313,6 +1431,15 @@ void turret::OnColRender( xbool bRenderHigh )
 
 const matrix4* turret::GetBoneL2Ws( void )
 {
+    if( m_RenderInterpActive && m_hAnimGroup.GetPointer() )
+    {
+        const matrix4* pMatrices = BuildSimpleAnimRenderMatrices( m_RenderInterp,
+                                                                  *m_hAnimGroup.GetPointer(),
+                                                                  m_hAnimGroup.GetPointer()->GetNBones() );
+        if( pMatrices )
+            return pMatrices;
+    }
+
     return m_AnimPlayer.GetBoneL2Ws( TRUE );
 }
 
@@ -2805,15 +2932,22 @@ void turret::GetSensorInfo( vector3& Pos, radian3& Rot )
         return;
     }
 
-    const matrix4* pL2W = m_AnimPlayer.GetBoneL2W( iSensorBone, TRUE );
-    if (NULL == pL2W)
+    matrix4 L2W;
+    if( m_RenderInterpActive && GetRenderBoneL2W( iSensorBone, L2W ) )
+    {
+        Pos = L2W.GetTranslation();
+        Rot = L2W.GetRotation();
+        return;
+    }
+
+    const matrix4* pBoneL2W = m_AnimPlayer.GetBoneL2W( iSensorBone, TRUE );
+    if (NULL == pBoneL2W)
     {
         Pos = GetPosition();
         return;
     }
 
-    matrix4 L2W = *pL2W;
-
+    L2W = *pBoneL2W;
     L2W.PreTranslate( m_AnimPlayer.GetBoneBindPosition( iSensorBone ) );
 
     Pos = L2W.GetTranslation();
@@ -3420,13 +3554,13 @@ xbool turret::GetAttachPointData( s32      iAttachPt,
 {
     if (iAttachPt == 0)
     {
-        L2W = GetL2W();
+        L2W = GetRenderL2W();
         return TRUE;
     }
     else
     if (iAttachPt == 1)
     {               
-        const matrix4& MyL2W = GetL2W();
+        const matrix4& MyL2W = GetRenderL2W();
 
         vector3 Pos;
         radian3 Rot;
@@ -3462,14 +3596,22 @@ xbool turret::GetAttachPointData( s32      iAttachPt,
             if ( (iAttachPt >= 0) &&
                  (iAttachPt < nBones ))
             {
-                const matrix4* pL2W = m_AnimPlayer.GetBoneL2W( iAttachPt );            
-                if ( NULL != pL2W )
-                    L2W = *pL2W;
+                if( m_RenderInterpActive && GetRenderBoneL2W( iAttachPt, L2W ) )
+                {
+                    if( !(Flags & ATTACH_USE_WORLDSPACE) )
+                        L2W = L2W * pGroup->GetBoneBindInvMatrix( iAttachPt );
+                }
                 else
-                    L2W.Identity();
+                {
+                    const matrix4* pL2W = m_AnimPlayer.GetBoneL2W( iAttachPt );
+                    if ( NULL != pL2W )
+                        L2W = *pL2W;
+                    else
+                        L2W.Identity();
  
-                if (Flags & ATTACH_USE_WORLDSPACE)
-                    L2W.PreTranslate( m_AnimPlayer.GetBoneBindPosition( iAttachPt ) );
+                    if (Flags & ATTACH_USE_WORLDSPACE)
+                        L2W.PreTranslate( m_AnimPlayer.GetBoneBindPosition( iAttachPt ) );
+                }
         
                 return TRUE;
             }        

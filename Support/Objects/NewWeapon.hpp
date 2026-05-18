@@ -280,6 +280,7 @@ public:
             void                DegradeAim              ( radian3& Rot, radian Amt, const vector3& InitPos, guid Owner ) ;
 
     virtual void                OnRender                ( void );
+    virtual void                RenderWeaponShadow      ( u64 ProjMask );
     virtual void                OnRenderTransparent     ( void );
     virtual void                RenderWeapon            ( xbool bDebug, const xcolor& Ambient, xbool Cloaked );
             void                SetVisible              ( xbool bVisible ) { m_IsVisible = bVisible; }

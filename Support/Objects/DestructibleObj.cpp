@@ -259,6 +259,7 @@ void destructible_obj::OnRender( void )
     
     if( pRigidGeom )
     {
+        const matrix4& RenderL2W = GetRenderL2W();
         u32 Flags = (GetFlagBits() & object::FLAG_CHECK_PLANES) ? render::CLIPPED : 0;
         
         if ( pRigidGeom->m_nBones > 1 )
@@ -267,7 +268,7 @@ void destructible_obj::OnRender( void )
         }
         else
         {
-            m_Inst.Render( &GetL2W(), Flags | GetRenderMode() );
+            m_Inst.Render( &RenderL2W, Flags | GetRenderMode() );
         }
     }
     else

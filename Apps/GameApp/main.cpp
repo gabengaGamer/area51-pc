@@ -38,12 +38,17 @@
 //==============================================================================
 
 #include "Objects\Player.hpp"  
+#include "Objects\AnimSurface.hpp"
+#include "Objects\CokeCan.hpp"
 #include "Objects\Corpse.hpp"
 #include "Objects\LevelSettings.hpp"
 #include "Objects\PlaySurface.hpp"
+#include "Objects\SkinPropSurface.hpp"
 #include "Objects\SpawnPoint.hpp"
+#include "Objects\SuperDestructible.hpp"
 #include "Objects\ParticleEmiter.hpp"
 #include "Objects\AlienGlob.hpp"
+#include "Objects\Turret.hpp"
 #include "Objects\HudObject.hpp"
 #include "Objects\Render\PostEffectMgr.hpp"
 
@@ -662,6 +667,22 @@ static void CaptureRenderState( void )
 
         ID = g_ObjMgr.GetNext( ID );
     }
+
+    actor* pActor = actor::m_pFirstActive;
+    while( pActor )
+    {
+        actor* pNextActor = pActor->m_pNextActive;
+        pActor->CaptureActorRenderState();
+        pActor = pNextActor;
+    }
+
+    anim_surface::CaptureRenderStates();
+    coke_can::CaptureRenderStates();
+    corpse::CaptureRenderStates();
+    play_surface::CaptureRenderStates();
+    skin_prop_surface::CaptureRenderStates();
+    turret::CaptureRenderStates();
+    super_destructible_obj::CaptureRenderStates();
 }
 
 //==============================================================================
@@ -672,6 +693,43 @@ static void UpdateRender( player* pPlayers[MAX_LOCAL_PLAYERS], s32 nPlayers, f32
     {
         pPlayers[i]->UpdateRenderState( Alpha );
     }
+
+    actor* pActor = actor::m_pFirstActive;
+    while( pActor )
+    {
+        actor* pNextActor = pActor->m_pNextActive;
+        pActor->UpdateActorRenderState( Alpha );
+        pActor = pNextActor;
+    }
+
+    anim_surface::UpdateRenderStates( Alpha );
+    coke_can::UpdateRenderStates( Alpha );
+    corpse::UpdateRenderStates( Alpha );
+    play_surface::UpdateRenderStates( Alpha );
+    skin_prop_surface::UpdateRenderStates( Alpha );
+    turret::UpdateRenderStates( Alpha );
+    super_destructible_obj::UpdateRenderStates( Alpha );
+}
+
+//==============================================================================
+
+static void ClearActorRenderState( void )
+{
+    actor* pActor = actor::m_pFirstActive;
+    while( pActor )
+    {
+        actor* pNextActor = pActor->m_pNextActive;
+        pActor->ClearActorRenderState();
+        pActor = pNextActor;
+    }
+
+    anim_surface::ClearRenderStates();
+    coke_can::ClearRenderStates();
+    corpse::ClearRenderStates();
+    play_surface::ClearRenderStates();
+    skin_prop_surface::ClearRenderStates();
+    turret::ClearRenderStates();
+    super_destructible_obj::ClearRenderStates();
 }
 
 //==============================================================================
@@ -873,6 +931,8 @@ void RenderGame( f32 Alpha )
         pPlayers[i]->ClearRenderState();
         pPlayers[i]->SetAsActivePlayer( FALSE );
     }
+
+    ClearActorRenderState();
 
     // Make all the players active again so their input will function.
     for( i = 0; i < nPlayers; i++ )

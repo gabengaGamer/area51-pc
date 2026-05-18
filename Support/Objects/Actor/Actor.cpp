@@ -101,6 +101,38 @@ avatar_tweaks g_AvatarTweaks;
 actor* actor::m_pFirstActive = NULL;
 s32    actor::m_nActive      = 0;
 
+static radian InterpActorRenderAngle( radian A, radian B, f32 T )
+{
+    return A + (x_MinAngleDiff( B, A ) * T);
+}
+
+static radian3 InterpActorRenderRotation( const radian3& A, const radian3& B, f32 T )
+{
+    return radian3( InterpActorRenderAngle( A.Pitch, B.Pitch, T ),
+                    InterpActorRenderAngle( A.Yaw,   B.Yaw,   T ),
+                    InterpActorRenderAngle( A.Roll,  B.Roll,  T ) );
+}
+
+static vector3 InterpActorRenderVector( const vector3& A, const vector3& B, f32 T )
+{
+    return A + ((B - A) * T);
+}
+
+static matrix4 BuildActorRenderL2W( const vector3& Pos, const radian3& Rot )
+{
+    matrix4 L2W;
+    L2W.Identity();
+    L2W.SetRotation( Rot );
+    L2W.SetTranslation( Pos );
+    return L2W;
+}
+
+static matrix4 InterpActorRenderMatrix( const matrix4& A, const matrix4& B, f32 T )
+{
+    return BuildActorRenderL2W( InterpActorRenderVector( A.GetTranslation(), B.GetTranslation(), T ),
+                                InterpActorRenderRotation( A.GetRotation(), B.GetRotation(), T ) );
+}
+
 
 //=========================================================================
 // Actor class
@@ -173,6 +205,7 @@ actor::actor( void ) :
     m_MutagenBurnMode               ( MBM_NORMAL_CAMPAIGN        ),
     m_TargetNetSlot                 ( -1                         ),
     m_AimOffset                     ( vector3( 0.0f, 0.0f, 0.0f) ),
+    m_ActorRenderInterpActive       ( FALSE                      ),
     m_bLockedDoors                  ( FALSE                      )
 {
     // Initialize the inventory data
@@ -188,6 +221,7 @@ actor::actor( void ) :
 
     m_BigPainTakenTime = (f32)x_GetTimeSec();
     m_pEffects = NULL;    
+    InvalidateActorRenderState();
 
     SetAvatarMutationState( AVATAR_NORMAL );
 
@@ -257,6 +291,225 @@ void actor::OnKill( void )
         m_pMPContagion = NULL;
     }
 #endif
+}
+
+//=========================================================================
+
+void actor::InvalidateActorRenderState( void )
+{
+    m_ActorRenderPrev.Valid = FALSE;
+    m_ActorRenderPrev.HasWeapon = FALSE;
+    m_ActorRenderPrev.NBones = 0;
+    m_ActorRenderPrev.WeaponNBones = 0;
+    m_ActorRenderPrev.L2W.Identity();
+
+    m_ActorRenderCurr = m_ActorRenderPrev;
+    m_ActorRenderInterp = m_ActorRenderPrev;
+    m_ActorRenderInterpActive = FALSE;
+}
+
+//=========================================================================
+
+void actor::CaptureActorRenderState( void )
+{
+    actor_render_state Snapshot;
+    Snapshot.Valid = TRUE;
+    Snapshot.HasWeapon = FALSE;
+    Snapshot.NBones = 0;
+    Snapshot.WeaponNBones = 0;
+    Snapshot.L2W = GetL2W();
+
+    loco* pLoco = GetLocoPointer();
+    if( pLoco && pLoco->IsAnimLoaded() )
+    {
+        const s32 nBones = MIN( pLoco->m_Player.GetNBones(), MAX_ANIM_BONES );
+        if( nBones > 0 )
+        {
+            pLoco->m_Player.SetNActiveBones( nBones );
+            Snapshot.NBones = nBones;
+            pLoco->m_Player.GetBoneL2Ws( Snapshot.Bones, FALSE );
+        }
+    }
+
+    new_weapon* pWeapon = GetCurrentWeaponPtr();
+    if( pWeapon )
+    {
+        const new_weapon::render_state OldState = pWeapon->GetRenderState();
+        pWeapon->SetRenderState( new_weapon::RENDER_STATE_NPC );
+
+        if( pWeapon->HasAnimGroup() )
+        {
+            char_anim_player& WeaponAnimPlayer = pWeapon->GetCurrentAnimPlayer();
+            xbool bHasExtraTrackControllers = FALSE;
+            for( s32 i = 1; i < MAX_CHAR_ANIM_PLAYER_TRACKS; i++ )
+            {
+                if( WeaponAnimPlayer.GetTrackController( i ) )
+                {
+                    bHasExtraTrackControllers = TRUE;
+                    break;
+                }
+            }
+
+            bbox WeaponBBox = pWeapon->GetLocalBBox();
+            WeaponBBox.Transform( pWeapon->GetL2W() );
+            const xbool bWeaponVisible = (g_ObjMgr.IsBoxInView( WeaponBBox, XBIN(111111) ) != -1);
+
+            if( bWeaponVisible && !bHasExtraTrackControllers )
+            {
+                Snapshot.HasWeapon = TRUE;
+                Snapshot.WeaponNBones = MIN( WeaponAnimPlayer.GetNBones(), MAX_ANIM_BONES );
+                if( Snapshot.WeaponNBones > 0 )
+                    WeaponAnimPlayer.GetBoneL2Ws( Snapshot.WeaponBones, FALSE );
+            }
+        }
+
+        pWeapon->SetRenderState( OldState );
+    }
+
+    m_ActorRenderPrev = m_ActorRenderCurr;
+    m_ActorRenderCurr = Snapshot;
+
+    if( !m_ActorRenderPrev.Valid )
+    {
+        m_ActorRenderPrev = m_ActorRenderCurr;
+        return;
+    }
+
+    const vector3 Delta = m_ActorRenderCurr.L2W.GetTranslation() - m_ActorRenderPrev.L2W.GetTranslation();
+    const radian3 PrevRot = m_ActorRenderPrev.L2W.GetRotation();
+    const radian3 CurrRot = m_ActorRenderCurr.L2W.GetRotation();
+
+    if( (Delta.LengthSquared() > x_sqr( 250.0f )) ||
+        (x_abs( x_MinAngleDiff( CurrRot.Pitch, PrevRot.Pitch ) ) > R_90) ||
+        (x_abs( x_MinAngleDiff( CurrRot.Yaw,   PrevRot.Yaw   ) ) > R_90) ||
+        (x_abs( x_MinAngleDiff( CurrRot.Roll,  PrevRot.Roll  ) ) > R_90) ||
+        (m_ActorRenderPrev.NBones != m_ActorRenderCurr.NBones) ||
+        (m_ActorRenderPrev.HasWeapon != m_ActorRenderCurr.HasWeapon) ||
+        (m_ActorRenderPrev.WeaponNBones != m_ActorRenderCurr.WeaponNBones) )
+    {
+        m_ActorRenderPrev = m_ActorRenderCurr;
+    }
+}
+
+//=========================================================================
+
+void actor::UpdateActorRenderState( f32 Alpha )
+{
+    m_ActorRenderInterpActive = FALSE;
+
+    if( !m_ActorRenderCurr.Valid )
+        return;
+
+    Alpha = MAX( 0.0f, MIN( Alpha, 1.0f ) );
+
+    const actor_render_state& Prev = m_ActorRenderPrev.Valid ? m_ActorRenderPrev : m_ActorRenderCurr;
+    m_ActorRenderInterp = m_ActorRenderCurr;
+    m_ActorRenderInterp.L2W = BuildActorRenderL2W(
+        InterpActorRenderVector( Prev.L2W.GetTranslation(), m_ActorRenderCurr.L2W.GetTranslation(), Alpha ),
+        InterpActorRenderRotation( Prev.L2W.GetRotation(), m_ActorRenderCurr.L2W.GetRotation(), Alpha ) );
+
+    m_ActorRenderInterp.NBones = m_ActorRenderCurr.NBones;
+    if( (Prev.NBones == m_ActorRenderCurr.NBones) && (m_ActorRenderCurr.NBones > 0) )
+    {
+        for( s32 i = 0; i < m_ActorRenderCurr.NBones; i++ )
+            m_ActorRenderInterp.Bones[i] = InterpActorRenderMatrix( Prev.Bones[i], m_ActorRenderCurr.Bones[i], Alpha );
+    }
+    else
+    {
+        for( s32 i = 0; i < m_ActorRenderCurr.NBones; i++ )
+            m_ActorRenderInterp.Bones[i] = m_ActorRenderCurr.Bones[i];
+    }
+
+    m_ActorRenderInterp.HasWeapon = m_ActorRenderCurr.HasWeapon;
+    m_ActorRenderInterp.WeaponNBones = m_ActorRenderCurr.WeaponNBones;
+    if( m_ActorRenderCurr.HasWeapon )
+    {
+        if( (Prev.HasWeapon) &&
+            (Prev.WeaponNBones == m_ActorRenderCurr.WeaponNBones) &&
+            (m_ActorRenderCurr.WeaponNBones > 0) )
+        {
+            for( s32 i = 0; i < m_ActorRenderCurr.WeaponNBones; i++ )
+                m_ActorRenderInterp.WeaponBones[i] = InterpActorRenderMatrix( Prev.WeaponBones[i], m_ActorRenderCurr.WeaponBones[i], Alpha );
+        }
+        else
+        {
+            for( s32 i = 0; i < m_ActorRenderCurr.WeaponNBones; i++ )
+                m_ActorRenderInterp.WeaponBones[i] = m_ActorRenderCurr.WeaponBones[i];
+        }
+    }
+
+    m_ActorRenderInterpActive = TRUE;
+}
+
+//=========================================================================
+
+void actor::ClearActorRenderState( void )
+{
+    m_ActorRenderInterpActive = FALSE;
+}
+
+//=========================================================================
+
+const matrix4& actor::GetActorRenderL2W( void ) const
+{
+    if( m_ActorRenderInterpActive )
+        return m_ActorRenderInterp.L2W;
+
+    return GetL2W();
+}
+
+//=========================================================================
+
+xbool actor::GetActorRenderBoneL2W( s32 iBone, matrix4& L2W ) const
+{
+    if( m_ActorRenderInterpActive &&
+        (iBone >= 0) &&
+        (iBone < m_ActorRenderInterp.NBones) )
+    {
+        L2W = m_ActorRenderInterp.Bones[iBone];
+        return TRUE;
+    }
+
+    if( m_pLoco )
+    {
+        s32 nBones = m_pLoco->m_Player.GetNBones();
+        if( (iBone >= 0) && (iBone < nBones) )
+        {
+            L2W = m_pLoco->m_Player.GetBoneL2W( iBone );
+            return TRUE;
+        }
+    }
+
+    return FALSE;
+}
+
+//=========================================================================
+
+xbool actor::GetRenderWeaponL2W( matrix4& L2W ) const
+{
+    loco* pLoco = m_pLoco;
+    if( !pLoco || !m_ActorRenderInterpActive )
+        return FALSE;
+
+    const s32 iBone = pLoco->GetWeaponBoneIndex();
+    if( !GetActorRenderBoneL2W( iBone, L2W ) )
+        return FALSE;
+    return TRUE;
+}
+
+//=========================================================================
+
+const matrix4* actor::GetRenderWeaponBones( s32& nBones ) const
+{
+    nBones = 0;
+
+    if( m_ActorRenderInterpActive && m_ActorRenderInterp.HasWeapon && (m_ActorRenderInterp.WeaponNBones > 0) )
+    {
+        nBones = m_ActorRenderInterp.WeaponNBones;
+        return m_ActorRenderInterp.WeaponBones;
+    }
+
+    return NULL;
 }
 
 //=========================================================================
@@ -903,6 +1156,8 @@ void actor::OnRender( void )
             return;
     #endif
 
+    const matrix4& RenderL2W = GetActorRenderL2W();
+
     // Reset timer
     m_TimeSinceLastRender = 0.0f;
     
@@ -919,13 +1174,13 @@ void actor::OnRender( void )
 #endif
 
     // Compute LOD mask
-    u64 LODMask = m_SkinInst.GetLODMask(GetL2W());
+    u64 LODMask = m_SkinInst.GetLODMask( RenderL2W );
     if( m_CloakState == CLOAKING_ON )
     {
         s32 CloakVMesh = pSkinGeom->GetVMeshIndex( "CLOAK" );
         if( CloakVMesh != -1 )
         {
-            u16 ScreenSize = (u16)eng_GetView()->CalcScreenSize( GetPosition(), m_SkinInst.GetBBox().GetRadius() );
+            u16 ScreenSize = (u16)eng_GetView()->CalcScreenSize( RenderL2W.GetTranslation(), m_SkinInst.GetBBox().GetRadius() );
             LODMask = pSkinGeom->GetLODMask( 1<<CloakVMesh, ScreenSize );
         }
     }
@@ -991,7 +1246,7 @@ void actor::OnRender( void )
             NormalRot.Pitch += x_frand( R_0, MaxRot );
             NormalRot.Roll  += x_frand( R_0, MaxRot );
         }
-        GetSkinInst().RenderDistortion(&GetL2W(), 
+        GetSkinInst().RenderDistortion(&RenderL2W, 
             pMatrices, 
             nActiveBones,
             Flags,
@@ -1016,7 +1271,7 @@ void actor::OnRender( void )
             Flags |= render::FADING_ALPHA;
         }
 
-        GetSkinInst().Render(&GetL2W(), 
+        GetSkinInst().Render(&RenderL2W, 
             pMatrices, 
             nActiveBones,
             Flags,
@@ -1045,6 +1300,8 @@ void actor::OnRenderShadowCast( u64 ProjMask )
             return;
     #endif
 
+    const matrix4& RenderL2W = GetActorRenderL2W();
+
     // Reset timer
     m_TimeSinceLastRender = 0;    
         
@@ -1058,7 +1315,7 @@ void actor::OnRenderShadowCast( u64 ProjMask )
         return;
 
     // Compute LOD mask for the normal render
-    u64 LODMask = GetSkinInst().GetLODMask(GetL2W()) ;
+    u64 LODMask = GetSkinInst().GetLODMask( RenderL2W ) ;
     if (LODMask == 0)
         return ;
 
@@ -1076,12 +1333,22 @@ void actor::OnRenderShadowCast( u64 ProjMask )
     const matrix4* pMatrices = GetBonesForRender( LODMask|ShadLODMask, nActiveBones );
 
     // Render
-    GetSkinInst().RenderShadowCast(&GetL2W(), 
+    GetSkinInst().RenderShadowCast(&RenderL2W, 
                                 pMatrices, 
                                 nActiveBones,
                                 Flags,
                                 ShadLODMask,
                                 ProjMask );
+
+    if( IsAlive() )
+    {
+        new_weapon* pWeapon = GetCurrentWeaponPtr();
+        if( pWeapon )
+        {
+            pWeapon->SetRenderState( new_weapon::RENDER_STATE_NPC );
+            pWeapon->RenderWeaponShadow( ProjMask );
+        }
+    }
 }
 
 //=============================================================================
@@ -4075,6 +4342,8 @@ void  actor::SetIsActive( xbool bIsActive )
     if( m_bIsActive == bIsActive )
         return;
 
+    InvalidateActorRenderState();
+
     if( bIsActive )
     {
         m_bIsActive = TRUE;
@@ -4223,7 +4492,7 @@ xbool actor::GetAttachPointData( s32      iAttachPt,
 {
     if (iAttachPt == 0)
     {
-        L2W = GetL2W();
+        L2W = GetActorRenderL2W();
         return TRUE;
     }
     if (m_pLoco)
@@ -4234,10 +4503,18 @@ xbool actor::GetAttachPointData( s32      iAttachPt,
         if ( (iAttachPt >= 0) &&
              (iAttachPt < nBones ))
         {
-            L2W = m_pLoco->m_Player.GetBoneL2W( iAttachPt );
-            if ( Flags & ATTACH_USE_WORLDSPACE)
-                L2W.PreTranslate( m_pLoco->m_Player.GetBoneBindPosition( iAttachPt ) );
-            
+            if( m_ActorRenderInterpActive && GetActorRenderBoneL2W( iAttachPt, L2W ) )
+            {
+                if( !(Flags & ATTACH_USE_WORLDSPACE) )
+                    L2W = L2W * m_pLoco->m_Player.GetBone( iAttachPt ).BindMatrixInv;
+            }
+            else
+            {
+                L2W = m_pLoco->m_Player.GetBoneL2W( iAttachPt );
+                if ( Flags & ATTACH_USE_WORLDSPACE)
+                    L2W.PreTranslate( m_pLoco->m_Player.GetBoneBindPosition( iAttachPt ) );
+            }
+
             return TRUE;
         }        
     }
@@ -4288,6 +4565,20 @@ const matrix4* actor::GetBonesForRender( u64 LODMask, s32& nActiveBones )
     if( nActiveBones == 0 )
         return NULL ;
 
+    if( m_ActorRenderInterpActive && (m_ActorRenderInterp.NBones >= nActiveBones) )
+    {
+        matrix4* pMat = (matrix4*)smem_BufferAlloc( nActiveBones * sizeof( matrix4 ) );
+        if( !pMat )
+            return NULL;
+
+        ASSERT( pLoco->m_Player.GetAnimGroup() );
+        const anim_group& AnimGroup = *pLoco->m_Player.GetAnimGroup();
+        for( i = 0; i < nActiveBones; i++ )
+            pMat[i] = m_ActorRenderInterp.Bones[i] * AnimGroup.GetBoneBindInvMatrix( i );
+
+        return pMat;
+    }
+
     // Use loco to compute bones?
     const matrix4* pMatrices = NULL;
     if( pLoco->IsAnimLoaded() )
@@ -4310,7 +4601,7 @@ const matrix4* actor::GetBonesForRender( u64 LODMask, s32& nActiveBones )
             return NULL;
 
         // Get object transform
-        const matrix4& L2W = GetL2W();
+        const matrix4& L2W = GetActorRenderL2W();
         
         // Use bind pose at current transform
         for( i = 0; i < nActiveBones ; i++ )

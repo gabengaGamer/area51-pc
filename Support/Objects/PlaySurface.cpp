@@ -7,9 +7,11 @@
 #include "GameLib\RigidGeomCollision.hpp"
 #include "Render\Render.hpp"
 #include "Debris\Debris_mgr.hpp"
+#include "Objects\Render\SimpleAnimRenderState.hpp"
 #include "..\MiscUtils\SimpleUtils.hpp"
 
 xbool ShowCollision = FALSE;
+play_surface* play_surface::s_pFirstRenderSurface = NULL;
 
 //=============================================================================
 // OBJECT DESCRIPTION
@@ -83,14 +85,44 @@ const object_desc&  play_surface::GetObjectType( void )
 // FUNCTIONS
 //=============================================================================
 
-play_surface::play_surface( void )  
+static xbool ShouldSnapPlaySurfaceState( const matrix4& Prev, const matrix4& Curr )
 {
+    const vector3 Delta   = Curr.GetTranslation() - Prev.GetTranslation();
+    const radian3 PrevRot = Prev.GetRotation();
+    const radian3 CurrRot = Curr.GetRotation();
+
+    return (Delta.LengthSquared() > x_sqr( 250.0f )) ||
+           (x_abs( x_MinAngleDiff( CurrRot.Pitch, PrevRot.Pitch ) ) > R_90) ||
+           (x_abs( x_MinAngleDiff( CurrRot.Yaw,   PrevRot.Yaw   ) ) > R_90) ||
+           (x_abs( x_MinAngleDiff( CurrRot.Roll,  PrevRot.Roll  ) ) > R_90);
+}
+
+play_surface::play_surface( void )
+{
+    m_pNextRenderSurface = s_pFirstRenderSurface;
+    m_pPrevRenderSurface = NULL;
+    if( s_pFirstRenderSurface )
+        s_pFirstRenderSurface->m_pPrevRenderSurface = this;
+    s_pFirstRenderSurface = this;
+
+    m_RenderPrevL2W.Identity();
+    m_RenderCurrL2W.Identity();
+    m_RenderInterpL2W.Identity();
+    m_RenderStateValid   = FALSE;
+    m_RenderInterpActive = FALSE;
 }
 
 //=============================================================================
 
 play_surface::~play_surface( void )
 {
+    if( m_pPrevRenderSurface )
+        m_pPrevRenderSurface->m_pNextRenderSurface = m_pNextRenderSurface;
+    else
+        s_pFirstRenderSurface = m_pNextRenderSurface;
+
+    if( m_pNextRenderSurface )
+        m_pNextRenderSurface->m_pPrevRenderSurface = m_pPrevRenderSurface;
 }
 
 //=============================================================================
@@ -136,6 +168,7 @@ void play_surface::OnRender( void )
     
     if( pRigidGeom )
     {
+        const matrix4& RenderL2W = GetRenderL2W();
         u32 Flags = (GetFlagBits() & object::FLAG_CHECK_PLANES) ? render::CLIPPED : 0;
         if( GetAttrBits() & object::ATTR_DISABLE_PROJ_SHADOWS )
             Flags |= render::DISABLE_PROJ_SHADOWS;
@@ -164,12 +197,12 @@ void play_surface::OnRender( void )
                 // playsurfaces don't get to choose which meshes render on the
                 // consoles (performance and data optimization), so make sure the
                 // editor behaves the same way.
-                m_Inst.Render( &GetL2W(), Flags | GetRenderMode(), (u64)0xffffffffffffffffL, (u8)255 );
+                m_Inst.Render( &RenderL2W, Flags | GetRenderMode(), (u64)0xffffffffffffffffL, (u8)255 );
             }
             else
 #endif
             {
-                m_Inst.Render( &GetL2W(), Flags | GetRenderMode() );
+                m_Inst.Render( &RenderL2W, Flags | GetRenderMode() );
             }
         }
     }
@@ -260,7 +293,7 @@ xbool play_surface::GetColDetails( s32 Key, detail_tri& Tri )
 const matrix4* play_surface::GetBoneL2Ws( void )
 {
     // Just 1 bone in a play surface
-    return &GetL2W() ;
+    return &GetRenderL2W() ;
 }
 
 //=============================================================================
@@ -297,6 +330,100 @@ void play_surface::OnKill( void )
     g_PolyCache.InvalidateCells( GetBBox(), GetGuid() );
 
     object::OnKill();
+}
+
+//==============================================================================
+
+void play_surface::CaptureRenderStates( void )
+{
+    play_surface* pSurface = s_pFirstRenderSurface;
+    while( pSurface )
+    {
+        play_surface* pNextSurface = pSurface->m_pNextRenderSurface;
+        pSurface->CaptureRenderState();
+        pSurface = pNextSurface;
+    }
+}
+
+//==============================================================================
+
+void play_surface::UpdateRenderStates( f32 Alpha )
+{
+    play_surface* pSurface = s_pFirstRenderSurface;
+    while( pSurface )
+    {
+        play_surface* pNextSurface = pSurface->m_pNextRenderSurface;
+        pSurface->UpdateRenderState( Alpha );
+        pSurface = pNextSurface;
+    }
+}
+
+//==============================================================================
+
+void play_surface::ClearRenderStates( void )
+{
+    play_surface* pSurface = s_pFirstRenderSurface;
+    while( pSurface )
+    {
+        play_surface* pNextSurface = pSurface->m_pNextRenderSurface;
+        pSurface->ClearRenderState();
+        pSurface = pNextSurface;
+    }
+}
+
+//==============================================================================
+
+const matrix4& play_surface::GetRenderL2W( void ) const
+{
+    if( m_RenderInterpActive )
+        return m_RenderInterpL2W;
+
+    return GetL2W();
+}
+
+//==============================================================================
+
+void play_surface::CaptureRenderState( void )
+{
+    const matrix4& L2W = GetL2W();
+
+    if( !m_RenderStateValid )
+    {
+        m_RenderPrevL2W      = L2W;
+        m_RenderCurrL2W      = L2W;
+        m_RenderInterpL2W    = L2W;
+        m_RenderStateValid   = TRUE;
+        m_RenderInterpActive = FALSE;
+        return;
+    }
+
+    m_RenderPrevL2W = m_RenderCurrL2W;
+    m_RenderCurrL2W = L2W;
+
+    if( ShouldSnapPlaySurfaceState( m_RenderPrevL2W, m_RenderCurrL2W ) )
+        m_RenderPrevL2W = m_RenderCurrL2W;
+}
+
+//==============================================================================
+
+void play_surface::UpdateRenderState( f32 Alpha )
+{
+    if( !m_RenderStateValid )
+    {
+        m_RenderInterpActive = FALSE;
+        return;
+    }
+
+    Alpha = MAX( 0.0f, MIN( Alpha, 1.0f ) );
+    m_RenderInterpL2W = InterpSimpleAnimRenderMatrix( m_RenderPrevL2W, m_RenderCurrL2W, Alpha );
+    m_RenderInterpActive = TRUE;
+}
+
+//==============================================================================
+
+void play_surface::ClearRenderState( void )
+{
+    m_RenderInterpActive = FALSE;
 }
 
 //==============================================================================

@@ -7,6 +7,7 @@
 
 #include "Obj_mgr\obj_mgr.hpp"
 #include "Objects\Render\SkinInst.hpp"
+#include "Objects\Render\SimpleAnimRenderState.hpp"
 #include "Characters\FloorProperties.hpp"
 
 //=========================================================================
@@ -55,6 +56,9 @@ public:
     CREATE_RTTI( coke_can, object, object )
     virtual const object_desc&  GetTypeDesc     ( void ) const;    
     static  const object_desc&  GetObjectType   ( void );
+    static  void                CaptureRenderStates( void );
+    static  void                UpdateRenderStates( f32 Alpha );
+    static  void                ClearRenderStates( void );
 
 
 //=========================================================================
@@ -144,6 +148,10 @@ public:
 //=========================================================================
 protected:  
 
+    static coke_can*            s_pFirstRenderCan;
+           coke_can*            m_pNextRenderCan;
+           coke_can*            m_pPrevRenderCan;
+
     // Flags
     u32                 m_bInitialized : 1;         // TRUE if initialized
     u32                 m_bOnGround    : 1;         // TRUE if lying on the ground
@@ -165,6 +173,14 @@ protected:
     // Rendering
     skin_inst           m_SkinInst;                 // Skinned inst
     floor_properties    m_FloorProperties;          // Floor tracking class
+    simple_anim_render_state m_RenderPrev;
+    simple_anim_render_state m_RenderCurr;
+    simple_anim_render_state m_RenderInterp;
+    xbool               m_RenderInterpActive;
+
+    void                CaptureRenderState      ( void );
+    void                UpdateRenderState       ( f32 Alpha );
+    void                ClearRenderState        ( void );
 };
 
 //=========================================================================

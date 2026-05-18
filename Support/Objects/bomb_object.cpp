@@ -200,6 +200,7 @@ void bomb_object::OnRender( void )
     rigid_geom* pRigidGeom = m_Inst.GetRigidGeom();
     if( pRigidGeom )
     {
+        const matrix4& RenderL2W = GetRenderL2W();
         u32 Flags = (GetFlagBits() & object::FLAG_CHECK_PLANES) ? render::CLIPPED : 0;
         
         if ( pRigidGeom->m_nBones > 1 )
@@ -209,7 +210,7 @@ void bomb_object::OnRender( void )
         else
         {
             DisplayBombCount(m_BombTimerMinutes, m_BombTimerSeconds);
-            m_Inst.Render( &GetL2W(), Flags | GetRenderMode(), m_MeshMask);
+            m_Inst.Render( &RenderL2W, Flags | GetRenderMode(), m_MeshMask);
         }
     }
     else

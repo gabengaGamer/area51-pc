@@ -12,6 +12,7 @@
 //==============================================================================
 
 #include "Objects\PlaySurface.hpp"
+#include "Objects\Render\SimpleAnimRenderState.hpp"
 #include "Animation\AnimPlayer.hpp"
 #include "Characters\Factions.hpp"
 #include "Objects\Event.hpp"
@@ -96,6 +97,10 @@ public:
 
                 turret          ( void );
                ~turret          ( void );
+
+    static  void                CaptureRenderStates( void );
+    static  void                UpdateRenderStates ( f32 Alpha );
+    static  void                ClearRenderStates  ( void );
     
     virtual void                OnEnumProp      ( prop_enum&    List );
     virtual xbool               OnProperty      ( prop_query&   I    );
@@ -273,15 +278,29 @@ virtual anim_group::handle* GetAnimGroupHandlePtr ( void ) { return &m_hAnimGrou
 
 protected:
     virtual void                TryToFireAtTarget( void );
+            void                CaptureRenderState ( void );
+            void                UpdateRenderState  ( f32 Alpha );
+            void                ClearRenderState   ( void );
+            void                InvalidateRenderState( void );
+    const   matrix4&            GetRenderL2W      ( void ) const;
+            xbool               GetRenderBoneL2W  ( s32 iBone, matrix4& L2W );
 
 //------------------------------------------------------------------------------
 //  Private Data
 
 protected:
 
+    static  turret*                 s_pFirstRenderTurret;
+            turret*                 m_pNextRenderTurret;
+            turret*                 m_pPrevRenderTurret;
+
     anim_group::handle          m_hAnimGroup;
     rhandle<char>               m_hAudioPackage;
     simple_anim_player          m_AnimPlayer;
+    simple_anim_render_state    m_RenderPrev;
+    simple_anim_render_state    m_RenderCurr;
+    simple_anim_render_state    m_RenderInterp;
+    xbool                       m_RenderInterpActive;
     anim_track_controller       m_TrackController[2];
     s32                         m_ProjectileTemplateID;
     s32                         m_AimingSoundID;

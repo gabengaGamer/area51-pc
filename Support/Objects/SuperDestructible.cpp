@@ -40,6 +40,7 @@
 
 xstring g_SuperDestructibleStringList;
 xstring g_SuperDestructiblePlayAnimStringList;
+super_destructible_obj* super_destructible_obj::s_pFirstRenderSuper = NULL;
 
 // Anim list
 struct namelist
@@ -171,6 +172,13 @@ void BuildNamesList( const geom& Geom, namelist& List )
 
 super_destructible_obj::super_destructible_obj(void)
 {
+    m_pNextRenderSuper = s_pFirstRenderSuper;
+    m_pPrevRenderSuper = NULL;
+    if( s_pFirstRenderSuper )
+        s_pFirstRenderSuper->m_pPrevRenderSuper = this;
+    s_pFirstRenderSuper = this;
+
+    InvalidateRenderState();
     m_Destroyed         = FALSE;
     m_DecalGroup        = 0;
     m_DestructionTime   = 0;
@@ -187,6 +195,13 @@ super_destructible_obj::super_destructible_obj(void)
 
 super_destructible_obj::~super_destructible_obj(void)
 {
+    if( m_pNextRenderSuper )
+        m_pNextRenderSuper->m_pPrevRenderSuper = m_pPrevRenderSuper;
+    if( m_pPrevRenderSuper )
+        m_pPrevRenderSuper->m_pNextRenderSuper = m_pNextRenderSuper;
+    if( s_pFirstRenderSuper == this )
+        s_pFirstRenderSuper = m_pNextRenderSuper;
+
     s32 i;
     for (i = 0 ; i < MAX_PAIN_RESPONSES ; i++ ) 
     {
@@ -205,6 +220,108 @@ super_destructible_obj::~super_destructible_obj(void)
             s_PainResponseInfo[ i ].Emitter = 0;
         }
     }
+}
+
+//=========================================================================
+
+void super_destructible_obj::CaptureRenderStates( void )
+{
+    for( super_destructible_obj* pObj = s_pFirstRenderSuper; pObj; pObj = pObj->m_pNextRenderSuper )
+        pObj->CaptureRenderState();
+}
+
+//=========================================================================
+
+void super_destructible_obj::UpdateRenderStates( f32 Alpha )
+{
+    for( super_destructible_obj* pObj = s_pFirstRenderSuper; pObj; pObj = pObj->m_pNextRenderSuper )
+        pObj->UpdateRenderState( Alpha );
+}
+
+//=========================================================================
+
+void super_destructible_obj::ClearRenderStates( void )
+{
+    for( super_destructible_obj* pObj = s_pFirstRenderSuper; pObj; pObj = pObj->m_pNextRenderSuper )
+        pObj->ClearRenderState();
+}
+
+//=========================================================================
+
+void super_destructible_obj::InvalidateRenderState( void )
+{
+    InitSimpleAnimRenderState( m_RenderPrev );
+    m_RenderCurr = m_RenderPrev;
+    m_RenderInterp = m_RenderPrev;
+    m_RenderInterpActive = FALSE;
+}
+
+//=========================================================================
+
+void super_destructible_obj::CaptureRenderState( void )
+{
+    simple_anim_render_state Snapshot;
+    CaptureSimpleAnimRenderState( Snapshot, GetL2W(), m_AnimPlayer );
+
+    m_RenderPrev = m_RenderCurr;
+    m_RenderCurr = Snapshot;
+
+    if( !m_RenderPrev.Valid )
+    {
+        m_RenderPrev = m_RenderCurr;
+        return;
+    }
+
+    if( ShouldSnapSimpleAnimRenderState( m_RenderPrev, m_RenderCurr ) )
+        m_RenderPrev = m_RenderCurr;
+}
+
+//=========================================================================
+
+void super_destructible_obj::UpdateRenderState( f32 Alpha )
+{
+    m_RenderInterpActive = FALSE;
+
+    if( !m_RenderCurr.Valid )
+        return;
+
+    UpdateSimpleAnimRenderState( m_RenderPrev.Valid ? m_RenderPrev : m_RenderCurr,
+                                 m_RenderCurr,
+                                 m_RenderInterp,
+                                 Alpha );
+    m_RenderInterpActive = TRUE;
+}
+
+//=========================================================================
+
+void super_destructible_obj::ClearRenderState( void )
+{
+    m_RenderInterpActive = FALSE;
+}
+
+//=========================================================================
+
+const matrix4& super_destructible_obj::GetRenderL2W( void ) const
+{
+    if( m_RenderInterpActive )
+        return m_RenderInterp.L2W;
+
+    return GetL2W();
+}
+
+//=========================================================================
+
+xbool super_destructible_obj::GetRenderBoneL2W( s32 iBone, matrix4& L2W )
+{
+    if( m_RenderInterpActive && GetSimpleAnimRenderBoneL2W( m_RenderInterp, iBone, L2W ) )
+        return TRUE;
+
+    const matrix4* pBone = m_AnimPlayer.GetBoneL2W( iBone, FALSE );
+    if( !pBone )
+        return FALSE;
+
+    L2W = *pBone;
+    return TRUE;
 }
 
 //=========================================================================
@@ -643,6 +760,15 @@ void super_destructible_obj::OnTransform( const matrix4& L2W )
 
 const matrix4* super_destructible_obj::GetBoneL2Ws( void )
 {
+    if( m_RenderInterpActive && m_hAnimGroup.GetPointer() )
+    {
+        const matrix4* pMatrices = BuildSimpleAnimRenderMatrices( m_RenderInterp,
+                                                                  *m_hAnimGroup.GetPointer(),
+                                                                  m_hAnimGroup.GetPointer()->GetNBones() );
+        if( pMatrices )
+            return pMatrices;
+    }
+
     return m_AnimPlayer.GetBoneL2Ws() ;
 }
 

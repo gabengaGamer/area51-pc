@@ -7,6 +7,7 @@
 //=========================================================================
 
 #include "Objects\PlaySurface.hpp"
+#include "Objects\Render\SimpleAnimRenderState.hpp"
 #include "Animation\AnimPlayer.hpp"
 #include "ZoneMgr\ZoneMgr.hpp"
 
@@ -22,6 +23,10 @@ public:
 
                                 anim_surface    ( void );
                                ~anim_surface    ( void );
+
+    static  void                CaptureRenderStates( void );
+    static  void                UpdateRenderStates ( f32 Alpha );
+    static  void                ClearRenderStates  ( void );
 
     virtual void                OnEnumProp      ( prop_enum&    List );
     virtual xbool               OnProperty      ( prop_query&   I    );
@@ -52,6 +57,13 @@ public:
 
 protected:
 
+    void                        CaptureRenderState ( void );
+    void                        UpdateRenderState  ( f32 Alpha );
+    void                        ClearRenderState   ( void );
+    void                        InvalidateRenderState( void );
+    const matrix4&              GetRenderL2W       ( void ) const;
+    xbool                       GetRenderBoneL2W   ( s32 iBone, matrix4& L2W );
+
     virtual void                OnRender        ( void );
     virtual void                OnColCheck      ( void );
 
@@ -65,9 +77,17 @@ protected:
 
 protected:
 
+    static  anim_surface*           s_pFirstRenderSurface;
+            anim_surface*           m_pNextRenderSurface;
+            anim_surface*           m_pPrevRenderSurface;
+
     anim_group::handle          m_hAnimGroup;
     rhandle<char>               m_hAudioPackage;
     simple_anim_player          m_AnimPlayer;
+    simple_anim_render_state    m_RenderPrev;
+    simple_anim_render_state    m_RenderCurr;
+    simple_anim_render_state    m_RenderInterp;
+    xbool                       m_RenderInterpActive;
     s16                         m_iBackupAnimString;
     zone_mgr::tracker           m_ZoneTracker;
 };

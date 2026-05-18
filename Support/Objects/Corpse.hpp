@@ -7,6 +7,7 @@
 
 #include "Obj_mgr\obj_mgr.hpp"
 #include "PhysicsMgr\PhysicsInst.hpp"
+#include "Objects\Render\SimpleAnimRenderState.hpp"
 
 //=========================================================================
 // DEFINITIONS
@@ -59,6 +60,9 @@ public:
 
 static      void            LimitCount              ( void );
 static      xbool           ReachedMaxActiveLimit   ( void );
+static      void            CaptureRenderStates     ( void );
+static      void            UpdateRenderStates      ( f32 Alpha );
+static      void            ClearRenderStates       ( void );
 
             xbool           Initialize              ( actor&                Actor ,
                                                       xbool                 bDoBodyFade = TRUE,
@@ -138,6 +142,7 @@ protected:
 
         // Static data
 static  s32                     m_ActiveCount;          // # of active (moving) corpses
+static  corpse*                  s_pFirstRenderCorpse;
     
         // Misc
         guid                    m_OriginGuid;               // Guid of object that created it (if any)
@@ -178,6 +183,16 @@ static  s32                     m_ActiveCount;          // # of active (moving) 
         
         // Audio
         f32                     m_ImpactSfxTimer;       // Timer count down since last impact
+        corpse*                 m_pNextRenderCorpse;
+        corpse*                 m_pPrevRenderCorpse;
+        simple_anim_render_state m_RenderPrev;
+        simple_anim_render_state m_RenderCurr;
+        simple_anim_render_state m_RenderInterp;
+        xbool                   m_RenderInterpActive;
+
+            void                CaptureRenderState      ( void );
+            void                UpdateRenderState       ( f32 Alpha );
+            void                ClearRenderState        ( void );
 
 };
 

@@ -1252,6 +1252,19 @@ void new_weapon::RenderWeapon( xbool bDebug, const xcolor& Ambient, xbool Cloake
                 Player.GetRenderWeaponL2W( RenderL2W );
                 pRenderBones = Player.GetRenderWeaponBones( RenderNBones );
             }
+            else
+            {
+                actor& OwnerActor = actor::GetSafeType( *pOwner );
+                OwnerActor.GetRenderWeaponL2W( RenderL2W );
+                pRenderBones = OwnerActor.GetRenderWeaponBones( RenderNBones );
+            }
+        }
+        else
+        if( pOwner && pOwner->IsKindOf( actor::GetRTTI() ) && (m_CurrentRenderState == RENDER_STATE_NPC) )
+        {
+            actor& OwnerActor = actor::GetSafeType( *pOwner );
+            OwnerActor.GetRenderWeaponL2W( RenderL2W );
+            pRenderBones = OwnerActor.GetRenderWeaponBones( RenderNBones );
         }
 
         // accumulate clipping flags and whether or not we should glow
@@ -1344,6 +1357,59 @@ void new_weapon::RenderWeapon( xbool bDebug, const xcolor& Ambient, xbool Cloake
                              Ambient );
         }
     }
+}
+
+//==============================================================================
+
+void new_weapon::RenderWeaponShadow( u64 ProjMask )
+{
+    if( !m_IsVisible || (m_CurrentRenderState != RENDER_STATE_NPC) )
+        return;
+
+    anim_group::handle& CurAnimGroup = m_AnimGroup[ m_CurrentRenderState ];
+    if( !CurAnimGroup.GetPointer() || !m_Skin[ m_CurrentRenderState ].GetSkinGeom() )
+        return;
+
+    object*        pOwner       = g_ObjMgr.GetObjectByGuid( m_OwnerGuid );
+    matrix4        RenderL2W    ( GetL2W() );
+    const matrix4* pRenderBones = NULL;
+    s32            RenderNBones = 0;
+
+    if( pOwner && pOwner->IsKindOf( actor::GetRTTI() ) )
+    {
+        actor& OwnerActor = actor::GetSafeType( *pOwner );
+        OwnerActor.GetRenderWeaponL2W( RenderL2W );
+        pRenderBones = OwnerActor.GetRenderWeaponBones( RenderNBones );
+    }
+
+    skin_inst& SkinInst = m_Skin[ m_CurrentRenderState ];
+    u64 ShadLODMask = SkinInst.GetLODMask( 0 );
+    if( ShadLODMask == 0 )
+        return;
+
+    s32            nBones    = m_AnimPlayer[ m_CurrentRenderState ].GetNBones();
+    if( nBones <= 0 )
+        return;
+
+    matrix4*       pBone     = (matrix4*)smem_BufferAlloc( nBones * sizeof( matrix4 ) );
+    const matrix4* pAnimBone = m_AnimPlayer[ m_CurrentRenderState ].GetBoneL2Ws();
+    const anim_group& BoneAnimGroup = *CurAnimGroup.GetPointer();
+
+    for( s32 i = 0; i < nBones; i++ )
+    {
+        if( pRenderBones && (RenderNBones == nBones) )
+            pBone[i] = pRenderBones[i] * BoneAnimGroup.GetBoneBindInvMatrix( i );
+        else
+            pBone[i] = pAnimBone[i];
+    }
+
+    const u32 Flags = ( GetFlagBits() & object::FLAG_CHECK_PLANES ) ? render::CLIPPED : 0;
+    SkinInst.RenderShadowCast( &RenderL2W,
+                               pBone,
+                               nBones,
+                               Flags,
+                               ShadLODMask,
+                               ProjMask );
 }
 
 //==============================================================================

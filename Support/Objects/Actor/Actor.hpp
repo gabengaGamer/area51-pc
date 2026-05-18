@@ -454,6 +454,11 @@ virtual void            OnRender                ( void );
 virtual void            OnRenderShadowCast      ( u64 ProjMask );
 virtual void            OnRenderTransparent     ( void );
 virtual void            OnRenderWeapon          ( void );
+        void            CaptureActorRenderState ( void );
+        void            UpdateActorRenderState  ( f32 Alpha );
+        void            ClearActorRenderState   ( void );
+        xbool           GetRenderWeaponL2W      ( matrix4& L2W ) const;
+const   matrix4*        GetRenderWeaponBones    ( s32& nBones ) const;
 virtual void            OnColCheck              ( void );    
 virtual void            OnMove                  ( const vector3& NewPos );
 virtual void            OnTransform             ( const matrix4& L2W );
@@ -689,6 +694,9 @@ virtual void            OnAttachedMove          ( s32 iAttachPt, const matrix4& 
 
 // Rendering functions
 const   matrix4*        GetBonesForRender       ( u64 LODMask, s32& nActiveBones );
+const   matrix4&        GetActorRenderL2W      ( void ) const;
+        xbool           GetActorRenderBoneL2W  ( s32 iBone, matrix4& L2W ) const;
+        void            InvalidateActorRenderState( void );
         void            RenderHitLocations      ( void );
         f32             TimeSinceLastRender     ( void );
 virtual skin_inst&      GetSkinInst             ( void ) { return m_SkinInst; }
@@ -757,6 +765,16 @@ static  s32                     m_nActive;
         actor*                  m_pPrevActive;
 
 protected:
+        struct actor_render_state
+        {
+            xbool   Valid;
+            xbool   HasWeapon;
+            s32     NBones;
+            s32     WeaponNBones;
+            matrix4 L2W;
+            matrix4 Bones[MAX_ANIM_BONES];
+            matrix4 WeaponBones[MAX_ANIM_BONES];
+        };
 
         // Active info
         xbool                   m_bIsActive ;           // TRUE if character is within active area
@@ -832,6 +850,10 @@ protected:
         floor_properties        m_FloorProperties;
         skin_inst               m_SkinInst ;            // Render instance
         anim_group::handle      m_hAnimGroup ;          // Animation group handle
+        actor_render_state      m_ActorRenderPrev;
+        actor_render_state      m_ActorRenderCurr;
+        actor_render_state      m_ActorRenderInterp;
+        xbool                   m_ActorRenderInterpActive;
         f32                     m_TimeSinceLastRender;  // Last time character was rendered
         f32                     m_LeanAmount;           // -1.0f to 1.0f indicates leaning all the way left
                                                         //       to all the way right, respectively

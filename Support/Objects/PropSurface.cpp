@@ -429,6 +429,7 @@ void prop_surface::OnRender( void )
     
     if( pRigidGeom && !(m_PropFlags & PROP_FLAG_BBOX_ONLY) )
     {
+        const matrix4& RenderL2W = GetRenderL2W();
         u32 Flags = (GetFlagBits() & object::FLAG_CHECK_PLANES) ? render::CLIPPED : 0;
         
         if ( pRigidGeom->m_nBones > 1 )
@@ -438,7 +439,7 @@ void prop_surface::OnRender( void )
         }
         else
         {
-            m_Inst.Render( &GetL2W(), Flags | GetRenderMode() );
+            m_Inst.Render( &RenderL2W, Flags | GetRenderMode() );
         }
     }
     else

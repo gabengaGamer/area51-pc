@@ -38,6 +38,9 @@ public:
 
     virtual const object_desc&  GetTypeDesc     ( void ) const;
     static  const object_desc&  GetObjectType   ( void );
+    static  void                CaptureRenderStates( void );
+    static  void                UpdateRenderStates( f32 Alpha );
+    static  void                ClearRenderStates( void );
 
     virtual void                OnPolyCacheGather   ( void );
 
@@ -53,9 +56,21 @@ protected:
     virtual void                OnColRender     ( xbool bRenderHigh );
             void                DoColRender     ( const matrix4* pBones, xbool High );
 #endif // X_RETAIL
+    virtual const matrix4&      GetRenderL2W    ( void ) const;
+            void                CaptureRenderState( void );
+            void                UpdateRenderState( f32 Alpha );
+            void                ClearRenderState( void );
 
 protected:
 
+    static  play_surface*       s_pFirstRenderSurface;
+            play_surface*       m_pNextRenderSurface;
+            play_surface*       m_pPrevRenderSurface;
+            matrix4             m_RenderPrevL2W;
+            matrix4             m_RenderCurrL2W;
+            matrix4             m_RenderInterpL2W;
+            xbool               m_RenderStateValid;
+            xbool               m_RenderInterpActive;
     rigid_inst                  m_Inst;         // Render Instance for the Play Surface
 };
 

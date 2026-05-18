@@ -8,6 +8,7 @@
 #include "x_color.hpp"
 #include "Obj_mgr\obj_mgr.hpp"
 #include "ResourceMgr\ResourceMgr.hpp"
+#include "Objects\Render\SimpleAnimRenderState.hpp"
 #include "Objects\Render\SkinInst.hpp"
 #include "Animation\AnimPlayer.hpp"
 #include "..\MiscUtils\SimpleUtils.hpp"
@@ -25,6 +26,10 @@ public:
 
                             skin_prop_surface( void );
                            ~skin_prop_surface( void );
+
+    static  void                CaptureRenderStates( void );
+    static  void                UpdateRenderStates ( f32 Alpha );
+    static  void                ClearRenderStates  ( void );
 
     virtual         bbox    GetLocalBBox    ( void ) const;
     virtual         s32     GetMaterial     ( void ) const { return m_iMaterial; }
@@ -55,6 +60,13 @@ public:
 
 protected:
 
+    void                        CaptureRenderState ( void );
+    void                        UpdateRenderState  ( f32 Alpha );
+    void                        ClearRenderState   ( void );
+    void                        InvalidateRenderState( void );
+    const matrix4&              GetRenderL2W       ( void ) const;
+    xbool                       GetRenderBoneL2W   ( s32 iBone, matrix4& L2W );
+
     enum anims_type
     {
         ANIM_INVLAID = -1,
@@ -80,11 +92,19 @@ protected:
     
 protected:
 
+    static  skin_prop_surface*      s_pFirstRenderSurface;
+            skin_prop_surface*      m_pNextRenderSurface;
+            skin_prop_surface*      m_pPrevRenderSurface;
+
     skin_inst                   m_Inst;         // Render Instance for the Play Surface
 
     anim_group::handle          m_hAnimGroup;
     rhandle<char>               m_hAudioPackage;
     simple_anim_player          m_AnimPlayer;
+    simple_anim_render_state    m_RenderPrev;
+    simple_anim_render_state    m_RenderCurr;
+    simple_anim_render_state    m_RenderInterp;
+    xbool                       m_RenderInterpActive;
     s16                         m_iBackupAnimString;
     s32                         m_iMaterial;
     floor_properties            m_FloorProperties;

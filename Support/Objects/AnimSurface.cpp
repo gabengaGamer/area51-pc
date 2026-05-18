@@ -11,6 +11,7 @@
 #include "Event.hpp"
 
 xstring g_AnimSurfaceStringList;
+anim_surface* anim_surface::s_pFirstRenderSurface = NULL;
 
 
 //=============================================================================
@@ -86,6 +87,13 @@ const object_desc& anim_surface::GetObjectType( void )
 
 anim_surface::anim_surface( void )
 {
+    m_pNextRenderSurface = s_pFirstRenderSurface;
+    m_pPrevRenderSurface = NULL;
+    if( s_pFirstRenderSurface )
+        s_pFirstRenderSurface->m_pPrevRenderSurface = this;
+    s_pFirstRenderSurface = this;
+
+    InvalidateRenderState();
     m_iBackupAnimString = g_StringMgr.Add( "None" );
 }
 
@@ -93,6 +101,114 @@ anim_surface::anim_surface( void )
 
 anim_surface::~anim_surface( void )
 {
+    if( m_pNextRenderSurface )
+        m_pNextRenderSurface->m_pPrevRenderSurface = m_pPrevRenderSurface;
+    if( m_pPrevRenderSurface )
+        m_pPrevRenderSurface->m_pNextRenderSurface = m_pNextRenderSurface;
+    if( s_pFirstRenderSurface == this )
+        s_pFirstRenderSurface = m_pNextRenderSurface;
+}
+
+//=============================================================================
+
+void anim_surface::CaptureRenderStates( void )
+{
+    for( anim_surface* pSurface = s_pFirstRenderSurface; pSurface; pSurface = pSurface->m_pNextRenderSurface )
+        pSurface->CaptureRenderState();
+}
+
+//=============================================================================
+
+void anim_surface::UpdateRenderStates( f32 Alpha )
+{
+    for( anim_surface* pSurface = s_pFirstRenderSurface; pSurface; pSurface = pSurface->m_pNextRenderSurface )
+        pSurface->UpdateRenderState( Alpha );
+}
+
+//=============================================================================
+
+void anim_surface::ClearRenderStates( void )
+{
+    for( anim_surface* pSurface = s_pFirstRenderSurface; pSurface; pSurface = pSurface->m_pNextRenderSurface )
+        pSurface->ClearRenderState();
+}
+
+//=============================================================================
+
+void anim_surface::InvalidateRenderState( void )
+{
+    InitSimpleAnimRenderState( m_RenderPrev );
+    m_RenderCurr = m_RenderPrev;
+    m_RenderInterp = m_RenderPrev;
+    m_RenderInterpActive = FALSE;
+}
+
+//=============================================================================
+
+void anim_surface::CaptureRenderState( void )
+{
+    simple_anim_render_state Snapshot;
+    CaptureSimpleAnimRenderState( Snapshot, GetL2W(), m_AnimPlayer );
+
+    m_RenderPrev = m_RenderCurr;
+    m_RenderCurr = Snapshot;
+
+    if( !m_RenderPrev.Valid )
+    {
+        m_RenderPrev = m_RenderCurr;
+        return;
+    }
+
+    if( ShouldSnapSimpleAnimRenderState( m_RenderPrev, m_RenderCurr ) )
+        m_RenderPrev = m_RenderCurr;
+}
+
+//=============================================================================
+
+void anim_surface::UpdateRenderState( f32 Alpha )
+{
+    m_RenderInterpActive = FALSE;
+
+    if( !m_RenderCurr.Valid )
+        return;
+
+    UpdateSimpleAnimRenderState( m_RenderPrev.Valid ? m_RenderPrev : m_RenderCurr,
+                                 m_RenderCurr,
+                                 m_RenderInterp,
+                                 Alpha );
+    m_RenderInterpActive = TRUE;
+}
+
+//=============================================================================
+
+void anim_surface::ClearRenderState( void )
+{
+    m_RenderInterpActive = FALSE;
+}
+
+//=============================================================================
+
+const matrix4& anim_surface::GetRenderL2W( void ) const
+{
+    if( m_RenderInterpActive )
+        return m_RenderInterp.L2W;
+
+    return GetL2W();
+}
+
+//=============================================================================
+
+xbool anim_surface::GetRenderBoneL2W( s32 iBone, matrix4& L2W )
+{
+    if( m_RenderInterpActive && GetSimpleAnimRenderBoneL2W( m_RenderInterp, iBone, L2W ) )
+        return TRUE;
+
+    const matrix4* pBone = m_AnimPlayer.GetBoneL2W( iBone, FALSE );
+    if( !pBone )
+        return FALSE;
+
+    L2W = *pBone;
+    return TRUE;
 }
 
 //=============================================================================
@@ -268,6 +384,15 @@ void anim_surface::OnColRender( xbool bRenderHigh )
 
 const matrix4* anim_surface::GetBoneL2Ws( void )
 {
+    if( m_RenderInterpActive && m_hAnimGroup.GetPointer() )
+    {
+        const matrix4* pMatrices = BuildSimpleAnimRenderMatrices( m_RenderInterp,
+                                                                  *m_hAnimGroup.GetPointer(),
+                                                                  m_hAnimGroup.GetPointer()->GetNBones() );
+        if( pMatrices )
+            return pMatrices;
+    }
+
     return m_AnimPlayer.GetBoneL2Ws() ;
 }
 
@@ -654,7 +779,7 @@ xbool anim_surface::GetAttachPointData( s32      iAttachPt,
 {
     if (iAttachPt == 0)
     {
-        L2W = GetL2W();
+        L2W = GetRenderL2W();
         return TRUE;
     }
 
@@ -669,23 +794,22 @@ xbool anim_surface::GetAttachPointData( s32      iAttachPt,
             if ( (iAttachPt >= 0) &&
                  (iAttachPt < nBones ))
             {
-                const matrix4* pL2W = m_AnimPlayer.GetBoneL2W( iAttachPt, TRUE );            
-                
-                if ( NULL != pL2W )
-                    L2W = *pL2W;
-                else
-                    L2W.Identity();
-/*
-                const matrix4*    pBindInvMtx = m_AnimPlayer.GetBoneBindInvMtx( iAttachPt );
-                if (pBindInvMtx)
+                if( m_RenderInterpActive && GetRenderBoneL2W( iAttachPt, L2W ) )
                 {
-                    matrix4 InvInv = *pBindInvMtx;
-                    //InvInv.Invert();
-                    L2W = InvInv * L2W;
+                    if( !(Flags & ATTACH_USE_WORLDSPACE) )
+                        L2W = L2W * pGroup->GetBoneBindInvMatrix( iAttachPt );
                 }
-  */              
-                if (Flags & ATTACH_USE_WORLDSPACE)
-                    L2W.PreTranslate( m_AnimPlayer.GetBoneBindPosition( iAttachPt ) );
+                else
+                {
+                    const matrix4* pL2W = m_AnimPlayer.GetBoneL2W( iAttachPt, TRUE );
+                    if ( NULL != pL2W )
+                        L2W = *pL2W;
+                    else
+                        L2W.Identity();
+
+                    if (Flags & ATTACH_USE_WORLDSPACE)
+                        L2W.PreTranslate( m_AnimPlayer.GetBoneBindPosition( iAttachPt ) );
+                }
                 
         
                 return TRUE;

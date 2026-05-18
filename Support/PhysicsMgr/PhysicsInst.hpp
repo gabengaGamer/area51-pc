@@ -29,6 +29,7 @@ class rigid_body;
 class constraint;
 class collision_shape;
 class loco_char_anim_player;
+struct simple_anim_render_state;
 
 
 //==============================================================================
@@ -87,6 +88,7 @@ public:
     // Matrix functions
             void                DirtyMatrices           ( void ) X_SECTION(physics);
             const matrix4*      GetBoneL2Ws             ( u64& LODMask, s32& nActiveBones );
+            xbool               CaptureRenderState      ( simple_anim_render_state& Snapshot ) const;
             vector3             GetBoneWorldPosition    ( s32 iBone );  // NOTE: Bind has been removed!
             matrix4             GetBoneWorldTransform   ( s32 iBone );  // NOTE: Bind has been removed!
             void                SetMatrices             ( loco_char_anim_player& AnimPlayer, const vector3& Vel );
