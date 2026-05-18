@@ -132,12 +132,6 @@ namespace render
         // INSTFLAG_PROJ_SHADOW_2 = 0x00020000, // legacy per-slot projected shadow flag		
     };
 
-    // Shadow-map source routines. We can address up to 64 shadow sources.
-    // The shadow-source mask maps casters to the sources they render into.
-    enum
-    {
-        MAX_SHADOW_CASTERS = 64,
-    };
     void    BeginShadowCreation     ( void ) X_SECTION( render_infrequent );
     void    EndShadowCreation       ( void ) X_SECTION( render_deferred_shadow );
     void    AddPointShadowMapSource ( const matrix4&         L2W,

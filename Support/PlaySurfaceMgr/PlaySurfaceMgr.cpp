@@ -4,7 +4,6 @@
 #include "Objects\ProxyPlaySurface.hpp"
 #include "Gamelib\RigidGeomCollision.hpp"
 #include "Render\LightMgr.hpp"
-#include "Render\ShadowMapMgr.hpp"
 
 #ifdef TARGET_XBOX
 #include "Entropy/XBox/xbox_private.hpp"
@@ -1397,43 +1396,6 @@ void playsurface_mgr::RenderPlaySurfaces( void )
     }
 #endif // X_EDITOR
 }
-
-//=========================================================================
-
-void playsurface_mgr::RenderShadowCasters( void )
-{
-#ifndef X_EDITOR
-    if ( m_Zones.GetCount() == 0 )
-        return;
-
-    const s32 nSources = g_ShadowMapMgr.GetSourceCount();
-    if ( nSources <= 0 )
-        return;
-
-    for ( s32 iSource = 0; iSource < nSources; iSource++ )
-    {
-        const shadow_map_mgr::shadow_source& Source = g_ShadowMapMgr.GetSource( iSource );
-        const u64 ShadowSourceMask = ((u64)1 << iSource);
-
-        CollectSurfaces( Source.WorldBBox, object::ATTR_ALL, 0 );
-
-        surface* pSurface = GetNextSurface();
-        while ( pSurface )
-        {
-            if ( !pSurface->RenderInst.IsNull() )
-            {
-                render::AddRigidCasterSimple( pSurface->RenderInst,
-                                              &pSurface->L2W,
-                                              ShadowSourceMask );
-            }
-
-            pSurface = GetNextSurface();
-        }
-    }
-#endif // X_EDITOR
-}
-
-//=========================================================================
 
 #ifndef X_RETAIL
 void playsurface_mgr::RenderPlaySurfacesCollision( xbool bRenderHi )

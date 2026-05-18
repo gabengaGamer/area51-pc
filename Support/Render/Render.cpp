@@ -2585,7 +2585,6 @@ void render::AddPointShadowMapSource( const matrix4&         L2W,
                                       f32                    ShadowScore )
 {
     ASSERT( s_InShadowBegin );
-    ASSERT( s_nShadowSources < MAX_SHADOW_CASTERS );
     platform_AddPointShadowMapSource( L2W,
                                       FOV,
                                       LightRadius,
@@ -2607,7 +2606,6 @@ void render::AddSpotShadowMapSource( const matrix4&         L2W,
                                      f32                    ShadowScore )
 {
     ASSERT( s_InShadowBegin );
-    ASSERT( s_nShadowSources < MAX_SHADOW_CASTERS );
     platform_AddSpotShadowMapSource( L2W,
                                      FOV,
                                      LightRadius,

@@ -208,7 +208,6 @@ protected:
         void            DoVisibilityTests           ( const view& View );
         void            CollectVisibleLights        ( void );
         void            CompleteVisibilityTests     ( void );
-        void            CollectShadowCasterCandidates( void );
         void            Render3dPrep                ( xbool DoPortalWalk, const view& PortalView, u8 StartZone );
         void            RenderNormalObjects         ( void );
         void            RenderPlaySurfaces          ( void );
@@ -312,7 +311,6 @@ protected:
         object*         m_pProxyPlaySurface;                            // This is a proxy playsurface for doing collisions, etc.
         xtick           m_GameTime;
         xarray<slot_id> m_DeleteObject;
-        xarray<object*> m_ShadowCasterCandidates;
         f32             m_TimeDilation;
         bbox            m_SafeBBox;
         guid            m_ReservedGuid;

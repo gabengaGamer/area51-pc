@@ -14,6 +14,7 @@
 
 #include "..\Objects\Object.hpp"
 #include "..\Objects\player.hpp"
+#include "..\Obj_mgr\Obj_Mgr.hpp"
 #include "..\PlaySurfaceMgr\PlaySurfaceMgr.hpp"
 #include "..\ZoneMgr\ZoneMgr.hpp"
 
@@ -97,6 +98,57 @@ namespace
         s32     Shape;
         s32     ShadowMapResolution;
     };
+
+    //---------------------------------------------------------------------
+
+    struct shadow_caster_record
+    {
+        enum caster_type
+        {
+            CASTER_OBJECT,
+            CASTER_PLAY_SURFACE,
+        };
+
+        caster_type              Type;
+        object*                  pObject;
+        playsurface_mgr::surface* pPlaySurface;
+    };
+
+    //---------------------------------------------------------------------
+
+    shadow_caster_record MakeObjectShadowCaster( object* pCaster )
+    {
+        shadow_caster_record Caster;
+        Caster.Type         = shadow_caster_record::CASTER_OBJECT;
+        Caster.pObject      = pCaster;
+        Caster.pPlaySurface = NULL;
+        return Caster;
+    }
+
+    //---------------------------------------------------------------------
+
+    shadow_caster_record MakePlaySurfaceShadowCaster( playsurface_mgr::surface* pSurface )
+    {
+        shadow_caster_record Caster;
+        Caster.Type         = shadow_caster_record::CASTER_PLAY_SURFACE;
+        Caster.pObject      = NULL;
+        Caster.pPlaySurface = pSurface;
+        return Caster;
+    }
+
+    //---------------------------------------------------------------------
+
+    xbool SameShadowCaster( const shadow_caster_record& A,
+                            const shadow_caster_record& B )
+    {
+        if( A.Type != B.Type )
+            return FALSE;
+
+        if( A.Type == shadow_caster_record::CASTER_OBJECT )
+            return ( A.pObject == B.pObject );
+
+        return ( A.pPlaySurface == B.pPlaySurface );
+    }
 
     //---------------------------------------------------------------------
 
@@ -395,31 +447,24 @@ namespace
 
     //---------------------------------------------------------------------
 
-    xbool ShadowCasterIsRelevant( object*       pCaster,
-                                  const vector3& LightPos,
-                                  f32            LightRadius,
-                                  const vector3* pLightDirection = NULL,
-                                  f32            LightConeOuterCos = -1.0f )
+    xbool ShadowCasterBoundsAreRelevant( const bbox&    CasterBBox,
+                                         u8             Zone1,
+                                         u8             Zone2,
+                                         const vector3& LightPos,
+                                         f32            LightRadius,
+                                         const vector3* pLightDirection = NULL,
+                                         f32            LightConeOuterCos = -1.0f )
     {
-        if( !pCaster )
-            return FALSE;
-
-#ifdef X_EDITOR
-        if( pCaster->IsHidden() )
-            return FALSE;
-#endif
-
-        const bbox& CasterBBox = pCaster->GetBBox();
         // Deep and raw
         //if( !g_ZoneMgr.IsBBoxVisible( CasterBBox,
-        //                              (u8)pCaster->GetZone1(),
-        //                              (u8)pCaster->GetZone2() ) )
+        //                              Zone1,
+        //                              Zone2 ) )
         //{
         //    return FALSE;
         //}
 
-        if( !g_ZoneMgr.IsZoneVisible( (u8)pCaster->GetZone1() ) &&
-            !g_ZoneMgr.IsZoneVisible( (u8)pCaster->GetZone2() ) )
+        if( !g_ZoneMgr.IsZoneVisible( Zone1 ) &&
+            !g_ZoneMgr.IsZoneVisible( Zone2 ) )
         {
             return FALSE;
         }
@@ -441,6 +486,31 @@ namespace
 
     //---------------------------------------------------------------------
 
+    xbool ShadowCasterIsRelevant( object*        pCaster,
+                                  const vector3& LightPos,
+                                  f32            LightRadius,
+                                  const vector3* pLightDirection = NULL,
+                                  f32            LightConeOuterCos = -1.0f )
+    {
+        if( !pCaster )
+            return FALSE;
+
+#ifdef X_EDITOR
+        if( pCaster->IsHidden() )
+            return FALSE;
+#endif
+
+        return ShadowCasterBoundsAreRelevant( pCaster->GetBBox(),
+                                              (u8)pCaster->GetZone1(),
+                                              (u8)pCaster->GetZone2(),
+                                              LightPos,
+                                              LightRadius,
+                                              pLightDirection,
+                                              LightConeOuterCos );
+    }
+
+    //---------------------------------------------------------------------
+
     f32 GetShadowLightScore( const dynamic_shadow_light& DynamicLight,
                              s32                         LocalCasterCount,
                              player*                     pActivePlayer )
@@ -457,40 +527,10 @@ namespace
 
     //---------------------------------------------------------------------
 
-    xbool ShadowLightHasRelevantPlaySurface( const dynamic_shadow_light& DynamicLight,
-                                             f32                         LightConeOuterCos )
-    {
-        g_PlaySurfaceMgr.CollectSurfaces( bbox( DynamicLight.Pos, DynamicLight.Radius ),
-                                          object::ATTR_ALL,
-                                          0 );
-
-        playsurface_mgr::surface* pSurface = g_PlaySurfaceMgr.GetNextSurface();
-        while( pSurface )
-        {
-            if( ( DynamicLight.Shape != light_mgr::LIGHT_SHAPE_SPOT ) ||
-                SourceConeAffectsBBox( DynamicLight.Pos,
-                                       DynamicLight.Direction,
-                                       LightConeOuterCos,
-                                       DynamicLight.Radius,
-                                       pSurface->WorldBBox ) )
-            {
-                return TRUE;
-            }
-
-            pSurface = g_PlaySurfaceMgr.GetNextSurface();
-        }
-
-        return FALSE;
-    }
-
-    //---------------------------------------------------------------------
-
     xbool BuildShadowLight( shadow_light&         ShadowLight,
                             s32                   LightIndex,
-                            object* const*        ppCasterCandidates,
-                            s32                   NCasterCandidates,
                             player*               pActivePlayer,
-                            xarray<s32>&          RelevantCasterIndices )
+                            xarray<shadow_caster_record>& RelevantCasters )
     {
         dynamic_shadow_light DynamicLight;
         xbool                CastShadows;
@@ -522,32 +562,76 @@ namespace
         DynamicLight.ShadowMapResolution = ClampShadowMapResolution( ShadowMapResolution );
 
         f32 LightConeOuterCos = -1.0f;
+        const vector3* pLightDirection = NULL;
         if( DynamicLight.Shape == light_mgr::LIGHT_SHAPE_SPOT )
-            LightConeOuterCos = x_cos( DEG_TO_RAD( DynamicLight.OuterAngle ) * 0.5f );
-
-        const s32 RelevantCasterStart = RelevantCasterIndices.GetCount();
-        s32       LocalCasterCount    = 0;
-        xbool     HasPlaySurfaceCaster= FALSE;
-
-        for( s32 iCandidate = 0; iCandidate < NCasterCandidates; iCandidate++ )
         {
-            if( !ShadowCasterIsRelevant( ppCasterCandidates[iCandidate],
+            LightConeOuterCos = x_cos( DEG_TO_RAD( DynamicLight.OuterAngle ) * 0.5f );
+            pLightDirection   = &DynamicLight.Direction;
+        }
+
+        const s32 RelevantCasterStart = RelevantCasters.GetCount();
+        s32       LocalCasterCount    = 0;
+        bbox      LightBBox           = bbox( DynamicLight.Pos, DynamicLight.Radius );
+
+        // TODO: GS: Dont forget unlock me, after patching ALL level files.
+        //g_ObjMgr.SelectBBox( object::ATTR_CAST_SHADOWS,
+        //                     LightBBox,
+        //                     object::TYPE_ALL_TYPES );
+        g_ObjMgr.SelectBBox( object::ATTR_RENDERABLE, //ATTR_ALL
+                             LightBBox,
+                             object::TYPE_ALL_TYPES );
+
+        for( slot_id SlotID = g_ObjMgr.StartLoop(); SlotID != SLOT_NULL; SlotID = g_ObjMgr.GetNextResult( SlotID ) )
+        {
+            object* pCandidate = g_ObjMgr.GetObjectBySlot( SlotID );
+            if( !pCandidate )
+                continue;
+
+            if( pCandidate->GetType() == object::TYPE_PLAY_SURFACE )
+                continue;
+
+            if( !ShadowCasterIsRelevant( pCandidate,
                                          DynamicLight.Pos,
                                          DynamicLight.Radius,
-                                         ( DynamicLight.Shape == light_mgr::LIGHT_SHAPE_SPOT ) ? &DynamicLight.Direction : NULL,
+                                         pLightDirection,
                                          LightConeOuterCos ) )
             {
                 continue;
             }
 
-            RelevantCasterIndices.Append( iCandidate );
+            RelevantCasters.Append( MakeObjectShadowCaster( pCandidate ) );
             LocalCasterCount++;
+        }
+        g_ObjMgr.EndLoop();
+
+        // TODO: GS: Dont forget unlock me, after patching ALL level files.
+        //g_PlaySurfaceMgr.CollectSurfaces( LightBBox,
+        //                                  object::ATTR_CAST_SHADOWS,
+        //                                  0 );
+        g_PlaySurfaceMgr.CollectSurfaces( LightBBox,
+                                          object::ATTR_RENDERABLE,  //ATTR_ALL
+                                          0 );
+
+        playsurface_mgr::surface* pSurface = g_PlaySurfaceMgr.GetNextSurface();
+        while( pSurface )
+        {
+            if( !pSurface->RenderInst.IsNull() &&
+                ShadowCasterBoundsAreRelevant( pSurface->WorldBBox,
+                                               (u8)( pSurface->ZoneInfo & 0xff ),
+                                               (u8)( pSurface->ZoneInfo >> 8 ),
+                                               DynamicLight.Pos,
+                                               DynamicLight.Radius,
+                                               pLightDirection,
+                                               LightConeOuterCos ) )
+            {
+                RelevantCasters.Append( MakePlaySurfaceShadowCaster( pSurface ) );
+                LocalCasterCount++;
+            }
+
+            pSurface = g_PlaySurfaceMgr.GetNextSurface();
         }
 
         if( LocalCasterCount <= 0 )
-            HasPlaySurfaceCaster = ShadowLightHasRelevantPlaySurface( DynamicLight, LightConeOuterCos );
-
-        if( ( LocalCasterCount <= 0 ) && !HasPlaySurfaceCaster )
             return FALSE;
 
         ShadowLight.Shape       = DynamicLight.Shape;
@@ -562,20 +646,18 @@ namespace
         ShadowLight.RelevantCasterStart = RelevantCasterStart;
         ShadowLight.RelevantCasterCount = LocalCasterCount;
         ShadowLight.Score       = GetShadowLightScore( DynamicLight,
-                                                       LocalCasterCount + ( HasPlaySurfaceCaster ? 1 : 0 ),
+                                                       LocalCasterCount,
                                                        pActivePlayer );
         return TRUE;
     }
 
     //---------------------------------------------------------------------
 
-    void AddShadowCastersInLight( object* const*  ppCasterCandidates,
-                                  const s32*      pRelevantCasterIndices,
-                                  const shadow_light& ShadowLight,
-                                  object**        ppCasters,
-                                  u64*            pCasterMasks,
-                                  s32&            NCasters,
-                                  u64             SourceMask )
+    void AddShadowCastersInLight( const xarray<shadow_caster_record>& RelevantCasters,
+                                  const shadow_light&                 ShadowLight,
+                                  xarray<shadow_caster_record>&       ppCasters,
+                                  xarray<u64>&                        CasterMasks,
+                                  u64                                 SourceMask )
     {
         const s32 EndRelevantCaster = ShadowLight.RelevantCasterStart + ShadowLight.RelevantCasterCount;
 
@@ -583,40 +665,33 @@ namespace
              iRelevantCaster < EndRelevantCaster;
              iRelevantCaster++ )
         {
-            object* pCaster = ppCasterCandidates[pRelevantCasterIndices[iRelevantCaster]];
+            const shadow_caster_record& Caster = RelevantCasters[iRelevantCaster];
 
             s32 iExisting = 0;
-            for( ; iExisting < NCasters; iExisting++ )
+            for( ; iExisting < ppCasters.GetCount(); iExisting++ )
             {
-                if( ppCasters[iExisting] == pCaster )
+                if( SameShadowCaster( ppCasters[iExisting], Caster ) )
                     break;
             }
 
-            if( iExisting == NCasters )
+            if( iExisting == ppCasters.GetCount() )
             {
-                if( NCasters >= render::MAX_SHADOW_CASTERS )
-                    break;
-
-                ppCasters[NCasters]    = pCaster;
-                pCasterMasks[NCasters] = 0;
-                iExisting              = NCasters;
-                NCasters++;
+                ppCasters.Append( Caster );
+                CasterMasks.Append( 0 );
             }
 
-            pCasterMasks[iExisting] |= SourceMask;
+            CasterMasks[iExisting] |= SourceMask;
         }
     }
 
     //---------------------------------------------------------------------
 
-    s32 CollectShadowCastersForLights( object* const*       ppCasterCandidates,
-                                       const s32*           pRelevantCasterIndices,
-                                       const shadow_light*  pShadowLights,
-                                       s32                  NShadowLights,
-                                       object**             ppCasters,
-                                       u64*                 pCasterMasks )
+    void CollectShadowCastersForLights( const xarray<shadow_caster_record>& RelevantCasters,
+                                        const shadow_light*                 pShadowLights,
+                                        s32                                 NShadowLights,
+                                        xarray<shadow_caster_record>&       ppCasters,
+                                        xarray<u64>&                        CasterMasks )
     {
-        s32 NCasters   = 0;
         s32 SourceBase = 0;
 
         for( s32 iLight = 0; iLight < NShadowLights; iLight++ )
@@ -624,20 +699,14 @@ namespace
             const shadow_light& ShadowLight = pShadowLights[iLight];
             const u64           LightMask   = ( ( (u64)1 << ShadowLight.SourceCount ) - 1 ) << SourceBase;
 
-            AddShadowCastersInLight( ppCasterCandidates,
-                                     pRelevantCasterIndices,
+            AddShadowCastersInLight( RelevantCasters,
                                      ShadowLight,
                                      ppCasters,
-                                     pCasterMasks,
-                                     NCasters,
+                                     CasterMasks,
                                      LightMask );
             SourceBase += ShadowLight.SourceCount;
         }
-
-        return NCasters;
     }
-	
-    //---------------------------------------------------------------------	
 
     void AddPointShadowSources( const vector3& LightPos,
                                 f32            LightRadius,
@@ -1234,7 +1303,7 @@ xbool shadow_map_mgr::AddPointSource( const matrix4& L2W,
     m_SourceCount++;
     m_PointFaceCount++;
     m_AtlasSourceCount++;
-    m_AtlasLayoutDirty = TRUE;	
+    m_AtlasLayoutDirty = TRUE;    
 
     if( Source.FaceIndex == 0 )
         m_PointLightCount++;
@@ -1359,28 +1428,26 @@ void shadow_map_mgr::CreateShadowMap( object* const* ppCasterCandidates,
 {
     ClearSources();
 
-    if( !ppCasterCandidates )
-        NCasterCandidates = 0;
+    (void)ppCasterCandidates;
 
-    object*      ppCasters[render::MAX_SHADOW_CASTERS];
-    u64          CasterMasks[render::MAX_SHADOW_CASTERS];
-    s32          NCasters               = 0;
     shadow_light ShadowLightCandidates[light_mgr::MAX_DYNAMIC_LIGHTS];
     shadow_light ShadowLights[light_mgr::MAX_DYNAMIC_LIGHTS];
     s32          NCandidateShadowLights = 0;
     player*      pActivePlayer          = SMP_UTIL_GetActivePlayer();
-    xarray<s32>  RelevantCasterIndices;
-    RelevantCasterIndices.SetGrowAmount( MAX( 128, NCasterCandidates ) );
+    xarray<shadow_caster_record> RelevantCasters;
+    xarray<shadow_caster_record> ShadowCasters;
+    xarray<u64>                  CasterMasks;
+    RelevantCasters.SetGrowAmount( MAX( 128, NCasterCandidates ) );
+    ShadowCasters.SetGrowAmount( MAX( 128, NCasterCandidates ) );
+    CasterMasks.SetGrowAmount( MAX( 128, NCasterCandidates ) );
 
     for( s32 iLight = 0; iLight < g_LightMgr.GetNDynamicLights(); iLight++ )
     {
         shadow_light ShadowLight;
         if( !BuildShadowLight( ShadowLight,
                                iLight,
-                               ppCasterCandidates,
-                               NCasterCandidates,
                                pActivePlayer,
-                               RelevantCasterIndices ) )
+                               RelevantCasters ) )
         {
             continue;
         }
@@ -1399,12 +1466,11 @@ void shadow_map_mgr::CreateShadowMap( object* const* ppCasterCandidates,
     if( NShadowLights <= 0 )
         return;
 
-    NCasters = CollectShadowCastersForLights( ppCasterCandidates,
-                                              RelevantCasterIndices.GetPtr(),
-                                              ShadowLights,
-                                              NShadowLights,
-                                              ppCasters,
-                                              CasterMasks );
+    CollectShadowCastersForLights( RelevantCasters,
+                                   ShadowLights,
+                                   NShadowLights,
+                                   ShadowCasters,
+                                   CasterMasks );
 
     if( eng_Begin( "Shadow Map" ) )
     {
@@ -1412,10 +1478,26 @@ void shadow_map_mgr::CreateShadowMap( object* const* ppCasterCandidates,
         AddShadowSources( ShadowLights, NShadowLights );
         FinalizeSources();
 
-        for( s32 i = 0; i < NCasters; i++ )
-            ppCasters[i]->OnRenderShadowCast( CasterMasks[i] );
+        for( s32 i = 0; i < ShadowCasters.GetCount(); i++ )
+        {
+            const shadow_caster_record& Caster = ShadowCasters[i];
 
-        g_PlaySurfaceMgr.RenderShadowCasters();
+            if( Caster.Type == shadow_caster_record::CASTER_OBJECT )
+            {
+                ASSERT( Caster.pObject );
+                Caster.pObject->OnRenderShadowCast( CasterMasks[i] );
+            }
+            else
+            {
+                ASSERT( Caster.pPlaySurface );
+                if( !Caster.pPlaySurface->RenderInst.IsNull() )
+                {
+                    render::AddRigidCasterSimple( Caster.pPlaySurface->RenderInst,
+                                                  &Caster.pPlaySurface->L2W,
+                                                  CasterMasks[i] );
+                }
+            }
+        }
 
         render::EndShadowCreation();
         eng_End();

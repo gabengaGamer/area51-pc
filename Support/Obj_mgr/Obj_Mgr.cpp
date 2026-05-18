@@ -2361,33 +2361,6 @@ void obj_mgr::CompleteVisibilityTests( void )
     m_ObjectType[object::TYPE_PLAYER].nVis++;
 }
 
-//==============================================================================
-
-void obj_mgr::CollectShadowCasterCandidates( void )
-{
-#ifdef TARGET_PC
-    m_ShadowCasterCandidates.Clear();
-
-    for( s32 Type = 0; Type < (s32)object::TYPE_END_OF_LIST; Type++ )
-    {
-        for( slot_id ID = GetFirst( (object::type)Type ); ID != SLOT_NULL; ID = GetNext( ID ) )
-        {
-            object* pCaster = GetObjectBySlot( ID );
-            if( !pCaster )
-                continue;
-
-            // TODO: GS: REMOVE ME WHEN ALL LEVEL WILL BE PATCHED!!!!
-            //if( ( pCaster->GetAttrBits() & object::ATTR_CAST_SHADOWS ) == 0 )
-            //    continue;
-
-            m_ShadowCasterCandidates.Append( pCaster );
-        }
-    }
-#endif
-}
-
-//==============================================================================
-
 void obj_mgr::Render3dPrep( xbool DoPortalWalk, const view& PortalView, u8 StartZone )
 {
     // Prepare visibility and other per-frame state for 3D rendering.
@@ -2414,9 +2387,7 @@ void obj_mgr::Render3dPrep( xbool DoPortalWalk, const view& PortalView, u8 Start
     if( g_RenderContext.m_bIsPipRender == 0 )
     {
         CompleteVisibilityTests();
-        CollectShadowCasterCandidates();
-        g_ShadowMapMgr.CreateShadowMap( m_ShadowCasterCandidates.GetPtr(),
-                                        m_ShadowCasterCandidates.GetCount() );
+        g_ShadowMapMgr.CreateShadowMap( NULL, 0 );
     }
 #else
     CompleteVisibilityTests();
