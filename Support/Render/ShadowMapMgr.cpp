@@ -634,20 +634,20 @@ namespace
         if( LocalCasterCount <= 0 )
             return FALSE;
 
-        ShadowLight.Shape       = DynamicLight.Shape;
-        ShadowLight.Pos         = DynamicLight.Pos;
-        ShadowLight.Direction   = DynamicLight.Direction;
-        ShadowLight.Radius      = DynamicLight.Radius;
-        ShadowLight.Falloff     = DynamicLight.Falloff;
-        ShadowLight.FOV         = GetShadowLightFOV( DynamicLight );
+        ShadowLight.Shape               = DynamicLight.Shape;
+        ShadowLight.Pos                 = DynamicLight.Pos;
+        ShadowLight.Direction           = DynamicLight.Direction;
+        ShadowLight.Radius              = DynamicLight.Radius;
+        ShadowLight.Falloff             = DynamicLight.Falloff;
+        ShadowLight.FOV                 = GetShadowLightFOV( DynamicLight );
         ShadowLight.ShadowMapResolution = DynamicLight.ShadowMapResolution;
-        ShadowLight.ShadowPriority = ClampShadowPriority( ShadowPriority );
-        ShadowLight.SourceCount = GetShadowLightSourceCount( DynamicLight.Shape );
+        ShadowLight.ShadowPriority      = ClampShadowPriority( ShadowPriority );
+        ShadowLight.SourceCount         = GetShadowLightSourceCount( DynamicLight.Shape );
         ShadowLight.RelevantCasterStart = RelevantCasterStart;
         ShadowLight.RelevantCasterCount = LocalCasterCount;
-        ShadowLight.Score       = GetShadowLightScore( DynamicLight,
-                                                       LocalCasterCount,
-                                                       pActivePlayer );
+        ShadowLight.Score               = GetShadowLightScore( DynamicLight,
+                                                               LocalCasterCount,
+                                                               pActivePlayer );
         return TRUE;
     }
 
@@ -1017,9 +1017,6 @@ namespace
         const s32 GuardTexels = (s32)x_ceil( ( FilterRadius * 4.0f ) + 2.0f );
         return ( GuardTexels > 0 ) ? GuardTexels : 1;
     }
-
-    //---------------------------------------------------------------------
-
 }
 
 //=========================================================================
@@ -1081,6 +1078,7 @@ void shadow_map_mgr::ComputePerspectiveSource( shadow_source&  Dest,
 
     f32       ReceiveNearZ = ComputeSpotShadowReceiveNearZ( LightRadius );
     f32       NearZ        = MAX( 0.5f, LightRadius * 0.01f );
+
     if( SourceType == SHADOW_SOURCE_POINT_FACE )
     {
         ReceiveNearZ = ComputePointShadowReceiveNearZ( LightRadius );
@@ -1117,24 +1115,24 @@ void shadow_map_mgr::ComputePerspectiveSource( shadow_source&  Dest,
     Proj2Clip(3,2) = -( NearZ * FarZ ) / ( FarZ - NearZ );
     Proj2Clip(2,3) =  1.0f;
 
-    Dest.Type           = SourceType;
-    Dest.PointLightIndex= -1;
-    Dest.FaceIndex      = -1;
+    Dest.Type                = SourceType;
+    Dest.PointLightIndex     = -1;
+    Dest.FaceIndex           = -1;
     Dest.RequestedResolution = ShadowMapResolution;
-    Dest.ShadowPriority = kMinShadowPriority;
-    Dest.ShadowScore    = 0.0f;
-    Dest.WorldToClip    = Proj2Clip * W2Proj;
-    Dest.WorldToAtlas   = Dest.WorldToClip;
+    Dest.ShadowPriority      = kMinShadowPriority;
+    Dest.ShadowScore         = 0.0f;
+    Dest.WorldToClip         = Proj2Clip * W2Proj;
+    Dest.WorldToAtlas        = Dest.WorldToClip;
     Dest.FaceLightDirFalloff.Zero();
     Dest.FaceLightData.Zero();
-    Dest.LightFalloff   = LightFalloff;
-    Dest.NearZ          = NearZ;
-    Dest.ReceiveNearZ   = ReceiveNearZ;
-    Dest.FarZ           = FarZ;
-    Dest.AtlasX         = 0;
-    Dest.AtlasY         = 0;
-    Dest.AtlasWidth     = ShadowMapResolution;
-    Dest.AtlasHeight    = ShadowMapResolution;
+    Dest.LightFalloff        = LightFalloff;
+    Dest.NearZ               = NearZ;
+    Dest.ReceiveNearZ        = ReceiveNearZ;
+    Dest.FarZ                = FarZ;
+    Dest.AtlasX              = 0;
+    Dest.AtlasY              = 0;
+    Dest.AtlasWidth          = ShadowMapResolution;
+    Dest.AtlasHeight         = ShadowMapResolution;
 
     const vector3 LightPos = L2W.GetTranslation();
     const vector3 Extent( FarZ, FarZ, FarZ );
