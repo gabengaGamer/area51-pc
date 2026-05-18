@@ -748,6 +748,22 @@ const matrix4& char_anim_player::GetCachedL2W( s32 iBone )
 
 //=========================================================================
 
+void char_anim_player::GetBoneL2Ws( matrix4* pBoneL2W, xbool bApplyBindPose )
+{
+    ASSERT( pBoneL2W );
+
+    anim_key* MixBuffer = base_player::GetMixBuffer( base_player::MIX_BUFFER_PLAYER );
+    ASSERT( MixBuffer );
+
+    matrix4 L2W;
+    L2W.Identity();
+
+    GetInterpKeys( MixBuffer );
+    GetAnimGroup().ComputeBonesL2W( L2W, MixBuffer, GetAnimGroup().GetNBones(), pBoneL2W, bApplyBindPose );
+}
+
+//=========================================================================
+
 void char_anim_player::ComputeBonesL2W( const matrix4& L2W, anim_key* pKey, matrix4* pBoneL2W )
 {
     s32 i;

@@ -393,6 +393,11 @@ public:
             vector3         GetDefaultViewPos   ( void );
 
             void            ComputeView         ( view& View, view_flags Flags = player::VIEW_NULL );
+            void            CaptureRenderState  ( void );
+            void            UpdateRenderState   ( f32 Alpha );
+            void            ClearRenderState    ( void );
+            xbool           GetRenderWeaponL2W  ( matrix4& L2W ) const;
+    const   matrix4*        GetRenderWeaponBones( s32& nBones ) const;
     virtual void            Push                ( const vector3& PushVector );
 
       const xarray<pain>&   GetLastPainEvents   ( void ){ return m_LastPainEvent; }
@@ -468,7 +473,7 @@ public:
 
     virtual void            DegradeAim                      ( f32 fAmountToDegradeBy );
     virtual void            SetAimRecoverSpeed              ( f32 fRecover ) { m_AimRecoverSpeed = fRecover; }    
-      const vector3&        GetCurrentWeaponCollisionOffset ( void ) { return m_WeaponCollisionOffset; }
+      const vector3&        GetCurrentWeaponCollisionOffset ( void ) const;
 
     virtual xbool           IsPlayer            ( void )                    { return TRUE; }
 
@@ -1089,9 +1094,27 @@ public:
 //==============================================================================
 
 protected:
+    struct render_state
+    {
+        xbool   Valid;
+        xbool   HasWeapon;
+        view    View;
+        matrix4 ArmsL2W;
+        matrix4 WeaponL2W;
+        vector3 WeaponCollisionOffset;
+        s32     ArmsNBones;
+        s32     WeaponNBones;
+        matrix4 ArmsBones[MAX_ANIM_BONES];
+        matrix4 WeaponBones[MAX_ANIM_BONES];
+    };
+
     static view             m_Views[MAX_LOCAL_PLAYERS];     // Views for all the players
     view_info               m_ViewInfo;                     // persistent information for the player's view
     view_info               m_OriginalViewInfo;             // original persistent information for the player's view
+    render_state            m_RenderPrev;
+    render_state            m_RenderCurr;
+    render_state            m_RenderInterp;
+    xbool                   m_RenderInterpActive;
     vector3                 m_RespawnPosition;              // Position where the player re-spawns after dying
     u8                      m_RespawnZone;                  // Zone to respawn in
     guid                    m_ThirdPersonCameraGuid;        // GUID of third person camera if we're using one

@@ -195,6 +195,7 @@ public:
     // Returns the cached L2W matrix for that bone
     //
     const matrix4*  GetBoneL2Ws     ( void );
+    void            GetBoneL2Ws     ( matrix4* pBoneL2W, xbool bApplyBindPose );
     const matrix4&  GetBoneL2W      ( s32 iBone );
 
     //

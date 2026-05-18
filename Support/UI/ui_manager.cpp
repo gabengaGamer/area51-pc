@@ -338,9 +338,12 @@ void ui_manager::UpdateAnalog( ui_manager::button& Button, f32 Value, f32 DeltaT
 
 ui_manager::ui_manager( void )
 {
-    m_AlphaTime       = 0.0f;
-    m_EnableUserInput = 0;
-    m_log             = 0;
+    m_AlphaTime             = 0.0f;
+    m_WipeStepAccumulator   = 0.0f;
+    m_RefreshStepAccumulator= 0.0f;
+    m_GlowStepAccumulator   = 0.0f;
+    m_EnableUserInput       = 0;
+    m_log                   = 0;
 }
 
 //=========================================================================
@@ -2047,6 +2050,8 @@ void ui_manager::DisableUserInput( void )
 
 void ui_manager::Update( f32 DeltaTime )
 {
+    const f32 HighlightFadeRate = 30.0f;
+
     // Update AlphaTime
     m_AlphaTime += DeltaTime;
     m_AlphaTime = x_fmod( m_AlphaTime, 1.0f );
@@ -2054,15 +2059,19 @@ void ui_manager::Update( f32 DeltaTime )
     // Update highlight alpha
     if( m_HighlightFadeUp )
     {
-        if( ++m_HighlightAlpha == 32)
+        m_HighlightAlpha += (DeltaTime * HighlightFadeRate);
+        if( m_HighlightAlpha >= 32.0f )
         {
+            m_HighlightAlpha = 32.0f;
             m_HighlightFadeUp = FALSE;
         }
     }
     else
     {
-        if( --m_HighlightAlpha == 0 )
+        m_HighlightAlpha -= (DeltaTime * HighlightFadeRate);
+        if( m_HighlightAlpha <= 0.0f )
         {
+            m_HighlightAlpha = 0.0f;
             m_HighlightFadeUp = TRUE;
         }
     }
@@ -2729,6 +2738,7 @@ void ui_manager::InitScreenWipe ( void )
     m_wipeDown      = TRUE;
     m_wipeWidth     = 32;
     m_wipeSpeed     = 960.0f;
+    m_WipeStepAccumulator = 0.0f;
 
     m_wipeStartY    = m_CurrScreenSize.t + 8;
     m_wipeEndY      = m_CurrScreenSize.b - 8;
@@ -2799,7 +2809,7 @@ void ui_manager::RenderScreenWipe( void )
 
 void ui_manager::UpdateScreenWipe( f32 DeltaTime )
 {
-    s32 deltaPos;
+    const f32 VisualStep = 1.0f / 30.0f;
 
     if (!m_wipeActive)
         return;
@@ -2808,49 +2818,55 @@ void ui_manager::UpdateScreenWipe( f32 DeltaTime )
     DeltaTime = DeltaTime * m_ScaleY;
 #endif
 
-    deltaPos = (s32)(m_wipeSpeed * DeltaTime);
+    m_WipeStepAccumulator += DeltaTime;
 
-    if (m_wipeDown)
+    while( (m_WipeStepAccumulator >= VisualStep) && m_wipeActive )
     {
-        m_wipePos.b += deltaPos;
+        const s32 deltaPos = (s32)(m_wipeSpeed * VisualStep);
+        m_WipeStepAccumulator -= VisualStep;
 
-        if (m_wipePos.b >= m_wipeEndY)
+        if (m_wipeDown)
         {
-            m_wipePos.t = m_wipePos.b - deltaPos;
-            m_wipePos.b = m_wipeEndY;
-            m_wipeDown = FALSE;
+            m_wipePos.b += deltaPos;
+
+            if (m_wipePos.b >= m_wipeEndY)
+            {
+                m_wipePos.b = m_wipeEndY;
+                m_wipePos.t = m_wipePos.b - m_wipeWidth;
+                m_wipeDown = FALSE;
+            }
+            else
+            {
+                m_wipePos.t = m_wipePos.b - m_wipeWidth;
+            }
         }
         else
         {
-            m_wipePos.t = m_wipePos.b - deltaPos;
-        }
-    }
-    else
-    {
-        //m_wipePos.t = -1;
-        if (--m_wipeCount == 0)
-            m_wipeActive = FALSE;
+            //m_wipePos.t = -1;
+            if (--m_wipeCount == 0)
+                m_wipeActive = FALSE;
 
-        if( m_wipePos.t < m_wipeEndY )
-        {
-            m_wipePos.t += deltaPos;
-
-            if( m_wipePos.t > m_wipeEndY )
+            if( m_wipePos.t < m_wipeEndY )
             {
-                m_wipePos.t = m_wipeEndY;
+                m_wipePos.t += deltaPos;
+
+                if( m_wipePos.t > m_wipeEndY )
+                {
+                    m_wipePos.t = m_wipeEndY;
+                }
             }
         }
-    }
 
-    for (s32 i=15; i>0; i--)
-    {
-        m_wipeTrail[i].Position = m_wipeTrail[i-1].Position;
-        m_wipeTrail[i].Active = m_wipeTrail[i-1].Active;
-    }
-    m_wipeTrail[0].Position = m_wipePos;
+        for (s32 i=15; i>0; i--)
+        {
+            m_wipeTrail[i].Position = m_wipeTrail[i-1].Position;
+            m_wipeTrail[i].Active = m_wipeTrail[i-1].Active;
+        }
+        m_wipeTrail[0].Position = m_wipePos;
 
-    if (m_wipeCount == 15)
-        m_wipeTrail[0].Active = FALSE;
+        if (m_wipeCount == 15)
+            m_wipeTrail[0].Active = FALSE;
+    }
 
 }
 
@@ -2859,6 +2875,7 @@ void ui_manager::ResetScreenWipe( void )
 {
     // reset flag
     m_wipeActive    = FALSE;
+    m_WipeStepAccumulator = 0.0f;
 
     // reset trail
     for (s32 i=0; i<16; i++)
@@ -2873,6 +2890,7 @@ void ui_manager::InitRefreshBar( void )
 {
     m_RefreshSpeed  = 80;
     m_RefreshWidth  = 5;
+    m_RefreshStepAccumulator = 0.0f;
     m_RefreshPos.l  = m_CurrScreenSize.l + 22;      
     m_RefreshPos.t  = m_CurrScreenSize.b - m_RefreshWidth;
     m_RefreshPos.r  = m_CurrScreenSize.r - 23;
@@ -2893,14 +2911,22 @@ void ui_manager::RenderRefreshBar( void )
 
 void ui_manager::UpdateRefreshBar( f32 deltaTime )
 {
+    const f32 VisualStep = 1.0f / 30.0f;
+
 #ifdef TARGET_PC
     deltaTime = deltaTime * m_ScaleY;
 #endif
 
-    m_RefreshPos.t  -= (s32)( ( m_RefreshSpeed * deltaTime ) + 0.5f );
+    m_RefreshStepAccumulator += deltaTime;
 
-    if( m_RefreshPos.t < m_CurrScreenSize.t )
-        m_RefreshPos.t = m_CurrScreenSize.b - m_RefreshWidth;
+    while( m_RefreshStepAccumulator >= VisualStep )
+    {
+        m_RefreshStepAccumulator -= VisualStep;
+        m_RefreshPos.t -= (s32)( ( m_RefreshSpeed * VisualStep ) + 0.5f );
+
+        if( m_RefreshPos.t < m_CurrScreenSize.t )
+            m_RefreshPos.t = m_CurrScreenSize.b - m_RefreshWidth;
+    }
     
     m_RefreshPos.l  = m_CurrScreenSize.l + 22;      
     m_RefreshPos.r  = m_CurrScreenSize.r - 23;
@@ -2923,10 +2949,9 @@ void ui_manager::InitScreenHighlight( void )
 {
     m_ScreenHighlightID      = g_UiMgr->FindElement( "highlight" );
     m_ScreenGlowID           = g_UiMgr->FindElement( "screenglow" );
-    m_HighlightAlpha         = 0;
+    m_HighlightAlpha         = 0.0f;
     m_ScreenHighlightEnabled = FALSE;
     m_HighlightFadeUp        = TRUE;
-    m_CycleFadeUp            = TRUE;
 }
 
 //=========================================================================
@@ -2962,33 +2987,27 @@ void ui_manager::RenderScreenHighlight( void )
 
 s32 ui_manager::GetHighlightAlpha( s32 cycle )
 {
-    s32 val;
-    s32 returnVal;
+    s32 HighlightAlpha = (s32)(m_HighlightAlpha + 0.5f);
+    s32 Phase;
+    s32 Wave;
 
     if ( m_HighlightFadeUp )
     {
-        val = m_HighlightAlpha % cycle;
+        Phase = HighlightAlpha;
     }
     else
     {
-        val = (32 - m_HighlightAlpha) % cycle;
+        Phase = (32 - HighlightAlpha);
     }
 
-    if ( m_CycleFadeUp )
+    Wave = Phase % (cycle * 2);
+
+    if ( Wave > cycle )
     {
-        returnVal = val;
-    }
-    else
-    {
-        returnVal = ( cycle - val );
+        Wave = (cycle * 2) - Wave;
     }
 
-    if ( val == ( cycle - 1 ) )
-    {
-        m_CycleFadeUp = !m_CycleFadeUp;
-    }
-
-    return ( returnVal );
+    return( Wave );
 }
 
 //=========================================================================
@@ -3028,6 +3047,7 @@ void ui_manager::InitGlowBar ( void )
 
     m_GlowSpeed     = 120;
     m_GlowOnTop     = TRUE;
+    m_GlowStepAccumulator = 0.0f;
 
     // initialize trail
     for (s32 i=0; i<8; i++)
@@ -3059,7 +3079,7 @@ void ui_manager::RenderGlowBar( void )
 
 void ui_manager::UpdateGlowBar( f32 deltaTime )
 {
-    (void) deltaTime;
+    const f32 VisualStep = 1.0f / 30.0f;
 
     if (!m_ScreenIsOn)
         return;
@@ -3068,62 +3088,70 @@ void ui_manager::UpdateGlowBar( f32 deltaTime )
     deltaTime = deltaTime * m_ScaleX;
 #endif
 
-    if (m_GlowOnTop)
+    m_GlowStepAccumulator += deltaTime;
+
+    while( m_GlowStepAccumulator >= VisualStep )
     {
-        m_GlowPos.l += (s32)((m_GlowSpeed * deltaTime) + 0.5f);
-        m_GlowPos.r  = m_GlowPos.l + 16;
+        const s32 deltaPos = (s32)((m_GlowSpeed * VisualStep) + 0.5f);
+        m_GlowStepAccumulator -= VisualStep;
 
-        if (m_GlowPos.l > m_GlowEndX)
+        if (m_GlowOnTop)
         {
-            m_GlowPos.l = m_GlowEndX;
-            m_GlowPos.r = m_GlowEndX + 16;
-            m_GlowPos.t = m_CurrScreenSize.b - 7;
-            m_GlowPos.b = m_CurrScreenSize.b;
-            m_GlowOnTop = FALSE;
-        }
-        else if (m_GlowPos.l < m_GlowStartX)
-        {
-            m_GlowPos.l = m_GlowStartX;
-            m_GlowPos.r = m_GlowStartX + 16;
+            m_GlowPos.l += deltaPos;
+            m_GlowPos.r  = m_GlowPos.l + 16;
 
-            for (s32 i=0; i<8; i++)
+            if (m_GlowPos.l > m_GlowEndX)
             {
-                if (m_GlowTrail[i].l < m_GlowStartX)
-                    m_GlowTrail[i].l = -1;
+                m_GlowPos.l = m_GlowEndX;
+                m_GlowPos.r = m_GlowEndX + 16;
+                m_GlowPos.t = m_CurrScreenSize.b - 7;
+                m_GlowPos.b = m_CurrScreenSize.b;
+                m_GlowOnTop = FALSE;
+            }
+            else if (m_GlowPos.l < m_GlowStartX)
+            {
+                m_GlowPos.l = m_GlowStartX;
+                m_GlowPos.r = m_GlowStartX + 16;
+
+                for (s32 i=0; i<8; i++)
+                {
+                    if (m_GlowTrail[i].l < m_GlowStartX)
+                        m_GlowTrail[i].l = -1;
+                }
             }
         }
-    }
-    else
-    {
-        m_GlowPos.l -= (s32)((m_GlowSpeed * deltaTime) + 0.5f);
-        m_GlowPos.r  = m_GlowPos.l + 16;
-
-        if (m_GlowPos.l < m_GlowStartX)
+        else
         {
-            m_GlowPos.l = m_GlowStartX;
-            m_GlowPos.r = m_GlowStartX + 16;
-            m_GlowPos.t = m_CurrScreenSize.t;
-            m_GlowPos.b = m_CurrScreenSize.t + 7;
-            m_GlowOnTop = TRUE;
-        }
-        else if (m_GlowPos.l > m_GlowEndX)
-        {
-            m_GlowPos.l = m_GlowEndX;
-            m_GlowPos.r = m_GlowEndX + 16;
+            m_GlowPos.l -= deltaPos;
+            m_GlowPos.r  = m_GlowPos.l + 16;
 
-            for (s32 i=0; i<8; i++)
+            if (m_GlowPos.l < m_GlowStartX)
             {
-                if (m_GlowTrail[i].l > m_GlowEndX)
-                    m_GlowTrail[i].l = -1;
+                m_GlowPos.l = m_GlowStartX;
+                m_GlowPos.r = m_GlowStartX + 16;
+                m_GlowPos.t = m_CurrScreenSize.t;
+                m_GlowPos.b = m_CurrScreenSize.t + 7;
+                m_GlowOnTop = TRUE;
+            }
+            else if (m_GlowPos.l > m_GlowEndX)
+            {
+                m_GlowPos.l = m_GlowEndX;
+                m_GlowPos.r = m_GlowEndX + 16;
+
+                for (s32 i=0; i<8; i++)
+                {
+                    if (m_GlowTrail[i].l > m_GlowEndX)
+                        m_GlowTrail[i].l = -1;
+                }
             }
         }
-    }
 
-    for (s32 i=7; i>0; i--)
-    {
-        m_GlowTrail[i] = m_GlowTrail[i-1];
+        for (s32 i=7; i>0; i--)
+        {
+            m_GlowTrail[i] = m_GlowTrail[i-1];
+        }
+        m_GlowTrail[0] = m_GlowPos;
     }
-    m_GlowTrail[0] = m_GlowPos;
 }
 
 //=============================================================================

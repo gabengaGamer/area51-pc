@@ -223,7 +223,7 @@ void dlg_credits::OnPadBack( ui_win* pWin )
 void dlg_credits::OnUpdate ( ui_win* pWin, f32 DeltaTime )
 {
     (void)pWin;
-    (void)DeltaTime;
+    const f32 FadeOutRate = 480.0f;
 
     // Total Page Time
     m_CurrentPageTime += DeltaTime;
@@ -240,7 +240,7 @@ void dlg_credits::OnUpdate ( ui_win* pWin, f32 DeltaTime )
                 // Fade All Chars
                 if( m_CreditLines[index].m_CustomRenderStruct[i].m_Value > 0.0f )
                 {
-                    m_CreditLines[index].m_CustomRenderStruct[i].m_Value -= 8;
+                    m_CreditLines[index].m_CustomRenderStruct[i].m_Value -= (FadeOutRate * DeltaTime);
                     if( m_CreditLines[index].m_CustomRenderStruct[i].m_Value < 0.0f )
                         m_CreditLines[index].m_CustomRenderStruct[i].m_Value = 0.0f;
 

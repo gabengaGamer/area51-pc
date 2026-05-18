@@ -675,6 +675,18 @@ player::player( void ) :
     m_MaxStrafeVelocity = .75f * m_MaxFowardVelocity;
 
     m_vRigOffset.Set( 0.0f, 0.0f, 0.0f );
+
+    m_RenderPrev.Valid = FALSE;
+    m_RenderPrev.HasWeapon = FALSE;
+    m_RenderPrev.ArmsL2W.Identity();
+    m_RenderPrev.WeaponL2W.Identity();
+    m_RenderPrev.WeaponCollisionOffset.Zero();
+    m_RenderPrev.ArmsNBones = 0;
+    m_RenderPrev.WeaponNBones = 0;
+
+    m_RenderCurr = m_RenderPrev;
+    m_RenderInterp = m_RenderPrev;
+    m_RenderInterpActive = FALSE;
  
     // The title for this player
     m_pPlayerTitle = "Unknown Mutation";
@@ -1913,6 +1925,38 @@ inline void player::ComputeStunnedPitchYawOffset( radian PitchOffset, radian Yaw
 //===========================================================================
 static f32 s_ViewRollTune = 3987.63f; 
 
+static radian InterpRenderAngle( radian A, radian B, f32 T )
+{
+    return A + (x_MinAngleDiff( B, A ) * T);
+}
+
+static radian3 InterpRenderRotation( const radian3& A, const radian3& B, f32 T )
+{
+    return radian3( InterpRenderAngle( A.Pitch, B.Pitch, T ),
+                     InterpRenderAngle( A.Yaw,   B.Yaw,   T ),
+                     InterpRenderAngle( A.Roll,  B.Roll,  T ) );
+}
+
+static vector3 InterpRenderVector( const vector3& A, const vector3& B, f32 T )
+{
+    return A + ((B - A) * T);
+}
+
+static matrix4 BuildRenderL2W( const vector3& Pos, const radian3& Rot )
+{
+    matrix4 L2W;
+    L2W.Identity();
+    L2W.SetRotation( Rot );
+    L2W.SetTranslation( Pos );
+    return L2W;
+}
+
+static matrix4 InterpRenderMatrix( const matrix4& A, const matrix4& B, f32 T )
+{
+    return BuildRenderL2W( InterpRenderVector( A.GetTranslation(), B.GetTranslation(), T ),
+                           InterpRenderRotation( A.GetRotation(), B.GetRotation(), T ) );
+}
+
 void player::ComputeView( view& View, view_flags Flags )
 {
     third_person_camera* pThirdPersonCamera = GetThirdPersonCamera();
@@ -2055,6 +2099,179 @@ void player::ComputeView( view& View, view_flags Flags )
     {
         View.SetZLimits( 10.0f, 8000.0f );
     }
+}
+
+//===========================================================================
+
+void player::CaptureRenderState( void )
+{
+    render_state Snapshot;
+    Snapshot.Valid = TRUE;
+    Snapshot.HasWeapon = FALSE;
+    Snapshot.WeaponCollisionOffset = m_WeaponCollisionOffset;
+    Snapshot.ArmsL2W = BuildRenderL2W( m_AnimPlayer.GetPosition(), m_AnimPlayer.GetRotation() );
+    Snapshot.WeaponL2W.Identity();
+    Snapshot.ArmsNBones = 0;
+    Snapshot.WeaponNBones = 0;
+
+    Snapshot.View = m_Views[ GetLocalSlot() ];
+    ComputeView( Snapshot.View, player::VIEW_NULL );
+
+    if( m_AnimGroup.GetPointer() && m_Skin.GetSkinGeom() )
+    {
+        Snapshot.ArmsNBones = MIN( m_AnimPlayer.GetNBones(), MAX_ANIM_BONES );
+        m_AnimPlayer.GetBoneL2Ws( Snapshot.ArmsBones, FALSE );
+    }
+
+    new_weapon* pWeapon = GetCurrentWeaponPtr();
+    if( pWeapon )
+    {
+        Snapshot.HasWeapon = TRUE;
+        Snapshot.WeaponL2W = pWeapon->GetL2W();
+
+        if( pWeapon->HasAnimGroup() )
+        {
+            char_anim_player& WeaponAnimPlayer = pWeapon->GetCurrentAnimPlayer();
+            Snapshot.WeaponNBones = MIN( WeaponAnimPlayer.GetNBones(), MAX_ANIM_BONES );
+            WeaponAnimPlayer.GetBoneL2Ws( Snapshot.WeaponBones, FALSE );
+        }
+    }
+
+    m_RenderPrev = m_RenderCurr;
+    m_RenderCurr = Snapshot;
+
+    if( !m_RenderPrev.Valid )
+    {
+        m_RenderPrev = m_RenderCurr;
+        return;
+    }
+
+    const vector3 Delta = m_RenderCurr.View.GetPosition() - m_RenderPrev.View.GetPosition();
+    const radian3 PrevRot = m_RenderPrev.View.GetV2W().GetRotation();
+    const radian3 CurrRot = m_RenderCurr.View.GetV2W().GetRotation();
+
+    if( (Delta.LengthSquared() > x_sqr( 250.0f )) ||
+        (x_abs( x_MinAngleDiff( CurrRot.Pitch, PrevRot.Pitch ) ) > R_90) ||
+        (x_abs( x_MinAngleDiff( CurrRot.Yaw,   PrevRot.Yaw   ) ) > R_90) ||
+        (x_abs( x_MinAngleDiff( CurrRot.Roll,  PrevRot.Roll  ) ) > R_90) ||
+        (m_RenderPrev.HasWeapon != m_RenderCurr.HasWeapon) ||
+        (m_RenderPrev.ArmsNBones != m_RenderCurr.ArmsNBones) ||
+        (m_RenderPrev.WeaponNBones != m_RenderCurr.WeaponNBones) )
+    {
+        m_RenderPrev = m_RenderCurr;
+    }
+}
+
+//===========================================================================
+
+void player::UpdateRenderState( f32 Alpha )
+{
+    m_RenderInterpActive = FALSE;
+
+    if( !m_RenderCurr.Valid )
+        return;
+
+    Alpha = MAX( 0.0f, MIN( Alpha, 1.0f ) );
+
+    const render_state& Prev = m_RenderPrev.Valid ? m_RenderPrev : m_RenderCurr;
+    m_RenderInterp = m_RenderCurr;
+
+    const vector3 ViewPos = InterpRenderVector( Prev.View.GetPosition(), m_RenderCurr.View.GetPosition(), Alpha );
+    const radian3 ViewRot = InterpRenderRotation( Prev.View.GetV2W().GetRotation(),
+                                                  m_RenderCurr.View.GetV2W().GetRotation(),
+                                                  Alpha );
+
+    m_RenderInterp.View.SetPosition( ViewPos );
+    m_RenderInterp.View.SetRotation( ViewRot );
+    m_RenderInterp.View.SetXFOV( Prev.View.GetXFOV() + ((m_RenderCurr.View.GetXFOV() - Prev.View.GetXFOV()) * Alpha) );
+
+    s32 X0, Y0, X1, Y1;
+    f32 ZNear, ZFar;
+    view& LiveView = m_Views[ GetLocalSlot() ];
+    LiveView.GetViewport( X0, Y0, X1, Y1 );
+    LiveView.GetZLimits( ZNear, ZFar );
+    m_RenderInterp.View.SetViewport( X0, Y0, X1, Y1 );
+    m_RenderInterp.View.SetPixelScale( LiveView.GetPixelScale() );
+    m_RenderInterp.View.SetZLimits( ZNear, ZFar );
+
+    m_RenderInterp.ArmsL2W = BuildRenderL2W(
+        InterpRenderVector( Prev.ArmsL2W.GetTranslation(), m_RenderCurr.ArmsL2W.GetTranslation(), Alpha ),
+        InterpRenderRotation( Prev.ArmsL2W.GetRotation(), m_RenderCurr.ArmsL2W.GetRotation(), Alpha ) );
+
+    m_RenderInterp.WeaponCollisionOffset = InterpRenderVector( Prev.WeaponCollisionOffset,
+                                                               m_RenderCurr.WeaponCollisionOffset,
+                                                               Alpha );
+
+    m_RenderInterp.ArmsNBones = m_RenderCurr.ArmsNBones;
+    if( (Prev.ArmsNBones == m_RenderCurr.ArmsNBones) && (m_RenderCurr.ArmsNBones > 0) )
+    {
+        for( s32 i = 0; i < m_RenderCurr.ArmsNBones; i++ )
+            m_RenderInterp.ArmsBones[i] = InterpRenderMatrix( Prev.ArmsBones[i], m_RenderCurr.ArmsBones[i], Alpha );
+    }
+    else
+    {
+        for( s32 i = 0; i < m_RenderCurr.ArmsNBones; i++ )
+            m_RenderInterp.ArmsBones[i] = m_RenderCurr.ArmsBones[i];
+    }
+
+    if( m_RenderCurr.HasWeapon )
+    {
+        m_RenderInterp.HasWeapon = TRUE;
+        m_RenderInterp.WeaponL2W = BuildRenderL2W(
+            InterpRenderVector( Prev.WeaponL2W.GetTranslation(), m_RenderCurr.WeaponL2W.GetTranslation(), Alpha ),
+            InterpRenderRotation( Prev.WeaponL2W.GetRotation(), m_RenderCurr.WeaponL2W.GetRotation(), Alpha ) );
+
+        m_RenderInterp.WeaponNBones = m_RenderCurr.WeaponNBones;
+        if( (Prev.WeaponNBones == m_RenderCurr.WeaponNBones) && (m_RenderCurr.WeaponNBones > 0) )
+        {
+            for( s32 i = 0; i < m_RenderCurr.WeaponNBones; i++ )
+                m_RenderInterp.WeaponBones[i] = InterpRenderMatrix( Prev.WeaponBones[i], m_RenderCurr.WeaponBones[i], Alpha );
+        }
+        else
+        {
+            for( s32 i = 0; i < m_RenderCurr.WeaponNBones; i++ )
+                m_RenderInterp.WeaponBones[i] = m_RenderCurr.WeaponBones[i];
+        }
+    }
+    else
+    {
+        m_RenderInterp.HasWeapon = FALSE;
+        m_RenderInterp.WeaponL2W.Identity();
+        m_RenderInterp.WeaponNBones = 0;
+    }
+
+    m_RenderInterpActive = TRUE;
+}
+
+//===========================================================================
+
+void player::ClearRenderState( void )
+{
+    m_RenderInterpActive = FALSE;
+}
+
+//===========================================================================
+
+xbool player::GetRenderWeaponL2W( matrix4& L2W ) const
+{
+    if( !m_RenderInterpActive || !m_RenderInterp.HasWeapon )
+        return FALSE;
+
+    L2W = m_RenderInterp.WeaponL2W;
+    return TRUE;
+}
+
+//===========================================================================
+
+const matrix4* player::GetRenderWeaponBones( s32& nBones ) const
+{
+    nBones = 0;
+
+    if( !m_RenderInterpActive || !m_RenderInterp.HasWeapon || (m_RenderInterp.WeaponNBones <= 0) )
+        return NULL;
+
+    nBones = m_RenderInterp.WeaponNBones;
+    return m_RenderInterp.WeaponBones;
 }
 
 //===========================================================================
@@ -3739,14 +3956,21 @@ void player::OnRender( void )
             && (GetCurrentWeaponPtr() || (m_CurrentAnimState == ANIM_STATE_DEATH))
             && !(m_bIsMutated && (m_CurrentAnimState == ANIM_STATE_DEATH)) )
         {
+            const anim_group& ArmsAnimGroup = m_AnimPlayer.GetAnimGroup();
             s32            nBones    = m_AnimPlayer.GetNBones();
             matrix4*       pBone     = (matrix4*)smem_BufferAlloc( nBones * sizeof( matrix4 ) );
             const matrix4* pAnimBone = m_AnimPlayer.GetBoneL2Ws();
+            const vector3& WeaponCollisionOffset = GetCurrentWeaponCollisionOffset();
+            xbool          UseRenderInterp = (m_RenderInterpActive && (m_RenderInterp.ArmsNBones == nBones));
 
             for( s32 i=0; i<nBones; i++ )
             {
-                pBone[i] = pAnimBone[i];
-                pBone[i].Translate( m_WeaponCollisionOffset );
+                if( UseRenderInterp )
+                    pBone[i] = m_RenderInterp.ArmsBones[i] * ArmsAnimGroup.GetBoneBindInvMatrix( i );
+                else
+                    pBone[i] = pAnimBone[i];
+
+                pBone[i].Translate( WeaponCollisionOffset );
             }
 
 #if !defined( CONFIG_RETAIL )
@@ -7825,8 +8049,21 @@ view& player::GetView( void )
 #ifdef X_EDITOR
     return GetView( 0 ); 
 #else
+    if( m_RenderInterpActive )
+        return m_RenderInterp.View;
+
     return GetView( GetLocalSlot() ); 
 #endif
+}
+
+//==============================================================================
+
+const vector3& player::GetCurrentWeaponCollisionOffset( void ) const
+{
+    if( m_RenderInterpActive )
+        return m_RenderInterp.WeaponCollisionOffset;
+
+    return m_WeaponCollisionOffset;
 }
 
 //==============================================================================

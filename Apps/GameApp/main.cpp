@@ -123,7 +123,10 @@
 
 #define RELEASE_PATH            "C:\\GameData\\A51\\Release"
 
-static f32 GAME_MAX_DELTA_TIME = 0.1f;
+static f32 GAME_MAX_DELTA_TIME         = 0.1f;
+static f32 FIXED_UPDATE_DELTA_TIME     = 1.0f / 30.0f;
+static f32 MAX_FRAME_DELTA_TIME        = 0.25f;
+static s32 MAX_UPDATE_STEPS_PER_FRAME  = 8;
 
 #if CONFIG_IS_DEMO
 xtimer g_DemoIdleTimer;
@@ -558,14 +561,19 @@ void UpdateFrontEnd( void )
     f32 DeltaTime;
 
     DeltaTime = s_FrontEndDelta.TripSec();
-    if (DeltaTime > 0.25f)
+    if( DeltaTime < 0.0f )
     {
-        DeltaTime = 1.0f/30.0f;
+        DeltaTime = FIXED_UPDATE_DELTA_TIME;
+    }
+    else if( DeltaTime > MAX_FRAME_DELTA_TIME )
+    {
+        DeltaTime = FIXED_UPDATE_DELTA_TIME;
     }
 
     ASSERT( g_StateMgr.IsBackgroundThreadRunning() == FALSE );
 
     input_UpdateState();
+    g_InputMgr.Update( DeltaTime );
 
     g_StateMgr.CheckControllers();
 
@@ -574,8 +582,8 @@ void UpdateFrontEnd( void )
     if( input_IsPressed( INPUT_MSG_EXIT ) )
         return;
     #endif
-    g_NetworkMgr.Update(DeltaTime);
-    g_StateMgr.Update(DeltaTime);
+    g_NetworkMgr.Update( DeltaTime );
+    g_StateMgr.Update( DeltaTime );
     g_StateMgr.Render();
 
     // update audio manager
@@ -640,7 +648,35 @@ void SetupViewAndFog( zone_mgr::zone_id StartZone )
 
 //==============================================================================
 
-void RenderGame( void )
+static void CaptureRenderState( void )
+{
+    slot_id ID = g_ObjMgr.GetFirst( object::TYPE_PLAYER );
+    while( ID != SLOT_NULL )
+    {
+        object* pObj = g_ObjMgr.GetObjectBySlot( ID );
+        player* pPlayer = &player::GetSafeType( *pObj );
+        if( pPlayer && (pPlayer->GetLocalSlot() != -1) )
+        {
+            pPlayer->CaptureRenderState();
+        }
+
+        ID = g_ObjMgr.GetNext( ID );
+    }
+}
+
+//==============================================================================
+
+static void UpdateRender( player* pPlayers[MAX_LOCAL_PLAYERS], s32 nPlayers, f32 Alpha )
+{
+    for( s32 i = 0; i < nPlayers; i++ )
+    {
+        pPlayers[i]->UpdateRenderState( Alpha );
+    }
+}
+
+//==============================================================================
+
+void RenderGame( f32 Alpha )
 {
     s32 i;
 
@@ -796,6 +832,8 @@ void RenderGame( void )
         break;
     }
 
+    UpdateRender( pPlayers, nPlayers, Alpha );
+
     // Make all the players inactive in anticipation of the render...
     for( i = 0; i < nPlayers; i++ )
         pPlayers[i]->SetAsActivePlayer( FALSE );
@@ -815,9 +853,7 @@ void RenderGame( void )
         if ( g_FreeCam == FALSE )
     #endif
         {
-            view& rView0 = pPlayers[i]->GetView();
-            pPlayers[i]->ComputeView( rView0, player::VIEW_NULL );
-            g_View = rView0;
+            g_View = pPlayers[i]->GetView();
         }
 
         SetupViewAndFog(pPlayers[i]->GetPlayerViewZone());
@@ -834,6 +870,7 @@ void RenderGame( void )
         g_ObjMgr.Render( DoPortalWalk, g_View, pPlayers[i]->GetPlayerViewZone() );
 
         EndRenderPlatform();
+        pPlayers[i]->ClearRenderState();
         pPlayers[i]->SetAsActivePlayer( FALSE );
     }
 
@@ -1258,7 +1295,6 @@ void RunFrontEnd( void )
 void RunGame( void )
 {
     MEMORY_OWNER( "INGAME" );
-    f32 GameTime = 0.0f;
 
     #if !defined( CONFIG_RETAIL )
     g_MemoryLowWater = 0x7fffffff;
@@ -1297,7 +1333,11 @@ void RunGame( void )
     // Level is fully loaded and startup trigger has run, notify scripts.
     g_ScriptMgr.NotifyLevelStart();
 
-    f32 DeltaTime = MAX( g_GameTimer.ReadSec(), 0.001f );
+    f32 DeltaTime   = 0.0f;
+    f32 Accumulator = 0.0f;
+
+    g_GameTimer.Reset();
+    g_GameTimer.Start();
 
     // Run!  At least until we stop, that is.
     while( TRUE )
@@ -1315,13 +1355,26 @@ void RunGame( void )
         //
         {
             // Compute the duration of the last frame.
-            DeltaTime = MAX( g_GameTimer.ReadSec(), 0.001f );
+            DeltaTime = g_GameTimer.ReadSec();
 
             #ifdef TARGET_PC
             s32 DelayTime = 32 - (s32)(DeltaTime * 1000.0f);
 //          x_DelayThread( DelayTime );
-            DeltaTime = MAX( g_GameTimer.ReadSec(), 0.001f );
+            DeltaTime = g_GameTimer.ReadSec();
             #endif
+
+            if( DeltaTime < 0.0f )
+            {
+                LOG_ERROR( "RunGame", "NEGATIVE DELTA TIME" );
+                DeltaTime = FIXED_UPDATE_DELTA_TIME;
+            }
+            else if( DeltaTime > MAX_FRAME_DELTA_TIME )
+            {
+                DeltaTime = MAX_FRAME_DELTA_TIME;
+            }
+
+            g_GameTimer.Reset();
+            g_GameTimer.Start();
 
             g_PerceptionMgr.Update( DeltaTime );
 
@@ -1332,23 +1385,24 @@ void RunGame( void )
             DeltaTime *= g_WorldTimeDilation;
             #endif
 
-            // Beware negative delta time!
-            if( DeltaTime < 0.0f )
-            {
-                LOG_ERROR( "RunGame", "NEGATIVE DELTA TIME" );
-                DeltaTime = 33.0f / 1000.0f;
-            }
-
-            g_GameTimer.Reset();
-            g_GameTimer.Start();
-
-            GameTime += DeltaTime;
+            Accumulator += DeltaTime;
         }
 
         //
         // We are "behind the times".  Catch up to the present.
         //
-        Update( DeltaTime );
+        s32 UpdateCount = 0;
+        while( (Accumulator >= FIXED_UPDATE_DELTA_TIME) &&
+               (UpdateCount < MAX_UPDATE_STEPS_PER_FRAME) )
+        {
+            Update( FIXED_UPDATE_DELTA_TIME );
+            CaptureRenderState();
+            Accumulator -= FIXED_UPDATE_DELTA_TIME;
+            UpdateCount++;
+
+            if( g_ActiveConfig.GetExitReason() != GAME_EXIT_CONTINUE )
+                break;
+        }
 
         //
         // During the logic, the game could have "ended".  If it did, get out
@@ -1373,7 +1427,7 @@ void RunGame( void )
         {
             if( g_nLogicFramesAfterLoad > 10 )
             {
-                RenderGame();
+                RenderGame( Accumulator / FIXED_UPDATE_DELTA_TIME );
             }
 
             // render the pause

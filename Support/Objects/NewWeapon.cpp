@@ -1239,9 +1239,19 @@ void new_weapon::RenderWeapon( xbool bDebug, const xcolor& Ambient, xbool Cloake
         // if we are owned by a player, then we need to ask for his offset
         object*        pOwner    = g_ObjMgr.GetObjectByGuid( m_OwnerGuid );
         vector3        Offset    ( 0.0f, 0.0f, 0.0f );
+        matrix4        RenderL2W ( GetL2W() );
+        const matrix4* pRenderBones = NULL;
+        s32            RenderNBones = 0;
         if ( pOwner && pOwner->IsKindOf( player::GetRTTI() ) )
         {
-            Offset = ((player*)pOwner)->GetCurrentWeaponCollisionOffset();
+            player& Player = player::GetSafeType( *pOwner );
+            Offset = Player.GetCurrentWeaponCollisionOffset();
+
+            if( m_CurrentRenderState == RENDER_STATE_PLAYER )
+            {
+                Player.GetRenderWeaponL2W( RenderL2W );
+                pRenderBones = Player.GetRenderWeaponBones( RenderNBones );
+            }
         }
 
         // accumulate clipping flags and whether or not we should glow
@@ -1256,7 +1266,7 @@ void new_weapon::RenderWeapon( xbool bDebug, const xcolor& Ambient, xbool Cloake
         {
             const anim_group* pAnimGroup = CurAnimGroup.GetPointer();
             bbox RenderBBox = pAnimGroup->GetBBox();
-            RenderBBox.Transform( GetL2W() );
+            RenderBBox.Transform( RenderL2W );
             RenderBBox.Translate( Offset );
 
             // Perform clipping test, and skip render if outside the view
@@ -1271,6 +1281,7 @@ void new_weapon::RenderWeapon( xbool bDebug, const xcolor& Ambient, xbool Cloake
         s32            nBones    = m_AnimPlayer[ m_CurrentRenderState ].GetNBones();
         matrix4*       pBone     = (matrix4*)smem_BufferAlloc( nBones * sizeof( matrix4 ) );
         const matrix4* pAnimBone = m_AnimPlayer[ m_CurrentRenderState ].GetBoneL2Ws();
+        const anim_group& BoneAnimGroup = *CurAnimGroup.GetPointer();
 
         // if our owner is spawning, we need ALPHA for fading
         if (   pOwner 
@@ -1282,7 +1293,11 @@ void new_weapon::RenderWeapon( xbool bDebug, const xcolor& Ambient, xbool Cloake
 
         for( s32 i=0; i<nBones; i++ )
         {
-            pBone[i] = pAnimBone[i];
+            if( pRenderBones && (RenderNBones == nBones) )
+                pBone[i] = pRenderBones[i] * BoneAnimGroup.GetBoneBindInvMatrix( i );
+            else
+                pBone[i] = pAnimBone[i];
+
             pBone[i].Translate( Offset );
         }
 
@@ -1290,17 +1305,17 @@ void new_weapon::RenderWeapon( xbool bDebug, const xcolor& Ambient, xbool Cloake
 
         if ( Cloaked )
         {
-            SkinInst.RenderDistortion( &GetL2W(),
+            SkinInst.RenderDistortion( &RenderL2W,
                                        pBone,
                                        nBones,
                                        Flags,
-                                       SkinInst.GetLODMask(GetL2W()),
+                                       SkinInst.GetLODMask(RenderL2W),
                                        radian3(R_0,R_0,R_0),
                                        Ambient );
         }
         else
         {
-            u64 MeshMask = SkinInst.GetLODMask( GetL2W() );
+            u64 MeshMask = SkinInst.GetLODMask( RenderL2W );
 
             // render the scope mesh if one is there
             if ( (m_ScopeMesh != -1)            &&
@@ -1312,7 +1327,7 @@ void new_weapon::RenderWeapon( xbool bDebug, const xcolor& Ambient, xbool Cloake
 
                 // render the scope mesh
                 MeshMask &= ~ScopeMask;
-                SkinInst.Render( &GetL2W(),
+                SkinInst.Render( &RenderL2W,
                                  pBone,
                                  nBones,
                                  Flags | render::FORCE_LAST,
@@ -1321,7 +1336,7 @@ void new_weapon::RenderWeapon( xbool bDebug, const xcolor& Ambient, xbool Cloake
             }
 
             // render the normal mesh
-            SkinInst.Render( &GetL2W(),
+            SkinInst.Render( &RenderL2W,
                              pBone,
                              nBones,
                              Flags,

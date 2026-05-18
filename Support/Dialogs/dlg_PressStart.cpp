@@ -179,7 +179,7 @@ xbool dlg_press_start::Create( s32                        UserID,
 
     m_FadeStartInAlpha  = 0;
     m_FadeStartIn       = TRUE;
-    m_FadeAdjust        = 4;
+    m_FadeAdjust        = 240.0f;
     m_WaitTime          = 0;
     m_Timeout           = TIMEOUT_TIME;
     m_bPlayDemo         = FALSE;
@@ -214,21 +214,7 @@ void dlg_press_start::Destroy( void )
 
 void dlg_press_start::Render( s32 ox, s32 oy )
 {
-    m_FadeStartInAlpha+=m_FadeAdjust;
-    
-    if( m_FadeStartInAlpha > 255 )
-    {
-        m_FadeStartInAlpha = 255;
-        m_FadeAdjust = -m_FadeAdjust;
-    }
-
-    if( m_FadeStartInAlpha < 64 )
-    {
-        m_FadeStartInAlpha = 64;
-        m_FadeAdjust = -m_FadeAdjust;
-    }
-
-    m_pButtonPressStart->SetLabelColor( xcolor(230, 230, 230, m_FadeStartInAlpha) );
+    m_pButtonPressStart->SetLabelColor( xcolor(230, 230, 230, (u8)m_FadeStartInAlpha) );
 
     // finally render all the normal dialog stuff
 	ui_dialog::Render( ox, oy );
@@ -306,7 +292,20 @@ void dlg_press_start::OnPadHelp( ui_win* pWin )
 void dlg_press_start::OnUpdate ( ui_win* pWin, f32 DeltaTime )
 {
     (void)pWin;
-    (void)DeltaTime;
+
+    m_FadeStartInAlpha += (m_FadeAdjust * DeltaTime);
+
+    if( m_FadeStartInAlpha > 255.0f )
+    {
+        m_FadeStartInAlpha = 255.0f;
+        m_FadeAdjust = -m_FadeAdjust;
+    }
+
+    if( m_FadeStartInAlpha < 64.0f )
+    {
+        m_FadeStartInAlpha = 64.0f;
+        m_FadeAdjust = -m_FadeAdjust;
+    }
 
 #if defined( TARGET_PC )
     if( m_bPlayDemo )

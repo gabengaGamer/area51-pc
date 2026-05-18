@@ -69,9 +69,9 @@ protected:
     f32                 m_FadeControl;
     f32                 m_DemoHoldTimer;
     s32                 m_PressStartState;
-    s32                 m_FadeStartInAlpha;
+    f32                 m_FadeStartInAlpha;
     xbool               m_FadeStartIn;
-    s32                 m_FadeAdjust;
+    f32                 m_FadeAdjust;
     f32                 m_WaitTime;
     f32                 m_Timeout;
     xbool               m_bPlayDemo;
