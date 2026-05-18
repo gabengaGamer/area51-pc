@@ -174,6 +174,8 @@ namespace
 
     s32 ClampShadowMapResolution( s32 ShadowMapResolution )
     {
+        if( ShadowMapResolution >= 4096 )
+            return 4096;		
         if( ShadowMapResolution >= 2048 )
             return 2048;
         if( ShadowMapResolution >= 1024 )
@@ -232,6 +234,8 @@ namespace
 
     s32 ReduceShadowMapResolution( s32 ShadowMapResolution )
     {
+        if( ShadowMapResolution > 2048 )
+            return 2048;		
         if( ShadowMapResolution > 1024 )
             return 1024;
         if( ShadowMapResolution > 512 )

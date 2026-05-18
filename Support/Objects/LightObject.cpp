@@ -374,7 +374,8 @@ void dynamic_light_obj::OnEnumProp( prop_enum& List )
                            "256\0"
                            "512\0"
                            "1024\0"
-                           "2048\0",				   
+                           "2048\0"
+                           "4096\0",
                            "Requested shadow map resolution for this light.",
                            0 );
         List.PropEnumEnum( "Light\\ShadowPriority",
@@ -382,7 +383,7 @@ void dynamic_light_obj::OnEnumProp( prop_enum& List )
                            "LOW\0"
                            "MEDIUM\0"
                            "HIGH\0"
-                           "HIGHEST\0",						   
+                           "HIGHEST\0",
                            "Shadow update priority for this light.",
                            0 );
     }
@@ -482,7 +483,8 @@ xbool dynamic_light_obj::OnProperty( prop_query& I )
             case SHADOW_MAP_RESOLUTION_256:  I.SetVarEnum("256");  break;
             case SHADOW_MAP_RESOLUTION_512:  I.SetVarEnum("512");  break;
             case SHADOW_MAP_RESOLUTION_1024: I.SetVarEnum("1024"); break;
-            case SHADOW_MAP_RESOLUTION_2048: I.SetVarEnum("2048"); break;			
+            case SHADOW_MAP_RESOLUTION_2048: I.SetVarEnum("2048"); break;
+            case SHADOW_MAP_RESOLUTION_4096: I.SetVarEnum("4096"); break;
             }
         }
         else
@@ -494,7 +496,9 @@ xbool dynamic_light_obj::OnProperty( prop_query& I )
             else if( !x_strcmp( I.GetVarEnum(), "1024" ) )
                 m_ShadowMapResolution = SHADOW_MAP_RESOLUTION_1024;
             else if( !x_strcmp( I.GetVarEnum(), "2048" ) )
-                m_ShadowMapResolution = SHADOW_MAP_RESOLUTION_2048;			
+                m_ShadowMapResolution = SHADOW_MAP_RESOLUTION_2048;
+            else if( !x_strcmp( I.GetVarEnum(), "4096" ) )
+                m_ShadowMapResolution = SHADOW_MAP_RESOLUTION_4096;
         }
     }
     else if( I.IsVar("Light\\ShadowPriority") )
@@ -516,7 +520,7 @@ xbool dynamic_light_obj::OnProperty( prop_query& I )
             if( !x_strcmp( I.GetVarEnum(), "LOWEST" ) )
                 m_ShadowPriority = SHADOW_PRIORITY_LOWEST;
             else if( !x_strcmp( I.GetVarEnum(), "LOW" ) )
-                m_ShadowPriority = SHADOW_PRIORITY_LOW;			
+                m_ShadowPriority = SHADOW_PRIORITY_LOW;	
             else if( !x_strcmp( I.GetVarEnum(), "MEDIUM" ) )
                 m_ShadowPriority = SHADOW_PRIORITY_MEDIUM;
             else if( !x_strcmp( I.GetVarEnum(), "HIGH" ) )
@@ -542,7 +546,7 @@ xbool dynamic_light_obj::OnProperty( prop_query& I )
             switch(m_DoneAction)
             {
             case ACTION_DESTROY:        I.SetVarEnum("DESTROY");    break ;
-            case ACTION_DEACTIVATE:     I.SetVarEnum("DEACTIVATE"); break ;            
+            case ACTION_DEACTIVATE:     I.SetVarEnum("DEACTIVATE"); break ;
             }
         }
         else
