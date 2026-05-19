@@ -28,6 +28,13 @@
 #include "EventMgr\EventMgr.hpp"
 #include "Object.hpp"
 #include "Actor/actor.hpp"
+#include "DeltaMgr\InterpolationMgr.hpp"
+
+static interpolation_mgr::provider s_SuperDestructibleInterpolationProvider( super_destructible_obj::CaptureRenderStates,
+                                                                             super_destructible_obj::UpdateRenderStates,
+                                                                             super_destructible_obj::ClearRenderStates,
+                                                                             interpolation_mgr::CLEAR_STAGE_END_FRAME,
+                                                                             900 );
 
                                        
 //==========================================================================
@@ -250,70 +257,44 @@ void super_destructible_obj::ClearRenderStates( void )
 
 void super_destructible_obj::InvalidateRenderState( void )
 {
-    InitSimpleAnimRenderState( m_RenderPrev );
-    m_RenderCurr = m_RenderPrev;
-    m_RenderInterp = m_RenderPrev;
-    m_RenderInterpActive = FALSE;
+    InitSimpleAnimInterpCache( m_RenderCache );
 }
 
 //=========================================================================
 
 void super_destructible_obj::CaptureRenderState( void )
 {
-    simple_anim_render_state Snapshot;
-    CaptureSimpleAnimRenderState( Snapshot, GetL2W(), m_AnimPlayer );
-
-    m_RenderPrev = m_RenderCurr;
-    m_RenderCurr = Snapshot;
-
-    if( !m_RenderPrev.Valid )
-    {
-        m_RenderPrev = m_RenderCurr;
-        return;
-    }
-
-    if( ShouldSnapSimpleAnimRenderState( m_RenderPrev, m_RenderCurr ) )
-        m_RenderPrev = m_RenderCurr;
+    simple_anim_interp_state Snapshot;
+    CaptureSimpleAnimInterpState( Snapshot, GetL2W(), m_AnimPlayer );
+    CaptureSimpleAnimInterpCache( m_RenderCache, Snapshot );
 }
 
 //=========================================================================
 
 void super_destructible_obj::UpdateRenderState( f32 Alpha )
 {
-    m_RenderInterpActive = FALSE;
-
-    if( !m_RenderCurr.Valid )
-        return;
-
-    UpdateSimpleAnimRenderState( m_RenderPrev.Valid ? m_RenderPrev : m_RenderCurr,
-                                 m_RenderCurr,
-                                 m_RenderInterp,
-                                 Alpha );
-    m_RenderInterpActive = TRUE;
+    UpdateSimpleAnimInterpCache( m_RenderCache, Alpha );
 }
 
 //=========================================================================
 
 void super_destructible_obj::ClearRenderState( void )
 {
-    m_RenderInterpActive = FALSE;
+    ClearSimpleAnimInterpCache( m_RenderCache );
 }
 
 //=========================================================================
 
 const matrix4& super_destructible_obj::GetRenderL2W( void ) const
 {
-    if( m_RenderInterpActive )
-        return m_RenderInterp.L2W;
-
-    return GetL2W();
+    return GetSimpleAnimInterpCacheL2W( m_RenderCache, GetL2W() );
 }
 
 //=========================================================================
 
 xbool super_destructible_obj::GetRenderBoneL2W( s32 iBone, matrix4& L2W )
 {
-    if( m_RenderInterpActive && GetSimpleAnimRenderBoneL2W( m_RenderInterp, iBone, L2W ) )
+    if( GetSimpleAnimInterpCacheBoneL2W( m_RenderCache, iBone, L2W ) )
         return TRUE;
 
     const matrix4* pBone = m_AnimPlayer.GetBoneL2W( iBone, FALSE );
@@ -760,11 +741,11 @@ void super_destructible_obj::OnTransform( const matrix4& L2W )
 
 const matrix4* super_destructible_obj::GetBoneL2Ws( void )
 {
-    if( m_RenderInterpActive && m_hAnimGroup.GetPointer() )
+    if( m_hAnimGroup.GetPointer() )
     {
-        const matrix4* pMatrices = BuildSimpleAnimRenderMatrices( m_RenderInterp,
-                                                                  *m_hAnimGroup.GetPointer(),
-                                                                  m_hAnimGroup.GetPointer()->GetNBones() );
+        const matrix4* pMatrices = BuildSimpleAnimInterpCacheMatrices( m_RenderCache,
+                                                                       *m_hAnimGroup.GetPointer(),
+                                                                       m_hAnimGroup.GetPointer()->GetNBones() );
         if( pMatrices )
             return pMatrices;
     }

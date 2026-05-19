@@ -13,6 +13,7 @@
 #define __VOLUMETRICLIGHT_HPP__
 
 #include "Obj_mgr\obj_mgr.hpp"
+#include "Objects\Interpolation\TransformInterpolation.hpp"
 #include "Render\Texture.hpp"
 
 class volumetric_light_obj : public object
@@ -23,6 +24,9 @@ public:
 
                             volumetric_light_obj    ( void );
     virtual                ~volumetric_light_obj    ( void );
+    static  void            CaptureRenderStates     ( void );
+    static  void            UpdateRenderStates      ( f32 Alpha );
+    static  void            ClearRenderStates       ( void );
     virtual bbox            GetLocalBBox            ( void ) const;
     virtual s32             GetMaterial             ( void ) const { return MAT_TYPE_FLESH; }
     virtual void            OnEnumProp              ( prop_enum& List );
@@ -39,6 +43,12 @@ protected:
     virtual void            OnRender            ( void );
     virtual void            OnRenderTransparent ( void );
 
+            void            CaptureRenderState  ( void );
+            void            UpdateRenderState   ( f32 Alpha );
+            void            ClearRenderState    ( void );
+            void            InvalidateRenderState( void );
+    const   matrix4&        GetRenderL2W        ( void ) const;
+
     void                    SetupData( void );
 
     f32                     m_StartSize;
@@ -52,6 +62,11 @@ protected:
 
     s32                     m_nBytesAlloced;
     byte*                   m_pData;
+    transform_interp_cache  m_RenderCache;
+
+    static  volumetric_light_obj* s_pFirstRenderLight;
+            volumetric_light_obj* m_pNextRenderLight;
+            volumetric_light_obj* m_pPrevRenderLight;
 };
 
 #endif // __VOLUMETRICLIGHT_HPP__

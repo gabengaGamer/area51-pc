@@ -653,6 +653,7 @@
     <ClCompile Include="..\InputMgr\GamePad.cpp" />
     <ClCompile Include="..\InputMgr\InputMgr.cpp" />
     <ClCompile Include="..\InputMgr\Monkey.cpp" />
+    <ClCompile Include="..\DeltaMgr\InterpolationMgr.cpp" />
     <ClCompile Include="..\Inventory\CollectableAntiMutagen.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='EDITOR-Debug|Win32'">true</ExcludedFromBuild>
@@ -1432,6 +1433,7 @@
     <ClInclude Include="..\InputMgr\GamePad.hpp" />
     <ClInclude Include="..\InputMgr\InputMgr.hpp" />
     <ClInclude Include="..\InputMgr\Monkey.hpp" />
+    <ClInclude Include="..\DeltaMgr\InterpolationMgr.hpp" />
     <ClInclude Include="..\Inventory\CollectableAntiMutagen.hpp" />
     <ClInclude Include="..\Inventory\CollectableHealthPack.hpp" />
     <ClInclude Include="..\Inventory\CollectableKeyCard.hpp" />

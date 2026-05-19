@@ -4,9 +4,15 @@
 #include "Render\Render.hpp"
 #include "EventMgr\EventMgr.hpp"
 #include "Dictionary\global_dictionary.hpp"
+#include "DeltaMgr\InterpolationMgr.hpp"
 
 xstring g_SkinPropSurfaceStringList;
 skin_prop_surface* skin_prop_surface::s_pFirstRenderSurface = NULL;
+static interpolation_mgr::provider s_SkinPropSurfaceInterpolationProvider( skin_prop_surface::CaptureRenderStates,
+                                                                           skin_prop_surface::UpdateRenderStates,
+                                                                           skin_prop_surface::ClearRenderStates,
+                                                                           interpolation_mgr::CLEAR_STAGE_END_FRAME,
+                                                                           700 );
 //=============================================================================
 //=============================================================================
 
@@ -150,70 +156,44 @@ void skin_prop_surface::ClearRenderStates( void )
 
 void skin_prop_surface::InvalidateRenderState( void )
 {
-    InitSimpleAnimRenderState( m_RenderPrev );
-    m_RenderCurr = m_RenderPrev;
-    m_RenderInterp = m_RenderPrev;
-    m_RenderInterpActive = FALSE;
+    InitSimpleAnimInterpCache( m_RenderCache );
 }
 
 //=============================================================================
 
 void skin_prop_surface::CaptureRenderState( void )
 {
-    simple_anim_render_state Snapshot;
-    CaptureSimpleAnimRenderState( Snapshot, GetL2W(), m_AnimPlayer );
-
-    m_RenderPrev = m_RenderCurr;
-    m_RenderCurr = Snapshot;
-
-    if( !m_RenderPrev.Valid )
-    {
-        m_RenderPrev = m_RenderCurr;
-        return;
-    }
-
-    if( ShouldSnapSimpleAnimRenderState( m_RenderPrev, m_RenderCurr ) )
-        m_RenderPrev = m_RenderCurr;
+    simple_anim_interp_state Snapshot;
+    CaptureSimpleAnimInterpState( Snapshot, GetL2W(), m_AnimPlayer );
+    CaptureSimpleAnimInterpCache( m_RenderCache, Snapshot );
 }
 
 //=============================================================================
 
 void skin_prop_surface::UpdateRenderState( f32 Alpha )
 {
-    m_RenderInterpActive = FALSE;
-
-    if( !m_RenderCurr.Valid )
-        return;
-
-    UpdateSimpleAnimRenderState( m_RenderPrev.Valid ? m_RenderPrev : m_RenderCurr,
-                                 m_RenderCurr,
-                                 m_RenderInterp,
-                                 Alpha );
-    m_RenderInterpActive = TRUE;
+    UpdateSimpleAnimInterpCache( m_RenderCache, Alpha );
 }
 
 //=============================================================================
 
 void skin_prop_surface::ClearRenderState( void )
 {
-    m_RenderInterpActive = FALSE;
+    ClearSimpleAnimInterpCache( m_RenderCache );
 }
 
 //=============================================================================
 
 const matrix4& skin_prop_surface::GetRenderL2W( void ) const
 {
-    if( m_RenderInterpActive )
-        return m_RenderInterp.L2W;
-
-    return GetL2W();
+    return GetSimpleAnimInterpCacheL2W( m_RenderCache, GetL2W() );
 }
 
 //=============================================================================
 
 xbool skin_prop_surface::GetRenderBoneL2W( s32 iBone, matrix4& L2W )
 {
-    if( m_RenderInterpActive && GetSimpleAnimRenderBoneL2W( m_RenderInterp, iBone, L2W ) )
+    if( GetSimpleAnimInterpCacheBoneL2W( m_RenderCache, iBone, L2W ) )
         return TRUE;
 
     const matrix4* pBone = m_AnimPlayer.GetBoneL2W( iBone, FALSE );
@@ -275,8 +255,8 @@ void skin_prop_surface::OnRender( void )
         // compute bones
         s32 nActiveBones = m_AnimPlayer.GetNBones();
         const matrix4* pMatrices = NULL;
-        if( m_RenderInterpActive && m_hAnimGroup.GetPointer() )
-            pMatrices = BuildSimpleAnimRenderMatrices( m_RenderInterp, *m_hAnimGroup.GetPointer(), nActiveBones );
+        if( m_hAnimGroup.GetPointer() )
+            pMatrices = BuildSimpleAnimInterpCacheMatrices( m_RenderCache, *m_hAnimGroup.GetPointer(), nActiveBones );
         if( !pMatrices )
             pMatrices = m_AnimPlayer.GetBoneL2Ws() ;
         if (!pMatrices)
@@ -323,8 +303,8 @@ void skin_prop_surface::OnRenderShadowCast( u64 ProjMask )
     // Compute bones
     s32 nActiveBones = m_AnimPlayer.GetNBones();
     const matrix4* pMatrices = NULL;
-    if( m_RenderInterpActive && m_hAnimGroup.GetPointer() )
-        pMatrices = BuildSimpleAnimRenderMatrices( m_RenderInterp, *m_hAnimGroup.GetPointer(), nActiveBones );
+    if( m_hAnimGroup.GetPointer() )
+        pMatrices = BuildSimpleAnimInterpCacheMatrices( m_RenderCache, *m_hAnimGroup.GetPointer(), nActiveBones );
     if( !pMatrices )
         pMatrices = m_AnimPlayer.GetBoneL2Ws();
     if( !pMatrices )
@@ -753,7 +733,7 @@ xbool skin_prop_surface::GetAttachPointData( s32      iAttachPt,
             if ( (iAttachPt >= 0) &&
                 (iAttachPt < nBones ))
             {
-                if( m_RenderInterpActive && GetRenderBoneL2W( iAttachPt, L2W ) )
+                if( HasSimpleAnimInterpCache( m_RenderCache ) && GetRenderBoneL2W( iAttachPt, L2W ) )
                 {
                     if( !(Flags & ATTACH_USE_WORLDSPACE) )
                         L2W = L2W * pGroup->GetBoneBindInvMatrix( iAttachPt );

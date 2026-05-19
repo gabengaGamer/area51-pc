@@ -13,7 +13,7 @@
 #include "Entropy.hpp"
 #include "Loco\LocoCharAnimPlayer.hpp"
 #include "Objects\BaseProjectile.hpp"
-#include "Objects\Render\SimpleAnimRenderState.hpp"
+#include "Objects\Interpolation\SimpleAnimInterpolation.hpp"
 #include "..\MiscUtils\SimpleUtils.hpp"
 
 #ifdef TARGET_PS2
@@ -949,9 +949,9 @@ const matrix4* physics_inst::GetBoneL2Ws( u64& LODMask, s32& nActiveBones )
 
 //==============================================================================
 
-xbool physics_inst::CaptureRenderState( simple_anim_render_state& Snapshot ) const
+xbool physics_inst::CaptureRenderState( simple_anim_interp_state& Snapshot ) const
 {
-    InitSimpleAnimRenderState( Snapshot );
+    InitSimpleAnimInterpState( Snapshot );
 
     const geom* pGeom = m_SkinInst.GetGeom();
     const s32   nRigidBodies = m_RigidBodies.GetCount();

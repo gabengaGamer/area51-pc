@@ -9,6 +9,7 @@
 
 #include "Obj_mgr\obj_mgr.hpp"
 #include "Objects\LightObject.hpp"
+#include "Objects\Interpolation\TransformInterpolation.hpp"
 #include "Objects\Render\RigidInst.hpp"
 
 //=========================================================================
@@ -24,6 +25,9 @@ public:
 
     team_light                                  ( void );
    ~team_light                                  ( void );
+    static  void                CaptureRenderStates( void );
+    static  void                UpdateRenderStates ( f32 Alpha );
+    static  void                ClearRenderStates  ( void );
 
     virtual s32                 GetMaterial     ( void ) const { return MAT_TYPE_NULL; }
 
@@ -39,6 +43,11 @@ public:
                     circuit&    GetCircuit      ( void ) { return m_Circuit; }
 protected:   
     //=========================================================================
+            void                CaptureRenderState  ( void );
+            void                UpdateRenderState   ( f32 Alpha );
+            void                ClearRenderState    ( void );
+            void                InvalidateRenderState( void );
+    const   matrix4&            GetRenderL2W        ( void ) const;
 
     virtual void                OnCollectLight  ( void );
     virtual void                OnRender		( void );                                  
@@ -93,6 +102,11 @@ protected:
     state_vals  m_FoeAll;
 
     circuit     m_Circuit;
+    transform_interp_cache  m_RenderCache;
+
+    static  team_light*  s_pFirstRenderLight;
+            team_light*  m_pNextRenderLight;
+            team_light*  m_pPrevRenderLight;
 };
 
 //=========================================================================

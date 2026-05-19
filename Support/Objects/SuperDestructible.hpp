@@ -16,7 +16,7 @@
 #include "Objects\PlaySurface.hpp"
 #include "Debris\debris_mgr.hpp"
 #include "Decals\DecalPackage.hpp"
-#include "Objects\Render\SimpleAnimRenderState.hpp"
+#include "Objects\Interpolation\SimpleAnimInterpolation.hpp"
 #include "Animation\AnimPlayer.hpp"
 #include "ZoneMgr\ZoneMgr.hpp"
 #include "Objects\Render\VirtualMeshMask.hpp"
@@ -114,10 +114,7 @@ protected:
             super_destructible_obj* m_pPrevRenderSuper;
     anim_group::handle      m_hAnimGroup;
     simple_anim_player      m_AnimPlayer;
-    simple_anim_render_state m_RenderPrev;
-    simple_anim_render_state m_RenderCurr;
-    simple_anim_render_state m_RenderInterp;
-    xbool                    m_RenderInterpActive;
+    simple_anim_interp_cache m_RenderCache;
     rhandle<char>           m_hAudioPackage;
     rhandle<decal_package>  m_hDecalPackage;
     zone_mgr::tracker       m_ZoneTracker;

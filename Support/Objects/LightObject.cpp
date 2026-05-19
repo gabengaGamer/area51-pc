@@ -4,10 +4,19 @@
 #include "CollisionMgr\CollisionMgr.hpp"
 #include "Render\Editor\editor_icons.hpp"
 #include "Render\LightMgr.hpp"
+#include "DeltaMgr\InterpolationMgr.hpp"
 
 //=========================================================================
 // BASE LIGHT OBJECT
 //=========================================================================
+
+light_obj* light_obj::s_pFirstRenderLight = NULL;
+
+static interpolation_mgr::provider s_LightInterpolationProvider( light_obj::CaptureRenderStates,
+                                                                 light_obj::UpdateRenderStates,
+                                                                 light_obj::ClearRenderStates,
+                                                                 interpolation_mgr::CLEAR_STAGE_END_FRAME,
+                                                                 250 );
 
 static struct light_obj_desc : public object_desc
 {
@@ -73,12 +82,93 @@ const object_desc& light_obj::GetObjectType( void )
 
 light_obj::light_obj( void ) 
 {
+    m_pNextRenderLight = s_pFirstRenderLight;
+    m_pPrevRenderLight = NULL;
+    if( s_pFirstRenderLight )
+        s_pFirstRenderLight->m_pPrevRenderLight = this;
+    s_pFirstRenderLight = this;
+
     m_Sphere.Pos.Set(0,0,0);
     m_Sphere.R=400;
     m_Color.Set(255,255,255,255);
     m_Ambient.Set(0,0,0,255);
     m_Intensity = 1;
     m_bAccentAngle = FALSE;
+
+    InvalidateRenderState();
+}
+
+//=========================================================================
+
+light_obj::~light_obj( void )
+{
+    if( m_pNextRenderLight )
+        m_pNextRenderLight->m_pPrevRenderLight = m_pPrevRenderLight;
+    if( m_pPrevRenderLight )
+        m_pPrevRenderLight->m_pNextRenderLight = m_pNextRenderLight;
+    if( s_pFirstRenderLight == this )
+        s_pFirstRenderLight = m_pNextRenderLight;
+}
+
+//=========================================================================
+
+void light_obj::CaptureRenderStates( void )
+{
+    for( light_obj* pLight = s_pFirstRenderLight; pLight; pLight = pLight->m_pNextRenderLight )
+        pLight->CaptureRenderState();
+}
+
+//=========================================================================
+
+void light_obj::UpdateRenderStates( f32 Alpha )
+{
+    for( light_obj* pLight = s_pFirstRenderLight; pLight; pLight = pLight->m_pNextRenderLight )
+        pLight->UpdateRenderState( Alpha );
+}
+
+//=========================================================================
+
+void light_obj::ClearRenderStates( void )
+{
+    for( light_obj* pLight = s_pFirstRenderLight; pLight; pLight = pLight->m_pNextRenderLight )
+        pLight->ClearRenderState();
+}
+
+//=========================================================================
+
+void light_obj::InvalidateRenderState( void )
+{
+    InitTransformInterpCache( m_RenderCache );
+}
+
+//=========================================================================
+
+void light_obj::CaptureRenderState( void )
+{
+    transform_interp_state Snapshot;
+    CaptureTransformInterpState( Snapshot, GetL2W() );
+    CaptureTransformInterpCache( m_RenderCache, Snapshot );
+}
+
+//=========================================================================
+
+void light_obj::UpdateRenderState( f32 Alpha )
+{
+    UpdateTransformInterpCache( m_RenderCache, Alpha );
+}
+
+//=========================================================================
+
+void light_obj::ClearRenderState( void )
+{
+    ClearTransformInterpCache( m_RenderCache );
+}
+
+//=========================================================================
+
+const matrix4& light_obj::GetRenderL2W( void ) const
+{
+    return GetTransformInterpCacheL2W( m_RenderCache, GetL2W() );
 }
 
 //=========================================================================
@@ -95,7 +185,7 @@ void light_obj::OnCollectLight( void )
 
     if ( IsDynamic() )
     {
-        g_LightMgr.AddDynamicLight( GetPosition(),
+        g_LightMgr.AddDynamicLight( GetRenderL2W().GetTranslation(),
                                     m_Color,
                                     m_Sphere.R,
                                     m_Intensity,
@@ -985,7 +1075,8 @@ void dynamic_light_obj::OnCollectLight( void )
     
     if ( T > 0.0f )
     {
-        vector3 Direction = GetL2W().RotateVector( vector3( 0.0f, 0.0f, 1.0f ) );
+        const matrix4& RenderL2W = GetRenderL2W();
+        vector3 Direction = RenderL2W.RotateVector( vector3( 0.0f, 0.0f, 1.0f ) );
         f32     InnerRadius = MAX( 0.0f, m_Sphere.R * ( 1.0f - m_Falloff ) );
 
         if( !Direction.SafeNormalize() )
@@ -997,7 +1088,7 @@ void dynamic_light_obj::OnCollectLight( void )
         if( m_EmitterType == EMITTER_TYPE_SPOT )
             Shape = light_mgr::LIGHT_SHAPE_SPOT;
 
-        g_LightMgr.AddDynamicLight( GetPosition(),
+        g_LightMgr.AddDynamicLight( RenderL2W.GetTranslation(),
                                     m_Color,
                                     m_Sphere.R,
                                     T*m_Intensity,

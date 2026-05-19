@@ -4597,6 +4597,16 @@
 				</File>
 			</Filter>
 			<Filter
+				Name="DeltaMgr"
+				Filter="">
+				<File
+					RelativePath="..\DeltaMgr\InterpolationMgr.cpp">
+				</File>
+				<File
+					RelativePath="..\DeltaMgr\InterpolationMgr.hpp">
+				</File>
+			</Filter>
+			<Filter
 				Name="ZoneMgr"
 				Filter="">
 				<File

@@ -115,6 +115,9 @@
     <Filter Include="Obj_mgr\InputMgr">
       <UniqueIdentifier>{7906b102-abca-4b6b-b694-2c556e5561ff}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Obj_mgr\DeltaMgr">
+      <UniqueIdentifier>{c4acdb67-fb47-4530-a922-32dd25157e8d}</UniqueIdentifier>
+    </Filter>
     <Filter Include="Obj_mgr\ZoneMgr">
       <UniqueIdentifier>{11b9443c-ae55-4e93-9b97-a766dfd75dc8}</UniqueIdentifier>
     </Filter>
@@ -993,6 +996,9 @@
     </ClCompile>
     <ClCompile Include="..\InputMgr\Monkey.cpp">
       <Filter>Obj_mgr\InputMgr</Filter>
+    </ClCompile>
+    <ClCompile Include="..\DeltaMgr\InterpolationMgr.cpp">
+      <Filter>Obj_mgr\DeltaMgr</Filter>
     </ClCompile>
     <ClCompile Include="..\ZoneMgr\ZoneMgr.cpp">
       <Filter>Obj_mgr\ZoneMgr</Filter>
@@ -2309,6 +2315,9 @@
     </ClInclude>
     <ClInclude Include="..\InputMgr\Monkey.hpp">
       <Filter>Obj_mgr\InputMgr</Filter>
+    </ClInclude>
+    <ClInclude Include="..\DeltaMgr\InterpolationMgr.hpp">
+      <Filter>Obj_mgr\DeltaMgr</Filter>
     </ClInclude>
     <ClInclude Include="..\ZoneMgr\ZoneMgr.hpp">
       <Filter>Obj_mgr\ZoneMgr</Filter>

@@ -25,12 +25,19 @@
 #include "Obj_Mgr\Obj_Mgr.hpp"
 #include "Objects\DamageField.hpp"
 #include "Objects\Actor\Actor.hpp"
+#include "DeltaMgr\InterpolationMgr.hpp"
 
 
 
 //=========================================================================
 // DEFINES
 //=========================================================================
+
+static interpolation_mgr::provider s_CorpseInterpolationProvider( corpse::CaptureRenderStates,
+                                                                  corpse::UpdateRenderStates,
+                                                                  corpse::ClearRenderStates,
+                                                                  interpolation_mgr::CLEAR_STAGE_END_FRAME,
+                                                                  500 );
 
 static  s32    CORPSE_MAX_DYNAMIC_COUNT         = 3;
 static  s32    CORPSE_MAX_ACTIVE_COUNT          = 4;
@@ -202,8 +209,7 @@ corpse::corpse( void ) :
     m_Material          ( object::MAT_TYPE_FLESH ),
     m_BloodDecalGroup   ( -1    ),
     m_CorpseName        ( CORPSE_GENERIC ),
-    m_ImpactSfxTimer    ( 0.0f ),
-    m_RenderInterpActive( FALSE )
+    m_ImpactSfxTimer    ( 0.0f )
 {
     PHYSICS_DEBUG_DYNAMIC_MEM_ALLOC( sizeof( corpse ) );
     
@@ -222,9 +228,7 @@ corpse::corpse( void ) :
         s_pFirstRenderCorpse->m_pPrevRenderCorpse = this;
     s_pFirstRenderCorpse = this;
 
-    InitSimpleAnimRenderState( m_RenderPrev );
-    InitSimpleAnimRenderState( m_RenderCurr );
-    InitSimpleAnimRenderState( m_RenderInterp );
+    InitSimpleAnimInterpCache( m_RenderCache );
 }
 
 //=========================================================================
@@ -481,54 +485,31 @@ void corpse::ClearRenderStates( void )
 
 void corpse::CaptureRenderState( void )
 {
-    simple_anim_render_state Snapshot;
-    InitSimpleAnimRenderState( Snapshot );
+    simple_anim_interp_state Snapshot;
+    InitSimpleAnimInterpState( Snapshot );
     m_PhysicsInst.CaptureRenderState( Snapshot );
 
     if( !Snapshot.Valid )
     {
-        InitSimpleAnimRenderState( m_RenderPrev );
-        InitSimpleAnimRenderState( m_RenderCurr );
-        InitSimpleAnimRenderState( m_RenderInterp );
-        m_RenderInterpActive = FALSE;
+        InitSimpleAnimInterpCache( m_RenderCache );
         return;
     }
 
-    if( !m_RenderCurr.Valid )
-    {
-        m_RenderPrev = Snapshot;
-        m_RenderCurr = Snapshot;
-        m_RenderInterp = Snapshot;
-        m_RenderInterpActive = FALSE;
-        return;
-    }
-
-    m_RenderPrev = m_RenderCurr;
-    m_RenderCurr = Snapshot;
-
-    if( ShouldSnapSimpleAnimRenderState( m_RenderPrev, m_RenderCurr ) )
-        m_RenderPrev = m_RenderCurr;
+    CaptureSimpleAnimInterpCache( m_RenderCache, Snapshot );
 }
 
 //===========================================================================
 
 void corpse::UpdateRenderState( f32 Alpha )
 {
-    if( !m_RenderCurr.Valid )
-    {
-        m_RenderInterpActive = FALSE;
-        return;
-    }
-
-    UpdateSimpleAnimRenderState( m_RenderPrev, m_RenderCurr, m_RenderInterp, Alpha );
-    m_RenderInterpActive = TRUE;
+    UpdateSimpleAnimInterpCache( m_RenderCache, Alpha );
 }
 
 //===========================================================================
 
 void corpse::ClearRenderState( void )
 {
-    m_RenderInterpActive = FALSE;
+    ClearSimpleAnimInterpCache( m_RenderCache );
 }
 
 //===========================================================================
@@ -771,14 +752,14 @@ void corpse::OnRenderShadowCast( u64 ProjMask )
     // Setup render flags
     u32 Flags = (GetFlagBits() & object::FLAG_CHECK_PLANES) ? render::CLIPPED : 0;
 
-    if( m_RenderInterpActive && m_RenderInterp.Valid )
+    if( HasSimpleAnimInterpCache( m_RenderCache ) )
     {
-        s32 nActiveBones = MIN( GetSkinInst().GetNActiveBones( ShadLODMask ), m_RenderInterp.NBones );
+        s32 nActiveBones = MIN( GetSkinInst().GetNActiveBones( ShadLODMask ), m_RenderCache.Interp.NBones );
         if( nActiveBones <= 0 )
             return;
 
-        GetSkinInst().RenderShadowCast( &m_RenderInterp.L2W,
-                                        m_RenderInterp.Bones,
+        GetSkinInst().RenderShadowCast( &m_RenderCache.Interp.L2W,
+                                        m_RenderCache.Interp.Bones,
                                         nActiveBones,
                                         Flags,
                                         ShadLODMask,
@@ -839,17 +820,17 @@ void corpse::OnRender( void )
         Ambient.A  = (u8)(Alpha*255.0f);
     }
 
-    if( m_RenderInterpActive && m_RenderInterp.Valid )
+    if( HasSimpleAnimInterpCache( m_RenderCache ) )
     {
-        const matrix4& RenderL2W = m_RenderInterp.L2W;
+        const matrix4& RenderL2W = m_RenderCache.Interp.L2W;
         const u64 LODMask = GetSkinInst().GetLODMask( RenderL2W );
         if( LODMask )
         {
-            s32 nActiveBones = MIN( GetSkinInst().GetNActiveBones( LODMask ), m_RenderInterp.NBones );
+            s32 nActiveBones = MIN( GetSkinInst().GetNActiveBones( LODMask ), m_RenderCache.Interp.NBones );
             if( nActiveBones > 0 )
             {
                 GetSkinInst().Render( &RenderL2W,
-                                      m_RenderInterp.Bones,
+                                      m_RenderCache.Interp.Bones,
                                       nActiveBones,
                                       Flags,
                                       LODMask,

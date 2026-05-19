@@ -344,6 +344,9 @@ public:
 
 
     static  player*         GetActivePlayer     ( void );
+    static  void            CaptureRenderStates ( void );
+    static  void            UpdateRenderStates  ( f32 Alpha );
+    static  void            ClearRenderStates   ( void );
             void            SetAsActivePlayer   ( xbool bActive ) { m_bActivePlayer = bActive; }
             xbool           IsActivePlayer      ( void ) { return m_bActivePlayer; }
 
@@ -396,8 +399,10 @@ public:
             void            CaptureRenderState  ( void );
             void            UpdateRenderState   ( f32 Alpha );
             void            ClearRenderState    ( void );
-            xbool           GetRenderWeaponL2W  ( matrix4& L2W ) const;
-    const   matrix4*        GetRenderWeaponBones( s32& nBones ) const;
+    virtual xbool           GetRenderWeaponL2W  ( matrix4& L2W,
+                                                   new_weapon::render_state RenderState = new_weapon::RENDER_STATE_PLAYER ) const;
+    virtual const matrix4*  GetRenderWeaponBones( s32& nBones,
+                                                   new_weapon::render_state RenderState = new_weapon::RENDER_STATE_PLAYER ) const;
     virtual void            Push                ( const vector3& PushVector );
 
       const xarray<pain>&   GetLastPainEvents   ( void ){ return m_LastPainEvent; }
@@ -473,6 +478,7 @@ public:
 
     virtual void            DegradeAim                      ( f32 fAmountToDegradeBy );
     virtual void            SetAimRecoverSpeed              ( f32 fRecover ) { m_AimRecoverSpeed = fRecover; }    
+    virtual const vector3&  GetRenderWeaponCollisionOffset( new_weapon::render_state RenderState = new_weapon::RENDER_STATE_PLAYER ) const;
       const vector3&        GetCurrentWeaponCollisionOffset ( void ) const;
 
     virtual xbool           IsPlayer            ( void )                    { return TRUE; }
@@ -1094,27 +1100,19 @@ public:
 //==============================================================================
 
 protected:
-    struct render_state
+    struct player_interp_state
     {
-        xbool   Valid;
-        xbool   HasWeapon;
-        view    View;
-        matrix4 ArmsL2W;
-        matrix4 WeaponL2W;
-        vector3 WeaponCollisionOffset;
-        s32     ArmsNBones;
-        s32     WeaponNBones;
-        matrix4 ArmsBones[MAX_ANIM_BONES];
-        matrix4 WeaponBones[MAX_ANIM_BONES];
+        xbool                Valid;
+        view                 View;
+        skinned_interp_state Arms;
+        weapon_interp_state  Weapon;
+        vector3              WeaponCollisionOffset;
     };
 
     static view             m_Views[MAX_LOCAL_PLAYERS];     // Views for all the players
     view_info               m_ViewInfo;                     // persistent information for the player's view
     view_info               m_OriginalViewInfo;             // original persistent information for the player's view
-    render_state            m_RenderPrev;
-    render_state            m_RenderCurr;
-    render_state            m_RenderInterp;
-    xbool                   m_RenderInterpActive;
+    interp_cache<player_interp_state> m_RenderCache;
     vector3                 m_RespawnPosition;              // Position where the player re-spawns after dying
     u8                      m_RespawnZone;                  // Zone to respawn in
     guid                    m_ThirdPersonCameraGuid;        // GUID of third person camera if we're using one

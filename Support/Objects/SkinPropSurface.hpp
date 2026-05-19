@@ -8,7 +8,7 @@
 #include "x_color.hpp"
 #include "Obj_mgr\obj_mgr.hpp"
 #include "ResourceMgr\ResourceMgr.hpp"
-#include "Objects\Render\SimpleAnimRenderState.hpp"
+#include "Objects\Interpolation\SimpleAnimInterpolation.hpp"
 #include "Objects\Render\SkinInst.hpp"
 #include "Animation\AnimPlayer.hpp"
 #include "..\MiscUtils\SimpleUtils.hpp"
@@ -101,10 +101,7 @@ protected:
     anim_group::handle          m_hAnimGroup;
     rhandle<char>               m_hAudioPackage;
     simple_anim_player          m_AnimPlayer;
-    simple_anim_render_state    m_RenderPrev;
-    simple_anim_render_state    m_RenderCurr;
-    simple_anim_render_state    m_RenderInterp;
-    xbool                       m_RenderInterpActive;
+    simple_anim_interp_cache    m_RenderCache;
     s16                         m_iBackupAnimString;
     s32                         m_iMaterial;
     floor_properties            m_FloorProperties;

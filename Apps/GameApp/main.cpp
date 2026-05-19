@@ -32,23 +32,18 @@
 #include "NetworkMgr\MsgMgr.hpp"
 #include "StateMgr\StateMgr.hpp"
 #include "MemCardMgr/MemCardMgr.hpp"
+#include "DeltaMgr\InterpolationMgr.hpp"
 
 //==============================================================================
 //  OBJECT INCLUDES
 //==============================================================================
 
 #include "Objects\Player.hpp"  
-#include "Objects\AnimSurface.hpp"
-#include "Objects\CokeCan.hpp"
 #include "Objects\Corpse.hpp"
 #include "Objects\LevelSettings.hpp"
-#include "Objects\PlaySurface.hpp"
-#include "Objects\SkinPropSurface.hpp"
 #include "Objects\SpawnPoint.hpp"
-#include "Objects\SuperDestructible.hpp"
 #include "Objects\ParticleEmiter.hpp"
 #include "Objects\AlienGlob.hpp"
-#include "Objects\Turret.hpp"
 #include "Objects\HudObject.hpp"
 #include "Objects\Render\PostEffectMgr.hpp"
 
@@ -653,87 +648,6 @@ void SetupViewAndFog( zone_mgr::zone_id StartZone )
 
 //==============================================================================
 
-static void CaptureRenderState( void )
-{
-    slot_id ID = g_ObjMgr.GetFirst( object::TYPE_PLAYER );
-    while( ID != SLOT_NULL )
-    {
-        object* pObj = g_ObjMgr.GetObjectBySlot( ID );
-        player* pPlayer = &player::GetSafeType( *pObj );
-        if( pPlayer && (pPlayer->GetLocalSlot() != -1) )
-        {
-            pPlayer->CaptureRenderState();
-        }
-
-        ID = g_ObjMgr.GetNext( ID );
-    }
-
-    actor* pActor = actor::m_pFirstActive;
-    while( pActor )
-    {
-        actor* pNextActor = pActor->m_pNextActive;
-        pActor->CaptureActorRenderState();
-        pActor = pNextActor;
-    }
-
-    anim_surface::CaptureRenderStates();
-    coke_can::CaptureRenderStates();
-    corpse::CaptureRenderStates();
-    play_surface::CaptureRenderStates();
-    skin_prop_surface::CaptureRenderStates();
-    turret::CaptureRenderStates();
-    super_destructible_obj::CaptureRenderStates();
-}
-
-//==============================================================================
-
-static void UpdateRender( player* pPlayers[MAX_LOCAL_PLAYERS], s32 nPlayers, f32 Alpha )
-{
-    for( s32 i = 0; i < nPlayers; i++ )
-    {
-        pPlayers[i]->UpdateRenderState( Alpha );
-    }
-
-    actor* pActor = actor::m_pFirstActive;
-    while( pActor )
-    {
-        actor* pNextActor = pActor->m_pNextActive;
-        pActor->UpdateActorRenderState( Alpha );
-        pActor = pNextActor;
-    }
-
-    anim_surface::UpdateRenderStates( Alpha );
-    coke_can::UpdateRenderStates( Alpha );
-    corpse::UpdateRenderStates( Alpha );
-    play_surface::UpdateRenderStates( Alpha );
-    skin_prop_surface::UpdateRenderStates( Alpha );
-    turret::UpdateRenderStates( Alpha );
-    super_destructible_obj::UpdateRenderStates( Alpha );
-}
-
-//==============================================================================
-
-static void ClearActorRenderState( void )
-{
-    actor* pActor = actor::m_pFirstActive;
-    while( pActor )
-    {
-        actor* pNextActor = pActor->m_pNextActive;
-        pActor->ClearActorRenderState();
-        pActor = pNextActor;
-    }
-
-    anim_surface::ClearRenderStates();
-    coke_can::ClearRenderStates();
-    corpse::ClearRenderStates();
-    play_surface::ClearRenderStates();
-    skin_prop_surface::ClearRenderStates();
-    turret::ClearRenderStates();
-    super_destructible_obj::ClearRenderStates();
-}
-
-//==============================================================================
-
 void RenderGame( f32 Alpha )
 {
     s32 i;
@@ -890,7 +804,7 @@ void RenderGame( f32 Alpha )
         break;
     }
 
-    UpdateRender( pPlayers, nPlayers, Alpha );
+    g_InterpolationMgr.Update( Alpha );
 
     // Make all the players inactive in anticipation of the render...
     for( i = 0; i < nPlayers; i++ )
@@ -928,11 +842,11 @@ void RenderGame( f32 Alpha )
         g_ObjMgr.Render( DoPortalWalk, g_View, pPlayers[i]->GetPlayerViewZone() );
 
         EndRenderPlatform();
-        pPlayers[i]->ClearRenderState();
+        g_InterpolationMgr.Clear( interpolation_mgr::CLEAR_STAGE_PER_VIEW );
         pPlayers[i]->SetAsActivePlayer( FALSE );
     }
 
-    ClearActorRenderState();
+    g_InterpolationMgr.Clear( interpolation_mgr::CLEAR_STAGE_END_FRAME );
 
     // Make all the players active again so their input will function.
     for( i = 0; i < nPlayers; i++ )
@@ -1456,7 +1370,7 @@ void RunGame( void )
                (UpdateCount < MAX_UPDATE_STEPS_PER_FRAME) )
         {
             Update( FIXED_UPDATE_DELTA_TIME );
-            CaptureRenderState();
+            g_InterpolationMgr.Capture();
             Accumulator -= FIXED_UPDATE_DELTA_TIME;
             UpdateCount++;
 

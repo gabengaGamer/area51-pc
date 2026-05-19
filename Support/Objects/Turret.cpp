@@ -31,6 +31,7 @@
 #include "Objects\ProjectileEnergy.hpp"
 
 #include "ProjectileMesonSeeker.hpp"
+#include "DeltaMgr\InterpolationMgr.hpp"
 
 //#define TURRET_AI_LOGGING 
 
@@ -42,6 +43,12 @@
 
 inline 
 void debug_log_msg_fn(...) {}
+
+static interpolation_mgr::provider s_TurretInterpolationProvider( turret::CaptureRenderStates,
+                                                                  turret::UpdateRenderStates,
+                                                                  turret::ClearRenderStates,
+                                                                  interpolation_mgr::CLEAR_STAGE_END_FRAME,
+                                                                  800 );
 
 turret* turret::s_pFirstRenderTurret = NULL;
 
@@ -322,70 +329,44 @@ void turret::ClearRenderStates( void )
 
 void turret::InvalidateRenderState( void )
 {
-    InitSimpleAnimRenderState( m_RenderPrev );
-    m_RenderCurr = m_RenderPrev;
-    m_RenderInterp = m_RenderPrev;
-    m_RenderInterpActive = FALSE;
+    InitSimpleAnimInterpCache( m_RenderCache );
 }
 
 //=============================================================================
 
 void turret::CaptureRenderState( void )
 {
-    simple_anim_render_state Snapshot;
-    CaptureSimpleAnimRenderState( Snapshot, GetL2W(), m_AnimPlayer );
-
-    m_RenderPrev = m_RenderCurr;
-    m_RenderCurr = Snapshot;
-
-    if( !m_RenderPrev.Valid )
-    {
-        m_RenderPrev = m_RenderCurr;
-        return;
-    }
-
-    if( ShouldSnapSimpleAnimRenderState( m_RenderPrev, m_RenderCurr ) )
-        m_RenderPrev = m_RenderCurr;
+    simple_anim_interp_state Snapshot;
+    CaptureSimpleAnimInterpState( Snapshot, GetL2W(), m_AnimPlayer );
+    CaptureSimpleAnimInterpCache( m_RenderCache, Snapshot );
 }
 
 //=============================================================================
 
 void turret::UpdateRenderState( f32 Alpha )
 {
-    m_RenderInterpActive = FALSE;
-
-    if( !m_RenderCurr.Valid )
-        return;
-
-    UpdateSimpleAnimRenderState( m_RenderPrev.Valid ? m_RenderPrev : m_RenderCurr,
-                                 m_RenderCurr,
-                                 m_RenderInterp,
-                                 Alpha );
-    m_RenderInterpActive = TRUE;
+    UpdateSimpleAnimInterpCache( m_RenderCache, Alpha );
 }
 
 //=============================================================================
 
 void turret::ClearRenderState( void )
 {
-    m_RenderInterpActive = FALSE;
+    ClearSimpleAnimInterpCache( m_RenderCache );
 }
 
 //=============================================================================
 
 const matrix4& turret::GetRenderL2W( void ) const
 {
-    if( m_RenderInterpActive )
-        return m_RenderInterp.L2W;
-
-    return GetL2W();
+    return GetSimpleAnimInterpCacheL2W( m_RenderCache, GetL2W() );
 }
 
 //=============================================================================
 
 xbool turret::GetRenderBoneL2W( s32 iBone, matrix4& L2W )
 {
-    if( m_RenderInterpActive && GetSimpleAnimRenderBoneL2W( m_RenderInterp, iBone, L2W ) )
+    if( GetSimpleAnimInterpCacheBoneL2W( m_RenderCache, iBone, L2W ) )
         return TRUE;
 
     const matrix4* pBone = m_AnimPlayer.GetBoneL2W( iBone, FALSE );
@@ -1431,11 +1412,11 @@ void turret::OnColRender( xbool bRenderHigh )
 
 const matrix4* turret::GetBoneL2Ws( void )
 {
-    if( m_RenderInterpActive && m_hAnimGroup.GetPointer() )
+    if( m_hAnimGroup.GetPointer() )
     {
-        const matrix4* pMatrices = BuildSimpleAnimRenderMatrices( m_RenderInterp,
-                                                                  *m_hAnimGroup.GetPointer(),
-                                                                  m_hAnimGroup.GetPointer()->GetNBones() );
+        const matrix4* pMatrices = BuildSimpleAnimInterpCacheMatrices( m_RenderCache,
+                                                                       *m_hAnimGroup.GetPointer(),
+                                                                       m_hAnimGroup.GetPointer()->GetNBones() );
         if( pMatrices )
             return pMatrices;
     }
@@ -2933,7 +2914,7 @@ void turret::GetSensorInfo( vector3& Pos, radian3& Rot )
     }
 
     matrix4 L2W;
-    if( m_RenderInterpActive && GetRenderBoneL2W( iSensorBone, L2W ) )
+    if( HasSimpleAnimInterpCache( m_RenderCache ) && GetRenderBoneL2W( iSensorBone, L2W ) )
     {
         Pos = L2W.GetTranslation();
         Rot = L2W.GetRotation();
@@ -3596,7 +3577,7 @@ xbool turret::GetAttachPointData( s32      iAttachPt,
             if ( (iAttachPt >= 0) &&
                  (iAttachPt < nBones ))
             {
-                if( m_RenderInterpActive && GetRenderBoneL2W( iAttachPt, L2W ) )
+                if( HasSimpleAnimInterpCache( m_RenderCache ) && GetRenderBoneL2W( iAttachPt, L2W ) )
                 {
                     if( !(Flags & ATTACH_USE_WORLDSPACE) )
                         L2W = L2W * pGroup->GetBoneBindInvMatrix( iAttachPt );

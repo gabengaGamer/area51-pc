@@ -6,6 +6,7 @@
 //=========================================================================
 
 #include "Obj_mgr\obj_mgr.hpp"
+#include "Objects\Interpolation\TransformInterpolation.hpp"
 
 //=========================================================================
 // LIGHT
@@ -17,6 +18,10 @@ public:
     CREATE_RTTI( light_obj, object, object )
     
                             light_obj       ( void );
+    virtual                ~light_obj       ( void );
+    static  void            CaptureRenderStates( void );
+    static  void            UpdateRenderStates ( f32 Alpha );
+    static  void            ClearRenderStates  ( void );
     virtual bbox            GetLocalBBox    ( void ) const { return m_Sphere.GetBBox(); }
     virtual s32             GetMaterial     ( void ) const { return MAT_TYPE_FLESH; }
     virtual void            OnEnumProp      ( prop_enum& List );
@@ -40,6 +45,11 @@ public:
     static  const object_desc&  GetObjectType   ( void );
 
 protected:
+            void            CaptureRenderState  ( void );
+            void            UpdateRenderState   ( f32 Alpha );
+            void            ClearRenderState    ( void );
+            void            InvalidateRenderState( void );
+    const   matrix4&        GetRenderL2W        ( void ) const;
     
     virtual void            OnCollectLight  ( void );
     virtual void            OnRender        ( void );
@@ -53,6 +63,11 @@ protected:
     xcolor                  m_Ambient;
     f32                     m_Intensity;
     xbool                   m_bAccentAngle;
+    transform_interp_cache  m_RenderCache;
+
+    static  light_obj*      s_pFirstRenderLight;
+            light_obj*      m_pNextRenderLight;
+            light_obj*      m_pPrevRenderLight;
     
 // Make friends here
 };

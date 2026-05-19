@@ -1236,35 +1236,17 @@ void new_weapon::RenderWeapon( xbool bDebug, const xcolor& Ambient, xbool Cloake
 
     if( CurAnimGroup.GetPointer() && m_Skin[ m_CurrentRenderState ].GetSkinGeom() )
     {
-        // if we are owned by a player, then we need to ask for his offset
         object*        pOwner    = g_ObjMgr.GetObjectByGuid( m_OwnerGuid );
         vector3        Offset    ( 0.0f, 0.0f, 0.0f );
         matrix4        RenderL2W ( GetL2W() );
         const matrix4* pRenderBones = NULL;
         s32            RenderNBones = 0;
-        if ( pOwner && pOwner->IsKindOf( player::GetRTTI() ) )
-        {
-            player& Player = player::GetSafeType( *pOwner );
-            Offset = Player.GetCurrentWeaponCollisionOffset();
-
-            if( m_CurrentRenderState == RENDER_STATE_PLAYER )
-            {
-                Player.GetRenderWeaponL2W( RenderL2W );
-                pRenderBones = Player.GetRenderWeaponBones( RenderNBones );
-            }
-            else
-            {
-                actor& OwnerActor = actor::GetSafeType( *pOwner );
-                OwnerActor.GetRenderWeaponL2W( RenderL2W );
-                pRenderBones = OwnerActor.GetRenderWeaponBones( RenderNBones );
-            }
-        }
-        else
-        if( pOwner && pOwner->IsKindOf( actor::GetRTTI() ) && (m_CurrentRenderState == RENDER_STATE_NPC) )
+        if( pOwner && pOwner->IsKindOf( actor::GetRTTI() ) )
         {
             actor& OwnerActor = actor::GetSafeType( *pOwner );
-            OwnerActor.GetRenderWeaponL2W( RenderL2W );
-            pRenderBones = OwnerActor.GetRenderWeaponBones( RenderNBones );
+            Offset = OwnerActor.GetRenderWeaponCollisionOffset( m_CurrentRenderState );
+            OwnerActor.GetRenderWeaponL2W( RenderL2W, m_CurrentRenderState );
+            pRenderBones = OwnerActor.GetRenderWeaponBones( RenderNBones, m_CurrentRenderState );
         }
 
         // accumulate clipping flags and whether or not we should glow
@@ -1378,8 +1360,8 @@ void new_weapon::RenderWeaponShadow( u64 ProjMask )
     if( pOwner && pOwner->IsKindOf( actor::GetRTTI() ) )
     {
         actor& OwnerActor = actor::GetSafeType( *pOwner );
-        OwnerActor.GetRenderWeaponL2W( RenderL2W );
-        pRenderBones = OwnerActor.GetRenderWeaponBones( RenderNBones );
+        OwnerActor.GetRenderWeaponL2W( RenderL2W, m_CurrentRenderState );
+        pRenderBones = OwnerActor.GetRenderWeaponBones( RenderNBones, m_CurrentRenderState );
     }
 
     skin_inst& SkinInst = m_Skin[ m_CurrentRenderState ];
@@ -1635,12 +1617,11 @@ void new_weapon::RenderMuzzleFx( void )
     // Do the players muzzle render logic...
     if ( m_CurrentRenderState == RENDER_STATE_PLAYER )
     {
-        // if we are owned by a player, then we need to ask for his offset
         object*        pOwner    = g_ObjMgr.GetObjectByGuid( m_OwnerGuid );
         vector3        Offset    ( 0.0f, 0.0f, 0.0f );
-        if ( pOwner && pOwner->IsKindOf( player::GetRTTI() ) )
+        if( pOwner && pOwner->IsKindOf( actor::GetRTTI() ) )
         {
-            Offset = ((player*)pOwner)->GetCurrentWeaponCollisionOffset();
+            Offset = actor::GetSafeType( *pOwner ).GetRenderWeaponCollisionOffset( m_CurrentRenderState );
         }
 
         for( s32 i = 0; i < FIRE_POINT_COUNT; i++ )
@@ -2714,6 +2695,24 @@ xbool new_weapon::GetFlashlightTransformInfo( matrix4& incMatrix,  vector3 &incV
 {
     if ( m_CurrentRenderState == RENDER_STATE_PLAYER )
     {
+        object*        pOwner       = g_ObjMgr.GetObjectByGuid( m_OwnerGuid );
+        const matrix4* pRenderBones = NULL;
+        s32            RenderNBones = 0;
+
+        if( pOwner && pOwner->IsKindOf( actor::GetRTTI() ) )
+        {
+            actor& OwnerActor = actor::GetSafeType( *pOwner );
+            pRenderBones = OwnerActor.GetRenderWeaponBones( RenderNBones, m_CurrentRenderState );
+        }
+
+        if( pRenderBones && (m_FlashlightBoneIndex >= 0) && (m_FlashlightBoneIndex < RenderNBones ) )
+        {
+            incMatrix = pRenderBones[ m_FlashlightBoneIndex ] *
+                        m_AnimGroup[ m_CurrentRenderState ].GetPointer()->GetBoneBindInvMatrix( m_FlashlightBoneIndex );
+            incVect = m_AnimPlayer[ m_CurrentRenderState ].GetBindPosition( m_FlashlightBoneIndex );
+            return TRUE;
+        }
+
         // return the matrix and the bone vector
         incMatrix = m_AnimPlayer[ m_CurrentRenderState ].GetBoneL2W( m_FlashlightBoneIndex );
         incVect = m_AnimPlayer[ m_CurrentRenderState ].GetBindPosition( m_FlashlightBoneIndex );

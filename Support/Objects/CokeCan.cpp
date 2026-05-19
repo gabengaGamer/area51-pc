@@ -25,6 +25,7 @@
 #include "Objects\BaseProjectile.hpp"
 #include "Ragdoll\VerletCollision.hpp"
 #include "Objects\Player.hpp"
+#include "DeltaMgr\InterpolationMgr.hpp"
 
 #ifdef X_EDITOR
 #include "CollisionMgr\PolyCache.hpp"
@@ -34,6 +35,12 @@
 //==============================================================================
 // DEFINES
 //==============================================================================
+
+static interpolation_mgr::provider s_CokeCanInterpolationProvider( coke_can::CaptureRenderStates,
+                                                                   coke_can::UpdateRenderStates,
+                                                                   coke_can::ClearRenderStates,
+                                                                   interpolation_mgr::CLEAR_STAGE_END_FRAME,
+                                                                   400 );
 
 struct coke_can_tweaks
 {
@@ -426,10 +433,9 @@ coke_can::coke_can( void ) :
     m_MinInitVel        ( 0,0,0 ),  // Min initial velocity
     m_MaxInitVel        ( 0,0,0 ),  // Max initial velocity
     m_RollAudioID       ( 0 ),      // Can rolling audio id
-    m_RenderInterpActive( FALSE )
+    m_iProfile          ( PROFILE_CAN )
 {
     m_FloorProperties.Init( 100.0f, 0.128f );
-    m_iProfile = PROFILE_CAN;
 
     m_pNextRenderCan = s_pFirstRenderCan;
     m_pPrevRenderCan = NULL;
@@ -437,9 +443,7 @@ coke_can::coke_can( void ) :
         s_pFirstRenderCan->m_pPrevRenderCan = this;
     s_pFirstRenderCan = this;
 
-    InitSimpleAnimRenderState( m_RenderPrev );
-    InitSimpleAnimRenderState( m_RenderCurr );
-    InitSimpleAnimRenderState( m_RenderInterp );
+    InitSimpleAnimInterpCache( m_RenderCache );
 }
 
 //=========================================================================
@@ -459,48 +463,27 @@ coke_can::~coke_can()
 
 void coke_can::CaptureRenderState( void )
 {
-    simple_anim_render_state Snapshot;
-    InitSimpleAnimRenderState( Snapshot );
+    simple_anim_interp_state Snapshot;
+    InitSimpleAnimInterpState( Snapshot );
     Snapshot.Valid    = TRUE;
     Snapshot.NBones   = 1;
     Snapshot.L2W      = GetL2W();
     Snapshot.Bones[0] = Snapshot.L2W;
-
-    if( !m_RenderCurr.Valid )
-    {
-        m_RenderPrev = Snapshot;
-        m_RenderCurr = Snapshot;
-        m_RenderInterp = Snapshot;
-        m_RenderInterpActive = FALSE;
-        return;
-    }
-
-    m_RenderPrev = m_RenderCurr;
-    m_RenderCurr = Snapshot;
-
-    if( ShouldSnapSimpleAnimRenderState( m_RenderPrev, m_RenderCurr ) )
-        m_RenderPrev = m_RenderCurr;
+    CaptureSimpleAnimInterpCache( m_RenderCache, Snapshot );
 }
 
 //=========================================================================
 
 void coke_can::UpdateRenderState( f32 Alpha )
 {
-    if( !m_RenderCurr.Valid )
-    {
-        m_RenderInterpActive = FALSE;
-        return;
-    }
-
-    UpdateSimpleAnimRenderState( m_RenderPrev, m_RenderCurr, m_RenderInterp, Alpha );
-    m_RenderInterpActive = TRUE;
+    UpdateSimpleAnimInterpCache( m_RenderCache, Alpha );
 }
 
 //=========================================================================
 
 void coke_can::ClearRenderState( void )
 {
-    m_RenderInterpActive = FALSE;
+    ClearSimpleAnimInterpCache( m_RenderCache );
 }
 
 //=========================================================================
@@ -573,7 +556,8 @@ void coke_can::OnRender( void )
     // Can only support 1 boned cans!
     ASSERTS( pSkinGeom->m_nBones == 1, "Coke cans can only have 1 bone!!" );        
 
-    const matrix4& RenderL2W = ( m_RenderInterpActive && m_RenderInterp.Valid ) ? m_RenderInterp.L2W : GetL2W();
+    const xbool bUseRenderCache = HasSimpleAnimInterpCache( m_RenderCache );
+    const matrix4& RenderL2W = bUseRenderCache ? m_RenderCache.Interp.L2W : GetL2W();
 
     // Compute LOD mask
     u64 LODMask = m_SkinInst.GetLODMask( RenderL2W );
@@ -597,7 +581,7 @@ void coke_can::OnRender( void )
     }
 #endif
 
-    const matrix4* pRenderBone = ( m_RenderInterpActive && m_RenderInterp.Valid ) ? m_RenderInterp.Bones : &RenderL2W;
+    const matrix4* pRenderBone = bUseRenderCache ? m_RenderCache.Interp.Bones : &RenderL2W;
     m_SkinInst.Render( &RenderL2W,
                        pRenderBone,
                        1, Flags | GetRenderMode(),
@@ -636,8 +620,9 @@ void coke_can::OnRenderShadowCast( u64 ProjMask )
     u32 Flags = ( GetFlagBits() & object::FLAG_CHECK_PLANES ) ? render::CLIPPED : 0;
 
     // Render
-    const matrix4& RenderL2W = ( m_RenderInterpActive && m_RenderInterp.Valid ) ? m_RenderInterp.L2W : GetL2W();
-    const matrix4* pRenderBone = ( m_RenderInterpActive && m_RenderInterp.Valid ) ? m_RenderInterp.Bones : &RenderL2W;
+    const xbool bUseRenderCache = HasSimpleAnimInterpCache( m_RenderCache );
+    const matrix4& RenderL2W = bUseRenderCache ? m_RenderCache.Interp.L2W : GetL2W();
+    const matrix4* pRenderBone = bUseRenderCache ? m_RenderCache.Interp.Bones : &RenderL2W;
     m_SkinInst.RenderShadowCast( &RenderL2W,
                                  pRenderBone,
                                  1,

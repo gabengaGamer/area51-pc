@@ -159,8 +159,11 @@ void ingame_pad::OnInitialize( void )
 	//-----BRUH...------
     AddMapping( INPUT_PLATFORM_PC, ACTION_MUTATION,      INPUT_KBD_X,            TRUE );
     AddMapping( INPUT_PLATFORM_PC, ACTION_MP_MUTATE,     INPUT_KBD_X,            TRUE );
-	
+
+	//-----BRUH...------
     AddMapping( INPUT_PLATFORM_PC, ACTION_MELEE_ATTACK,  INPUT_KBD_V,            TRUE );
+    AddMapping( INPUT_PLATFORM_PC, ACTION_MUTANT_MELEE,  INPUT_KBD_V,            TRUE );	
+	
     AddMapping( INPUT_PLATFORM_PC, ACTION_FLASHLIGHT,    INPUT_KBD_F,            TRUE );
                                                                                  
     //UI                                                                         

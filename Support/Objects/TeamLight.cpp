@@ -13,12 +13,21 @@
 #include "NetworkMgr\NetObjMgr.hpp"
 #include "Player.hpp"
 #include "Render\LightMgr.hpp"
+#include "DeltaMgr\InterpolationMgr.hpp"
 
 #ifndef X_EDITOR
 #include "GameLib\RenderContext.hpp"
 #endif
 
 //=========================================================================
+
+team_light* team_light::s_pFirstRenderLight = NULL;
+
+static interpolation_mgr::provider s_TeamLightInterpolationProvider( team_light::CaptureRenderStates,
+                                                                     team_light::UpdateRenderStates,
+                                                                     team_light::ClearRenderStates,
+                                                                     interpolation_mgr::CLEAR_STAGE_END_FRAME,
+                                                                     260 );
 
 //=========================================================================
 // OBJECT DESCRIPTION
@@ -111,6 +120,12 @@ const object_desc& team_light::GetObjectType( void )
 
 team_light::team_light( void )
 { 
+    m_pNextRenderLight = s_pFirstRenderLight;
+    m_pPrevRenderLight = NULL;
+    if( s_pFirstRenderLight )
+        s_pFirstRenderLight->m_pPrevRenderLight = this;
+    s_pFirstRenderLight = this;
+
     m_NewState = FRIENDLY_ALL;
     m_OldState = FRIENDLY_ALL;
     m_TransitionValue = 1.0f;
@@ -133,12 +148,81 @@ team_light::team_light( void )
     // it disappears before it should.
     m_RenderBBox.Min.Set( -m_Radius * 2.0f, -m_Radius * 2.0f, -m_Radius * 2.0f );
     m_RenderBBox.Max.Set(  m_Radius * 2.0f,  m_Radius * 2.0f,  m_Radius * 2.0f );
+
+    InvalidateRenderState();
 }
 
 //=========================================================================
 
 team_light::~team_light( void )
 { 
+    if( m_pNextRenderLight )
+        m_pNextRenderLight->m_pPrevRenderLight = m_pPrevRenderLight;
+    if( m_pPrevRenderLight )
+        m_pPrevRenderLight->m_pNextRenderLight = m_pNextRenderLight;
+    if( s_pFirstRenderLight == this )
+        s_pFirstRenderLight = m_pNextRenderLight;
+}
+
+//=========================================================================
+
+void team_light::CaptureRenderStates( void )
+{
+    for( team_light* pLight = s_pFirstRenderLight; pLight; pLight = pLight->m_pNextRenderLight )
+        pLight->CaptureRenderState();
+}
+
+//=========================================================================
+
+void team_light::UpdateRenderStates( f32 Alpha )
+{
+    for( team_light* pLight = s_pFirstRenderLight; pLight; pLight = pLight->m_pNextRenderLight )
+        pLight->UpdateRenderState( Alpha );
+}
+
+//=========================================================================
+
+void team_light::ClearRenderStates( void )
+{
+    for( team_light* pLight = s_pFirstRenderLight; pLight; pLight = pLight->m_pNextRenderLight )
+        pLight->ClearRenderState();
+}
+
+//=========================================================================
+
+void team_light::InvalidateRenderState( void )
+{
+    InitTransformInterpCache( m_RenderCache );
+}
+
+//=========================================================================
+
+void team_light::CaptureRenderState( void )
+{
+    transform_interp_state Snapshot;
+    CaptureTransformInterpState( Snapshot, GetL2W() );
+    CaptureTransformInterpCache( m_RenderCache, Snapshot );
+}
+
+//=========================================================================
+
+void team_light::UpdateRenderState( f32 Alpha )
+{
+    UpdateTransformInterpCache( m_RenderCache, Alpha );
+}
+
+//=========================================================================
+
+void team_light::ClearRenderState( void )
+{
+    ClearTransformInterpCache( m_RenderCache );
+}
+
+//=========================================================================
+
+const matrix4& team_light::GetRenderL2W( void ) const
+{
+    return GetTransformInterpCacheL2W( m_RenderCache, GetL2W() );
 }
 
 //=========================================================================
@@ -226,7 +310,7 @@ void team_light::OnCollectLight( void )
                                  m_TransitionValue );
     f32 InnerRadius = MAX( 0.0f, m_Radius * ( 1.0f - m_Falloff ) );
 
-    g_LightMgr.AddDynamicLight( GetPosition(),
+    g_LightMgr.AddDynamicLight( GetRenderL2W().GetTranslation(),
                                 Color,
                                 m_Radius,
                                 m_Intensity,

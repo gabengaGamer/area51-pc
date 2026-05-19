@@ -14,10 +14,19 @@
 #include "Entropy.hpp"
 #include "E_Draw.hpp"
 #include "Render\Render.hpp"
+#include "DeltaMgr\InterpolationMgr.hpp"
 
 //==============================================================================
 // DEFINES
 //==============================================================================
+
+volumetric_light_obj* volumetric_light_obj::s_pFirstRenderLight = NULL;
+
+static interpolation_mgr::provider s_VolumetricLightInterpolationProvider( volumetric_light_obj::CaptureRenderStates,
+                                                                           volumetric_light_obj::UpdateRenderStates,
+                                                                           volumetric_light_obj::ClearRenderStates,
+                                                                           interpolation_mgr::CLEAR_STAGE_END_FRAME,
+                                                                           270 );
 
 //==============================================================================
 // OBJECT DESCRIPTION
@@ -80,15 +89,90 @@ volumetric_light_obj::volumetric_light_obj( void ) :
     m_nBytesAlloced ( 0 ),
     m_pData         ( NULL )
 {
+    m_pNextRenderLight = s_pFirstRenderLight;
+    m_pPrevRenderLight = NULL;
+    if( s_pFirstRenderLight )
+        s_pFirstRenderLight->m_pPrevRenderLight = this;
+    s_pFirstRenderLight = this;
+
+    InvalidateRenderState();
 }
 
 //==============================================================================
 
 volumetric_light_obj::~volumetric_light_obj( void )
 {
+    if( m_pNextRenderLight )
+        m_pNextRenderLight->m_pPrevRenderLight = m_pPrevRenderLight;
+    if( m_pPrevRenderLight )
+        m_pPrevRenderLight->m_pNextRenderLight = m_pNextRenderLight;
+    if( s_pFirstRenderLight == this )
+        s_pFirstRenderLight = m_pNextRenderLight;
+
     m_nBytesAlloced = 0;
     if( m_pData )
         x_free( m_pData );
+}
+
+//==============================================================================
+
+void volumetric_light_obj::CaptureRenderStates( void )
+{
+    for( volumetric_light_obj* pLight = s_pFirstRenderLight; pLight; pLight = pLight->m_pNextRenderLight )
+        pLight->CaptureRenderState();
+}
+
+//==============================================================================
+
+void volumetric_light_obj::UpdateRenderStates( f32 Alpha )
+{
+    for( volumetric_light_obj* pLight = s_pFirstRenderLight; pLight; pLight = pLight->m_pNextRenderLight )
+        pLight->UpdateRenderState( Alpha );
+}
+
+//==============================================================================
+
+void volumetric_light_obj::ClearRenderStates( void )
+{
+    for( volumetric_light_obj* pLight = s_pFirstRenderLight; pLight; pLight = pLight->m_pNextRenderLight )
+        pLight->ClearRenderState();
+}
+
+//==============================================================================
+
+void volumetric_light_obj::InvalidateRenderState( void )
+{
+    InitTransformInterpCache( m_RenderCache );
+}
+
+//==============================================================================
+
+void volumetric_light_obj::CaptureRenderState( void )
+{
+    transform_interp_state Snapshot;
+    CaptureTransformInterpState( Snapshot, GetL2W() );
+    CaptureTransformInterpCache( m_RenderCache, Snapshot );
+}
+
+//==============================================================================
+
+void volumetric_light_obj::UpdateRenderState( f32 Alpha )
+{
+    UpdateTransformInterpCache( m_RenderCache, Alpha );
+}
+
+//==============================================================================
+
+void volumetric_light_obj::ClearRenderState( void )
+{
+    ClearTransformInterpCache( m_RenderCache );
+}
+
+//==============================================================================
+
+const matrix4& volumetric_light_obj::GetRenderL2W( void ) const
+{
+    return GetTransformInterpCacheL2W( m_RenderCache, GetL2W() );
 }
 
 //==============================================================================
@@ -169,7 +253,8 @@ void volumetric_light_obj::OnRenderTransparent( void )
 
     // render using our already compiled data
     render::SetDiffuseMaterial( pProjTex->m_Bitmap, render::BLEND_MODE_ADDITIVE, TRUE );
-    render::Render3dSprites( m_nSprites, 1.0f, &GetL2W(), pPositions, pRotScales, pColors );
+    const matrix4& RenderL2W = GetRenderL2W();
+    render::Render3dSprites( m_nSprites, 1.0f, &RenderL2W, pPositions, pRotScales, pColors );
 }
 
 //==============================================================================

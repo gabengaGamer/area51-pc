@@ -7,11 +7,17 @@
 #include "GameLib\RigidGeomCollision.hpp"
 #include "Render\Render.hpp"
 #include "Debris\Debris_mgr.hpp"
-#include "Objects\Render\SimpleAnimRenderState.hpp"
+#include "Objects\Interpolation\InterpolationMath.hpp"
 #include "..\MiscUtils\SimpleUtils.hpp"
+#include "DeltaMgr\InterpolationMgr.hpp"
 
 xbool ShowCollision = FALSE;
 play_surface* play_surface::s_pFirstRenderSurface = NULL;
+static interpolation_mgr::provider s_PlaySurfaceInterpolationProvider( play_surface::CaptureRenderStates,
+                                                                       play_surface::UpdateRenderStates,
+                                                                       play_surface::ClearRenderStates,
+                                                                       interpolation_mgr::CLEAR_STAGE_END_FRAME,
+                                                                       600 );
 
 //=============================================================================
 // OBJECT DESCRIPTION
@@ -87,14 +93,7 @@ const object_desc&  play_surface::GetObjectType( void )
 
 static xbool ShouldSnapPlaySurfaceState( const matrix4& Prev, const matrix4& Curr )
 {
-    const vector3 Delta   = Curr.GetTranslation() - Prev.GetTranslation();
-    const radian3 PrevRot = Prev.GetRotation();
-    const radian3 CurrRot = Curr.GetRotation();
-
-    return (Delta.LengthSquared() > x_sqr( 250.0f )) ||
-           (x_abs( x_MinAngleDiff( CurrRot.Pitch, PrevRot.Pitch ) ) > R_90) ||
-           (x_abs( x_MinAngleDiff( CurrRot.Yaw,   PrevRot.Yaw   ) ) > R_90) ||
-           (x_abs( x_MinAngleDiff( CurrRot.Roll,  PrevRot.Roll  ) ) > R_90);
+    return ShouldSnapInterpL2W( Prev, Curr );
 }
 
 play_surface::play_surface( void )
@@ -415,7 +414,7 @@ void play_surface::UpdateRenderState( f32 Alpha )
     }
 
     Alpha = MAX( 0.0f, MIN( Alpha, 1.0f ) );
-    m_RenderInterpL2W = InterpSimpleAnimRenderMatrix( m_RenderPrevL2W, m_RenderCurrL2W, Alpha );
+    m_RenderInterpL2W = InterpMatrix( m_RenderPrevL2W, m_RenderCurrL2W, Alpha );
     m_RenderInterpActive = TRUE;
 }
 

@@ -7,7 +7,7 @@
 
 #include "Obj_mgr\obj_mgr.hpp"
 #include "PhysicsMgr\PhysicsInst.hpp"
-#include "Objects\Render\SimpleAnimRenderState.hpp"
+#include "Objects\Interpolation\SimpleAnimInterpolation.hpp"
 
 //=========================================================================
 // DEFINITIONS
@@ -185,10 +185,7 @@ static  corpse*                  s_pFirstRenderCorpse;
         f32                     m_ImpactSfxTimer;       // Timer count down since last impact
         corpse*                 m_pNextRenderCorpse;
         corpse*                 m_pPrevRenderCorpse;
-        simple_anim_render_state m_RenderPrev;
-        simple_anim_render_state m_RenderCurr;
-        simple_anim_render_state m_RenderInterp;
-        xbool                   m_RenderInterpActive;
+        simple_anim_interp_cache m_RenderCache;
 
             void                CaptureRenderState      ( void );
             void                UpdateRenderState       ( f32 Alpha );

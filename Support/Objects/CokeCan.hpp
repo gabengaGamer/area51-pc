@@ -7,7 +7,7 @@
 
 #include "Obj_mgr\obj_mgr.hpp"
 #include "Objects\Render\SkinInst.hpp"
-#include "Objects\Render\SimpleAnimRenderState.hpp"
+#include "Objects\Interpolation\SimpleAnimInterpolation.hpp"
 #include "Characters\FloorProperties.hpp"
 
 //=========================================================================
@@ -173,10 +173,7 @@ protected:
     // Rendering
     skin_inst           m_SkinInst;                 // Skinned inst
     floor_properties    m_FloorProperties;          // Floor tracking class
-    simple_anim_render_state m_RenderPrev;
-    simple_anim_render_state m_RenderCurr;
-    simple_anim_render_state m_RenderInterp;
-    xbool               m_RenderInterpActive;
+    simple_anim_interp_cache m_RenderCache;
 
     void                CaptureRenderState      ( void );
     void                UpdateRenderState       ( f32 Alpha );
