@@ -13,6 +13,8 @@
 
 #include "x_color.hpp"
 #include "x_math.hpp"
+#include "x_array.hpp"
+#include "Texture.hpp"
 
 //==============================================================================
 //  LIGHTMGR MANAGER CLASS
@@ -67,7 +69,8 @@ public:
                                       f32            InnerAngle = 30.0f,
                                       f32            OuterAngle = 45.0f,
                                       s32            ShadowMapResolution = 512,
-                                      s32            ShadowPriority = 1 );
+                                      s32            ShadowPriority = 1,
+                                      const texture::handle& Cookie = texture::handle() );
 
     // Here are the functions for getting lights that actually hit an object. You should
     // make sure you are in the begin/end pair before asking for lights. Also, make
@@ -97,6 +100,10 @@ public:
                                       vector3&       Direction,
                                       f32&           InnerAngle,
                                       f32&           OuterAngle );
+    void    GetCollectedLightCookie( s32            Index,
+                                      s32&           CookieIndex,
+                                      vector3&       CookieU,
+                                      vector3&       CookieV );
     s32     CollectCharLights       ( const matrix4& L2W,
                                       const bbox&    B,
                                       s32            MaxLightCount = 3 );
@@ -107,6 +114,8 @@ public:
                                       vector3&       Dir,
                                       xcolor&        C );
     s32     GetNDynamicLights       ( void ) const;
+    const xbitmap*
+            GetLightCookieFaceBitmap( s32            Index ) const;
     void    GetDynamicLight         ( s32            Index,
                                       vector3&       Pos,
                                       f32&           Radius,
@@ -157,6 +166,9 @@ protected:
         s32     ShadowMapResolution;
         s32     ShadowPriority;
         xbool   CastShadows;
+        s32     CookieIndex;
+        vector3 CookieU;
+        vector3 CookieV;
     };
 
     struct dir_light
@@ -182,6 +194,9 @@ protected:
         vector3 Direction;
         f32     InnerAngle;
         f32     OuterAngle;
+        s32     CookieIndex;
+        vector3 CookieU;
+        vector3 CookieV;
     };
 
     // internal helper routines
@@ -189,6 +204,7 @@ protected:
     void    RemoveLight             ( s32            LightIndex );
     void    ReduceCollectedSpadLights( s32           MaxLightCount );
     void    ReduceCollectedCharLights( s32           MaxLightCount );
+    s32     RegisterSpotLightCookie ( const texture::handle& Cookie );
     xbool   CalcDirLight            ( dir_light*     pDst,
                                       const matrix4& L2W,
                                       const bbox&    Box,
@@ -214,6 +230,7 @@ protected:
     dynamic_light   m_DynamicLights[MAX_DYNAMIC_LIGHTS];
     s32             m_NCharLights;
     dynamic_light   m_CharLights[MAX_CHAR_LIGHTS];
+    xarray<const xbitmap*> m_LightCookieFaces;
 
     // list of potential collectors
     xbool           m_bInCollection;
@@ -242,6 +259,7 @@ void light_mgr::ClearLights( void )
 {
     m_NDynamicLights = 0;
     m_NCharLights    = 0;
+    m_LightCookieFaces.Clear();
 }
 
 //==============================================================================
@@ -260,6 +278,15 @@ inline
 s32 light_mgr::GetNDynamicLights( void ) const
 {
     return m_NDynamicLights;
+}
+
+//==============================================================================
+
+inline
+const xbitmap* light_mgr::GetLightCookieFaceBitmap( s32 Index ) const
+{
+    ASSERT( (Index >= 0) && (Index < m_LightCookieFaces.GetCount()) );
+    return m_LightCookieFaces[Index];
 }
 
 //==============================================================================

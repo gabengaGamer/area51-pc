@@ -15,6 +15,8 @@ struct SkinInstanceData
     float4 LightCol[MAX_GEOM_LIGHTS];
     float4 LightDir[MAX_GEOM_LIGHTS];
     float4 LightCone[MAX_GEOM_LIGHTS];
+    float4 LightCookieU[MAX_GEOM_LIGHTS];
+    float4 LightCookieV[MAX_GEOM_LIGHTS];
     float4 LightAmbCol;
     uint   ShaderFlags;
     uint   BoneOffset;

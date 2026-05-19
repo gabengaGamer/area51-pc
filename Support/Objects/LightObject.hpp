@@ -7,6 +7,7 @@
 
 #include "Obj_mgr\obj_mgr.hpp"
 #include "Objects\Interpolation\TransformInterpolation.hpp"
+#include "Render\Texture.hpp"
 
 //=========================================================================
 // LIGHT
@@ -178,6 +179,7 @@ protected:
 
     s32             m_EmitterType;
     f32             m_Falloff;
+    texture::handle m_hCookie;
     xbool           m_bCastShadows;
     s32             m_ShadowMapResolution;
     s32             m_ShadowPriority;

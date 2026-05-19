@@ -173,6 +173,54 @@ void light_mgr::AddFadingLight( const vector3& Pos, const xcolor& C, f32 Radius,
 
 //=========================================================================
 
+s32 light_mgr::RegisterSpotLightCookie( const texture::handle& Cookie )
+{
+    texture* pTexture = Cookie.GetPointer();
+    if( !pTexture )
+        return -1;
+
+    const xbitmap* pBitmap = &pTexture->m_Bitmap;
+    for( s32 i = 0; i < m_LightCookieFaces.GetCount(); i++ )
+    {
+        if( m_LightCookieFaces[i] == pBitmap )
+            return i;
+    }
+
+    m_LightCookieFaces.Append() = pBitmap;
+    return m_LightCookieFaces.GetCount() - 1;
+}
+
+//=========================================================================
+
+static void BuildLightCookieUV( const vector3& Direction,
+                                vector3&       CookieU,
+                                vector3&       CookieV )
+{
+    vector3 Forward = Direction;
+    if( !Forward.SafeNormalize() )
+    {
+        Forward.Set( 0.0f, 0.0f, 1.0f );
+    }
+
+    CookieU = vector3( 0.0f, 1.0f, 0.0f ).Cross( Forward );
+    if( !CookieU.SafeNormalize() )
+    {
+        CookieU = vector3( 1.0f, 0.0f, 0.0f ).Cross( Forward );
+        if( !CookieU.SafeNormalize() )
+        {
+            CookieU.Set( 1.0f, 0.0f, 0.0f );
+        }
+    }
+
+    CookieV = Forward.Cross( CookieU );
+    if( !CookieV.SafeNormalize() )
+    {
+        CookieV.Set( 0.0f, 1.0f, 0.0f );
+    }
+}
+
+//=========================================================================
+
 void light_mgr::AddDynamicLight( const vector3& Pos,
                                  const xcolor& C,
                                  f32 Radius,
@@ -186,7 +234,8 @@ void light_mgr::AddDynamicLight( const vector3& Pos,
                                  f32 InnerAngle,
                                  f32 OuterAngle,
                                  s32 ShadowMapResolution,
-                                 s32 ShadowPriority )
+                                 s32 ShadowPriority,
+                                 const texture::handle& Cookie )
 {
     vector3 LightDirection = Direction;
 
@@ -216,6 +265,7 @@ void light_mgr::AddDynamicLight( const vector3& Pos,
         m_CharLights[m_NCharLights].Radius    = Radius;
         m_CharLights[m_NCharLights].Intensity = Intensity;
         m_CharLights[m_NCharLights].Color     = C;
+        m_CharLights[m_NCharLights].CookieIndex = -1;
         m_NCharLights++;
     }
     else
@@ -225,6 +275,14 @@ void light_mgr::AddDynamicLight( const vector3& Pos,
             //ASSERT( FALSE );
             return;
         }
+        vector3 CookieU( 1.0f, 0.0f, 0.0f );
+        vector3 CookieV( 0.0f, 1.0f, 0.0f );
+        const s32 CookieIndex = (Shape == LIGHT_SHAPE_SPOT) ? RegisterSpotLightCookie( Cookie ) : -1;
+        if( CookieIndex >= 0 )
+        {
+            BuildLightCookieUV( LightDirection, CookieU, CookieV );
+        }
+
         m_DynamicLights[m_NDynamicLights].Pos       = Pos;
         m_DynamicLights[m_NDynamicLights].Radius    = Radius;
         m_DynamicLights[m_NDynamicLights].Intensity = Intensity;
@@ -237,6 +295,9 @@ void light_mgr::AddDynamicLight( const vector3& Pos,
         m_DynamicLights[m_NDynamicLights].ShadowMapResolution = ShadowMapResolution;
         m_DynamicLights[m_NDynamicLights].ShadowPriority      = ShadowPriority;
         m_DynamicLights[m_NDynamicLights].CastShadows = CastShadows;
+        m_DynamicLights[m_NDynamicLights].CookieIndex = CookieIndex;
+        m_DynamicLights[m_NDynamicLights].CookieU     = CookieU;
+        m_DynamicLights[m_NDynamicLights].CookieV     = CookieV;
         m_NDynamicLights++;
     }
 }
@@ -477,6 +538,9 @@ void light_mgr::BeginLightCollection( void )
         m_pSpadLights[nLights].Direction = Light.Direction;
         m_pSpadLights[nLights].InnerAngle= Light.InnerAngle;
         m_pSpadLights[nLights].OuterAngle= Light.OuterAngle;
+        m_pSpadLights[nLights].CookieIndex = Light.CookieIndex;
+        m_pSpadLights[nLights].CookieU     = Light.CookieU;
+        m_pSpadLights[nLights].CookieV     = Light.CookieV;
         nLights++;
     }
 
@@ -496,6 +560,9 @@ void light_mgr::BeginLightCollection( void )
         m_pSpadLights[nLights].Direction.Set( 0.0f, 0.0f, 1.0f );
         m_pSpadLights[nLights].InnerAngle= 0.0f;
         m_pSpadLights[nLights].OuterAngle= 0.0f;
+        m_pSpadLights[nLights].CookieIndex = -1;
+        m_pSpadLights[nLights].CookieU.Set( 1.0f, 0.0f, 0.0f );
+        m_pSpadLights[nLights].CookieV.Set( 0.0f, 1.0f, 0.0f );
         nLights++;
         
         CurrLink = Light.NextLink;
@@ -520,6 +587,9 @@ void light_mgr::BeginLightCollection( void )
         m_pSpadLights[nLights].Direction.Set( 0.0f, 0.0f, 1.0f );
         m_pSpadLights[nLights].InnerAngle= 0.0f;
         m_pSpadLights[nLights].OuterAngle= 0.0f;
+        m_pSpadLights[nLights].CookieIndex = -1;
+        m_pSpadLights[nLights].CookieU.Set( 1.0f, 0.0f, 0.0f );
+        m_pSpadLights[nLights].CookieV.Set( 0.0f, 1.0f, 0.0f );
         nLights++;
     }
 
@@ -649,6 +719,23 @@ void light_mgr::GetCollectedLightInfo( s32 Index,
     InnerAngle = Light.InnerAngle;
     OuterAngle = Light.OuterAngle;
     ScaleLightColor( C, Light.Color, Light.Intensity );
+}
+
+//=========================================================================
+
+void light_mgr::GetCollectedLightCookie( s32 Index,
+                                         s32& CookieIndex,
+                                         vector3& CookieU,
+                                         vector3& CookieV )
+{
+    ASSERT( (Index >= 0) && (Index < m_NCollectedLights) );
+    ASSERT( m_bInCollection );
+    ASSERT( m_pSpadLights );
+
+    spad_light& Light = m_pSpadLights[m_CollectedLights[Index]];
+    CookieIndex = Light.CookieIndex;
+    CookieU     = Light.CookieU;
+    CookieV     = Light.CookieV;
 }
 
 //=========================================================================

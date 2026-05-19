@@ -117,6 +117,8 @@ struct cb_geom_lighting
     vector4 LightCol[MAX_GEOM_LIGHTS];
     vector4 LightDir[MAX_GEOM_LIGHTS];
     vector4 LightCone[MAX_GEOM_LIGHTS];
+    vector4 LightCookieU[MAX_GEOM_LIGHTS];
+    vector4 LightCookieV[MAX_GEOM_LIGHTS];
     vector4 AmbCol;
 };
 
@@ -166,6 +168,8 @@ struct cb_rigid_instance
     vector4 LightCol[MAX_GEOM_LIGHTS];
     vector4 LightDir[MAX_GEOM_LIGHTS];
     vector4 LightCone[MAX_GEOM_LIGHTS];
+    vector4 LightCookieU[MAX_GEOM_LIGHTS];
+    vector4 LightCookieV[MAX_GEOM_LIGHTS];
     vector4 LightAmbCol;
     u32     ShaderFlags;
     u32     ColorOffset;
@@ -183,6 +187,8 @@ struct cb_skin_instance
     vector4 LightCol[MAX_GEOM_LIGHTS];
     vector4 LightDir[MAX_GEOM_LIGHTS];
     vector4 LightCone[MAX_GEOM_LIGHTS];
+    vector4 LightCookieU[MAX_GEOM_LIGHTS];
+    vector4 LightCookieV[MAX_GEOM_LIGHTS];
     vector4 LightAmbCol;
     u32     ShaderFlags;
     u32     BoneOffset;
@@ -277,6 +283,7 @@ enum texture_slot
     TEXTURE_SLOT_RIGID_COLOR_DATA     = 23,
     TEXTURE_SLOT_SKIN_INSTANCE_DATA   = 24,
     TEXTURE_SLOT_SKIN_BONE_DATA       = 25,
+    TEXTURE_SLOT_LIGHT_COOKIE         = 26,
 };
 
 //==============================================================================
@@ -315,6 +322,7 @@ public:
 
     void        ResetProjTextures           ( void );
     void        ResetShadowMaps             ( void );
+    void        ResetLightCookies           ( void );
     void        SetDistortionState          ( const radian3& NormalRot );
     void        ClearDistortionState        ( void );
 
@@ -404,6 +412,16 @@ protected:
                                               u8                  OverrideMat = FALSE );
     xbool       UpdateProjTextures          ( u32 Slot );
     xbool       UpdateShadowMaps            ( void );
+    xbool       CanAppendLightCookies       ( const cb_rigid_instance* pInstances,
+                                              s32                      nInstances,
+                                              const cb_geom_lighting*  pLighting ) const;
+    xbool       CanAppendLightCookies       ( const cb_skin_instance*  pInstances,
+                                              s32                      nInstances,
+                                              const cb_geom_lighting*  pLighting ) const;
+    void        BindLightCookies            ( cb_rigid_instance*       pInstances,
+                                              s32                      nInstances );
+    void        BindLightCookies            ( cb_skin_instance*        pInstances,
+                                              s32                      nInstances );
     static u32  BuildInstanceFlags          ( u32 RenderFlags );
     static f32  BuildInstanceFadeAlpha      ( u32 RenderFlags,
                                               u8  Alpha );
@@ -466,6 +484,7 @@ protected:
     ID3D11SamplerState*     m_pProjSampler;
     ID3D11Buffer*           m_pShadowBuffer;
     ID3D11SamplerState*     m_pShadowAtlasSampler;
+    u32                     m_LastLightCookieCount;
 
     //--------------------------------------------------------------------------
     // Skin Geometry Resources

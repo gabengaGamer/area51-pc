@@ -4,12 +4,13 @@
 #include "Render\\LightMgr.hpp"
 
 static const f32     s_FlashlightRange          = 2048.0f;
-static const radian  s_FlashlightFOV            = R_45;
+static const radian  s_FlashlightFOV            = R_75;
 static const f32     s_FlashlightIntensity      = 2.0f;
-static const f32     s_FlashlightFalloff        = 0.8f;
-static const f32     s_FlashlightInnerConeScale = 0.75f;
+static const f32     s_FlashlightFalloff        = 0.5f;
+static const f32     s_FlashlightInnerConeScale = 0.70f;
 static const xcolor  s_FlashlightColor          ( 255, 255, 255, 255 );
 static const vector3 s_FlashlightOffset         ( 0.0f, 0.0f, -75.0f );
+static texture::handle s_FlashlightCookie;
 
 xbool flashlight_CalcTransform( player& Player, matrix4& L2W )
 {
@@ -42,6 +43,11 @@ void flashlight_Register( player& Player )
         Direction.Set( 0.0f, 0.0f, 1.0f );
     }
 
+    if( !s_FlashlightCookie.GetName()[0] )
+    {
+        s_FlashlightCookie.SetName( "Flashlight.xbmp" );
+    }
+
     const f32 OuterAngle  = RAD_TO_DEG( s_FlashlightFOV );
     const f32 InnerAngle  = MAX( 1.0f, OuterAngle * s_FlashlightInnerConeScale );
     const f32 InnerRadius = MAX( 0.0f, s_FlashlightRange * ( 1.0f - s_FlashlightFalloff ) );
@@ -59,5 +65,6 @@ void flashlight_Register( player& Player )
                                 InnerAngle,
                                 OuterAngle,
                                 1024,
-                                4 );
+                                4,
+                                s_FlashlightCookie );
 }

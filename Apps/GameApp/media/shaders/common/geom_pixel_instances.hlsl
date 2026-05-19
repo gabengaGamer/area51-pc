@@ -60,6 +60,20 @@ float4 GeomGetLightCone( GEOM_PIXEL_INPUT input, uint lightIndex )
 
 //==============================================================================
 
+float4 GeomGetLightCookieU( GEOM_PIXEL_INPUT input, uint lightIndex )
+{
+    return RigidInstances[input.InstanceID].LightCookieU[lightIndex];
+}
+
+//==============================================================================
+
+float4 GeomGetLightCookieV( GEOM_PIXEL_INPUT input, uint lightIndex )
+{
+    return RigidInstances[input.InstanceID].LightCookieV[lightIndex];
+}
+
+//==============================================================================
+
 float4 GeomGetLightAmbCol( GEOM_PIXEL_INPUT input )
 {
     return RigidInstances[input.InstanceID].LightAmbCol;
@@ -112,6 +126,20 @@ float4 GeomGetLightDir( GEOM_PIXEL_INPUT input, uint lightIndex )
 float4 GeomGetLightCone( GEOM_PIXEL_INPUT input, uint lightIndex )
 {
     return SkinInstances[input.InstanceID].LightCone[lightIndex];
+}
+
+//==============================================================================
+
+float4 GeomGetLightCookieU( GEOM_PIXEL_INPUT input, uint lightIndex )
+{
+    return SkinInstances[input.InstanceID].LightCookieU[lightIndex];
+}
+
+//==============================================================================
+
+float4 GeomGetLightCookieV( GEOM_PIXEL_INPUT input, uint lightIndex )
+{
+    return SkinInstances[input.InstanceID].LightCookieV[lightIndex];
 }
 
 //==============================================================================

@@ -239,7 +239,10 @@ xbool geom_mgr::CanAppendRigidBatch( const desc_rigid_batch& Desc ) const
            ( m_RigidBatchFlags == Desc.RenderFlags ) &&
            ( m_RigidBatchUOffset == Desc.UOffset ) &&
            ( m_RigidBatchVOffset == Desc.VOffset ) &&
-           ( m_RigidBatchOverrideMat == Desc.OverrideMat );
+           ( m_RigidBatchOverrideMat == Desc.OverrideMat ) &&
+           CanAppendLightCookies( &m_lRigidBatchInstances[0],
+                                  m_lRigidBatchInstances.GetCount(),
+                                  Desc.pLighting );
 }
 
 //==============================================================================
@@ -285,6 +288,7 @@ void geom_mgr::SetRigidMaterial( const material* pMaterial,
 
     if( OverrideMat )
     {
+        ResetLightCookies();
         ResetProjTextures();
         ResetShadowMaps();
         return;
@@ -292,6 +296,7 @@ void geom_mgr::SetRigidMaterial( const material* pMaterial,
 
     if( !pMaterial )
     {
+        ResetLightCookies();
         ResetProjTextures();
         ResetShadowMaps();
         return;
@@ -333,6 +338,8 @@ void geom_mgr::FillRigidInstanceLighting( cb_rigid_instance&  Instance,
         Instance.LightCol [i] = pLighting->LightCol [i];
         Instance.LightDir [i] = pLighting->LightDir [i];
         Instance.LightCone[i] = pLighting->LightCone[i];
+        Instance.LightCookieU[i] = pLighting->LightCookieU[i];
+        Instance.LightCookieV[i] = pLighting->LightCookieV[i];
     }
 }
 
@@ -405,6 +412,11 @@ void geom_mgr::FlushRigidBatch( const material* pMaterial, u8 MaterialOverride )
                       m_RigidBatchUOffset,
                       m_RigidBatchVOffset,
                       MaterialOverride );
+    if( !MaterialOverride && pMaterial )
+    {
+        BindLightCookies( &m_lRigidBatchInstances[0],
+                          m_lRigidBatchInstances.GetCount() );
+    }
 
     if( SetRigidInstanceData( &m_lRigidBatchInstances[0],
                               m_lRigidBatchInstances.GetCount(),
@@ -415,6 +427,7 @@ void geom_mgr::FlushRigidBatch( const material* pMaterial, u8 MaterialOverride )
     }
 
     ResetRigidInstanceData();
+    ResetLightCookies();
     ResetProjTextures();
     ResetShadowMaps();
     ResetRigidBatch();

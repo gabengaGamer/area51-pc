@@ -17,6 +17,7 @@ Texture2D        txProjLight [MAX_PROJ_LIGHTS]  : register(t4);
 Texture2D        txProjShadow[MAX_PROJ_SHADOWS] : register(t8);
 Texture2D<float> txFaceShadowAtlas              : register(t20);
 Texture2D        txDistortionScene              : register(t21);
+Texture2D        txLightCookie[MAX_GEOM_LIGHTS] : register(t26);
 
 SamplerState     samLinear                      : register(s0);
 SamplerState     samFaceShadow                  : register(s8);

@@ -50,6 +50,61 @@ float GeomComputeSpotAttenuation( GEOM_PIXEL_INPUT input, uint lightIndex, float
 
 //==============================================================================
 
+float4 GeomSampleLightCookieTexture( uint cookieSlot, float2 uv )
+{
+    if( cookieSlot == 1u ) return txLightCookie[0].Sample( samLinear, uv );
+    if( cookieSlot == 2u ) return txLightCookie[1].Sample( samLinear, uv );
+    if( cookieSlot == 3u ) return txLightCookie[2].Sample( samLinear, uv );
+    return txLightCookie[3].Sample( samLinear, uv );
+}
+
+//==============================================================================
+
+float GeomSampleLightCookie( GEOM_PIXEL_INPUT input,
+                             uint             lightIndex,
+                             float3           lightToPoint )
+{
+    float4 cookieU = GeomGetLightCookieU( input, lightIndex );
+    const uint cookieSlot = (uint)cookieU.w;
+    if( cookieSlot == 0u || cookieSlot > (uint)MAX_GEOM_LIGHTS )
+        return 1.0f;
+
+    float4 lightDir = GeomGetLightDir( input, lightIndex );
+    if( lightDir.w < 0.5f || GeomIsCharFillLight( lightDir ) )
+        return 1.0f;
+
+    float3 spotDir = lightDir.xyz;
+    const float spotDirLenSq = dot( spotDir, spotDir );
+    if( spotDirLenSq <= 1e-8f )
+        return 1.0f;
+
+    spotDir *= rsqrt( spotDirLenSq );
+    const float distAlong = dot( lightToPoint, spotDir );
+    if( distAlong <= 1e-4f )
+        return 0.0f;
+
+    float4 lightCone = GeomGetLightCone( input, lightIndex );
+    const float cosOuter = saturate( lightCone.y );
+    const float sinOuter = sqrt( saturate( 1.0f - cosOuter * cosOuter ) );
+    const float coneRadius = max( distAlong * sinOuter / max( cosOuter, 1e-4f ), 1e-4f );
+
+    float4 cookieV = GeomGetLightCookieV( input, lightIndex );
+    float2 uv = float2( dot( lightToPoint, cookieU.xyz ),
+                        dot( lightToPoint, cookieV.xyz ) ) / ( 2.0f * coneRadius ) + 0.5f;
+
+    if( uv.x < 0.0f || uv.x > 1.0f ||
+        uv.y < 0.0f || uv.y > 1.0f )
+    {
+        return 0.0f;
+    }
+
+    const float4 cookie = GeomSampleLightCookieTexture( cookieSlot, uv );
+    const float  gray   = dot( cookie.rgb, float3( 0.299f, 0.587f, 0.114f ) );
+    return saturate( gray * cookie.a );
+}
+
+//==============================================================================
+
 float GeomComputeLocalLightAttenuation( GEOM_PIXEL_INPUT input, uint lightIndex, float3 worldPos, out float3 pointToLightDir )
 {
     float4 lightVec = GeomGetLightVec( input, lightIndex );
@@ -69,7 +124,8 @@ float GeomComputeLocalLightAttenuation( GEOM_PIXEL_INPUT input, uint lightIndex,
         return 1.0f;
     }
 
-    const float3 toLight = lightVec.xyz - worldPos;
+    const float3 lightToPoint = worldPos - lightVec.xyz;
+    const float3 toLight = -lightToPoint;
     const float  distSq  = dot( toLight, toLight );
 
     if( distSq <= 1e-8f )
@@ -87,7 +143,9 @@ float GeomComputeLocalLightAttenuation( GEOM_PIXEL_INPUT input, uint lightIndex,
     }
 
     pointToLightDir = toLight / dist;
-    return radial * GeomComputeSpotAttenuation( input, lightIndex, -pointToLightDir );
+    return radial *
+           GeomComputeSpotAttenuation( input, lightIndex, -pointToLightDir ) *
+           GeomSampleLightCookie( input, lightIndex, lightToPoint );
 }
 
 //==============================================================================

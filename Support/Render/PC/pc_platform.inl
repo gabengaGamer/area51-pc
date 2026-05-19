@@ -955,6 +955,9 @@ void* platform_CalculateRigidLighting( const matrix4&   L2W,
             vector3 Direction;
             f32     InnerAngle;
             f32     OuterAngle;
+            s32     CookieIndex;
+            vector3 CookieU;
+            vector3 CookieV;
             
             g_LightMgr.GetCollectedLightInfo( i,
                                              Pos,
@@ -965,6 +968,10 @@ void* platform_CalculateRigidLighting( const matrix4&   L2W,
                                              Direction,
                                              InnerAngle,
                                              OuterAngle );
+            g_LightMgr.GetCollectedLightCookie( i,
+                                                CookieIndex,
+                                                CookieU,
+                                                CookieV );
             
             // Setup rigid lights
             pLighting->LightVec[i].Set( Pos.GetX(),
@@ -986,6 +993,15 @@ void* platform_CalculateRigidLighting( const matrix4&   L2W,
                                          x_cos( DEG_TO_RAD( OuterAngle ) * 0.5f ),
                                          0.0f,
                                          0.0f );
+
+            pLighting->LightCookieU[i].Set( CookieU.GetX(),
+                                            CookieU.GetY(),
+                                            CookieU.GetZ(),
+                                            (CookieIndex >= 0) ? (f32)(CookieIndex + 1) : 0.0f );
+            pLighting->LightCookieV[i].Set( CookieV.GetX(),
+                                            CookieV.GetY(),
+                                            CookieV.GetZ(),
+                                            0.0f );
         }
         
         pResult = pLighting;
@@ -1033,6 +1049,9 @@ void* platform_CalculateSkinLighting( u32            Flags,
         vector3 Direction;
         f32     InnerAngle;
         f32     OuterAngle;
+        s32     CookieIndex;
+        vector3 CookieU;
+        vector3 CookieV;
 
         g_LightMgr.GetCollectedLightInfo( i,
                                           Pos,
@@ -1043,6 +1062,10 @@ void* platform_CalculateSkinLighting( u32            Flags,
                                           Direction,
                                           InnerAngle,
                                           OuterAngle );
+        g_LightMgr.GetCollectedLightCookie( i,
+                                            CookieIndex,
+                                            CookieU,
+                                            CookieV );
 
         pLighting->LightVec[LightIndex].Set( Pos.GetX(),
                                              Pos.GetY(),
@@ -1063,6 +1086,15 @@ void* platform_CalculateSkinLighting( u32            Flags,
                                               x_cos( DEG_TO_RAD( OuterAngle ) * 0.5f ),
                                               0.0f,
                                               0.0f );
+
+        pLighting->LightCookieU[LightIndex].Set( CookieU.GetX(),
+                                                 CookieU.GetY(),
+                                                 CookieU.GetZ(),
+                                                 (CookieIndex >= 0) ? (f32)(CookieIndex + 1) : 0.0f );
+        pLighting->LightCookieV[LightIndex].Set( CookieV.GetX(),
+                                                 CookieV.GetY(),
+                                                 CookieV.GetZ(),
+                                                 0.0f );
     }
 
     s32 NCharLights = g_LightMgr.CollectCharLightsOnly( L2W, BBox, MAX_GEOM_LIGHTS );

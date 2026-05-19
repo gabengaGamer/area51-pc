@@ -21,6 +21,7 @@
 //==============================================================================
 
 #include "GeomMgr.hpp"
+#include "../../LightMgr.hpp"
 
 //==============================================================================
 //  GLOBAL INSTANCE
@@ -30,6 +31,91 @@ geom_mgr g_GeomMgr;
 
 namespace
 {
+    s32 FindLightCookieFaceSlot( const s32* pSlots, s32 nSlots, s32 SourceSlot )
+    {
+        for( s32 i = 0; i < nSlots; i++ )
+        {
+            if( pSlots[i] == SourceSlot )
+                return i;
+        }
+
+        return -1;
+    }
+
+    xbool AddLightCookieFaceSlot( s32* pSlots, s32& nSlots, s32 SourceSlot )
+    {
+        if( SourceSlot <= 0 )
+            return TRUE;
+
+        if( FindLightCookieFaceSlot( pSlots, nSlots, SourceSlot ) >= 0 )
+            return TRUE;
+
+        if( nSlots >= MAX_GEOM_LIGHTS )
+            return FALSE;
+
+        pSlots[nSlots++] = SourceSlot;
+        return TRUE;
+    }
+
+    xbool AddLightingCookieFaces( const cb_geom_lighting* pLighting, s32* pSlots, s32& nSlots )
+    {
+        if( !pLighting )
+            return TRUE;
+
+        const s32 nLights = MIN( pLighting->LightCount, MAX_GEOM_LIGHTS );
+        for( s32 i = 0; i < nLights; i++ )
+        {
+            const s32 SourceSlot = (s32)pLighting->LightCookieU[i].GetW();
+            if( !AddLightCookieFaceSlot( pSlots, nSlots, SourceSlot ) )
+                return FALSE;
+        }
+
+        return TRUE;
+    }
+
+    template<class T_INSTANCE>
+    xbool AddInstanceCookieFaces( const T_INSTANCE* pInstances, s32 nInstances, s32* pSlots, s32& nSlots )
+    {
+        if( !pInstances )
+            return TRUE;
+
+        for( s32 iInstance = 0; iInstance < nInstances; iInstance++ )
+        {
+            const T_INSTANCE& Instance = pInstances[iInstance];
+            const s32 nLights = MIN( Instance.LightCount, MAX_GEOM_LIGHTS );
+            for( s32 iLight = 0; iLight < nLights; iLight++ )
+            {
+                const s32 SourceSlot = (s32)Instance.LightCookieU[iLight].GetW();
+                if( !AddLightCookieFaceSlot( pSlots, nSlots, SourceSlot ) )
+                    return FALSE;
+            }
+        }
+
+        return TRUE;
+    }
+
+    ID3D11ShaderResourceView* GetLightCookieFaceSRV( s32 SourceSlot )
+    {
+        const xbitmap* pBitmap = g_LightMgr.GetLightCookieFaceBitmap( SourceSlot - 1 );
+        if( !pBitmap )
+            return NULL;
+
+        const s32 vramID = pBitmap->GetVRAMID();
+        if( vramID <= 0 )
+        {
+            x_DebugMsg( "GeomMgr: WARNING - light cookie texture has no VRAM id\n" );
+            return NULL;
+        }
+
+        ID3D11ShaderResourceView* pSRV = vram_GetSRV( *pBitmap );
+        if( !pSRV )
+        {
+            x_DebugMsg( "GeomMgr: ERROR - Failed to get light cookie SRV (vram id %d)\n", vramID );
+        }
+
+        return pSRV;
+    }
+
     const char* GeomTextureSlotName( texture_slot Slot )
     {
         switch( Slot )
@@ -39,6 +125,7 @@ namespace
             case TEXTURE_SLOT_ENVIRONMENT:      return "environment";
             case TEXTURE_SLOT_ENVIRONMENT_CUBE: return "environment cube";
             case TEXTURE_SLOT_DISTORTION_SCENE: return "distortion scene";
+            case TEXTURE_SLOT_LIGHT_COOKIE:     return "light cookie";
             default:                            return "unknown";
         }
     }
@@ -62,6 +149,7 @@ void geom_mgr::Init( void )
     m_pCurrentEnvCubemap    = NULL;
     m_bDistortionStateActive = FALSE;
     m_DistortionNormalRot.Zero();
+    m_LastLightCookieCount = 0;
 
     // Initialize shaders and resources
     InitRigidShaders();
@@ -84,6 +172,7 @@ void geom_mgr::Kill( void )
 
     KillRigidShaders();
     KillSkinShaders();
+    ResetLightCookies();
     KillProjTextures();
     KillShadowMaps();
     ClearDistortionState();
@@ -92,6 +181,145 @@ void geom_mgr::Kill( void )
 
     m_bInitialized = FALSE;
     x_DebugMsg( "GeomMgr: Shaders shutdown complete\n" );
+}
+
+//==============================================================================
+
+void geom_mgr::ResetLightCookies( void )
+{
+    if( !g_pd3dContext || !m_LastLightCookieCount )
+        return;
+
+    ID3D11ShaderResourceView* nullSRV[MAX_GEOM_LIGHTS] = { NULL };
+    g_pd3dContext->PSSetShaderResources( TEXTURE_SLOT_LIGHT_COOKIE,
+                                          m_LastLightCookieCount,
+                                          nullSRV );
+    m_LastLightCookieCount = 0;
+}
+
+//==============================================================================
+
+xbool geom_mgr::CanAppendLightCookies( const cb_rigid_instance* pInstances,
+                                       s32                      nInstances,
+                                       const cb_geom_lighting*  pLighting ) const
+{
+    s32 Slots[MAX_GEOM_LIGHTS] = { 0 };
+    s32 nSlots = 0;
+
+    return AddInstanceCookieFaces( pInstances, nInstances, Slots, nSlots ) &&
+           AddLightingCookieFaces( pLighting, Slots, nSlots );
+}
+
+//==============================================================================
+
+xbool geom_mgr::CanAppendLightCookies( const cb_skin_instance* pInstances,
+                                       s32                     nInstances,
+                                       const cb_geom_lighting* pLighting ) const
+{
+    s32 Slots[MAX_GEOM_LIGHTS] = { 0 };
+    s32 nSlots = 0;
+
+    return AddInstanceCookieFaces( pInstances, nInstances, Slots, nSlots ) &&
+           AddLightingCookieFaces( pLighting, Slots, nSlots );
+}
+
+//==============================================================================
+
+template<class T_INSTANCE>
+static void BindLightCookieInstances( T_INSTANCE* pInstances, s32 nInstances, u32& LastLightCookieCount )
+{
+    if( !g_pd3dContext || !pInstances || (nInstances <= 0) )
+    {
+        if( LastLightCookieCount )
+        {
+            ID3D11ShaderResourceView* nullSRV[MAX_GEOM_LIGHTS] = { NULL };
+            g_pd3dContext->PSSetShaderResources( TEXTURE_SLOT_LIGHT_COOKIE,
+                                                 LastLightCookieCount,
+                                                 nullSRV );
+            LastLightCookieCount = 0;
+        }
+        return;
+    }
+
+    s32 Slots[MAX_GEOM_LIGHTS] = { 0 };
+    s32 nSlots = 0;
+    ID3D11ShaderResourceView* cookieSRV[MAX_GEOM_LIGHTS] = { NULL };
+
+    for( s32 iInstance = 0; iInstance < nInstances; iInstance++ )
+    {
+        T_INSTANCE& Instance = pInstances[iInstance];
+        const s32 nLights = MIN( Instance.LightCount, MAX_GEOM_LIGHTS );
+
+        for( s32 iLight = 0; iLight < nLights; iLight++ )
+        {
+            const s32 SourceSlot = (s32)Instance.LightCookieU[iLight].GetW();
+            if( SourceSlot <= 0 )
+                continue;
+
+            s32 LocalSlot = FindLightCookieFaceSlot( Slots, nSlots, SourceSlot );
+            if( LocalSlot < 0 )
+            {
+                if( nSlots >= MAX_GEOM_LIGHTS )
+                {
+                    Instance.LightCookieU[iLight].GetW() = 0.0f;
+                    continue;
+                }
+
+                ID3D11ShaderResourceView* pSRV = GetLightCookieFaceSRV( SourceSlot );
+                if( !pSRV )
+                {
+                    Instance.LightCookieU[iLight].GetW() = 0.0f;
+                    continue;
+                }
+
+                LocalSlot = nSlots;
+                Slots[nSlots] = SourceSlot;
+                cookieSRV[nSlots] = pSRV;
+                nSlots++;
+            }
+
+            Instance.LightCookieU[iLight].GetW() = (f32)(LocalSlot + 1);
+        }
+    }
+
+    if( nSlots )
+    {
+        g_pd3dContext->PSSetShaderResources( TEXTURE_SLOT_LIGHT_COOKIE,
+                                             nSlots,
+                                             cookieSRV );
+    }
+    else if( LastLightCookieCount )
+    {
+        ID3D11ShaderResourceView* nullSRV[MAX_GEOM_LIGHTS] = { NULL };
+        g_pd3dContext->PSSetShaderResources( TEXTURE_SLOT_LIGHT_COOKIE,
+                                             LastLightCookieCount,
+                                             nullSRV );
+    }
+
+    if( (LastLightCookieCount > (u32)nSlots) && nSlots )
+    {
+        const u32 nUnused = LastLightCookieCount - nSlots;
+        ID3D11ShaderResourceView* nullSRV[MAX_GEOM_LIGHTS] = { NULL };
+        g_pd3dContext->PSSetShaderResources( TEXTURE_SLOT_LIGHT_COOKIE + nSlots,
+                                             nUnused,
+                                             nullSRV );
+    }
+
+    LastLightCookieCount = nSlots;
+}
+
+//==============================================================================
+
+void geom_mgr::BindLightCookies( cb_rigid_instance* pInstances, s32 nInstances )
+{
+    BindLightCookieInstances( pInstances, nInstances, m_LastLightCookieCount );
+}
+
+//==============================================================================
+
+void geom_mgr::BindLightCookies( cb_skin_instance* pInstances, s32 nInstances )
+{
+    BindLightCookieInstances( pInstances, nInstances, m_LastLightCookieCount );
 }
 
 //==============================================================================

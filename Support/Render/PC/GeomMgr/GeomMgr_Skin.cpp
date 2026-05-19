@@ -251,7 +251,10 @@ xbool geom_mgr::CanAppendSkinBatch( const desc_skin_batch& Desc ) const
            ( m_SkinBatchFlags == Desc.RenderFlags ) &&
            ( m_SkinBatchUOffset == Desc.UOffset ) &&
            ( m_SkinBatchVOffset == Desc.VOffset ) &&
-           ( m_SkinBatchOverrideMat == Desc.OverrideMat );
+           ( m_SkinBatchOverrideMat == Desc.OverrideMat ) &&
+           CanAppendLightCookies( &m_lSkinBatchInstances[0],
+                                  m_lSkinBatchInstances.GetCount(),
+                                  Desc.pLighting );
 }
 
 //==============================================================================
@@ -297,6 +300,7 @@ void geom_mgr::SetSkinMaterial( const material* pMaterial,
 
     if( OverrideMat )
     {
+        ResetLightCookies();
         ResetProjTextures();
         ResetShadowMaps();
         return;
@@ -304,6 +308,7 @@ void geom_mgr::SetSkinMaterial( const material* pMaterial,
 
     if( !pMaterial )
     {
+        ResetLightCookies();
         ResetProjTextures();
         ResetShadowMaps();
         return;
@@ -345,6 +350,8 @@ void geom_mgr::FillSkinInstanceLighting( cb_skin_instance&   Instance,
         Instance.LightCol [i] = pLighting->LightCol [i];
         Instance.LightDir [i] = pLighting->LightDir [i];
         Instance.LightCone[i] = pLighting->LightCone[i];
+        Instance.LightCookieU[i] = pLighting->LightCookieU[i];
+        Instance.LightCookieV[i] = pLighting->LightCookieV[i];
     }
 }
 
@@ -414,6 +421,11 @@ void geom_mgr::FlushSkinBatch( const material* pMaterial, u8 MaterialOverride )
                      m_SkinBatchUOffset,
                      m_SkinBatchVOffset,
                      MaterialOverride );
+    if( !MaterialOverride && pMaterial )
+    {
+        BindLightCookies( &m_lSkinBatchInstances[0],
+                          m_lSkinBatchInstances.GetCount() );
+    }
 
     if( SetSkinInstanceData( &m_lSkinBatchInstances[0],
                              m_lSkinBatchInstances.GetCount(),
@@ -424,6 +436,7 @@ void geom_mgr::FlushSkinBatch( const material* pMaterial, u8 MaterialOverride )
     }
 
     ResetSkinInstanceData();
+    ResetLightCookies();
     ResetProjTextures();
     ResetShadowMaps();
     ResetSkinBatch();

@@ -401,6 +401,7 @@ dynamic_light_obj::dynamic_light_obj( void ) :
     light_obj(),
     m_EmitterType        (EMITTER_TYPE_OMNI),
     m_Falloff            (1.0f),
+    m_hCookie            (     ),
     m_bCastShadows       (TRUE),
     m_ShadowMapResolution(SHADOW_MAP_RESOLUTION_512),
     m_ShadowPriority     (SHADOW_PRIORITY_MEDIUM),
@@ -448,6 +449,10 @@ void dynamic_light_obj::OnEnumProp( prop_enum& List )
         List.PropEnumFloat( "Light\\OuterAngle",
                             "Outer spotlight cone angle in degrees.",
                             0 );
+        List.PropEnumExternal( "Light\\Cookie",
+                               "Resource\0xbmp\0",
+                               "2D texture mask multiplied into this spot light.",
+                               0 );
     }
     List.PropEnumColor ( "Light\\LightColor",
                          "This is the color of the light",
@@ -506,6 +511,17 @@ xbool dynamic_light_obj::OnProperty( prop_query& I )
     }
     else if( I.VarFloat("Light\\Falloff", m_Falloff, 0.0f, 1.0f ) )
     {
+    }
+    else if( I.IsVar( "Light\\Cookie" ) )
+    {
+        if( I.IsRead() )
+        {
+            I.SetVarExternal( m_hCookie.GetName(), RESOURCE_NAME_SIZE );
+        }
+        else
+        {
+            m_hCookie.SetName( I.GetVarExternal() );
+        }
     }
     else if( I.IsVar("Light\\InnerRadius") )
     {
@@ -1101,7 +1117,8 @@ void dynamic_light_obj::OnCollectLight( void )
                                     m_InnerAngle,
                                     m_OuterAngle,
                                     m_ShadowMapResolution,
-                                    m_ShadowPriority );
+                                    m_ShadowPriority,
+                                    m_hCookie );
     }
 }
 
