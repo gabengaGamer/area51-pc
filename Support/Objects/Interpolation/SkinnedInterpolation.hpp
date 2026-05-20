@@ -139,6 +139,20 @@ const matrix4* BuildSkinnedInterpMatrices( const skinned_interp_state& State,
 
 //==============================================================================
 
+inline
+void TransformSkinnedInterpState( skinned_interp_state& State, const matrix4& M )
+{
+    if( !State.Valid )
+        return;
+
+    State.L2W = M * State.L2W;
+
+    for( s32 i = 0; i < State.NBones; i++ )
+        State.Bones[i] = M * State.Bones[i];
+}
+
+//==============================================================================
+
 inline 
 void InitWeaponInterpState( weapon_interp_state& State )
 {
@@ -196,6 +210,20 @@ void UpdateWeaponInterpState( const weapon_interp_state& Prev,
                           Curr.Bones,
                           Curr.NBones,
                           Alpha );
+}
+
+//==============================================================================
+
+inline
+void TransformWeaponInterpState( weapon_interp_state& State, const matrix4& M )
+{
+    if( !State.Active )
+        return;
+
+    State.L2W = M * State.L2W;
+
+    for( s32 i = 0; i < State.NBones; i++ )
+        State.Bones[i] = M * State.Bones[i];
 }
 
 //==============================================================================

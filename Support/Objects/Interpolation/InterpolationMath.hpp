@@ -53,6 +53,16 @@ vector3 InterpVector( const vector3& A, const vector3& B, f32 T )
 
 //==============================================================================
 
+inline
+vector3 TransformInterpDirection( const matrix4& M, const vector3& V )
+{
+    matrix4 R = M;
+    R.ClearTranslation();
+    return R * V;
+}
+
+//==============================================================================
+
 inline 
 matrix4 BuildInterpL2W( const vector3& Pos, const radian3& Rot )
 {

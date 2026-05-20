@@ -2080,12 +2080,14 @@ void player::CaptureRenderState( void )
 
     player_interp_state Snapshot;
     Snapshot.Valid = TRUE;
-    Snapshot.WeaponCollisionOffset = m_WeaponCollisionOffset;
-    CaptureSkinnedInterpState( Snapshot.Arms, BuildInterpL2W( m_AnimPlayer.GetPosition(), m_AnimPlayer.GetRotation() ) );
-    InitWeaponInterpState( Snapshot.Weapon );
-
     Snapshot.View = m_Views[ GetLocalSlot() ];
     ComputeView( Snapshot.View, player::VIEW_NULL );
+
+    const matrix4 WorldToView = Snapshot.View.GetW2V();
+
+    Snapshot.WeaponCollisionOffset = TransformInterpDirection( WorldToView, m_WeaponCollisionOffset );
+    CaptureSkinnedInterpState( Snapshot.Arms, BuildInterpL2W( m_AnimPlayer.GetPosition(), m_AnimPlayer.GetRotation() ) );
+    InitWeaponInterpState( Snapshot.Weapon );
 
     if( m_AnimGroup.GetPointer() && m_Skin.GetSkinGeom() )
     {
@@ -2105,6 +2107,9 @@ void player::CaptureRenderState( void )
             WeaponAnimPlayer.GetBoneL2Ws( Snapshot.Weapon.Bones, FALSE );
         }
     }
+
+    TransformSkinnedInterpState( Snapshot.Arms, WorldToView );
+    TransformWeaponInterpState( Snapshot.Weapon, WorldToView );
 
     CaptureInterpCache( m_RenderCache, Snapshot,
                         []( const player_interp_state& Prev, const player_interp_state& Curr )
@@ -2150,6 +2155,12 @@ void player::UpdateRenderState( f32 Alpha )
                                                                              T );
                                 UpdateSkinnedInterpState( Prev.Arms, Curr.Arms, Interp.Arms, T );
                                 UpdateWeaponInterpState( Prev.Weapon, Curr.Weapon, Interp.Weapon, T );
+
+                                const matrix4 ViewToWorld = Interp.View.GetV2W();
+                                Interp.WeaponCollisionOffset = TransformInterpDirection( ViewToWorld,
+                                                                                        Interp.WeaponCollisionOffset );
+                                TransformSkinnedInterpState( Interp.Arms, ViewToWorld );
+                                TransformWeaponInterpState( Interp.Weapon, ViewToWorld );
                             } );
 }
 
