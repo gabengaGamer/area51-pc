@@ -964,6 +964,11 @@ xbool eng_Begin( const char* pTaskName )
 
     if( s.FrameCleared == FALSE )
     {
+        // Preserve any offscreen target that was bound before the first eng_Begin of the frame
+        xbool bTargetsPushed = FALSE;
+        if( rtarget_GetCurrentCount() )
+            bTargetsPushed = rtarget_PushTargets();
+
         // Use rtarget system for clearing and setting targets		
         f32 clearColor[4];
         d3deng_GetClearColor( clearColor );
@@ -972,6 +977,9 @@ xbool eng_Begin( const char* pTaskName )
         rtarget_Clear( RTARGET_CLEAR_ALL, clearColor, 1.0f, 0 );
 
         d3deng_RunFrameStages( &eng_frame_stage::OnBeginFrame );
+
+        if( bTargetsPushed )
+            rtarget_PopTargets();
 
         s.FrameCleared = TRUE;
     }
