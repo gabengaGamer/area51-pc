@@ -39,9 +39,9 @@ public:
                     circuit&    GetCircuit      ( void ) { return m_Circuit; }
 protected:   
     //=========================================================================
-            void                CaptureRenderState  ( void );
-            void                UpdateRenderState   ( f32 Alpha );
-            void                ClearRenderState    ( void );
+    virtual void                CaptureRenderState  ( void );
+    virtual void                UpdateRenderState   ( f32 Alpha );
+    virtual void                ClearRenderState    ( void );
             void                InvalidateRenderState( void );
     const   matrix4&            GetRenderL2W        ( void ) const;
 

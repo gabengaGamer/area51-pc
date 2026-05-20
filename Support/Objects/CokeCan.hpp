@@ -166,9 +166,9 @@ protected:
     floor_properties    m_FloorProperties;          // Floor tracking class
     simple_anim_interp_cache m_RenderCache;
 
-    void                CaptureRenderState      ( void );
-    void                UpdateRenderState       ( f32 Alpha );
-    void                ClearRenderState        ( void );
+    virtual void        CaptureRenderState      ( void );
+    virtual void        UpdateRenderState       ( f32 Alpha );
+    virtual void        ClearRenderState        ( void );
 };
 
 //=========================================================================
