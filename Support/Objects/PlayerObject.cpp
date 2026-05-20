@@ -96,6 +96,7 @@ static const f32    k_Modfactor                 = 2.5f;
 static const f32    DeathCamStartBackDist       = 800.0f;
 static const f32    DeathCamEndDist             = 500.0f;
 static const f32    ZERO                        = 0.00001f;
+static const f32    s_ReferenceFrameRate        = 30.0f;
 
              f32     g_EnemyShootBBoxPct = 1.20f; // percent of screen bbox width to inflate for an aiming HIT bbox
 //static      f32     s_AimAssistRadius   = 20.0f;
@@ -1116,6 +1117,9 @@ zone_mgr::zone_id player::GetPlayerViewZone( void ) const
     {
         return (zone_mgr::zone_id)pThirdPersonCam->GetZone1();
     }
+
+    if( HasInterpCache( m_RenderCache ) )
+        return g_ZoneMgr.GetTrackerZoneAtPosition( m_ZoneTracker, m_RenderCache.Interp.View.GetPosition() );
     
     // Use object zone
     return GetPlayerObjectZone();
@@ -1599,8 +1603,6 @@ void player::PushViewCinematic ( lock_view_node* pLockViewBuffer )
 void player::UpdateViewCinematic ( const f32& rDeltaTime )
 {
     //play through the cinematic 
-    
-    (void) rDeltaTime;
 
     ASSERT( m_CurrentViewNode < lock_player_view::MAX_TABLE_SIZE && m_CurrentViewNode >= 0);
 
@@ -1652,7 +1654,7 @@ void player::UpdateViewCinematic ( const f32& rDeltaTime )
         
         f32 Tquad = -(T*T - T)*m_CScale;
         
-        m_CTimeSum += Tquad;
+        m_CTimeSum += Tquad * (rDeltaTime * s_ReferenceFrameRate);
         
         if (m_CTimeSum > 0.0f && m_CTimeSum < 1.0f)
         {
@@ -2028,10 +2030,11 @@ void player::ComputeView( view& View, view_flags Flags )
             // Apply movement roll
             if ( m_DeltaTime > 0.0f )
             {
-                radian RollAmount = ((m_StrafeVelocity.Length() / m_DeltaTime) / s_ViewRollTune) * R_1;
+                const vector3 StrafeSpeed = m_StrafeVelocity / m_DeltaTime;
+                radian RollAmount = (StrafeSpeed.Length() / s_ViewRollTune) * R_1;
                 vector3 Forward;
                 Forward.Set( radian3( 0.0f, Rot.Yaw, 0.0f ) );
-                if ( m_StrafeVelocity.Cross( Forward ).GetY() < 0 )
+                if ( StrafeSpeed.Cross( Forward ).GetY() < 0 )
                 {
                     RollAmount = -RollAmount;
                 }
@@ -2719,7 +2722,7 @@ void player::OnAdvanceLogic( f32 DeltaTime )
     // KSS -- new cinema code
     if( m_Cinema.m_bUseViewCorrection )
     {
-        m_Cinema.m_ViewCorrectionDelta *= CINEMA_DELTA_FADE_T;
+        m_Cinema.m_ViewCorrectionDelta *= x_pow( CINEMA_DELTA_FADE_T, DeltaTime * s_ReferenceFrameRate );
     }
 
     // Store a pointer to the current weapon.  This pointer is only valid 
@@ -4439,7 +4442,7 @@ void player::UpdateMovement( f32 DeltaTime )
     ASSERT( m_ArmsVelocity.IsValid() );
 
     // dampen with drag
-    m_ArmsVelocity -= m_ArmsVelocity * s_ArmsDampen;
+    m_ArmsVelocity *= x_pow( 1.0f - s_ArmsDampen, DeltaTime * s_ReferenceFrameRate );
     m_ArmsOffset   += m_ArmsVelocity * DeltaTime;
 
     ASSERT( m_ArmsOffset.IsValid() );

@@ -596,7 +596,8 @@ void light_mgr::BeginLightCollection( void )
     // sort the lights based on their score...this will mean that lights
     // with a higher intensity and color will get precedence when it comes
     // time to whittle them down to a nice number for the hardware
-    x_qsort( m_pSpadLights, nLights, sizeof(spad_light), SpadLightSortFn );
+    if( nLights > 1 )
+        x_qsort( m_pSpadLights, nLights, sizeof(spad_light), SpadLightSortFn );
 
     m_NSpadLights   = nLights;
     m_bInCollection = TRUE;

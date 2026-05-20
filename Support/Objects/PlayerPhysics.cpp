@@ -910,6 +910,9 @@ xbool player::UpdateLadderMovement( f32 DeltaTime )
 
     // Compute final vel
     vector3 FinalVel = UpDownVel + SideVel ;
+    m_ForwardVelocity = UpDownVel ;
+    m_StrafeVelocity  = SideVel ;
+    m_DeltaPos        = FinalVel ;
 
     // Clear velocity so player doesn't shoot up/down if no input
     Physics.ZeroVelocity() ;

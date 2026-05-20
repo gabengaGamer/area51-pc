@@ -1057,6 +1057,18 @@ zone_mgr::zone_id zone_mgr::FindZone( const vector3& Position ) const
 
 //=========================================================================
 
+zone_mgr::zone_id zone_mgr::GetTrackerZoneAtPosition( const tracker& Tracker, const vector3& Position ) const
+{
+    if( m_nZones == 0 )
+        return (zone_id)0;
+
+    tracker TempTracker = Tracker;
+    MoveTracker( TempTracker, Position );
+    return TempTracker.GetMainZone();
+}
+
+//=========================================================================
+
 xbool zone_mgr::BBoxInView( const frustum& Frustum, const bbox& BBox ) const
 {
     // Collect all the data

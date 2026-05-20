@@ -148,6 +148,7 @@ public:
     void        Render                  ( void ) const;
     void        RenderMPZoneStates      ( void ) const;
     zone_id     FindZone                ( const vector3& Position ) const;
+    zone_id     GetTrackerZoneAtPosition( const tracker& Tracker, const vector3& Position ) const;
     void        GetBBoxMaxNormalMasks   ( const plane& Plane, vector3& Mask0, vector3& Mask1 ) const;
     xbool       IsBBoxVisible           ( const bbox& BBox, zone_id Zone1, zone_id Zone2 ) const; 
     xbool       IsZoneVisible           ( zone_id iZone ) const;
