@@ -270,26 +270,26 @@ void dlg_load_game::RenderLevelName( s32 NameAlpha, f32 ShadowOffsetX, f32 Shado
     f32 ScaleX = (f32)GetScreenRect().GetWidth()  / (f32)LOAD_BASE_WIDTH;
     f32 ScaleY = (f32)GetScreenRect().GetHeight() / (f32)LOAD_BASE_HEIGHT;
 
-    irect ShadowRect = TextRect;
-    ShadowRect.Translate( (s32)(2.0f * ScaleX), (s32)(2.0f * ScaleY) );
-    g_UiMgr->RenderText( FontIndex,
-                         ShadowRect,
-                         TextFlags,
-                         xcolor( 0, 0, 0, (u8)MINMAX( 0, (NameAlpha * 3) / 4, 255 ) ),
-                         m_NameText );
+    //irect ShadowRect = TextRect;
+    //ShadowRect.Translate( (s32)(2.0f * ScaleX), (s32)(2.0f * ScaleY) );
+    //g_UiMgr->RenderText( FontIndex,
+    //                     ShadowRect,
+    //                     TextFlags,
+    //                     xcolor( 0, 0, 0, (u8)MINMAX( 0, (NameAlpha * 3) / 4, 255 ) ),
+    //                     m_NameText );
 
-    if( ShadowAlpha > 0.0f )
-    {
-        s32 GlowAlpha = MINMAX( 0, (s32)(255.0f * ShadowAlpha), NameAlpha );
-
-        ShadowRect = TextRect;
-        ShadowRect.Translate( (s32)(ShadowOffsetX * ScaleX), (s32)(ShadowOffsetY * ScaleY) );
-        g_UiMgr->RenderText( FontIndex,
-                             ShadowRect,
-                             TextFlags,
-                             xcolor( s_LoadNameGlow.R, s_LoadNameGlow.G, s_LoadNameGlow.B, (u8)GlowAlpha ),
-                             m_NameText );
-    }
+    //if( ShadowAlpha > 0.0f )
+    //{
+    //    s32 GlowAlpha = MINMAX( 0, (s32)(255.0f * ShadowAlpha), NameAlpha );
+	//
+    //    ShadowRect = TextRect;
+    //    ShadowRect.Translate( (s32)(ShadowOffsetX * ScaleX), (s32)(ShadowOffsetY * ScaleY) );
+    //    g_UiMgr->RenderText( FontIndex,
+    //                         ShadowRect,
+    //                         TextFlags,
+    //                         xcolor( s_LoadNameGlow.R, s_LoadNameGlow.G, s_LoadNameGlow.B, (u8)GlowAlpha ),
+    //                         m_NameText );
+    //}
 
     g_UiMgr->RenderText( FontIndex,
                          TextRect,
