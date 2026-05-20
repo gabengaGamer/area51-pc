@@ -146,6 +146,9 @@ loop:
 	// Need to release it?
 	if( pChannel->Hardware.CurrentPosition >= pSample->nSamples )
 	{
+        if( pChannel->StreamData.pStream && !pChannel->StreamData.pStream->StreamDone )
+            return;
+
 		// Nuke it.
 		g_AudioHardware.ReleaseChannel( pChannel );
 	}
@@ -450,6 +453,11 @@ void audio_hardware::InitChannelStreamed( channel* pChannel )
 	pChannel->StreamData.PreviousPosition = 0;
 	pChannel->StreamData.WriteCursor      = 0;
 
+    if( pHotSample->CompressionType == MP3 )
+    {
+        x_memset( (void*)pHotSample->AudioRam, 0, STREAM_BUFFER_SIZE * 2 );
+    }
+
 	// Nuke the number of samples played.
 	pChannel->StreamData.nSamplesPlayed = 0;
 
@@ -475,7 +483,7 @@ void audio_hardware::InitChannelStreamed( channel* pChannel )
     s32 LoopEnd   = STREAM_BUFFER_SIZE;
 
     // Will sample fit in one buffer?
-    if( nSampleBytes < nBufferBytes )
+    if( (pHotSample->CompressionType != MP3) && (nSampleBytes < nBufferBytes) )
     {
         IsLooped = FALSE;
         LoopEnd  = nSampleBytes / 2;

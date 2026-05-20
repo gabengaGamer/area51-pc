@@ -50,17 +50,18 @@ public:
 
 private:
         struct      mp3_decoder_state;
-        static s32  mp3_fetch_data              ( audio_stream*       pStream,
+        static s32  mp3_stream_read             ( audio_stream*       pStream,
+                                                  mp3_decoder_state&  State,
                                                   void*               pBuffer,
-                                                  s32                 nBytes,
-                                                  s32                 Offset );
+                                                  s32                 nBytes );
         static void mp3_state_reset             ( mp3_decoder_state&  State,
                                                   const audio_stream* pStream );
         static void mp3_state_compact           ( mp3_decoder_state&  State );
         static void mp3_state_refill            ( audio_stream*       pStream,
                                                   mp3_decoder_state&  State );
         static s32  mp3_state_available_bytes   ( const mp3_decoder_state& State );
-        static xbool mp3_state_validate_frame   ( const mp3_decoder_state& State );
+        static void mp3_state_finish            ( audio_stream*       pStream,
+                                                  mp3_decoder_state&  State );
         static s32  mp3_state_decode_frame      ( audio_stream*       pStream,
                                                   mp3_decoder_state&  State );
         static xbool IsValidStream              ( const audio_stream* pStream );
