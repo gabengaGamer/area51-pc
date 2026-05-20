@@ -9,16 +9,9 @@
 #include "EventMgr\EventMgr.hpp"
 #include "Dictionary\global_dictionary.hpp"
 #include "Event.hpp"
-#include "DeltaMgr\InterpolationMgr.hpp"
 
 xstring g_AnimSurfaceStringList;
 anim_surface* anim_surface::s_pFirstRenderSurface = NULL;
-static interpolation_mgr::provider s_AnimSurfaceInterpolationProvider( anim_surface::CaptureRenderStates,
-                                                                       anim_surface::UpdateRenderStates,
-                                                                       anim_surface::ClearRenderStates,
-                                                                       interpolation_mgr::CLEAR_STAGE_END_FRAME,
-                                                                       300 );
-
 
 //=============================================================================
 // OBJECT DESCRIPTION
@@ -113,30 +106,6 @@ anim_surface::~anim_surface( void )
         m_pPrevRenderSurface->m_pNextRenderSurface = m_pNextRenderSurface;
     if( s_pFirstRenderSurface == this )
         s_pFirstRenderSurface = m_pNextRenderSurface;
-}
-
-//=============================================================================
-
-void anim_surface::CaptureRenderStates( void )
-{
-    for( anim_surface* pSurface = s_pFirstRenderSurface; pSurface; pSurface = pSurface->m_pNextRenderSurface )
-        pSurface->CaptureRenderState();
-}
-
-//=============================================================================
-
-void anim_surface::UpdateRenderStates( f32 Alpha )
-{
-    for( anim_surface* pSurface = s_pFirstRenderSurface; pSurface; pSurface = pSurface->m_pNextRenderSurface )
-        pSurface->UpdateRenderState( Alpha );
-}
-
-//=============================================================================
-
-void anim_surface::ClearRenderStates( void )
-{
-    for( anim_surface* pSurface = s_pFirstRenderSurface; pSurface; pSurface = pSurface->m_pNextRenderSurface )
-        pSurface->ClearRenderState();
 }
 
 //=============================================================================

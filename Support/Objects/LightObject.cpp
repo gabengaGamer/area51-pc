@@ -4,19 +4,12 @@
 #include "CollisionMgr\CollisionMgr.hpp"
 #include "Render\Editor\editor_icons.hpp"
 #include "Render\LightMgr.hpp"
-#include "DeltaMgr\InterpolationMgr.hpp"
 
 //=========================================================================
 // BASE LIGHT OBJECT
 //=========================================================================
 
 light_obj* light_obj::s_pFirstRenderLight = NULL;
-
-static interpolation_mgr::provider s_LightInterpolationProvider( light_obj::CaptureRenderStates,
-                                                                 light_obj::UpdateRenderStates,
-                                                                 light_obj::ClearRenderStates,
-                                                                 interpolation_mgr::CLEAR_STAGE_END_FRAME,
-                                                                 250 );
 
 static struct light_obj_desc : public object_desc
 {
@@ -108,30 +101,6 @@ light_obj::~light_obj( void )
         m_pPrevRenderLight->m_pNextRenderLight = m_pNextRenderLight;
     if( s_pFirstRenderLight == this )
         s_pFirstRenderLight = m_pNextRenderLight;
-}
-
-//=========================================================================
-
-void light_obj::CaptureRenderStates( void )
-{
-    for( light_obj* pLight = s_pFirstRenderLight; pLight; pLight = pLight->m_pNextRenderLight )
-        pLight->CaptureRenderState();
-}
-
-//=========================================================================
-
-void light_obj::UpdateRenderStates( f32 Alpha )
-{
-    for( light_obj* pLight = s_pFirstRenderLight; pLight; pLight = pLight->m_pNextRenderLight )
-        pLight->UpdateRenderState( Alpha );
-}
-
-//=========================================================================
-
-void light_obj::ClearRenderStates( void )
-{
-    for( light_obj* pLight = s_pFirstRenderLight; pLight; pLight = pLight->m_pNextRenderLight )
-        pLight->ClearRenderState();
 }
 
 //=========================================================================

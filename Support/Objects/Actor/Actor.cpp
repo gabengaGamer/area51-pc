@@ -31,7 +31,6 @@
 #include "Objects\Teleporter.hpp"
 #include "Objects\Interpolation\InterpolationMath.hpp"
 #include "StateMgr\MapList.hpp"
-#include "DeltaMgr\InterpolationMgr.hpp"
 
 
 #ifndef X_EDITOR
@@ -102,13 +101,6 @@ avatar_tweaks g_AvatarTweaks;
 
 actor* actor::m_pFirstActive = NULL;
 s32    actor::m_nActive      = 0;
-
-static interpolation_mgr::provider s_ActorInterpolationProvider( actor::CaptureRenderStates,
-                                                                 actor::UpdateRenderStates,
-                                                                 actor::ClearRenderStates,
-                                                                 interpolation_mgr::CLEAR_STAGE_END_FRAME,
-                                                                 200 );
-
 
 //=========================================================================
 // Actor class
@@ -270,45 +262,6 @@ void actor::OnKill( void )
 
 //=========================================================================
 
-void actor::CaptureRenderStates( void )
-{
-    actor* pActor = m_pFirstActive;
-    while( pActor )
-    {
-        actor* pNextActor = pActor->m_pNextActive;
-        pActor->CaptureActorRenderState();
-        pActor = pNextActor;
-    }
-}
-
-//=========================================================================
-
-void actor::UpdateRenderStates( f32 Alpha )
-{
-    actor* pActor = m_pFirstActive;
-    while( pActor )
-    {
-        actor* pNextActor = pActor->m_pNextActive;
-        pActor->UpdateActorRenderState( Alpha );
-        pActor = pNextActor;
-    }
-}
-
-//=========================================================================
-
-void actor::ClearRenderStates( void )
-{
-    actor* pActor = m_pFirstActive;
-    while( pActor )
-    {
-        actor* pNextActor = pActor->m_pNextActive;
-        pActor->ClearActorRenderState();
-        pActor = pNextActor;
-    }
-}
-
-//=========================================================================
-
 void actor::InvalidateActorRenderState( void )
 {
     actor_interp_state InitialState;
@@ -317,6 +270,35 @@ void actor::InvalidateActorRenderState( void )
     InitWeaponInterpState( InitialState.Weapon );
 
     InitInterpCache( m_ActorRenderCache, InitialState );
+}
+
+//=========================================================================
+
+void actor::CaptureRenderState( void )
+{
+    if( !m_bIsActive )
+    {
+        ClearActorRenderState();
+        return;
+    }
+
+    CaptureActorRenderState();
+}
+
+//=========================================================================
+
+void actor::UpdateRenderState( f32 Alpha )
+{
+    if( m_bIsActive )
+        UpdateActorRenderState( Alpha );
+}
+
+//=========================================================================
+
+void actor::ClearRenderState( void )
+{
+    if( m_bIsActive )
+        ClearActorRenderState();
 }
 
 //=========================================================================

@@ -25,19 +25,12 @@
 #include "Obj_Mgr\Obj_Mgr.hpp"
 #include "Objects\DamageField.hpp"
 #include "Objects\Actor\Actor.hpp"
-#include "DeltaMgr\InterpolationMgr.hpp"
 
 
 
 //=========================================================================
 // DEFINES
 //=========================================================================
-
-static interpolation_mgr::provider s_CorpseInterpolationProvider( corpse::CaptureRenderStates,
-                                                                  corpse::UpdateRenderStates,
-                                                                  corpse::ClearRenderStates,
-                                                                  interpolation_mgr::CLEAR_STAGE_END_FRAME,
-                                                                  500 );
 
 static  s32    CORPSE_MAX_DYNAMIC_COUNT         = 3;
 static  s32    CORPSE_MAX_ACTIVE_COUNT          = 4;
@@ -440,45 +433,6 @@ xbool corpse::ReachedMaxActiveLimit( void )
 {
     return ( m_ActiveCount >= CORPSE_MAX_ACTIVE_COUNT ) ||
            ( g_PhysicsMgr.GetAwakeInstanceCount() > CORPSE_MAX_ACTIVE_COUNT );
-}
-
-//===========================================================================
-
-void corpse::CaptureRenderStates( void )
-{
-    corpse* pCorpse = s_pFirstRenderCorpse;
-    while( pCorpse )
-    {
-        corpse* pNextCorpse = pCorpse->m_pNextRenderCorpse;
-        pCorpse->CaptureRenderState();
-        pCorpse = pNextCorpse;
-    }
-}
-
-//===========================================================================
-
-void corpse::UpdateRenderStates( f32 Alpha )
-{
-    corpse* pCorpse = s_pFirstRenderCorpse;
-    while( pCorpse )
-    {
-        corpse* pNextCorpse = pCorpse->m_pNextRenderCorpse;
-        pCorpse->UpdateRenderState( Alpha );
-        pCorpse = pNextCorpse;
-    }
-}
-
-//===========================================================================
-
-void corpse::ClearRenderStates( void )
-{
-    corpse* pCorpse = s_pFirstRenderCorpse;
-    while( pCorpse )
-    {
-        corpse* pNextCorpse = pCorpse->m_pNextRenderCorpse;
-        pCorpse->ClearRenderState();
-        pCorpse = pNextCorpse;
-    }
 }
 
 //===========================================================================

@@ -56,11 +56,6 @@ public:
     CREATE_RTTI( coke_can, object, object )
     virtual const object_desc&  GetTypeDesc     ( void ) const;    
     static  const object_desc&  GetObjectType   ( void );
-    static  void                CaptureRenderStates( void );
-    static  void                UpdateRenderStates( f32 Alpha );
-    static  void                ClearRenderStates( void );
-
-
 //=========================================================================
 // Public functions
 //=========================================================================

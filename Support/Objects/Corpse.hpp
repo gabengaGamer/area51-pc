@@ -60,9 +60,6 @@ public:
 
 static      void            LimitCount              ( void );
 static      xbool           ReachedMaxActiveLimit   ( void );
-static      void            CaptureRenderStates     ( void );
-static      void            UpdateRenderStates      ( f32 Alpha );
-static      void            ClearRenderStates       ( void );
 
             xbool           Initialize              ( actor&                Actor ,
                                                       xbool                 bDoBodyFade = TRUE,

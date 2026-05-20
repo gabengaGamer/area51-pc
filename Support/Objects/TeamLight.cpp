@@ -13,7 +13,6 @@
 #include "NetworkMgr\NetObjMgr.hpp"
 #include "Player.hpp"
 #include "Render\LightMgr.hpp"
-#include "DeltaMgr\InterpolationMgr.hpp"
 
 #ifndef X_EDITOR
 #include "GameLib\RenderContext.hpp"
@@ -22,12 +21,6 @@
 //=========================================================================
 
 team_light* team_light::s_pFirstRenderLight = NULL;
-
-static interpolation_mgr::provider s_TeamLightInterpolationProvider( team_light::CaptureRenderStates,
-                                                                     team_light::UpdateRenderStates,
-                                                                     team_light::ClearRenderStates,
-                                                                     interpolation_mgr::CLEAR_STAGE_END_FRAME,
-                                                                     260 );
 
 //=========================================================================
 // OBJECT DESCRIPTION
@@ -162,30 +155,6 @@ team_light::~team_light( void )
         m_pPrevRenderLight->m_pNextRenderLight = m_pNextRenderLight;
     if( s_pFirstRenderLight == this )
         s_pFirstRenderLight = m_pNextRenderLight;
-}
-
-//=========================================================================
-
-void team_light::CaptureRenderStates( void )
-{
-    for( team_light* pLight = s_pFirstRenderLight; pLight; pLight = pLight->m_pNextRenderLight )
-        pLight->CaptureRenderState();
-}
-
-//=========================================================================
-
-void team_light::UpdateRenderStates( f32 Alpha )
-{
-    for( team_light* pLight = s_pFirstRenderLight; pLight; pLight = pLight->m_pNextRenderLight )
-        pLight->UpdateRenderState( Alpha );
-}
-
-//=========================================================================
-
-void team_light::ClearRenderStates( void )
-{
-    for( team_light* pLight = s_pFirstRenderLight; pLight; pLight = pLight->m_pNextRenderLight )
-        pLight->ClearRenderState();
 }
 
 //=========================================================================

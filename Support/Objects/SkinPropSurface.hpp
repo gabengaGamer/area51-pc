@@ -27,10 +27,6 @@ public:
                             skin_prop_surface( void );
                            ~skin_prop_surface( void );
 
-    static  void                CaptureRenderStates( void );
-    static  void                UpdateRenderStates ( f32 Alpha );
-    static  void                ClearRenderStates  ( void );
-
     virtual         bbox    GetLocalBBox    ( void ) const;
     virtual         s32     GetMaterial     ( void ) const { return m_iMaterial; }
     virtual void            OnEnumProp      ( prop_enum&    List );

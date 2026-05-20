@@ -344,9 +344,6 @@ public:
 
 
     static  player*         GetActivePlayer     ( void );
-    static  void            CaptureRenderStates ( void );
-    static  void            UpdateRenderStates  ( f32 Alpha );
-    static  void            ClearRenderStates   ( void );
             void            SetAsActivePlayer   ( xbool bActive ) { m_bActivePlayer = bActive; }
             xbool           IsActivePlayer      ( void ) { return m_bActivePlayer; }
 
@@ -396,9 +393,10 @@ public:
             vector3         GetDefaultViewPos   ( void );
 
             void            ComputeView         ( view& View, view_flags Flags = player::VIEW_NULL );
-            void            CaptureRenderState  ( void );
-            void            UpdateRenderState   ( f32 Alpha );
-            void            ClearRenderState    ( void );
+    virtual void            CaptureRenderState  ( void );
+    virtual void            UpdateRenderState   ( f32 Alpha );
+    virtual void            ClearRenderState    ( void );
+    virtual void            ClearRenderStatePerView( void );
     virtual xbool           GetRenderWeaponL2W  ( matrix4& L2W,
                                                    new_weapon::render_state RenderState = new_weapon::RENDER_STATE_PLAYER ) const;
     virtual const matrix4*  GetRenderWeaponBones( s32& nBones,

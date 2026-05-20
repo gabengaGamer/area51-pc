@@ -25,10 +25,6 @@ public:
 
     team_light                                  ( void );
    ~team_light                                  ( void );
-    static  void                CaptureRenderStates( void );
-    static  void                UpdateRenderStates ( f32 Alpha );
-    static  void                ClearRenderStates  ( void );
-
     virtual s32                 GetMaterial     ( void ) const { return MAT_TYPE_NULL; }
 
 

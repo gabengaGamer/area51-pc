@@ -9,15 +9,9 @@
 #include "Debris\Debris_mgr.hpp"
 #include "Objects\Interpolation\InterpolationMath.hpp"
 #include "..\MiscUtils\SimpleUtils.hpp"
-#include "DeltaMgr\InterpolationMgr.hpp"
 
 xbool ShowCollision = FALSE;
 play_surface* play_surface::s_pFirstRenderSurface = NULL;
-static interpolation_mgr::provider s_PlaySurfaceInterpolationProvider( play_surface::CaptureRenderStates,
-                                                                       play_surface::UpdateRenderStates,
-                                                                       play_surface::ClearRenderStates,
-                                                                       interpolation_mgr::CLEAR_STAGE_END_FRAME,
-                                                                       600 );
 
 //=============================================================================
 // OBJECT DESCRIPTION
@@ -329,45 +323,6 @@ void play_surface::OnKill( void )
     g_PolyCache.InvalidateCells( GetBBox(), GetGuid() );
 
     object::OnKill();
-}
-
-//==============================================================================
-
-void play_surface::CaptureRenderStates( void )
-{
-    play_surface* pSurface = s_pFirstRenderSurface;
-    while( pSurface )
-    {
-        play_surface* pNextSurface = pSurface->m_pNextRenderSurface;
-        pSurface->CaptureRenderState();
-        pSurface = pNextSurface;
-    }
-}
-
-//==============================================================================
-
-void play_surface::UpdateRenderStates( f32 Alpha )
-{
-    play_surface* pSurface = s_pFirstRenderSurface;
-    while( pSurface )
-    {
-        play_surface* pNextSurface = pSurface->m_pNextRenderSurface;
-        pSurface->UpdateRenderState( Alpha );
-        pSurface = pNextSurface;
-    }
-}
-
-//==============================================================================
-
-void play_surface::ClearRenderStates( void )
-{
-    play_surface* pSurface = s_pFirstRenderSurface;
-    while( pSurface )
-    {
-        play_surface* pNextSurface = pSurface->m_pNextRenderSurface;
-        pSurface->ClearRenderState();
-        pSurface = pNextSurface;
-    }
 }
 
 //==============================================================================

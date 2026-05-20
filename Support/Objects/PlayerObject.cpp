@@ -38,7 +38,6 @@
 #include "Characters\ActorEffects.hpp"
 #include "Configuration/GameConfig.hpp"
 #include "objects\turret.hpp"
-#include "DeltaMgr\InterpolationMgr.hpp"
 #include "objects\WeaponShotgun.hpp"
 #include "Gamelib/DebugCheats.hpp"
 #include "objects\FocusObject.hpp"
@@ -61,12 +60,6 @@
 #include "NetworkMgr\MsgMgr.hpp"
 #include "Menu\DebugMenu2.hpp"
 #endif
-
-static interpolation_mgr::provider s_PlayerInterpolationProvider( player::CaptureRenderStates,
-                                                                  player::UpdateRenderStates,
-                                                                  player::ClearRenderStates,
-                                                                  interpolation_mgr::CLEAR_STAGE_PER_VIEW,
-                                                                  100 );
 
 #ifdef cgalley
 #define LOGGING_ENABLED 1
@@ -1929,60 +1922,6 @@ inline void player::ComputeStunnedPitchYawOffset( radian PitchOffset, radian Yaw
 //===========================================================================
 static f32 s_ViewRollTune = 3987.63f; 
 
-void player::CaptureRenderStates( void )
-{
-    slot_id ID = g_ObjMgr.GetFirst( object::TYPE_PLAYER );
-    while( ID != SLOT_NULL )
-    {
-        object* pObj = g_ObjMgr.GetObjectBySlot( ID );
-        player* pPlayer = &player::GetSafeType( *pObj );
-        if( pPlayer && (pPlayer->GetLocalSlot() != -1) )
-        {
-            pPlayer->CaptureRenderState();
-        }
-
-        ID = g_ObjMgr.GetNext( ID );
-    }
-}
-
-//===========================================================================
-
-void player::UpdateRenderStates( f32 Alpha )
-{
-    slot_id ID = g_ObjMgr.GetFirst( object::TYPE_PLAYER );
-    while( ID != SLOT_NULL )
-    {
-        object* pObj = g_ObjMgr.GetObjectBySlot( ID );
-        player* pPlayer = &player::GetSafeType( *pObj );
-        if( pPlayer && (pPlayer->GetLocalSlot() != -1) )
-        {
-            pPlayer->UpdateRenderState( Alpha );
-        }
-
-        ID = g_ObjMgr.GetNext( ID );
-    }
-}
-
-//===========================================================================
-
-void player::ClearRenderStates( void )
-{
-    slot_id ID = g_ObjMgr.GetFirst( object::TYPE_PLAYER );
-    while( ID != SLOT_NULL )
-    {
-        object* pObj = g_ObjMgr.GetObjectBySlot( ID );
-        player* pPlayer = &player::GetSafeType( *pObj );
-        if( pPlayer && (pPlayer->GetLocalSlot() != -1) && pPlayer->IsActivePlayer() )
-        {
-            pPlayer->ClearRenderState();
-        }
-
-        ID = g_ObjMgr.GetNext( ID );
-    }
-}
-
-//===========================================================================
-
 void player::ComputeView( view& View, view_flags Flags )
 {
     third_person_camera* pThirdPersonCamera = GetThirdPersonCamera();
@@ -2131,6 +2070,12 @@ void player::ComputeView( view& View, view_flags Flags )
 
 void player::CaptureRenderState( void )
 {
+    if( GetLocalSlot() == -1 )
+    {
+        ClearRenderState();
+        return;
+    }
+
     player_interp_state Snapshot;
     Snapshot.Valid = TRUE;
     Snapshot.WeaponCollisionOffset = m_WeaponCollisionOffset;
@@ -2173,6 +2118,9 @@ void player::CaptureRenderState( void )
 
 void player::UpdateRenderState( f32 Alpha )
 {
+    if( GetLocalSlot() == -1 )
+        return;
+
     UpdateInterpCache( m_RenderCache, Alpha,
                        [this]( const player_interp_state& Prev,
                                const player_interp_state& Curr,
@@ -2206,6 +2154,14 @@ void player::UpdateRenderState( f32 Alpha )
 void player::ClearRenderState( void )
 {
     ClearInterpCache( m_RenderCache );
+}
+
+//===========================================================================
+
+void player::ClearRenderStatePerView( void )
+{
+    if( (GetLocalSlot() != -1) && IsActivePlayer() )
+        ClearRenderState();
 }
 
 //===========================================================================

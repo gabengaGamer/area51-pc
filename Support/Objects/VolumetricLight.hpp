@@ -24,9 +24,6 @@ public:
 
                             volumetric_light_obj    ( void );
     virtual                ~volumetric_light_obj    ( void );
-    static  void            CaptureRenderStates     ( void );
-    static  void            UpdateRenderStates      ( f32 Alpha );
-    static  void            ClearRenderStates       ( void );
     virtual bbox            GetLocalBBox            ( void ) const;
     virtual s32             GetMaterial             ( void ) const { return MAT_TYPE_FLESH; }
     virtual void            OnEnumProp              ( prop_enum& List );

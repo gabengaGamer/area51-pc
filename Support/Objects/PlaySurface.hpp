@@ -38,10 +38,6 @@ public:
 
     virtual const object_desc&  GetTypeDesc     ( void ) const;
     static  const object_desc&  GetObjectType   ( void );
-    static  void                CaptureRenderStates( void );
-    static  void                UpdateRenderStates( f32 Alpha );
-    static  void                ClearRenderStates( void );
-
     virtual void                OnPolyCacheGather   ( void );
 
 protected:

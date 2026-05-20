@@ -14,19 +14,12 @@
 #include "Entropy.hpp"
 #include "E_Draw.hpp"
 #include "Render\Render.hpp"
-#include "DeltaMgr\InterpolationMgr.hpp"
 
 //==============================================================================
 // DEFINES
 //==============================================================================
 
 volumetric_light_obj* volumetric_light_obj::s_pFirstRenderLight = NULL;
-
-static interpolation_mgr::provider s_VolumetricLightInterpolationProvider( volumetric_light_obj::CaptureRenderStates,
-                                                                           volumetric_light_obj::UpdateRenderStates,
-                                                                           volumetric_light_obj::ClearRenderStates,
-                                                                           interpolation_mgr::CLEAR_STAGE_END_FRAME,
-                                                                           270 );
 
 //==============================================================================
 // OBJECT DESCRIPTION
@@ -112,30 +105,6 @@ volumetric_light_obj::~volumetric_light_obj( void )
     m_nBytesAlloced = 0;
     if( m_pData )
         x_free( m_pData );
-}
-
-//==============================================================================
-
-void volumetric_light_obj::CaptureRenderStates( void )
-{
-    for( volumetric_light_obj* pLight = s_pFirstRenderLight; pLight; pLight = pLight->m_pNextRenderLight )
-        pLight->CaptureRenderState();
-}
-
-//==============================================================================
-
-void volumetric_light_obj::UpdateRenderStates( f32 Alpha )
-{
-    for( volumetric_light_obj* pLight = s_pFirstRenderLight; pLight; pLight = pLight->m_pNextRenderLight )
-        pLight->UpdateRenderState( Alpha );
-}
-
-//==============================================================================
-
-void volumetric_light_obj::ClearRenderStates( void )
-{
-    for( volumetric_light_obj* pLight = s_pFirstRenderLight; pLight; pLight = pLight->m_pNextRenderLight )
-        pLight->ClearRenderState();
 }
 
 //==============================================================================

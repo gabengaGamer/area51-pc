@@ -508,6 +508,11 @@ public:
     virtual       f32           GetLookAtExtent ( void ) const { return .95f; }
                   type          GetType         ( void ) const;      
 
+    static        void          CaptureRenderStates( void );
+    static        void          UpdateRenderStates ( f32 Alpha );
+    static        void          ClearRenderStates  ( void );
+    static        void          ClearRenderStatesPerView( void );
+
             const bbox&         GetBBox         ( void );                
     virtual       bbox          GetColBBox      ( void );                
     virtual       bbox          GetScreenBBox   ( const view& rView );
@@ -679,6 +684,10 @@ protected:
     void                        SetTransform    ( const matrix4& L2W );
     void                        UpdateTransform ( void );
     xbool                       IsLoading       ( void );
+    virtual void                CaptureRenderState( void );
+    virtual void                UpdateRenderState ( f32 Alpha );
+    virtual void                ClearRenderState  ( void );
+    virtual void                ClearRenderStatePerView( void ) {}
     
     
     void                        SetNewZoneInfo          ( u16 ZoneInfo );

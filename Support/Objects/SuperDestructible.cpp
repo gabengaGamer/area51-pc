@@ -28,13 +28,6 @@
 #include "EventMgr\EventMgr.hpp"
 #include "Object.hpp"
 #include "Actor/actor.hpp"
-#include "DeltaMgr\InterpolationMgr.hpp"
-
-static interpolation_mgr::provider s_SuperDestructibleInterpolationProvider( super_destructible_obj::CaptureRenderStates,
-                                                                             super_destructible_obj::UpdateRenderStates,
-                                                                             super_destructible_obj::ClearRenderStates,
-                                                                             interpolation_mgr::CLEAR_STAGE_END_FRAME,
-                                                                             900 );
 
                                        
 //==========================================================================
@@ -227,30 +220,6 @@ super_destructible_obj::~super_destructible_obj(void)
             s_PainResponseInfo[ i ].Emitter = 0;
         }
     }
-}
-
-//=========================================================================
-
-void super_destructible_obj::CaptureRenderStates( void )
-{
-    for( super_destructible_obj* pObj = s_pFirstRenderSuper; pObj; pObj = pObj->m_pNextRenderSuper )
-        pObj->CaptureRenderState();
-}
-
-//=========================================================================
-
-void super_destructible_obj::UpdateRenderStates( f32 Alpha )
-{
-    for( super_destructible_obj* pObj = s_pFirstRenderSuper; pObj; pObj = pObj->m_pNextRenderSuper )
-        pObj->UpdateRenderState( Alpha );
-}
-
-//=========================================================================
-
-void super_destructible_obj::ClearRenderStates( void )
-{
-    for( super_destructible_obj* pObj = s_pFirstRenderSuper; pObj; pObj = pObj->m_pNextRenderSuper )
-        pObj->ClearRenderState();
 }
 
 //=========================================================================

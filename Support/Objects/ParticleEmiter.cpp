@@ -306,6 +306,36 @@ particle_emitter::~particle_emitter(void)
 
 //=========================================================================
 
+void particle_emitter::SyncFXTransform( void )
+{
+    if( m_FxHandle.IsValid() == TRUE )
+    {
+        const matrix4& L2W = GetL2W();
+
+        m_FxHandle.m_Fx.SetScale      ( vector3( m_Scale, m_Scale, m_Scale ) );
+        m_FxHandle.m_Fx.SetRotation   ( L2W.GetRotation() );
+        m_FxHandle.m_Fx.SetTranslation( L2W.GetTranslation() );
+    }
+}
+
+//=========================================================================
+
+void particle_emitter::UpdateRenderState( f32 Alpha )
+{
+    object::UpdateRenderState( Alpha );
+    SyncFXTransform();
+}
+
+//=========================================================================
+
+void particle_emitter::ClearRenderState( void )
+{
+    object::ClearRenderState();
+    SyncFXTransform();
+}
+
+//=========================================================================
+
 void particle_emitter::OnInit( void )
 {
     object::OnInit();

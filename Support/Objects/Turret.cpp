@@ -31,7 +31,6 @@
 #include "Objects\ProjectileEnergy.hpp"
 
 #include "ProjectileMesonSeeker.hpp"
-#include "DeltaMgr\InterpolationMgr.hpp"
 
 //#define TURRET_AI_LOGGING 
 
@@ -43,12 +42,6 @@
 
 inline 
 void debug_log_msg_fn(...) {}
-
-static interpolation_mgr::provider s_TurretInterpolationProvider( turret::CaptureRenderStates,
-                                                                  turret::UpdateRenderStates,
-                                                                  turret::ClearRenderStates,
-                                                                  interpolation_mgr::CLEAR_STAGE_END_FRAME,
-                                                                  800 );
 
 turret* turret::s_pFirstRenderTurret = NULL;
 
@@ -299,30 +292,6 @@ turret::~turret( void )
         m_pPrevRenderTurret->m_pNextRenderTurret = m_pNextRenderTurret;
     if( s_pFirstRenderTurret == this )
         s_pFirstRenderTurret = m_pNextRenderTurret;
-}
-
-//=============================================================================
-
-void turret::CaptureRenderStates( void )
-{
-    for( turret* pTurret = s_pFirstRenderTurret; pTurret; pTurret = pTurret->m_pNextRenderTurret )
-        pTurret->CaptureRenderState();
-}
-
-//=============================================================================
-
-void turret::UpdateRenderStates( f32 Alpha )
-{
-    for( turret* pTurret = s_pFirstRenderTurret; pTurret; pTurret = pTurret->m_pNextRenderTurret )
-        pTurret->UpdateRenderState( Alpha );
-}
-
-//=============================================================================
-
-void turret::ClearRenderStates( void )
-{
-    for( turret* pTurret = s_pFirstRenderTurret; pTurret; pTurret = pTurret->m_pNextRenderTurret )
-        pTurret->ClearRenderState();
 }
 
 //=============================================================================

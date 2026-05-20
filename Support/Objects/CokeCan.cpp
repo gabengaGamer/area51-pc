@@ -25,7 +25,6 @@
 #include "Objects\BaseProjectile.hpp"
 #include "Ragdoll\VerletCollision.hpp"
 #include "Objects\Player.hpp"
-#include "DeltaMgr\InterpolationMgr.hpp"
 
 #ifdef X_EDITOR
 #include "CollisionMgr\PolyCache.hpp"
@@ -35,12 +34,6 @@
 //==============================================================================
 // DEFINES
 //==============================================================================
-
-static interpolation_mgr::provider s_CokeCanInterpolationProvider( coke_can::CaptureRenderStates,
-                                                                   coke_can::UpdateRenderStates,
-                                                                   coke_can::ClearRenderStates,
-                                                                   interpolation_mgr::CLEAR_STAGE_END_FRAME,
-                                                                   400 );
 
 struct coke_can_tweaks
 {
@@ -375,47 +368,6 @@ const object_desc& coke_can::GetObjectType( void )
     return s_CokeCanDesc;
 }
 
-//=========================================================================
-
-void coke_can::CaptureRenderStates( void )
-{
-    coke_can* pCan = s_pFirstRenderCan;
-    while( pCan )
-    {
-        coke_can* pNextCan = pCan->m_pNextRenderCan;
-        pCan->CaptureRenderState();
-        pCan = pNextCan;
-    }
-}
-
-//=========================================================================
-
-void coke_can::UpdateRenderStates( f32 Alpha )
-{
-    coke_can* pCan = s_pFirstRenderCan;
-    while( pCan )
-    {
-        coke_can* pNextCan = pCan->m_pNextRenderCan;
-        pCan->UpdateRenderState( Alpha );
-        pCan = pNextCan;
-    }
-}
-
-//=========================================================================
-
-void coke_can::ClearRenderStates( void )
-{
-    coke_can* pCan = s_pFirstRenderCan;
-    while( pCan )
-    {
-        coke_can* pNextCan = pCan->m_pNextRenderCan;
-        pCan->ClearRenderState();
-        pCan = pNextCan;
-    }
-}
-
-//=========================================================================
-// FUNCTIONS
 //=========================================================================
 
 //=========================================================================

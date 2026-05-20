@@ -24,10 +24,6 @@ public:
                                 anim_surface    ( void );
                                ~anim_surface    ( void );
 
-    static  void                CaptureRenderStates( void );
-    static  void                UpdateRenderStates ( f32 Alpha );
-    static  void                ClearRenderStates  ( void );
-
     virtual void                OnEnumProp      ( prop_enum&    List );
     virtual xbool               OnProperty      ( prop_query&   I    );
 

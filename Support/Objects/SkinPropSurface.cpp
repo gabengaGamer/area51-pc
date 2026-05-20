@@ -4,15 +4,9 @@
 #include "Render\Render.hpp"
 #include "EventMgr\EventMgr.hpp"
 #include "Dictionary\global_dictionary.hpp"
-#include "DeltaMgr\InterpolationMgr.hpp"
 
 xstring g_SkinPropSurfaceStringList;
 skin_prop_surface* skin_prop_surface::s_pFirstRenderSurface = NULL;
-static interpolation_mgr::provider s_SkinPropSurfaceInterpolationProvider( skin_prop_surface::CaptureRenderStates,
-                                                                           skin_prop_surface::UpdateRenderStates,
-                                                                           skin_prop_surface::ClearRenderStates,
-                                                                           interpolation_mgr::CLEAR_STAGE_END_FRAME,
-                                                                           700 );
 //=============================================================================
 //=============================================================================
 
@@ -126,30 +120,6 @@ skin_prop_surface::~skin_prop_surface( void )
         m_pPrevRenderSurface->m_pNextRenderSurface = m_pNextRenderSurface;
     if( s_pFirstRenderSurface == this )
         s_pFirstRenderSurface = m_pNextRenderSurface;
-}
-
-//=============================================================================
-
-void skin_prop_surface::CaptureRenderStates( void )
-{
-    for( skin_prop_surface* pSurface = s_pFirstRenderSurface; pSurface; pSurface = pSurface->m_pNextRenderSurface )
-        pSurface->CaptureRenderState();
-}
-
-//=============================================================================
-
-void skin_prop_surface::UpdateRenderStates( f32 Alpha )
-{
-    for( skin_prop_surface* pSurface = s_pFirstRenderSurface; pSurface; pSurface = pSurface->m_pNextRenderSurface )
-        pSurface->UpdateRenderState( Alpha );
-}
-
-//=============================================================================
-
-void skin_prop_surface::ClearRenderStates( void )
-{
-    for( skin_prop_surface* pSurface = s_pFirstRenderSurface; pSurface; pSurface = pSurface->m_pNextRenderSurface )
-        pSurface->ClearRenderState();
 }
 
 //=============================================================================
