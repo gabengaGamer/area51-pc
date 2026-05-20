@@ -100,9 +100,6 @@ protected:
     circuit     m_Circuit;
     transform_interp_cache  m_RenderCache;
 
-    static  team_light*  s_pFirstRenderLight;
-            team_light*  m_pNextRenderLight;
-            team_light*  m_pPrevRenderLight;
 };
 
 //=========================================================================

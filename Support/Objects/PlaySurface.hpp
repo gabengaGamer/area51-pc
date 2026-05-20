@@ -59,9 +59,6 @@ protected:
 
 protected:
 
-    static  play_surface*       s_pFirstRenderSurface;
-            play_surface*       m_pNextRenderSurface;
-            play_surface*       m_pPrevRenderSurface;
             matrix4             m_RenderPrevL2W;
             matrix4             m_RenderCurrL2W;
             matrix4             m_RenderInterpL2W;

@@ -11,7 +11,6 @@
 #include "..\MiscUtils\SimpleUtils.hpp"
 
 xbool ShowCollision = FALSE;
-play_surface* play_surface::s_pFirstRenderSurface = NULL;
 
 //=============================================================================
 // OBJECT DESCRIPTION
@@ -92,12 +91,6 @@ static xbool ShouldSnapPlaySurfaceState( const matrix4& Prev, const matrix4& Cur
 
 play_surface::play_surface( void )
 {
-    m_pNextRenderSurface = s_pFirstRenderSurface;
-    m_pPrevRenderSurface = NULL;
-    if( s_pFirstRenderSurface )
-        s_pFirstRenderSurface->m_pPrevRenderSurface = this;
-    s_pFirstRenderSurface = this;
-
     m_RenderPrevL2W.Identity();
     m_RenderCurrL2W.Identity();
     m_RenderInterpL2W.Identity();
@@ -109,13 +102,6 @@ play_surface::play_surface( void )
 
 play_surface::~play_surface( void )
 {
-    if( m_pPrevRenderSurface )
-        m_pPrevRenderSurface->m_pNextRenderSurface = m_pNextRenderSurface;
-    else
-        s_pFirstRenderSurface = m_pNextRenderSurface;
-
-    if( m_pNextRenderSurface )
-        m_pNextRenderSurface->m_pPrevRenderSurface = m_pPrevRenderSurface;
 }
 
 //=============================================================================

@@ -11,7 +11,6 @@
 #include "Event.hpp"
 
 xstring g_AnimSurfaceStringList;
-anim_surface* anim_surface::s_pFirstRenderSurface = NULL;
 
 //=============================================================================
 // OBJECT DESCRIPTION
@@ -86,12 +85,6 @@ const object_desc& anim_surface::GetObjectType( void )
 
 anim_surface::anim_surface( void )
 {
-    m_pNextRenderSurface = s_pFirstRenderSurface;
-    m_pPrevRenderSurface = NULL;
-    if( s_pFirstRenderSurface )
-        s_pFirstRenderSurface->m_pPrevRenderSurface = this;
-    s_pFirstRenderSurface = this;
-
     InvalidateRenderState();
     m_iBackupAnimString = g_StringMgr.Add( "None" );
 }
@@ -100,12 +93,6 @@ anim_surface::anim_surface( void )
 
 anim_surface::~anim_surface( void )
 {
-    if( m_pNextRenderSurface )
-        m_pNextRenderSurface->m_pPrevRenderSurface = m_pPrevRenderSurface;
-    if( m_pPrevRenderSurface )
-        m_pPrevRenderSurface->m_pNextRenderSurface = m_pNextRenderSurface;
-    if( s_pFirstRenderSurface == this )
-        s_pFirstRenderSurface = m_pNextRenderSurface;
 }
 
 //=============================================================================

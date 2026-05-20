@@ -20,8 +20,6 @@
 
 //=========================================================================
 
-team_light* team_light::s_pFirstRenderLight = NULL;
-
 //=========================================================================
 // OBJECT DESCRIPTION
 //=========================================================================
@@ -113,12 +111,6 @@ const object_desc& team_light::GetObjectType( void )
 
 team_light::team_light( void )
 { 
-    m_pNextRenderLight = s_pFirstRenderLight;
-    m_pPrevRenderLight = NULL;
-    if( s_pFirstRenderLight )
-        s_pFirstRenderLight->m_pPrevRenderLight = this;
-    s_pFirstRenderLight = this;
-
     m_NewState = FRIENDLY_ALL;
     m_OldState = FRIENDLY_ALL;
     m_TransitionValue = 1.0f;
@@ -149,12 +141,6 @@ team_light::team_light( void )
 
 team_light::~team_light( void )
 { 
-    if( m_pNextRenderLight )
-        m_pNextRenderLight->m_pPrevRenderLight = m_pPrevRenderLight;
-    if( m_pPrevRenderLight )
-        m_pPrevRenderLight->m_pNextRenderLight = m_pNextRenderLight;
-    if( s_pFirstRenderLight == this )
-        s_pFirstRenderLight = m_pNextRenderLight;
 }
 
 //=========================================================================

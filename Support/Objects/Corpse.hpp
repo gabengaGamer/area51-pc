@@ -139,7 +139,6 @@ protected:
 
         // Static data
 static  s32                     m_ActiveCount;          // # of active (moving) corpses
-static  corpse*                  s_pFirstRenderCorpse;
     
         // Misc
         guid                    m_OriginGuid;               // Guid of object that created it (if any)
@@ -180,8 +179,6 @@ static  corpse*                  s_pFirstRenderCorpse;
         
         // Audio
         f32                     m_ImpactSfxTimer;       // Timer count down since last impact
-        corpse*                 m_pNextRenderCorpse;
-        corpse*                 m_pPrevRenderCorpse;
         simple_anim_interp_cache m_RenderCache;
 
             void                CaptureRenderState      ( void );

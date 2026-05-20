@@ -2070,9 +2070,11 @@ void player::ComputeView( view& View, view_flags Flags )
 
 void player::CaptureRenderState( void )
 {
+    actor::CaptureRenderState();
+
     if( GetLocalSlot() == -1 )
     {
-        ClearRenderState();
+        ClearInterpCache( m_RenderCache );
         return;
     }
 
@@ -2118,6 +2120,8 @@ void player::CaptureRenderState( void )
 
 void player::UpdateRenderState( f32 Alpha )
 {
+    actor::UpdateRenderState( Alpha );
+
     if( GetLocalSlot() == -1 )
         return;
 
@@ -2154,6 +2158,7 @@ void player::UpdateRenderState( f32 Alpha )
 void player::ClearRenderState( void )
 {
     ClearInterpCache( m_RenderCache );
+    actor::ClearRenderState();
 }
 
 //===========================================================================

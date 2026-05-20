@@ -73,10 +73,6 @@ protected:
 
 protected:
 
-    static  anim_surface*           s_pFirstRenderSurface;
-            anim_surface*           m_pNextRenderSurface;
-            anim_surface*           m_pPrevRenderSurface;
-
     anim_group::handle          m_hAnimGroup;
     rhandle<char>               m_hAudioPackage;
     simple_anim_player          m_AnimPlayer;

@@ -105,9 +105,6 @@ public:
     virtual guid            GetParentGuid               ( void )            { return m_ParentGuid; }
                                                         
 protected:                                              
-    static  super_destructible_obj* s_pFirstRenderSuper;
-            super_destructible_obj* m_pNextRenderSuper;
-            super_destructible_obj* m_pPrevRenderSuper;
     anim_group::handle      m_hAnimGroup;
     simple_anim_player      m_AnimPlayer;
     simple_anim_interp_cache m_RenderCache;

@@ -9,8 +9,6 @@
 // BASE LIGHT OBJECT
 //=========================================================================
 
-light_obj* light_obj::s_pFirstRenderLight = NULL;
-
 static struct light_obj_desc : public object_desc
 {
     light_obj_desc( void ) : object_desc( 
@@ -75,12 +73,6 @@ const object_desc& light_obj::GetObjectType( void )
 
 light_obj::light_obj( void ) 
 {
-    m_pNextRenderLight = s_pFirstRenderLight;
-    m_pPrevRenderLight = NULL;
-    if( s_pFirstRenderLight )
-        s_pFirstRenderLight->m_pPrevRenderLight = this;
-    s_pFirstRenderLight = this;
-
     m_Sphere.Pos.Set(0,0,0);
     m_Sphere.R=400;
     m_Color.Set(255,255,255,255);
@@ -95,12 +87,6 @@ light_obj::light_obj( void )
 
 light_obj::~light_obj( void )
 {
-    if( m_pNextRenderLight )
-        m_pNextRenderLight->m_pPrevRenderLight = m_pPrevRenderLight;
-    if( m_pPrevRenderLight )
-        m_pPrevRenderLight->m_pNextRenderLight = m_pNextRenderLight;
-    if( s_pFirstRenderLight == this )
-        s_pFirstRenderLight = m_pNextRenderLight;
 }
 
 //=========================================================================

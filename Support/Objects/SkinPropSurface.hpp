@@ -88,10 +88,6 @@ protected:
     
 protected:
 
-    static  skin_prop_surface*      s_pFirstRenderSurface;
-            skin_prop_surface*      m_pNextRenderSurface;
-            skin_prop_surface*      m_pPrevRenderSurface;
-
     skin_inst                   m_Inst;         // Render Instance for the Play Surface
 
     anim_group::handle          m_hAnimGroup;

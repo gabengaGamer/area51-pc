@@ -43,9 +43,6 @@
 inline 
 void debug_log_msg_fn(...) {}
 
-turret* turret::s_pFirstRenderTurret = NULL;
-
-
 //void draw_Cylinder  ( const vector3& Center, f32 Radius, f32 Height, s32 nSteps, xcolor Color, xbool bCapped, const vector3& Up);
 //==============================================================================
 //  DEFINES
@@ -150,12 +147,6 @@ turret::turret( void ) :
     m_UpperBoundary( NULL_GUID ),
     m_LowerBoundary( NULL_GUID )
 {
-    m_pNextRenderTurret = s_pFirstRenderTurret;
-    m_pPrevRenderTurret = NULL;
-    if( s_pFirstRenderTurret )
-        s_pFirstRenderTurret->m_pPrevRenderTurret = this;
-    s_pFirstRenderTurret = this;
-
     InvalidateRenderState();
 
    m_ProjectileTemplateID   = -1;
@@ -286,12 +277,6 @@ turret::turret( void ) :
 
 turret::~turret( void )
 {
-    if( m_pNextRenderTurret )
-        m_pNextRenderTurret->m_pPrevRenderTurret = m_pPrevRenderTurret;
-    if( m_pPrevRenderTurret )
-        m_pPrevRenderTurret->m_pNextRenderTurret = m_pNextRenderTurret;
-    if( s_pFirstRenderTurret == this )
-        s_pFirstRenderTurret = m_pNextRenderTurret;
 }
 
 //=============================================================================

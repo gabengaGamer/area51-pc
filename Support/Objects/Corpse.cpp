@@ -46,7 +46,6 @@ static  f32    CORPSE_BLEND_CONSTRAINTS_TIME    = 1.0f;
 //=========================================================================
 
 s32 corpse::m_ActiveCount = 0;          // # of active (moving) corpses
-corpse* corpse::s_pFirstRenderCorpse = NULL;
 
 // Workspace data for corpses for initialization. Using scratchmem would
 // be preferable, but this needs to be used in the loading screen where
@@ -215,12 +214,6 @@ corpse::corpse( void ) :
 
     m_FadeOutTime = CORPSE_FADEOUT_TIME;
 
-    m_pNextRenderCorpse = s_pFirstRenderCorpse;
-    m_pPrevRenderCorpse = NULL;
-    if( s_pFirstRenderCorpse )
-        s_pFirstRenderCorpse->m_pPrevRenderCorpse = this;
-    s_pFirstRenderCorpse = this;
-
     InitSimpleAnimInterpCache( m_RenderCache );
 }
 
@@ -229,14 +222,6 @@ corpse::corpse( void ) :
 corpse::~corpse()
 {
     PHYSICS_DEBUG_DYNAMIC_MEM_FREE( sizeof( corpse ) );
-
-    if( m_pPrevRenderCorpse )
-        m_pPrevRenderCorpse->m_pNextRenderCorpse = m_pNextRenderCorpse;
-    else
-        s_pFirstRenderCorpse = m_pNextRenderCorpse;
-
-    if( m_pNextRenderCorpse )
-        m_pNextRenderCorpse->m_pPrevRenderCorpse = m_pPrevRenderCorpse;
 
     if( m_pActorEffects )
     {

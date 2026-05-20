@@ -63,10 +63,6 @@ protected:
     xbool                   m_bAccentAngle;
     transform_interp_cache  m_RenderCache;
 
-    static  light_obj*      s_pFirstRenderLight;
-            light_obj*      m_pNextRenderLight;
-            light_obj*      m_pPrevRenderLight;
-    
 // Make friends here
 };
 

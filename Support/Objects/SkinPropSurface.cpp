@@ -6,7 +6,6 @@
 #include "Dictionary\global_dictionary.hpp"
 
 xstring g_SkinPropSurfaceStringList;
-skin_prop_surface* skin_prop_surface::s_pFirstRenderSurface = NULL;
 //=============================================================================
 //=============================================================================
 
@@ -97,12 +96,6 @@ const object_desc&  skin_prop_surface::GetObjectType( void )
 
 skin_prop_surface::skin_prop_surface( void )  
 {
-    m_pNextRenderSurface = s_pFirstRenderSurface;
-    m_pPrevRenderSurface = NULL;
-    if( s_pFirstRenderSurface )
-        s_pFirstRenderSurface->m_pPrevRenderSurface = this;
-    s_pFirstRenderSurface = this;
-
     InvalidateRenderState();
     m_iMaterial = MAT_TYPE_NULL; 
     m_iBackupAnimString = -1;
@@ -114,12 +107,6 @@ skin_prop_surface::skin_prop_surface( void )
 
 skin_prop_surface::~skin_prop_surface( void )
 {
-    if( m_pNextRenderSurface )
-        m_pNextRenderSurface->m_pPrevRenderSurface = m_pPrevRenderSurface;
-    if( m_pPrevRenderSurface )
-        m_pPrevRenderSurface->m_pNextRenderSurface = m_pNextRenderSurface;
-    if( s_pFirstRenderSurface == this )
-        s_pFirstRenderSurface = m_pNextRenderSurface;
 }
 
 //=============================================================================

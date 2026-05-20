@@ -143,10 +143,6 @@ public:
 //=========================================================================
 protected:  
 
-    static coke_can*            s_pFirstRenderCan;
-           coke_can*            m_pNextRenderCan;
-           coke_can*            m_pPrevRenderCan;
-
     // Flags
     u32                 m_bInitialized : 1;         // TRUE if initialized
     u32                 m_bOnGround    : 1;         // TRUE if lying on the ground

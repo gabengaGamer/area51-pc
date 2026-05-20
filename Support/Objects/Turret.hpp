@@ -286,10 +286,6 @@ protected:
 
 protected:
 
-    static  turret*                 s_pFirstRenderTurret;
-            turret*                 m_pNextRenderTurret;
-            turret*                 m_pPrevRenderTurret;
-
     anim_group::handle          m_hAnimGroup;
     rhandle<char>               m_hAudioPackage;
     simple_anim_player          m_AnimPlayer;

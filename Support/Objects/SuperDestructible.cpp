@@ -40,7 +40,6 @@
 
 xstring g_SuperDestructibleStringList;
 xstring g_SuperDestructiblePlayAnimStringList;
-super_destructible_obj* super_destructible_obj::s_pFirstRenderSuper = NULL;
 
 // Anim list
 struct namelist
@@ -172,12 +171,6 @@ void BuildNamesList( const geom& Geom, namelist& List )
 
 super_destructible_obj::super_destructible_obj(void)
 {
-    m_pNextRenderSuper = s_pFirstRenderSuper;
-    m_pPrevRenderSuper = NULL;
-    if( s_pFirstRenderSuper )
-        s_pFirstRenderSuper->m_pPrevRenderSuper = this;
-    s_pFirstRenderSuper = this;
-
     InvalidateRenderState();
     m_Destroyed         = FALSE;
     m_DecalGroup        = 0;
@@ -195,13 +188,6 @@ super_destructible_obj::super_destructible_obj(void)
 
 super_destructible_obj::~super_destructible_obj(void)
 {
-    if( m_pNextRenderSuper )
-        m_pNextRenderSuper->m_pPrevRenderSuper = m_pPrevRenderSuper;
-    if( m_pPrevRenderSuper )
-        m_pPrevRenderSuper->m_pNextRenderSuper = m_pNextRenderSuper;
-    if( s_pFirstRenderSuper == this )
-        s_pFirstRenderSuper = m_pNextRenderSuper;
-
     s32 i;
     for (i = 0 ; i < MAX_PAIN_RESPONSES ; i++ ) 
     {

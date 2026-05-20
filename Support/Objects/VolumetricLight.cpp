@@ -19,8 +19,6 @@
 // DEFINES
 //==============================================================================
 
-volumetric_light_obj* volumetric_light_obj::s_pFirstRenderLight = NULL;
-
 //==============================================================================
 // OBJECT DESCRIPTION
 //==============================================================================
@@ -82,12 +80,6 @@ volumetric_light_obj::volumetric_light_obj( void ) :
     m_nBytesAlloced ( 0 ),
     m_pData         ( NULL )
 {
-    m_pNextRenderLight = s_pFirstRenderLight;
-    m_pPrevRenderLight = NULL;
-    if( s_pFirstRenderLight )
-        s_pFirstRenderLight->m_pPrevRenderLight = this;
-    s_pFirstRenderLight = this;
-
     InvalidateRenderState();
 }
 
@@ -95,13 +87,6 @@ volumetric_light_obj::volumetric_light_obj( void ) :
 
 volumetric_light_obj::~volumetric_light_obj( void )
 {
-    if( m_pNextRenderLight )
-        m_pNextRenderLight->m_pPrevRenderLight = m_pPrevRenderLight;
-    if( m_pPrevRenderLight )
-        m_pPrevRenderLight->m_pNextRenderLight = m_pNextRenderLight;
-    if( s_pFirstRenderLight == this )
-        s_pFirstRenderLight = m_pNextRenderLight;
-
     m_nBytesAlloced = 0;
     if( m_pData )
         x_free( m_pData );

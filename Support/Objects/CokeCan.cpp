@@ -154,9 +154,6 @@ extern xbool g_game_running;
 extern xbool g_level_loading;
 #endif
 
-coke_can* coke_can::s_pFirstRenderCan = NULL;
-
-
 //=========================================================================
 // EDITOR UTILITY FUNCTIONS
 //=========================================================================
@@ -389,12 +386,6 @@ coke_can::coke_can( void ) :
 {
     m_FloorProperties.Init( 100.0f, 0.128f );
 
-    m_pNextRenderCan = s_pFirstRenderCan;
-    m_pPrevRenderCan = NULL;
-    if( s_pFirstRenderCan )
-        s_pFirstRenderCan->m_pPrevRenderCan = this;
-    s_pFirstRenderCan = this;
-
     InitSimpleAnimInterpCache( m_RenderCache );
 }
 
@@ -402,13 +393,6 @@ coke_can::coke_can( void ) :
 
 coke_can::~coke_can()
 {
-    if( m_pPrevRenderCan )
-        m_pPrevRenderCan->m_pNextRenderCan = m_pNextRenderCan;
-    else
-        s_pFirstRenderCan = m_pNextRenderCan;
-
-    if( m_pNextRenderCan )
-        m_pNextRenderCan->m_pPrevRenderCan = m_pPrevRenderCan;
 }
 
 //=========================================================================

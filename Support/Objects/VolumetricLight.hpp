@@ -61,9 +61,6 @@ protected:
     byte*                   m_pData;
     transform_interp_cache  m_RenderCache;
 
-    static  volumetric_light_obj* s_pFirstRenderLight;
-            volumetric_light_obj* m_pNextRenderLight;
-            volumetric_light_obj* m_pPrevRenderLight;
 };
 
 #endif // __VOLUMETRICLIGHT_HPP__
