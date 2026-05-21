@@ -1,3 +1,9 @@
+//=========================================================================
+//
+//  GamePad.hpp
+//
+//=========================================================================
+
 #ifndef GAME_PAD_HPP
 #define GAME_PAD_HPP
 
@@ -7,24 +13,8 @@
 
 #include "InputMgr.hpp"
 #ifndef MAX_LOCAL_PLAYERS
-#ifdef TARGET_PS2
-#define MAX_LOCAL_PLAYERS 2
-#else
 #define MAX_LOCAL_PLAYERS 4
 #endif
-#endif
-
-/* Add it later.
-#ifndef MAX_LOCAL_PLAYERS
-    #if defined(TARGET_XBOX)
-        #define MAX_LOCAL_PLAYERS 4
-    #elif defined(TARGET_PS2)
-        #define MAX_LOCAL_PLAYERS 2
-    #elif defined(TARGET_PC)
-        #define MAX_LOCAL_PLAYERS 1
-    #endif
-#endif
-*/
 
 //=========================================================================
 // CLASSES
@@ -34,62 +24,36 @@ class ingame_pad : public input_pad
 {
 public:
 
-    // Note:  There is a define in InputMgr.hpp called MAX_LOGICAL.  MAX_LOGICAL must always
-    //        be greater than MAX_ACTION.  I don't think that MAX_LOGICAL should even exist, but 
-    //        what do I know.
     enum logical_id
     {
         ACTION_NULL = -1,
-        MOVE_STRAFE,             //Deprecated, use instead: STRAFE_LEFT, STRAFE_RIGHT        
-        MOVE_FOWARD_BACKWARDS,   //Deprecated, use instead: MOVE_FORWARD, MOVE_BACKWARD  
 
-        MOVE_FORWARD,                    
-        MOVE_BACKWARD,      
-        STRAFE_LEFT,                    
-        STRAFE_RIGHT,      
-     
-        LOOK_HORIZONTAL,                
-        LOOK_VERTICAL,                  
-        ACTION_JUMP,                    
-        ACTION_CROUCH,                  
-        ACTION_PRIMARY,                 
-        ACTION_SECONDARY,               
+        GAMEPLAY_ACTION_FIRST = 0,
+        MOVE_FORWARD = GAMEPLAY_ACTION_FIRST,
+        MOVE_BACKWARD,
+        STRAFE_LEFT,
+        STRAFE_RIGHT,
+
+        LOOK_HORIZONTAL,
+        LOOK_VERTICAL,
+        ACTION_JUMP,
+        ACTION_CROUCH,
+        ACTION_PRIMARY,
+        ACTION_SECONDARY,
         ACTION_RELOAD,                  
         ACTION_MUTATION,
-        ACTION_CYCLE_RIGHT,             
-        ACTION_USE,                     
-        ACTION_FLASHLIGHT,              
+        ACTION_CYCLE_RIGHT,
+        ACTION_USE,
+        ACTION_FLASHLIGHT,
 
-        // Friendly interaction controls.
-        ACTION_SPEAK_FOLLOW_STAY,       
-        ACTION_SPEAK_USE_ACTIVATE,      
-        ACTION_SPEAK_COVER_ME,          
-        ACTION_SPEAK_ATTACK_COVER,      
+        ACTION_SPEAK_FOLLOW_STAY,
+        ACTION_SPEAK_USE_ACTIVATE,
+        ACTION_SPEAK_COVER_ME,
+        ACTION_SPEAK_ATTACK_COVER,
 
-        //Interface controls
-        ACTION_HUD_CONTEXT,             
-        ACTION_HUD_MOVEMENT_HORIZONTAL, 
-        ACTION_HUD_MOVEMENT_VERTICAL,   
-        ACTION_HUD_SET_HOTKEY_0,        
-        ACTION_HUD_SET_HOTKEY_1,        
-        // Hot key stuff
-        ACTION_USE_HOTKEY_0,            
-        ACTION_USE_HOTKEY_1,            
-
-        ACTION_PAUSE_CONTEXT,           
-
-        ACTION_FRONTEND_CONTEXT,        
-
-        ACTION_RIFT,                    
-
-        ACTION_WEAPON_ITEM_SWITCH,      
-        
-        ACTION_THROW_GRENADE,           
-        ACTION_CYCLE_GRENADE_TYPE,      
-
-        ACTION_MELEE_ATTACK,            
-        ACTION_CYCLE_LEFT,              
-        ACTION_TOGGLE_PRECISE_AIM,      
+        ACTION_THROW_GRENADE,
+        ACTION_MELEE_ATTACK,
+        ACTION_CYCLE_LEFT,
 
         ACTION_VOTE_MENU_ON,
         ACTION_VOTE_MENU_OFF,
@@ -110,8 +74,27 @@ public:
         ACTION_MP_FLASHLIGHT,
         ACTION_MP_MUTATE,
         ACTION_DROP_FLAG,
+        ACTION_PAUSE_CONTEXT,
 
-        MAX_ACTION                      
+        GAMEPLAY_ACTION_END,
+
+        FRONTEND_ACTION_FIRST = GAMEPLAY_ACTION_END,
+        UI_UP = FRONTEND_ACTION_FIRST,
+        UI_DOWN,
+        UI_LEFT,
+        UI_RIGHT,
+        UI_SELECT,
+        UI_BACK,
+        UI_DELETE,
+        UI_ACTIVATE,
+        UI_SHOULDER_L,
+        UI_SHOULDER_R,
+        UI_SHOULDER_L2,
+        UI_SHOULDER_R2,
+        UI_HELP,
+
+        FRONTEND_ACTION_END,
+        MAX_ACTION = FRONTEND_ACTION_END
     };
 
 public:
@@ -120,10 +103,13 @@ public:
     virtual void        OnUpdate        ( f32 DeltaTime );
     virtual void        OnInitialize    ( void );
 
-    // These routines allow us to expose properties to the editor.
-    static  const char* GetLogicalIDName    ( s32 Index ) ;            
-    static  const char* GetLogicalIDEnum    ( void)  ;
-    static  logical_id GetLogicalIDByName  ( const char* pName ) ;
+    static  const char* GetLogicalIDName    ( s32 Index );
+    static  const char* GetLogicalIDEnum    ( void );
+    static  logical_id  GetLogicalIDByName  ( const char* pName );
+
+protected:
+
+    virtual xbool       IsPausePressed  ( void ) const;
 };
 
 //=========================================================================
@@ -133,6 +119,5 @@ public:
 extern ingame_pad g_IngamePad[ MAX_LOCAL_PLAYERS ];
 
 //=========================================================================
-// END
+#endif // GAME_PAD_HPP
 //=========================================================================
-#endif

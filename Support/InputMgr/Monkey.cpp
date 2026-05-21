@@ -44,7 +44,7 @@ const f32 k_MutationModeTime          = 30.f;
 
 struct virtual_control_entry
 {
-    ingame_pad::logical_id      LogicalID;                          // represents a logical button press (jump, fire, etc.)    
+    ingame_pad::logical_id      LogicalID;                          // represents a logical button press (jump, fire, etc.)
     f32                         PercentChoice[k_NumMonkeyModes];    // what percentage of the time should we press this button?    
 };
 
@@ -96,8 +96,6 @@ virtual_control_entry MonkeyButtonPercentages[] =
     { ingame_pad::ACTION_MELEE_ATTACK,              {  1.0f,       1.0f,        0.0f,       1.0f,       1.0f,       1.0f,       1.0f,       5.0f,   0.0f   } },            
 
     // weapon switching
-    { ingame_pad::ACTION_CYCLE_GRENADE_TYPE,        {  0.5f,       0.5f,        0.5f,       0.5f,       0.5f,       0.5f,       0.5f,       1.0f,	0.0f   } },
-    { ingame_pad::ACTION_WEAPON_ITEM_SWITCH,        {  0.5f,       0.5f,        0.5f,       0.5f,       0.5f,       0.5f,       0.5f,       1.0f,	0.0f   } },      
     { ingame_pad::ACTION_CYCLE_LEFT,                {  0.5f,       0.5f,        0.5f,       0.5f,       0.5f,       0.5f,       0.5f,       1.0f,	0.0f   } },              
     { ingame_pad::ACTION_CYCLE_RIGHT,               {  0.5f,       0.5f,        0.5f,       0.5f,       0.5f,       0.5f,       0.5f,       1.0f,	0.0f   } },
     
@@ -108,21 +106,7 @@ virtual_control_entry MonkeyButtonPercentages[] =
     { ingame_pad::ACTION_FIRE_CONTAGION,            {  1.0f,       0.0f,        0.0f,       0.0f,       0.0f,       2.0f,       0.0f,       5.0f,	1.0f   } },
     { ingame_pad::ACTION_MUTANT_MELEE,              {  1.0f,       0.0f,        0.0f,       0.0f,       0.0f,       2.0f,       0.0f,       5.0f,	0.0f   } },
     
-    //Interface controls -- not actually used!
-    { ingame_pad::ACTION_HUD_CONTEXT,               {  1.0f,       1.0f,        1.0f,       1.0f,       1.0f,       1.0f,       5.0f,       0.0f,   0.0f   } },             
-    { ingame_pad::ACTION_HUD_MOVEMENT_HORIZONTAL,   {  1.0f,       1.0f,        1.0f,       1.0f,       1.0f,       1.0f,      10.0f,       0.0f,   0.0f   } }, 
-    { ingame_pad::ACTION_HUD_MOVEMENT_VERTICAL,     {  1.0f,       1.0f,        1.0f,       1.0f,       1.0f,       1.0f,      10.0f,       0.0f,   0.0f   } },   
-    { ingame_pad::ACTION_HUD_SET_HOTKEY_0,          {  1.0f,       1.0f,        1.0f,       1.0f,       1.0f,       1.0f,      10.0f,       0.0f,   0.0f   } },        
-    { ingame_pad::ACTION_HUD_SET_HOTKEY_1,          {  1.0f,       1.0f,        1.0f,       1.0f,       1.0f,       1.0f,      10.0f,       0.0f,   0.0f   } },    
-    { ingame_pad::ACTION_USE_HOTKEY_0,              {  1.0f,       1.0f,        1.0f,       1.0f,       1.0f,       1.0f,       1.0f,       0.0f,   0.0f   } },            
-    { ingame_pad::ACTION_USE_HOTKEY_1,              {  1.0f,       1.0f,        1.0f,       1.0f,       1.0f,       1.0f,       1.0f,       0.0f,   0.0f   } },                
-    { ingame_pad::ACTION_FRONTEND_CONTEXT,          {  1.0f,       1.0f,        1.0f,       1.0f,       1.0f,       1.0f,      10.0f,       0.0f,   0.0f   } },        
     { ingame_pad::ACTION_PAUSE_CONTEXT,             {  0.0f,       0.0f,        0.0f,       0.0f,       0.0f,       0.0f,       5.0f,       0.0f,   0.0f   } },
-
-    { ingame_pad::ACTION_RIFT,                      {  1.0f,       1.0f,        1.0f,       1.0f,       1.0f,       1.0f,       1.0f,       0.0f,   0.0f   } },                    
-
-    // toggle precise aim seems to switch weapons
-    { ingame_pad::ACTION_TOGGLE_PRECISE_AIM,        {  1.0f,       1.0f,        1.0f,       1.0f,       1.0f,       1.0f,       1.0f,       0.0f,   0.0f   } },      
 
     { ingame_pad::ACTION_VOTE_MENU_ON,              {  1.0f,       1.0f,        1.0f,       1.0f,       1.0f,       1.0f,       1.0f,       0.0f,   0.0f   } },
     { ingame_pad::ACTION_VOTE_MENU_OFF,             {  1.0f,       1.0f,        1.0f,       1.0f,       1.0f,       1.0f,       1.0f,       0.0f,   0.0f   } },
@@ -442,11 +426,9 @@ f32 monkey::GetValue( s32 LogicalPadMapping )
         case ingame_pad::STRAFE_RIGHT :
             return ( m_MonkeyPadData.pad_l_x );
 
-        case ingame_pad::ACTION_HUD_MOVEMENT_HORIZONTAL :
         case ingame_pad::LOOK_HORIZONTAL :
             return ( m_MonkeyPadData.pad_r_x );
 
-        case ingame_pad::ACTION_HUD_MOVEMENT_VERTICAL :
         case ingame_pad::LOOK_VERTICAL : 
             return ( m_MonkeyPadData.pad_r_y );
     }

@@ -2449,8 +2449,6 @@ void player::SetLocalPlayer( s32 LocalIndex )
 
     ASSERT( g_IngamePad[LocalIndex].GetControllerID() != -1 );
 
-    g_IngamePad[LocalIndex].EnableContext( INGAME_CONTEXT );
-
     //#ifndef X_EDITOR
     //s32 nPlayers = g_StateMgr.GetPlayerCount();
     //LOG_MESSAGE( "player::SetLocalPlayer",

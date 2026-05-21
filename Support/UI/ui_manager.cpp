@@ -30,10 +30,10 @@
 #include "ui_dlg_list.hpp"
 #include "ResourceMgr\ResourceMgr.hpp"
 #include "StateMgr/StateMgr.hpp"
+#include "InputMgr/GamePad.hpp"
 
 #ifndef X_RELEASE
 #include "InputMgr/Monkey.hpp"
-#include "InputMgr/GamePad.hpp"
 #endif
 
 #include "bitmap\aux_bitmap.hpp"
@@ -220,6 +220,17 @@ static const eng_frame_stage s_UIFrameStage =
 
 //=========================================================================
 //  Helpers
+//=========================================================================
+
+static 
+xbool IsUILogicalDown( s32 ControllerID, ingame_pad::logical_id LogicalID )
+{
+    ASSERT( ControllerID >= 0 );
+    ASSERT( ControllerID < MAX_LOCAL_PLAYERS );
+
+    return( g_IngamePad[ControllerID].GetLogical( LogicalID ).IsValue > 0.25f );
+}
+
 //=========================================================================
 
 void ui_manager::UpdateButton( ui_manager::button& Button, xbool State, f32 DeltaTime )
@@ -1775,13 +1786,11 @@ xbool ui_manager::ProcessInput( f32 DeltaTime, s32 UserID )
                 pWin = pUser->DialogStack[pUser->DialogStack.GetCount()-1];
         }
 
-#ifdef TARGET_PC
-
         for( s32 i=StartController ; i<=EndController ; i++ )
         {
+#ifndef X_RELEASE
             if ( g_MonkeyOptions.Enabled && g_MonkeyOptions.ModeEnabled[MONKEY_MENUMONKEY] )
             {
-#ifndef X_RELEASE
                 UpdateButton( pUser->DPadUp[i],         g_Monkey.GetUIButtonValue( MONKEY_UI_UP ),          DeltaTime);                    
                 UpdateButton( pUser->DPadDown[i],       g_Monkey.GetUIButtonValue( MONKEY_UI_DOWN ),        DeltaTime);
                 UpdateButton( pUser->DPadLeft[i],       g_Monkey.GetUIButtonValue( MONKEY_UI_LEFT ),        DeltaTime);
@@ -1795,21 +1804,23 @@ xbool ui_manager::ProcessInput( f32 DeltaTime, s32 UserID )
                 UpdateButton( pUser->PadShoulderL2[i],  g_Monkey.GetUIButtonValue( MONKEY_UI_SHOULDERL2 ),  DeltaTime);
                 UpdateButton( pUser->PadShoulderR2[i],  g_Monkey.GetUIButtonValue( MONKEY_UI_SHOULDERR2 ),  DeltaTime);
                 UpdateButton( pUser->PadHelp[i],        g_Monkey.GetUIButtonValue( MONKEY_UI_HELP ),        DeltaTime);
-#endif
             }
             else
+#endif
             {
-                UpdateButton( pUser->DPadUp[i],    input_IsPressed( INPUT_KBD_UP,    i ), DeltaTime );
-                UpdateButton( pUser->DPadDown[i],  input_IsPressed( INPUT_KBD_DOWN,  i ), DeltaTime );
-                UpdateButton( pUser->DPadLeft[i],  input_IsPressed( INPUT_KBD_LEFT,  i ), DeltaTime );
-                UpdateButton( pUser->DPadRight[i], input_IsPressed( INPUT_KBD_RIGHT, i ), DeltaTime );
-                
-                UpdateButton( pUser->PadSelect[i],     input_WasPressed( INPUT_KBD_RETURN, i ), DeltaTime );
-                UpdateButton( pUser->PadBack[i],       input_WasPressed( INPUT_KBD_ESCAPE, i ), DeltaTime );
-                
-                //Idk, it should be like this?
-                UpdateButton( pUser->PadDelete[i], (input_IsPressed( INPUT_KBD_DELETE, i ) || input_IsPressed( INPUT_KBD_BACK, i )), DeltaTime ); //Usefull for deleting player profiles and etc.
-                UpdateButton( pUser->PadActivate[i],   input_WasPressed( INPUT_KBD_R,   i ), DeltaTime ); //Usefull for editing player profiles and etc.                
+                UpdateButton( pUser->DPadUp[i],        IsUILogicalDown( i, ingame_pad::UI_UP ),          DeltaTime );
+                UpdateButton( pUser->DPadDown[i],      IsUILogicalDown( i, ingame_pad::UI_DOWN ),        DeltaTime );
+                UpdateButton( pUser->DPadLeft[i],      IsUILogicalDown( i, ingame_pad::UI_LEFT ),        DeltaTime );
+                UpdateButton( pUser->DPadRight[i],     IsUILogicalDown( i, ingame_pad::UI_RIGHT ),       DeltaTime );
+                UpdateButton( pUser->PadSelect[i],     IsUILogicalDown( i, ingame_pad::UI_SELECT ),      DeltaTime );
+                UpdateButton( pUser->PadBack[i],       IsUILogicalDown( i, ingame_pad::UI_BACK ),        DeltaTime );
+                UpdateButton( pUser->PadDelete[i],     IsUILogicalDown( i, ingame_pad::UI_DELETE ),      DeltaTime );
+                UpdateButton( pUser->PadActivate[i],   IsUILogicalDown( i, ingame_pad::UI_ACTIVATE ),    DeltaTime );
+                UpdateButton( pUser->PadShoulderL[i],  IsUILogicalDown( i, ingame_pad::UI_SHOULDER_L ),  DeltaTime );
+                UpdateButton( pUser->PadShoulderR[i],  IsUILogicalDown( i, ingame_pad::UI_SHOULDER_R ),  DeltaTime );
+                UpdateButton( pUser->PadShoulderL2[i], IsUILogicalDown( i, ingame_pad::UI_SHOULDER_L2 ), DeltaTime );
+                UpdateButton( pUser->PadShoulderR2[i], IsUILogicalDown( i, ingame_pad::UI_SHOULDER_R2 ), DeltaTime );
+                UpdateButton( pUser->PadHelp[i],       IsUILogicalDown( i, ingame_pad::UI_HELP ),        DeltaTime );
             }
             // Keep index of last controller that pressed a select button so we can hack
             // the controller number into the players controller for 1 player games
@@ -1820,6 +1831,7 @@ xbool ui_manager::ProcessInput( f32 DeltaTime, s32 UserID )
         }
 
         // Update mouse buttons
+#ifdef TARGET_PC
         UpdateButton( pUser->ButtonLB, input_IsPressed( INPUT_MOUSE_BTN_L ), DeltaTime );
         UpdateButton( pUser->ButtonMB, input_IsPressed( INPUT_MOUSE_BTN_C ), DeltaTime );
         UpdateButton( pUser->ButtonRB, input_IsPressed( INPUT_MOUSE_BTN_R ), DeltaTime );

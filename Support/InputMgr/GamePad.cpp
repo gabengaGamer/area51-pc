@@ -1,3 +1,13 @@
+//=========================================================================
+//
+//  GamePad.cpp
+//
+//=========================================================================
+
+//=========================================================================
+//  INCLUDES
+//=========================================================================
+
 #include "GamePad.hpp"
 
 //=========================================================================
@@ -7,14 +17,291 @@
 ingame_pad g_IngamePad[ MAX_LOCAL_PLAYERS ];
 
 //=========================================================================
-// FUNCTIONS
+// TYPES
 //=========================================================================
 
+struct logical_definition
+{
+    ingame_pad::logical_id  LogicalID;
+    const char*             pName;
+};
+
+//-------------------------------------------------------------------------
+
+struct mapping_definition
+{
+    input_platform          Platform;
+    ingame_pad::logical_id  LogicalID;
+    input_gadget            GadgetID;
+    xbool                   IsButton;
+    f32                     Scale;
+    u32                     ContextMask;
+};
+
+//=========================================================================
+// LOGICAL DEFINITIONS
+//=========================================================================
+
+static 
+const logical_definition s_GameplayLogicals[] =
+{
+    { ingame_pad::MOVE_FORWARD,                "Move Forward" },
+    { ingame_pad::MOVE_BACKWARD,               "Move Backward" },
+    { ingame_pad::STRAFE_LEFT,                 "Strafe Left" },
+    { ingame_pad::STRAFE_RIGHT,                "Strafe Right" },
+    { ingame_pad::LOOK_HORIZONTAL,             "Horizontal Look" },
+    { ingame_pad::LOOK_VERTICAL,               "Vertical Look" },
+    { ingame_pad::LEAN_LEFT,                   "Lean Left" },
+    { ingame_pad::LEAN_RIGHT,                  "Lean Right" },
+
+    { ingame_pad::ACTION_RELOAD,               "Reload" },
+    { ingame_pad::ACTION_PRIMARY,              "Primary Fire" },
+    { ingame_pad::ACTION_SECONDARY,            "Secondary Fire" },
+    { ingame_pad::ACTION_JUMP,                 "Jump" },
+    { ingame_pad::ACTION_CROUCH,               "Crouch" },
+    { ingame_pad::ACTION_MUTATION,             "Toggle Mutation" },
+    { ingame_pad::ACTION_FIRE_PARASITES,       "Fire Parasites" },
+    { ingame_pad::ACTION_FIRE_CONTAGION,       "Fire Contagion" },
+    { ingame_pad::ACTION_MUTANT_MELEE,         "Mutant Melee" },
+    { ingame_pad::ACTION_CYCLE_RIGHT,          "Cycle Weapons Right" },
+    { ingame_pad::ACTION_CYCLE_LEFT,           "Cycle Weapons Left" },
+    { ingame_pad::ACTION_USE,                  "Use Object" },
+    { ingame_pad::ACTION_FLASHLIGHT,           "Toggle Flashlight" },
+    { ingame_pad::ACTION_THROW_GRENADE,        "Throw Grenade" },
+    { ingame_pad::ACTION_MELEE_ATTACK,         "Melee Attack" },
+
+    { ingame_pad::ACTION_SPEAK_FOLLOW_STAY,    "Speak: Follow Me" },
+    { ingame_pad::ACTION_SPEAK_USE_ACTIVATE,   "Speak: Use / Activate" },
+    { ingame_pad::ACTION_SPEAK_COVER_ME,       "Speak: Cover Me" },
+    { ingame_pad::ACTION_SPEAK_ATTACK_COVER,   "Speak: Attack / Take Cover" },
+
+    { ingame_pad::ACTION_VOTE_MENU_ON,         "Vote: Menu On" },
+    { ingame_pad::ACTION_VOTE_MENU_OFF,        "Vote: Menu Off" },
+    { ingame_pad::ACTION_VOTE_YES,             "Vote: Yes" },
+    { ingame_pad::ACTION_VOTE_NO,              "Vote: No" },
+    { ingame_pad::ACTION_VOTE_ABSTAIN,         "Vote: Abstain" },
+
+    { ingame_pad::ACTION_CHAT,                 "Voice Chat" },
+    { ingame_pad::ACTION_TALK_MODE_TOGGLE,     "Talk: Mode Toggle" },
+    { ingame_pad::ACTION_MP_FLASHLIGHT,        "Multiplayer Toggle Flashlight" },
+    { ingame_pad::ACTION_MP_MUTATE,            "Multiplayer Toggle Mutation" },
+    { ingame_pad::ACTION_DROP_FLAG,            "Drop Flag" },
+
+    { ingame_pad::ACTION_PAUSE_CONTEXT,        "Pause" },
+};
+
+//-------------------------------------------------------------------------
+
+static 
+const logical_definition s_FrontendLogicals[] =
+{
+    { ingame_pad::UI_UP,                       "UI Up" },
+    { ingame_pad::UI_DOWN,                     "UI Down" },
+    { ingame_pad::UI_LEFT,                     "UI Left" },
+    { ingame_pad::UI_RIGHT,                    "UI Right" },
+    { ingame_pad::UI_SELECT,                   "UI Select" },
+    { ingame_pad::UI_BACK,                     "UI Back" },
+    { ingame_pad::UI_DELETE,                   "UI Delete" },
+    { ingame_pad::UI_ACTIVATE,                 "UI Activate" },
+    { ingame_pad::UI_SHOULDER_L,               "UI Shoulder Left" },
+    { ingame_pad::UI_SHOULDER_R,               "UI Shoulder Right" },
+    { ingame_pad::UI_SHOULDER_L2,              "UI Shoulder Left 2" },
+    { ingame_pad::UI_SHOULDER_R2,              "UI Shoulder Right 2" },
+    { ingame_pad::UI_HELP,                     "UI Help" },
+};
+
+//=========================================================================
+// MAPPING DEFINITIONS
+//=========================================================================
+
+static 
+const mapping_definition s_GameplayMappings[] =
+{
+    { INPUT_PLATFORM_XBOX, ingame_pad::MOVE_FORWARD,              INPUT_XBOX_STICK_LEFT_Y,   FALSE,  1.0f, INGAME_CONTEXT },
+    { INPUT_PLATFORM_XBOX, ingame_pad::MOVE_BACKWARD,             INPUT_XBOX_STICK_LEFT_Y,   FALSE, -1.0f, INGAME_CONTEXT },
+    { INPUT_PLATFORM_XBOX, ingame_pad::STRAFE_RIGHT,              INPUT_XBOX_STICK_LEFT_X,   FALSE,  1.0f, INGAME_CONTEXT },
+    { INPUT_PLATFORM_XBOX, ingame_pad::STRAFE_LEFT,               INPUT_XBOX_STICK_LEFT_X,   FALSE, -1.0f, INGAME_CONTEXT },
+    { INPUT_PLATFORM_XBOX, ingame_pad::LOOK_HORIZONTAL,           INPUT_XBOX_STICK_RIGHT_X,  FALSE,  1.0f, INGAME_CONTEXT },
+    { INPUT_PLATFORM_XBOX, ingame_pad::LOOK_VERTICAL,             INPUT_XBOX_STICK_RIGHT_Y,  FALSE,  1.0f, INGAME_CONTEXT },
+    { INPUT_PLATFORM_XBOX, ingame_pad::ACTION_PRIMARY,            INPUT_XBOX_BTN_R_STICK,    TRUE,   1.0f, INGAME_CONTEXT },
+    { INPUT_PLATFORM_XBOX, ingame_pad::ACTION_SECONDARY,          INPUT_XBOX_R_TRIGGER,      TRUE,   1.0f, INGAME_CONTEXT },
+    { INPUT_PLATFORM_XBOX, ingame_pad::ACTION_JUMP,               INPUT_XBOX_BTN_L_STICK,    TRUE,   1.0f, INGAME_CONTEXT },
+    { INPUT_PLATFORM_XBOX, ingame_pad::ACTION_CROUCH,             INPUT_XBOX_L_TRIGGER,      TRUE,   1.0f, INGAME_CONTEXT },
+    { INPUT_PLATFORM_XBOX, ingame_pad::ACTION_RELOAD,             INPUT_XBOX_BTN_Y,          TRUE,   1.0f, INGAME_CONTEXT },
+    { INPUT_PLATFORM_XBOX, ingame_pad::ACTION_USE,                INPUT_XBOX_BTN_X,          TRUE,   1.0f, INGAME_CONTEXT },
+    { INPUT_PLATFORM_XBOX, ingame_pad::ACTION_FLASHLIGHT,         INPUT_XBOX_BTN_WHITE,      TRUE,   1.0f, INGAME_CONTEXT },
+    { INPUT_PLATFORM_XBOX, ingame_pad::ACTION_CHAT,               INPUT_XBOX_BTN_BLACK,      TRUE,   1.0f, INGAME_CONTEXT },
+    { INPUT_PLATFORM_XBOX, ingame_pad::ACTION_TALK_MODE_TOGGLE,   INPUT_XBOX_BTN_BLACK,      TRUE,   1.0f, INGAME_CONTEXT },
+    { INPUT_PLATFORM_XBOX, ingame_pad::ACTION_SPEAK_FOLLOW_STAY,  INPUT_XBOX_BTN_UP,         TRUE,   1.0f, INGAME_CONTEXT },
+    { INPUT_PLATFORM_XBOX, ingame_pad::ACTION_SPEAK_USE_ACTIVATE, INPUT_XBOX_BTN_LEFT,       TRUE,   1.0f, INGAME_CONTEXT },
+    { INPUT_PLATFORM_XBOX, ingame_pad::ACTION_SPEAK_COVER_ME,     INPUT_XBOX_BTN_RIGHT,      TRUE,   1.0f, INGAME_CONTEXT },
+    { INPUT_PLATFORM_XBOX, ingame_pad::ACTION_SPEAK_ATTACK_COVER, INPUT_XBOX_BTN_DOWN,       TRUE,   1.0f, INGAME_CONTEXT },
+
+    { INPUT_PLATFORM_PC,   ingame_pad::ACTION_PRIMARY,            INPUT_MOUSE_BTN_L,         TRUE,   1.0f, INGAME_CONTEXT },
+    { INPUT_PLATFORM_PC,   ingame_pad::ACTION_SECONDARY,          INPUT_MOUSE_BTN_R,         TRUE,   1.0f, INGAME_CONTEXT },
+    { INPUT_PLATFORM_PC,   ingame_pad::LOOK_HORIZONTAL,           INPUT_MOUSE_X_REL,         FALSE,  1.0f, INGAME_CONTEXT },
+    { INPUT_PLATFORM_PC,   ingame_pad::LOOK_VERTICAL,             INPUT_MOUSE_Y_REL,         FALSE,  1.0f, INGAME_CONTEXT },
+    { INPUT_PLATFORM_PC,   ingame_pad::ACTION_CYCLE_RIGHT,        INPUT_MOUSE_WHEEL_REL,     FALSE,  1.0f, INGAME_CONTEXT },
+    { INPUT_PLATFORM_PC,   ingame_pad::ACTION_CYCLE_LEFT,         INPUT_MOUSE_WHEEL_REL,     FALSE, -1.0f, INGAME_CONTEXT },
+    { INPUT_PLATFORM_PC,   ingame_pad::MOVE_FORWARD,              INPUT_KBD_W,               FALSE,  1.0f, INGAME_CONTEXT },
+    { INPUT_PLATFORM_PC,   ingame_pad::MOVE_BACKWARD,             INPUT_KBD_S,               FALSE,  1.0f, INGAME_CONTEXT },
+    { INPUT_PLATFORM_PC,   ingame_pad::STRAFE_LEFT,               INPUT_KBD_A,               FALSE,  1.0f, INGAME_CONTEXT },
+    { INPUT_PLATFORM_PC,   ingame_pad::STRAFE_RIGHT,              INPUT_KBD_D,               FALSE,  1.0f, INGAME_CONTEXT },
+    { INPUT_PLATFORM_PC,   ingame_pad::ACTION_JUMP,               INPUT_KBD_SPACE,           TRUE,   1.0f, INGAME_CONTEXT },
+    { INPUT_PLATFORM_PC,   ingame_pad::ACTION_CROUCH,             INPUT_KBD_LCONTROL,        TRUE,   1.0f, INGAME_CONTEXT },
+    { INPUT_PLATFORM_PC,   ingame_pad::LEAN_LEFT,                 INPUT_KBD_Q,               TRUE,   1.0f, INGAME_CONTEXT },
+    { INPUT_PLATFORM_PC,   ingame_pad::LEAN_RIGHT,                INPUT_KBD_E,               TRUE,   1.0f, INGAME_CONTEXT },
+    { INPUT_PLATFORM_PC,   ingame_pad::ACTION_RELOAD,             INPUT_KBD_R,               TRUE,   1.0f, INGAME_CONTEXT },
+    { INPUT_PLATFORM_PC,   ingame_pad::ACTION_THROW_GRENADE,      INPUT_KBD_G,               TRUE,   1.0f, INGAME_CONTEXT },
+    { INPUT_PLATFORM_PC,   ingame_pad::ACTION_USE,                INPUT_KBD_TAB,             TRUE,   1.0f, INGAME_CONTEXT },
+    { INPUT_PLATFORM_PC,   ingame_pad::ACTION_MUTATION,           INPUT_KBD_X,               TRUE,   1.0f, INGAME_CONTEXT },
+    { INPUT_PLATFORM_PC,   ingame_pad::ACTION_MP_MUTATE,          INPUT_KBD_X,               TRUE,   1.0f, INGAME_CONTEXT },
+    { INPUT_PLATFORM_PC,   ingame_pad::ACTION_MELEE_ATTACK,       INPUT_KBD_V,               TRUE,   1.0f, INGAME_CONTEXT },
+    { INPUT_PLATFORM_PC,   ingame_pad::ACTION_MUTANT_MELEE,       INPUT_KBD_V,               TRUE,   1.0f, INGAME_CONTEXT },
+    { INPUT_PLATFORM_PC,   ingame_pad::ACTION_FLASHLIGHT,         INPUT_KBD_F,               TRUE,   1.0f, INGAME_CONTEXT },
+
+    { INPUT_PLATFORM_PS2,  ingame_pad::MOVE_FORWARD,              INPUT_PS2_STICK_LEFT_Y,    FALSE,  1.0f, INGAME_CONTEXT },
+    { INPUT_PLATFORM_PS2,  ingame_pad::MOVE_BACKWARD,             INPUT_PS2_STICK_LEFT_Y,    FALSE, -1.0f, INGAME_CONTEXT },
+    { INPUT_PLATFORM_PS2,  ingame_pad::STRAFE_RIGHT,              INPUT_PS2_STICK_LEFT_X,    FALSE,  1.0f, INGAME_CONTEXT },
+    { INPUT_PLATFORM_PS2,  ingame_pad::STRAFE_LEFT,               INPUT_PS2_STICK_LEFT_X,    FALSE, -1.0f, INGAME_CONTEXT },
+    { INPUT_PLATFORM_PS2,  ingame_pad::ACTION_CHAT,               INPUT_PS2_BTN_L_STICK,     TRUE,   1.0f, INGAME_CONTEXT },
+    { INPUT_PLATFORM_PS2,  ingame_pad::LOOK_HORIZONTAL,           INPUT_PS2_STICK_RIGHT_X,   FALSE,  1.0f, INGAME_CONTEXT },
+    { INPUT_PLATFORM_PS2,  ingame_pad::LOOK_VERTICAL,             INPUT_PS2_STICK_RIGHT_Y,   FALSE,  1.0f, INGAME_CONTEXT },
+    { INPUT_PLATFORM_PS2,  ingame_pad::ACTION_PRIMARY,            INPUT_PS2_BTN_R1,          TRUE,   1.0f, INGAME_CONTEXT },
+    { INPUT_PLATFORM_PS2,  ingame_pad::ACTION_SECONDARY,          INPUT_PS2_BTN_R2,          TRUE,   1.0f, INGAME_CONTEXT },
+    { INPUT_PLATFORM_PS2,  ingame_pad::ACTION_JUMP,               INPUT_PS2_BTN_L1,          TRUE,   1.0f, INGAME_CONTEXT },
+    { INPUT_PLATFORM_PS2,  ingame_pad::ACTION_CROUCH,             INPUT_PS2_BTN_L2,          TRUE,   1.0f, INGAME_CONTEXT },
+    { INPUT_PLATFORM_PS2,  ingame_pad::ACTION_RELOAD,             INPUT_PS2_BTN_SQUARE,      TRUE,   1.0f, INGAME_CONTEXT },
+    { INPUT_PLATFORM_PS2,  ingame_pad::ACTION_USE,                INPUT_PS2_BTN_CROSS,       TRUE,   1.0f, INGAME_CONTEXT },
+    { INPUT_PLATFORM_PS2,  ingame_pad::ACTION_FLASHLIGHT,         INPUT_PS2_BTN_CIRCLE,      TRUE,   1.0f, INGAME_CONTEXT },
+    { INPUT_PLATFORM_PS2,  ingame_pad::ACTION_SPEAK_FOLLOW_STAY,  INPUT_PS2_BTN_L_UP,        TRUE,   1.0f, INGAME_CONTEXT },
+    { INPUT_PLATFORM_PS2,  ingame_pad::ACTION_SPEAK_USE_ACTIVATE, INPUT_PS2_BTN_L_LEFT,      TRUE,   1.0f, INGAME_CONTEXT },
+    { INPUT_PLATFORM_PS2,  ingame_pad::ACTION_SPEAK_COVER_ME,     INPUT_PS2_BTN_L_RIGHT,     TRUE,   1.0f, INGAME_CONTEXT },
+    { INPUT_PLATFORM_PS2,  ingame_pad::ACTION_SPEAK_ATTACK_COVER, INPUT_PS2_BTN_L_DOWN,      TRUE,   1.0f, INGAME_CONTEXT },
+    { INPUT_PLATFORM_PS2,  ingame_pad::LEAN_LEFT,                 INPUT_PS2_BTN_L_LEFT,      TRUE,   1.0f, INGAME_CONTEXT },
+    { INPUT_PLATFORM_PS2,  ingame_pad::LEAN_RIGHT,                INPUT_PS2_BTN_L_RIGHT,     TRUE,   1.0f, INGAME_CONTEXT },
+    { INPUT_PLATFORM_PS2,  ingame_pad::ACTION_TALK_MODE_TOGGLE,   INPUT_PS2_BTN_SELECT,      TRUE,   1.0f, INGAME_CONTEXT },
+};
+
+//-------------------------------------------------------------------------
+
+static 
+const mapping_definition s_SystemMappings[] =
+{
+    { INPUT_PLATFORM_XBOX, ingame_pad::ACTION_PAUSE_CONTEXT,         INPUT_XBOX_BTN_START,     TRUE,   1.0f, ALL_CONTEXTS },
+    { INPUT_PLATFORM_PC,   ingame_pad::ACTION_PAUSE_CONTEXT,         INPUT_KBD_ESCAPE,         TRUE,   1.0f, ALL_CONTEXTS },
+    { INPUT_PLATFORM_PS2,  ingame_pad::ACTION_PAUSE_CONTEXT,         INPUT_PS2_BTN_START,      TRUE,   1.0f, ALL_CONTEXTS },
+};
+
+//-------------------------------------------------------------------------
+
+static 
+const mapping_definition s_FrontendMappings[] =
+{
+    { INPUT_PLATFORM_XBOX, ingame_pad::UI_UP,                        INPUT_XBOX_BTN_UP,        TRUE,   1.0f, FRONTEND_CONTEXT },
+    { INPUT_PLATFORM_XBOX, ingame_pad::UI_DOWN,                      INPUT_XBOX_BTN_DOWN,      TRUE,   1.0f, FRONTEND_CONTEXT },
+    { INPUT_PLATFORM_XBOX, ingame_pad::UI_LEFT,                      INPUT_XBOX_BTN_LEFT,      TRUE,   1.0f, FRONTEND_CONTEXT },
+    { INPUT_PLATFORM_XBOX, ingame_pad::UI_RIGHT,                     INPUT_XBOX_BTN_RIGHT,     TRUE,   1.0f, FRONTEND_CONTEXT },
+    { INPUT_PLATFORM_XBOX, ingame_pad::UI_UP,                        INPUT_XBOX_STICK_LEFT_Y,  FALSE,  1.0f, FRONTEND_CONTEXT },
+    { INPUT_PLATFORM_XBOX, ingame_pad::UI_DOWN,                      INPUT_XBOX_STICK_LEFT_Y,  FALSE, -1.0f, FRONTEND_CONTEXT },
+    { INPUT_PLATFORM_XBOX, ingame_pad::UI_LEFT,                      INPUT_XBOX_STICK_LEFT_X,  FALSE, -1.0f, FRONTEND_CONTEXT },
+    { INPUT_PLATFORM_XBOX, ingame_pad::UI_RIGHT,                     INPUT_XBOX_STICK_LEFT_X,  FALSE,  1.0f, FRONTEND_CONTEXT },
+    { INPUT_PLATFORM_XBOX, ingame_pad::UI_SELECT,                    INPUT_XBOX_BTN_A,         TRUE,   1.0f, FRONTEND_CONTEXT },
+    { INPUT_PLATFORM_XBOX, ingame_pad::UI_BACK,                      INPUT_XBOX_BTN_B,         TRUE,   1.0f, FRONTEND_CONTEXT },
+    { INPUT_PLATFORM_XBOX, ingame_pad::UI_BACK,                      INPUT_XBOX_BTN_BACK,      TRUE,   1.0f, FRONTEND_CONTEXT },
+    { INPUT_PLATFORM_XBOX, ingame_pad::UI_DELETE,                    INPUT_XBOX_BTN_X,         TRUE,   1.0f, FRONTEND_CONTEXT },
+    { INPUT_PLATFORM_XBOX, ingame_pad::UI_ACTIVATE,                  INPUT_XBOX_BTN_Y,         TRUE,   1.0f, FRONTEND_CONTEXT },
+    { INPUT_PLATFORM_XBOX, ingame_pad::UI_SHOULDER_L,                INPUT_XBOX_BTN_WHITE,     TRUE,   1.0f, FRONTEND_CONTEXT },
+    { INPUT_PLATFORM_XBOX, ingame_pad::UI_SHOULDER_R,                INPUT_XBOX_BTN_BLACK,     TRUE,   1.0f, FRONTEND_CONTEXT },
+    { INPUT_PLATFORM_XBOX, ingame_pad::UI_SHOULDER_L2,               INPUT_XBOX_L_TRIGGER,     TRUE,   1.0f, FRONTEND_CONTEXT },
+    { INPUT_PLATFORM_XBOX, ingame_pad::UI_SHOULDER_R2,               INPUT_XBOX_R_TRIGGER,     TRUE,   1.0f, FRONTEND_CONTEXT },
+
+    { INPUT_PLATFORM_PC,   ingame_pad::UI_UP,                        INPUT_KBD_UP,             TRUE,   1.0f, FRONTEND_CONTEXT },
+    { INPUT_PLATFORM_PC,   ingame_pad::UI_DOWN,                      INPUT_KBD_DOWN,           TRUE,   1.0f, FRONTEND_CONTEXT },
+    { INPUT_PLATFORM_PC,   ingame_pad::UI_LEFT,                      INPUT_KBD_LEFT,           TRUE,   1.0f, FRONTEND_CONTEXT },
+    { INPUT_PLATFORM_PC,   ingame_pad::UI_RIGHT,                     INPUT_KBD_RIGHT,          TRUE,   1.0f, FRONTEND_CONTEXT },
+    { INPUT_PLATFORM_PC,   ingame_pad::UI_SELECT,                    INPUT_KBD_RETURN,         TRUE,   1.0f, FRONTEND_CONTEXT },
+    { INPUT_PLATFORM_PC,   ingame_pad::UI_BACK,                      INPUT_KBD_ESCAPE,         TRUE,   1.0f, FRONTEND_CONTEXT },
+    { INPUT_PLATFORM_PC,   ingame_pad::UI_DELETE,                    INPUT_KBD_DELETE,         TRUE,   1.0f, FRONTEND_CONTEXT },
+    { INPUT_PLATFORM_PC,   ingame_pad::UI_DELETE,                    INPUT_KBD_BACK,           TRUE,   1.0f, FRONTEND_CONTEXT },
+    { INPUT_PLATFORM_PC,   ingame_pad::UI_ACTIVATE,                  INPUT_KBD_R,              TRUE,   1.0f, FRONTEND_CONTEXT },
+
+    { INPUT_PLATFORM_PS2,  ingame_pad::UI_UP,                        INPUT_PS2_BTN_L_UP,       TRUE,   1.0f, FRONTEND_CONTEXT },
+    { INPUT_PLATFORM_PS2,  ingame_pad::UI_DOWN,                      INPUT_PS2_BTN_L_DOWN,     TRUE,   1.0f, FRONTEND_CONTEXT },
+    { INPUT_PLATFORM_PS2,  ingame_pad::UI_LEFT,                      INPUT_PS2_BTN_L_LEFT,     TRUE,   1.0f, FRONTEND_CONTEXT },
+    { INPUT_PLATFORM_PS2,  ingame_pad::UI_RIGHT,                     INPUT_PS2_BTN_L_RIGHT,    TRUE,   1.0f, FRONTEND_CONTEXT },
+    { INPUT_PLATFORM_PS2,  ingame_pad::UI_UP,                        INPUT_PS2_STICK_LEFT_Y,   FALSE,  1.0f, FRONTEND_CONTEXT },
+    { INPUT_PLATFORM_PS2,  ingame_pad::UI_DOWN,                      INPUT_PS2_STICK_LEFT_Y,   FALSE, -1.0f, FRONTEND_CONTEXT },
+    { INPUT_PLATFORM_PS2,  ingame_pad::UI_LEFT,                      INPUT_PS2_STICK_LEFT_X,   FALSE, -1.0f, FRONTEND_CONTEXT },
+    { INPUT_PLATFORM_PS2,  ingame_pad::UI_RIGHT,                     INPUT_PS2_STICK_LEFT_X,   FALSE,  1.0f, FRONTEND_CONTEXT },
+    { INPUT_PLATFORM_PS2,  ingame_pad::UI_SELECT,                    INPUT_PS2_BTN_CROSS,      TRUE,   1.0f, FRONTEND_CONTEXT },
+    { INPUT_PLATFORM_PS2,  ingame_pad::UI_BACK,                      INPUT_PS2_BTN_SQUARE,     TRUE,   1.0f, FRONTEND_CONTEXT },
+    { INPUT_PLATFORM_PS2,  ingame_pad::UI_DELETE,                    INPUT_PS2_BTN_CIRCLE,     TRUE,   1.0f, FRONTEND_CONTEXT },
+    { INPUT_PLATFORM_PS2,  ingame_pad::UI_ACTIVATE,                  INPUT_PS2_BTN_TRIANGLE,   TRUE,   1.0f, FRONTEND_CONTEXT },
+    { INPUT_PLATFORM_PS2,  ingame_pad::UI_SHOULDER_L,                INPUT_PS2_BTN_L1,         TRUE,   1.0f, FRONTEND_CONTEXT },
+    { INPUT_PLATFORM_PS2,  ingame_pad::UI_SHOULDER_R,                INPUT_PS2_BTN_R1,         TRUE,   1.0f, FRONTEND_CONTEXT },
+    { INPUT_PLATFORM_PS2,  ingame_pad::UI_SHOULDER_L2,               INPUT_PS2_BTN_L2,         TRUE,   1.0f, FRONTEND_CONTEXT },
+    { INPUT_PLATFORM_PS2,  ingame_pad::UI_SHOULDER_R2,               INPUT_PS2_BTN_R2,         TRUE,   1.0f, FRONTEND_CONTEXT },
+};
+
+//=========================================================================
+// HELPER FUNCTIONS
+//=========================================================================
+
+template< class T >
+static s32 CountOf( const T& Array )
+{
+    return sizeof( Array ) / sizeof( Array[0] );
+}
+
+//=========================================================================
+
+static 
+void RegisterLogicals( ingame_pad& Pad, const logical_definition* pDefinitions, s32 Count )
+{
+    for( s32 i = 0; i < Count; i++ )
+    {
+        Pad.SetLogicalName( pDefinitions[i].LogicalID, pDefinitions[i].pName );
+    }
+}
+
+//=========================================================================
+
+static 
+void RegisterMappings( ingame_pad& Pad, const mapping_definition* pDefinitions, s32 Count )
+{
+    for( s32 i = 0; i < Count; i++ )
+    {
+        const mapping_definition& Mapping = pDefinitions[i];
+        Pad.AddMapping( Mapping.Platform,
+                        Mapping.LogicalID,
+                        Mapping.GadgetID,
+                        Mapping.IsButton,
+                        Mapping.Scale,
+                        Mapping.ContextMask );
+    }
+}
+
+//=========================================================================
+
+static 
+const char* FindLogicalName( const logical_definition* pDefinitions, s32 Count, s32 LogicalID )
+{
+    for( s32 i = 0; i < Count; i++ )
+    {
+        if( pDefinitions[i].LogicalID == LogicalID )
+            return pDefinitions[i].pName;
+    }
+
+    return NULL;
+}
+
+//=========================================================================
+// FUNCTIONS
 //=========================================================================
 
 ingame_pad::ingame_pad( void )
 {
-    m_pName = "Ingame Pad";
     g_InputMgr.RegisterPad( *this );
 }
 
@@ -22,338 +309,82 @@ ingame_pad::ingame_pad( void )
 
 void ingame_pad::OnInitialize( void )
 {
-    //-------------------------------------------------------------------------
-    // Logical actions
-    //-------------------------------------------------------------------------
+    ASSERT( CountOf( s_GameplayLogicals ) == (GAMEPLAY_ACTION_END - GAMEPLAY_ACTION_FIRST) );
+    ASSERT( CountOf( s_FrontendLogicals ) == (FRONTEND_ACTION_END - FRONTEND_ACTION_FIRST) );
 
-    SetLogical( MOVE_STRAFE,            "" );   //Deprecated, use instead: STRAFE_LEFT, STRAFE_RIGHT    
-    SetLogical( MOVE_FOWARD_BACKWARDS,  "" );   //Deprecated, use instead: MOVE_FORWARD, MOVE_BACKWARD  
-    SetLogical( MOVE_FORWARD,           "Move Forward" );
-    SetLogical( MOVE_BACKWARD,          "Move Backward" );
-    SetLogical( STRAFE_LEFT,            "Strafe Left" );
-    SetLogical( STRAFE_RIGHT,           "Strafe Right" );
-    SetLogical( LOOK_HORIZONTAL,        "Horizontal Look" );
-    SetLogical( LOOK_VERTICAL,          "Vertical Look" );
-    SetLogical( LEAN_LEFT,              "Lean Left" );
-    SetLogical( LEAN_RIGHT,             "Lean Right" );
+    SetLogicalCount( MAX_ACTION );
 
-    SetLogical( ACTION_RELOAD,          "Reload" );
-    SetLogical( ACTION_PRIMARY,         "Primary" );
-    SetLogical( ACTION_SECONDARY,       "Secondary" );
-    SetLogical( ACTION_JUMP,            "Jump" );
-    SetLogical( ACTION_CROUCH,          "Crouch" );
-    SetLogical( ACTION_MUTATION,        "Toggle Mutation");
-    SetLogical( ACTION_FIRE_PARASITES,  "Fire Parasites" );
-    SetLogical( ACTION_FIRE_CONTAGION,  "Fire Contagion" );
-    SetLogical( ACTION_MUTANT_MELEE,    "Mutant Melee" );
-    SetLogical( ACTION_CYCLE_RIGHT,     "Cycle Weapons Right" );
-    SetLogical( ACTION_CYCLE_LEFT,      "Cycle Weapons Left" );
-    SetLogical( ACTION_USE,             "Use Object");
-    SetLogical( ACTION_FLASHLIGHT,      "Toggle Flashlight");
-    SetLogical( ACTION_TOGGLE_PRECISE_AIM, "Toggle Precise Aim");
-    
-    // Conversation mappings.
-    SetLogical( ACTION_SPEAK_FOLLOW_STAY,   "Speak: Follow Me" );
-    SetLogical( ACTION_SPEAK_USE_ACTIVATE,  "Speak: Use / Activate" );
-    SetLogical( ACTION_SPEAK_COVER_ME,      "Speak: Cover Me" );
-    SetLogical( ACTION_SPEAK_ATTACK_COVER,  "Speak: Attack / Take Cover" );
+    RegisterLogicals( *this, s_GameplayLogicals, CountOf( s_GameplayLogicals ) );
+    RegisterLogicals( *this, s_FrontendLogicals, CountOf( s_FrontendLogicals ) );
 
-
-    SetLogical( ACTION_HUD_CONTEXT,         "Hud Context switch" );
-    SetLogical( ACTION_PAUSE_CONTEXT,       "Pause menu context switch" );
-
-    SetLogical( ACTION_HUD_MOVEMENT_HORIZONTAL, "Move selection cursor horizontal" );
-    SetLogical( ACTION_HUD_MOVEMENT_VERTICAL,   "Move selection cursor vertical" );
-    SetLogical( ACTION_HUD_SET_HOTKEY_0,        "Assign the item as hot key 0" );
-    SetLogical( ACTION_HUD_SET_HOTKEY_1,        "Assign the item as hot key 1" );
-    SetLogical( ACTION_USE_HOTKEY_0,            "Use the item in hot key 0" );
-    SetLogical( ACTION_USE_HOTKEY_1,            "Use the item in hot key 1" );
-    SetLogical( ACTION_WEAPON_ITEM_SWITCH,      "Toggle between item and weapons" );
-    SetLogical( ACTION_THROW_GRENADE,           "Throw a grenade" );
-    SetLogical( ACTION_CYCLE_GRENADE_TYPE,      "Cycle grenade type" );
-    SetLogical( ACTION_MELEE_ATTACK,            "Melee attack" );
-
-
-    SetLogical( ACTION_VOTE_MENU_ON,            "Vote: Menu On" );
-    SetLogical( ACTION_VOTE_MENU_OFF,           "Vote: Menu Off" );
-    SetLogical( ACTION_VOTE_YES,                "Vote: Yes" );
-    SetLogical( ACTION_VOTE_NO,                 "Vote: No" );
-    SetLogical( ACTION_VOTE_ABSTAIN,            "Vote: Abstain" );
-
-    SetLogical( ACTION_CHAT,                    "Voice Chat" );
-    SetLogical( ACTION_TALK_MODE_TOGGLE,        "Talk: Mode Toggle" );
-
-    SetLogical( ACTION_MP_FLASHLIGHT,           "Multiplayer Toggle Flashlight" );
-    SetLogical( ACTION_MP_MUTATE,               "Multiplayer Toggle Mutation" );
-    SetLogical( ACTION_DROP_FLAG,               "Drop Flag" );
-
-#ifdef TARGET_XBOX
-    // Set the default controler
-    // Left Analog
-    AddMapping( INPUT_PLATFORM_XBOX, MOVE_FORWARD,           INPUT_XBOX_STICK_LEFT_Y, FALSE,  1.0f );
-    AddMapping( INPUT_PLATFORM_XBOX, MOVE_BACKWARD,          INPUT_XBOX_STICK_LEFT_Y, FALSE, -1.0f );
-    AddMapping( INPUT_PLATFORM_XBOX, STRAFE_RIGHT,           INPUT_XBOX_STICK_LEFT_X, FALSE,  1.0f );
-    AddMapping( INPUT_PLATFORM_XBOX, STRAFE_LEFT,            INPUT_XBOX_STICK_LEFT_X, FALSE, -1.0f );
-
-    // Right Analog
-    AddMapping( INPUT_PLATFORM_XBOX, LOOK_HORIZONTAL,        INPUT_XBOX_STICK_RIGHT_X, FALSE );
-    AddMapping( INPUT_PLATFORM_XBOX, LOOK_VERTICAL,          INPUT_XBOX_STICK_RIGHT_Y, FALSE );
-
-    // Shoulder buttons
-    AddMapping( INPUT_PLATFORM_XBOX, ACTION_PRIMARY,         INPUT_XBOX_BTN_R_STICK,  TRUE );
-    AddMapping( INPUT_PLATFORM_XBOX, ACTION_SECONDARY,       INPUT_XBOX_R_TRIGGER,    TRUE );
-    AddMapping( INPUT_PLATFORM_XBOX, ACTION_JUMP,            INPUT_XBOX_BTN_L_STICK,  TRUE );
-    AddMapping( INPUT_PLATFORM_XBOX, ACTION_CROUCH,          INPUT_XBOX_L_TRIGGER,    TRUE );
-    
-    // Buttons
-    AddMapping( INPUT_PLATFORM_XBOX, ACTION_RELOAD,          INPUT_XBOX_BTN_Y,     TRUE );
-    AddMapping( INPUT_PLATFORM_XBOX, ACTION_USE,             INPUT_XBOX_BTN_X,     TRUE );
-    AddMapping( INPUT_PLATFORM_XBOX, ACTION_FLASHLIGHT,      INPUT_XBOX_BTN_WHITE, TRUE );
-
-    AddMapping( INPUT_PLATFORM_XBOX, ACTION_CHAT,            INPUT_XBOX_BTN_BLACK, TRUE );
-
-    // D - Pad
-    AddMapping( INPUT_PLATFORM_XBOX, ACTION_SPEAK_FOLLOW_STAY,   INPUT_XBOX_BTN_UP,    TRUE );
-    AddMapping( INPUT_PLATFORM_XBOX, ACTION_SPEAK_USE_ACTIVATE,  INPUT_XBOX_BTN_LEFT,  TRUE );
-    AddMapping( INPUT_PLATFORM_XBOX, ACTION_SPEAK_COVER_ME,      INPUT_XBOX_BTN_RIGHT, TRUE );
-    AddMapping( INPUT_PLATFORM_XBOX, ACTION_SPEAK_ATTACK_COVER,  INPUT_XBOX_BTN_DOWN,  TRUE );
-
-    AddMapping( INPUT_PLATFORM_XBOX, ACTION_HUD_CONTEXT,             INPUT_XBOX_L_TRIGGER, TRUE );
-    AddMapping( INPUT_PLATFORM_XBOX, ACTION_PAUSE_CONTEXT,           INPUT_XBOX_BTN_START,     TRUE );
-
-    AddMapping( INPUT_PLATFORM_XBOX, ACTION_HUD_MOVEMENT_HORIZONTAL, INPUT_XBOX_STICK_LEFT_X, FALSE );
-    AddMapping( INPUT_PLATFORM_XBOX, ACTION_HUD_MOVEMENT_VERTICAL,   INPUT_XBOX_STICK_LEFT_Y, FALSE );
-
-    AddMapping( INPUT_PLATFORM_XBOX, ACTION_TALK_MODE_TOGGLE, INPUT_XBOX_BTN_BLACK, TRUE );
-#endif
-
-#ifdef TARGET_PC
-    //Set the default PC controls.
-    //Mouse
-    AddMapping( INPUT_PLATFORM_PC, ACTION_PRIMARY,       INPUT_MOUSE_BTN_L,      TRUE );
-    AddMapping( INPUT_PLATFORM_PC, ACTION_SECONDARY,     INPUT_MOUSE_BTN_R,      TRUE );
-    AddMapping( INPUT_PLATFORM_PC, LOOK_HORIZONTAL,      INPUT_MOUSE_X_REL,      FALSE );
-    AddMapping( INPUT_PLATFORM_PC, LOOK_VERTICAL,        INPUT_MOUSE_Y_REL,      FALSE );
-    
-	//Basic weapon change
-    AddMapping( INPUT_PLATFORM_PC, ACTION_CYCLE_RIGHT,   INPUT_MOUSE_WHEEL_REL,  FALSE,  1.0f );
-    AddMapping( INPUT_PLATFORM_PC, ACTION_CYCLE_LEFT,    INPUT_MOUSE_WHEEL_REL,  FALSE, -1.0f );
-	
-    //Movement
-    AddMapping( INPUT_PLATFORM_PC, MOVE_FORWARD,         INPUT_KBD_W,            FALSE );
-    AddMapping( INPUT_PLATFORM_PC, MOVE_BACKWARD,        INPUT_KBD_S,            FALSE );
-    AddMapping( INPUT_PLATFORM_PC, STRAFE_LEFT,          INPUT_KBD_A,            FALSE );
-    AddMapping( INPUT_PLATFORM_PC, STRAFE_RIGHT,         INPUT_KBD_D,            FALSE );
-                                                                                 
-    AddMapping( INPUT_PLATFORM_PC, ACTION_JUMP,          INPUT_KBD_SPACE,        TRUE );
-    AddMapping( INPUT_PLATFORM_PC, ACTION_CROUCH,        INPUT_KBD_LCONTROL,     TRUE );
-                                                                                 
-    AddMapping( INPUT_PLATFORM_PC, LEAN_LEFT,            INPUT_KBD_Q,            TRUE );
-    AddMapping( INPUT_PLATFORM_PC, LEAN_RIGHT,           INPUT_KBD_E,            TRUE );
-                                                                                 
-    //Buttons                                                                    
-    AddMapping( INPUT_PLATFORM_PC, ACTION_RELOAD,        INPUT_KBD_R,            TRUE );
-    AddMapping( INPUT_PLATFORM_PC, ACTION_THROW_GRENADE, INPUT_KBD_G,            TRUE );
-    AddMapping( INPUT_PLATFORM_PC, ACTION_USE,           INPUT_KBD_TAB,          TRUE );
-	
-	//-----BRUH...------
-    AddMapping( INPUT_PLATFORM_PC, ACTION_MUTATION,      INPUT_KBD_X,            TRUE );
-    AddMapping( INPUT_PLATFORM_PC, ACTION_MP_MUTATE,     INPUT_KBD_X,            TRUE );
-
-	//-----BRUH...------
-    AddMapping( INPUT_PLATFORM_PC, ACTION_MELEE_ATTACK,  INPUT_KBD_V,            TRUE );
-    AddMapping( INPUT_PLATFORM_PC, ACTION_MUTANT_MELEE,  INPUT_KBD_V,            TRUE );	
-	
-    AddMapping( INPUT_PLATFORM_PC, ACTION_FLASHLIGHT,    INPUT_KBD_F,            TRUE );
-                                                                                 
-    //UI                                                                         
-    AddMapping( INPUT_PLATFORM_PC, ACTION_HUD_CONTEXT,   INPUT_KBD_F1,           TRUE );
-    AddMapping( INPUT_PLATFORM_PC, ACTION_PAUSE_CONTEXT, INPUT_KBD_ESCAPE,       TRUE );
-#endif
-
-#ifdef TARGET_PS2
-    // Set the default controler
-    // Left Analog
-    AddMapping( INPUT_PLATFORM_PS2, MOVE_FORWARD,           INPUT_PS2_STICK_LEFT_Y, FALSE,  1.0f );
-    AddMapping( INPUT_PLATFORM_PS2, MOVE_BACKWARD,          INPUT_PS2_STICK_LEFT_Y, FALSE, -1.0f );
-    AddMapping( INPUT_PLATFORM_PS2, STRAFE_RIGHT,           INPUT_PS2_STICK_LEFT_X, FALSE,  1.0f );
-    AddMapping( INPUT_PLATFORM_PS2, STRAFE_LEFT,            INPUT_PS2_STICK_LEFT_X, FALSE, -1.0f );
-    AddMapping( INPUT_PLATFORM_PS2, ACTION_CHAT,            INPUT_PS2_BTN_L_STICK, TRUE   );  
-
-    // Right Analog
-    AddMapping( INPUT_PLATFORM_PS2, LOOK_HORIZONTAL,        INPUT_PS2_STICK_RIGHT_X, FALSE );
-    AddMapping( INPUT_PLATFORM_PS2, LOOK_VERTICAL,          INPUT_PS2_STICK_RIGHT_Y, FALSE );
-
-    // Shoulder buttons
-    AddMapping( INPUT_PLATFORM_PS2, ACTION_PRIMARY,         INPUT_PS2_BTN_R1,       TRUE );
-    AddMapping( INPUT_PLATFORM_PS2, ACTION_SECONDARY,       INPUT_PS2_BTN_R2,       TRUE );
-    AddMapping( INPUT_PLATFORM_PS2, ACTION_JUMP,            INPUT_PS2_BTN_L1,       TRUE );
-    AddMapping( INPUT_PLATFORM_PS2, ACTION_CROUCH,          INPUT_PS2_BTN_L2,       TRUE );
-    
-    // Buttons
-    AddMapping( INPUT_PLATFORM_PS2, ACTION_RELOAD,          INPUT_PS2_BTN_SQUARE,   TRUE );
-    AddMapping( INPUT_PLATFORM_PS2, ACTION_USE,             INPUT_PS2_BTN_CROSS,    TRUE );
-    AddMapping( INPUT_PLATFORM_PS2, ACTION_FLASHLIGHT,      INPUT_PS2_BTN_CIRCLE,   TRUE );
-
-    // D - Pad
-    AddMapping( INPUT_PLATFORM_PS2, ACTION_SPEAK_FOLLOW_STAY,   INPUT_PS2_BTN_L_UP,     TRUE );
-    AddMapping( INPUT_PLATFORM_PS2, ACTION_SPEAK_USE_ACTIVATE,  INPUT_PS2_BTN_L_LEFT,   TRUE );
-    AddMapping( INPUT_PLATFORM_PS2, ACTION_SPEAK_COVER_ME,      INPUT_PS2_BTN_L_RIGHT,  TRUE );
-    AddMapping( INPUT_PLATFORM_PS2, ACTION_SPEAK_ATTACK_COVER,  INPUT_PS2_BTN_L_DOWN,   TRUE );
-
-    AddMapping( INPUT_PLATFORM_PS2, ACTION_HUD_CONTEXT,             INPUT_PS2_BTN_L2,       TRUE );
-    AddMapping( INPUT_PLATFORM_PS2, ACTION_PAUSE_CONTEXT,           INPUT_PS2_BTN_START,    TRUE );
-
-    AddMapping( INPUT_PLATFORM_PS2, ACTION_HUD_MOVEMENT_HORIZONTAL, INPUT_PS2_STICK_LEFT_X, FALSE );
-    AddMapping( INPUT_PLATFORM_PS2, ACTION_HUD_MOVEMENT_VERTICAL,   INPUT_PS2_STICK_LEFT_Y, FALSE );
-
-    AddMapping( INPUT_PLATFORM_PS2, LEAN_LEFT, INPUT_PS2_BTN_L_LEFT, TRUE);
-    AddMapping( INPUT_PLATFORM_PS2, LEAN_RIGHT, INPUT_PS2_BTN_L_RIGHT, TRUE);
-
-    AddMapping( INPUT_PLATFORM_PS2, ACTION_TALK_MODE_TOGGLE, INPUT_PS2_BTN_SELECT, TRUE );
-#endif
+    RegisterMappings( *this, s_GameplayMappings, CountOf( s_GameplayMappings ) );
+    RegisterMappings( *this, s_SystemMappings,   CountOf( s_SystemMappings ) );
+    RegisterMappings( *this, s_FrontendMappings, CountOf( s_FrontendMappings ) );
 }
 
 //=========================================================================
 
 void ingame_pad::OnUpdate( f32 DeltaTime )
 {
-#if defined(TARGET_XBOX)
-    s32 iPlatform = INPUT_PLATFORM_XBOX;
-#elif defined(TARGET_PS2)
-    s32 iPlatform = INPUT_PLATFORM_PS2;
-#elif defined(TARGET_PC)
-    s32 iPlatform = INPUT_PLATFORM_PC;
-#endif
-    //
-    // First lets read all the input what we need
-    //
-    input_pad::OnUpdate( iPlatform, DeltaTime );
-    // Nothing to do for now
-    //OnDebugRender();
+    input_pad::OnUpdate( DeltaTime );
 }
 
 //===========================================================================
 
 const char* ingame_pad::GetLogicalIDName( s32 Index )
 {
-    // Which state?
-    switch( Index )
-    {
-        default:
-            ASSERTS(0, "Add your new state to this list or properties will not work!");
+    const char* pName = FindLogicalName( s_GameplayLogicals, CountOf( s_GameplayLogicals ), Index );
+    if( pName )
+        return pName;
 
+    pName = FindLogicalName( s_FrontendLogicals, CountOf( s_FrontendLogicals ), Index );
+    if( pName )
+        return pName;
 
-        case MOVE_STRAFE:               return "";  //Deprecated, use instead: STRAFE_LEFT, STRAFE_RIGHT    
-        case MOVE_FOWARD_BACKWARDS:     return "";  //Deprecated, use instead: MOVE_FORWARD, MOVE_BACKWARD  
-        case MOVE_FORWARD:              return "Move Forward";
-        case MOVE_BACKWARD:             return "Move Backward";
-        case STRAFE_LEFT:               return "Strafe Left";
-        case STRAFE_RIGHT:              return "Strafe Right";
-        case LOOK_HORIZONTAL:           return "Look Horiz";
-        case LOOK_VERTICAL:             return "Look Vert";
-        case LEAN_LEFT:                 return "Lean Left";
-        case LEAN_RIGHT:                return "Lean Right";
-        case ACTION_JUMP:               return "Jump";
-        case ACTION_CROUCH:             return "Crouch";
-        case ACTION_PRIMARY:            return "Primary Fire";
-        case ACTION_SECONDARY:          return "Secondary Fire";
-        case ACTION_RELOAD:             return "Reload";
-        case ACTION_MUTATION:           return "Mutation";
-        case ACTION_FIRE_PARASITES:     return "Fire Parasites";
-        case ACTION_FIRE_CONTAGION:     return "Fire Contagion";
-        case ACTION_MUTANT_MELEE:       return "Mutant Melee";
-        case ACTION_CYCLE_RIGHT:        return "Cycle Right";
-        case ACTION_CYCLE_LEFT:         return "Cycle Left";
-        case ACTION_USE:                return "Use";
-        case ACTION_FLASHLIGHT:         return "Flashlight";
-        case ACTION_TOGGLE_PRECISE_AIM: return "Toggle Precise Aim";
-        case ACTION_MP_FLASHLIGHT:      return "Multiplayer Flashlight";
-        case ACTION_MP_MUTATE:          return "Multiplayer Mutation";
-        case ACTION_DROP_FLAG:          return "Drop Flag";
-
-
-        // Friendly interaction controls.
-        case ACTION_SPEAK_FOLLOW_STAY:  return "Talk: Follow";
-        case ACTION_SPEAK_USE_ACTIVATE: return "Talk: Activate";
-        case ACTION_SPEAK_COVER_ME:     return "Talk: Cover";
-        case ACTION_SPEAK_ATTACK_COVER: return "Talk: Attack";
-
-        //Interface controls
-        case ACTION_HUD_CONTEXT:            return "";
-        case ACTION_HUD_MOVEMENT_HORIZONTAL:return "";
-        case ACTION_HUD_MOVEMENT_VERTICAL:  return "";
-        case ACTION_HUD_SET_HOTKEY_0:       return "Set Hkey 0";
-        case ACTION_HUD_SET_HOTKEY_1:       return "Set Hkey 1";
-
-        // Hot key stuff
-        case ACTION_USE_HOTKEY_0:           return "Use Hkey 0";
-        case ACTION_USE_HOTKEY_1:           return "Use Hkey 1";
-        case ACTION_PAUSE_CONTEXT:          return "Pause";
-        case ACTION_FRONTEND_CONTEXT:       return "";
-        case ACTION_RIFT:                   return "";
-
-        case ACTION_WEAPON_ITEM_SWITCH:     return "";
-        case ACTION_THROW_GRENADE:          return "";
-        case ACTION_CYCLE_GRENADE_TYPE:     return "";
-        case ACTION_MELEE_ATTACK:           return "";
-
-        case ACTION_TALK_MODE_TOGGLE:       return "Talk: Mode Toggle";
-        case ACTION_VOTE_MENU_ON:           return "Vote: Menu On";
-        case ACTION_VOTE_MENU_OFF:          return "Vote: Menu Off";
-        case ACTION_VOTE_YES:               return "Vote: Yes";
-        case ACTION_VOTE_NO:                return "Vote: No";
-        case ACTION_VOTE_ABSTAIN:           return "Vote: Abstain";
-
-        case ACTION_CHAT:                   return "Voice Chat";
-
-    }
+    ASSERTS( 0, "Unknown logical input id" );
+    return "";
 }
 
 //===========================================================================
 
 const char* ingame_pad::GetLogicalIDEnum( void )
 {
-    // Build enum list
-    static char s_Enum[1024] = {0};
-        
-    // Already built?
-    if (s_Enum[0])
-        return s_Enum;
+    static xarray<char> s_Enum;
 
-    // Add all states to enum
-    char* pDest = s_Enum;
-    for (s32 i = 0; i < MAX_ACTION; i++)
+    if( s_Enum.GetCount() )
+        return s_Enum.GetPtr();
+
+    for( s32 i = 0; i < CountOf( s_GameplayLogicals ); i++ )
     {
-        // Lookup state name
-        const char* pState = GetLogicalIDName(i);
+        const char* pName = s_GameplayLogicals[i].pName;
+        const s32 Length  = x_strlen( pName );
 
-        // Add to enum list
-        x_strcpy(pDest, pState);
-
-        // Next
-        pDest += x_strlen(pState)+1;
+        for( s32 j = 0; j <= Length; j++ )
+        {
+            s_Enum.Append( pName[j] );
+        }
     }
 
-    // Make sure we didn't overrun the array!
-    ASSERT(pDest <= &s_Enum[1024]);
-
-    // Done
-    return s_Enum;
+    s_Enum.Append( 0 );
+    return s_Enum.GetPtr();
 }
 
 //=========================================================================
 
 ingame_pad::logical_id ingame_pad::GetLogicalIDByName( const char* pName )
 {
-    // Check all states
-    for (s32 i = 0; i < MAX_ACTION; i++)
+    for( s32 i = 0; i < CountOf( s_GameplayLogicals ); i++ )
     {
-        // Found?
-        if (x_stricmp(pName, GetLogicalIDName(i)) == 0)
-            return (ingame_pad::logical_id)i;
+        if( x_stricmp( pName, s_GameplayLogicals[i].pName ) == 0 )
+            return s_GameplayLogicals[i].LogicalID;
     }
 
-    // Not found
     return ACTION_NULL;
+}
+
+//=========================================================================
+
+xbool ingame_pad::IsPausePressed( void ) const
+{
+    return GetLogical( ACTION_PAUSE_CONTEXT ).WasValue > 0.0f;
 }
