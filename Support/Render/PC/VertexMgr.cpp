@@ -607,10 +607,7 @@ void vertex_mgr::ActivateStreams( xhandle hDList )
 
 //=========================================================================
 
-// TODO: GS: Now shaders and settings are set for each DList separately, am I doing it right?
-// IDK, maybe it shoud be reworked.
-
-void vertex_mgr::DrawDList( xhandle hDList, const matrix4* pWorld, const d3d_lighting* pLighting )
+void vertex_mgr::DrawDList( xhandle hDList, const matrix4* pWorld )
 {
     ASSERT( hDList.Handle >= 0 );
 
@@ -631,32 +628,34 @@ void vertex_mgr::DrawDList( xhandle hDList, const matrix4* pWorld, const d3d_lig
 
 //=========================================================================
 
-void vertex_mgr::ApplyLightmapColors( xhandle hDList, const u32* pColors, s32 nColors, s32 iColor )
+void vertex_mgr::DrawDListInstanced( xhandle hDList, s32 nInstances )
 {
-    if( !pColors || !nColors )
-        return;
-       
-    //x_DebugMsg( "VertexMGR: ApplyLightmapColors: offset %d count %d\n", iColor, nColors );
-	   
-    BYTE* pVertData = (BYTE*)LockDListVerts( hDList );
-    if( pVertData )
+    ASSERT( hDList.Handle >= 0 );
+    ASSERT( nInstances > 0 );
+
+    dlist& DList  = m_lDList( hDList );
+    node&  Index  = m_lNode ( DList.hIndexNode  );
+
+    ActivateStreams( hDList );
+
+    if( g_pd3dDevice && g_pd3dContext )
     {
-        const u32* pColorData = pColors + iColor;
-        
-        for( s32 i = 0; i < nColors; i++ )
-        {
-            // Color field at offset 24 in each vertex
-            BYTE* pVertexStart = pVertData + (i * m_Stride);
-            xcolor* pColor = (xcolor*)(pVertexStart + 24);
-            
-            u32 color = pColorData[i];
-            *pColor = xcolor( (color >> 16) & 0xFF,  // R
-                              (color >> 8)  & 0xFF,  // G
-                               color & 0xFF,         // B
-                              (color >> 24) & 0xFF); // A
-        }        
-        UnlockDListVerts( hDList );
+        ASSERT( DList.nPrims*3 == Index.User );
+        ASSERT( (Index.Offset + Index.User) < MAX_INDEX_POOL );
+
+        g_pd3dContext->DrawIndexedInstanced( Index.User, nInstances, Index.Offset, 0, 0 );
     }
+}
+
+//=========================================================================
+
+s32 vertex_mgr::GetDListVertexOffset( xhandle hDList ) const
+{
+    ASSERT( hDList.Handle >= 0 );
+
+    const dlist& DList  = m_lDList( hDList );
+    const node&  Vertex = m_lNode ( DList.hVertexNode );
+    return Vertex.Offset;
 }
 
 //=========================================================================

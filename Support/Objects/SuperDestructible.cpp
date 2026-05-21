@@ -82,18 +82,20 @@ static struct super_destructible_obj_desc : public object_desc
             "Super Destructible Object", 
             "PROPS",
 
-            object::ATTR_COLLIDABLE         | 
-            object::ATTR_BLOCKS_ALL_PROJECTILES | 
-            object::ATTR_BLOCKS_ALL_ACTORS | 
-            object::ATTR_BLOCKS_RAGDOLL | 
-            object::ATTR_BLOCKS_CHARACTER_LOS | 
-            object::ATTR_BLOCKS_PLAYER_LOS | 
-            object::ATTR_BLOCKS_PAIN_LOS | 
-            object::ATTR_BLOCKS_SMALL_DEBRIS | 
-            object::ATTR_RENDERABLE         |
-            object::ATTR_NEEDS_LOGIC_TIME   |
-            object::ATTR_SPACIAL_ENTRY      |
-            object::ATTR_DESTRUCTABLE_OBJECT|
+            object::ATTR_COLLIDABLE             |
+            object::ATTR_BLOCKS_ALL_PROJECTILES |
+            object::ATTR_BLOCKS_ALL_ACTORS      |
+            object::ATTR_BLOCKS_RAGDOLL         |
+            object::ATTR_BLOCKS_CHARACTER_LOS   |
+            object::ATTR_BLOCKS_PLAYER_LOS      |
+            object::ATTR_BLOCKS_PAIN_LOS        |
+            object::ATTR_BLOCKS_SMALL_DEBRIS    |
+            object::ATTR_RENDERABLE             |
+            object::ATTR_NEEDS_LOGIC_TIME       |
+            object::ATTR_SPACIAL_ENTRY          |
+            object::ATTR_DESTRUCTABLE_OBJECT    |
+            object::ATTR_CAST_SHADOWS           |
+            object::ATTR_RECEIVE_SHADOWS        |
             object::ATTR_DAMAGEABLE, 
 
             FLAGS_GENERIC_EDITOR_CREATE | 
@@ -169,6 +171,7 @@ void BuildNamesList( const geom& Geom, namelist& List )
 
 super_destructible_obj::super_destructible_obj(void)
 {
+    InvalidateRenderState();
     m_Destroyed         = FALSE;
     m_DecalGroup        = 0;
     m_DestructionTime   = 0;
@@ -203,6 +206,57 @@ super_destructible_obj::~super_destructible_obj(void)
             s_PainResponseInfo[ i ].Emitter = 0;
         }
     }
+}
+
+//=========================================================================
+
+void super_destructible_obj::InvalidateRenderState( void )
+{
+    InitSimpleAnimInterpCache( m_RenderCache );
+}
+
+//=========================================================================
+
+void super_destructible_obj::CaptureRenderInterpState( void )
+{
+    CaptureSimpleAnimInterpCache( m_RenderCache, GetL2W(), m_AnimPlayer );
+    RegisterRenderInterpUpdate();
+}
+
+//=========================================================================
+
+void super_destructible_obj::UpdateRenderInterpState( f32 Alpha )
+{
+    UpdateSimpleAnimInterpCache( m_RenderCache, Alpha );
+}
+
+//=========================================================================
+
+void super_destructible_obj::ClearRenderInterpState( void )
+{
+    ClearSimpleAnimInterpCache( m_RenderCache );
+}
+
+//=========================================================================
+
+const matrix4& super_destructible_obj::GetRenderL2W( void ) const
+{
+    return GetSimpleAnimInterpCacheL2W( m_RenderCache, GetL2W() );
+}
+
+//=========================================================================
+
+xbool super_destructible_obj::GetRenderBoneL2W( s32 iBone, matrix4& L2W )
+{
+    if( GetSimpleAnimInterpCacheBoneL2W( m_RenderCache, iBone, L2W ) )
+        return TRUE;
+
+    const matrix4* pBone = m_AnimPlayer.GetBoneL2W( iBone, FALSE );
+    if( !pBone )
+        return FALSE;
+
+    L2W = *pBone;
+    return TRUE;
 }
 
 //=========================================================================
@@ -592,6 +646,16 @@ void  super_destructible_obj::OnRender( void )
 
 //=============================================================================
 
+void super_destructible_obj::OnRenderShadowCast( u64 ProjMask )
+{
+    if( m_Stages.GetCount() <= 0 )
+        return;
+    
+    object::OnRenderShadowCast( ProjMask );
+}
+
+//=============================================================================
+
 void super_destructible_obj::OnMove( const vector3& NewPos )
 {
     bbox BBox = GetBBox() ;
@@ -631,6 +695,15 @@ void super_destructible_obj::OnTransform( const matrix4& L2W )
 
 const matrix4* super_destructible_obj::GetBoneL2Ws( void )
 {
+    if( m_hAnimGroup.GetPointer() )
+    {
+        const matrix4* pMatrices = BuildSimpleAnimInterpCacheMatrices( m_RenderCache,
+                                                                       *m_hAnimGroup.GetPointer(),
+                                                                       m_hAnimGroup.GetPointer()->GetNBones() );
+        if( pMatrices )
+            return pMatrices;
+    }
+
     return m_AnimPlayer.GetBoneL2Ws() ;
 }
 

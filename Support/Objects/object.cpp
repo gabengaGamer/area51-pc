@@ -16,6 +16,8 @@
 #include "Event.hpp"
 #include "Parsing\TextIn.hpp"
 #include "e_Draw.hpp"
+#include "DeltaMgr\InterpolationMgr.hpp"
+#include "Objects\Interpolation\InterpolationMath.hpp"
 
 #ifdef X_EDITOR
 #include "..\Apps\WorldEditor\WorldEditor.hpp"
@@ -32,6 +34,39 @@
 //==============================================================================
 //  DEFINES
 //==============================================================================
+
+struct object_render_interp_state
+{
+    guid    Guid;
+    matrix4 PrevL2W;
+    matrix4 CurrL2W;
+    matrix4 BackupL2W;
+    xbool   Valid;
+    xbool   Active;
+    xbool   Changed;
+    s32     QueueID;
+};
+
+struct object_render_update_entry
+{
+    slot_id SlotID;
+    guid    Guid;
+};
+
+static object_render_interp_state s_ObjectRenderInterp[ obj_mgr::MAX_OBJECTS ];
+static object_render_update_entry s_ObjectRenderUpdate[ obj_mgr::MAX_OBJECTS ];
+static s32                        s_nObjectRenderUpdates = 0;
+static s32                        s_ObjectRenderQueueID  = 0;
+static interpolation_mgr::provider s_ObjectInterpolationProvider( object::CaptureRenderInterpStates,
+                                                                  object::UpdateRenderInterpStates,
+                                                                  object::ClearRenderInterpStates,
+                                                                  interpolation_mgr::CLEAR_STAGE_END_FRAME,
+                                                                  1000 );
+static interpolation_mgr::provider s_ObjectPerViewInterpolationProvider( NULL,
+                                                                         NULL,
+                                                                         object::ClearRenderInterpStatesPerView,
+                                                                         interpolation_mgr::CLEAR_STAGE_PER_VIEW,
+                                                                         1000 );
 
 //==============================================================================
 //  OBJECT FUNCTIONS
@@ -89,6 +124,229 @@ object::~object( void )
         // TODO: Ask the string manager to nuke this string
         // m_hCustomName        
     }
+}
+
+//==============================================================================
+
+static matrix4 InterpObjectL2W( const matrix4& PrevL2W, const matrix4& CurrL2W, f32 T )
+{
+    vector3 PrevScale;
+    vector3 CurrScale;
+    radian3 PrevRot;
+    radian3 CurrRot;
+    vector3 PrevPos;
+    vector3 CurrPos;
+
+    PrevScale = PrevL2W.GetScale();
+    CurrScale = CurrL2W.GetScale();
+    PrevRot   = PrevL2W.GetRotation();
+    CurrRot   = CurrL2W.GetRotation();
+    PrevPos   = PrevL2W.GetTranslation();
+    CurrPos   = CurrL2W.GetTranslation();
+
+    matrix4 L2W;
+    L2W.Setup( InterpVector  ( PrevScale, CurrScale, T ),
+               InterpRotation( PrevRot,   CurrRot,   T ),
+               InterpVector  ( PrevPos,   CurrPos,   T ) );
+    return L2W;
+}
+
+//==============================================================================
+
+static xbool ShouldSnapObjectRenderInterpState( const matrix4& PrevL2W, const matrix4& CurrL2W )
+{
+    const vector3 Delta = CurrL2W.GetTranslation() - PrevL2W.GetTranslation();
+
+    return Delta.LengthSquared() > x_sqr( 5000.0f );
+}
+
+//==============================================================================
+
+static object_render_interp_state& GetObjectRenderInterpState( const object& Object )
+{
+    const s32 Slot = Object.GetSlot();
+    ASSERT( IN_RANGE( 0, Slot, obj_mgr::MAX_OBJECTS-1 ) );
+    return s_ObjectRenderInterp[ Slot ];
+}
+
+//==============================================================================
+
+void object::RegisterRenderInterpUpdate( void )
+{
+    if( !(GetAttrBits() & object::ATTR_RENDERABLE) ||
+        ( GetAttrBits() & object::ATTR_DESTROY    ) )
+    {
+        return;
+    }
+
+    object_render_interp_state& State = GetObjectRenderInterpState( *this );
+    if( State.QueueID == s_ObjectRenderQueueID )
+        return;
+
+    ASSERT( s_nObjectRenderUpdates < obj_mgr::MAX_OBJECTS );
+    State.QueueID = s_ObjectRenderQueueID;
+
+    s_ObjectRenderUpdate[ s_nObjectRenderUpdates ].SlotID = m_SlotID;
+    s_ObjectRenderUpdate[ s_nObjectRenderUpdates ].Guid   = m_Guid;
+    s_nObjectRenderUpdates++;
+}
+
+//==============================================================================
+
+void object::CaptureRenderInterpStates( void )
+{
+    s_nObjectRenderUpdates = 0;
+    s_ObjectRenderQueueID++;
+
+    for( s32 Type = object::TYPE_NULL + 1; Type < object::TYPE_END_OF_LIST; Type++ )
+    {
+        slot_id SlotID = g_ObjMgr.GetFirst( (object::type)Type );
+        while( SlotID != SLOT_NULL )
+        {
+            object* pObject = g_ObjMgr.GetObjectBySlot( SlotID );
+            slot_id NextSlotID = g_ObjMgr.GetNext( SlotID );
+
+            if( pObject )
+                pObject->CaptureRenderInterpState();
+
+            SlotID = NextSlotID;
+        }
+    }
+}
+
+//==============================================================================
+
+void object::UpdateRenderInterpStates( f32 Alpha )
+{
+    for( s32 i = 0; i < s_nObjectRenderUpdates; i++ )
+    {
+        object* pObject = g_ObjMgr.GetObjectBySlot( s_ObjectRenderUpdate[i].SlotID );
+
+        if( pObject && (pObject->GetGuid() == s_ObjectRenderUpdate[i].Guid) )
+            pObject->UpdateRenderInterpState( Alpha );
+    }
+}
+
+//==============================================================================
+
+void object::ClearRenderInterpStates( void )
+{
+    for( s32 i = 0; i < s_nObjectRenderUpdates; i++ )
+    {
+        object* pObject = g_ObjMgr.GetObjectBySlot( s_ObjectRenderUpdate[i].SlotID );
+
+        if( pObject && (pObject->GetGuid() == s_ObjectRenderUpdate[i].Guid) )
+            pObject->ClearRenderInterpState();
+    }
+}
+
+//==============================================================================
+
+void object::ClearRenderInterpStatesPerView( void )
+{
+    slot_id SlotID = g_ObjMgr.GetFirst( object::TYPE_PLAYER );
+    while( SlotID != SLOT_NULL )
+    {
+        object* pObject = g_ObjMgr.GetObjectBySlot( SlotID );
+        slot_id NextSlotID = g_ObjMgr.GetNext( SlotID );
+
+        if( pObject )
+            pObject->ClearRenderInterpStatePerView();
+
+        SlotID = NextSlotID;
+    }
+}
+
+//==============================================================================
+
+void object::CaptureRenderInterpState( void )
+{
+    object_render_interp_state& State = GetObjectRenderInterpState( *this );
+
+    if( State.Guid != GetGuid() )
+    {
+        State.Guid   = GetGuid();
+        State.Valid  = FALSE;
+        State.Active = FALSE;
+        State.Changed = FALSE;
+        State.QueueID = 0;
+    }
+
+    if( !(GetAttrBits() & object::ATTR_RENDERABLE) ||
+        ( GetAttrBits() & object::ATTR_DESTROY    ) )
+    {
+        State.Valid   = FALSE;
+        State.Active  = FALSE;
+        State.Changed = FALSE;
+        return;
+    }
+
+    const matrix4& L2W = GetL2W();
+
+    if( !State.Valid )
+    {
+        State.PrevL2W = L2W;
+        State.CurrL2W = L2W;
+        State.Valid   = TRUE;
+        State.Changed = FALSE;
+        return;
+    }
+
+    State.PrevL2W = State.CurrL2W;
+    State.CurrL2W = L2W;
+    State.Changed = (x_memcmp( &State.PrevL2W, &State.CurrL2W, sizeof( matrix4 ) ) != 0);
+
+    if( ShouldSnapObjectRenderInterpState( State.PrevL2W, State.CurrL2W ) )
+    {
+        State.PrevL2W = State.CurrL2W;
+        State.Changed = FALSE;
+    }
+
+    if( State.Changed )
+        RegisterRenderInterpUpdate();
+}
+
+//==============================================================================
+
+void object::UpdateRenderInterpState( f32 Alpha )
+{
+    object_render_interp_state& State = GetObjectRenderInterpState( *this );
+
+    if( State.Active )
+        object::ClearRenderInterpState();
+
+    if( !State.Valid ||
+        !State.Changed ||
+        !(GetAttrBits() & object::ATTR_RENDERABLE) ||
+        ( GetAttrBits() & object::ATTR_DESTROY    ) )
+    {
+        return;
+    }
+
+    Alpha = ClampInterpAlpha( Alpha );
+
+    State.BackupL2W = m_L2W;
+    m_L2W           = InterpObjectL2W( State.PrevL2W, State.CurrL2W, Alpha );
+    State.Active    = TRUE;
+
+    m_FlagBits |= FLAG_DIRTY_TRANSFORM;
+    UpdateTransform();
+}
+
+//==============================================================================
+
+void object::ClearRenderInterpState( void )
+{
+    object_render_interp_state& State = GetObjectRenderInterpState( *this );
+
+    if( !State.Active )
+        return;
+
+    m_L2W        = State.BackupL2W;
+    State.Active = FALSE;
+
+    m_FlagBits |= FLAG_DIRTY_TRANSFORM;
+    UpdateTransform();
 }
 
 //==============================================================================
@@ -1209,6 +1467,39 @@ void object::OnAttachedMove(       s32      iAttachPt,
         return;
 
     OnTransform( L2W );
+}
+
+//=============================================================================
+
+void object::OnRenderShadowCast( u64 ProjMask )
+{
+    render_inst* pRenderInst = GetRenderInstPtr();
+    if( !pRenderInst )
+        return;
+
+    const matrix4* pMatrices = GetBoneL2Ws();
+    const matrix4* pL2W      = &GetL2W();
+    geom*          pGeom     = pRenderInst->GetGeom();
+
+    if( pGeom && ( pGeom->m_nBones > 1 ) )
+    {
+        if( !pMatrices || ( pMatrices == pL2W ) )
+            return;
+    }
+    else if( !pMatrices )
+    {
+        pMatrices = pL2W;
+    }
+
+    const u32 Flags = NeedsClipping() ? render::CLIPPED : 0;
+    pRenderInst->RenderShadowCast( pMatrices, Flags, ProjMask );
+}
+
+//=============================================================================
+
+void object::OnRenderShadowReceive( u64 ProjMask )
+{
+    (void)ProjMask;
 }
 
 //=============================================================================

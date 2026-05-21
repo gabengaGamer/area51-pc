@@ -97,23 +97,12 @@ int TreeTypeRscList::OnCreate(LPCREATESTRUCT lpCreateStruct)
 
 void TreeTypeRscList::OnPaint() 
 {
-    // Use a "Offscreen" DC to fill rect and send to DefWindowProc...  
-	// Background is already filled in gray
 	CPaintDC dc(this);
-
-	// Get the client rect.
-	CRect rectClient;
-	GetClientRect(&rectClient);
-
-	// Paint to a memory device context to help
-	// eliminate screen flicker.
-	CXTMemDC memDC(&dc, rectClient);
-
-	// Let the window do its default painting.
-	CWnd::DefWindowProc( WM_PAINT, (WPARAM)memDC.m_hDC, 0 );
+    UNUSED_ALWAYS( dc );
+    Default();
 }
 
-UINT TreeTypeRscList::OnNcHitTest(CPoint point) 
+LRESULT TreeTypeRscList::OnNcHitTest(CPoint point) 
 {
 	UINT uFlag=0;
 

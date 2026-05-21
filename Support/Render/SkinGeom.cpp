@@ -1,11 +1,14 @@
+//=========================================================================
+//  
+//  SkinGeom.cpp  
+//
+//=========================================================================
+
+//=========================================================================
+//  Includes
+//=========================================================================
 
 #include "SkinGeom.hpp"
-
-#ifdef TARGET_XBOX
-#include "Entropy/XBox/xbox_private.hpp"
-
-void xbox_PreRegister( const char*,skin_geom* pGeom );
-#endif
 
 //=========================================================================
 
@@ -18,15 +21,6 @@ skin_geom::skin_geom( void ) : geom()
 skin_geom::skin_geom( fileio& File ) : geom( File )
 {
     (void)File;
-
-    // Must resolve here because dynamic data is deleted upon exiting
-    // this function. Note that we will register it here, but unregister
-    // from the fileio because rigid_geom's don't have destructors. (PS2
-    // and PC optimize virtual destructors differently, making the struct
-    // size change.)
-    #ifdef TARGET_XBOX
-    xbox_PreRegister( "Skin geom",this );
-    #endif
 }
 
 //=========================================================================
@@ -189,6 +183,3 @@ void skin_geom::FileIO( fileio& File )
             break;
     }
 }
-
-//=========================================================================
-

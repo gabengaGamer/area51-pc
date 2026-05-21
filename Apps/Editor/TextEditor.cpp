@@ -18,9 +18,9 @@ IMPLEMENT_DYNCREATE(CTextEditor, CFrameWnd)
 
 CTextEditor::CTextEditor()
 {
-    CXTRegistryManager regMgr;
-    m_strFontSize = regMgr.GetProfileString(_T("Settings"), _T("m_strFontSize"), _T( "10" )      );
-	m_strFontName = regMgr.GetProfileString(_T("Settings"), _T("m_strFontName"), _T( "Verdana" ) );
+    m_strFontSize      = AfxGetApp()->GetProfileString(_T("Settings"), _T("m_strFontSize"), _T("10"));
+	m_strFontName      = AfxGetApp()->GetProfileString(_T("Settings"), _T("m_strFontName"), _T("Verdana"));
+    m_CurrentTextColor = RGB(0x00, 0x00, 0xff);
 }
 
 CTextEditor::~CTextEditor()
@@ -59,7 +59,6 @@ BEGIN_MESSAGE_MAP(CTextEditor, CFrameWnd)
     ON_COMMAND(ID_PROJ_TEXT_FONT, OnFormatFont)
     ON_COMMAND(ID_PROJ_TEXT_SELECTALL, OnSelectAll)    
 	//}}AFX_MSG_MAP
-    ON_MESSAGE( CPN_XT_SELENDOK, OnSelEndOkColor )
 	ON_CBN_SELENDOK(ID_PROJ_TEXT_FONT_TYPE, OnSelEndOk)
 	ON_CBN_SELENDOK(ID_PROJ_TEXT_FONT_SIZE, OnSelEndOk)
 	ON_NOTIFY(NM_RETURN, ID_PROJ_TEXT_FONT_TYPE, OnReturn)
@@ -109,23 +108,39 @@ void CTextEditor::OnSelEndOk()
 
 bool CTextEditor::InitComboFont()
 {
-	// create thefont combo box.
-	if (!m_wndComboFont.Create( WS_CHILD|WS_VISIBLE|WS_VSCROLL|CBS_OWNERDRAWFIXED|CBS_DROPDOWN|CBS_SORT|CBS_HASSTRINGS|WS_CLIPCHILDREN,
-		CRect(0,0,150,250), &m_wndToolBar, ID_PROJ_TEXT_FONT_TYPE ))
+    const int FontIndex = m_wndToolBar.CommandToIndex(ID_PROJ_TEXT_FONT_TYPE);
+    if (FontIndex == -1)
+        return false;
+
+    m_wndToolBar.SetButtonInfo(FontIndex, ID_PROJ_TEXT_FONT_TYPE, TBBS_SEPARATOR, 180);
+
+    CRect Rect;
+    m_wndToolBar.GetItemRect(FontIndex, &Rect);
+    Rect.bottom += 300;
+
+	if (!m_wndComboFont.Create(WS_CHILD | WS_VISIBLE | WS_VSCROLL | CBS_DROPDOWN | CBS_SORT | CBS_HASSTRINGS | WS_CLIPCHILDREN,
+		Rect, &m_wndToolBar, ID_PROJ_TEXT_FONT_TYPE ))
 	{
 		TRACE0("Failed to create font combo.\n");
 		return false;
 	}
 
-	// insert it into the formatting toolbar.
-	m_wndToolBar.InsertControl(&m_wndComboFont);
+    static LPCTSTR kFonts[] =
+    {
+        _T("Arial"),
+        _T("Courier New"),
+        _T("Tahoma"),
+        _T("Times New Roman"),
+        _T("Verdana")
+    };
 
-	// select the font and set the drop width for the combo.
-	m_wndComboFont.InitControl( m_strFontName, 285 );
+    for (int i = 0; i < _countof(kFonts); ++i)
+        m_wndComboFont.AddString(kFonts[i]);
 
-	// use a different character set.
-	//CXTFontEnum::Get().Init( NULL, SYMBOL_CHARSET );
-	//m_wndComboFont.InitControl( _T( "Wingdings" ) );
+    if (m_wndComboFont.FindStringExact(-1, m_strFontName) == CB_ERR)
+        m_wndComboFont.AddString(m_strFontName);
+
+    m_wndComboFont.SetWindowText(m_strFontName);
 
     return true;
 }
@@ -133,16 +148,22 @@ bool CTextEditor::InitComboFont()
 
 bool CTextEditor::InitComboSize()
 {
-	// create the size combo box.
+    const int SizeIndex = m_wndToolBar.CommandToIndex(ID_PROJ_TEXT_FONT_SIZE);
+    if (SizeIndex == -1)
+        return false;
+
+    m_wndToolBar.SetButtonInfo(SizeIndex, ID_PROJ_TEXT_FONT_SIZE, TBBS_SEPARATOR, 60);
+
+    CRect Rect;
+    m_wndToolBar.GetItemRect(SizeIndex, &Rect);
+    Rect.bottom += 250;
+
 	if (!m_wndComboSize.Create( WS_CHILD|WS_VISIBLE|WS_VSCROLL|CBS_DROPDOWN|WS_CLIPCHILDREN,
-		CRect(0,0,50,150), &m_wndToolBar, ID_PROJ_TEXT_FONT_SIZE ))
+		Rect, &m_wndToolBar, ID_PROJ_TEXT_FONT_SIZE ))
 	{
 		TRACE0("Failed to create size combo.\n");
 		return false;
 	}
-
-	// insert it into the formatting toolbar.
-	m_wndToolBar.InsertControl(&m_wndComboSize);
 
 	// insert strings into the size combo box.
 	m_wndComboSize.AddString( _T( "8" ) );
@@ -205,9 +226,6 @@ int CTextEditor::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	{
 		TRACE0("Failed to create toolbar\n");
 	}
-
-    m_wndToolBar.AddDropDownButton( ID_PROJ_TEXT_COLOR, RGB( 0x00, 0x00, 0xff ), RGB( 0x00, 0x00, 0x00 ), 
-        CPS_XT_EXTENDED | CPS_XT_MORECOLORS, TRUE, TRUE );
 
     if( !InitComboSize() || !InitComboFont() )
     {
@@ -279,10 +297,12 @@ void CTextEditor::OnUnderlineEnable(CCmdUI* pCmdUI)
 
 void CTextEditor::OnSetColor()
 {
-	XT_DROPDOWNBUTTON* pDDBtn = m_wndToolBar.FindDropDownButton( ID_PROJ_TEXT_COLOR );
-	if ( pDDBtn != NULL ) 
+    CColorDialog Dialog(m_CurrentTextColor, CC_FULLOPEN, this);
+	if (Dialog.DoModal() == IDOK)
     {
-        m_rtf.SetColor( pDDBtn->clrColor );
+        m_CurrentTextColor = Dialog.GetColor();
+        m_rtf.SetColor(m_CurrentTextColor);
+        m_rtf.SetFocus();
 	}
 }
 

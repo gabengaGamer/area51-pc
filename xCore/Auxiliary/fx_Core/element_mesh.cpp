@@ -119,12 +119,9 @@ void element_mesh::Render( f32 T )
         GetColorAtTime( T, Color );
 
         // Set L2W
-        g_pd3dDevice->SetTransform( D3DTS_WORLD, (D3DMATRIX*)&L2W );
+        draw_SetL2W( L2W );
 
         m_MeshViewer.Render( Color );
-
-        // Set L2W
-        draw_SetL2W( L2W );
 
         // Render element bbox
         RenderBBox( T );

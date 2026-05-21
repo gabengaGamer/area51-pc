@@ -6,6 +6,7 @@
 
 #include "Entropy.hpp"
 #include "Render.hpp"
+#include "ProjTextureMgr.hpp"
 
 #define RENDER_PRIVATE
 #include "MaterialArray.hpp"
@@ -59,7 +60,7 @@ union shad_sortkey
 {
     struct
     {
-        u32     ProjectorIndex  : 6;
+        u32     ShadowSourceIndex : 6;
         u32     GeomSubMesh     : 8;
         u32     GeomHandle      : 9;
         u32     GeomType        : 1;
@@ -150,11 +151,6 @@ struct private_instance
 {
     geom*       pGeom;
     geom_type   Type;
-
-#ifdef TARGET_PC
-    xarray<xhandle> RigidDList;
-    xbool           IsLit;
-#endif // TARGET_PC
 };
 
 //-----------------------------------------------------------------------------
@@ -166,6 +162,7 @@ struct private_geom
     geom*       pGeom;
 
 #ifdef TARGET_PC
+    xarray<xhandle> RigidDList;
     xarray<xhandle> SkinDList;
 #endif // TARGET_PC
 };
@@ -245,8 +242,8 @@ render::debug_options       g_RenderDebug = { FALSE, FALSE, FALSE, FALSE };
 static s32    s_bFilterLight = FALSE;
 static xcolor s_FilterLightColor(xcolor(30,0,0,255));
 
-// projected shadows that are generated dynamically
-static s32                  s_nDynamicShadows;
+// dynamic shadow-map sources generated for the current frame
+static s32                  s_nShadowSources;
 
 //=============================================================================
 // Platform-specific code
@@ -1200,7 +1197,7 @@ void render::EndNormalRender( void )
                 }
 
                 if( g_RenderDebug.RenderShadowedOnly &&
-                    !(s_lRenderInst[iInstToRender].Flags & (render::INSTFLAG_PROJ_SHADOW_1 | render::INSTFLAG_PROJ_SHADOW_2 | render::SHADOW_PASS)))
+                    !(s_lRenderInst[iInstToRender].Flags & (render::INSTFLAG_PROJ_SHADOW | render::SHADOW_PASS)))
                 {
                     iInstToRender = s_lRenderInst[iInstToRender].Brother;
                     continue;
@@ -1223,7 +1220,7 @@ void render::EndNormalRender( void )
                 }
 
                 if( g_RenderDebug.RenderShadowedOnly &&
-                    !(s_lRenderInst[iInstToRender].Flags & (render::INSTFLAG_PROJ_SHADOW_1 | render::INSTFLAG_PROJ_SHADOW_2 | render::SHADOW_PASS)))
+                    !(s_lRenderInst[iInstToRender].Flags & (render::INSTFLAG_PROJ_SHADOW | render::SHADOW_PASS)))
                 {
                     iInstToRender = s_lRenderInst[iInstToRender].Brother;
                     continue;
@@ -1285,6 +1282,7 @@ void render::EndCustomRender( void )
     CurrentSortData.RenderOrder = ORDER_OPAQUE;
     geom*     pCurrentGeom      = NULL;
     geom_type CurrentType       = TYPE_UNKNOWN;
+    xbool     bDistortionPassActive = FALSE;
 
     for ( s32 iUniqueInst = s_CustomStart; iUniqueInst < s_LoHashMark; iUniqueInst++ )
     {
@@ -1312,7 +1310,10 @@ void render::EndCustomRender( void )
             }
             else
             if ( CurrentSortData.RenderOrder == ORDER_DISTORTION )
+            {
                 platform_BeginDistortion();
+                bDistortionPassActive = TRUE;
+            }
         }
 
         // the distortion and fading alpha materials need to get set properly
@@ -1413,7 +1414,7 @@ void render::EndCustomRender( void )
                 }
 
                 if( g_RenderDebug.RenderShadowedOnly &&
-                    !(s_lRenderInst[iInstToRender].Flags & (render::INSTFLAG_PROJ_SHADOW_1 | render::INSTFLAG_PROJ_SHADOW_2 | render::SHADOW_PASS)))
+                    !(s_lRenderInst[iInstToRender].Flags & (render::INSTFLAG_PROJ_SHADOW | render::SHADOW_PASS)))
                 {
                     iInstToRender = s_lRenderInst[iInstToRender].Brother;
                     continue;
@@ -1437,7 +1438,7 @@ void render::EndCustomRender( void )
                 }
 
                 if( g_RenderDebug.RenderShadowedOnly &&
-                    !(s_lRenderInst[iInstToRender].Flags & (render::INSTFLAG_PROJ_SHADOW_1 | render::INSTFLAG_PROJ_SHADOW_2 | render::SHADOW_PASS)))
+                    !(s_lRenderInst[iInstToRender].Flags & (render::INSTFLAG_PROJ_SHADOW | render::SHADOW_PASS)))
                 {
                     iInstToRender = s_lRenderInst[iInstToRender].Brother;
                     continue;
@@ -1459,7 +1460,7 @@ void render::EndCustomRender( void )
     }
 
     // end distortion
-    if( CurrentSortData.RenderOrder == ORDER_DISTORTION )
+    if( bDistortionPassActive )
         platform_EndDistortion();
 
     // let the microcode or whatever finish up
@@ -1501,6 +1502,9 @@ void render::AddRigidInstanceSimple( hgeom_inst     hInst,
     void* pLighting = platform_CalculateRigidLighting( *pL2W, WorldBBox );
     if( pLighting )
         Flags |= INSTFLAG_DYNAMICLIGHT;
+
+    // collect texture projections
+    u32 ProjFlags = g_ProjTextureMgr.CollectProjectionFlags( Flags, WorldBBox );
 
     // Use filter light?
     if ( ( s_bFilterLight ) && ( (Flags & DISABLE_FILTERLIGHT) == 0 ) )
@@ -1555,8 +1559,13 @@ void render::AddRigidInstanceSimple( hgeom_inst     hInst,
             // fill in the lighting
             Inst.pLighting = pLighting;
 
+            // do texture projections
+            if( (SortKey.RenderOrder < ORDER_ZPRIME) && g_ProjTextureMgr.CanReceiveProjTexture( Material ) )
+                Inst.Flags |= ProjFlags;
+
             #ifdef TARGET_PC
-            Inst.hDList = RegisteredInst.RigidDList[(s32)SubMesh.iDList];
+            private_geom& PrivateGeom = s_lRegisteredGeoms(pGeom->m_hGeom);
+            Inst.hDList               = PrivateGeom.RigidDList[(s32)SubMesh.iDList];
             #endif
         }
     }
@@ -1594,12 +1603,15 @@ void render::AddRigidInstance( hgeom_inst     hInst,
     if ( pLighting )
         Flags |= INSTFLAG_DYNAMICLIGHT;
 
+    // collect texture projections
+    u32 ProjFlags = g_ProjTextureMgr.CollectProjectionFlags( Flags, WorldBBox );
+
     // Use filter light?
     if ( ( s_bFilterLight ) && ( (Flags & DISABLE_FILTERLIGHT) == 0 ) )
         Flags |= INSTFLAG_FILTERLIGHT;
 
-    // fading alpha?
-    if ( Alpha != 255 )
+    const xbool bFadingAlpha = ((Flags & render::FADING_ALPHA) != 0) || (Alpha != 255);
+    if ( bFadingAlpha )
         Flags |= INSTFLAG_FADING_ALPHA;
 
     // add the meshes and submeshes to the render list
@@ -1662,7 +1674,7 @@ void render::AddRigidInstance( hgeom_inst     hInst,
             SortKey.GeomType    = 0;
             SortKey.MatIndex    = s_lRegisteredMaterials.GetIndexByHandle(hMat);
             SortKey.RenderOrder = GetRenderOrder( (material_type)Material.Type );
-            if ( (Flags & render::FADING_ALPHA) && (SortKey.RenderOrder < ORDER_FADING_ALPHA) )
+            if ( bFadingAlpha && (SortKey.RenderOrder < ORDER_FADING_ALPHA) )
                 SortKey.RenderOrder = ORDER_FADING_ALPHA;
 
             // make a copy of the l2w in smem that we can ref to
@@ -1690,12 +1702,17 @@ void render::AddRigidInstance( hgeom_inst     hInst,
             // fill in the lighting
             Inst.pLighting = pLighting;
 
+            // do texture projections
+            if( (SortKey.RenderOrder < ORDER_ZPRIME) && g_ProjTextureMgr.CanReceiveProjTexture( Material ) )
+                Inst.Flags |= ProjFlags;
+
             #ifdef TARGET_PC
-            Inst.hDList = RegisteredInst.RigidDList[(s32)SubMesh.iDList];
+            private_geom& PrivateGeom = s_lRegisteredGeoms(pGeom->m_hGeom);
+            Inst.hDList               = PrivateGeom.RigidDList[(s32)SubMesh.iDList];
             #endif
 
             // handle fading geometry
-            if ( Flags & render::FADING_ALPHA )
+            if ( bFadingAlpha )
             {
                 // we need to render twice to prime the z-buffer for alpha geometry
                 SortKey.GeomSubMesh         = iSubMesh;
@@ -1756,12 +1773,15 @@ void render::AddRigidInstance( hgeom_inst        hInst,
     if ( pLighting )
         Flags |= INSTFLAG_DYNAMICLIGHT;
 
+    // collect texture projections
+    u32 ProjFlags = g_ProjTextureMgr.CollectProjectionFlags( Flags, WorldBBox );
+
     // Use filter light?
     if ( ( s_bFilterLight ) && ( (Flags & DISABLE_FILTERLIGHT) == 0 ) )
         Flags |= INSTFLAG_FILTERLIGHT;
 
-    // fading alpha?
-    if ( Alpha != 255 )
+    const xbool bFadingAlpha = ((Flags & render::FADING_ALPHA) != 0) || (Alpha != 255);
+    if ( bFadingAlpha )
         Flags |= INSTFLAG_FADING_ALPHA;
 
     // calculate the virtual mesh offsets
@@ -1828,7 +1848,7 @@ void render::AddRigidInstance( hgeom_inst        hInst,
             SortKey.GeomType    = 0;
             SortKey.MatIndex    = s_lRegisteredMaterials.GetIndexByHandle(hMat);
             SortKey.RenderOrder = GetRenderOrder( (material_type)Material.Type );
-            if ( (Flags & render::FADING_ALPHA) && (SortKey.RenderOrder < ORDER_FADING_ALPHA) )
+            if ( bFadingAlpha && (SortKey.RenderOrder < ORDER_FADING_ALPHA) )
                 SortKey.RenderOrder = ORDER_FADING_ALPHA;
 
             // make a copy of the l2w in smem that we can ref to
@@ -1856,12 +1876,17 @@ void render::AddRigidInstance( hgeom_inst        hInst,
             // fill in the lighting
             Inst.pLighting = pLighting;
 
+            // do texture projections
+            if( (SortKey.RenderOrder < ORDER_ZPRIME) && g_ProjTextureMgr.CanReceiveProjTexture( Material ) )
+                Inst.Flags |= ProjFlags;
+
             #ifdef TARGET_PC
-            Inst.hDList = RegisteredInst.RigidDList[(s32)SubMesh.iDList];
+            private_geom& PrivateGeom = s_lRegisteredGeoms(pGeom->m_hGeom);
+            Inst.hDList               = PrivateGeom.RigidDList[(s32)SubMesh.iDList];
             #endif
 
             // handle fading geometry
-            if ( Flags & render::FADING_ALPHA )
+            if ( bFadingAlpha )
             {
                 // we need to render twice to prime the z-buffer for alpha geometry
                 SortKey.GeomSubMesh         = iSubMesh;
@@ -1916,6 +1941,14 @@ void render::AddSkinInstance( hgeom_inst     hInst,
     // calculate lighting
     void* pLighting = platform_CalculateSkinLighting( Flags, pBone[0], pGeom->m_BBox, Ambient );
     Flags |= INSTFLAG_DYNAMICLIGHT;
+    const xbool bFadingAlpha = ((Flags & render::FADING_ALPHA) != 0) || (Ambient.A != 255);
+    if ( bFadingAlpha )
+        Flags |= INSTFLAG_FADING_ALPHA;
+
+    // collect texture projections
+    bbox WorldBBox( pGeom->m_BBox );
+    WorldBBox.Transform( pBone[0] );
+    u32 ProjFlags = g_ProjTextureMgr.CollectProjectionFlags( Flags, WorldBBox );
 
     // calculate the virtual mesh offsets
     s32 VMatOffsets[32];
@@ -1953,7 +1986,7 @@ void render::AddSkinInstance( hgeom_inst     hInst,
             SortKey.GeomType    = 1;
             SortKey.MatIndex    = s_lRegisteredMaterials.GetIndexByHandle(hMat);
             SortKey.RenderOrder = GetRenderOrder( (material_type)Material.Type );
-            if ( (Flags & render::FADING_ALPHA) && (SortKey.RenderOrder < ORDER_FADING_ALPHA) )
+            if ( bFadingAlpha && (SortKey.RenderOrder < ORDER_FADING_ALPHA) )
                 SortKey.RenderOrder = ORDER_FADING_ALPHA;
             if ( (Flags & render::GLOWING) && (SortKey.RenderOrder < ORDER_GLOWING) )
                 SortKey.RenderOrder = ORDER_GLOWING;
@@ -1980,13 +2013,17 @@ void render::AddSkinInstance( hgeom_inst     hInst,
             // fill in the lighting
             Inst.pLighting = pLighting;
 
+            // do texture projections
+            if( (SortKey.RenderOrder < ORDER_ZPRIME) && g_ProjTextureMgr.CanReceiveProjTexture( Material ) )
+                Inst.Flags |= ProjFlags;
+
             #ifdef TARGET_PC
             private_geom& PrivateGeom = s_lRegisteredGeoms(pGeom->m_hGeom);
             Inst.hDList               = PrivateGeom.SkinDList[(s32)SubMesh.iDList];
             #endif
 
             // handle fading geometry
-            if ( Flags & render::FADING_ALPHA )
+            if ( bFadingAlpha )
             {
                 // we need to render twice to prime the z-buffer for alpha geometry
                 SortKey.GeomSubMesh         = iSubMesh;
@@ -2339,9 +2376,9 @@ void render::BeginShadowCreation( void )
     s_HiHashMark = kMaxRenderedInstances - 1;
     x_memset( s_HashTable, 0xff, sizeof(s16)*kMaxRenderedInstances );
 
-    // clear out any current projectors
-    platform_ClearShadowProjectorList();
-    s_nDynamicShadows = 0;
+    // clear out any current shadow-map sources
+    platform_ClearShadowSourceList();
+    s_nShadowSources = 0;
 }
 
 //=============================================================================
@@ -2354,6 +2391,8 @@ void render::EndShadowCreation( void )
     ASSERT( eng_InBeginEnd() );
     ASSERT( s_InShadowBegin );
     s_InShadowBegin = FALSE;
+
+    platform_FinalizeShadowSourceList();
 
     // let the platform-specific shaders get initialized (whether its d3d vert/pixel
     // shaders, vu0/vu1 microcode, or gamecube passes)
@@ -2434,7 +2473,7 @@ void render::EndShadowCreation( void )
             while ( iInstToRender != -1 )
             {
                 ASSERT( s_lRenderInst[iInstToRender].ShadSortKey.Bits == Inst.ShadSortKey.Bits );
-                platform_RenderShadowCastSkin( s_lRenderInst[iInstToRender], Inst.ShadSortKey.ProjectorIndex );
+                platform_RenderShadowCastSkin( s_lRenderInst[iInstToRender], Inst.ShadSortKey.ShadowSourceIndex );
                 iInstToRender = s_lRenderInst[iInstToRender].Brother;
             };
         }
@@ -2507,7 +2546,7 @@ void render::EndShadowCreation( void )
             while ( iInstToRender != -1 )
             {
                 ASSERT( s_lRenderInst[iInstToRender].ShadSortKey.Bits == Inst.ShadSortKey.Bits );
-                platform_RenderShadowReceiveRigid( s_lRenderInst[iInstToRender], Inst.ShadSortKey.ProjectorIndex );
+                platform_RenderShadowReceiveRigid( s_lRenderInst[iInstToRender], Inst.ShadSortKey.ShadowSourceIndex );
                 iInstToRender = s_lRenderInst[iInstToRender].Brother;
             };
         }
@@ -2537,40 +2576,104 @@ void render::EndShadowCreation( void )
 
 //=============================================================================
 
-void render::AddPointShadowProjection( const matrix4&         L2W,
-                                       radian                 FOV,
-                                       f32                    NearZ,
-                                       f32                    FarZ )
+void render::AddPointShadowMapSource( const matrix4&         L2W,
+                                      radian                 FOV,
+                                      f32                    LightRadius,
+                                      f32                    LightFalloff,
+                                      s32                    ShadowMapResolution,
+                                      s32                    ShadowPriority,
+                                      f32                    ShadowScore )
 {
     ASSERT( s_InShadowBegin );
-    platform_AddPointShadowProjection( L2W, FOV, NearZ, FarZ );
-    s_nDynamicShadows++;
+    platform_AddPointShadowMapSource( L2W,
+                                      FOV,
+                                      LightRadius,
+                                      LightFalloff,
+                                      ShadowMapResolution,
+                                      ShadowPriority,
+                                      ShadowScore );
+    s_nShadowSources++;
 }
 
 //=============================================================================
 
-void render::AddDirShadowProjection( const matrix4&         L2W,
-                                     f32                    Width,
-                                     f32                    Height,
-                                     f32                    NearZ,
-                                     f32                    FarZ )
+void render::AddSpotShadowMapSource( const matrix4&         L2W,
+                                     radian                 FOV,
+                                     f32                    LightRadius,
+                                     f32                    LightFalloff,
+                                     s32                    ShadowMapResolution,
+                                     s32                    ShadowPriority,
+                                     f32                    ShadowScore )
 {
     ASSERT( s_InShadowBegin );
-    platform_AddDirShadowProjection( L2W, Width, Height, NearZ, FarZ );
-    s_nDynamicShadows++;
+    platform_AddSpotShadowMapSource( L2W,
+                                     FOV,
+                                     LightRadius,
+                                     LightFalloff,
+                                     ShadowMapResolution,
+                                     ShadowPriority,
+                                     ShadowScore );
+    s_nShadowSources++;
 }
 
 //=============================================================================
 
 void render::AddRigidCasterSimple( render::hgeom_inst hInst,
                                    const matrix4*     pL2W,  // will be DMA ref'd to!
-                                   u64                ProjMask )
+                                   u64                ShadowSourceMask )
 {
+    #ifndef X_RETAIL
+    if( g_RenderDebug.RenderSkinOnly )
+        return;
+    #endif
+
     ASSERT( s_InShadowBegin );
-    ASSERT( FALSE );
-    (void)hInst;
-    (void)pL2W;
-    (void)ProjMask;
+    ASSERT( pL2W );
+    ASSERT( pL2W->IsValid() );
+
+    private_instance& RegisteredInst = s_lRegisteredInst( hInst );
+    ASSERT( RegisteredInst.Type == TYPE_RIGID );
+    rigid_geom* pGeom = (rigid_geom*)RegisteredInst.pGeom;
+
+    for ( s32 iShadowSource = 0; iShadowSource < s_nShadowSources; iShadowSource++ )
+    {
+        if ( (ShadowSourceMask & ((u64)1 << iShadowSource)) == 0 )
+            continue;
+
+        for ( s32 iSubMesh = 0; iSubMesh < pGeom->m_nSubMeshes; iSubMesh++ )
+        {
+            geom::submesh&  SubMesh  = pGeom->m_pSubMesh[iSubMesh];
+            geom::material& Material = pGeom->m_pMaterial[SubMesh.iMaterial];
+            if ( IsAlphaMaterial( (material_type)Material.Type ) )
+                continue;
+
+            xhandle hMat = pGeom->m_pVirtualMaterials[Material.iVirtualMat].MatHandle;
+            ASSERT( (hMat>=0) && (hMat<kMaxRegisteredMaterials) );
+
+            shad_sortkey SortKey;
+            SortKey.Bits              = 0;
+            SortKey.ShadowSourceIndex = iShadowSource;
+            SortKey.GeomSubMesh       = iSubMesh;
+            SortKey.GeomHandle        = pGeom->m_hGeom;
+            SortKey.GeomType          = 0;
+            SortKey.ShadType          = 0;
+
+            render_instance& Inst = AddToHashHybrid( SortKey.Bits );
+            Inst.ShadSortKey      = SortKey;
+            Inst.Flags            = 0;
+            Inst.OverrideMat      = FALSE;
+            GetUVOffset( Inst.UOffset, Inst.VOffset, pGeom, s_lRegisteredMaterials(hMat) );
+
+            Inst.Data.Rigid.pGeom    = pGeom;
+            Inst.Data.Rigid.pL2W     = pL2W;
+            Inst.Data.Rigid.pColInfo = NULL;
+
+            #ifdef TARGET_PC
+            private_geom& PrivateGeom = s_lRegisteredGeoms(pGeom->m_hGeom);
+            Inst.hDList               = PrivateGeom.RigidDList[(s32)SubMesh.iDList];
+            #endif
+        }
+    }
 }
 
 //=============================================================================
@@ -2578,13 +2681,92 @@ void render::AddRigidCasterSimple( render::hgeom_inst hInst,
 void render::AddRigidCaster( render::hgeom_inst hInst,
                              const matrix4*     pL2W,
                              u64                Mask,
-                             u64                ProjMask )
+                             u64                ShadowSourceMask )
 {
+    #ifndef X_RETAIL
+    if( g_RenderDebug.RenderSkinOnly )
+        return;
+    #endif
+
     ASSERT( s_InShadowBegin );
-    (void)hInst;
-    (void)pL2W;
-    (void)Mask;
-    (void)ProjMask;
+    ASSERT( pL2W );
+    ASSERT( pL2W->IsValid() );
+
+    private_instance& RegisteredInst = s_lRegisteredInst( hInst );
+    ASSERT( RegisteredInst.Type == TYPE_RIGID );
+    rigid_geom* pGeom = (rigid_geom*)RegisteredInst.pGeom;
+
+    geom::mesh* pMesh    = pGeom->m_pMesh;
+    geom::mesh* pEndMesh = pMesh + pGeom->m_nMeshes;
+    while ( pMesh < pEndMesh )
+    {
+        if( (Mask & 1) == 0 )
+        {
+            pMesh++;
+            Mask >>= 1;
+            continue;
+        }
+
+        for ( s32 iSubMesh = pMesh->iSubMesh;
+              iSubMesh < pMesh->iSubMesh+pMesh->nSubMeshes;
+              iSubMesh++ )
+        {
+            geom::submesh&  SubMesh  = pGeom->m_pSubMesh[iSubMesh];
+            geom::material& Material = pGeom->m_pMaterial[SubMesh.iMaterial];
+            if ( IsAlphaMaterial( (material_type)Material.Type ) )
+                continue;
+
+            xhandle hMat = pGeom->m_pVirtualMaterials[Material.iVirtualMat].MatHandle;
+            ASSERT( (hMat>=0) && (hMat<kMaxRegisteredMaterials) );
+
+            ASSERT( (pGeom->m_hGeom>=0) && (pGeom->m_hGeom<kMaxRegisteredGeoms) );
+            ASSERT( (iSubMesh      >=0) && (iSubMesh      <256                ) );
+
+            #ifdef TARGET_PC
+            s32 iBone = pGeom->m_System.pPC[SubMesh.iDList].iBone;
+            #else
+            #error Unknown Target!
+            #endif
+
+            matrix4* pMat = (matrix4*)smem_BufferAlloc(sizeof(matrix4));
+            {
+                *pMat = *(pL2W + iBone);
+                ASSERT( pMat->IsValid() );
+            }
+
+            for ( s32 iShadowSource = 0; iShadowSource < s_nShadowSources; iShadowSource++ )
+            {
+                if ( (ShadowSourceMask & ((u64)1 << iShadowSource)) == 0 )
+                    continue;
+
+                shad_sortkey SortKey;
+                SortKey.Bits              = 0;
+                SortKey.ShadowSourceIndex = iShadowSource;
+                SortKey.GeomSubMesh       = iSubMesh;
+                SortKey.GeomHandle        = pGeom->m_hGeom;
+                SortKey.GeomType          = 0;
+                SortKey.ShadType          = 0;
+
+                render_instance& Inst = AddToHashHybrid( SortKey.Bits );
+                Inst.ShadSortKey      = SortKey;
+                Inst.Flags            = 0;
+                Inst.OverrideMat      = FALSE;
+                GetUVOffset( Inst.UOffset, Inst.VOffset, pGeom, s_lRegisteredMaterials(hMat) );
+
+                Inst.Data.Rigid.pGeom    = pGeom;
+                Inst.Data.Rigid.pL2W     = pMat;
+                Inst.Data.Rigid.pColInfo = NULL;
+
+                #ifdef TARGET_PC
+                private_geom& PrivateGeom = s_lRegisteredGeoms(pGeom->m_hGeom);
+                Inst.hDList               = PrivateGeom.RigidDList[(s32)SubMesh.iDList];
+                #endif
+            }
+        }
+
+        pMesh++;
+        Mask >>= 1;
+    }
 }
 
 //=============================================================================
@@ -2592,7 +2774,7 @@ void render::AddRigidCaster( render::hgeom_inst hInst,
 void render::AddSkinCaster( render::hgeom_inst hInst,
                             const matrix4*     pBone,
                             u64                Mask,
-                            u64                ProjMask )
+                            u64                ShadowSourceMask )
 {
     #ifndef X_RETAIL
     if( g_RenderDebug.RenderRigidOnly )
@@ -2609,10 +2791,10 @@ void render::AddSkinCaster( render::hgeom_inst hInst,
     ASSERT( RegisteredInst.Type == TYPE_SKIN );
     skin_geom* pGeom = (skin_geom*)RegisteredInst.pGeom;
 
-    // for each of the projectors, add the meshes and submeshes to the render list
-    for ( s32 iProj = 0; iProj < s_nDynamicShadows; iProj++ )
+    // for each shadow source, add the meshes and submeshes to the render list
+    for ( s32 iShadowSource = 0; iShadowSource < s_nShadowSources; iShadowSource++ )
     {
-        if ( (ProjMask & (1 << iProj)) == 0 )
+        if ( (ShadowSourceMask & ((u64)1 << iShadowSource)) == 0 )
             continue;
         
         for ( s32 iMesh = 0; iMesh < pGeom->m_nMeshes; iMesh++ )
@@ -2637,10 +2819,13 @@ void render::AddSkinCaster( render::hgeom_inst hInst,
                 if ( IsAlphaMaterial( (material_type)Material.Type ) )
                     continue;
 
+                xhandle hMat = pGeom->m_pVirtualMaterials[Material.iVirtualMat].MatHandle;
+                ASSERT( (hMat>=0) && (hMat<kMaxRegisteredMaterials) );
+
                 // build the sort key
                 shad_sortkey SortKey;
                 SortKey.Bits           = 0;
-                SortKey.ProjectorIndex = iProj;
+                SortKey.ShadowSourceIndex = iShadowSource;
                 SortKey.GeomSubMesh    = iSubMesh;
                 SortKey.GeomHandle     = pGeom->m_hGeom;
                 SortKey.GeomType       = 1;
@@ -2650,9 +2835,8 @@ void render::AddSkinCaster( render::hgeom_inst hInst,
                 render_instance& Inst = AddToHashHybrid( SortKey.Bits );
                 Inst.ShadSortKey      = SortKey;
                 Inst.Flags            = 0;
-                Inst.UOffset          = 0;
-                Inst.VOffset          = 0;
                 Inst.OverrideMat      = FALSE;
+                GetUVOffset( Inst.UOffset, Inst.VOffset, pGeom, s_lRegisteredMaterials(hMat) );
 
                 // fill in the skin geom instance info
                 Inst.Data.Skin.pGeom  = pGeom;
@@ -2673,7 +2857,7 @@ void render::AddSkinCaster( render::hgeom_inst hInst,
 void render::AddRigidReceiverSimple( render::hgeom_inst hInst,
                                      const matrix4*     pL2W,  // will be DMA ref'd to!
                                      u32                Flags,
-                                     u64                ProjMask )
+                                     u64                ShadowSourceMask )
 {
     #ifndef X_RETAIL
     if( g_RenderDebug.RenderSkinOnly )
@@ -2689,10 +2873,10 @@ void render::AddRigidReceiverSimple( render::hgeom_inst hInst,
     ASSERT( RegisteredInst.Type == TYPE_RIGID );
     rigid_geom* pGeom = (rigid_geom*)RegisteredInst.pGeom;
 
-    // for each shadow cast, add each of the submeshes to the render list
-    for ( s32 iProj = 0; iProj < s_nDynamicShadows; iProj++ )
+    // for each shadow source, add each of the submeshes to the render list
+    for ( s32 iShadowSource = 0; iShadowSource < s_nShadowSources; iShadowSource++ )
     {
-        if ( (ProjMask & (1 << iProj)) == 0 )
+        if ( (ShadowSourceMask & ((u64)1 << iShadowSource)) == 0 )
             continue;
 
         for ( s32 iSubMesh = 0; iSubMesh < pGeom->m_nSubMeshes; iSubMesh ++ )
@@ -2716,7 +2900,7 @@ void render::AddRigidReceiverSimple( render::hgeom_inst hInst,
             // build the sort key
             shad_sortkey SortKey;
             SortKey.Bits = 0;
-            SortKey.ProjectorIndex = iProj;
+            SortKey.ShadowSourceIndex = iShadowSource;
             SortKey.GeomSubMesh    = iSubMesh;
             SortKey.GeomHandle     = pGeom->m_hGeom;
             SortKey.GeomType       = 0;
@@ -2734,7 +2918,8 @@ void render::AddRigidReceiverSimple( render::hgeom_inst hInst,
             Inst.Data.Rigid.pL2W  = pL2W;
 
             #ifdef TARGET_PC
-            Inst.hDList = RegisteredInst.RigidDList[(s32)SubMesh.iDList];
+            private_geom& PrivateGeom = s_lRegisteredGeoms(pGeom->m_hGeom);
+            Inst.hDList               = PrivateGeom.RigidDList[(s32)SubMesh.iDList];
             #endif
         }
     }
@@ -2746,14 +2931,14 @@ void render::AddRigidReceiver( render::hgeom_inst hInst,
                                const matrix4*     pL2W,
                                u64                Mask,
                                u32                Flags,
-                               u64                ProjMask )
+                               u64                ShadowSourceMask )
 {
     ASSERT( s_InShadowBegin );
     (void)hInst;
     (void)pL2W;
     (void)Flags;
     (void)Mask;
-    (void)ProjMask;
+    (void)ShadowSourceMask;
 }
 
 //=============================================================================
@@ -2762,14 +2947,14 @@ void render::AddSkinReceiver( render::hgeom_inst hInst,
                               const matrix4*     pBone,
                               u64                Mask,
                               u32                Flags,
-                              u64                ProjMask )
+                              u64                ShadowSourceMask )
 {
     ASSERT( s_InShadowBegin );
     (void)hInst;
     (void)pBone;
     (void)Flags;
     (void)Mask;
-    (void)ProjMask;
+    (void)ShadowSourceMask;
 }
 
 //=============================================================================

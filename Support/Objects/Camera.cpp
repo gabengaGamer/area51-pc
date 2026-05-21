@@ -11,8 +11,6 @@
 #include "TriggerEx\TriggerEx_Object.hpp"
 #include "TriggerEx\Actions\action_set_property.hpp"
 
-#include "GameLib/RenderContext.hpp"
-
 #if defined(TARGET_PS2)
 #include "Entropy\PS2\ps2_misc.hpp"
 #endif
@@ -400,30 +398,6 @@ void camera::RenderViewBegin( const irect& Viewport, s32 VramID )
 	
 #elif defined(TARGET_PC)
 
-    g_RenderContext.MarkPipTargetsActive( FALSE );
-
-    if( g_RenderContext.m_bIsPipRender )
-    {
-        pip_render_target_pc* pTarget = g_RenderContext.GetActivePipTarget();
-        if( pTarget && pTarget->bValid )
-        {
-            if( rtarget_PushTargets() )
-            {
-                if( rtarget_SetTargets( &pTarget->ColorTarget, 1, &pTarget->DepthTarget ) )
-                {
-                    g_RenderContext.MarkPipTargetsActive( TRUE );
-
-                    f32 ClearColor[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
-                    rtarget_Clear( RTARGET_CLEAR_COLOR | RTARGET_CLEAR_DEPTH, ClearColor, 1.0f, 0 );
-                }
-                else
-                {
-                    rtarget_PopTargets();
-                }
-            }
-        }
-    }
-
     (void)Viewport;
     (void)VramID;
 	
@@ -686,12 +660,6 @@ void camera::RenderViewEnd( const irect& Viewport, s32 VramID, s32 TexWidth, s32
     (void)VramID;
     (void)TexWidth;
     (void)TexHeight;
-
-    if( g_RenderContext.ArePipTargetsActive() )
-    {
-        rtarget_PopTargets();
-        g_RenderContext.MarkPipTargetsActive( FALSE );
-    }
 
 #else
 

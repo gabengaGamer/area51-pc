@@ -7,6 +7,7 @@
 
 #include "Obj_mgr\obj_mgr.hpp"
 #include "PhysicsMgr\PhysicsInst.hpp"
+#include "Objects\Interpolation\SimpleAnimInterpolation.hpp"
 
 //=========================================================================
 // DEFINITIONS
@@ -178,6 +179,11 @@ static  s32                     m_ActiveCount;          // # of active (moving) 
         
         // Audio
         f32                     m_ImpactSfxTimer;       // Timer count down since last impact
+        simple_anim_interp_cache m_RenderCache;
+
+    virtual void                CaptureRenderInterpState      ( void );
+    virtual void                UpdateRenderInterpState       ( f32 Alpha );
+    virtual void                ClearRenderInterpState        ( void );
 
 };
 

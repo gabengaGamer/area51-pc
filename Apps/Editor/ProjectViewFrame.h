@@ -8,6 +8,7 @@
 //
 
 #include "TextEditor.h"
+#include "WorkspaceTabCtrl.h"
 
 /////////////////////////////////////////////////////////////////////////////
 // CProjectView view
@@ -21,8 +22,8 @@ public:
     CTextEditor&        GetTextEditor();
 
 protected:
-    CXTToolBar          m_wndToolBar;
-    CXTTabCtrlBar       m_TabCtrl;
+    CToolBar                m_wndToolBar;
+    CEditorWorkspaceTabCtrl m_TabCtrl;
 
 // Attributes
 public:

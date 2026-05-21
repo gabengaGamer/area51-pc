@@ -13,6 +13,7 @@
 #include "Entropy.hpp"
 #include "Loco\LocoCharAnimPlayer.hpp"
 #include "Objects\BaseProjectile.hpp"
+#include "Objects\Interpolation\SimpleAnimInterpolation.hpp"
 #include "..\MiscUtils\SimpleUtils.hpp"
 
 #ifdef TARGET_PS2
@@ -944,6 +945,112 @@ const matrix4* physics_inst::GetBoneL2Ws( u64& LODMask, s32& nActiveBones )
     PHYSICS_DEBUG_STOP_TIMER( g_PhysicsMgr.m_Profile.m_Render );
 
     return pBoneMatrices;
+}
+
+//==============================================================================
+
+xbool physics_inst::CaptureRenderInterpState( simple_anim_interp_state& Snapshot ) const
+{
+    InitSimpleAnimInterpState( Snapshot );
+
+    const geom* pGeom = m_SkinInst.GetGeom();
+    const s32   nRigidBodies = m_RigidBodies.GetCount();
+    if( !pGeom || !nRigidBodies )
+        return FALSE;
+
+    ASSERT( nRigidBodies == pGeom->m_nRigidBodies );
+    ASSERT( nRigidBodies <= 32 );
+
+    Snapshot.Valid  = TRUE;
+    Snapshot.L2W    = m_RigidBodies[0].GetL2W();
+    Snapshot.NBones = MIN( pGeom->m_nBones, MAX_ANIM_BONES );
+    if( Snapshot.NBones <= 0 )
+        return TRUE;
+
+#ifdef TARGET_PS2
+    ASSERT( ( nRigidBodies * sizeof( matrix4 ) ) <= (u32)SPAD.GetUsableSize() );
+    matrix4* pBodyMatrices = (matrix4*)SPAD.GetUsableStartAddr();
+#else
+    static matrix4 pBodyMatrices[32];
+#endif
+
+    for( s32 i = 0; i < nRigidBodies; i++ )
+        pBodyMatrices[i] = m_RigidBodies[i].GetL2W();
+
+    for( s32 Iters = g_PhysicsMgr.m_Settings.m_nRenderIterations; Iters > 0; Iters-- )
+    {
+        s32 iStart, iEnd, iDir;
+        if( Iters & 1 )
+        {
+            iStart = 0;
+            iEnd   = nRigidBodies - 1;
+            iDir   = 1;
+        }
+        else
+        {
+            iStart = nRigidBodies - 1;
+            iEnd   = 0;
+            iDir   = -1;
+        }
+
+        for( s32 i = iStart; i != iEnd; i += iDir )
+        {
+            matrix4& BodyL2W = pBodyMatrices[i];
+
+            constraint* pPivotConstraint = m_RigidBodies[i].GetPivotConstraint();
+            if( !pPivotConstraint )
+                continue;
+
+            ASSERT( pPivotConstraint->GetMaxDist() == 0.0f );
+
+            const s32 iParentBody = pGeom->m_pRigidBodies[i].iParentBody;
+            ASSERT( iParentBody != -1 );
+            ASSERT( iParentBody != i );
+            matrix4& ParentBodyL2W = pBodyMatrices[iParentBody];
+
+            ASSERT( pPivotConstraint->GetRigidBody( 0 ) == &m_RigidBodies[i] );
+            vector3 WorldPivot = BodyL2W * pPivotConstraint->GetBodyPos( 0 );
+
+            ASSERT( pPivotConstraint->GetRigidBody( 1 ) == &m_RigidBodies[iParentBody] );
+            vector3 ParentWorldPivot = ParentBodyL2W * pPivotConstraint->GetBodyPos( 1 );
+
+            vector3 Delta = 0.5f * ( ParentWorldPivot - WorldPivot );
+            BodyL2W.Translate( Delta );
+            ParentBodyL2W.Translate( -Delta );
+        }
+    }
+
+    for( s32 i = 0; i < nRigidBodies; i++ )
+    {
+        const geom::rigid_body& Body = pGeom->m_pRigidBodies[i];
+        matrix4 BodyBind( vector3( 1.0f, 1.0f, 1.0f ), Body.BodyBindRotation, Body.BodyBindPosition );
+        matrix4 InvBodyBind = m4_InvertRT( BodyBind );
+
+        pBodyMatrices[i] = pBodyMatrices[i] * InvBodyBind;
+    }
+
+    if( m_bPopFix )
+    {
+        for( s32 i = 0; i < Snapshot.NBones; i++ )
+        {
+            const s32 iRigidBody = pGeom->m_pBone[i].iRigidBody;
+            ASSERT( iRigidBody >= 0 );
+            ASSERT( iRigidBody < nRigidBodies );
+            Snapshot.Bones[i] = pBodyMatrices[iRigidBody] * m_PopFixMatrices[i];
+        }
+    }
+    else
+    {
+        for( s32 i = 0; i < Snapshot.NBones; i++ )
+        {
+            const s32 iRigidBody = pGeom->m_pBone[i].iRigidBody;
+            ASSERT( iRigidBody >= 0 );
+            ASSERT( iRigidBody < nRigidBodies );
+            Snapshot.Bones[i] = pBodyMatrices[iRigidBody];
+        }
+    }
+
+    return TRUE;
 }
 
 //==============================================================================

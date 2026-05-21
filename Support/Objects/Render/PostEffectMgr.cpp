@@ -145,8 +145,6 @@ void post_effect_mgr::Render( void )
 
     // start doing post-effects
     render::BeginPostEffects();
-    
-	render::NoiseFilter( xcolor(255, 200, 150, 200) );
 	
     // do the self-illum glows
     if ( g_RenderContext.m_bIsMutated )
@@ -156,6 +154,17 @@ void post_effect_mgr::Render( void )
     else
     {
         render::ApplySelfIllumGlows( 0.0f, 255 );
+    }
+
+    // KSS -- As per design, rip out screen warp on MSN projectiles.
+    // go through all of the meson projectiles and render a "warp" effect
+    slot_id SlotID = g_ObjMgr.GetFirst( object::TYPE_GRAV_CHARGE_PROJECTILE );
+    while( SlotID != SLOT_NULL )
+    {
+        object* pObj = g_ObjMgr.GetObjectBySlot( SlotID );
+        ASSERT( pObj );
+        render::AddScreenWarp( pObj->GetPosition(), 400.0f, 0.4f );
+        SlotID = g_ObjMgr.GetNext( SlotID );
     }
 
     // handle normal pain/screen blurring
@@ -168,7 +177,7 @@ void post_effect_mgr::Render( void )
     else
     {
         // do a very slight depth-of-field to remove some of the sparkles
-        render::MipFilter( 2, 0.0f, render::FALLOFF_EXP, xcolor(128,128,128,128), 8.0f, 0.0f, LocalPlayerIndex );
+        //render::MipFilter( 2, 0.0f, render::FALLOFF_EXP, xcolor(128,128,128,128), 8.0f, 0.0f, LocalPlayerIndex );
     }
 
     // do the "mutant" vision mode
@@ -182,18 +191,9 @@ void post_effect_mgr::Render( void )
         render::RadialBlur( Zoom, Angle, AlphaSub, AlphaScale );
     }
 
-    /*
-    // KSS -- As per design, rip out screen warp on MSN projectiles.
-    // go through all of the meson projectiles and render a "warp" effect
-    slot_id SlotID = g_ObjMgr.GetFirst( object::TYPE_GRAV_CHARGE_PROJECTILE );
-    while( SlotID != SLOT_NULL )
-    {
-        object* pObj = g_ObjMgr.GetObjectBySlot( SlotID );
-        ASSERT( pObj );
-        render::AddScreenWarp( pObj->GetPosition(), 400.0f, 0.4f );
-        SlotID = g_ObjMgr.GetNext( SlotID );
-    }
-    */
+    // do a very slight film grain effect
+    // GS: TODO: Make me customizable!!!	
+    render::NoiseFilter( xcolor(200, 185, 170, 100) );
 
     // done
     render::EndPostEffects();

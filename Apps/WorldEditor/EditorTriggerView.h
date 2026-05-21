@@ -9,7 +9,6 @@
 #include "EditorPaletteDoc.h"
 #include "..\Editor\PaletteView.h"
 #include "..\Support\Globals\Global_Variables_Manager.hpp"
-#include "..\WinControls\XTSortListCtrl.h"
 
 /////////////////////////////////////////////////////////////////////////////
 // CEditorTriggerView view
@@ -24,7 +23,7 @@ protected:
 public:
 	CEditorPaletteDoc* GetDocument();
 
-    CXTSortListCtrl m_TriggerLst;
+    CListCtrl       m_TriggerLst;
 
     virtual void    OnTabActivate( BOOL bActivate );
     void            RefreshView     ( void );

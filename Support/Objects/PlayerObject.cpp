@@ -25,13 +25,12 @@
 #include "objects\Corpse.hpp"
 #include "NetworkMgr/NetObjMgr.hpp"
 #include "NetworkMgr/Voice/VoiceMgr.hpp"
+#include "Objects\Flashlight.hpp"
 #include "Objects\Ladders\Ladder_Field.hpp"
 #include "Objects\GrenadeProjectile.hpp"
 #include "Objects\GravChargeProjectile.hpp"
 #include "Objects\JumpingBeanProjectile.hpp"
-#include "render\LightMgr.hpp"
 #include "Objects\Door.hpp"
-#include "objects\Projector.hpp"
 #include "objects\WeaponMutation.hpp"
 #include "StateMgr\StateMgr.hpp"
 #include "NetworkMgr\GameMgr.hpp"
@@ -46,6 +45,7 @@
 #include "Objects\LoreObject.hpp"
 #include "Objects\Camera.hpp"
 #include "Objects\LevelSettings.hpp"
+#include "Objects\Interpolation\InterpolationMath.hpp"
 #include "GameTextMgr\GameTextMgr.hpp"
 #include "StringMgr\StringMgr.hpp"
 #include "e_Audio.hpp"
@@ -96,6 +96,7 @@ static const f32    k_Modfactor                 = 2.5f;
 static const f32    DeathCamStartBackDist       = 800.0f;
 static const f32    DeathCamEndDist             = 500.0f;
 static const f32    ZERO                        = 0.00001f;
+static const f32    s_ReferenceFrameRate        = 30.0f;
 
              f32     g_EnemyShootBBoxPct = 1.20f; // percent of screen bbox width to inflate for an aiming HIT bbox
 //static      f32     s_AimAssistRadius   = 20.0f;
@@ -587,7 +588,6 @@ player::player( void ) :
     m_WeaponCollisionOffset             ( 0.0f, 0.0f, 0.0f ),
     m_LastWeaponCollisionOffsetScalar   ( 0.0f ),
     m_WeaponCollisionOffsetScalar       ( 0.0f ),
-    m_FlashlightGuid                    ( 0 ),
     m_BatteryChangeTime                 ( 0.0f ),
     m_Battery                           ( 100.0f ),
     m_MaxBattery                        ( 100.0f ),
@@ -677,6 +677,14 @@ player::player( void ) :
     m_MaxStrafeVelocity = .75f * m_MaxFowardVelocity;
 
     m_vRigOffset.Set( 0.0f, 0.0f, 0.0f );
+
+    player_interp_state InitialState;
+    InitialState.Valid = FALSE;
+    InitSkinnedInterpState( InitialState.Arms );
+    InitWeaponInterpState( InitialState.Weapon );
+    InitialState.WeaponCollisionOffset.Zero();
+
+    InitInterpCache( m_RenderCache, InitialState );
  
     // The title for this player
     m_pPlayerTitle = "Unknown Mutation";
@@ -850,16 +858,6 @@ player::strain_control_modifiers::strain_control_modifiers() :
 player::~player( void )
 {
     SetIsActive( FALSE );
-
-    // Destroy flashlight
-    object* pFlashlight = m_FlashlightGuid != 0 ? g_ObjMgr.GetObjectByGuid( m_FlashlightGuid ) : NULL;
-    
-    if ( pFlashlight != NULL )
-    {
-        g_ObjMgr.DestroyObjectEx( m_FlashlightGuid, TRUE );
-    }
-
-    m_FlashlightGuid = 0;
 
     // Remove the player's ear from the audio manager.
     g_AudioMgr.DestroyEar( m_AudioEarID );
@@ -1119,6 +1117,9 @@ zone_mgr::zone_id player::GetPlayerViewZone( void ) const
     {
         return (zone_mgr::zone_id)pThirdPersonCam->GetZone1();
     }
+
+    if( HasInterpCache( m_RenderCache ) )
+        return g_ZoneMgr.GetTrackerZoneAtPosition( m_ZoneTracker, m_RenderCache.Interp.View.GetPosition() );
     
     // Use object zone
     return GetPlayerObjectZone();
@@ -1602,8 +1603,6 @@ void player::PushViewCinematic ( lock_view_node* pLockViewBuffer )
 void player::UpdateViewCinematic ( const f32& rDeltaTime )
 {
     //play through the cinematic 
-    
-    (void) rDeltaTime;
 
     ASSERT( m_CurrentViewNode < lock_player_view::MAX_TABLE_SIZE && m_CurrentViewNode >= 0);
 
@@ -1655,7 +1654,7 @@ void player::UpdateViewCinematic ( const f32& rDeltaTime )
         
         f32 Tquad = -(T*T - T)*m_CScale;
         
-        m_CTimeSum += Tquad;
+        m_CTimeSum += Tquad * (rDeltaTime * s_ReferenceFrameRate);
         
         if (m_CTimeSum > 0.0f && m_CTimeSum < 1.0f)
         {
@@ -2031,10 +2030,11 @@ void player::ComputeView( view& View, view_flags Flags )
             // Apply movement roll
             if ( m_DeltaTime > 0.0f )
             {
-                radian RollAmount = ((m_StrafeVelocity.Length() / m_DeltaTime) / s_ViewRollTune) * R_1;
+                const vector3 StrafeSpeed = m_StrafeVelocity / m_DeltaTime;
+                radian RollAmount = (StrafeSpeed.Length() / s_ViewRollTune) * R_1;
                 vector3 Forward;
                 Forward.Set( radian3( 0.0f, Rot.Yaw, 0.0f ) );
-                if ( m_StrafeVelocity.Cross( Forward ).GetY() < 0 )
+                if ( StrafeSpeed.Cross( Forward ).GetY() < 0 )
                 {
                     RollAmount = -RollAmount;
                 }
@@ -2067,6 +2067,163 @@ void player::ComputeView( view& View, view_flags Flags )
     {
         View.SetZLimits( 10.0f, 8000.0f );
     }
+}
+
+//===========================================================================
+
+void player::CaptureRenderInterpState( void )
+{
+    actor::CaptureRenderInterpState();
+
+    if( GetLocalSlot() == -1 )
+    {
+        ClearInterpCache( m_RenderCache );
+        return;
+    }
+
+    player_interp_state& Snapshot = BeginCaptureInterpCache( m_RenderCache );
+    Snapshot.Valid = TRUE;
+    Snapshot.View = m_Views[ GetLocalSlot() ];
+    ComputeView( Snapshot.View, player::VIEW_NULL );
+
+    const matrix4 WorldToView = Snapshot.View.GetW2V();
+
+    Snapshot.WeaponCollisionOffset = TransformInterpDirection( WorldToView, m_WeaponCollisionOffset );
+    CaptureSkinnedInterpState( Snapshot.Arms, BuildInterpL2W( m_AnimPlayer.GetPosition(), m_AnimPlayer.GetRotation() ) );
+    InitWeaponInterpState( Snapshot.Weapon );
+
+    if( m_AnimGroup.GetPointer() && m_Skin.GetSkinGeom() )
+    {
+        Snapshot.Arms.NBones = MIN( m_AnimPlayer.GetNBones(), MAX_ANIM_BONES );
+        m_AnimPlayer.GetBoneL2Ws( Snapshot.Arms.Bones, FALSE );
+    }
+
+    new_weapon* pWeapon = GetCurrentWeaponPtr();
+    if( pWeapon )
+    {
+        CaptureWeaponInterpState( Snapshot.Weapon, pWeapon->GetL2W() );
+
+        if( pWeapon->HasAnimGroup() )
+        {
+            char_anim_player& WeaponAnimPlayer = pWeapon->GetCurrentAnimPlayer();
+            Snapshot.Weapon.NBones = MIN( WeaponAnimPlayer.GetNBones(), MAX_ANIM_BONES );
+            WeaponAnimPlayer.GetBoneL2Ws( Snapshot.Weapon.Bones, FALSE );
+        }
+    }
+
+    TransformSkinnedInterpState( Snapshot.Arms, WorldToView );
+    TransformWeaponInterpState( Snapshot.Weapon, WorldToView );
+
+    FinishCaptureInterpCache( m_RenderCache,
+                              []( const player_interp_state& Prev, const player_interp_state& Curr )
+                                   {
+                                       return ShouldSnapInterpL2W( Prev.View.GetV2W(), Curr.View.GetV2W() ) ||
+                                              (Prev.Weapon.Active != Curr.Weapon.Active) ||
+                                              (Prev.Arms.NBones != Curr.Arms.NBones) ||
+                                              (Prev.Weapon.NBones != Curr.Weapon.NBones);
+                                   } );
+
+    RegisterRenderInterpUpdate();
+}
+
+//===========================================================================
+
+void player::UpdateRenderInterpState( f32 Alpha )
+{
+    actor::UpdateRenderInterpState( Alpha );
+
+    if( GetLocalSlot() == -1 )
+        return;
+
+    UpdateInterpCache( m_RenderCache, Alpha,
+                       [this]( const player_interp_state& Prev,
+                               const player_interp_state& Curr,
+                                     player_interp_state& Interp,
+                                     f32                  T )
+                            {
+                                Interp.Valid = Curr.Valid;
+                                Interp.View  = Curr.View;
+                                T = ClampInterpAlpha( T );
+                                Interp.View.SetV2W( InterpMatrix( Prev.View.GetV2W(), Curr.View.GetV2W(), T ) );
+                                Interp.View.SetXFOV( InterpScalar( Prev.View.GetXFOV(), Curr.View.GetXFOV(), T ) );
+
+                                s32 X0, Y0, X1, Y1;
+                                f32 ZNear, ZFar;
+                                view& LiveView = m_Views[ GetLocalSlot() ];
+                                LiveView.GetViewport( X0, Y0, X1, Y1 );
+                                LiveView.GetZLimits( ZNear, ZFar );
+                                Interp.View.SetViewport( X0, Y0, X1, Y1 );
+                                Interp.View.SetPixelScale( LiveView.GetPixelScale() );
+                                Interp.View.SetZLimits( ZNear, ZFar );
+
+                                Interp.WeaponCollisionOffset = InterpVector( Prev.WeaponCollisionOffset,
+                                                                             Curr.WeaponCollisionOffset,
+                                                                             T );
+                                UpdateSkinnedInterpState( Prev.Arms, Curr.Arms, Interp.Arms, T );
+                                UpdateWeaponInterpState( Prev.Weapon, Curr.Weapon, Interp.Weapon, T );
+
+                                const matrix4 ViewToWorld = Interp.View.GetV2W();
+                                Interp.WeaponCollisionOffset = TransformInterpDirection( ViewToWorld,
+                                                                                        Interp.WeaponCollisionOffset );
+                                TransformSkinnedInterpState( Interp.Arms, ViewToWorld );
+                                TransformWeaponInterpState( Interp.Weapon, ViewToWorld );
+                            } );
+}
+
+//===========================================================================
+
+void player::ClearRenderInterpState( void )
+{
+    ClearInterpCache( m_RenderCache );
+    actor::ClearRenderInterpState();
+}
+
+//===========================================================================
+
+void player::ClearRenderInterpStatePerView( void )
+{
+    if( (GetLocalSlot() != -1) && IsActivePlayer() )
+        ClearRenderInterpState();
+}
+
+//===========================================================================
+
+xbool player::GetRenderWeaponL2W( matrix4& L2W, new_weapon::render_state RenderState ) const
+{
+    if( RenderState != new_weapon::RENDER_STATE_PLAYER )
+        return actor::GetRenderWeaponL2W( L2W, RenderState );
+
+    if( !HasInterpCache( m_RenderCache ) || !m_RenderCache.Interp.Weapon.Active )
+        return FALSE;
+
+    L2W = m_RenderCache.Interp.Weapon.L2W;
+    return TRUE;
+}
+
+//===========================================================================
+
+const matrix4* player::GetRenderWeaponBones( s32& nBones, new_weapon::render_state RenderState ) const
+{
+    if( RenderState != new_weapon::RENDER_STATE_PLAYER )
+        return actor::GetRenderWeaponBones( nBones, RenderState );
+
+    if( !HasInterpCache( m_RenderCache ) )
+    {
+        nBones = 0;
+        return NULL;
+    }
+
+    return GetWeaponInterpStateBones( m_RenderCache.Interp.Weapon, nBones );
+}
+
+//===========================================================================
+
+const vector3& player::GetRenderWeaponCollisionOffset( new_weapon::render_state RenderState ) const
+{
+    if( RenderState != new_weapon::RENDER_STATE_PLAYER )
+        return actor::GetRenderWeaponCollisionOffset( RenderState );
+
+    return GetCurrentWeaponCollisionOffset();
 }
 
 //===========================================================================
@@ -2568,7 +2725,7 @@ void player::OnAdvanceLogic( f32 DeltaTime )
     // KSS -- new cinema code
     if( m_Cinema.m_bUseViewCorrection )
     {
-        m_Cinema.m_ViewCorrectionDelta *= CINEMA_DELTA_FADE_T;
+        m_Cinema.m_ViewCorrectionDelta *= x_pow( CINEMA_DELTA_FADE_T, DeltaTime * s_ReferenceFrameRate );
     }
 
     // Store a pointer to the current weapon.  This pointer is only valid 
@@ -3098,62 +3255,20 @@ xbool player::GetClosestLoreObjectDist( f32 &ClosestDist )
 }
 
 //==============================================================================
-void player::InitFlashlight( const vector3& rInitPos )
+void player::OnCollectLight( void )
 {
-    // create the flashlight (todo--make this part of the weapon blueprint so artists/designers can play.)
-    if( m_FlashlightGuid != 0 )
-    {
-        // already created
-        return;
-    }
-    else
-    {
-        m_FlashlightGuid = g_ObjMgr.CreateObject( projector_obj::GetObjectType() );
-    }
-
-    object_ptr<projector_obj> ProjObj(m_FlashlightGuid);
-
-    if( ProjObj.IsValid() )
-    {
-        texture::handle Texture;
-
-        // set visuals
-        Texture.SetName( PRELOAD_FILE("Flashlight.xbmp") );
-        ProjObj.m_pObject->SetShadow( FALSE );
-        ProjObj.m_pObject->SetActive( FALSE );
-        ProjObj.m_pObject->SetIsFlashlight( TRUE );
-        ProjObj.m_pObject->SetFOV( R_90 );
-        ProjObj.m_pObject->SetLength( 2000.0f );
-        ProjObj.m_pObject->SetTextureHandle( Texture );
-        ProjObj.m_pObject->OnMove( rInitPos );
-        ProjObj.m_pObject->SetZone1( GetZone1() );
-        ProjObj.m_pObject->SetZone2( GetZone2() );
-    }
-    else
-    {
-        ASSERTS(0, "Invalid Flashlight");
-    }
+    flashlight_Register( *this );
 }
 
 //==============================================================================
 
 xbool player::IsFlashlightActive( void )
 {
-    new_weapon* pWeapon = GetCurrentWeaponPtr();
-    
-    // validate weapon
-    if( pWeapon )
-    {
-        object_ptr<projector_obj> ProjObj(m_FlashlightGuid);
+    if( !m_bUsingFlashlight )
+        return FALSE;
 
-        // is the flashlight object valid and is the bone valid?
-        if ( ProjObj.IsValid() && pWeapon->CheckFlashlightPoint() )
-        {
-            return ProjObj.m_pObject->IsActive();
-        }
-    }
-    
-    return FALSE;
+    matrix4 L2W;
+    return flashlight_CalcTransform( *this, L2W );
 }
 
 //==============================================================================
@@ -3201,56 +3316,33 @@ void player::SetFlashlightActive( xbool bOn )
 
 
     new_weapon* pWeapon = GetCurrentWeaponPtr();
+    const xbool bCanUseFlashlight = ( pWeapon && pWeapon->HasFlashlight() && pWeapon->CheckFlashlightPoint() );
+    const xbool bWasUsingFlashlight = m_bUsingFlashlight;
+    m_bUsingFlashlight = ( bOn && bCanUseFlashlight );
 
-    // validate weapon
-    if( pWeapon )
+    if ( bWasUsingFlashlight != m_bUsingFlashlight )
     {
-        object_ptr<projector_obj> ProjObj(m_FlashlightGuid);
-        
-        // is the flashlight object valid and is the bone valid?
-        if ( ProjObj.IsValid() && pWeapon->CheckFlashlightPoint() )
+        actor_effects* pActorEffects = GetActorEffects( TRUE );
+
+        if ( m_bUsingFlashlight )
         {
-            ProjObj.m_pObject->SetActive(bOn);
-        }
-
-        MoveFlashlight();
-
-        const xbool bWasUsingFlashlight = m_bUsingFlashlight;
-        m_bUsingFlashlight = bOn;
-
-        if ( bWasUsingFlashlight != m_bUsingFlashlight )
-        {
-            actor_effects* pActorEffects = GetActorEffects( TRUE );
-
-            if ( m_bUsingFlashlight )
+            if ( pActorEffects )
             {
-                if ( pActorEffects )
-                {
-                    pActorEffects->InitEffect( actor_effects::FX_FLASHLIGHT, this );
-                }
-            }
-            else
-            {
-                if( pActorEffects )
-                {
-                    pActorEffects->KillEffect( actor_effects::FX_FLASHLIGHT );
-                }
+                pActorEffects->InitEffect( actor_effects::FX_FLASHLIGHT, this );
             }
         }
-
-        #ifndef X_EDITOR
-        m_NetDirtyBits |= FLASHLIGHT_BIT;
-        #endif
+        else
+        {
+            if( pActorEffects )
+            {
+                pActorEffects->KillEffect( actor_effects::FX_FLASHLIGHT );
+            }
+        }
     }
-    else
-    {
-        // set using flashlight to false because weapon is invalid
-        m_bUsingFlashlight = FALSE;
 
-        #ifndef X_EDITOR
-        m_NetDirtyBits |= FLASHLIGHT_BIT;
-        #endif
-    }
+    #ifndef X_EDITOR
+    m_NetDirtyBits |= FLASHLIGHT_BIT;
+    #endif
 
     // flashlight is off, reset flashlight timeout
     if( m_bUsingFlashlight == FALSE )
@@ -3322,46 +3414,6 @@ xbool player::AddBattery( const f32& nDeltaBattery )
     }
 
     return FALSE;
-}
-
-//==============================================================================
-
-void player::MoveFlashlight( void )
-{
-    if( IsFlashlightActive() )
-    {
-        new_weapon* pWeapon = GetCurrentWeaponPtr();
-    
-        // validate weapon
-        if( pWeapon )
-        {
-            object_ptr<projector_obj> ProjObj(m_FlashlightGuid);
-            
-            // validate flashlight object and flashlight bone
-            if ( ProjObj.IsValid() && pWeapon->CheckFlashlightPoint() )
-            {
-                matrix4 L2W;
-                vector3 Vect;
-                
-                // transform if we are in the proper state
-                if( pWeapon->GetFlashlightTransformInfo(L2W, Vect) )
-                {
-                    L2W.PreTranslate(Vect);
-                    L2W.PreRotateY(R_180);
-                    L2W.PreTranslate( vector3(0.0f, 0.0f, -100.0f) );
-                    ProjObj.m_pObject->OnTransform( L2W );
-
-                    // set flashlight zones to the player's zones
-                    ProjObj.m_pObject->SetZones(GetZones());
-                }
-            }
-            else
-            {
-                // kill flashlight if we don't have a weapon
-                ProjObj.m_pObject->SetActive(FALSE);
-            }            
-        }
-    }    
 }
 
 //==============================================================================
@@ -3856,14 +3908,21 @@ void player::OnRender( void )
             && (GetCurrentWeaponPtr() || (m_CurrentAnimState == ANIM_STATE_DEATH))
             && !(m_bIsMutated && (m_CurrentAnimState == ANIM_STATE_DEATH)) )
         {
+            const anim_group& ArmsAnimGroup = m_AnimPlayer.GetAnimGroup();
             s32            nBones    = m_AnimPlayer.GetNBones();
             matrix4*       pBone     = (matrix4*)smem_BufferAlloc( nBones * sizeof( matrix4 ) );
             const matrix4* pAnimBone = m_AnimPlayer.GetBoneL2Ws();
+            const vector3& WeaponCollisionOffset = GetCurrentWeaponCollisionOffset();
+            xbool          UseRenderInterp = (HasInterpCache( m_RenderCache ) && (m_RenderCache.Interp.Arms.NBones == nBones));
 
             for( s32 i=0; i<nBones; i++ )
             {
-                pBone[i] = pAnimBone[i];
-                pBone[i].Translate( m_WeaponCollisionOffset );
+                if( UseRenderInterp )
+                    pBone[i] = m_RenderCache.Interp.Arms.Bones[i] * ArmsAnimGroup.GetBoneBindInvMatrix( i );
+                else
+                    pBone[i] = pAnimBone[i];
+
+                pBone[i].Translate( WeaponCollisionOffset );
             }
 
 #if !defined( CONFIG_RETAIL )
@@ -4386,7 +4445,7 @@ void player::UpdateMovement( f32 DeltaTime )
     ASSERT( m_ArmsVelocity.IsValid() );
 
     // dampen with drag
-    m_ArmsVelocity -= m_ArmsVelocity * s_ArmsDampen;
+    m_ArmsVelocity *= x_pow( 1.0f - s_ArmsDampen, DeltaTime * s_ReferenceFrameRate );
     m_ArmsOffset   += m_ArmsVelocity * DeltaTime;
 
     ASSERT( m_ArmsOffset.IsValid() );
@@ -7942,8 +8001,21 @@ view& player::GetView( void )
 #ifdef X_EDITOR
     return GetView( 0 ); 
 #else
+    if( HasInterpCache( m_RenderCache ) )
+        return m_RenderCache.Interp.View;
+
     return GetView( GetLocalSlot() ); 
 #endif
+}
+
+//==============================================================================
+
+const vector3& player::GetCurrentWeaponCollisionOffset( void ) const
+{
+    if( HasInterpCache( m_RenderCache ) )
+        return m_RenderCache.Interp.WeaponCollisionOffset;
+
+    return m_WeaponCollisionOffset;
 }
 
 //==============================================================================

@@ -1,8 +1,8 @@
 //==============================================================================
-//  
+//
 //  GBufferMgr.hpp
-//  
-//  Mini G-Buffer Manager for Forward+ Renderer
+//
+//  Mini G-Buffer Manager for Forward Renderer
 //
 //==============================================================================
 
@@ -26,19 +26,23 @@
 #include "Entropy/D3DEngine/d3deng_rtarget.hpp"
 
 //==============================================================================
-//  ENUMS
+//  ENUMS / CONSTANTS
 //==============================================================================
 
 enum gbuffer_target
 {
-    GBUFFER_FINAL_COLOR  = 0,  // Main backbuffer output
-    GBUFFER_ALBEDO,            // RGB: Base color
-    GBUFFER_NORMAL,            // RGB: View-space Normal
-    GBUFFER_DEPTH_INFO,        // R: Linear Depth
-    GBUFFER_GLOW,              // RGB: Emissive color, A: Intensity mask
-    GBUFFER_DEPTH,             // Hardware depth buffer
+    GBUFFER_FINAL_COLOR  = 0,
+    GBUFFER_ALBEDO,
+    GBUFFER_NORMAL,
+    GBUFFER_LINEAR_DEPTH,
+    GBUFFER_GLOW,
+    GBUFFER_DEPTH,
     GBUFFER_TARGET_COUNT
 };
+
+//------------------------------------------------------------------------------
+
+#define GBUFFER_MRT_COUNT  4
 
 //==============================================================================
 //  G-BUFFER MANAGER CLASS
@@ -47,35 +51,46 @@ enum gbuffer_target
 class gbuffer_mgr
 {
 public:
-    gbuffer_mgr();
-    ~gbuffer_mgr();
+    gbuffer_mgr ( void );
+    ~gbuffer_mgr( void );
 
     void           Init                ( void );
     void           Kill                ( void );
-                   
+
     xbool          InitGBuffer         ( u32 Width, u32 Height );
-    void           DestroyGBuffer         ( void );
+    void           DestroyGBuffer      ( void );
     xbool          ResizeGBuffer       ( u32 Width, u32 Height );
-                   
+
     xbool          SetGBufferTargets   ( void );
-    void           SetBackBufferTarget ( void );
+    void           SetFinalColorTarget ( void );
+    void           PresentFinalColor   ( void );
     void           ClearGBuffer        ( void );
-    
+    void           BeginFrame          ( void );
+    void           SetTargetOverride   ( const rtarget* pColor, const rtarget* pDepth );
+
     const rtarget* GetGBufferTarget    ( gbuffer_target Target ) const;
     xbool          IsGBufferEnabled    ( void ) const { return m_bGBufferValid; }
+    xbool          WasSceneRenderedThisFrame( void ) const { return m_bSceneColorRenderedThisFrame; }
     void           GetGBufferSize      ( u32& Width, u32& Height ) const;
 
 private:
-    void           ResetState          ( void );
+    xbool          CreateTarget        ( rtarget& Target, rtarget_format Format, const char* pErrorMsg );
+    const rtarget* GetActiveSceneColor ( void ) const;
+    const rtarget* GetActiveDepthTarget( void ) const;
 
-    xbool       m_bInitialized;
-    rtarget     m_GBufferTarget[GBUFFER_TARGET_COUNT-2];
-    rtarget     m_GBufferTargetSet[GBUFFER_TARGET_COUNT];
-    rtarget     m_GBufferDepth;
-    xbool       m_bGBufferValid;
-    u32         m_GBufferWidth;
-    u32         m_GBufferHeight;
-    xbool       m_bGBufferTargetsActive;
+    xbool          m_bInitialized;
+    xbool          m_bGBufferValid;
+    xbool          m_bGBufferTargetsActive;
+    xbool          m_bSceneColorRenderedThisFrame;
+    u32            m_GBufferWidth;
+    u32            m_GBufferHeight;
+
+    rtarget        m_SceneColorTarget;
+    rtarget        m_GBufferTarget[ GBUFFER_MRT_COUNT ];
+    rtarget        m_GBufferDepth;
+
+    const rtarget* m_pOverrideColor;
+    const rtarget* m_pOverrideDepth;
 };
 
 //==============================================================================
@@ -83,16 +98,6 @@ private:
 //==============================================================================
 
 extern gbuffer_mgr g_GBufferMgr;
-
-//==============================================================================
-//  CONSTANTS
-//==============================================================================
-
-#define GBUFFER_FORMAT_FINAL_COLOR  RTARGET_FORMAT_RGBA8
-#define GBUFFER_FORMAT_ALBEDO       RTARGET_FORMAT_RGBA8
-#define GBUFFER_FORMAT_NORMAL       RTARGET_FORMAT_RGBA16F
-#define GBUFFER_FORMAT_GLOW         RTARGET_FORMAT_RGBA16F
-#define GBUFFER_FORMAT_DEPTH_INFO   RTARGET_FORMAT_R32F
 
 //==============================================================================
 #endif // GBUFFER_MANAGER_HPP

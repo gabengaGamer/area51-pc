@@ -9,7 +9,7 @@
 #include "..\Editor\View3d.h"
 #include "..\Editor\Grid3d.hpp"
 #include "..\Editor\Axis3d.hpp"
-#include "..\MeshViewer\MeshViewer.hpp"
+//#include "..\MeshViewer\MeshViewer.hpp"
 
 /////////////////////////////////////////////////////////////////////////////
 // CResourcePreview window
@@ -48,7 +48,7 @@ protected:
     view            m_View;
     grid3d          m_Grid;
     axis3d          m_Axis;
-    mesh_viewer     m_Viewer;
+    //mesh_viewer     m_Viewer;
     UINT            m_nTimer;
     vector3         m_v3Mult;
     f32             m_LastMaxY;

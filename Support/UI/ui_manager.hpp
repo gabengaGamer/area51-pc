@@ -542,6 +542,7 @@ protected:
     s32                     m_wipeEndY;
     xbool                   m_wipeDown;
     f32                     m_wipeSpeed;
+    f32                     m_WipeStepAccumulator;
     irect                   m_wipePos;
     wipeElement             m_wipeTrail[16];
     s32                     m_wipeCount;
@@ -549,6 +550,7 @@ protected:
 
     // refresh bar controls
     f32                     m_RefreshSpeed;
+    f32                     m_RefreshStepAccumulator;
     u32                     m_RefreshWidth;
     irect                   m_RefreshPos;      
 
@@ -561,9 +563,8 @@ protected:
     s32                     m_ScreenGlowID;
     irect                   m_ScreenHighlightPos;
     xbool                   m_ScreenHighlightEnabled;
-    s32                     m_HighlightAlpha;
+    f32                     m_HighlightAlpha;
     xbool                   m_HighlightFadeUp;
-    xbool                   m_CycleFadeUp;
 
 
     // glow bar controls
@@ -571,6 +572,7 @@ protected:
     s32                     m_GlowStartX;
     s32                     m_GlowEndX;
     f32                     m_GlowSpeed;
+    f32                     m_GlowStepAccumulator;
     irect                   m_GlowPos;
     irect                   m_GlowTrail[8];
     xbool                   m_GlowOnTop;

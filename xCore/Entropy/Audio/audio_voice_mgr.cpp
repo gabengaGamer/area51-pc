@@ -2797,8 +2797,11 @@ inline voice* audio_voice_mgr::UpdateCheckStreams( voice* pVoice )
                     FreeVoice( pVoice, TRUE );
                     return NULL;
                 }
-                if( !pElement->pChannel->StreamData.pStream->StreamDone )
+                if( (pElement->pChannel->StreamData.pStream->CompressionType != MP3) &&
+                    !pElement->pChannel->StreamData.pStream->StreamDone )
+                {
                     g_AudioStreamMgr.ReadStream( pElement->pChannel->StreamData.pStream );
+                }
 
                 // Mark it as ready.
                 pElement->State = ELEMENT_READY;

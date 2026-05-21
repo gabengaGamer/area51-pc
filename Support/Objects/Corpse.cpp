@@ -127,8 +127,8 @@ static struct corpse_desc : public object_desc
                                         "AI",
 
                                         object::ATTR_SPACIAL_ENTRY          |
-										object::ATTR_NEEDS_LOGIC_TIME		|
-                                        object::ATTR_SOUND_SOURCE			|
+                                        object::ATTR_NEEDS_LOGIC_TIME       |
+                                        object::ATTR_SOUND_SOURCE           |
                                         object::ATTR_COLLIDABLE             | 
                                         object::ATTR_BLOCKS_ALL_PROJECTILES | 
                                         object::ATTR_BLOCKS_RAGDOLL         | 
@@ -137,6 +137,7 @@ static struct corpse_desc : public object_desc
                                         object::ATTR_NO_RUNTIME_SAVE        |
                                         object::ATTR_RENDERABLE             |
                                         object::ATTR_CAST_SHADOWS           |
+                                        object::ATTR_RECEIVE_SHADOWS        |
                                         object::ATTR_TRANSPARENT,
 
                                         FLAGS_GENERIC_EDITOR_CREATE | FLAGS_NO_ICON |
@@ -198,7 +199,7 @@ corpse::corpse( void ) :
     m_AnimFrame         (  0    ),
     m_SimulationTime    ( 0.0f  ),
     m_Material          ( object::MAT_TYPE_FLESH ),
-	m_BloodDecalGroup   ( -1    ),
+    m_BloodDecalGroup   ( -1    ),
     m_CorpseName        ( CORPSE_GENERIC ),
     m_ImpactSfxTimer    ( 0.0f )
 {
@@ -212,6 +213,8 @@ corpse::corpse( void ) :
                                  vector3(  100,   50,  100 ) ) );
 
     m_FadeOutTime = CORPSE_FADEOUT_TIME;
+
+    InitSimpleAnimInterpCache( m_RenderCache );
 }
 
 //=========================================================================
@@ -415,6 +418,38 @@ xbool corpse::ReachedMaxActiveLimit( void )
 {
     return ( m_ActiveCount >= CORPSE_MAX_ACTIVE_COUNT ) ||
            ( g_PhysicsMgr.GetAwakeInstanceCount() > CORPSE_MAX_ACTIVE_COUNT );
+}
+
+//===========================================================================
+
+void corpse::CaptureRenderInterpState( void )
+{
+    simple_anim_interp_state& Snapshot = BeginCaptureInterpCache( m_RenderCache );
+    InitSimpleAnimInterpState( Snapshot );
+    m_PhysicsInst.CaptureRenderInterpState( Snapshot );
+
+    if( !Snapshot.Valid )
+    {
+        InitSimpleAnimInterpCache( m_RenderCache );
+        return;
+    }
+
+    FinishCaptureInterpCache( m_RenderCache, ShouldSnapSimpleAnimInterpState );
+    RegisterRenderInterpUpdate();
+}
+
+//===========================================================================
+
+void corpse::UpdateRenderInterpState( f32 Alpha )
+{
+    UpdateSimpleAnimInterpCache( m_RenderCache, Alpha );
+}
+
+//===========================================================================
+
+void corpse::ClearRenderInterpState( void )
+{
+    ClearSimpleAnimInterpCache( m_RenderCache );
 }
 
 //===========================================================================
@@ -648,29 +683,44 @@ xbool corpse::InitializeEditorPlaced( void )
 
 void corpse::OnRenderShadowCast( u64 ProjMask )
 {
-    // Compute LOD mask for the shadow render (by putting zero in for screen size
-    // we force the lowest lod)
+    // Compute LOD mask for the shadow render (by forcing 0 for the screen size
+    // we are sure to get the lowest LOD)
     u64 ShadLODMask = GetSkinInst().GetLODMask(0);
     if( ShadLODMask == 0 )
         return;
 
-    // Compute matrices
+    // Setup render flags
+    u32 Flags = (GetFlagBits() & object::FLAG_CHECK_PLANES) ? render::CLIPPED : 0;
+
+    if( HasSimpleAnimInterpCache( m_RenderCache ) )
+    {
+        s32 nActiveBones = MIN( GetSkinInst().GetNActiveBones( ShadLODMask ), m_RenderCache.Interp.NBones );
+        if( nActiveBones <= 0 )
+            return;
+
+        GetSkinInst().RenderShadowCast( &m_RenderCache.Interp.L2W,
+                                        m_RenderCache.Interp.Bones,
+                                        nActiveBones,
+                                        Flags,
+                                        ShadLODMask,
+                                        ProjMask );
+        return;
+    }
+
+    // Compute bones
     u64 LODMask;
     s32 nActiveBones;
     const matrix4* pMatrices = m_PhysicsInst.GetBoneL2Ws( LODMask, nActiveBones );
     if( !pMatrices )
         return;
 
-    // Setup render flags
-    u32 Flags = (GetFlagBits() & object::FLAG_CHECK_PLANES) ? render::CLIPPED : 0;
-
-    // Render that puppy!
-    GetSkinInst().RenderShadowCast( &GetL2W(), 
-                             pMatrices, 
-                             nActiveBones,
-                             Flags,
-                             ShadLODMask,
-                             ProjMask );
+    // Render
+    GetSkinInst().RenderShadowCast( &GetL2W(),
+                                    pMatrices,
+                                    nActiveBones,
+                                    Flags,
+                                    ShadLODMask,
+                                    ProjMask );
 }
 
 //===============================================================================
@@ -710,8 +760,32 @@ void corpse::OnRender( void )
         Ambient.A  = (u8)(Alpha*255.0f);
     }
 
-    // Render that puppy!
-    m_PhysicsInst.Render( Flags, Ambient );
+    if( HasSimpleAnimInterpCache( m_RenderCache ) )
+    {
+        const matrix4& RenderL2W = m_RenderCache.Interp.L2W;
+        const u64 LODMask = GetSkinInst().GetLODMask( RenderL2W );
+        if( LODMask )
+        {
+            s32 nActiveBones = MIN( GetSkinInst().GetNActiveBones( LODMask ), m_RenderCache.Interp.NBones );
+            if( nActiveBones > 0 )
+            {
+                GetSkinInst().Render( &RenderL2W,
+                                      m_RenderCache.Interp.Bones,
+                                      nActiveBones,
+                                      Flags,
+                                      LODMask,
+                                      Ambient );
+            }
+        }
+
+        if( m_bActiveWhenVisible )
+            m_PhysicsInst.Activate();
+    }
+    else
+    {
+        // Render that puppy!
+        m_PhysicsInst.Render( Flags, Ambient );
+    }
 }
 
 //===============================================================================

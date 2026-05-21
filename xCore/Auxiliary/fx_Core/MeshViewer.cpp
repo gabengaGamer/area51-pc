@@ -1,5 +1,6 @@
 
 #include "MeshViewer.hpp"
+#include "Entropy/e_Draw.hpp"
 #include "Entropy/e_VRAM.hpp"
 #include "Entropy/e_ScratchMem.hpp"
 #include "Auxiliary/Bitmap/aux_Bitmap.hpp"
@@ -104,40 +105,6 @@ void mesh_viewer::Unload( void )
 
 void mesh_viewer::Render( xcolor TintColor )
 {
-    g_pd3dDevice->SetTextureStageState( 0, D3DTSS_COLOROP,      D3DTOP_MODULATE );
-    g_pd3dDevice->SetTextureStageState( 0, D3DTSS_COLORARG1,    D3DTA_DIFFUSE   );
-    g_pd3dDevice->SetTextureStageState( 0, D3DTSS_COLORARG2,    D3DTA_TEXTURE   );
-
-    g_pd3dDevice->SetTextureStageState( 0, D3DTSS_ALPHAOP,      D3DTOP_MODULATE );
-    g_pd3dDevice->SetTextureStageState( 0, D3DTSS_ALPHAARG1,    D3DTA_DIFFUSE   );
-    g_pd3dDevice->SetTextureStageState( 0, D3DTSS_ALPHAARG2,    D3DTA_TEXTURE   );
-
-    g_pd3dDevice->SetTextureStageState( 1, D3DTSS_COLOROP,      D3DTOP_DISABLE  );
-    g_pd3dDevice->SetTextureStageState( 1, D3DTSS_ALPHAOP,      D3DTOP_DISABLE  );
-
-    g_pd3dDevice->SetSamplerState( 0, D3DSAMP_ADDRESSU, D3DTADDRESS_WRAP );
-    g_pd3dDevice->SetSamplerState( 0, D3DSAMP_ADDRESSV, D3DTADDRESS_WRAP );
-
-    g_pd3dDevice->SetRenderState( D3DRS_ALPHABLENDENABLE, TRUE                 ); //FALSE );
-    g_pd3dDevice->SetRenderState( D3DRS_SRCBLEND,         D3DBLEND_SRCALPHA    );
-    g_pd3dDevice->SetRenderState( D3DRS_DESTBLEND,        D3DBLEND_INVSRCALPHA );
-    g_pd3dDevice->SetRenderState( D3DRS_BLENDOP,          D3DBLENDOP_ADD       );
-
-    g_pd3dDevice->SetRenderState( D3DRS_LIGHTING,     FALSE );
-    g_pd3dDevice->SetRenderState( D3DRS_COLORVERTEX,  TRUE  );
-
-    g_pd3dDevice->SetRenderState( D3DRS_ZENABLE,      D3DZB_TRUE );
-    g_pd3dDevice->SetRenderState( D3DRS_ZWRITEENABLE, D3DZB_TRUE ); //D3DZB_FALSE );
-
-    if( m_bBackFacets )
-    {
-        g_pd3dDevice->SetRenderState( D3DRS_CULLMODE, D3DCULL_NONE );
-    }
-    else
-    {
-        g_pd3dDevice->SetRenderState( D3DRS_CULLMODE, D3DCULL_CW );
-    }
-
     if( m_Mesh.m_nBones == 1 )
     {
         RenderSolid( TintColor );
@@ -159,96 +126,63 @@ void mesh_viewer::SetBackFacets( xbool bFaceFacets )
 
 void mesh_viewer::RenderSolid( xcolor TintColor )
 {
-    g_pd3dDevice->SetFVF( D3DFVF_XYZ | D3DFVF_DIFFUSE | D3DFVF_TEX1 );
-
-    struct lovert
-    {
-        vector3 P;
-        xcolor  C;
-        vector2 UV;
-    };
-
-    lovert*             pVertexBuffer   = NULL;
     rawmesh::vertex*    pVertex         = NULL;
 
     s32     i, j;
 
-    s32     iLastTex    = -1;
     s32     iMaterial;
     s32     iVertex;
     s32     iTexture;
-    s32     nFacets;
-    s32     iVB;
-    s32     iFace;
 
     vector3 N;
     vector3 L = m_LightDir;
     f32     I;
+    xcolor  VertColor;
+    u32     DrawFlags = DRAW_TEXTURED | DRAW_USE_ALPHA;
+
+    if( m_bBackFacets )
+    {
+        DrawFlags |= DRAW_CULL_NONE;
+    }
+
+    draw_Begin( DRAW_TRIANGLES, DrawFlags );
 
     for( iMaterial = 0; iMaterial < m_Mesh.m_nMaterials; iMaterial++ )
     {
         // Activate the diffuse texture for this material
         iTexture    = m_Mesh.m_pMaterial[ iMaterial ].TexMaterial[0].iTexture;
 
-        //if( m_Bitmap[iMaterial].GetVRAMID() )       { vram_Activate( m_Bitmap[iMaterial] ); }
-        if( m_Bitmap[iTexture].GetVRAMID() )        { vram_Activate( m_Bitmap[iTexture] ); }
-        else                                        { vram_Activate(); }
-
-        // Figure out how many facets use this material
-        nFacets = 0;
+        if( m_Bitmap[iTexture].GetVRAMID() )   { draw_SetTexture( m_Bitmap[iTexture] ); }
+        else                                   { draw_SetTexture(); }
 
         for( i = 0; i < m_Mesh.m_nFacets; i++ )
         {
             if( m_Mesh.m_pFacet[i].iMaterial == iMaterial )
             {
-                nFacets++;
-            }
-        }
-
-        // Allocate the vertex buffer for the facets that use this material
-        pVertexBuffer   = new lovert[ nFacets * 3 ];
-        iFace           = -1;
-
-        // Gather the data for the vertex buffer
-        for( i = 0; i < m_Mesh.m_nFacets; i++ )
-        {
-            if( m_Mesh.m_pFacet[i].iMaterial == iMaterial )
-            {
-                iFace++;
-
                 for( j = 0; j < 3; j++ )
                 {
-                    iVertex                     = m_Mesh.m_pFacet[i].iVertex[j];
-                    pVertex                     = &( m_Mesh.m_pVertex[ iVertex ] );
-                    iVB                         = j + (iFace * 3); // j + (i * 3);
+                    iVertex = m_Mesh.m_pFacet[i].iVertex[j];
+                    pVertex = &( m_Mesh.m_pVertex[ iVertex ] );
 
-                    pVertexBuffer[iVB].UV.X     = pVertex->UV[0].X; 
-                    pVertexBuffer[iVB].UV.Y     = pVertex->UV[0].Y;  
-                    pVertexBuffer[iVB].P        = pVertex->Position;
-
-                    N                           = pVertex->Normal[0];
-                    I                           = fMax( 0, L.Dot( N ) );
+                    N = pVertex->Normal[0];
+                    I = fMax( 0, L.Dot( N ) );
 
                     ASSERT( I >= 0 );
 
-                    pVertexBuffer[iVB].C.SetfRGBA( ( m_Ambient.GetX() + (TintColor.R / 255.0f * I) ),
-                                                   ( m_Ambient.GetY() + (TintColor.G / 255.0f * I) ),
-                                                   ( m_Ambient.GetZ() + (TintColor.B / 255.0f * I) ),
-                                                   (f32)TintColor.A / 255.0f );
+                    VertColor.SetfRGBA( ( m_Ambient.GetX() + (TintColor.R / 255.0f * I) ),
+                                        ( m_Ambient.GetY() + (TintColor.G / 255.0f * I) ),
+                                        ( m_Ambient.GetZ() + (TintColor.B / 255.0f * I) ),
+                                        (f32)TintColor.A / 255.0f );
+
+                    draw_UV( pVertex->UV[0] );
+                    draw_Color( VertColor );
+                    draw_Vertex( pVertex->Position );
                 }
             }
         }
-
-        // Render the vertex buffer for this material
-        g_pd3dDevice->DrawPrimitiveUP( D3DPT_TRIANGLELIST, nFacets, pVertexBuffer, sizeof(lovert) );
-
-        // Cleanup the vertex buffer data
-        if( pVertexBuffer )
-        {
-            delete[] pVertexBuffer;
-            pVertexBuffer = NULL;
-        }
     }
+
+    draw_End();
 }
 
 //=========================================================================
@@ -269,13 +203,14 @@ void mesh_viewer::RenderSoftSkin( void )
     if( m_Anim.m_nBones == 0 )
         return;
 
-    g_pd3dDevice->SetFVF( D3DFVF_XYZ | D3DFVF_DIFFUSE | D3DFVF_TEX1 );
-
     // Allocate all the matrices
     smem_StackPushMarker();
     matrix4* pMatrix = (matrix4*)smem_StackAlloc( m_Anim.m_nBones * sizeof(matrix4) );
     if( pMatrix == NULL )
+    {
+        smem_StackPopToMarker();
         return;
+    }
 
     // Compute the frame
     if( m_bPlayAnim )
@@ -293,6 +228,15 @@ void mesh_viewer::RenderSoftSkin( void )
 
     // Render triangles
     s32 iLastTex = -1;
+    u32 DrawFlags = DRAW_TEXTURED | DRAW_USE_ALPHA;
+
+    if( m_bBackFacets )
+    {
+        DrawFlags |= DRAW_CULL_NONE;
+    }
+
+    draw_Begin( DRAW_TRIANGLES, DrawFlags );
+
     for( i=0; i<m_Mesh.m_nFacets; i++ )
     {
         lovert      V[3];
@@ -305,8 +249,8 @@ void mesh_viewer::RenderSoftSkin( void )
         if( m_Mesh.m_pMaterial[ Facet.iMaterial ].TexMaterial[0].iTexture != iLastTex )
         {
             iLastTex = m_Mesh.m_pMaterial[ Facet.iMaterial ].TexMaterial[0].iTexture;
-            if( m_Bitmap[iLastTex].GetVRAMID() ) vram_Activate( m_Bitmap[iLastTex] );
-            else vram_Activate();
+            if( m_Bitmap[iLastTex].GetVRAMID() ) draw_SetTexture( m_Bitmap[iLastTex] );
+            else                                 draw_SetTexture();
         }
 
         for( s32 j=0; j<3; j++ )
@@ -343,9 +287,15 @@ void mesh_viewer::RenderSoftSkin( void )
 
         }
 
-        // Render the triangle
-        g_pd3dDevice->DrawPrimitiveUP( D3DPT_TRIANGLELIST, 1, V, sizeof(lovert) );
+        for( s32 j=0; j<3; j++ )
+        {
+            draw_UV( V[j].UV );
+            draw_Color( V[j].C );
+            draw_Vertex( V[j].P );
+        }
     }
+
+    draw_End();
 
     // Free alloced memory
     smem_StackPopToMarker();

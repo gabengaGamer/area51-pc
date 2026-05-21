@@ -195,6 +195,36 @@ const char* rigid_inst::GetRigidGeomName( void ) const
 
 //=============================================================================
 
+void rigid_inst::RenderShadowCast( const matrix4* pL2W,
+                                   u32            Flags,
+                                   u64            ProjMask )
+{
+    if( !pL2W || !m_hInst.IsNonNull() || ( m_Alpha == 0 ) )
+        return;
+
+    rigid_geom* pRigidGeom = GetRigidGeom();
+    if( !pRigidGeom )
+        return;
+
+    u64 ShadLODMask = GetLODMask( 0 );
+    if( ShadLODMask == 0 )
+        ShadLODMask = GetLODMask( *pL2W );
+    if( ShadLODMask == 0 )
+        ShadLODMask = GetLODMask( U16_MAX );
+    if( ShadLODMask == 0 )
+        return;
+
+    (void)Flags;
+
+    // add the shadow
+    render::AddRigidCaster( m_hInst,
+                            pL2W,
+                            ShadLODMask,
+                            ProjMask );
+}
+
+//=============================================================================
+
 void rigid_inst::Render( const matrix4* pL2W, u32 Flags, u64 Mask )
 {
     if ( m_Alpha == 0 )

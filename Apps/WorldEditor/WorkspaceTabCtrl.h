@@ -7,17 +7,29 @@
 // WorkspaceTabCtrl.h : header file
 //
 
+#include <vector>
+
 /////////////////////////////////////////////////////////////////////////////
 // CWorkspaceTabCtrl window
 
-class CWorkspaceTabCtrl : public CXTTabCtrlBar
+class CWorkspaceTabCtrl : public CToolBar
 {
 // Construction
 public:
 	CWorkspaceTabCtrl();
 	virtual ~CWorkspaceTabCtrl();
 
-    virtual void OnTabSelChange(int nIDCtrl, CXTTabCtrl* pTabCtrl);
+    BOOL Create(CWnd* pParentWnd, UINT nID, LPCTSTR pWindowName, CSize SizeDefault, DWORD dwAlignStyle, DWORD dwStyle);
+    CFrameWnd* CreateFrameDocView(CRuntimeClass* pFrameClass, CRuntimeClass* pViewClass, CDocument* pDocument);
+    BOOL AddControl(LPCTSTR pLabel, CWnd* pView);
+    CWnd* GetView(int Index) const;
+    void SetActiveView(int Index);
+    void SetCaption(LPCTSTR pCaption);
+    void SetTabImageList(CImageList* pImageList);
+    BOOL EnableToolTips(BOOL bEnable);
+    CTabCtrl& GetTabCtrl() { return m_TabCtrl; }
+
+    virtual void OnTabSelChange(int nIDCtrl, CTabCtrl* pTabCtrl);
     CWnd* GetWorkspaceView( CRuntimeClass *pViewClass );
 
 // Overrides
@@ -25,16 +37,17 @@ public:
 	//{{AFX_VIRTUAL(CWorkspaceTabCtrl)
 	//}}AFX_VIRTUAL
 
-	// Generated message map functions
 protected:
-	//{{AFX_MSG(CWorkspaceTabCtrl)
-		// NOTE - the ClassWizard will add and remove member functions here.
-	//}}AFX_MSG
-
-	DECLARE_MESSAGE_MAP()
+    virtual BOOL OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult);
+    virtual LRESULT WindowProc(UINT message, WPARAM wParam, LPARAM lParam);
+    virtual CSize CalcFixedLayout(BOOL bStretch, BOOL bHorz);
 
     void UpdateView(int Index, BOOL bActivate);
+    void LayoutChildren();
 
+    CTabCtrl            m_TabCtrl;
+    std::vector<CWnd*>  m_Views;
+    CSize               m_DefaultSize;
     int m_nLastActiveView;
 };
 

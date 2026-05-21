@@ -13,6 +13,8 @@
 
 #include "x_color.hpp"
 #include "x_math.hpp"
+#include "x_array.hpp"
+#include "Texture.hpp"
 
 //==============================================================================
 //  LIGHTMGR MANAGER CLASS
@@ -33,6 +35,12 @@ public:
     enum    { MAX_FADING_LIGHTS    = 64 };
     enum    { MAX_COLLECTED_LIGHTS = 16 };
 
+    enum light_shape
+    {
+        LIGHT_SHAPE_OMNI = 0,
+        LIGHT_SHAPE_SPOT,
+    };
+
              light_mgr( void );
     virtual ~light_mgr( void );
 
@@ -52,7 +60,17 @@ public:
                                       const xcolor&  C,
                                       f32            Radius,
                                       f32            Intensity,
-                                      xbool          CharOnly );
+                                      xbool          CharOnly,
+                                      s32            Shape = LIGHT_SHAPE_OMNI,
+                                      xbool          CastShadows = TRUE,
+                                      f32            InnerRadius = 0.0f,
+                                      const vector3& Direction = vector3( 0.0f, 0.0f, 1.0f ),
+                                      f32            Falloff = 1.0f,
+                                      f32            InnerAngle = 30.0f,
+                                      f32            OuterAngle = 45.0f,
+                                      s32            ShadowMapResolution = 512,
+                                      s32            ShadowPriority = 1,
+                                      const texture::handle& Cookie = texture::handle() );
 
     // Here are the functions for getting lights that actually hit an object. You should
     // make sure you are in the begin/end pair before asking for lights. Also, make
@@ -68,12 +86,49 @@ public:
                                       vector3&       Pos,
                                       f32&           Radius,
                                       xcolor&        C );
+    void    GetCollectedLightInfo   ( s32            Index,
+                                      vector3&       Pos,
+                                      f32&           Radius,
+                                      xcolor&        C,
+                                      f32&           Falloff );
+    void    GetCollectedLightInfo   ( s32            Index,
+                                      vector3&       Pos,
+                                      f32&           Radius,
+                                      xcolor&        C,
+                                      f32&           Falloff,
+                                      s32&           Shape,
+                                      vector3&       Direction,
+                                      f32&           InnerAngle,
+                                      f32&           OuterAngle );
+    void    GetCollectedLightCookie( s32            Index,
+                                      s32&           CookieIndex,
+                                      vector3&       CookieU,
+                                      vector3&       CookieV );
     s32     CollectCharLights       ( const matrix4& L2W,
+                                      const bbox&    B,
+                                      s32            MaxLightCount = 3 );
+    s32     CollectCharLightsOnly   ( const matrix4& L2W,
                                       const bbox&    B,
                                       s32            MaxLightCount = 3 );
     void    GetCollectedCharLight   ( s32            Index,
                                       vector3&       Dir,
                                       xcolor&        C );
+    s32     GetNDynamicLights       ( void ) const;
+    const xbitmap*
+            GetLightCookieFaceBitmap( s32            Index ) const;
+    void    GetDynamicLight         ( s32            Index,
+                                      vector3&       Pos,
+                                      f32&           Radius,
+                                      xcolor&        C,
+                                      s32&           Shape,
+                                      xbool&         CastShadows,
+                                      f32&           InnerRadius,
+                                      vector3&       Direction,
+                                      f32&           Falloff,
+                                      f32&           InnerAngle,
+                                      f32&           OuterAngle,
+                                      s32&           ShadowMapResolution,
+                                      s32&           ShadowPriority ) const;
     s32     GetNNonCharLights       ( void ) const;
     void    GetLight                ( s32            Index,
                                       vector3&       Pos,
@@ -103,6 +158,17 @@ protected:
         f32     Radius;
         xcolor  Color;
         f32     Intensity;
+        vector3 Direction;
+        f32     Falloff;
+        f32     InnerAngle;
+        f32     OuterAngle;
+        s32     Shape;
+        s32     ShadowMapResolution;
+        s32     ShadowPriority;
+        xbool   CastShadows;
+        s32     CookieIndex;
+        vector3 CookieU;
+        vector3 CookieV;
     };
 
     struct dir_light
@@ -121,21 +187,35 @@ protected:
         f32     Radius;
         xcolor  Color;
         f32     Intensity;
+        f32     Falloff;
         f32     Score;
         xbool   CharOnly;
+        s32     Shape;
+        vector3 Direction;
+        f32     InnerAngle;
+        f32     OuterAngle;
+        s32     CookieIndex;
+        vector3 CookieU;
+        vector3 CookieV;
     };
 
     // internal helper routines
     s32     AddLight                ( void );
     void    RemoveLight             ( s32            LightIndex );
-    void    ReduceCollectedLights   ( s32            MaxLightCount );
+    void    ReduceCollectedSpadLights( s32           MaxLightCount );
+    void    ReduceCollectedCharLights( s32           MaxLightCount );
+    s32     RegisterSpotLightCookie ( const texture::handle& Cookie );
     xbool   CalcDirLight            ( dir_light*     pDst,
                                       const matrix4& L2W,
                                       const bbox&    Box,
                                       const vector3& Pos,
                                       f32            Radius,
                                       f32            Intensity,
-                                      xcolor&        C );
+                                      xcolor&        C,
+                                      s32            Shape = LIGHT_SHAPE_OMNI,
+                                      const vector3& Direction = vector3( 0.0f, 0.0f, 1.0f ),
+                                      f32            InnerAngle = 30.0f,
+                                      f32            OuterAngle = 45.0f );
     friend s32 SpadLightSortFn      ( const void* pA,
                                       const void* pB );
 
@@ -150,6 +230,7 @@ protected:
     dynamic_light   m_DynamicLights[MAX_DYNAMIC_LIGHTS];
     s32             m_NCharLights;
     dynamic_light   m_CharLights[MAX_CHAR_LIGHTS];
+    xarray<const xbitmap*> m_LightCookieFaces;
 
     // list of potential collectors
     xbool           m_bInCollection;
@@ -178,6 +259,7 @@ void light_mgr::ClearLights( void )
 {
     m_NDynamicLights = 0;
     m_NCharLights    = 0;
+    m_LightCookieFaces.Clear();
 }
 
 //==============================================================================
@@ -188,6 +270,23 @@ s32 light_mgr::GetNNonCharLights( void ) const
     ASSERT( m_bInCollection );
 
     return m_nNonCharLightsInSpad;
+}
+
+//==============================================================================
+
+inline
+s32 light_mgr::GetNDynamicLights( void ) const
+{
+    return m_NDynamicLights;
+}
+
+//==============================================================================
+
+inline
+const xbitmap* light_mgr::GetLightCookieFaceBitmap( s32 Index ) const
+{
+    ASSERT( (Index >= 0) && (Index < m_LightCookieFaces.GetCount()) );
+    return m_LightCookieFaces[Index];
 }
 
 //==============================================================================

@@ -504,7 +504,7 @@ xbool rawmesh2::LoadMatx2( text_in& File )
                 }                
             }
             
-            (void)MeshSort;
+            (void)&MeshSort;
             //x_qsort( m_pSubMesh[0], m_nSubMeshs, sizeof(sub_mesh), MeshSort );
         }
         

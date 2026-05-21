@@ -12,25 +12,43 @@
 /////////////////////////////////////////////////////////////////////////////
 // Column data structure
 
+enum COLUMN_DATA_TYPE
+{
+    DT_INT = 1,
+    DT_STRING,
+    DT_DATETIME
+};
+
 struct col_data 
 { 
 	LPCTSTR name; 
 	int width; 
 	int fmt;
-    XT_DATA_TYPE type;
+    COLUMN_DATA_TYPE type;
 };
 
 
 /////////////////////////////////////////////////////////////////////////////
 // CFlatRscList_View view
 
-class CFlatRscList_View : public CXTListView
+class CFlatRscList_View : public CListView
 {
 protected:
+    struct sort_context
+    {
+        CFlatRscList_View* pView;
+        s32                 nCol;
+        bool                bAscending;
+    };
+
+    static int CALLBACK CompareItems( LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort );
+
     bool SortList( int nCol, bool bAscending );
     EDRscDesc_Doc&      GetDoc      ( void ) { return *((EDRscDesc_Doc*)GetDocument()); }
     rsc_desc_mgr&       GetMgr      ( void ) { return g_RescDescMGR; }
     void                SetDetails  ( s32 i, const char* pPath, const char* pTheme );
+    s32                 m_nSortedCol;
+    bool                m_bAscending;
 
 public:
     
@@ -75,6 +93,7 @@ public:
 protected:
 	//{{AFX_MSG(CFlatRscList_View)
 	afx_msg void OnLButtonDblClk(UINT nFlags, CPoint point);
+    afx_msg void OnColumnClick( NMHDR* pNMHDR, LRESULT* pResult );
     afx_msg void OnItemChanged( NMHDR* pNMHDR, LRESULT* pResult );
     afx_msg void OnDoubleClick( NMHDR* pNMHDR, LRESULT* pResult );
 	//}}AFX_MSG

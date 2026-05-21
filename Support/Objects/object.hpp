@@ -61,6 +61,7 @@ class  render_inst;
 class  pain;
 struct event;
 class  object;
+class  shadow_map_mgr;
 class object_affecter;
 class simple_anim_player;
 
@@ -507,6 +508,11 @@ public:
     virtual       f32           GetLookAtExtent ( void ) const { return .95f; }
                   type          GetType         ( void ) const;      
 
+    static        void          CaptureRenderInterpStates( void );
+    static        void          UpdateRenderInterpStates ( f32 Alpha );
+    static        void          ClearRenderInterpStates  ( void );
+    static        void          ClearRenderInterpStatesPerView( void );
+
             const bbox&         GetBBox         ( void );                
     virtual       bbox          GetColBBox      ( void );                
     virtual       bbox          GetScreenBBox   ( const view& rView );
@@ -575,6 +581,7 @@ public:
     virtual const char*         GetGeomName           ( void );
 
     virtual simple_anim_player* GetSimpleAnimPlayer   ( void ) { return NULL; }
+    virtual const matrix4*      GetBoneL2Ws           ( void ) { return NULL; }
     virtual anim_group::handle* GetAnimGroupHandlePtr ( void ) { return NULL; }
     virtual anim_group*         GetAnimGroupPtr       ( void );
     virtual const char*         GetAnimGroupName      ( void );
@@ -651,6 +658,7 @@ protected:
 #ifdef TARGET_XBOX
     virtual void                OnRenderCloth           ( void );
 #endif    
+    virtual void                OnCollectLight          ( void );
     virtual void                OnRenderShadowCast      ( u64 ProjMask );
     virtual void                OnRenderShadowReceive   ( u64 ProjMask );
 #ifndef X_RETAIL
@@ -676,6 +684,11 @@ protected:
     void                        SetTransform    ( const matrix4& L2W );
     void                        UpdateTransform ( void );
     xbool                       IsLoading       ( void );
+    void                        RegisterRenderInterpUpdate( void );
+    virtual void                CaptureRenderInterpState( void );
+    virtual void                UpdateRenderInterpState ( f32 Alpha );
+    virtual void                ClearRenderInterpState  ( void );
+    virtual void                ClearRenderInterpStatePerView( void ) {}
     
     
     void                        SetNewZoneInfo          ( u16 ZoneInfo );
@@ -747,6 +760,7 @@ public:
 //------------------------------------------------------------------------------
 
     friend class obj_mgr;
+    friend class shadow_map_mgr;
     friend class collision_mgr;
 };
 
@@ -955,6 +969,13 @@ void object::OnRender( void )
 
 //==============================================================================
 
+inline
+void object::OnCollectLight( void )
+{
+}
+
+//==============================================================================
+
 #ifdef TARGET_XBOX
 
 inline
@@ -969,21 +990,6 @@ void object::OnRenderCloth( void )
 
 //==============================================================================
 
-inline
-void object::OnRenderShadowCast( u64 ProjMask )
-{
-    (void)ProjMask;
-}
-
-//==============================================================================
-
-inline
-void object::OnRenderShadowReceive( u64 ProjMask )
-{
-    (void)ProjMask;
-}
-
-//==============================================================================
 inline
 xbool object::NeedsClipping( void )
 {

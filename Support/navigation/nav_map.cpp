@@ -138,74 +138,74 @@ void navRenderFullScreenQuad( void )
 
 void navPrepD3DForStencil( void )
 {
-    g_pd3dDevice->SetTextureStageState( 0, D3DTSS_COLOROP,   D3DTOP_SELECTARG1  );
-    g_pd3dDevice->SetTextureStageState( 0, D3DTSS_COLORARG1, D3DTA_DIFFUSE      );
-    g_pd3dDevice->SetTextureStageState( 1, D3DTSS_COLOROP,   D3DTOP_DISABLE     );
-    g_pd3dDevice->SetTextureStageState( 0, D3DTSS_ALPHAOP,   D3DTOP_SELECTARG1  );
-    g_pd3dDevice->SetTextureStageState( 0, D3DTSS_ALPHAARG1, D3DTA_DIFFUSE      );
-    g_pd3dDevice->SetTextureStageState( 1, D3DTSS_ALPHAOP,   D3DTOP_DISABLE     );
-
-    g_pd3dDevice->SetRenderState( D3DRS_STENCILENABLE,  TRUE );
-    g_pd3dDevice->SetRenderState( D3DRS_STENCILFUNC,    D3DCMP_ALWAYS );
-    g_pd3dDevice->SetRenderState( D3DRS_STENCILMASK,    0xFFFFFFFF );
-    g_pd3dDevice->SetRenderState( D3DRS_STENCILFAIL,    D3DSTENCILOP_KEEP );
-    g_pd3dDevice->SetRenderState( D3DRS_STENCILZFAIL,   D3DSTENCILOP_KEEP );
-    g_pd3dDevice->SetRenderState( D3DRS_STENCILPASS,    D3DSTENCILOP_REPLACE  );
-
-    g_pd3dDevice->SetRenderState( D3DRS_COLORWRITEENABLE, 0x0 );
-    g_pd3dDevice->SetRenderState( D3DRS_ZWRITEENABLE, FALSE );
-    g_pd3dDevice->SetRenderState( D3DRS_ALPHABLENDENABLE, FALSE );
-    g_pd3dDevice->SetRenderState( D3DRS_ALPHATESTENABLE, FALSE );
-    g_pd3dDevice->SetRenderState( D3DRS_SRCBLEND,         D3DBLEND_ONE );
-    g_pd3dDevice->SetRenderState( D3DRS_DESTBLEND,        D3DBLEND_ZERO );
+    //g_pd3dDevice->SetTextureStageState( 0, D3DTSS_COLOROP,   D3DTOP_SELECTARG1  );
+    //g_pd3dDevice->SetTextureStageState( 0, D3DTSS_COLORARG1, D3DTA_DIFFUSE      );
+    //g_pd3dDevice->SetTextureStageState( 1, D3DTSS_COLOROP,   D3DTOP_DISABLE     );
+    //g_pd3dDevice->SetTextureStageState( 0, D3DTSS_ALPHAOP,   D3DTOP_SELECTARG1  );
+    //g_pd3dDevice->SetTextureStageState( 0, D3DTSS_ALPHAARG1, D3DTA_DIFFUSE      );
+    //g_pd3dDevice->SetTextureStageState( 1, D3DTSS_ALPHAOP,   D3DTOP_DISABLE     );
+	//
+    //g_pd3dDevice->SetRenderState( D3DRS_STENCILENABLE,  TRUE );
+    //g_pd3dDevice->SetRenderState( D3DRS_STENCILFUNC,    D3DCMP_ALWAYS );
+    //g_pd3dDevice->SetRenderState( D3DRS_STENCILMASK,    0xFFFFFFFF );
+    //g_pd3dDevice->SetRenderState( D3DRS_STENCILFAIL,    D3DSTENCILOP_KEEP );
+    //g_pd3dDevice->SetRenderState( D3DRS_STENCILZFAIL,   D3DSTENCILOP_KEEP );
+    //g_pd3dDevice->SetRenderState( D3DRS_STENCILPASS,    D3DSTENCILOP_REPLACE  );
+	//
+    //g_pd3dDevice->SetRenderState( D3DRS_COLORWRITEENABLE, 0x0 );
+    //g_pd3dDevice->SetRenderState( D3DRS_ZWRITEENABLE, FALSE );
+    //g_pd3dDevice->SetRenderState( D3DRS_ALPHABLENDENABLE, FALSE );
+    //g_pd3dDevice->SetRenderState( D3DRS_ALPHATESTENABLE, FALSE );
+    //g_pd3dDevice->SetRenderState( D3DRS_SRCBLEND,         D3DBLEND_ONE );
+    //g_pd3dDevice->SetRenderState( D3DRS_DESTBLEND,        D3DBLEND_ZERO );
 }
 
 void navPrepD3DForIncreStencil( void )
 {
-    g_pd3dDevice->SetTextureStageState( 0, D3DTSS_COLOROP,   D3DTOP_SELECTARG1  );
-    g_pd3dDevice->SetTextureStageState( 0, D3DTSS_COLORARG1, D3DTA_DIFFUSE      );
-    g_pd3dDevice->SetTextureStageState( 1, D3DTSS_COLOROP,   D3DTOP_DISABLE     );
-    g_pd3dDevice->SetTextureStageState( 0, D3DTSS_ALPHAOP,   D3DTOP_SELECTARG1  );
-    g_pd3dDevice->SetTextureStageState( 0, D3DTSS_ALPHAARG1, D3DTA_DIFFUSE      );
-    g_pd3dDevice->SetTextureStageState( 1, D3DTSS_ALPHAOP,   D3DTOP_DISABLE     );
-
-    g_pd3dDevice->SetRenderState( D3DRS_STENCILENABLE,  TRUE );
-    g_pd3dDevice->SetRenderState( D3DRS_STENCILFUNC,    D3DCMP_ALWAYS );
-    g_pd3dDevice->SetRenderState( D3DRS_STENCILMASK,    0xFFFFFFFF );
-    g_pd3dDevice->SetRenderState( D3DRS_STENCILFAIL,    D3DSTENCILOP_KEEP );
-    g_pd3dDevice->SetRenderState( D3DRS_STENCILZFAIL,   D3DSTENCILOP_KEEP );
-    g_pd3dDevice->SetRenderState( D3DRS_STENCILPASS,    D3DSTENCILOP_INCR );
-
-    g_pd3dDevice->SetRenderState( D3DRS_COLORWRITEENABLE, 0x0 );
-    g_pd3dDevice->SetRenderState( D3DRS_ZWRITEENABLE, FALSE );
-    g_pd3dDevice->SetRenderState( D3DRS_ALPHABLENDENABLE, FALSE );
-    g_pd3dDevice->SetRenderState( D3DRS_ALPHATESTENABLE, FALSE );
-    g_pd3dDevice->SetRenderState( D3DRS_SRCBLEND,         D3DBLEND_ONE );
-    g_pd3dDevice->SetRenderState( D3DRS_DESTBLEND,        D3DBLEND_ZERO );
+    //g_pd3dDevice->SetTextureStageState( 0, D3DTSS_COLOROP,   D3DTOP_SELECTARG1  );
+    //g_pd3dDevice->SetTextureStageState( 0, D3DTSS_COLORARG1, D3DTA_DIFFUSE      );
+    //g_pd3dDevice->SetTextureStageState( 1, D3DTSS_COLOROP,   D3DTOP_DISABLE     );
+    //g_pd3dDevice->SetTextureStageState( 0, D3DTSS_ALPHAOP,   D3DTOP_SELECTARG1  );
+    //g_pd3dDevice->SetTextureStageState( 0, D3DTSS_ALPHAARG1, D3DTA_DIFFUSE      );
+    //g_pd3dDevice->SetTextureStageState( 1, D3DTSS_ALPHAOP,   D3DTOP_DISABLE     );
+	//
+    //g_pd3dDevice->SetRenderState( D3DRS_STENCILENABLE,  TRUE );
+    //g_pd3dDevice->SetRenderState( D3DRS_STENCILFUNC,    D3DCMP_ALWAYS );
+    //g_pd3dDevice->SetRenderState( D3DRS_STENCILMASK,    0xFFFFFFFF );
+    //g_pd3dDevice->SetRenderState( D3DRS_STENCILFAIL,    D3DSTENCILOP_KEEP );
+    //g_pd3dDevice->SetRenderState( D3DRS_STENCILZFAIL,   D3DSTENCILOP_KEEP );
+    //g_pd3dDevice->SetRenderState( D3DRS_STENCILPASS,    D3DSTENCILOP_INCR );
+	//
+    //g_pd3dDevice->SetRenderState( D3DRS_COLORWRITEENABLE, 0x0 );
+    //g_pd3dDevice->SetRenderState( D3DRS_ZWRITEENABLE, FALSE );
+    //g_pd3dDevice->SetRenderState( D3DRS_ALPHABLENDENABLE, FALSE );
+    //g_pd3dDevice->SetRenderState( D3DRS_ALPHATESTENABLE, FALSE );
+    //g_pd3dDevice->SetRenderState( D3DRS_SRCBLEND,         D3DBLEND_ONE );
+    //g_pd3dDevice->SetRenderState( D3DRS_DESTBLEND,        D3DBLEND_ZERO );
 }
 
 void navPrepD3DForDecreStencil( void )
 {
-    g_pd3dDevice->SetTextureStageState( 0, D3DTSS_COLOROP,   D3DTOP_SELECTARG1  );
-    g_pd3dDevice->SetTextureStageState( 0, D3DTSS_COLORARG1, D3DTA_DIFFUSE      );
-    g_pd3dDevice->SetTextureStageState( 1, D3DTSS_COLOROP,   D3DTOP_DISABLE     );
-    g_pd3dDevice->SetTextureStageState( 0, D3DTSS_ALPHAOP,   D3DTOP_SELECTARG1  );
-    g_pd3dDevice->SetTextureStageState( 0, D3DTSS_ALPHAARG1, D3DTA_DIFFUSE      );
-    g_pd3dDevice->SetTextureStageState( 1, D3DTSS_ALPHAOP,   D3DTOP_DISABLE     );
-
-    g_pd3dDevice->SetRenderState( D3DRS_STENCILENABLE,  TRUE );
-    g_pd3dDevice->SetRenderState( D3DRS_STENCILFUNC,    D3DCMP_ALWAYS );
-    g_pd3dDevice->SetRenderState( D3DRS_STENCILMASK,    0xFFFFFFFF );
-    g_pd3dDevice->SetRenderState( D3DRS_STENCILFAIL,    D3DSTENCILOP_KEEP );
-    g_pd3dDevice->SetRenderState( D3DRS_STENCILZFAIL,   D3DSTENCILOP_KEEP );
-    g_pd3dDevice->SetRenderState( D3DRS_STENCILPASS,    D3DSTENCILOP_DECR );
-
-    g_pd3dDevice->SetRenderState( D3DRS_COLORWRITEENABLE, 0x0 );
-    g_pd3dDevice->SetRenderState( D3DRS_ZWRITEENABLE, FALSE );
-    g_pd3dDevice->SetRenderState( D3DRS_ALPHABLENDENABLE, FALSE );
-    g_pd3dDevice->SetRenderState( D3DRS_ALPHATESTENABLE, FALSE );
-    g_pd3dDevice->SetRenderState( D3DRS_SRCBLEND,         D3DBLEND_ONE );
-    g_pd3dDevice->SetRenderState( D3DRS_DESTBLEND,        D3DBLEND_ZERO );
+    //g_pd3dDevice->SetTextureStageState( 0, D3DTSS_COLOROP,   D3DTOP_SELECTARG1  );
+    //g_pd3dDevice->SetTextureStageState( 0, D3DTSS_COLORARG1, D3DTA_DIFFUSE      );
+    //g_pd3dDevice->SetTextureStageState( 1, D3DTSS_COLOROP,   D3DTOP_DISABLE     );
+    //g_pd3dDevice->SetTextureStageState( 0, D3DTSS_ALPHAOP,   D3DTOP_SELECTARG1  );
+    //g_pd3dDevice->SetTextureStageState( 0, D3DTSS_ALPHAARG1, D3DTA_DIFFUSE      );
+    //g_pd3dDevice->SetTextureStageState( 1, D3DTSS_ALPHAOP,   D3DTOP_DISABLE     );
+	//
+    //g_pd3dDevice->SetRenderState( D3DRS_STENCILENABLE,  TRUE );
+    //g_pd3dDevice->SetRenderState( D3DRS_STENCILFUNC,    D3DCMP_ALWAYS );
+    //g_pd3dDevice->SetRenderState( D3DRS_STENCILMASK,    0xFFFFFFFF );
+    //g_pd3dDevice->SetRenderState( D3DRS_STENCILFAIL,    D3DSTENCILOP_KEEP );
+    //g_pd3dDevice->SetRenderState( D3DRS_STENCILZFAIL,   D3DSTENCILOP_KEEP );
+    //g_pd3dDevice->SetRenderState( D3DRS_STENCILPASS,    D3DSTENCILOP_DECR );
+	//
+    //g_pd3dDevice->SetRenderState( D3DRS_COLORWRITEENABLE, 0x0 );
+    //g_pd3dDevice->SetRenderState( D3DRS_ZWRITEENABLE, FALSE );
+    //g_pd3dDevice->SetRenderState( D3DRS_ALPHABLENDENABLE, FALSE );
+    //g_pd3dDevice->SetRenderState( D3DRS_ALPHATESTENABLE, FALSE );
+    //g_pd3dDevice->SetRenderState( D3DRS_SRCBLEND,         D3DBLEND_ONE );
+    //g_pd3dDevice->SetRenderState( D3DRS_DESTBLEND,        D3DBLEND_ZERO );
 }
 
 void navDoFinalStencil()
@@ -216,14 +216,14 @@ void navDoFinalStencil()
         draw_Color(xcolor(64,64,64,255));
 
         navPrepD3DForStencil();
-        g_pd3dDevice->SetRenderState( D3DRS_ZWRITEENABLE,       FALSE );
-        g_pd3dDevice->SetRenderState( D3DRS_COLORWRITEENABLE,   0x0F );
-        g_pd3dDevice->SetRenderState( D3DRS_STENCILFUNC,        D3DCMP_EQUAL );
-        g_pd3dDevice->SetRenderState( D3DRS_STENCILREF,         0 );
-        g_pd3dDevice->SetRenderState( D3DRS_ALPHABLENDENABLE,   TRUE );
-        g_pd3dDevice->SetRenderState( D3DRS_SRCBLEND,           D3DBLEND_ZERO );
-        g_pd3dDevice->SetRenderState( D3DRS_DESTBLEND,          D3DBLEND_SRCCOLOR );
-        g_pd3dDevice->SetRenderState( D3DRS_CULLMODE,           D3DCULL_CW );
+        //g_pd3dDevice->SetRenderState( D3DRS_ZWRITEENABLE,       FALSE );
+        //g_pd3dDevice->SetRenderState( D3DRS_COLORWRITEENABLE,   0x0F );
+        //g_pd3dDevice->SetRenderState( D3DRS_STENCILFUNC,        D3DCMP_EQUAL );
+        //g_pd3dDevice->SetRenderState( D3DRS_STENCILREF,         0 );
+        //g_pd3dDevice->SetRenderState( D3DRS_ALPHABLENDENABLE,   TRUE );
+        //g_pd3dDevice->SetRenderState( D3DRS_SRCBLEND,           D3DBLEND_ZERO );
+        //g_pd3dDevice->SetRenderState( D3DRS_DESTBLEND,          D3DBLEND_SRCCOLOR );
+        //g_pd3dDevice->SetRenderState( D3DRS_CULLMODE,           D3DCULL_CW );
 
         navRenderFullScreenQuad();
     }
@@ -234,23 +234,23 @@ void navDoFinalStencil()
         draw_Color(xcolor(45,45,45,255));
 
         navPrepD3DForStencil();
-        g_pd3dDevice->SetRenderState( D3DRS_ZWRITEENABLE,       FALSE );
-        g_pd3dDevice->SetRenderState( D3DRS_COLORWRITEENABLE,   0x0F );
-        g_pd3dDevice->SetRenderState( D3DRS_STENCILFUNC,        D3DCMP_EQUAL );
-        g_pd3dDevice->SetRenderState( D3DRS_STENCILREF,         0xFFFFFFFF );
-        g_pd3dDevice->SetRenderState( D3DRS_ALPHABLENDENABLE,   TRUE );
-        g_pd3dDevice->SetRenderState( D3DRS_SRCBLEND,           D3DBLEND_ONE );
-        g_pd3dDevice->SetRenderState( D3DRS_DESTBLEND,          D3DBLEND_ONE );
-        g_pd3dDevice->SetRenderState( D3DRS_CULLMODE,           D3DCULL_CW );
+        //g_pd3dDevice->SetRenderState( D3DRS_ZWRITEENABLE,       FALSE );
+        //g_pd3dDevice->SetRenderState( D3DRS_COLORWRITEENABLE,   0x0F );
+        //g_pd3dDevice->SetRenderState( D3DRS_STENCILFUNC,        D3DCMP_EQUAL );
+        //g_pd3dDevice->SetRenderState( D3DRS_STENCILREF,         0xFFFFFFFF );
+        //g_pd3dDevice->SetRenderState( D3DRS_ALPHABLENDENABLE,   TRUE );
+        //g_pd3dDevice->SetRenderState( D3DRS_SRCBLEND,           D3DBLEND_ONE );
+        //g_pd3dDevice->SetRenderState( D3DRS_DESTBLEND,          D3DBLEND_ONE );
+        //g_pd3dDevice->SetRenderState( D3DRS_CULLMODE,           D3DCULL_CW );
 
         navRenderFullScreenQuad();
     }
 
-    g_pd3dDevice->SetRenderState( D3DRS_STENCILENABLE,  FALSE );
-    g_pd3dDevice->SetRenderState( D3DRS_ZWRITEENABLE, TRUE );
-    g_pd3dDevice->SetRenderState( D3DRS_CULLMODE, D3DCULL_CW );
-    g_pd3dDevice->SetRenderState( D3DRS_ALPHABLENDENABLE, FALSE );
-    g_pd3dDevice->SetRenderState( D3DRS_COLORWRITEENABLE, 0x0F );
+    //g_pd3dDevice->SetRenderState( D3DRS_STENCILENABLE,  FALSE );
+    //g_pd3dDevice->SetRenderState( D3DRS_ZWRITEENABLE, TRUE );
+    //g_pd3dDevice->SetRenderState( D3DRS_CULLMODE, D3DCULL_CW );
+    //g_pd3dDevice->SetRenderState( D3DRS_ALPHABLENDENABLE, FALSE );
+    //g_pd3dDevice->SetRenderState( D3DRS_COLORWRITEENABLE, 0x0F );
 }
 
 
@@ -269,7 +269,7 @@ void navRenderFrustum( const vector3* VertexList, xbool bInside )
         draw_Color(xcolor(64,64,64,0));
         navPrepD3DForIncreStencil();
 //        g_pd3dDevice->SetRenderState( D3DRS_STENCILREF,     0x00000001 );
-        g_pd3dDevice->SetRenderState( D3DRS_CULLMODE, D3DCULL_CW );
+        //g_pd3dDevice->SetRenderState( D3DRS_CULLMODE, D3DCULL_CW );
         draw_Verts( VertexList, 8 );
         draw_Execute( IndexList, sizeof(IndexList)/sizeof(s16) );
         draw_End();
@@ -281,7 +281,7 @@ void navRenderFrustum( const vector3* VertexList, xbool bInside )
         draw_Color(xcolor(0,0,0,0));
         navPrepD3DForDecreStencil();
 //        g_pd3dDevice->SetRenderState( D3DRS_STENCILREF,     0xFFFFFFFF );
-        g_pd3dDevice->SetRenderState( D3DRS_CULLMODE, D3DCULL_CCW );
+        //g_pd3dDevice->SetRenderState( D3DRS_CULLMODE, D3DCULL_CCW );
         draw_Verts( VertexList, 8 );
         draw_Execute( IndexList, sizeof(IndexList)/sizeof(s16) );
         draw_End();
@@ -333,8 +333,8 @@ void nav_map::RenderConnectionsBright()
             draw_Begin( DRAW_TRIANGLES );
             draw_Color(xcolor(64,64,64,0));
             navPrepD3DForStencil();
-            g_pd3dDevice->SetRenderState( D3DRS_STENCILREF,     0x0 );
-            g_pd3dDevice->SetRenderState( D3DRS_CULLMODE, D3DCULL_CW );
+            //g_pd3dDevice->SetRenderState( D3DRS_STENCILREF,     0x0 );
+            //g_pd3dDevice->SetRenderState( D3DRS_CULLMODE, D3DCULL_CW );
             navRenderFullScreenQuad();
         }
 

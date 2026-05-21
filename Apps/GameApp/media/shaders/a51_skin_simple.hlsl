@@ -12,18 +12,42 @@
 //  GEOMETRY RESOURCES
 //==============================================================================
 
-#define GEOM_INPUT_TYPE GEOM_INPUT_SKIN
-#include "common/vertexinput_geom.hlsl"
+#define GEOM_USE_SKIN_INSTANCE_DATA 1
+#include "common/frame_constants.hlsl"
+#include "common/lighting_constants.hlsl"
+#include "common/proj_buffers.hlsl"
+#include "common/shadow_buffers.hlsl"
+#include "common/skin_instance_buffers.hlsl"
 
-#include "common/geom_buffers.hlsl"
-#include "common/skin_bones.hlsl"
+//------------------------------------------------------------------------------
 
-#include "common/pixelinput_geom.hlsl"
+struct VS_INPUT
+{
+    float4 PosIndex  : POSITION;
+    float4 NormIndex : NORMAL;
+    float4 UVWeights : TEXCOORD0;
+    uint   InstanceID : SV_InstanceID;
+};
+
+//------------------------------------------------------------------------------
+
+struct GEOM_PIXEL_INPUT
+{
+    float4 Pos         : SV_POSITION;
+    float2 UV          : TEXCOORD0;
+    float3 WorldPos    : TEXCOORD1;
+    float3 Normal      : TEXCOORD2;
+    float3 ViewVector  : TEXCOORD3;
+    float3 ViewNormal  : TEXCOORD4;
+    nointerpolation uint InstanceID : TEXCOORD5;
+};
+
+//------------------------------------------------------------------------------
+
 #include "common/pixel_structs.hlsl"
-
-#define GEOM_USE_SKIN_LIGHTING
 #include "common/geom_textures.hlsl"
 #include "common/geom_pixel_shared.hlsl"
+#include "common/geom_local_shadow_maps.hlsl"
 
 //==============================================================================
 //  VERTEX SHADER
@@ -33,50 +57,33 @@ GEOM_PIXEL_INPUT VSMain(VS_INPUT input)
 {
     GEOM_PIXEL_INPUT output;
 
-    // Extract bone indices and weights (stub)
-    //int   index1  = 0;
-    //int   index2  = 0;
-    //float weight1 = 1.0;
-    //float weight2 = 0.0;
-
-    // Extract bone indices and weights
-    int   index1  = (int)input.PosIndex.w;
-    int   index2  = (int)input.NormIndex.w;
+    uint  index1  = (uint)input.PosIndex.w;
+    uint  index2  = (uint)input.NormIndex.w;
     float weight1 = input.UVWeights.z;
     float weight2 = input.UVWeights.w;
 
-    // Blend positions using bone matrices
-    float3 pos1 = mul(Bones[index1].L2W, float4(input.PosIndex.xyz, 1.0)).xyz;
-    float3 pos2 = mul(Bones[index2].L2W, float4(input.PosIndex.xyz, 1.0)).xyz;
+    float4x4 bone1 = SkinGetBoneL2W( input.InstanceID, index1 );
+    float4x4 bone2 = SkinGetBoneL2W( input.InstanceID, index2 );
+
+    float3 pos1 = mul( bone1, float4( input.PosIndex.xyz, 1.0f ) ).xyz;
+    float3 pos2 = mul( bone2, float4( input.PosIndex.xyz, 1.0f ) ).xyz;
     float3 skinnedPos = pos1 * weight1 + pos2 * weight2;
 
-    // Blend normals using bone matrices
-    float3 norm1 = mul((float3x3)Bones[index1].L2W, input.NormIndex.xyz);
-    float3 norm2 = mul((float3x3)Bones[index2].L2W, input.NormIndex.xyz);
-    float3 skinnedNorm = normalize(norm1 * weight1 + norm2 * weight2);
+    float3 norm1 = mul( (float3x3)bone1, input.NormIndex.xyz );
+    float3 norm2 = mul( (float3x3)bone2, input.NormIndex.xyz );
+    float3 skinnedNorm = normalize( norm1 * weight1 + norm2 * weight2 );
 
-    // Transform position through matrices
-    float4 worldPos = float4(skinnedPos, 1.0);
-    float4 viewPos  = mul(View, worldPos);
-    output.Pos      = mul(Projection, viewPos);
+    float4 worldPos = float4( skinnedPos, 1.0f );
+    float4 viewPos  = mul( View, worldPos );
+    output.Pos      = mul( Projection, viewPos );
 
-    // Pass through vertex attributes
-    float3 viewNormal  = normalize(mul((float3x3)View, skinnedNorm));
-    output.WorldPos    = worldPos.xyz;
-    output.Normal      = skinnedNorm;
-    output.ViewNormal  = viewNormal;
-
-    float3 viewVector = worldPos.xyz - CameraPosition.xyz;
-    output.ViewVector = viewVector;
-
-    float2 depthParams = MaterialParams.zw;
-    float nearZ = depthParams.x;
-    float farZ  = depthParams.y;
-    float invRange = rcp(max(farZ - nearZ, 1e-5f));
-    float linearDepth = (viewPos.z - nearZ) * invRange;
-    output.LinearDepth = saturate(linearDepth);
-    float2 uvAnimOffset = UVAnim.xy;
-    output.UV          = input.UVWeights.xy + uvAnimOffset;
+    float3 viewNormal = normalize( mul( (float3x3)View, skinnedNorm ) );
+    output.WorldPos   = worldPos.xyz;
+    output.Normal     = skinnedNorm;
+    output.ViewNormal = viewNormal;
+    output.ViewVector = worldPos.xyz - CameraPosition.xyz;
+    output.UV         = input.UVWeights.xy + UVAnim.xy;
+    output.InstanceID = input.InstanceID;
 
     return output;
 }

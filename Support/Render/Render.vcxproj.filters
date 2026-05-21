@@ -17,7 +17,7 @@
     <Filter Include="PC\PostMgr">
       <UniqueIdentifier>{ab60e8ec-bda8-4643-a675-fb58a517d75e}</UniqueIdentifier>
     </Filter>
-    <Filter Include="PC\MaterialMgr">
+    <Filter Include="PC\ShaderMgr">
       <UniqueIdentifier>{51aa40fc-fd6e-4c3c-a23f-e2f87e33790d}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
@@ -37,17 +37,24 @@
     <ClCompile Include="PC\GBufferMgr.cpp">
       <Filter>PC</Filter>
     </ClCompile>
+    <ClCompile Include="PC\ShadowMgr.cpp">
+      <Filter>PC</Filter>
+    </ClCompile>
     <ClCompile Include="CollisionVolume.cpp" />
     <ClCompile Include="geom.cpp" />
     <ClCompile Include="LightMgr.cpp" />
     <ClCompile Include="Material.cpp" />
     <ClCompile Include="MaterialArray.cpp" />
     <ClCompile Include="ProjTextureMgr.cpp" />
+    <ClCompile Include="ShadowMapMgr.cpp" />
     <ClCompile Include="Render.cpp" />
     <ClCompile Include="RigidGeom.cpp" />
     <ClCompile Include="SkinGeom.cpp" />
     <ClCompile Include="Texture.cpp" />
     <ClCompile Include="PC\PostMgr\PostMgr_Filters.cpp">
+      <Filter>PC\PostMgr</Filter>
+    </ClCompile>
+    <ClCompile Include="PC\PostMgr\PostMgr_Fog.cpp">
       <Filter>PC\PostMgr</Filter>
     </ClCompile>
     <ClCompile Include="PC\PostMgr\PostMgr_Glow.cpp">
@@ -56,17 +63,26 @@
     <ClCompile Include="PC\PostMgr\PostMgr.cpp">
       <Filter>PC\PostMgr</Filter>
     </ClCompile>
-    <ClCompile Include="PC\MaterialMgr\MaterialMgr_ProjTex.cpp">
-      <Filter>PC\MaterialMgr</Filter>
+    <ClCompile Include="PC\GeomMgr\GeomMgr.cpp">
+      <Filter>PC</Filter>
     </ClCompile>
-    <ClCompile Include="PC\MaterialMgr\MaterialMgr_Rigid.cpp">
-      <Filter>PC\MaterialMgr</Filter>
+    <ClCompile Include="PC\GeomMgr\GeomMgr_ProjTex.cpp">
+      <Filter>PC</Filter>
     </ClCompile>
-    <ClCompile Include="PC\MaterialMgr\MaterialMgr_Skin.cpp">
-      <Filter>PC\MaterialMgr</Filter>
+    <ClCompile Include="PC\GeomMgr\GeomMgr_ShadowMaps.cpp">
+      <Filter>PC</Filter>
     </ClCompile>
-    <ClCompile Include="PC\MaterialMgr\MaterialMgr.cpp">
-      <Filter>PC\MaterialMgr</Filter>
+    <ClCompile Include="PC\GeomMgr\GeomMgr_Rigid.cpp">
+      <Filter>PC</Filter>
+    </ClCompile>
+    <ClCompile Include="PC\GeomMgr\GeomMgr_Skin.cpp">
+      <Filter>PC</Filter>
+    </ClCompile>
+    <ClCompile Include="PC\PrimitiveMgr\PrimitiveMgr.cpp">
+      <Filter>PC</Filter>
+    </ClCompile>
+    <ClCompile Include="PC\RuntimeVertexMgr.cpp">
+      <Filter>PC</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -82,6 +98,9 @@
     <ClInclude Include="PC\GBufferMgr.hpp">
       <Filter>PC</Filter>
     </ClInclude>
+    <ClInclude Include="PC\ShadowMgr.hpp">
+      <Filter>PC</Filter>
+    </ClInclude>
     <ClInclude Include="Texture.hpp" />
     <ClInclude Include="CollisionVolume.hpp" />
     <ClInclude Include="geom.hpp" />
@@ -91,14 +110,21 @@
     <ClInclude Include="MaterialArray.hpp" />
     <ClInclude Include="platform_Render.hpp" />
     <ClInclude Include="ProjTextureMgr.hpp" />
+    <ClInclude Include="ShadowMapMgr.hpp" />
     <ClInclude Include="Render.hpp" />
     <ClInclude Include="RigidGeom.hpp" />
     <ClInclude Include="SkinGeom.hpp" />
     <ClInclude Include="PC\PostMgr\PostMgr.hpp">
       <Filter>PC\PostMgr</Filter>
     </ClInclude>
-    <ClInclude Include="PC\MaterialMgr\MaterialMgr.hpp">
-      <Filter>PC\MaterialMgr</Filter>
+    <ClInclude Include="PC\GeomMgr\GeomMgr.hpp">
+      <Filter>PC</Filter>
+    </ClInclude>
+    <ClInclude Include="PC\PrimitiveMgr\PrimitiveMgr.hpp">
+      <Filter>PC</Filter>
+    </ClInclude>
+    <ClInclude Include="PC\RuntimeVertexMgr.hpp">
+      <Filter>PC</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

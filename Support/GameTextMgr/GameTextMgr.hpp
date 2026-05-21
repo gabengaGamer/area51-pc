@@ -30,6 +30,7 @@ public:
                               xcolor Color = XCOLOR_WHITE );
 
     void    Init          ( void );
+    void    Reset         ( void );
     void    Update        ( f32 DeltaTime );
     void    Kill          ( void );
     

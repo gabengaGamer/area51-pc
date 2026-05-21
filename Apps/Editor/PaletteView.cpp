@@ -91,7 +91,8 @@ int CPaletteView::OnCreate(LPCREATESTRUCT lpCreateStruct)
 
 CSize CPaletteView::SizeToolBar(int cx, int cy) 
 {
-	CSize size = m_wndToolBar.CalcLayout(LM_HORZ| LM_COMMIT,cx);
+    UNREFERENCED_PARAMETER(cy);
+	CSize size = m_wndToolBar.CalcDynamicLayout(cx, LM_HORZ | LM_COMMIT);
 	m_wndToolBar.MoveWindow(0,0,cx,size.cy);
     return size;
 }

@@ -1,35 +1,26 @@
+//=========================================================================
+//  
+//  RigidGeom.cpp  
+//
+//=========================================================================
+
+//=========================================================================
+//  Includes
+//=========================================================================
 
 #include "RigidGeom.hpp"
 
-#ifdef TARGET_XBOX
-#include "Entropy/XBox/xbox_private.hpp"
-
-void xbox_PreRegister( const char*,rigid_geom* pGeom );
-#endif
-
 //=========================================================================
 
-rigid_geom::rigid_geom( void ) :
-    geom()
+rigid_geom::rigid_geom( void ) : geom()
 {
 }
 
 //=========================================================================
 
-rigid_geom::rigid_geom( fileio& File ) 
-:   geom( File ), 
-    m_Collision( File )
+rigid_geom::rigid_geom( fileio& File ) : geom( File ), m_Collision( File )
 {
     (void)File;
-
-    // Must resolve here because dynamic data is deleted upon exiting
-    // this function. Note that we will register it here, but unregister
-    // from the fileio because rigid_geom's don't have destructors. (PS2
-    // and PC optimize virtual destructors differently, making the struct
-    // size change.)
-    #ifdef TARGET_XBOX
-    xbox_PreRegister( "Rigid geom",this );
-    #endif
 }
 
 //=========================================================================
@@ -96,7 +87,7 @@ void rigid_geom::dlist_pc::FileIO( fileio& File )
     File.Static( nVerts );
     File.Static( pVert, nVerts );
     File.Static( iBone );
-    File.Static( iColor ); // GS: New variable in V41 PC. 
+    File.Static( iColor );
 }
 
 //=========================================================================
@@ -135,5 +126,3 @@ xbool rigid_geom::GetGeoTri( s32 Key, vector3& V0, vector3& V1, vector3& V2 ) co
     return RigidGeom_GetTriangle( this, Key, V0, V1, V2 );
 
 }
-
-//=========================================================================

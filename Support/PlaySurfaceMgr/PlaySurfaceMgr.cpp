@@ -409,6 +409,7 @@ void playsurface_mgr::RebuildList( const xarray<guid>& lstGuidsToExport,platform
         }
 
         static const u32 AttrBits = object::ATTR_DISABLE_PROJ_SHADOWS     |
+                                    object::ATTR_CAST_SHADOWS            |
                                     object::ATTR_RECEIVE_SHADOWS          |
                                     object::ATTR_COLLIDABLE               |
                                     object::ATTR_BLOCKS_PLAYER            |
@@ -1395,8 +1396,6 @@ void playsurface_mgr::RenderPlaySurfaces( void )
     }
 #endif // X_EDITOR
 }
-
-//=========================================================================
 
 #ifndef X_RETAIL
 void playsurface_mgr::RenderPlaySurfacesCollision( xbool bRenderHi )

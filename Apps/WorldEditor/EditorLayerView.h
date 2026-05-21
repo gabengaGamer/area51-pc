@@ -181,7 +181,7 @@ protected:
 
 
 private:
-    CXTTreeCtrl     m_tcLayer;
+    CTreeCtrl       m_tcLayer;
 	CImageList	    m_imageList;
     xharray<guid>   m_lstObjectGuidStorage;
     xharray<guid>   m_lstBlueprintGuidStorage;

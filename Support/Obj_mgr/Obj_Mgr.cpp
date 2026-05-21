@@ -7,6 +7,7 @@
 //==============================================================================
 //  INCLUDES
 //==============================================================================
+
 #include "Obj_Mgr\Obj_Mgr.hpp"
 #include "x_stdio.hpp"
 #include "Entropy.hpp"
@@ -34,6 +35,10 @@
 #include "PhysicsMgr\PhysicsMgr.hpp"
 #include "OccluderMgr\OccluderMgr.hpp"
 
+#ifdef TARGET_PC
+#include "Render\ShadowMapMgr.hpp"
+#endif
+
 #ifdef X_EDITOR
 extern xbool g_EditorShowNameFlag;
 #endif
@@ -50,10 +55,6 @@ extern xbool g_EditorShowNameFlag;
 #define LOGGING_ENABLED 0
 #endif
 
-#ifdef TARGET_XBOX
-extern xbool g_bPipelineIn3D;
-#endif
-
 //==============================================================================
 //  Special structures for sorting transparent objects by distance
 //==============================================================================
@@ -67,6 +68,7 @@ struct special_render_obj
 //==============================================================================
 //  Global declarations
 //==============================================================================
+
 obj_mgr                    g_ObjMgr;   
 xarray<special_render_obj> g_SpecialRenderObj;
 
@@ -75,8 +77,6 @@ object_desc* object_desc::s_pHead = NULL;
 
 //==============================================================================
 //  OBJECT MANAGER FUNCTIONS
-//==============================================================================
-
 //==============================================================================
 
 obj_mgr::obj_mgr( void ) :
@@ -88,14 +88,6 @@ obj_mgr::obj_mgr( void ) :
     AlreadyCreated      = TRUE;
     m_GameTime          = 0;
     m_pProxyPlaySurface = NULL;
-
-    m_ShadowProjectors.SetCapacity(64/*MAX_VISIBLE_SHADOW_PROJECTORS*/);
-    m_ShadowCasters.SetCapacity(64);
-    m_ShadowReceivers.SetCapacity(256);
-    m_ShadowProjectors.SetLocked(TRUE);
-    m_ShadowCasters.SetLocked(TRUE);
-    m_ShadowReceivers.SetLocked(TRUE);
-    m_bRenderShadows = FALSE;
 
     m_nLogicLoops = 0;
 
@@ -118,11 +110,6 @@ obj_mgr::~obj_mgr( void )
     // Assert that there are no objects left or not needed because it's a singleton
 }
 
-
-//==============================================================================
-//
-// Destroy all objects
-//
 //==============================================================================
 
 void obj_mgr::Kill( void )
@@ -725,10 +712,6 @@ void obj_mgr::DestroyObjectEx( guid Guid, xbool bRemoveNow )
 }
 
 //==============================================================================
-//
-//  Clears all objects from the list and destroys them.
-//
-//==============================================================================
 
 void obj_mgr::Clear( void )
 {
@@ -929,8 +912,6 @@ void obj_mgr::ResetSearchResult( void )
 }
 
 //==============================================================================
-// QUERIES
-//==============================================================================
 
 //check LOS from point to point
 xbool obj_mgr::HasLOS( guid Object0, const vector3& P0, guid Object1, const vector3& P1 )
@@ -964,8 +945,6 @@ xbool obj_mgr::HasLOS( guid Object0, const vector3& P0, guid Object1, const vect
     return (nCollision == 0);    
 }
 
-//==============================================================================
-// CheckCollisions
 //==============================================================================
 
 struct select_func_info
@@ -1016,11 +995,6 @@ xbool SelectFunc( spatial_cell* pCell, void* pPrivateData )
     return TRUE;
 }
 
-//==============================================================================
-//  FIXME:  SrcSet is not currently used.  Objects should e selected from 
-//          the resulting list from this object.  All objects should be used
-//          if -1 is used for the srcset since that is the number that will
-//          be returned by the GetFirstSearchResult call
 //==============================================================================
 
 void obj_mgr::SelectBBox( u32 Attribute, const bbox& BBox, object::type Type, u32 NotTheseAttributes )
@@ -1116,7 +1090,6 @@ void obj_mgr::SelectRay( u32 Attribute, const vector3& RayStart, const vector3& 
 {
     CONTEXT( "obj_mgr::SelectBBox" );
 
-
     //
     // update the sequence
     //
@@ -1202,11 +1175,6 @@ void obj_mgr::SelectRay( u32 Attribute, const vector3& RayStart, const vector3& 
 
 }
 
-//==============================================================================
-//  FIXME:  SrcSet is not currently used.  Objects should e selected from 
-//          the resulting list from this object.  All objects should be used
-//          if -1 is used for the srcset since that is the number that will
-//          be returned by the GetFirstSearchResult call
 //==============================================================================
 
 void obj_mgr::SelectVolume( u32 Attribute, const plane* pPlane, s32 NPlanes, xbool Fast, object::type Type  )
@@ -1411,10 +1379,6 @@ void obj_mgr::AddToSpatialDBase(guid Guid)
 }
 
 //==============================================================================
-//
-//  Removes the object in the slot from the Spatial database
-//
-//==============================================================================
 
 void obj_mgr::RemoveFromSpatialDBase( slot_id SlotID )
 {
@@ -1457,10 +1421,6 @@ void obj_mgr::RemoveFromSpatialDBase( slot_id SlotID )
     }
 }
 
-//==============================================================================
-//
-//  Removes the object in the slot from the Spatial database
-//
 //==============================================================================
 
 void obj_mgr::AddToSpatialDBase( slot_id SlotID )
@@ -1734,7 +1694,6 @@ s32 obj_mgr::IsBoxInView(
 //==============================================================================
 
 #ifdef X_EDITOR
-
 void obj_mgr::RenderIcons( void )
 {
     if( eng_Begin( "Render Icons" ) )
@@ -1840,7 +1799,6 @@ void obj_mgr::RenderIcons( void )
         eng_End();
     }
 }
-
 #endif
 
 //==============================================================================
@@ -2117,69 +2075,12 @@ void obj_mgr::RenderNormalObjects( void )
             // Done rendering this type
             m_ObjectType[type].pDesc->OnEndRender();
         }
-
-        // if we've just finished adding all the lights, do some collection
-        if ( type == object::TYPE_DYNAMIC_LIGHT )
-            g_LightMgr.BeginLightCollection();
     }
 }
-
-//==============================================================================
-
-#ifdef TARGET_XBOX
-
-void obj_mgr::RenderClothObjects( object::type type )
-{
-    CONTEXT( "obj_mgr::RenderClothObjects" );
-
-    // If a type is renderable then render
-    if( m_ObjectType[type].pDesc && m_ObjectType[type].pDesc->OnBeginRender() ) 
-    {
-#ifndef X_RETAIL
-        // turn on clipping if the screen shot is active
-        if ( eng_ScreenShotActive() )
-        {
-            slot_id ID = m_ObjectType[type].FirstVis;
-            for(; ID != SLOT_NULL; ID = GetNextVis( ID ) )
-            {
-                object* pObject  = GetObjectBySlot( ID );
-                pObject->m_FlagBits = pObject->GetFlagBits() & ~object::FLAG_CHECK_PLANES;
-                pObject->SetFlagBits( pObject->GetFlagBits() | (1<<object::FLAG_CHECK_PLANES_SHIFT) );
-            }
-        }
-#endif
-
-        // Go through all the objects in the given type
-        slot_id ID = m_ObjectType[type].FirstVis;
-        for(; ID != SLOT_NULL; ID = GetNextVis( ID ) )
-        {
-            // Get the object
-            object* pObject = GetObjectBySlot( ID );
-
-#ifdef X_EDITOR
-            if( pObject->IsHidden() )
-                continue;
-#endif
-
-#if !defined(X_RETAIL)
-            if( m_TrapBeforeRenderGuid && (pObject->GetGuid() == m_TrapBeforeRenderGuid))
-                BREAK;
-#endif
-
-            pObject->OnRenderCloth();
-        }
-
-        // Done rendering this type
-        m_ObjectType[type].pDesc->OnEndRender();
-    }
-}
-
-#endif  //#ifdef TARGET_XBOX
 
 //==============================================================================
 
 #if !defined( X_RETAIL )
-
 void obj_mgr::DisplayLocations( void )
 {
     for( s32 type=object::TYPE_TRIGGER; type<(s32)object::TYPE_END_OF_LIST; type++ )
@@ -2204,11 +2105,8 @@ void obj_mgr::DisplayLocations( void )
     }
 }
 
-#endif // !defined( X_RETAIL )
-
 //==============================================================================
 
-#ifndef X_RETAIL
 void obj_mgr::RenderCollision( void )
 {
     CONTEXT( "obj_mgr::RenderCollision" );
@@ -2266,26 +2164,9 @@ s32 TransparentSortFn( const void* pItem1, const void* pItem2 )
 }
 
 //==============================================================================
-// TO DO BRYON: - Put these lines in the correct place
-
-void RenderClothObject( void )
-{
-#ifdef TARGET_XBOX
-    g_ObjMgr.RenderClothObjects( object::TYPE_CLOTH_OBJECT );
-    g_ObjMgr.RenderClothObjects( object::TYPE_FLAG );
-#endif
-}
-
-//==============================================================================
 
 void obj_mgr::RenderSpecialObjects( void )
 {
-#ifdef TARGET_XBOX
-    // For performance reasons the PIP has no special objects on Xbox
-    extern xbool xbox_IsPipTarget( void );
-    if( xbox_IsPipTarget() )
-        return;
-#endif
 
 #if defined(TARGET_PC)
     if( g_RenderContext.m_bIsPipRender )
@@ -2425,325 +2306,64 @@ void obj_mgr::Render2dObjects( void )
 
 //==============================================================================
 
-void obj_mgr::CollectShadowCasters( void )
+void obj_mgr::CollectVisibleLights( void )
 {
-    // TODO: These hard-coded numbers are really nasty
-    // and should be bounding-box based at the very least,
-    // but...since the directional is only a temporary thing
-    // and will be replaced by point shadow sources
-    // eventually, we won't worry about it
-	
-    static const radian3 kLightRot( R_60, -R_15, R_0 );
-    static const f32     kLightWidth  = 300.0f;
-    static const f32     kLightHeight = 300.0f;
-    static const f32     kLightNear   = 10.0f;
-    static const f32     kLightFar    = 300.0f;
-    static const f32     kLightOffset = 200.0f;
-
-    //==============================================================================
-    // collect shadow casters
-    //==============================================================================
-    for ( s32 ObjType = 0; ObjType != (s32)object::TYPE_END_OF_LIST; ObjType++ )
+    for( s32 Type = (s32)object::TYPE_LIGHT; Type <= (s32)object::TYPE_DYNAMIC_LIGHT; Type++ )
     {
-        if ( m_ObjectType[ObjType].pDesc &&
-             (m_ObjectType[ObjType].pDesc->GetAttrBits() & object::ATTR_CAST_SHADOWS) )
+        if( !m_ObjectType[Type].pDesc )
+            continue;
+
+        slot_id ID = m_ObjectType[Type].FirstVis;
+        for( ; ID != SLOT_NULL; ID = GetNextVis( ID ) )
         {
-            // go through all the object in the given type
-            slot_id ID = m_ObjectType[ObjType].FirstType;
-            for (; ID != SLOT_NULL; ID = GetNext(ID) )
-            {
-                if( m_ShadowProjectors.GetCount() < m_ShadowProjectors.GetCapacity() )
-                {
-                    object* pObject = GetObjectBySlot(ID);
-                    if ( !pObject )
-                    {
-                        // We should never get a null pObject
-                        ASSERT( FALSE );
-                        continue;
-                    }
+            object* pObject = GetObjectBySlot( ID );
+            ASSERT( pObject );
 
-                    // can this object cast shadows?
-                    if ( (pObject->GetAttrBits() & object::ATTR_CAST_SHADOWS) == FALSE )
-                        continue;
-
-                    // make sure it's in a visible zone
-                    if ( !g_ZoneMgr.IsBBoxVisible( pObject->GetBBox(),
-                                                   (u8)pObject->GetZone1(),
-                                                   (u8)pObject->GetZone2() ) )
-                    {
-                        continue;
-                    }
-
-                    if( IsBoxInView( pObject->GetBBox(), XBIN(111111) ) == -1 )
-                    {
-                        continue;
-                    }
-
-                #ifdef X_EDITOR
-                if ( m_ShadowCasters.GetCount() >= 64 )
-                    continue;
-                #endif // X_EDITOR
-
-                    // we have a caster
-                    shad_projector ShadProj;
-                    ShadProj.Guid = pObject->GetGuid();
-                    ShadProj.L2W.Identity();
-                    ShadProj.L2W.SetTranslation( vector3( 0.0f, 0.0f, -kLightOffset ) );
-                    ShadProj.L2W.Rotate( kLightRot );
-                    ShadProj.L2W.Translate( pObject->GetL2W().GetTranslation() );
-                    ShadProj.CastWorldBBox.Set(vector3(-kLightWidth*0.5f,-kLightHeight*0.5f, kLightNear),
-                                               vector3( kLightWidth*0.5f, kLightHeight*0.5f, kLightFar ));
-                    ShadProj.CastWorldBBox.Transform(ShadProj.L2W);
-                
-                    m_ShadowProjectors.Append(ShadProj);
-                    m_ShadowCasters.Append(ShadProj);
-                }
-            }
-        }
-    }
-}
-
-//==============================================================================
-
-void obj_mgr::CompleteVisAndShadowTests( void )
-{
-    for ( s32 ObjType = 0; ObjType < (s32)object::TYPE_END_OF_LIST; ObjType++ )
-    {
-        if( m_ObjectType[ObjType].pDesc &&
-            (m_ObjectType[ObjType].pDesc->GetAttrBits() & object::ATTR_RECEIVE_SHADOWS) &&
-            m_ObjectType[ObjType].pDesc->OnBeginRender() ) 
-        {
-            // go through all the objects in the given type
-            slot_id ID = m_ObjectType[ObjType].FirstVis;
-            for (; ID != SLOT_NULL; ID = GetNextVis(ID) )
-            {
-                object* pObject = GetObjectBySlot(ID);
-                if ( !pObject )
-                {
-                    // We should never get a null pObject
-                    ASSERT( FALSE );
-                    continue;
-                }
-
-                // 2D objects dont' count
-                if( pObject->GetAttrBits() & object::ATTR_DRAW_2D )
-                    continue;
-
-                if ( pObject->GetAttrBits() & object::ATTR_RECEIVE_SHADOWS )
-                {
-                    // check it's bbox against the caster bboxes
-                    for ( s32 iProj = 0; iProj < m_ShadowCasters.GetCount(); iProj++ )
-                    {
-                        shad_projector& ShadProj = m_ShadowCasters[iProj];
-
-                        // self-shadowing not allowed
-                        if ( ShadProj.Guid == pObject->GetGuid() )
-                            continue;
-
-                        if ( ShadProj.CastWorldBBox.Intersect(pObject->GetBBox()) )
-                        {
-                            // has this guid already been added?
-                            s32 iReceiver;
-                            for ( iReceiver = 0; iReceiver < m_ShadowReceivers.GetCount(); iReceiver++ )
-                            {
-                                if ( m_ShadowReceivers[iReceiver].Guid == pObject->GetGuid() )
-                                {
-                                    break;
-                                }
-                            }
-                            if ( iReceiver == m_ShadowReceivers.GetCount() )
-                            {
-                                shad_receiver ShadReceiver;
-                                ShadReceiver.Guid = pObject->GetGuid();
-                                ShadReceiver.Mask = (1<<iProj);
-                                m_ShadowReceivers.Append( ShadReceiver );
-                            }
-                            else
-                            {
-                                m_ShadowReceivers[iReceiver].Mask |= (1<<iProj);
-                            }
-                        }
-                    }
-                }
-            }
-            
-            m_ObjectType[ObjType].pDesc->OnEndRender();
-        }
-    }
-
-    ////////////////////////////////////////////////////////////////////////////////
-    // BEGIN HACK HACK HACK HACK HACK HACK HACK HACK HACK HACK HACK HACK HACK HACK
-    // We're forcing the player to always render here, as if its bbox is partially
-    // visible. This overcomes a problem when looking up, and crouching, the player
-    // doesn't render for a couple frames when the bbox gets out of the view.
-    if( 1 )
-    {
-        player* pActivePlayer = SMP_UTIL_GetActivePlayer();
-        if( pActivePlayer )
-        {
-            // mark the player as partially in (this will also force clipping on the player)
-            pActivePlayer->m_FlagBits = pActivePlayer->GetFlagBits() & ~object::FLAG_CHECK_PLANES;
-            pActivePlayer->SetFlagBits( pActivePlayer->GetFlagBits() | (1<<object::FLAG_CHECK_PLANES_SHIFT) );
-
-            // make sure this player is in the vis list
-            xbool   ActivePlayerFound = FALSE;
-            s32     ActivePlayerSlot  = pActivePlayer->GetSlot();
-            slot_id ID                = m_ObjectType[object::TYPE_PLAYER].FirstVis;
-            for(; ID != SLOT_NULL; ID = GetNextVis(ID) )
-            {
-                if( ID == ActivePlayerSlot )
-                {
-                    ActivePlayerFound = TRUE;
-                    break;
-                }
-            }
-
-            // add the player to the vis list if necessary
-            if( !ActivePlayerFound )
-            {
-                m_ObjectSlot[ActivePlayerSlot].NextVis     = m_ObjectType[object::TYPE_PLAYER].FirstVis;
-                m_ObjectType[object::TYPE_PLAYER].FirstVis = ActivePlayerSlot;
-            }
-        }
-    }
-    // END HACK HACK HACK HACK HACK HACK HACK HACK HACK HACK HACK HACK HACK HACK    
-    ////////////////////////////////////////////////////////////////////////////////
-
-    // now check playsurfaces that may be receivers. these are a kind of special
-    // case object
-    if ( m_bRenderShadows )
-    {
-        for ( s32 iProj = 0; iProj < m_ShadowCasters.GetCount(); iProj++ )
-        {
-            shad_projector& ShadProj = m_ShadowCasters[iProj];
-            g_PlaySurfaceMgr.CollectSurfaces( ShadProj.CastWorldBBox, object::ATTR_RECEIVE_SHADOWS, 0 );
-
-            playsurface_mgr::surface* pSurface;
-            while ( (pSurface=g_PlaySurfaceMgr.GetNextSurface()) != NULL )
-            {
-                if ( ShadProj.CastWorldBBox.Intersect(pSurface->WorldBBox) )
-                {
-                    s32 InView = IsBoxInView( pSurface->WorldBBox, XBIN(111111) );
-
-#ifndef X_RETAIL
-                    // for some reason, the InView flag is messed up for large
-                    // screenshots, turn on clipping
-                    if( eng_ScreenShotActive() )
-                    {
-                        InView = 1;
-                    }
+#ifdef X_EDITOR
+            if( pObject->IsHidden() )
+                continue;
 #endif
 
-                    // It actually was outside the view. Nothing to do then.
-                    if( InView == -1 )
-                        continue;
-
-                    // make sure the play surface is in a visible zone
-                    guid PlaySurfaceGuid = g_PlaySurfaceMgr.GetPlaySurfaceGuid();
-                    u8 Zone1 = pSurface->ZoneInfo & 0xff;
-                    u8 Zone2 = ((pSurface->ZoneInfo&0xff00)>>8);
-                    xbool Zone1Visible = (Zone1 && g_ZoneMgr.IsZoneVisible( Zone1 ) );
-                    xbool Zone2Visible = (Zone2 && g_ZoneMgr.IsZoneVisible( Zone2 ) );
-                    if( !(Zone1Visible || Zone2Visible) )
-                        continue;
-
-                    // has this guid already been added?
-                    s32 iReceiver;
-                    for ( iReceiver = 0; iReceiver < m_ShadowReceivers.GetCount(); iReceiver++ )
-                    {
-                        if ( m_ShadowReceivers[iReceiver].Guid == PlaySurfaceGuid )
-                        {
-                            break;
-                        }
-                    }
-                    if ( iReceiver == m_ShadowReceivers.GetCount() )
-                    {
-                        shad_receiver ShadReceiver;
-                        ShadReceiver.Guid = PlaySurfaceGuid;
-                        ShadReceiver.Mask = (1<<iProj);
-                        m_ShadowReceivers.Append( ShadReceiver );
-                    }
-                    else
-                    {
-                        m_ShadowReceivers[iReceiver].Mask |= (1<<iProj);
-                    }
-                }
-            }
+            pObject->OnCollectLight();
         }
     }
-}
 
-//==============================================================================
-
-void obj_mgr::CreateShadowMap( void )
-{
-    // TODO: Remove this hard-coded crap.
-    // Until then, make sure it always matches up with the ones in CollectShadowCasters
-    static const radian3 kLightRot( R_60, -R_15, R_0 );
-    static const f32     kLightWidth  = 300.0f;
-    static const f32     kLightHeight = 300.0f;
-    static const f32     kLightNear   = 10.0f;
-    static const f32     kLightFar    = 300.0f;
-
-    //==============================================================================
-    // tell the renderer about the projectors
-    //==============================================================================
-    s32 i;
-    if( eng_Begin("Shadow Map") )
+    // The player owns the runtime flashlight light directly.
+    for( slot_id ID = m_ObjectType[object::TYPE_PLAYER].FirstType; ID != SLOT_NULL; ID = GetNext( ID ) )
     {
-        render::BeginShadowCreation();
-        for ( i = 0; i < m_ShadowProjectors.GetCount(); i++ )
-        {
-            object* pProj = GetObjectByGuid( m_ShadowProjectors[i].Guid );
-
-            // create the projector
-            // TODO: These hard-coded numbers are really nasty
-            // and should be bounding-box based at the very least,
-            // but...since the directional is only a temporary thing
-            // and will be replaced by point shadow sources
-            // eventually, we won't worry about it
-            render::AddDirShadowProjection( m_ShadowProjectors[i].L2W,
-                                            kLightWidth,
-                                            kLightHeight,
-                                            kLightNear,
-                                            kLightFar );
-            ASSERT( i < 64 );
-
-            // TODO: There is no need to cast projectors that have no receivers
-            pProj->OnRenderShadowCast( 1 << i );
-        }
-
-        // TODO: Remove any casters that don't actually have receivers associated with them
-
-        // add each of the receivers
-        for ( s32 iReceiver = 0; iReceiver < m_ShadowReceivers.GetCount(); iReceiver++ )
-        {
-            shad_receiver& ShadRec = m_ShadowReceivers[iReceiver];
-            object*        pObject = GetObjectByGuid( ShadRec.Guid );
-
-#ifndef X_RETAIL
-            // turn on clipping if the screen shot is active
-            if ( eng_ScreenShotActive() )
-            {
-                pObject->m_FlagBits = pObject->GetFlagBits() & ~object::FLAG_CHECK_PLANES;
-                pObject->SetFlagBits( pObject->GetFlagBits() | (1<<object::FLAG_CHECK_PLANES_SHIFT) );
-            }
-#endif
-
-            pObject->OnRenderShadowReceive( ShadRec.Mask );
-        }
-
-        render::EndShadowCreation();
-        eng_End();
+        object* pObject = GetObjectBySlot( ID );
+        ASSERT( pObject );
+        pObject->OnCollectLight();
     }
 }
 
 //==============================================================================
+
+void obj_mgr::CompleteVisibilityTests( void )
+{
+    // Keep the active player visible when the bbox briefly falls outside the
+    // frustum while looking up or crouching.
+    player* pActivePlayer = SMP_UTIL_GetActivePlayer();
+    if( !pActivePlayer )
+        return;
+
+    pActivePlayer->SetFlagBits( ( pActivePlayer->GetFlagBits() & ~object::FLAG_CHECK_PLANES ) |
+                                ( 1 << object::FLAG_CHECK_PLANES_SHIFT ) );
+
+    slot_id   ActivePlayerSlot    = pActivePlayer->GetSlot();
+    obj_slot& ActivePlayerObjSlot = m_ObjectSlot[ActivePlayerSlot];
+    if( ActivePlayerObjSlot.Sequence == m_Sequence )
+        return;
+
+    ActivePlayerObjSlot.Sequence = m_Sequence;
+    ActivePlayerObjSlot.NextVis  = m_ObjectType[object::TYPE_PLAYER].FirstVis;
+    m_ObjectType[object::TYPE_PLAYER].FirstVis = ActivePlayerSlot;
+    m_ObjectType[object::TYPE_PLAYER].nVis++;
+}
 
 void obj_mgr::Render3dPrep( xbool DoPortalWalk, const view& PortalView, u8 StartZone )
 {
-    // solves the shadow casting and general visibility, and preps the game for
-    // proper 3d rendering
+    // Prepare visibility and other per-frame state for 3D rendering.
     CONTEXT( "obj_mgr::Render3dPrep" );
 
     // Update the OccluderMgr with the latest view
@@ -2759,55 +2379,39 @@ void obj_mgr::Render3dPrep( xbool DoPortalWalk, const view& PortalView, u8 Start
         g_ZoneMgr.PortalWalk( PortalView, 0 );
     DoVisibilityTests( PortalView );
 
-#if defined(TARGET_XBOX) || defined(TARGET_PC)
-    xbool bSkipShadows = FALSE;
-#endif
+    // clear the list of dynamic and character lights so visible light objects can add them back in
+    g_LightMgr.ClearLights();
+    CollectVisibleLights();
 
-#ifdef TARGET_XBOX
-    // For performance reasons the PIP has no shadows on Xbox
-    extern xbool xbox_IsPipTarget( void );
-    bSkipShadows = xbox_IsPipTarget();
-#elif defined(TARGET_PC)
-    bSkipShadows = ( g_RenderContext.m_bIsPipRender != 0 );
-#endif
-
-#if defined(TARGET_XBOX) || defined(TARGET_PC)
-    if( !bSkipShadows )
-#endif
+#ifdef TARGET_PC
+    if( g_RenderContext.m_bIsPipRender == 0 )
     {
-    // clear out our projector, caster, and receivers lists. they need to be
-    // recalculated at every frame
-    m_ShadowProjectors.Clear();
-    m_ShadowReceivers.Clear();
-    m_ShadowCasters.Clear();
-
-    // collect any shadow casters
-    if ( m_bRenderShadows )
-        CollectShadowCasters();
-    // finish up visibility tests and solve shadow receivers
-    CompleteVisAndShadowTests();
-    // finally, create the shadow map
-    if ( m_bRenderShadows )
-        CreateShadowMap();
-#if defined(TARGET_XBOX) || defined(TARGET_PC)
+        CompleteVisibilityTests();
+        g_ShadowMapMgr.CreateShadowMap( NULL, 0 );
     }
+#else
+    CompleteVisibilityTests();
 #endif
+
     // Clear the list of special render objects;
     g_SpecialRenderObj.Delete(0, g_SpecialRenderObj.GetCount() );
 
-    // clear the list of character lights...the rendering process will add them back in
-    g_LightMgr.ClearLights();
-
     // set up the environment map
     cubemap::handle Handle;
-    //#### TODO: Fix me to come from the proper zone
-//    player*         pActivePlayer = SMP_UTIL_GetActivePlayer();
-//    if ( pActivePlayer )
-//        Handle.SetName( g_ZoneMgr.GetZoneEnvMap( pActivePlayer->GetPlayerViewZone() ) );
-//    else
+    Handle.SetName( PRELOAD_FILE("DefaultEnvMap.envmap") );
+
+    if( DoPortalWalk && (StartZone < g_ZoneMgr.GetZoneCount()) )
     {
-        Handle.SetName( PRELOAD_FILE("DefaultEnvMap.envmap") );
+        const char* pEnvMap = g_ZoneMgr.GetZoneEnvMap( StartZone );
+        if( pEnvMap && pEnvMap[0] )
+            Handle.SetName( pEnvMap );
     }
+
+//#define cubemapverb
+#ifdef cubemapverb
+    x_DebugMsg( "EnvMap: Zone=%d Name=[%s]\n", StartZone, Handle.GetName() );
+#endif	
+
     render::SetAreaCubeMap( Handle );
 }
 
@@ -2819,15 +2423,14 @@ void obj_mgr::Render3dObjects( xbool bDoPortalWalk, const view& PortalView, u8 S
 {
     CONTEXT( "obj_mgr::Render3dObjects" );
     LOG_STAT( k_stats_HighLevelRender );
-#ifdef TARGET_XBOX
-    g_bPipelineIn3D = true;
-#endif
+
 	if( g_ZoneMgr.GetPortalCount() == 0 ) bDoPortalWalk = FALSE;
     Render3dPrep( bDoPortalWalk, PortalView, StartZone );
     {
         // Handle the normal rendering
         if( eng_Begin( "3d Objects" ) )
         {
+            g_LightMgr.BeginLightCollection();
             render::BeginNormalRender();
             RenderNormalObjects();
 
@@ -2865,32 +2468,21 @@ void obj_mgr::Render3dObjects( xbool bDoPortalWalk, const view& PortalView, u8 S
 #ifndef X_RETAIL
             RenderCollision();
 #endif
-
             {
                 LOG_STAT( k_stats_ObjectRender );
                 render::EndNormalRender();
             }
 
-// TO DO BRYON: - Put these lines in the correct place
-//#ifdef TARGET_XBOX            
-//          RenderClothObjects( object::TYPE_CLOTH_OBJECT );
-//          RenderClothObjects( object::TYPE_FLAG );
-//#endif
 #ifdef X_EDITOR
             g_NavMap.RenderConnectionsBright();
 #endif
             eng_End();
         }
     }
-
-
     {
         LOG_STAT( k_stats_OtherRender );
         RenderSpecialObjects();
     }
-#ifdef TARGET_XBOX
-    g_bPipelineIn3D = false;
-#endif
 }
 
 //==============================================================================
@@ -2907,34 +2499,7 @@ void obj_mgr::Render( xbool bDoPortalWalk, const view& PortalView, u8 StartZone 
     render::GetStats().Begin();
     #endif
 
-    ///////////////////////////////////////////////////////////////////////////
-
-    #ifdef TARGET_XBOX
-    {
-        xbool bTargetSet = FALSE;
-        // Render pip view into texture before main scene is drawn
-        SlotID = m_ObjectType[object::TYPE_PIP].FirstType;
-        while( SlotID != SLOT_NULL )
-        {
-            // Get pip and render
-            pip* pPip = (pip*)g_ObjMgr.GetObjectBySlot( SlotID );
-            ASSERT(pPip);
-            if( pPip->GetState( )==pip::STATE_ACTIVE )
-            {
-                if( ! bTargetSet )
-                {
-                    xbox_SetPipTarget( kTARGET_PIP,pPip->GetWidth(),pPip->GetHeight() );
-                    bTargetSet = TRUE;
-                }
-                pPip->RenderView();
-            }
-
-            // Check next
-            SlotID = m_ObjectSlot[SlotID].Next;
-        }
-        xbox_SetPipTarget( kTARGET_MAIN,0,0 );
-    }
-    #elif defined(TARGET_PC)
+    #if defined(TARGET_PC)
     {
         SlotID = m_ObjectType[object::TYPE_PIP].FirstType;
         while( SlotID != SLOT_NULL )
@@ -2951,15 +2516,10 @@ void obj_mgr::Render( xbool bDoPortalWalk, const view& PortalView, u8 StartZone 
     }
     #endif
 
-    ///////////////////////////////////////////////////////////////////////////
-
     // Render 3d scene
     Render3dObjects( bDoPortalWalk, PortalView, StartZone );
 
-    ///////////////////////////////////////////////////////////////////////////
-
 #ifdef X_EDITOR
-
     // Render selected cameras (editor only)
     xbool bCameraRendered = FALSE;
     SlotID = m_ObjectType[object::TYPE_CAMERA].FirstType;
@@ -3005,10 +2565,7 @@ void obj_mgr::Render( xbool bDoPortalWalk, const view& PortalView, u8 StartZone 
     // again, otherwise only the icons that are visible in the camera will be drawn.
     if (bCameraRendered)
         Render3dPrep( bDoPortalWalk, PortalView, StartZone );
-
 #endif // X_EDITOR
-
-    ///////////////////////////////////////////////////////////////////////////
 
 #ifndef X_RETAIL
     // Render polycache
@@ -3023,8 +2580,6 @@ void obj_mgr::Render( xbool bDoPortalWalk, const view& PortalView, u8 StartZone 
     }
 #endif // X_RETAIL
 
-    ///////////////////////////////////////////////////////////////////////////
-
 #ifdef ENABLE_PHYSICS_DEBUG
     // Render physics
     if( 1 )
@@ -3038,14 +2593,6 @@ void obj_mgr::Render( xbool bDoPortalWalk, const view& PortalView, u8 StartZone 
     }
 #endif // #ifdef ENABLE_PHYSICS_DEBUG
 
-    ///////////////////////////////////////////////////////////////////////////
-
-    #ifdef TARGET_XBOX
-    xbox_SetPipTarget( kTARGET_OFF,0,0 );
-    #endif
-
-    ///////////////////////////////////////////////////////////////////////////
-
     eng_Begin( "MP Zones" );
     g_ZoneMgr.RenderMPZoneStates();
     eng_End();
@@ -3053,7 +2600,6 @@ void obj_mgr::Render( xbool bDoPortalWalk, const view& PortalView, u8 StartZone 
     // Render HUD
     Render2dObjects();
 
-#if defined TARGET_PS2 || defined TARGET_XBOX || defined TARGET_PC
     // Render pip hud objects
     SlotID = m_ObjectType[object::TYPE_PIP].FirstType;
     while( SlotID != SLOT_NULL )
@@ -3079,7 +2625,6 @@ void obj_mgr::Render( xbool bDoPortalWalk, const view& PortalView, u8 StartZone 
         // Check next
         SlotID = m_ObjectSlot[SlotID].Next;
     }
-#endif
 
     // Render screen fades after the 2d stuff so that the hud will also fade
     eng_Begin( "Screen Fade" );
@@ -3110,96 +2655,6 @@ void obj_mgr::Render( xbool bDoPortalWalk, const view& PortalView, u8 StartZone 
 #endif // ENABLE_COLLISION_STATS
 }
 
-//==============================================================================
-
-#ifdef CONFIG_VIEWER
-
-void obj_mgr::RenderArtistViewer( const view& View )
-{
-    // Pass0 = normal, Pass1 = transparent
-    for( s32 Pass = 0; Pass < 2; Pass++ )
-    {
-        // Begin render
-        if( Pass == 0 )
-        {
-            render::BeginNormalRender() ;
-        }
-        else
-        {
-            render::BeginCustomRender();
-        }            
-
-        // Render all object types
-        for( s32 Type=0; Type < (s32)object::TYPE_END_OF_LIST; Type++ )
-        {
-            // If a type is renderable then render
-            if( m_ObjectType[Type].pDesc && m_ObjectType[Type].pDesc->OnBeginRender() ) 
-            {
-                // Go through all the objects in the given type
-                slot_id ID = GetFirst( (object::type)Type );
-                for(; ID != SLOT_NULL; ID = GetNext( ID ) )
-                {
-                    // Get the object
-                    object* pObject = GetObjectBySlot( ID );
-
-                    // These guys rendered last.
-                    if( pObject->GetAttrBits() & object::ATTR_DRAW_2D )
-                        continue;
-
-                    // Which type?
-                    if( pObject->GetAttrBits() & object::ATTR_TRANSPARENT )
-                    {
-                        // Object is transparent - skip normal pass
-                        if( Pass == 0 )
-                            continue;
-                    }
-                    else
-                    {
-                        // Object is opaque - skip transparent pass
-                        if( Pass == 1 )
-                            continue;
-                    }
-
-                    // Render?
-                    s32 Vis = View.BBoxInView( pObject->GetBBox() );
-                    if( Vis )                
-                    {
-                        // Clip?
-                        if( ( Vis == view::VISIBLE_PARTIAL ) || ( eng_ScreenShotActive() ) )
-                        {
-                            pObject->m_FlagBits = pObject->GetFlagBits() & ~object::FLAG_CHECK_PLANES;
-                            pObject->SetFlagBits( pObject->GetFlagBits() | (1<<object::FLAG_CHECK_PLANES_SHIFT) );
-                        }
-                    
-                        // Which kind of render?
-                        if( pObject->GetAttrBits() & object::ATTR_TRANSPARENT )
-                            pObject->OnRenderTransparent();
-                        else                        
-                            pObject->OnRender();
-                    }                    
-                }
-
-                // Done rendering this type
-                m_ObjectType[Type].pDesc->OnEndRender();
-            }
-        }
-        
-        // End render
-        if( Pass == 0 )
-        {
-            render::EndNormalRender();
-        }
-        else
-        {
-            render::EndCustomRender();
-        }            
-    }
-}
-
-#endif
-
-//==============================================================================
-// OBJECT DESC
 //==============================================================================
 
 void object_desc::OnEnumProp( prop_enum& List )
@@ -3352,11 +2807,8 @@ void obj_mgr::SlotSanityCheck( void )
         }
     }
 }
-#endif
 
 //==============================================================================
-
-#if !defined( X_RETAIL )
 
 void obj_mgr::DumpStatsToFile( const char* pFileName )
 {
@@ -3397,6 +2849,4 @@ void obj_mgr::DumpStatsToFile( const char* pFileName )
         x_fclose( pFile );
     }
 }
-
 #endif // !defined( X_RETAIL )
-//==============================================================================

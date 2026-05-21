@@ -32,6 +32,9 @@ struct pip_render_target_pc
     {
         x_memset( this, 0, sizeof(pip_render_target_pc) );
     }
+
+    xbool Create   ( s32 Width, s32 Height );
+    void  Destroy  ( void );
 };
 #endif // defined(TARGET_PC)
 
@@ -61,9 +64,9 @@ struct render_context
     void    SetPipRender( xbool bIsPipRender );
 	
 #if defined(TARGET_PC)
-    void    SetActivePipTarget   ( pip_render_target_pc* pTarget );
-    pip_render_target_pc* GetActivePipTarget( void ) const;
-    void    MarkPipTargetsActive ( xbool bActive );
+    xbool   BeginPipRender       ( pip_render_target_pc* pTarget );
+    void    EndPipRender         ( void );
+    pip_render_target_pc* GetActivePipTarget ( void ) const;
     xbool   ArePipTargetsActive  ( void ) const;
 #endif
 };

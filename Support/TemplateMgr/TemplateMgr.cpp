@@ -943,7 +943,7 @@ xbool template_mgr::EditorCreateGameData( xbool bPreGameDetermination )
     //now we need to update the bitstream and dictionary and pointer arrays
     s16 iCurrentObjectIndex = 0;
     s16 iCurrentPropertyIndex = 0;
-    for ( i = 0; i < lstData.GetCount(); i++)
+    for ( s32 i = 0; i < lstData.GetCount(); i++)
     {
         EditorBPData& BPData = lstData.GetAt(i);
 

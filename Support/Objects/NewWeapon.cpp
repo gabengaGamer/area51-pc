@@ -33,6 +33,7 @@
 
 #if defined(TARGET_PC)
 #include "Entropy/D3DEngine/d3deng_rtarget.hpp"
+#include "Render\PC\GBufferMgr.hpp"
 #endif
 
 #if !defined(X_EDITOR)
@@ -1235,12 +1236,17 @@ void new_weapon::RenderWeapon( xbool bDebug, const xcolor& Ambient, xbool Cloake
 
     if( CurAnimGroup.GetPointer() && m_Skin[ m_CurrentRenderState ].GetSkinGeom() )
     {
-        // if we are owned by a player, then we need to ask for his offset
         object*        pOwner    = g_ObjMgr.GetObjectByGuid( m_OwnerGuid );
         vector3        Offset    ( 0.0f, 0.0f, 0.0f );
-        if ( pOwner && pOwner->IsKindOf( player::GetRTTI() ) )
+        matrix4        RenderL2W ( GetL2W() );
+        const matrix4* pRenderBones = NULL;
+        s32            RenderNBones = 0;
+        if( pOwner && pOwner->IsKindOf( actor::GetRTTI() ) )
         {
-            Offset = ((player*)pOwner)->GetCurrentWeaponCollisionOffset();
+            actor& OwnerActor = actor::GetSafeType( *pOwner );
+            Offset = OwnerActor.GetRenderWeaponCollisionOffset( m_CurrentRenderState );
+            OwnerActor.GetRenderWeaponL2W( RenderL2W, m_CurrentRenderState );
+            pRenderBones = OwnerActor.GetRenderWeaponBones( RenderNBones, m_CurrentRenderState );
         }
 
         // accumulate clipping flags and whether or not we should glow
@@ -1255,7 +1261,7 @@ void new_weapon::RenderWeapon( xbool bDebug, const xcolor& Ambient, xbool Cloake
         {
             const anim_group* pAnimGroup = CurAnimGroup.GetPointer();
             bbox RenderBBox = pAnimGroup->GetBBox();
-            RenderBBox.Transform( GetL2W() );
+            RenderBBox.Transform( RenderL2W );
             RenderBBox.Translate( Offset );
 
             // Perform clipping test, and skip render if outside the view
@@ -1270,6 +1276,7 @@ void new_weapon::RenderWeapon( xbool bDebug, const xcolor& Ambient, xbool Cloake
         s32            nBones    = m_AnimPlayer[ m_CurrentRenderState ].GetNBones();
         matrix4*       pBone     = (matrix4*)smem_BufferAlloc( nBones * sizeof( matrix4 ) );
         const matrix4* pAnimBone = m_AnimPlayer[ m_CurrentRenderState ].GetBoneL2Ws();
+        const anim_group& BoneAnimGroup = *CurAnimGroup.GetPointer();
 
         // if our owner is spawning, we need ALPHA for fading
         if (   pOwner 
@@ -1281,7 +1288,11 @@ void new_weapon::RenderWeapon( xbool bDebug, const xcolor& Ambient, xbool Cloake
 
         for( s32 i=0; i<nBones; i++ )
         {
-            pBone[i] = pAnimBone[i];
+            if( pRenderBones && (RenderNBones == nBones) )
+                pBone[i] = pRenderBones[i] * BoneAnimGroup.GetBoneBindInvMatrix( i );
+            else
+                pBone[i] = pAnimBone[i];
+
             pBone[i].Translate( Offset );
         }
 
@@ -1289,17 +1300,17 @@ void new_weapon::RenderWeapon( xbool bDebug, const xcolor& Ambient, xbool Cloake
 
         if ( Cloaked )
         {
-            SkinInst.RenderDistortion( &GetL2W(),
+            SkinInst.RenderDistortion( &RenderL2W,
                                        pBone,
                                        nBones,
                                        Flags,
-                                       SkinInst.GetLODMask(GetL2W()),
+                                       SkinInst.GetLODMask(RenderL2W),
                                        radian3(R_0,R_0,R_0),
                                        Ambient );
         }
         else
         {
-            u64 MeshMask = SkinInst.GetLODMask( GetL2W() );
+            u64 MeshMask = SkinInst.GetLODMask( RenderL2W );
 
             // render the scope mesh if one is there
             if ( (m_ScopeMesh != -1)            &&
@@ -1311,7 +1322,7 @@ void new_weapon::RenderWeapon( xbool bDebug, const xcolor& Ambient, xbool Cloake
 
                 // render the scope mesh
                 MeshMask &= ~ScopeMask;
-                SkinInst.Render( &GetL2W(),
+                SkinInst.Render( &RenderL2W,
                                  pBone,
                                  nBones,
                                  Flags | render::FORCE_LAST,
@@ -1320,7 +1331,7 @@ void new_weapon::RenderWeapon( xbool bDebug, const xcolor& Ambient, xbool Cloake
             }
 
             // render the normal mesh
-            SkinInst.Render( &GetL2W(),
+            SkinInst.Render( &RenderL2W,
                              pBone,
                              nBones,
                              Flags,
@@ -1328,6 +1339,59 @@ void new_weapon::RenderWeapon( xbool bDebug, const xcolor& Ambient, xbool Cloake
                              Ambient );
         }
     }
+}
+
+//==============================================================================
+
+void new_weapon::RenderWeaponShadow( u64 ProjMask )
+{
+    if( !m_IsVisible || (m_CurrentRenderState != RENDER_STATE_NPC) )
+        return;
+
+    anim_group::handle& CurAnimGroup = m_AnimGroup[ m_CurrentRenderState ];
+    if( !CurAnimGroup.GetPointer() || !m_Skin[ m_CurrentRenderState ].GetSkinGeom() )
+        return;
+
+    object*        pOwner       = g_ObjMgr.GetObjectByGuid( m_OwnerGuid );
+    matrix4        RenderL2W    ( GetL2W() );
+    const matrix4* pRenderBones = NULL;
+    s32            RenderNBones = 0;
+
+    if( pOwner && pOwner->IsKindOf( actor::GetRTTI() ) )
+    {
+        actor& OwnerActor = actor::GetSafeType( *pOwner );
+        OwnerActor.GetRenderWeaponL2W( RenderL2W, m_CurrentRenderState );
+        pRenderBones = OwnerActor.GetRenderWeaponBones( RenderNBones, m_CurrentRenderState );
+    }
+
+    skin_inst& SkinInst = m_Skin[ m_CurrentRenderState ];
+    u64 ShadLODMask = SkinInst.GetLODMask( 0 );
+    if( ShadLODMask == 0 )
+        return;
+
+    s32            nBones    = m_AnimPlayer[ m_CurrentRenderState ].GetNBones();
+    if( nBones <= 0 )
+        return;
+
+    matrix4*       pBone     = (matrix4*)smem_BufferAlloc( nBones * sizeof( matrix4 ) );
+    const matrix4* pAnimBone = m_AnimPlayer[ m_CurrentRenderState ].GetBoneL2Ws();
+    const anim_group& BoneAnimGroup = *CurAnimGroup.GetPointer();
+
+    for( s32 i = 0; i < nBones; i++ )
+    {
+        if( pRenderBones && (RenderNBones == nBones) )
+            pBone[i] = pRenderBones[i] * BoneAnimGroup.GetBoneBindInvMatrix( i );
+        else
+            pBone[i] = pAnimBone[i];
+    }
+
+    const u32 Flags = ( GetFlagBits() & object::FLAG_CHECK_PLANES ) ? render::CLIPPED : 0;
+    SkinInst.RenderShadowCast( &RenderL2W,
+                               pBone,
+                               nBones,
+                               Flags,
+                               ShadLODMask,
+                               ProjMask );
 }
 
 //==============================================================================
@@ -1553,12 +1617,11 @@ void new_weapon::RenderMuzzleFx( void )
     // Do the players muzzle render logic...
     if ( m_CurrentRenderState == RENDER_STATE_PLAYER )
     {
-        // if we are owned by a player, then we need to ask for his offset
         object*        pOwner    = g_ObjMgr.GetObjectByGuid( m_OwnerGuid );
         vector3        Offset    ( 0.0f, 0.0f, 0.0f );
-        if ( pOwner && pOwner->IsKindOf( player::GetRTTI() ) )
+        if( pOwner && pOwner->IsKindOf( actor::GetRTTI() ) )
         {
-            Offset = ((player*)pOwner)->GetCurrentWeaponCollisionOffset();
+            Offset = actor::GetSafeType( *pOwner ).GetRenderWeaponCollisionOffset( m_CurrentRenderState );
         }
 
         for( s32 i = 0; i < FIRE_POINT_COUNT; i++ )
@@ -2632,6 +2695,24 @@ xbool new_weapon::GetFlashlightTransformInfo( matrix4& incMatrix,  vector3 &incV
 {
     if ( m_CurrentRenderState == RENDER_STATE_PLAYER )
     {
+        object*        pOwner       = g_ObjMgr.GetObjectByGuid( m_OwnerGuid );
+        const matrix4* pRenderBones = NULL;
+        s32            RenderNBones = 0;
+
+        if( pOwner && pOwner->IsKindOf( actor::GetRTTI() ) )
+        {
+            actor& OwnerActor = actor::GetSafeType( *pOwner );
+            pRenderBones = OwnerActor.GetRenderWeaponBones( RenderNBones, m_CurrentRenderState );
+        }
+
+        if( pRenderBones && (m_FlashlightBoneIndex >= 0) && (m_FlashlightBoneIndex < RenderNBones ) )
+        {
+            incMatrix = pRenderBones[ m_FlashlightBoneIndex ] *
+                        m_AnimGroup[ m_CurrentRenderState ].GetPointer()->GetBoneBindInvMatrix( m_FlashlightBoneIndex );
+            incVect = m_AnimPlayer[ m_CurrentRenderState ].GetBindPosition( m_FlashlightBoneIndex );
+            return TRUE;
+        }
+
         // return the matrix and the bone vector
         incMatrix = m_AnimPlayer[ m_CurrentRenderState ].GetBoneL2W( m_FlashlightBoneIndex );
         incVect = m_AnimPlayer[ m_CurrentRenderState ].GetBindPosition( m_FlashlightBoneIndex );
@@ -3562,7 +3643,6 @@ void new_weapon::CreateScopeTexture( void )
     gsreg_End();
 	
 #elif defined(TARGET_PC)
-
     if( (m_ScopeTextureVramId <= 0) || (s_bScopeRenderTargetValid == FALSE) )
         return;
 
@@ -3572,8 +3652,8 @@ void new_weapon::CreateScopeTexture( void )
     if( !s_ScopeRenderTarget.pTexture )
         return;
 
-    const rtarget* pBackBuffer = rtarget_GetBackBuffer();
-    if( !pBackBuffer || !pBackBuffer->pTexture )
+    const rtarget* pSceneTarget = g_GBufferMgr.GetGBufferTarget( GBUFFER_FINAL_COLOR );
+    if( !pSceneTarget || !pSceneTarget->pTexture )
         return;
 
     const view* pActiveView = eng_GetView();
@@ -3606,10 +3686,9 @@ void new_weapon::CreateScopeTexture( void )
                                           0,
                                           0,
                                           0,
-                                          pBackBuffer->pTexture,
+                                          pSceneTarget->pTexture,
                                           0,
                                           &SrcBox );	
-
 #elif defined(TARGET_XBOX)
 
     extern void xbox_FrameCopy( s32 VRAMID );

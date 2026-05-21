@@ -5,9 +5,9 @@
 #include "Resource.h"
 #include "AnimPkgDialog.h"
 #include "..\EDRscDesc\RscDesc.hpp"
-#include "..\LocoEditor\LocoEditor.hpp"
+//#include "..\LocoEditor\LocoEditor.hpp"
 #include "..\WinControls\FileSearch.h"
-#include "..\AudioEditor\AudioEditor.hpp"
+//#include "..\AudioEditor\AudioEditor.hpp"
 #include "..\Editor\Project.hpp"
 #include ".\animpkgdialog.h"
 
@@ -93,14 +93,14 @@ void CAnimPkgDialog::OnLoadAnimPackage( animation_desc* pAnimDesc )
 {
     HTREEITEM hParent = TVI_ROOT;
 
-    // What is the name of the animation package?
-    hParent = m_rscTree.InsertItem(pAnimDesc->GetName(), 0, 1, hParent);
-    m_rscTree.SetItemData(hParent, HNULL);
-
-    for( s32 i = 0; i < pAnimDesc->m_lAnimInfo.GetCount(); i++ )
-    {
-        m_rscTree.InsertItem( pAnimDesc->m_lAnimInfo.GetAt(i).Name, 16, 17, hParent );
-    }
+    //// What is the name of the animation package?
+    //hParent = m_rscTree.InsertItem(pAnimDesc->GetName(), 0, 1, hParent);
+    //m_rscTree.SetItemData(hParent, HNULL);
+	//
+    //for( s32 i = 0; i < pAnimDesc->m_lAnimInfo.GetCount(); i++ )
+    //{
+    //    m_rscTree.InsertItem( pAnimDesc->m_lAnimInfo.GetAt(i).Name, 16, 17, hParent );
+    //}
 }
 
 //===========================================================================

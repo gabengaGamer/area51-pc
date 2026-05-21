@@ -82,7 +82,7 @@ protected:
 	CStatic					m_stHelp;
 	CFont					m_fntTitle;
 	CFont					m_fntText;
-    CXTButton               m_btnRefresh;
+    CButton               m_btnRefresh;
 
     int                     m_RedrawDisableCount;
 

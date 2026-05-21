@@ -7,7 +7,6 @@
 #include "resource.h"
 
 #ifdef _DEBUG
-#define new DEBUG_NEW
 #undef THIS_FILE
 static char THIS_FILE[] = __FILE__;
 #endif
@@ -216,7 +215,7 @@ void CFileTreeCtrl::OnRclick(NMHDR* pNMHDR, LRESULT* pResult)
 
 void CFileTreeCtrl::OnContextMenu(CWnd*, CPoint point)
 {
-	CXTMenu menu;
+	CMenu menu;
     menu.CreatePopupMenu();
     
     UINT nFlags;

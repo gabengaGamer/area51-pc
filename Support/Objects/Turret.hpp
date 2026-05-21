@@ -12,6 +12,7 @@
 //==============================================================================
 
 #include "Objects\PlaySurface.hpp"
+#include "Objects\Interpolation\SimpleAnimInterpolation.hpp"
 #include "Animation\AnimPlayer.hpp"
 #include "Characters\Factions.hpp"
 #include "Objects\Event.hpp"
@@ -96,7 +97,7 @@ public:
 
                 turret          ( void );
                ~turret          ( void );
-    
+
     virtual void                OnEnumProp      ( prop_enum&    List );
     virtual xbool               OnProperty      ( prop_query&   I    );
 
@@ -169,6 +170,7 @@ protected:
 
     virtual void                OnImport        ( text_in& TIn );
     virtual void                OnRender        ( void );
+    virtual void                OnRenderShadowCast( u64 ProjMask );
     virtual void                OnRenderTransparent ( void );
 
 #ifndef X_RETAIL
@@ -272,6 +274,12 @@ virtual anim_group::handle* GetAnimGroupHandlePtr ( void ) { return &m_hAnimGrou
 
 protected:
     virtual void                TryToFireAtTarget( void );
+    virtual void                CaptureRenderInterpState ( void );
+    virtual void                UpdateRenderInterpState  ( f32 Alpha );
+    virtual void                ClearRenderInterpState   ( void );
+            void                InvalidateRenderState( void );
+    const   matrix4&            GetRenderL2W      ( void ) const;
+            xbool               GetRenderBoneL2W  ( s32 iBone, matrix4& L2W );
 
 //------------------------------------------------------------------------------
 //  Private Data
@@ -281,6 +289,7 @@ protected:
     anim_group::handle          m_hAnimGroup;
     rhandle<char>               m_hAudioPackage;
     simple_anim_player          m_AnimPlayer;
+    simple_anim_interp_cache    m_RenderCache;
     anim_track_controller       m_TrackController[2];
     s32                         m_ProjectileTemplateID;
     s32                         m_AimingSoundID;

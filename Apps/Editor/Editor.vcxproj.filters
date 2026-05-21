@@ -1,0 +1,296 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{5e42cc15-5941-434b-8b55-8927658eb5a0}</UniqueIdentifier>
+      <Extensions>h;hpp;cpp;c;cxx;rc;def;r;odl;idl;hpj;bat</Extensions>
+    </Filter>
+    <Filter Include="Source Files\EditorBase">
+      <UniqueIdentifier>{debc7ed7-5069-4af1-b826-d0d1dd12f7ac}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\MFCStuff">
+      <UniqueIdentifier>{d1e643db-a839-4045-b179-07bafba27089}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{9a40b1ca-f046-46b3-a8b8-d475929ac87e}</UniqueIdentifier>
+      <Extensions>ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe</Extensions>
+    </Filter>
+    <Filter Include="Helpers">
+      <UniqueIdentifier>{60d85032-648c-4c90-b569-56907accde5f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Font">
+      <UniqueIdentifier>{122b557b-b491-4b2b-93ab-c793de4b0194}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\Support\GenericDialog\GenericDialog.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Lighting.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="OutputCtrl.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Project.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="RaycastLighting.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ResourceDesc.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="SlowLighting.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Version.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Axis3d.cpp">
+      <Filter>Source Files\EditorBase</Filter>
+    </ClCompile>
+    <ClCompile Include="BaseDocument.cpp">
+      <Filter>Source Files\EditorBase</Filter>
+    </ClCompile>
+    <ClCompile Include="BaseFrame.cpp">
+      <Filter>Source Files\EditorBase</Filter>
+    </ClCompile>
+    <ClCompile Include="BaseStdAfx.cpp">
+      <Filter>Source Files\EditorBase</Filter>
+    </ClCompile>
+    <ClCompile Include="BaseView.cpp">
+      <Filter>Source Files\EditorBase</Filter>
+    </ClCompile>
+    <ClCompile Include="Grid3d.cpp">
+      <Filter>Source Files\EditorBase</Filter>
+    </ClCompile>
+    <ClCompile Include="PaletteView.cpp">
+      <Filter>Source Files\EditorBase</Filter>
+    </ClCompile>
+    <ClCompile Include="RealTimeMessage.cpp">
+      <Filter>Source Files\EditorBase</Filter>
+    </ClCompile>
+    <ClCompile Include="View3D.cpp">
+      <Filter>Source Files\EditorBase</Filter>
+    </ClCompile>
+    <ClCompile Include="BugBase.cpp">
+      <Filter>Source Files\MFCStuff</Filter>
+    </ClCompile>
+    <ClCompile Include="ChildFrm.cpp">
+      <Filter>Source Files\MFCStuff</Filter>
+    </ClCompile>
+    <ClCompile Include="DisableScreenSave.cpp">
+      <Filter>Source Files\MFCStuff</Filter>
+    </ClCompile>
+    <ClCompile Include="Editor.cpp">
+      <Filter>Source Files\MFCStuff</Filter>
+    </ClCompile>
+    <ClCompile Include="HelpView.cpp">
+      <Filter>Source Files\MFCStuff</Filter>
+    </ClCompile>
+    <ClCompile Include="LogView.cpp">
+      <Filter>Source Files\MFCStuff</Filter>
+    </ClCompile>
+    <ClCompile Include="MainFrm.cpp">
+      <Filter>Source Files\MFCStuff</Filter>
+    </ClCompile>
+    <ClCompile Include="MyRichEditCtrl.cpp">
+      <Filter>Source Files\MFCStuff</Filter>
+    </ClCompile>
+    <ClCompile Include="OutputBar.cpp">
+      <Filter>Source Files\MFCStuff</Filter>
+    </ClCompile>
+    <ClCompile Include="ProjectDoc.cpp">
+      <Filter>Source Files\MFCStuff</Filter>
+    </ClCompile>
+    <ClCompile Include="ProjectFrame.cpp">
+      <Filter>Source Files\MFCStuff</Filter>
+    </ClCompile>
+    <ClCompile Include="ProjectView.cpp">
+      <Filter>Source Files\MFCStuff</Filter>
+    </ClCompile>
+    <ClCompile Include="ProjectViewFrame.cpp">
+      <Filter>Source Files\MFCStuff</Filter>
+    </ClCompile>
+    <ClCompile Include="RscView.cpp">
+      <Filter>Source Files\MFCStuff</Filter>
+    </ClCompile>
+    <ClCompile Include="TabDoc.cpp">
+      <Filter>Source Files\MFCStuff</Filter>
+    </ClCompile>
+    <ClCompile Include="TabView.cpp">
+      <Filter>Source Files\MFCStuff</Filter>
+    </ClCompile>
+    <ClCompile Include="TextEditor.cpp">
+      <Filter>Source Files\MFCStuff</Filter>
+    </ClCompile>
+    <ClCompile Include="TextEditorView.cpp">
+      <Filter>Source Files\MFCStuff</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Support\Font\font.cpp">
+      <Filter>Font</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\Support\GenericDialog\GenericDialog.hpp">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Lighting.hpp">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="OutputCtrl.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Project.hpp">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="RaycastLighting.hpp">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ResourceDesc.hpp">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="SlowLighting.hpp">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="UserMessage.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Axis3d.hpp">
+      <Filter>Source Files\EditorBase</Filter>
+    </ClInclude>
+    <ClInclude Include="BaseDocument.h">
+      <Filter>Source Files\EditorBase</Filter>
+    </ClInclude>
+    <ClInclude Include="BaseFrame.h">
+      <Filter>Source Files\EditorBase</Filter>
+    </ClInclude>
+    <ClInclude Include="BaseStdAfx.h">
+      <Filter>Source Files\EditorBase</Filter>
+    </ClInclude>
+    <ClInclude Include="BaseView.h">
+      <Filter>Source Files\EditorBase</Filter>
+    </ClInclude>
+    <ClInclude Include="Grid3d.hpp">
+      <Filter>Source Files\EditorBase</Filter>
+    </ClInclude>
+    <ClInclude Include="PaletteView.h">
+      <Filter>Source Files\EditorBase</Filter>
+    </ClInclude>
+    <ClInclude Include="RealTimeMessage.h">
+      <Filter>Source Files\EditorBase</Filter>
+    </ClInclude>
+    <ClInclude Include="View3D.h">
+      <Filter>Source Files\EditorBase</Filter>
+    </ClInclude>
+    <ClInclude Include="BugBase.h">
+      <Filter>Source Files\MFCStuff</Filter>
+    </ClInclude>
+    <ClInclude Include="ChildFrm.h">
+      <Filter>Source Files\MFCStuff</Filter>
+    </ClInclude>
+    <ClInclude Include="DisableScreenSave.h">
+      <Filter>Source Files\MFCStuff</Filter>
+    </ClInclude>
+    <ClInclude Include="Editor.h">
+      <Filter>Source Files\MFCStuff</Filter>
+    </ClInclude>
+    <ClInclude Include="HelpView.h">
+      <Filter>Source Files\MFCStuff</Filter>
+    </ClInclude>
+    <ClInclude Include="LogView.h">
+      <Filter>Source Files\MFCStuff</Filter>
+    </ClInclude>
+    <ClInclude Include="MainFrm.h">
+      <Filter>Source Files\MFCStuff</Filter>
+    </ClInclude>
+    <ClInclude Include="MyRichEditCtrl.h">
+      <Filter>Source Files\MFCStuff</Filter>
+    </ClInclude>
+    <ClInclude Include="OutputBar.h">
+      <Filter>Source Files\MFCStuff</Filter>
+    </ClInclude>
+    <ClInclude Include="ProjectDoc.h">
+      <Filter>Source Files\MFCStuff</Filter>
+    </ClInclude>
+    <ClInclude Include="ProjectFrame.h">
+      <Filter>Source Files\MFCStuff</Filter>
+    </ClInclude>
+    <ClInclude Include="ProjectView.h">
+      <Filter>Source Files\MFCStuff</Filter>
+    </ClInclude>
+    <ClInclude Include="ProjectViewFrame.h">
+      <Filter>Source Files\MFCStuff</Filter>
+    </ClInclude>
+    <ClInclude Include="RscView.h">
+      <Filter>Source Files\MFCStuff</Filter>
+    </ClInclude>
+    <ClInclude Include="TabDoc.h">
+      <Filter>Source Files\MFCStuff</Filter>
+    </ClInclude>
+    <ClInclude Include="TabView.h">
+      <Filter>Source Files\MFCStuff</Filter>
+    </ClInclude>
+    <ClInclude Include="TextEditor.h">
+      <Filter>Source Files\MFCStuff</Filter>
+    </ClInclude>
+    <ClInclude Include="TextEditorView.h">
+      <Filter>Source Files\MFCStuff</Filter>
+    </ClInclude>
+    <ClInclude Include="Resource.h">
+      <Filter>Resource Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Support\Font\font.hpp">
+      <Filter>Font</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="res\Editor.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\EditorBuildToolBar.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\EditorDoc.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\helpbraw.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\idr_proj.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\ImgView.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\proj_ric.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\proj_too.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\Toolbar.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="Editor.rc">
+      <Filter>Resource Files</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="res\Editor.rc2">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="res\web_thin.avi" />
+  </ItemGroup>
+  <ItemGroup>
+    <Library Include="..\..\xCore\3rdParty\Miles6\lib\win\Mss32.lib">
+      <Filter>Helpers</Filter>
+    </Library>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="ReadMe.txt" />
+  </ItemGroup>
+</Project>

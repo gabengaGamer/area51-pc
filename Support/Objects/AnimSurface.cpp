@@ -12,7 +12,6 @@
 
 xstring g_AnimSurfaceStringList;
 
-
 //=============================================================================
 // OBJECT DESCRIPTION
 //=============================================================================
@@ -37,6 +36,8 @@ static struct anim_surface_desc : public object_desc
             object::ATTR_RENDERABLE             |
             object::ATTR_NEEDS_LOGIC_TIME       |
             object::ATTR_SPACIAL_ENTRY          |
+            object::ATTR_CAST_SHADOWS           |
+            object::ATTR_RECEIVE_SHADOWS        |			
             object::ATTR_ACTOR_RIDEABLE,
 
             FLAGS_GENERIC_EDITOR_CREATE | 
@@ -84,6 +85,7 @@ const object_desc& anim_surface::GetObjectType( void )
 
 anim_surface::anim_surface( void )
 {
+    InvalidateRenderState();
     m_iBackupAnimString = g_StringMgr.Add( "None" );
 }
 
@@ -91,6 +93,57 @@ anim_surface::anim_surface( void )
 
 anim_surface::~anim_surface( void )
 {
+}
+
+//=============================================================================
+
+void anim_surface::InvalidateRenderState( void )
+{
+    InitSimpleAnimInterpCache( m_RenderCache );
+}
+
+//=============================================================================
+
+void anim_surface::CaptureRenderInterpState( void )
+{
+    CaptureSimpleAnimInterpCache( m_RenderCache, GetL2W(), m_AnimPlayer );
+    RegisterRenderInterpUpdate();
+}
+
+//=============================================================================
+
+void anim_surface::UpdateRenderInterpState( f32 Alpha )
+{
+    UpdateSimpleAnimInterpCache( m_RenderCache, Alpha );
+}
+
+//=============================================================================
+
+void anim_surface::ClearRenderInterpState( void )
+{
+    ClearSimpleAnimInterpCache( m_RenderCache );
+}
+
+//=============================================================================
+
+const matrix4& anim_surface::GetRenderL2W( void ) const
+{
+    return GetSimpleAnimInterpCacheL2W( m_RenderCache, GetL2W() );
+}
+
+//=============================================================================
+
+xbool anim_surface::GetRenderBoneL2W( s32 iBone, matrix4& L2W )
+{
+    if( GetSimpleAnimInterpCacheBoneL2W( m_RenderCache, iBone, L2W ) )
+        return TRUE;
+
+    const matrix4* pBone = m_AnimPlayer.GetBoneL2W( iBone, FALSE );
+    if( !pBone )
+        return FALSE;
+
+    L2W = *pBone;
+    return TRUE;
 }
 
 //=============================================================================
@@ -266,6 +319,15 @@ void anim_surface::OnColRender( xbool bRenderHigh )
 
 const matrix4* anim_surface::GetBoneL2Ws( void )
 {
+    if( m_hAnimGroup.GetPointer() )
+    {
+        const matrix4* pMatrices = BuildSimpleAnimInterpCacheMatrices( m_RenderCache,
+                                                                       *m_hAnimGroup.GetPointer(),
+                                                                       m_hAnimGroup.GetPointer()->GetNBones() );
+        if( pMatrices )
+            return pMatrices;
+    }
+
     return m_AnimPlayer.GetBoneL2Ws() ;
 }
 
@@ -652,7 +714,7 @@ xbool anim_surface::GetAttachPointData( s32      iAttachPt,
 {
     if (iAttachPt == 0)
     {
-        L2W = GetL2W();
+        L2W = GetRenderL2W();
         return TRUE;
     }
 
@@ -667,23 +729,22 @@ xbool anim_surface::GetAttachPointData( s32      iAttachPt,
             if ( (iAttachPt >= 0) &&
                  (iAttachPt < nBones ))
             {
-                const matrix4* pL2W = m_AnimPlayer.GetBoneL2W( iAttachPt, TRUE );            
-                
-                if ( NULL != pL2W )
-                    L2W = *pL2W;
-                else
-                    L2W.Identity();
-/*
-                const matrix4*    pBindInvMtx = m_AnimPlayer.GetBoneBindInvMtx( iAttachPt );
-                if (pBindInvMtx)
+                if( HasSimpleAnimInterpCache( m_RenderCache ) && GetRenderBoneL2W( iAttachPt, L2W ) )
                 {
-                    matrix4 InvInv = *pBindInvMtx;
-                    //InvInv.Invert();
-                    L2W = InvInv * L2W;
+                    if( !(Flags & ATTACH_USE_WORLDSPACE) )
+                        L2W = L2W * pGroup->GetBoneBindInvMatrix( iAttachPt );
                 }
-  */              
-                if (Flags & ATTACH_USE_WORLDSPACE)
-                    L2W.PreTranslate( m_AnimPlayer.GetBoneBindPosition( iAttachPt ) );
+                else
+                {
+                    const matrix4* pL2W = m_AnimPlayer.GetBoneL2W( iAttachPt, TRUE );
+                    if ( NULL != pL2W )
+                        L2W = *pL2W;
+                    else
+                        L2W.Identity();
+
+                    if (Flags & ATTACH_USE_WORLDSPACE)
+                        L2W.PreTranslate( m_AnimPlayer.GetBoneBindPosition( iAttachPt ) );
+                }
                 
         
                 return TRUE;

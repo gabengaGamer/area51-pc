@@ -2215,35 +2215,33 @@ void CGridListCtrl::Sort(CGridTreeItem* pParent, BOOL bSortChildren)
 	const int nChildren = NumChildren(pParent);
 	if (nChildren > 1)
 	{
-		CGridTreeItem** ppSortArray = new CGridTreeItem*[nChildren];
+		CGridTreeItem** ppSortArray = new CGridTreeItem * [nChildren];
 		// Fill in array with pointers to our children.
 		POSITION pos = pParent->m_listChild.GetHeadPosition();
-		for (int i=0; pos; i++)
+		for (int i = 0; pos; i++)
 		{
 			ASSERT(i < nChildren);
 			ppSortArray[i] = (CGridTreeItem*)pParent->m_listChild.GetAt(pos);
 			pParent->m_listChild.GetNext(pos);
 		}
-
 		qsort(ppSortArray, nChildren, sizeof(CGridTreeItem*), CompareChildren);
 		// reorg children with new sorted list
 		pos = pParent->m_listChild.GetHeadPosition();
-		for (i=0; pos; i++)
+		for (int i = 0; pos; i++)
 		{
 			ASSERT(i < nChildren);
-			pParent->m_listChild.SetAt(pos, ppSortArray[i]);
+			POSITION curPos = pos;
 			pParent->m_listChild.GetNext(pos);
+			pParent->m_listChild.SetAt(curPos, ppSortArray[i]);
 		}
-
-		delete [] ppSortArray;
+		delete[] ppSortArray;
 	}
-
-	if(bSortChildren)
+	if (bSortChildren)
 	{
 		POSITION pos = pParent->m_listChild.GetHeadPosition();
 		while (pos)
 		{
-			CGridTreeItem *pChild = (CGridTreeItem*)pParent->m_listChild.GetNext(pos);
+			CGridTreeItem* pChild = (CGridTreeItem*)pParent->m_listChild.GetNext(pos);
 			Sort(pChild, TRUE);
 		}
 	}
@@ -2766,18 +2764,14 @@ BOOL CGridListCtrl::OnEraseBkgnd(CDC* pDC)
 
 void CGridListCtrl::OnPaint()
 {
-	// Helps to reduce screen flicker.
 	CPaintDC dc(this);
-	CRect rectClient;
-	GetClientRect(&rectClient);
-	CXTMemDC memDC(&dc, rectClient, xtAfxData.clrWindow);
-	CWnd::DefWindowProc( WM_PAINT, (WPARAM)memDC.m_hDC, 0 );
+	CWnd::DefWindowProc(WM_PAINT, (WPARAM)dc.GetSafeHdc(), 0);
 }
 
 void CGridListCtrl::SaveColumnState( LPCTSTR lpszProfileName )
 {
     CString strSection;
-    CXTRegistryManager regManager;
+    CWinApp* regManager = AfxGetApp();
 
     for( int i=0 ; i<GetColumnCount() ; i++ )
     {
@@ -2785,21 +2779,21 @@ void CGridListCtrl::SaveColumnState( LPCTSTR lpszProfileName )
         CString Key;
         Key.Format( "%d", i );
         int Width = GetColumnWidth(i);
-        regManager.WriteProfileInt( strSection, Key, Width );
+        regManager->WriteProfileInt( strSection, Key, Width );
     }
 }
 
 void CGridListCtrl::LoadColumnState( LPCTSTR lpszProfileName )
 {
     CString strSection;
-    CXTRegistryManager regManager;
+    CWinApp* regManager = AfxGetApp();
 
     for( int i=0 ; i<GetColumnCount() ; i++ )
     {
         strSection.Format( _T("%s-Columns"), lpszProfileName );
         CString Key;
         Key.Format( "%d", i );
-        int Width = regManager.GetProfileInt( strSection, Key, GetColumnWidth(i) );
+        int Width = regManager->GetProfileInt( strSection, Key, GetColumnWidth(i) );
         SetColumnWidth( i, Width );
     }
 }

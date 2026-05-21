@@ -6,6 +6,8 @@
 //=========================================================================
 
 #include "Obj_mgr\obj_mgr.hpp"
+#include "Objects\Interpolation\TransformInterpolation.hpp"
+#include "Render\Texture.hpp"
 
 //=========================================================================
 // LIGHT
@@ -17,6 +19,7 @@ public:
     CREATE_RTTI( light_obj, object, object )
     
                             light_obj       ( void );
+    virtual                ~light_obj       ( void );
     virtual bbox            GetLocalBBox    ( void ) const { return m_Sphere.GetBBox(); }
     virtual s32             GetMaterial     ( void ) const { return MAT_TYPE_FLESH; }
     virtual void            OnEnumProp      ( prop_enum& List );
@@ -40,7 +43,13 @@ public:
     static  const object_desc&  GetObjectType   ( void );
 
 protected:
+    virtual void            CaptureRenderInterpState  ( void );
+    virtual void            UpdateRenderInterpState   ( f32 Alpha );
+    virtual void            ClearRenderInterpState    ( void );
+            void            InvalidateRenderState( void );
+    const   matrix4&        GetRenderL2W        ( void ) const;
     
+    virtual void            OnCollectLight  ( void );
     virtual void            OnRender        ( void );
 
 #ifndef X_RETAIL
@@ -52,7 +61,8 @@ protected:
     xcolor                  m_Ambient;
     f32                     m_Intensity;
     xbool                   m_bAccentAngle;
-    
+    transform_interp_cache  m_RenderCache;
+
 // Make friends here
 };
 
@@ -84,6 +94,7 @@ public:
     virtual void            OnActivate          ( xbool       Flag      );
     virtual xbool           OnProperty          ( prop_query& I         );
     virtual void            OnAdvanceLogic      ( f32         DeltaTime );
+    virtual void            OnCollectLight      ( void );
     virtual void            OnRender            ( void );
     virtual xbool           IsDynamic           ( void ) { return TRUE; }
 
@@ -95,12 +106,12 @@ public:
         LIGHT_ACTIVE = 0x0001,
     };
 
-    enum type
+    enum behavior
     {
-        TYPE_CONSTANT = 0,
-        TYPE_FLASHING,
-        TYPE_RANDOM,
-        TYPE_ONESHOT_FADE,
+        BEHAVIOR_CONSTANT = 0,
+        BEHAVIOR_FLASHING,
+        BEHAVIOR_RANDOM,
+        BEHAVIOR_ONESHOT_FADE,
     };
 
     enum state
@@ -115,6 +126,30 @@ public:
     {
         ACTION_DESTROY,
         ACTION_DEACTIVATE,
+    };
+
+    enum emitter_type
+    {
+        EMITTER_TYPE_OMNI = 0,
+        EMITTER_TYPE_SPOT,
+    };
+
+    enum shadow_map_resolution
+    {
+        SHADOW_MAP_RESOLUTION_256  = 256,
+        SHADOW_MAP_RESOLUTION_512  = 512,
+        SHADOW_MAP_RESOLUTION_1024 = 1024,
+        SHADOW_MAP_RESOLUTION_2048 = 2048,
+        SHADOW_MAP_RESOLUTION_4096 = 4096,
+    };
+
+    enum shadow_priority
+    {
+        SHADOW_PRIORITY_LOWEST = 0,
+        SHADOW_PRIORITY_LOW,
+        SHADOW_PRIORITY_MEDIUM,
+        SHADOW_PRIORITY_HIGH,
+        SHADOW_PRIORITY_HIGHEST,
     };
 
 
@@ -135,7 +170,16 @@ protected:
     void    RandomLogic         ( f32 DeltaTime );
     void    OneShotFadeLogic    ( f32 DeltaTime );
 
-    s32             m_LightType;
+    s32             m_EmitterType;
+    f32             m_Falloff;
+    texture::handle m_hCookie;
+    xbool           m_bCastShadows;
+    s32             m_ShadowMapResolution;
+    s32             m_ShadowPriority;
+    f32             m_InnerAngle;
+    f32             m_OuterAngle;
+
+    s32             m_LightBehavior;
     f32             m_FlashRate;
     f32             m_FadeInTime;
     f32             m_FadeOutTime;

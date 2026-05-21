@@ -7,6 +7,7 @@
 
 #include "Obj_mgr\obj_mgr.hpp"
 #include "Objects\Render\SkinInst.hpp"
+#include "Objects\Interpolation\SimpleAnimInterpolation.hpp"
 #include "Characters\FloorProperties.hpp"
 
 //=========================================================================
@@ -55,8 +56,6 @@ public:
     CREATE_RTTI( coke_can, object, object )
     virtual const object_desc&  GetTypeDesc     ( void ) const;    
     static  const object_desc&  GetObjectType   ( void );
-
-
 //=========================================================================
 // Public functions
 //=========================================================================
@@ -68,6 +67,7 @@ public:
             bbox        GetGeomBBox             ( void ) const;
     virtual s32         GetMaterial				( void ) const { return MAT_TYPE_SOLID_METAL; }
     virtual void        OnRender                ( void );
+    virtual void        OnRenderShadowCast      ( u64 ProjMask );
     virtual const char* GetLogicalName          ( void )   { return "COKE_CAN"; }
 
 #ifndef X_RETAIL
@@ -164,6 +164,11 @@ protected:
     // Rendering
     skin_inst           m_SkinInst;                 // Skinned inst
     floor_properties    m_FloorProperties;          // Floor tracking class
+    simple_anim_interp_cache m_RenderCache;
+
+    virtual void        CaptureRenderInterpState      ( void );
+    virtual void        UpdateRenderInterpState       ( f32 Alpha );
+    virtual void        ClearRenderInterpState        ( void );
 };
 
 //=========================================================================

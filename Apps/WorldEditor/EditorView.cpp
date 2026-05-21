@@ -24,7 +24,6 @@
 #include "..\Support\GameTextMgr\GameTextMgr.hpp"
 #include "..\WinControls\StringEntryDlg.h"
 #include "..\Support\Render\LightMgr.hpp"
-#include "Auxiliary/PCRE/regex.hpp"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -284,7 +283,8 @@ void CEditorView::Initialize()
     m_Grid.SetSeparation(float(GetDocument()->GetGridSnap()),float(GetDocument()->GetGridSnap()));
 
 	CameraFreeFlyMode();
-    d3deng_SetAmbientLight(xcolor(255,255,255,255));
+    // DX9 reference for the DX11 port:
+    // d3deng_SetAmbientLight(xcolor(255,255,255,255));
 }
 
 //=========================================================================
@@ -349,11 +349,12 @@ xbool CEditorView::SetupView( const view* pPlayerView, view& PortalView, xbool F
     eng_SetView( EngView );
     eng_SetViewport( EngView );
 
-    if( g_pd3dDevice )
-    {
-        g_pd3dDevice->SetTransform( D3DTS_VIEW,       (D3DMATRIX*)&(EngView.GetW2V() ));
-        g_pd3dDevice->SetTransform( D3DTS_PROJECTION, (D3DMATRIX*)&(EngView.GetV2C() ));
-    }
+    // DX9 reference for the DX11 port:
+    // if( g_pd3dDevice )
+    // {
+    //     g_pd3dDevice->SetTransform( D3DTS_VIEW,       (D3DMATRIX*)&(EngView.GetW2V() ));
+    //     g_pd3dDevice->SetTransform( D3DTS_PROJECTION, (D3DMATRIX*)&(EngView.GetV2C() ));
+    // }
 
     return bDoPortalWalk;
 }
@@ -1314,75 +1315,76 @@ void CEditorView::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
                 m_pFrameEdit->GetSettingsEditorDoc()->Refresh();
                 SetViewDirty();
             }
-            break;             
-        case VK_F2:
-            {
-                //Guid Lookup
-                CStringEntryDlg dlg;
-                dlg.SetDisplayText( "Enter: GUID (00000000:00000000) | location ( xxx, yyy, zzz ) | name \"name\"" );
-                dlg.SetEntryText( "" );
-                if (dlg.DoModal() == IDOK)
-                {
-                    CString Str = dlg.GetEntryText();
-
-                    // Is this a guid?
-                    regex r1( "[0-9a-fA-F]{8}:?[0-9a-fA-F]{8}" );
-                    if( r1.Match( Str ) )
-                    {
-                        xstring GuidString = r1.GetSubstring(0);
-                        guid GuidToFind = guid_FromString( GuidString );
-
-                        if (g_WorldEditor.SelectObject(GuidToFind))
-                        {
-                            // Move the camera focus
-                            vector3 Pos = g_WorldEditor.GetMinPositionForSelected();
-                            SetFocusPos( Pos );
-                            FocusCameraWithUndo( Pos );
-                            m_pFrameEdit->GetPropertyEditorDoc()->Refresh();
-                            SetViewDirty();
-                        }
-                        else
-                        {
-                            ::AfxMessageBox("Guid Not Found.");
-                        }
-
-                        break;
-                    }
-
-                    // Is this a location?
-                    regex r2( "(-?\\d*\\.?\\d+)\\s*,\\s*(-?\\d*\\.?\\d+)\\s*,\\s*(-?\\d*\\.?\\d+)" );
-                    if( r2.Match( Str ) )
-                    {
-                        xstring x = r2.GetSubstring( 1 );
-                        xstring y = r2.GetSubstring( 2 );
-                        xstring z = r2.GetSubstring( 3 );
-
-                        // Move the camera focus
-                        vector3 Pos = vector3( x_atof(x), x_atof(y), x_atof(z) );
-                        SetFocusPos( Pos );
-                        FocusCameraWithUndo( Pos );
-                        m_pFrameEdit->GetPropertyEditorDoc()->Refresh();
-                        SetViewDirty();
-                        break;
-                    }
-
-                    // Find it by name
-                    object* pObject = g_ObjMgr.GetObjectByName( Str );
-                    if( pObject )
-                    {
-                        if( g_WorldEditor.SelectObject( pObject->GetGuid() ) )
-                        {
-                            // Move the camera focus
-                            vector3 Pos = g_WorldEditor.GetMinPositionForSelected();
-                            SetFocusPos( Pos );
-                            FocusCameraWithUndo( Pos );
-                            m_pFrameEdit->GetPropertyEditorDoc()->Refresh();
-                            SetViewDirty();
-                        }
-                    }
-                }
-            }
-            break;
+            break;      
+        // TODO: GS: REPLACE THIS STUFF WITH std::regex			
+        //case VK_F2:
+        //    {
+        //        //Guid Lookup
+        //        CStringEntryDlg dlg;
+        //        dlg.SetDisplayText( "Enter: GUID (00000000:00000000) | location ( xxx, yyy, zzz ) | name \"name\"" );
+        //        dlg.SetEntryText( "" );
+        //        if (dlg.DoModal() == IDOK)
+        //        {
+        //            CString Str = dlg.GetEntryText();
+		//
+        //            // Is this a guid?
+        //            regex r1( "[0-9a-fA-F]{8}:?[0-9a-fA-F]{8}" );
+        //            if( r1.Match( Str ) )
+        //            {
+        //                xstring GuidString = r1.GetSubstring(0);
+        //                guid GuidToFind = guid_FromString( GuidString );
+		//
+        //                if (g_WorldEditor.SelectObject(GuidToFind))
+        //                {
+        //                    // Move the camera focus
+        //                    vector3 Pos = g_WorldEditor.GetMinPositionForSelected();
+        //                    SetFocusPos( Pos );
+        //                    FocusCameraWithUndo( Pos );
+        //                    m_pFrameEdit->GetPropertyEditorDoc()->Refresh();
+        //                    SetViewDirty();
+        //                }
+        //                else
+        //                {
+        //                    ::AfxMessageBox("Guid Not Found.");
+        //                }
+		//
+        //                break;
+        //            }
+		//
+        //            // Is this a location?
+        //            regex r2( "(-?\\d*\\.?\\d+)\\s*,\\s*(-?\\d*\\.?\\d+)\\s*,\\s*(-?\\d*\\.?\\d+)" );
+        //            if( r2.Match( Str ) )
+        //            {
+        //                xstring x = r2.GetSubstring( 1 );
+        //                xstring y = r2.GetSubstring( 2 );
+        //                xstring z = r2.GetSubstring( 3 );
+		//
+        //                // Move the camera focus
+        //                vector3 Pos = vector3( x_atof(x), x_atof(y), x_atof(z) );
+        //                SetFocusPos( Pos );
+        //                FocusCameraWithUndo( Pos );
+        //                m_pFrameEdit->GetPropertyEditorDoc()->Refresh();
+        //                SetViewDirty();
+        //                break;
+        //            }
+		//
+        //            // Find it by name
+        //            object* pObject = g_ObjMgr.GetObjectByName( Str );
+        //            if( pObject )
+        //            {
+        //                if( g_WorldEditor.SelectObject( pObject->GetGuid() ) )
+        //                {
+        //                    // Move the camera focus
+        //                    vector3 Pos = g_WorldEditor.GetMinPositionForSelected();
+        //                    SetFocusPos( Pos );
+        //                    FocusCameraWithUndo( Pos );
+        //                    m_pFrameEdit->GetPropertyEditorDoc()->Refresh();
+        //                    SetViewDirty();
+        //                }
+        //            }
+        //        }
+        //    }
+        //    break;
         case VK_F3:
             {
                 //last selected
@@ -2580,7 +2582,7 @@ void CEditorView::OnCopyObjects()
         guid& ObjGuid = lstItems.GetAt(i);
         GetFrame()->AddObjectToActiveLayerView(ObjGuid);
     }
-    for (i=0; i<lstBPRefs.GetCount(); i++)
+    for (int i=0; i<lstBPRefs.GetCount(); i++)
     {
         guid& BPGuid = lstBPRefs.GetAt(i);
         GetFrame()->AddBlueprintToActiveLayerView(BPGuid);

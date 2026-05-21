@@ -9,7 +9,7 @@
 #pragma once
 #endif // _MSC_VER > 1000
 
-class CTabView : public CXTTreeView
+class CTabView : public CTreeView
 {
 protected: // create from serialization only
 	CTabView();
@@ -47,7 +47,7 @@ protected:
 	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
 	afx_msg void OnPaint();
 	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
-	afx_msg UINT OnNcHitTest(CPoint point);
+	afx_msg LRESULT OnNcHitTest(CPoint point);
 	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()
 };
@@ -63,4 +63,3 @@ inline CTabDoc* CTabView::GetDocument()
 // Microsoft Visual C++ will insert additional declarations immediately before the previous line.
 
 #endif // !defined(AFX_TABVIEW_H__A6FF7A53_CE95_4659_9C2F_F4DBCA673A9A__INCLUDED_)
-

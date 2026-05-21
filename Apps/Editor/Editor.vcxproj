@@ -1,0 +1,243 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="Current" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="EDITOR-Debug|Win32">
+      <Configuration>EDITOR-Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>17.0</VCProjectVersion>
+    <ProjectGuid>{767E20A8-339C-4337-B4C7-61CD47F1C043}</ProjectGuid>
+    <SccProjectName>Perforce Project</SccProjectName>
+    <SccAuxPath />
+    <SccLocalPath>..\..</SccLocalPath>
+    <SccProvider>MSSCCI:Perforce SCM</SccProvider>
+    <Keyword>MFCProj</Keyword>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='EDITOR-Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <PlatformToolset>v143</PlatformToolset>
+    <UseOfMfc>Static</UseOfMfc>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='EDITOR-Debug|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_ProjectFileVersion>17.0.36414.14</_ProjectFileVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='EDITOR-Debug|Win32'">
+    <OutDir>$(ProjectDir)_$(Platform)$(Configuration)\</OutDir>
+    <IntDir>$(ProjectDir)_$(Platform)$(Configuration)\</IntDir>
+    <LinkIncremental>true</LinkIncremental>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='EDITOR-Debug|Win32'">
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <AdditionalIncludeDirectories>$(X);$(X)/x_Files;$(X)/Entropy;$(X)/MeshUtil;$(X)\..\Support;$(X)\Auxiliary;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>TARGET_PC;CONFIG_DEBUG;APP_EDITOR;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <BasicRuntimeChecks>Default</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <BufferSecurityCheck>true</BufferSecurityCheck>
+      <FunctionLevelLinking>false</FunctionLevelLinking>
+      <PrecompiledHeader />
+      <PrecompiledHeaderFile>BaseStdAfx.h</PrecompiledHeaderFile>
+      <BrowseInformation>false</BrowseInformation>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>None</DebugInformationFormat>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>dxguid.lib;dinput8.lib;dsound.lib;DirectXTex.lib;legacy_stdio_definitions.lib;ole32.lib;user32.lib;gdi32.lib</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(X)\3rdParty\DirectX9;$(X)\3rdParty\WebM\lib\x86;$(X)\3rdParty\DirectXTex\DirectXTex\Bin\x32;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <IgnoreSpecificDefaultLibraries>libci.lib;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <SubSystem>Windows</SubSystem>
+    </Link>
+    <ResourceCompile>
+      <AdditionalIncludeDirectories>../AudioEditor;../WinControls;../WorldEditor;../EventEditor;../LocoEditor;../MeshViewer;../EDRscDesc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ResourceCompile>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\Support\Font\font.cpp" />
+    <ClCompile Include="..\..\Support\GenericDialog\GenericDialog.cpp" />
+    <ClCompile Include="Axis3d.cpp" />
+    <ClCompile Include="BaseDocument.cpp" />
+    <ClCompile Include="BaseFrame.cpp" />
+    <ClCompile Include="BaseStdAfx.cpp" />
+    <ClCompile Include="BaseView.cpp" />
+    <ClCompile Include="BugBase.cpp" />
+    <ClCompile Include="ChildFrm.cpp" />
+    <ClCompile Include="DisableScreenSave.cpp" />
+    <ClCompile Include="Editor.cpp" />
+    <ClCompile Include="Grid3d.cpp" />
+    <ClCompile Include="HelpView.cpp" />
+    <ClCompile Include="Lighting.cpp" />
+    <ClCompile Include="LogView.cpp" />
+    <ClCompile Include="MainFrm.cpp" />
+    <ClCompile Include="MyRichEditCtrl.cpp" />
+    <ClCompile Include="OutputBar.cpp" />
+    <ClCompile Include="OutputCtrl.cpp" />
+    <ClCompile Include="PaletteView.cpp" />
+    <ClCompile Include="Project.cpp" />
+    <ClCompile Include="ProjectDoc.cpp" />
+    <ClCompile Include="ProjectFrame.cpp" />
+    <ClCompile Include="ProjectView.cpp" />
+    <ClCompile Include="ProjectViewFrame.cpp" />
+    <ClCompile Include="RaycastLighting.cpp" />
+    <ClCompile Include="RealTimeMessage.cpp" />
+    <ClCompile Include="ResourceDesc.cpp" />
+    <ClCompile Include="RscView.cpp" />
+    <ClCompile Include="SlowLighting.cpp" />
+    <ClCompile Include="TabDoc.cpp" />
+    <ClCompile Include="TabView.cpp" />
+    <ClCompile Include="TextEditor.cpp" />
+    <ClCompile Include="TextEditorView.cpp" />
+    <ClCompile Include="Version.cpp" />
+    <ClCompile Include="View3D.cpp" />
+    <ClCompile Include="WorkspaceTabCtrl.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\Support\Font\font.hpp" />
+    <ClInclude Include="..\..\Support\GenericDialog\GenericDialog.hpp" />
+    <ClInclude Include="Axis3d.hpp" />
+    <ClInclude Include="BaseDocument.h" />
+    <ClInclude Include="BaseFrame.h" />
+    <ClInclude Include="BaseStdAfx.h" />
+    <ClInclude Include="BaseView.h" />
+    <ClInclude Include="BugBase.h" />
+    <ClInclude Include="ChildFrm.h" />
+    <ClInclude Include="DisableScreenSave.h" />
+    <ClInclude Include="Editor.h" />
+    <ClInclude Include="Grid3d.hpp" />
+    <ClInclude Include="HelpView.h" />
+    <ClInclude Include="Lighting.hpp" />
+    <ClInclude Include="LogView.h" />
+    <ClInclude Include="MainFrm.h" />
+    <ClInclude Include="MyRichEditCtrl.h" />
+    <ClInclude Include="OutputBar.h" />
+    <ClInclude Include="OutputCtrl.h" />
+    <ClInclude Include="PaletteView.h" />
+    <ClInclude Include="Project.hpp" />
+    <ClInclude Include="ProjectDoc.h" />
+    <ClInclude Include="ProjectFrame.h" />
+    <ClInclude Include="ProjectView.h" />
+    <ClInclude Include="ProjectViewFrame.h" />
+    <ClInclude Include="RaycastLighting.hpp" />
+    <ClInclude Include="RealTimeMessage.h" />
+    <ClInclude Include="Resource.h" />
+    <ClInclude Include="ResourceDesc.hpp" />
+    <ClInclude Include="RscView.h" />
+    <ClInclude Include="SlowLighting.hpp" />
+    <ClInclude Include="TabDoc.h" />
+    <ClInclude Include="TabView.h" />
+    <ClInclude Include="TextEditor.h" />
+    <ClInclude Include="TextEditorView.h" />
+    <ClInclude Include="UserMessage.h" />
+    <ClInclude Include="View3D.h" />
+    <ClInclude Include="WorkspaceTabCtrl.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="res\Editor.ico" />
+    <Image Include="res\EditorBuildToolBar.bmp" />
+    <Image Include="res\EditorDoc.ico" />
+    <Image Include="res\helpbraw.bmp" />
+    <Image Include="res\idr_proj.ico" />
+    <Image Include="res\ImgView.bmp" />
+    <Image Include="res\proj_ric.bmp" />
+    <Image Include="res\proj_too.bmp" />
+    <Image Include="res\Toolbar.bmp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="Editor.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="res\Editor.rc2" />
+    <None Include="res\web_thin.avi" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="ReadMe.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\WorldEditor\WorldEditor.vcxproj">
+      <Project>{7176B5C2-38B2-4AD3-A540-826D121FF366}</Project>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+    <ProjectReference Include="..\WinControls\WinControls.vcxproj">
+      <Project>{6B9B3CFC-15F0-4017-81B9-470F629BF6DC}</Project>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+    <ProjectReference Include="..\PropertyEditor\PropertyEditor.vcxproj">
+      <Project>{98E3D39D-CE16-43F3-BF06-7A633264A1E8}</Project>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+    <ProjectReference Include="..\EDRscDesc\EDRscDesc.vcxproj">
+      <Project>{2679A684-1DCF-4930-ACB7-207D91F1C671}</Project>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Support\AudioMgr\AudioMgr.vcxproj">
+      <Project>{55221814-70e0-430b-8947-881f19d9ee9f}</Project>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Support\ConversationMgr\ConversationMgr.vcxproj">
+      <Project>{bd7cc635-cfed-4bbc-aa1a-a3fe8bbf00cc}</Project>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Support\EventMgr\EventMgr.vcxproj">
+      <Project>{363b0366-f4a2-4622-8ed8-225d1b5166b7}</Project>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Support\GameLib\Gamelib.vcxproj">
+      <Project>{6aad82b8-a6c4-41e4-ab06-3e5c0e68aafe}</Project>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Support\Music_mgr\Music_mgr.vcxproj">
+      <Project>{0de696a2-85bd-4b78-8dcc-5329b99d5aeb}</Project>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Support\Render\Render.vcxproj">
+      <Project>{15db23d2-38f7-489c-a130-bff6c1bbcc00}</Project>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Support\StringMgr\StringMgr.vcxproj">
+      <Project>{7085c1e2-423d-4d4e-bc7d-1ba4b23f37c6}</Project>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+    <ProjectReference Include="..\..\xCore\Auxiliary\Bitmap\aux_Bitmap.vcxproj">
+      <Project>{9ca26e69-c9c6-433e-80d7-d28ac74c5d85}</Project>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+    <ProjectReference Include="..\..\xCore\Auxiliary\fx_RunTime\fx_RunTime.vcxproj">
+      <Project>{4283cee3-79de-4b21-97c3-d54749ef3907}</Project>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+    <ProjectReference Include="..\..\xCore\Entropy\Entropy.vcxproj">
+      <Project>{a8af0f46-11ed-4d6e-b6d4-96b32f64476a}</Project>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+    <ProjectReference Include="..\..\xCore\Parsing\Parsing.vcxproj">
+      <Project>{bcc5edd0-c48b-4f3a-bfcf-d72a676d0749}</Project>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+    <ProjectReference Include="..\..\xCore\MeshUtil\MeshUtil.vcxproj">
+      <Project>{36FB18DE-FA6A-4093-9BAD-8A025A7F218D}</Project>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+    <ProjectReference Include="..\..\xCore\x_files\x_files.vcxproj">
+      <Project>{a4275571-0365-47b6-8d23-910f33690d4b}</Project>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+  <ProjectExtensions>
+    <VisualStudio>
+      <UserProperties RESOURCE_FILE="Editor.rc" />
+    </VisualStudio>
+  </ProjectExtensions>
+</Project>

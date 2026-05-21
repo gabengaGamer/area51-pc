@@ -16,7 +16,7 @@
 #include "StateMgr/StateMgr.hpp"
 
 #ifdef X_EDITOR
-extern g_EditorBreakpoint;
+extern xbool g_EditorBreakpoint;
 #endif
 
 static const xcolor s_LoadLevelColor   (255,255,255);

@@ -8,8 +8,10 @@
 #include "..\platform_Render.hpp"
 #include "..\ProjTextureMgr.hpp"
 #include "..\..\Decals\DecalMgr.hpp"
+#include "..\..\GameLib\RenderContext.hpp"
 #include "VertexMgr.hpp"
 #include "SoftVertexMgr.hpp"
+#include "ShadowMgr.hpp"
 #include "PostMgr/PostMgr.hpp"
 #include "GBufferMgr.hpp"
 #include "Entropy/D3DEngine/d3deng_rtarget.hpp"
@@ -23,6 +25,38 @@ static const material*         s_pMaterial        = NULL;
 static rigid_geom*             s_pRigidGeom       = NULL;
 static skin_geom*              s_pSkinGeom        = NULL;
 static const xbitmap*          s_pDrawBitmap      = NULL;
+static s32                     s_iRigidSubMesh    = -1;
+static s32                     s_iSkinSubMesh     = -1;
+
+static
+const rtarget* platform_GetFinalColorTarget( void )
+{
+    const rtarget* pFinalColor = g_GBufferMgr.GetGBufferTarget( GBUFFER_FINAL_COLOR );
+    if( pFinalColor )
+        return pFinalColor;
+
+    return rtarget_GetBackBuffer();
+}
+
+//=============================================================================
+
+static
+const rtarget* platform_GetFinalDepthTarget( void )
+{
+    if( g_RenderContext.m_bIsPipRender && g_RenderContext.ArePipTargetsActive() )
+    {
+        pip_render_target_pc* pPipTarget = g_RenderContext.GetActivePipTarget();
+        if( pPipTarget &&
+            pPipTarget->bValid &&
+            pPipTarget->DepthTarget.bIsDepthTarget &&
+            pPipTarget->DepthTarget.pDepthStencilView )
+        {
+            return &pPipTarget->DepthTarget;
+        }
+    }
+
+    return g_GBufferMgr.GetGBufferTarget( GBUFFER_DEPTH );
+}
 
 static
 xbool platform_ApplyGDepthTarget( void )
@@ -30,16 +64,22 @@ xbool platform_ApplyGDepthTarget( void )
     if( !g_GBufferMgr.IsGBufferEnabled() )
         return TRUE;
 
-    const rtarget* pGBufferDepth = g_GBufferMgr.GetGBufferTarget( GBUFFER_DEPTH );
-    const rtarget* pBackBuffer   = rtarget_GetBackBuffer();
+    const rtarget* pGBufferDepth = platform_GetFinalDepthTarget();
+    const rtarget* pFinalColor   = platform_GetFinalColorTarget();
 
-    if( pGBufferDepth && pBackBuffer )
+    if( pGBufferDepth && pFinalColor )
     {
-        return rtarget_SetTargets( pBackBuffer, 1, pGBufferDepth );
+        return rtarget_SetTargets( pFinalColor, 1, pGBufferDepth );
     }
 
     return FALSE;
 }
+
+//=============================================================================
+// Distortion implementation
+//=============================================================================
+
+#include "pc_platform_distortion.inl"
 
 //=============================================================================
 // Implementation
@@ -48,8 +88,10 @@ xbool platform_ApplyGDepthTarget( void )
 static
 void platform_Init( void )
 {
+    platform_InitDefaultDistortionMaterial();
     g_GBufferMgr.Init();
-    g_MaterialMgr.Init();
+    g_GeomMgr.Init();
+    g_ShadowMgr.Init();
     g_PostMgr.Init(); 
     g_RigidVertMgr.Init( sizeof( rigid_geom::vertex_pc ) );
     g_SkinVertMgr.Init();
@@ -61,10 +103,12 @@ void platform_Init( void )
 static
 void platform_Kill( void )
 {
+    platform_ReleaseDistortionScene();
     g_SkinVertMgr.Kill(); 
     g_RigidVertMgr.Kill();
     g_PostMgr.Kill();
-    g_MaterialMgr.Kill();
+    g_ShadowMgr.Kill();
+    g_GeomMgr.Kill();
     g_GBufferMgr.Kill();  
 }
 
@@ -97,37 +141,51 @@ void platform_ActivateMaterial( const material& Material )
 
     s_pMaterial = &Material;
 
-    // Get diffuse texture
-    texture* pDiffuse = Material.m_DiffuseMap.GetPointer();
-    const xbitmap* pDiffuseMap = pDiffuse ? &pDiffuse->m_Bitmap : NULL;
-    
-    // Get detail texture
-    texture* pDetail = Material.m_DetailMap.GetPointer();
-    const xbitmap* pDetailMap = pDetail ? &pDetail->m_Bitmap : NULL;
-    
-    // Get env texture
-    texture* pEnvironment = Material.m_EnvironmentMap.GetPointer();
-    const xbitmap* pEnvironmentMap = pEnvironment ? &pEnvironment->m_Bitmap : NULL;
-
-    // Set primary textures through MaterialMgr
-    g_MaterialMgr.SetBitmap( pDiffuseMap, TEXTURE_SLOT_DIFFUSE );
-    g_MaterialMgr.SetBitmap( pDetailMap, TEXTURE_SLOT_DETAIL  );
-    
-    if( Material.m_Flags & geom::material::FLAG_ENV_CUBE_MAP )
+    if( ((Material.m_Type == Material_Distortion) ||
+         (Material.m_Type == Material_Distortion_PerPolyEnv)) &&
+        s_bInDistortionPass )
     {
-        if( !s_pCurrCubeMap )
-        {
-            x_DebugMsg( "MaterialMgr: WARNING - ENV cube map requested but no cubemap bound\n" );
-            ASSERT( s_pCurrCubeMap );
-        }
-
-        g_MaterialMgr.SetBitmap( NULL, TEXTURE_SLOT_ENVIRONMENT );
-        g_MaterialMgr.SetEnvironmentCubemap( s_pCurrCubeMap );
+        radian3 ZeroRot;
+        ZeroRot.Zero();
+        g_GeomMgr.SetDistortionState( ZeroRot );
+        platform_ActivateDistortionTextureBindings( &Material );
     }
     else
     {
-        g_MaterialMgr.SetEnvironmentCubemap( NULL );
-        g_MaterialMgr.SetBitmap( pEnvironmentMap, TEXTURE_SLOT_ENVIRONMENT );
+        g_GeomMgr.ClearDistortionState();
+
+        // Get diffuse texture
+        texture* pDiffuse = Material.m_DiffuseMap.GetPointer();
+        const xbitmap* pDiffuseMap = pDiffuse ? &pDiffuse->m_Bitmap : NULL;
+
+        // Get detail texture
+        texture* pDetail = Material.m_DetailMap.GetPointer();
+        const xbitmap* pDetailMap = pDetail ? &pDetail->m_Bitmap : NULL;
+
+        // Get env texture
+        texture* pEnvironment = Material.m_EnvironmentMap.GetPointer();
+        const xbitmap* pEnvironmentMap = pEnvironment ? &pEnvironment->m_Bitmap : NULL;
+
+        // Set primary textures through MaterialMgr
+        g_GeomMgr.SetBitmap( pDiffuseMap, TEXTURE_SLOT_DIFFUSE );
+        g_GeomMgr.SetBitmap( pDetailMap, TEXTURE_SLOT_DETAIL  );
+
+        if( Material.m_Flags & geom::material::FLAG_ENV_CUBE_MAP )
+        {
+            if( !s_pCurrCubeMap )
+            {
+                x_DebugMsg( "MaterialMgr: WARNING - ENV cube map requested but no cubemap bound\n" );
+                ASSERT( s_pCurrCubeMap );
+            }
+
+            g_GeomMgr.SetBitmap( NULL, TEXTURE_SLOT_ENVIRONMENT );
+            g_GeomMgr.SetEnvironmentCubemap( s_pCurrCubeMap );
+        }
+        else
+        {
+            g_GeomMgr.SetEnvironmentCubemap( NULL );
+            g_GeomMgr.SetBitmap( pEnvironmentMap, TEXTURE_SLOT_ENVIRONMENT );
+        }
     }
 
     x_catch_display;
@@ -136,27 +194,105 @@ void platform_ActivateMaterial( const material& Material )
 //=============================================================================
 
 static
-void platform_ActivateDistortionMaterial( const material* pMaterial, const radian3& NormalRot )
+void platform_ActivateZPrimeMaterial( void )
 {
-    // TODO:    
-    if( !pMaterial )
-    {    
-        (void)pMaterial;
-        (void)NormalRot;
-    }
-    else
-    {
-        platform_ActivateMaterial( *pMaterial );    
-    }
-    
+    s_pMaterial = NULL;
+    g_GeomMgr.ClearDistortionState();
+    g_GeomMgr.InvalidateCache();
 }
 
 //=============================================================================
 
 static
-void platform_ActivateZPrimeMaterial( void )
+xbool platform_ShouldRenderSceneOnly( const material* pMaterial, u32 RenderFlags, u8 MaterialOverride )
 {
-    // TODO:
+    if( MaterialOverride || s_bInDistortionPass || !pMaterial )
+        return FALSE;
+
+    if( rtarget_GetCurrentCount() <= 1 )
+        return FALSE;
+
+    const u32 FadeMask = (render::FADING_ALPHA | render::INSTFLAG_FADING_ALPHA);
+    if( RenderFlags & FadeMask )
+        return TRUE;
+
+    switch( pMaterial->m_Type )
+    {
+        case Material_Alpha:
+        case Material_Alpha_PerPixelIllum:
+        case Material_Alpha_PerPolyIllum:
+        case Material_Alpha_PerPolyEnv:
+            return TRUE;
+
+        default:
+            return FALSE;
+    }
+}
+
+//=============================================================================
+
+static
+xbool platform_BindSceneOnlyTargets( const material* pMaterial, u32 RenderFlags, u8 MaterialOverride )
+{
+    if( !platform_ShouldRenderSceneOnly( pMaterial, RenderFlags, MaterialOverride ) )
+        return FALSE;
+
+    const rtarget* pFinalColor = platform_GetFinalColorTarget();
+    const rtarget* pDepthTarget = platform_GetFinalDepthTarget();
+    if( !pFinalColor || !pDepthTarget )
+        return FALSE;
+
+    // Transparent/fading geometry should not populate auxiliary GBuffer targets.
+    return rtarget_SetTargets( pFinalColor, 1, pDepthTarget );
+}
+
+//=============================================================================
+
+static
+void platform_RestoreGBufferTargets( xbool bSceneOnlyBound )
+{
+    if( bSceneOnlyBound )
+        g_GBufferMgr.SetGBufferTargets();
+}
+
+//=============================================================================
+
+static
+void platform_FlushRigidBatch( void )
+{
+    if( !g_GeomMgr.HasRigidBatch() )
+    {
+        g_GeomMgr.FlushRigidBatch( s_pMaterial, FALSE );
+        return;
+    }
+
+    const u8 MaterialOverride = s_bInDistortionPass ? FALSE : g_GeomMgr.GetRigidBatchOverrideMat();
+    const xbool bSceneOnlyBound = platform_BindSceneOnlyTargets( s_pMaterial,
+                                                                 g_GeomMgr.GetRigidBatchFlags(),
+                                                                 MaterialOverride );
+
+    g_GeomMgr.FlushRigidBatch( s_pMaterial, MaterialOverride );
+    platform_RestoreGBufferTargets( bSceneOnlyBound );
+}
+
+//=============================================================================
+
+static
+void platform_FlushSkinBatch( void )
+{
+    if( !g_GeomMgr.HasSkinBatch() )
+    {
+        g_GeomMgr.FlushSkinBatch( s_pMaterial, FALSE );
+        return;
+    }
+
+    const u8 MaterialOverride = s_bInDistortionPass ? FALSE : g_GeomMgr.GetSkinBatchOverrideMat();
+    const xbool bSceneOnlyBound = platform_BindSceneOnlyTargets( s_pMaterial,
+                                                                 g_GeomMgr.GetSkinBatchFlags(),
+                                                                 MaterialOverride );
+
+    g_GeomMgr.FlushSkinBatch( s_pMaterial, MaterialOverride );
+    platform_RestoreGBufferTargets( bSceneOnlyBound );
 }
 
 //=============================================================================
@@ -164,11 +300,12 @@ void platform_ActivateZPrimeMaterial( void )
 static
 void platform_BeginRigidGeom( geom* pGeom, s32 iSubMesh )
 {
-    (void)iSubMesh;
     ASSERT( s_pRigidGeom == NULL );
     s_pRigidGeom = (rigid_geom*)pGeom;
+    s_iRigidSubMesh = iSubMesh;
+    g_GeomMgr.BeginRigidBatch();
     g_RigidVertMgr.BeginRender();
-    g_MaterialMgr.InvalidateCache();
+    g_GeomMgr.InvalidateCache();
 }
 
 //=============================================================================
@@ -177,7 +314,9 @@ static
 void platform_EndRigidGeom( void )
 {
     ASSERT( s_pRigidGeom );
+    platform_FlushRigidBatch();
     s_pRigidGeom = NULL;
+    s_iRigidSubMesh = -1;
 }
 
 //=============================================================================
@@ -185,11 +324,12 @@ void platform_EndRigidGeom( void )
 static
 void platform_BeginSkinGeom( geom* pGeom, s32 iSubMesh )
 {
-    (void)iSubMesh;
     ASSERT( s_pSkinGeom == NULL );
     s_pSkinGeom = (skin_geom*)pGeom;
+    s_iSkinSubMesh = iSubMesh;
+    g_GeomMgr.BeginSkinBatch();
     g_SkinVertMgr.BeginRender();
-    g_MaterialMgr.InvalidateCache();
+    g_GeomMgr.InvalidateCache();
 }
 
 //=============================================================================
@@ -198,7 +338,9 @@ static
 void platform_EndSkinGeom( void )
 {
     ASSERT( s_pSkinGeom );
+    platform_FlushSkinBatch();
     s_pSkinGeom = NULL;
+    s_iSkinSubMesh = -1;
 }
 
 //=============================================================================
@@ -206,42 +348,28 @@ void platform_EndSkinGeom( void )
 static
 void platform_RenderRigidInstance( render_instance& Inst )
 {
-    if( !g_pd3dDevice )
+    if( !g_pd3dDevice || !s_pRigidGeom )
         return;
 
-    g_MaterialMgr.SetRigidMaterial(  Inst.Data.Rigid.pL2W,
-                                    &Inst.Data.Rigid.pGeom->m_BBox,
-                                    (d3d_lighting*)Inst.pLighting,
-                                    s_pMaterial,
-                                    Inst.Flags,
-                                    Inst.UOffset,
-                                    Inst.VOffset,
-                                    Inst.Alpha,
-                                    Inst.OverrideMat );
+    ASSERT( s_iRigidSubMesh == Inst.SortKey.GeomSubMesh );
 
-    // TODO: GS: At the moment we use a lightmap every call to platform_RenderRigidInstance. 
-    // In theory, this is not the best solution, should definitely come up with something else
+    desc_rigid_batch Batch;
+    Batch.pGeom        = Inst.Data.Rigid.pGeom;
+    Batch.pL2W         = Inst.Data.Rigid.pL2W;
+    Batch.pLighting    = (const cb_geom_lighting*)Inst.pLighting;
+    Batch.pColorInfo   = (const u32*)Inst.Data.Rigid.pColInfo;
+    Batch.hDList       = Inst.hDList;
+    Batch.iSubMesh     = Inst.SortKey.GeomSubMesh;
+    Batch.RenderFlags  = Inst.Flags;
+    Batch.UOffset      = Inst.UOffset;
+    Batch.VOffset      = Inst.VOffset;
+    Batch.Alpha        = Inst.Alpha;
+    Batch.OverrideMat  = Inst.OverrideMat;
 
-    if( Inst.Data.Rigid.pColInfo )
-    {
-        // Get the geometry to determine vertex count and submesh info
-        rigid_geom* pGeom = Inst.Data.Rigid.pGeom;
-        if( pGeom )
-        {
-            // Get submesh info  
-            geom::submesh& SubMesh = pGeom->m_pSubMesh[Inst.SortKey.GeomSubMesh];
-            rigid_geom::dlist_pc& DList = pGeom->m_System.pPC[SubMesh.iDList];
-            
-            // Apply lightmap colors
-            g_RigidVertMgr.ApplyLightmapColors( Inst.hDList,
-                                                (const u32*)Inst.Data.Rigid.pColInfo,
-                                                DList.nVerts,
-                                                DList.iColor );
-        }
-    }
+    if( !g_GeomMgr.CanAppendRigidBatch( Batch ) )
+        platform_FlushRigidBatch();
 
-    g_RigidVertMgr.DrawDList( Inst.hDList, Inst.Data.Rigid.pL2W, NULL );
-    g_MaterialMgr.ResetProjTextures();    
+    g_GeomMgr.AddRigidBatchInstance( Batch );
 }
 
 //=============================================================================
@@ -249,21 +377,27 @@ void platform_RenderRigidInstance( render_instance& Inst )
 static
 void platform_RenderSkinInstance( render_instance& Inst )
 {
-    if( !g_pd3dDevice )
+    if( !g_pd3dDevice || !s_pSkinGeom )
         return;
 
-    g_MaterialMgr.SetSkinMaterial( &Inst.Data.Skin.pBones[0],
-                                   &Inst.Data.Skin.pGeom->m_BBox,
-                                   (d3d_lighting*)Inst.pLighting,
-                                   s_pMaterial,
-                                   Inst.Flags,
-                                   Inst.UOffset,
-                                   Inst.VOffset,
-                                   Inst.Alpha,
-                                   Inst.OverrideMat );
+    ASSERT( s_iSkinSubMesh == Inst.SortKey.GeomSubMesh );
 
-    g_SkinVertMgr.DrawDList( Inst.hDList, Inst.Data.Skin.pBones, (d3d_lighting*)Inst.pLighting );
-    g_MaterialMgr.ResetProjTextures();
+    desc_skin_batch Batch;
+    Batch.pGeom        = Inst.Data.Skin.pGeom;
+    Batch.pBones       = Inst.Data.Skin.pBones;
+    Batch.pLighting    = (const cb_geom_lighting*)Inst.pLighting;
+    Batch.hDList       = Inst.hDList;
+    Batch.iSubMesh     = Inst.SortKey.GeomSubMesh;
+    Batch.RenderFlags  = Inst.Flags;
+    Batch.UOffset      = Inst.UOffset;
+    Batch.VOffset      = Inst.VOffset;
+    Batch.Alpha        = Inst.Alpha;
+    Batch.OverrideMat  = Inst.OverrideMat;
+
+    if( !g_GeomMgr.CanAppendSkinBatch( Batch ) )
+        platform_FlushSkinBatch();
+
+    g_GeomMgr.AddSkinBatchInstance( Batch );
 }
 
 //=============================================================================
@@ -280,8 +414,41 @@ void platform_RegisterMaterial( material& Mat )
 static
 void platform_RegisterRigidGeom( rigid_geom& Geom )
 {
-    (void)Geom;
-    // TODO:
+    private_geom& PrivateGeom = s_lRegisteredGeoms(Geom.m_hGeom);
+    PrivateGeom.RigidDList.Clear();
+
+    rigid_geom::dlist_pc* pPCDList = Geom.m_System.pPC;
+
+    s32 nVerts = Geom.GetNVerts();
+    rigid_geom::vertex_pc* pBuffer = new rigid_geom::vertex_pc[nVerts];
+    rigid_geom::vertex_pc* pVertex = pBuffer;
+    rigid_geom::vertex_pc* pEnd    = (pVertex + nVerts);
+
+    for ( s32 iSubMesh = 0; iSubMesh < Geom.m_nSubMeshes; iSubMesh++ )
+    {
+        geom::submesh&        GeomSubMesh = Geom.m_pSubMesh[iSubMesh];
+        rigid_geom::dlist_pc& DList       = pPCDList[GeomSubMesh.iDList];
+
+        for ( s32 iVert = 0; iVert < DList.nVerts; iVert++ )
+        {
+            pVertex[iVert].Pos    = DList.pVert[iVert].Pos;
+            pVertex[iVert].UV     = DList.pVert[iVert].UV;
+            pVertex[iVert].Normal = DList.pVert[iVert].Normal;
+            pVertex[iVert].Color  = xcolor( 128, 128, 128, 255 );
+        }
+
+        xhandle& hDList = PrivateGeom.RigidDList.Append();
+        hDList = g_RigidVertMgr.AddDList( pVertex,
+                                          DList.nVerts,
+                                          DList.pIndices,
+                                          DList.nIndices,
+                                          DList.nIndices / 3 );
+
+        pVertex += DList.nVerts;
+    }
+
+    delete []pBuffer;
+    ASSERT( pVertex == pEnd );
 }
 
 //=============================================================================
@@ -289,8 +456,12 @@ void platform_RegisterRigidGeom( rigid_geom& Geom )
 static
 void platform_UnregisterRigidGeom( rigid_geom& Geom )
 {
-    (void)Geom;
-    // TODO:
+    private_geom& PrivateGeom = s_lRegisteredGeoms(Geom.m_hGeom);
+    for ( s32 i = 0; i < PrivateGeom.RigidDList.GetCount(); i++ )
+    {
+        g_RigidVertMgr.DelDList( PrivateGeom.RigidDList[i] );
+    }
+    PrivateGeom.RigidDList.Clear();
 }
 
 //=============================================================================
@@ -367,7 +538,7 @@ void platform_UnregisterSkinGeom( skin_geom& Geom )
 //
 // VERY IMPORTANT NOTE: README README README README!!!!! 
 //
-// NOTE: platform_SetDiffuseMaterial, platform_SetGlowMaterial, platform_SetEnvMapMaterial, platform_SetDistortionMaterial
+// NOTE: platform_SetDiffuseMaterial, platform_SetGlowMaterial, platform_SetEnvMapMaterial
 // Sets ONLY materials for primitives like sprites and decals! This code NOT for models. 
 //
 // TODO: This shit needs to change its functions name a long time ago because it's so fucking confusing.
@@ -431,16 +602,6 @@ void platform_SetEnvMapMaterial( const xbitmap& Bitmap, s32 BlendMode, xbool ZTe
 //=============================================================================
 
 static
-void platform_SetDistortionMaterial( s32 BlendMode, xbool ZTestEnabled )
-{
-    ASSERTS( FALSE, "Not implemented yet!" );
-    (void)BlendMode;
-    (void)ZTestEnabled;
-}
-
-//=============================================================================
-
-static
 void platform_StartRawDataMode( void )
 {
     // TODO:
@@ -494,7 +655,7 @@ void platform_RenderRawStrips( s32               nVerts,
 
         // Intensity decals ignore vertex color and always render white
         const xcolor White( 255, 255, 255, 255 );
-        if( s_DrawFlags == render::BLEND_MODE_INTENSITY )
+        if( s_DrawFlags & DRAW_BLEND_INTENSITY )
         {
             draw_Color( White ); draw_UV( UV0 ); draw_Vertex( Pos0 );
             draw_Color( White ); draw_UV( UV1 ); draw_Vertex( Pos1 );
@@ -780,7 +941,8 @@ void* platform_CalculateRigidLighting( const matrix4&   L2W,
     if( NLights )
     {
         // Try allocate
-        d3d_lighting* pLighting = (d3d_lighting*)smem_BufferAlloc( sizeof(d3d_lighting) );
+        cb_geom_lighting* pLighting = (cb_geom_lighting*)smem_BufferAlloc( sizeof(cb_geom_lighting) );
+        x_memset( pLighting, 0, sizeof(cb_geom_lighting) );
         pLighting->LightCount = NLights;
       
         for( s32 i = 0; i < NLights; i++ )
@@ -788,8 +950,28 @@ void* platform_CalculateRigidLighting( const matrix4&   L2W,
             vector3 Pos;
             f32     Radius;
             xcolor  Col;
+            f32     Falloff;
+            s32     Shape;
+            vector3 Direction;
+            f32     InnerAngle;
+            f32     OuterAngle;
+            s32     CookieIndex;
+            vector3 CookieU;
+            vector3 CookieV;
             
-            g_LightMgr.GetCollectedLight( i, Pos, Radius, Col );
+            g_LightMgr.GetCollectedLightInfo( i,
+                                             Pos,
+                                             Radius,
+                                             Col,
+                                             Falloff,
+                                             Shape,
+                                             Direction,
+                                             InnerAngle,
+                                             OuterAngle );
+            g_LightMgr.GetCollectedLightCookie( i,
+                                                CookieIndex,
+                                                CookieU,
+                                                CookieV );
             
             // Setup rigid lights
             pLighting->LightVec[i].Set( Pos.GetX(),
@@ -800,7 +982,26 @@ void* platform_CalculateRigidLighting( const matrix4&   L2W,
             pLighting->LightCol[i].Set( (f32)Col.R / 255.0f,
                                         (f32)Col.G / 255.0f,
                                         (f32)Col.B / 255.0f,
-                                        1.0f );
+                                        Falloff );
+
+            pLighting->LightDir[i].Set( Direction.GetX(),
+                                        Direction.GetY(),
+                                        Direction.GetZ(),
+                                        (Shape == light_mgr::LIGHT_SHAPE_SPOT) ? 1.0f : 0.0f );
+
+            pLighting->LightCone[i].Set( x_cos( DEG_TO_RAD( InnerAngle ) * 0.5f ),
+                                         x_cos( DEG_TO_RAD( OuterAngle ) * 0.5f ),
+                                         0.0f,
+                                         0.0f );
+
+            pLighting->LightCookieU[i].Set( CookieU.GetX(),
+                                            CookieU.GetY(),
+                                            CookieU.GetZ(),
+                                            (CookieIndex >= 0) ? (f32)(CookieIndex + 1) : 0.0f );
+            pLighting->LightCookieV[i].Set( CookieV.GetX(),
+                                            CookieV.GetY(),
+                                            CookieV.GetZ(),
+                                            0.0f );
         }
         
         pResult = pLighting;
@@ -822,42 +1023,105 @@ void* platform_CalculateSkinLighting( u32            Flags,
     CONTEXT( "platform_CalculateSkinLighting" );
     
     void* pResult = NULL;
-    
-    // Grab lights
-    s32 NLights = g_LightMgr.CollectCharLights( L2W, BBox, MAX_GEOM_LIGHTS );
+    bbox WorldBBox = BBox;
+    WorldBBox.Transform( L2W );
     
     // Try allocate
-    d3d_lighting* pLighting = (d3d_lighting*)smem_BufferAlloc( sizeof(d3d_lighting) );
+    cb_geom_lighting* pLighting = (cb_geom_lighting*)smem_BufferAlloc( sizeof(cb_geom_lighting) );
+    x_memset( pLighting, 0, sizeof(cb_geom_lighting) );
     
     // Setup ambient
     pLighting->AmbCol.Set( (f32)Ambient.R / 255.0f,
                            (f32)Ambient.G / 255.0f,
                            (f32)Ambient.B / 255.0f,
                            1.0f );
-    
-    pLighting->LightCount = NLights;
-    
-    if( NLights )
+
+    s32 NSceneLights = g_LightMgr.CollectLights( WorldBBox, MAX_GEOM_LIGHTS );
+    s32 LightIndex   = 0;
+
+    for( s32 i = 0; ( i < NSceneLights ) && ( LightIndex < MAX_GEOM_LIGHTS ); i++, LightIndex++ )
     {
-        for( s32 i = 0; i < NLights; i++ )
-        {
-            vector3 Dir;
-            xcolor  Col;
-            
-            g_LightMgr.GetCollectedCharLight( i, Dir, Col );
-            
-            // Setup skin lights
-            pLighting->LightVec[i].Set( Dir.GetX(),
-                                        Dir.GetY(),
-                                        Dir.GetZ(),
-                                        0.0f );
-            
-            pLighting->LightCol[i].Set( (f32)Col.R / 255.0f,
-                                        (f32)Col.G / 255.0f,
-                                        (f32)Col.B / 255.0f,
-                                        (f32)Col.A / 255.0f );
-        }
+        vector3 Pos;
+        f32     Radius;
+        xcolor  Col;
+        f32     Falloff;
+        s32     Shape;
+        vector3 Direction;
+        f32     InnerAngle;
+        f32     OuterAngle;
+        s32     CookieIndex;
+        vector3 CookieU;
+        vector3 CookieV;
+
+        g_LightMgr.GetCollectedLightInfo( i,
+                                          Pos,
+                                          Radius,
+                                          Col,
+                                          Falloff,
+                                          Shape,
+                                          Direction,
+                                          InnerAngle,
+                                          OuterAngle );
+        g_LightMgr.GetCollectedLightCookie( i,
+                                            CookieIndex,
+                                            CookieU,
+                                            CookieV );
+
+        pLighting->LightVec[LightIndex].Set( Pos.GetX(),
+                                             Pos.GetY(),
+                                             Pos.GetZ(),
+                                             Radius );
+
+        pLighting->LightCol[LightIndex].Set( (f32)Col.R / 255.0f,
+                                             (f32)Col.G / 255.0f,
+                                             (f32)Col.B / 255.0f,
+                                             Falloff );
+
+        pLighting->LightDir[LightIndex].Set( Direction.GetX(),
+                                             Direction.GetY(),
+                                             Direction.GetZ(),
+                                             (Shape == light_mgr::LIGHT_SHAPE_SPOT) ? 1.0f : 0.0f );
+
+        pLighting->LightCone[LightIndex].Set( x_cos( DEG_TO_RAD( InnerAngle ) * 0.5f ),
+                                              x_cos( DEG_TO_RAD( OuterAngle ) * 0.5f ),
+                                              0.0f,
+                                              0.0f );
+
+        pLighting->LightCookieU[LightIndex].Set( CookieU.GetX(),
+                                                 CookieU.GetY(),
+                                                 CookieU.GetZ(),
+                                                 (CookieIndex >= 0) ? (f32)(CookieIndex + 1) : 0.0f );
+        pLighting->LightCookieV[LightIndex].Set( CookieV.GetX(),
+                                                 CookieV.GetY(),
+                                                 CookieV.GetZ(),
+                                                 0.0f );
     }
+
+    s32 NCharLights = g_LightMgr.CollectCharLightsOnly( L2W, BBox, MAX_GEOM_LIGHTS );
+    for( s32 i = 0; ( i < NCharLights ) && ( LightIndex < MAX_GEOM_LIGHTS ); i++, LightIndex++ )
+    {
+        vector3 Dir;
+        xcolor  Col;
+
+        g_LightMgr.GetCollectedCharLight( i, Dir, Col );
+
+        pLighting->LightVec[LightIndex].Set( Dir.GetX(),
+                                             Dir.GetY(),
+                                             Dir.GetZ(),
+                                             0.0f );
+
+        pLighting->LightCol[LightIndex].Set( (f32)Col.R / 255.0f,
+                                             (f32)Col.G / 255.0f,
+                                             (f32)Col.B / 255.0f,
+                                             0.0f );
+
+        pLighting->LightDir[LightIndex].Set( 0.0f,
+                                             0.0f,
+                                             0.0f,
+                                             2.0f );
+    }
+
+    pLighting->LightCount = LightIndex;
     
     pResult = pLighting;
     
@@ -872,10 +1136,27 @@ void* platform_CalculateSkinLighting( u32            Flags,
 #ifdef X_EDITOR
 
 static
+xhandle pc_GetRigidDList( render::hgeom_inst hInst, s32 iSubMesh )
+{
+    ASSERT( hInst.IsNonNull() );
+
+    private_instance& PrivateInst = s_lRegisteredInst(hInst);
+    rigid_geom*       pGeom       = (rigid_geom*)PrivateInst.pGeom;
+    ASSERT( PrivateInst.Type == TYPE_RIGID );
+    ASSERT( (iSubMesh >= 0) && (iSubMesh < pGeom->m_nSubMeshes) );
+
+    geom::submesh& SubMesh     = pGeom->m_pSubMesh[iSubMesh];
+    private_geom&  PrivateGeom = s_lRegisteredGeoms(pGeom->m_hGeom);
+    return PrivateGeom.RigidDList[(s32)SubMesh.iDList];
+}
+
+//=============================================================================
+
+static
 void* platform_LockRigidDListVertex( render::hgeom_inst hInst, s32 iSubMesh )
 {
     xhandle Handle = pc_GetRigidDList( hInst, iSubMesh );
-    return s_RigidVertMgr.LockDListVerts( Handle );
+    return g_RigidVertMgr.LockDListVerts( Handle );
 }
 
 //=============================================================================
@@ -884,7 +1165,7 @@ static
 void platform_UnlockRigidDListVertex( render::hgeom_inst hInst, s32 iSubMesh )
 {
     xhandle Handle = pc_GetRigidDList( hInst, iSubMesh );
-    s_RigidVertMgr.UnlockDListVerts( Handle );
+    g_RigidVertMgr.UnlockDListVerts( Handle );
 }
 
 //=============================================================================
@@ -893,7 +1174,7 @@ static
 void* platform_LockRigidDListIndex( render::hgeom_inst hInst, s32 iSubMesh,  s32& VertexOffset )
 {
     xhandle Handle = pc_GetRigidDList( hInst, iSubMesh );
-    return s_RigidVertMgr.LockDListIndices( Handle, VertexOffset );
+    return g_RigidVertMgr.LockDListIndices( Handle, VertexOffset );
 }
 
 //=============================================================================
@@ -902,7 +1183,7 @@ static
 void platform_UnlockRigidDListIndex( render::hgeom_inst hInst, s32 iSubMesh )
 {
     xhandle Handle = pc_GetRigidDList( hInst, iSubMesh );
-    s_RigidVertMgr.UnlockDListIndices( Handle );
+    g_RigidVertMgr.UnlockDListIndices( Handle );
 }
 
 #endif
@@ -998,7 +1279,7 @@ void platform_SetShadowProjectionMatrix( s32 Index, const matrix4& Matrix )
 static
 void platform_SetCustomFogPalette( const texture::handle& Texture, xbool ImmediateSwitch, s32 PaletteIndex )
 {
-    //g_PostMgr.SetCustomFogPalette( Texture, ImmediateSwitch, PaletteIndex );
+    g_PostMgr.SetCustomFogPalette( Texture, ImmediateSwitch, PaletteIndex );
 }
 
 //=============================================================================
@@ -1022,9 +1303,7 @@ void platform_BeginPostEffects( void )
 static
 void platform_AddScreenWarp( const vector3& WorldPos, f32 Radius, f32 WarpAmount )
 {
-    (void)WorldPos;
-    (void)Radius;
-    (void)WarpAmount;
+    g_PostMgr.AddScreenWarp( WorldPos, Radius, WarpAmount );
 }
 
 //=============================================================================
@@ -1129,7 +1408,7 @@ void platform_EndPostEffects( void )
 static
 void platform_BeginShadowShaders( void )
 {
-    // TODO:
+    g_ShadowMgr.BeginShadowShaders();
 }
 
 //=============================================================================
@@ -1137,7 +1416,7 @@ void platform_BeginShadowShaders( void )
 static
 void platform_EndShadowShaders( void )
 {
-    // TODO:
+    g_ShadowMgr.EndShadowShaders();
 }
 
 //=============================================================================
@@ -1145,7 +1424,7 @@ void platform_EndShadowShaders( void )
 static
 void platform_StartShadowCast( void )
 {
-    // TODO:
+    g_ShadowMgr.BeginCastPass();
 }
 
 //=============================================================================
@@ -1153,7 +1432,7 @@ void platform_StartShadowCast( void )
 static
 void platform_EndShadowCast( void )
 {
-    // TODO:
+    g_ShadowMgr.EndCastPass();
 }
 
 //=============================================================================
@@ -1161,7 +1440,6 @@ void platform_EndShadowCast( void )
 static
 void platform_StartShadowReceive( void )
 {
-    // TODO:
 }
 
 //=============================================================================
@@ -1169,40 +1447,62 @@ void platform_StartShadowReceive( void )
 static
 void platform_EndShadowReceive( void )
 {
-    // TODO:
 }
 
 //=============================================================================
 
 static
-void platform_ClearShadowProjectorList( void )
+void platform_ClearShadowSourceList( void )
 {
-    // TODO:
+    g_ShadowMapMgr.ClearSources();
 }
 
 //=============================================================================
 
 static
-void platform_AddPointShadowProjection( const matrix4& L2W, radian FOV, f32 NearZ, f32 FarZ )
+void platform_FinalizeShadowSourceList( void )
 {
-    (void)L2W;
-    (void)FOV;
-    (void)NearZ;
-    (void)FarZ;
-    // TODO:
+    g_ShadowMapMgr.FinalizeSources();
 }
 
 //=============================================================================
 
 static
-void platform_AddDirShadowProjection( const matrix4& L2W, f32 Width, f32 Height, f32 NearZ, f32 FarZ )
+void platform_AddPointShadowMapSource( const matrix4& L2W,
+                                       radian         FOV,
+                                       f32            LightRadius,
+                                       f32            LightFalloff,
+                                       s32            ShadowMapResolution,
+                                       s32            ShadowPriority,
+                                       f32            ShadowScore )
 {
-    (void)L2W;
-    (void)Width;
-    (void)Height;
-    (void)NearZ;
-    (void)FarZ;
-    // TODO:
+    g_ShadowMapMgr.AddPointSource( L2W,
+                                   FOV,
+                                   LightRadius,
+                                   LightFalloff,
+                                   ShadowMapResolution,
+                                   ShadowPriority,
+                                   ShadowScore );
+}
+
+//=============================================================================
+
+static
+void platform_AddSpotShadowMapSource( const matrix4& L2W,
+                                      radian         FOV,
+                                      f32            LightRadius,
+                                      f32            LightFalloff,
+                                      s32            ShadowMapResolution,
+                                      s32            ShadowPriority,
+                                      f32            ShadowScore )
+{
+    g_ShadowMapMgr.AddSpotSource( L2W,
+                                  FOV,
+                                  LightRadius,
+                                  LightFalloff,
+                                  ShadowMapResolution,
+                                  ShadowPriority,
+                                  ShadowScore );
 }
 
 //=============================================================================
@@ -1212,7 +1512,30 @@ void platform_BeginShadowCastRigid( geom* pGeom, s32 iSubMesh )
 {
     (void)pGeom;
     (void)iSubMesh;
-    // TODO:
+}
+
+//=============================================================================
+
+static
+const material* platform_GetShadowCastMaterial( const render_instance& Inst )
+{
+    const geom* pGeom = ( Inst.ShadSortKey.GeomType == 0 ) ?
+                        (const geom*)Inst.Data.Rigid.pGeom :
+                        (const geom*)Inst.Data.Skin.pGeom;
+    if( !pGeom )
+        return NULL;
+
+    const s32 iSubMesh = Inst.ShadSortKey.GeomSubMesh;
+    if( (iSubMesh < 0) || (iSubMesh >= pGeom->m_nSubMeshes) )
+        return NULL;
+
+    const geom::submesh&  SubMesh = pGeom->m_pSubMesh[iSubMesh];
+    const geom::material& GeomMat = pGeom->m_pMaterial[SubMesh.iMaterial];
+    const xhandle         hMat    = pGeom->m_pVirtualMaterials[GeomMat.iVirtualMat].MatHandle;
+    if( (hMat < 0) || (hMat >= kMaxRegisteredMaterials) )
+        return NULL;
+
+    return &s_lRegisteredMaterials(hMat);
 }
 
 //=============================================================================
@@ -1220,8 +1543,12 @@ void platform_BeginShadowCastRigid( geom* pGeom, s32 iSubMesh )
 static
 void platform_RenderShadowCastRigid( render_instance& Inst )
 {
-    (void)Inst;
-    // TODO:
+    g_ShadowMgr.RenderRigidCaster( Inst.hDList,
+                                   Inst.Data.Rigid.pL2W,
+                                   platform_GetShadowCastMaterial( Inst ),
+                                   Inst.UOffset,
+                                   Inst.VOffset,
+                                   Inst.ShadSortKey.ShadowSourceIndex );
 }
 
 //=============================================================================
@@ -1229,7 +1556,6 @@ void platform_RenderShadowCastRigid( render_instance& Inst )
 static
 void platform_EndShadowCastRigid( void )
 {
-    // TODO:
 }
 
 //=============================================================================
@@ -1239,17 +1565,19 @@ void platform_BeginShadowCastSkin( geom* pGeom, s32 iSubMesh )
 {
     (void)pGeom;
     (void)iSubMesh;
-    // TODO:
 }
 
 //=============================================================================
 
 static
-void platform_RenderShadowCastSkin( render_instance& Inst, s32 iProj )
+void platform_RenderShadowCastSkin( render_instance& Inst, s32 iShadowSource )
 {
-    (void)Inst;
-    (void)iProj;
-    // TODO:
+    g_ShadowMgr.RenderSkinCaster( Inst.hDList, 
+                                  Inst.Data.Skin.pBones, 
+                                  platform_GetShadowCastMaterial( Inst ),
+                                  Inst.UOffset,
+                                  Inst.VOffset,
+                                  iShadowSource );
 }
 
 //=============================================================================
@@ -1257,7 +1585,6 @@ void platform_RenderShadowCastSkin( render_instance& Inst, s32 iProj )
 static
 void platform_EndShadowCastSkin( void )
 {
-    // TODO:
 }
 
 //=============================================================================
@@ -1267,17 +1594,15 @@ void platform_BeginShadowReceiveRigid( geom* pGeom, s32 iSubMesh )
 {
     (void)pGeom;
     (void)iSubMesh;
-    // TODO:
 }
 
 //=============================================================================
 
 static
-void platform_RenderShadowReceiveRigid( render_instance& Inst, s32 iProj )
+void platform_RenderShadowReceiveRigid( render_instance& Inst, s32 iShadowSource )
 {
     (void)Inst;
-    (void)iProj;
-    // TODO:
+    (void)iShadowSource;
 }
 
 //=============================================================================
@@ -1285,7 +1610,6 @@ void platform_RenderShadowReceiveRigid( render_instance& Inst, s32 iProj )
 static
 void platform_EndShadowReceiveRigid( void )
 {
-    // TODO:
 }
 
 //=============================================================================
@@ -1295,7 +1619,6 @@ void platform_BeginShadowReceiveSkin( geom* pGeom, s32 iSubMesh )
 {
     (void)pGeom;
     (void)iSubMesh;
-    // TODO:
 }
 
 //=============================================================================
@@ -1304,29 +1627,12 @@ static
 void platform_RenderShadowReceiveSkin( render_instance& Inst )
 {
     (void)Inst;
-    // TODO:
 }
 
 //=============================================================================
 
 static
 void platform_EndShadowReceiveSkin( void )
-{
-    // TODO:
-}
-
-//=============================================================================
-
-static
-void platform_BeginDistortion( void )
-{
-    // TODO:
-}
-
-//=============================================================================
-
-static
-void platform_EndDistortion( void )
 {
 }
 
@@ -1360,7 +1666,7 @@ void platform_BeginNormalRender( void )
 static
 void platform_EndNormalRender( void )
 {
-    g_GBufferMgr.SetBackBufferTarget();
+    g_GBufferMgr.SetFinalColorTarget();
 }
 
 //=============================================================================
@@ -1368,53 +1674,8 @@ void platform_EndNormalRender( void )
 static
 void platform_RegisterRigidInstance( rigid_geom& Geom, render::hgeom_inst hInst )
 {
-    private_instance& PrivateInst = s_lRegisteredInst(hInst);
-    PrivateInst.RigidDList.Clear();
-    PrivateInst.IsLit = FALSE;
-
-    // Copy the instance over (the pc renderer isn't really instance based, so
-    // we need to make a copy of the verts)
-    rigid_geom::dlist_pc* pPCDList = Geom.m_System.pPC;
-
-    // Allocate work memory and setup pointers for the copy loop
-    s32 nVerts = Geom.GetNVerts();
-    rigid_geom::vertex_pc* pBuffer = new rigid_geom::vertex_pc[nVerts];
-    rigid_geom::vertex_pc* pVertex = pBuffer;
-    rigid_geom::vertex_pc* pEnd    = (pVertex + nVerts);
-
-    // Loop through all SubMeshs
-    for ( s32 iSubMesh = 0; iSubMesh < Geom.m_nSubMeshes; iSubMesh++ )
-    {
-        // Get the DList for this submesh
-        geom::submesh&        GeomSubMesh = Geom.m_pSubMesh[iSubMesh];
-        rigid_geom::dlist_pc& DList       = pPCDList[GeomSubMesh.iDList];
-
-        // Copy vertex data
-        for ( s32 iVert = 0; iVert < DList.nVerts; iVert++ )
-        {
-            pVertex[iVert].Pos    = DList.pVert[iVert].Pos;
-            pVertex[iVert].UV     = DList.pVert[iVert].UV;
-            pVertex[iVert].Normal = DList.pVert[iVert].Normal;
-            pVertex[iVert].Color  = xcolor( 128, 128, 128, 255 );
-        }
-
-        // create a new handle in the private instance
-        xhandle& hDList = PrivateInst.RigidDList.Append();
-
-        // create the dlist and store the handle out
-        hDList = g_RigidVertMgr.AddDList( pVertex,
-                                          DList.nVerts,
-                                          DList.pIndices,
-                                          DList.nIndices,
-                                          DList.nIndices/3 );
-
-        // advance the ptr
-        pVertex += DList.nVerts;
-    }
-
-    // Free the work memory
-    delete []pBuffer;
-    ASSERT( pVertex == pEnd );
+    (void)Geom;
+    (void)hInst;
 }
 
 //=============================================================================
@@ -1424,7 +1685,6 @@ void platform_RegisterSkinInstance( skin_geom& Geom, render::hgeom_inst hInst )
 {
     (void)Geom;
     (void)hInst;
-    // TODO:
 }
 
 //=============================================================================
@@ -1432,12 +1692,7 @@ void platform_RegisterSkinInstance( skin_geom& Geom, render::hgeom_inst hInst )
 static
 void platform_UnregisterRigidInstance( render::hgeom_inst hInst )
 {
-    private_instance& PrivateInst = s_lRegisteredInst(hInst);
-    for ( s32 i = 0; i < PrivateInst.RigidDList.GetCount(); i++ )
-    {
-        g_RigidVertMgr.DelDList( PrivateInst.RigidDList[i] );
-    }
-    PrivateInst.RigidDList.Clear();
+    (void)hInst;
 }
 
 //=============================================================================
@@ -1446,5 +1701,4 @@ static
 void platform_UnregisterSkinInstance( render::hgeom_inst hInst )
 {
     (void)hInst;
-    // TODO:
 }

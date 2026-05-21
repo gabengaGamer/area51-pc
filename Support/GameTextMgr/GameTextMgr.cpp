@@ -29,11 +29,7 @@ void game_text_mgr::DisplayMessage( const char* pTableName, const char* pTitleSt
     (void)pTableName;
     (void)pTitleString;
 
-    if( g_ConverseMgr.IsActive( m_Message.SoundID ) )
-    {
-        g_ConverseMgr.Stop( m_Message.SoundID );
-        m_Message.SoundID = 0;
-    }
+    Reset();
 
     m_Message.pMainString       = (xwchar*)g_StringTableMgr( pTableName, pTitleString );
     m_Message.pSubTitleString   = (xwchar*)g_StringTableMgr.GetSubTitleSpeaker( pTableName, pTitleString );
@@ -90,6 +86,32 @@ void game_text_mgr::Init( void )
     m_Message.SoundID           = 0;
     m_Message.Guid              = 0;
     m_Message.State             = 0;
+    m_Flags                     = 0;
+}
+
+//=========================================================================
+
+void game_text_mgr::Reset( void )
+{
+    if( m_Message.SoundID )
+    {
+        if( g_ConverseMgr.IsActive( m_Message.SoundID ) )
+            g_ConverseMgr.Stop( m_Message.SoundID );
+
+        m_Message.SoundID = 0;
+    }
+
+    if( m_Message.Guid )
+    {
+        g_ObjMgr.DestroyObject( m_Message.Guid );
+        m_Message.Guid = 0;
+    }
+
+    m_Message.pMainString       = NULL;
+    m_Message.pSoundDescString  = NULL;
+    m_Message.pSubTitleString   = NULL;
+    m_Message.State             = 0;
+    m_Flags                     = 0;
 }
 
 //=========================================================================
@@ -126,10 +148,7 @@ void game_text_mgr::Update( f32 DeltaTime )
             // If the sound is dead, destory the object.  If its still active update its position to the player position.
             if( g_ConverseMgr.IsActive( m_Message.SoundID ) == FALSE )
             {
-                g_ObjMgr.DestroyObject( m_Message.Guid );
-                m_Message.Guid  = 0;
-                m_Message.State = 0;
-                m_Message.State |= AUDIO_FINISHED;
+                Reset();
             }
             else
             {
@@ -150,6 +169,7 @@ void game_text_mgr::Update( f32 DeltaTime )
 
 void game_text_mgr::Kill( void )
 {
+    Reset();
 }
         
 //=========================================================================

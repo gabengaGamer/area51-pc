@@ -7,8 +7,6 @@
 // PaletteView.h : header file
 //
 
-#include "..\WinControls\XTDialogToolBar.h"
-
 /////////////////////////////////////////////////////////////////////////////
 // CPaletteView view
 
@@ -51,7 +49,7 @@ protected:
 
     int m_ToolbarResourceId;    //0 for none
     BOOL m_bActive;
-    CXTDialogToolBar m_wndToolBar;
+    CToolBar m_wndToolBar;
 };
 
 /////////////////////////////////////////////////////////////////////////////

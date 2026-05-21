@@ -88,6 +88,32 @@ BOOL EDRscDesc_Frame::PreCreateWindow(CREATESTRUCT& cs)
 
 //=========================================================================
 
+void EDRscDesc_Frame::DockControlBarLeftOf( CControlBar* pBar, CControlBar* pLeftOf )
+{
+    ASSERT( pBar );
+    ASSERT( pLeftOf );
+
+    CRect Rect;
+    DWORD dw = pLeftOf->GetBarStyle();
+    UINT  nDockBarID = 0;
+
+    RecalcLayout();
+    pLeftOf->GetWindowRect( &Rect );
+    Rect.OffsetRect( 1, 0 );
+
+    if( dw & CBRS_ALIGN_TOP )       nDockBarID = AFX_IDW_DOCKBAR_TOP;
+    else if( dw & CBRS_ALIGN_BOTTOM ) nDockBarID = AFX_IDW_DOCKBAR_BOTTOM;
+    else if( dw & CBRS_ALIGN_LEFT )   nDockBarID = AFX_IDW_DOCKBAR_LEFT;
+    else if( dw & CBRS_ALIGN_RIGHT )  nDockBarID = AFX_IDW_DOCKBAR_RIGHT;
+
+    if( nDockBarID != 0 )
+    {
+        DockControlBar( pBar, nDockBarID, &Rect );
+    }
+}
+
+//=========================================================================
+
 void EDRscDesc_Frame::ActivateFrame(int nCmdShow)
 {
     nCmdShow = SW_SHOWMAXIMIZED;
@@ -116,7 +142,7 @@ int EDRscDesc_Frame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 
 	// Create the property bar.
 	if( !m_TabCtrl.Create(this, IDR_RSC_DESC_PROPERTY_TAB, _T("Properties"),
-		CSize(350, 150), CBRS_LEFT, CBRS_XT_BUTTONS | CBRS_XT_GRIPPER | CBRS_XT_CLIENT_STATIC)) //(AFX_IDW_TOOLBAR + 6) ))
+		CSize(350, 150), CBRS_LEFT, CBRS_TOOLTIPS | CBRS_FLYBY))
 	{
 		TRACE0("Failed to create property dock window\n");
 		return -1;		// fail to create
@@ -144,10 +170,10 @@ int EDRscDesc_Frame::OnCreate(LPCREATESTRUCT lpCreateStruct)
     m_EditToolBar.SetWindowText( "Edit" );
 //    m_EditToolBar.SetCustomBar(TRUE);
 
-    m_TabCtrl.EnableDockingEx(CBRS_ALIGN_ANY, CBRS_XT_ALL_FLAT|CBRS_XT_GRIPPER_GRAD);
-    m_BuildToolBar.EnableDockingEx(CBRS_ALIGN_ANY, CBRS_XT_ALL_FLAT);
-    m_EditToolBar.EnableDockingEx(CBRS_ALIGN_ANY, CBRS_XT_ALL_FLAT);
-    EnableDockingEx(CBRS_ALIGN_ANY, CBRS_XT_ALL_FLAT);
+    m_TabCtrl.EnableDocking(CBRS_ALIGN_ANY);
+    m_BuildToolBar.EnableDocking(CBRS_ALIGN_ANY);
+    m_EditToolBar.EnableDocking(CBRS_ALIGN_ANY);
+    EnableDocking(CBRS_ALIGN_ANY);
 
     DockControlBar(&m_TabCtrl,AFX_IDW_DOCKBAR_LEFT);
     DockControlBar(&m_BuildToolBar );
@@ -166,8 +192,6 @@ int EDRscDesc_Frame::OnCreate(LPCREATESTRUCT lpCreateStruct)
         RUNTIME_CLASS(CFrameWnd), RUNTIME_CLASS(CPropertyEditorView), m_pPropEditor);
     m_TabCtrl.AddControl(_T("Properties"), pFrameWnd);
     m_pPropEditor->GetView()->LoadColumnState( "BarState - Resource Project" );
-
-    m_TabCtrl.ModifyXTBarStyle(CBRS_XT_CLOSEBTN, 0);
 
     // Restore control bar postion.
     LoadBarState(_T("BarState - EdRscDesc"));
@@ -194,7 +218,7 @@ void EDRscDesc_Frame::OnRscAddResDesc()
 	CPoint pt;
     RECT   Rect;
 
-    s32 iItem = m_BuildToolBar.GetHotItem();
+    s32 iItem = m_BuildToolBar.GetToolBarCtrl().GetHotItem();
     m_BuildToolBar.GetItemRect( iItem, &Rect );
 
     pt.y = Rect.bottom-8;
@@ -202,7 +226,7 @@ void EDRscDesc_Frame::OnRscAddResDesc()
     m_BuildToolBar.ClientToScreen( &pt );
 
 
-    CXTMenu MainTPMMenu;
+    CMenu MainTPMMenu;
 
     MainTPMMenu.CreatePopupMenu();
 
@@ -513,4 +537,3 @@ void EDRscDesc_Frame::UpdateButtons( void )
 }
 
 //=========================================================================
-

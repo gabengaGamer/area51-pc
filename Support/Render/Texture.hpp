@@ -1,3 +1,9 @@
+//=========================================================================
+//  
+//  Texture.hpp  
+//
+//=========================================================================
+
 #ifndef TEXTURE_HPP
 #define TEXTURE_HPP
 
@@ -8,10 +14,6 @@
 #include "..\ResourceMgr\ResourceMgr.hpp"
 #include "x_files.hpp"
 #include "x_bitmap.hpp"
-
-#ifdef TARGET_XBOX
-#include "Entropy\Xbox\TextureMgr.hpp"
-#endif
 
 //=========================================================================
 // CLASS
@@ -51,11 +53,7 @@ public:
 
     typedef rhandle<cubemap> handle;
 
-#ifdef TARGET_XBOX
-    texture_factory::cube_handle m_hTexture;
-#else
     void* m_hTexture;
-#endif
 
     xbitmap m_Bitmap[6];
 
@@ -63,7 +61,6 @@ public:
 };
 
 //=========================================================================
-// END
-//=========================================================================
 #endif
+//=========================================================================
 

@@ -28,6 +28,9 @@ public:
             void        OnAdvanceLogic      ( f32 DeltaTime );
             u8          GetAlpha            ( void ) const              { return m_Alpha; }
     virtual void        LoadColorTable      ( const char* pFileName )   { (void)pFileName; }
+    virtual void        RenderShadowCast    ( const matrix4* pL2W,
+                                              u32            Flags,
+                                              u64            ProjMask )  { (void)pL2W; (void)Flags; (void)ProjMask; }
     virtual geom*       GetGeom             ( void ) const = 0;
     virtual const char* GetGeomName         ( void ) const { return ""; }
 

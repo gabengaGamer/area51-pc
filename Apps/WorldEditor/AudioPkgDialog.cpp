@@ -6,7 +6,7 @@
 #include "AudioPkgDialog.h"
 #include "..\EDRscDesc\RscDesc.hpp"
 #include "..\WinControls\FileSearch.h"
-#include "..\AudioEditor\AudioEditor.hpp"
+//#include "..\AudioEditor\AudioEditor.hpp"
 #include "..\Editor\Project.hpp"
 #include "..\..\Support\AudioMgr\AudioMgr.hpp"
 #include ".\audiopkgdialog.h"

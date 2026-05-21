@@ -392,6 +392,8 @@ void d3deng_ReleaseSwapChain( void )
 static
 void d3deng_ReleaseDevice( void )
 {
+    shader_FlushCache();
+
     if( g_pd3dContext != NULL )
     {
         g_pd3dContext->Release();
@@ -459,6 +461,7 @@ xbool d3deng_CreateD3DDevice( void )
     }
 
     x_DebugMsg( "Engine: D3D11 device created successfully\n" );
+    shader_FlushCache();
     return TRUE;
 }
 
@@ -961,6 +964,11 @@ xbool eng_Begin( const char* pTaskName )
 
     if( s.FrameCleared == FALSE )
     {
+        // Preserve any offscreen target that was bound before the first eng_Begin of the frame
+        xbool bTargetsPushed = FALSE;
+        if( rtarget_GetCurrentCount() )
+            bTargetsPushed = rtarget_PushTargets();
+
         // Use rtarget system for clearing and setting targets		
         f32 clearColor[4];
         d3deng_GetClearColor( clearColor );
@@ -969,6 +977,9 @@ xbool eng_Begin( const char* pTaskName )
         rtarget_Clear( RTARGET_CLEAR_ALL, clearColor, 1.0f, 0 );
 
         d3deng_RunFrameStages( &eng_frame_stage::OnBeginFrame );
+
+        if( bTargetsPushed )
+            rtarget_PopTargets();
 
         s.FrameCleared = TRUE;
     }
@@ -1016,7 +1027,7 @@ xbool d3deng_PresentFrame( void )
     // Ensure rendering to back buffer before present
     rtarget_SetBackBuffer();
 
-    HRESULT Error = g_pSwapChain->Present( 1, 0 );  // 0 = immediate present, VSYNC
+    HRESULT Error = g_pSwapChain->Present( 0, 0 );  // 0 = immediate present, VSYNC
     frameCount++;
 
     if( Error != S_OK )
@@ -1089,6 +1100,8 @@ void eng_ResetAfterException( void )
 {
     // Clear the in scene flag	
     s.inRenderPass = FALSE;
+    shader_FlushCache();
+    state_FlushCache();
     smem_ResetAfterException();
 }
 
@@ -1270,3 +1283,18 @@ xbool eng_ScreenShotActive( void )
     return FALSE;
 }
 #endif  // !defined( X_RETAIL ) || defined( X_QA )
+
+//=========================================================================
+
+// Editor code
+void d3deng_SetResolution( s32 Width, s32 Height )
+{
+    ASSERT( Width  > 0 );
+    ASSERT( Width  < 40000 );
+    ASSERT( Height > 0 );
+    ASSERT( Height < 40000 );
+
+    d3deng_ChangeDisplayMode( Width, Height,
+        g_SwapChainDesc.BufferDesc.Format,
+        s.DisplayMode );
+}

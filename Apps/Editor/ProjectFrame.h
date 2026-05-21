@@ -7,6 +7,7 @@
 // ProjectFrame.h : header file
 //
 #include "BaseFrame.h"
+#include "WorkspaceTabCtrl.h"
 
 /////////////////////////////////////////////////////////////////////////////
 // CProjectFrame frame
@@ -21,12 +22,12 @@ public:
 
 protected:
 
-    CXTTabCtrlBar       m_TabCtrl;
+    CEditorWorkspaceTabCtrl m_TabCtrl;
     CProjectDoc*        m_pDoc;
     CPropertyEditorDoc* m_pProjectProp;
     CPropertyEditorDoc* m_pSettingsProp;
     CString             m_strCurrentProject;
-    CXTToolBar          m_wndToolBar;
+    CToolBar            m_wndToolBar;
 
 /////////////////////////////////////////////////////////////////////////////
 // MFC STUFF

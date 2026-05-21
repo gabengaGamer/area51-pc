@@ -72,18 +72,20 @@ static struct destructible_obj_desc : public object_desc
             "Destructible Object", 
             "PROPS",
 
-            object::ATTR_COLLIDABLE         | 
-            object::ATTR_BLOCKS_ALL_PROJECTILES | 
-            object::ATTR_BLOCKS_ALL_ACTORS | 
-            object::ATTR_BLOCKS_RAGDOLL | 
-            object::ATTR_BLOCKS_CHARACTER_LOS | 
-            object::ATTR_BLOCKS_PLAYER_LOS | 
-            object::ATTR_BLOCKS_PAIN_LOS | 
-            object::ATTR_BLOCKS_SMALL_DEBRIS | 
-            object::ATTR_RENDERABLE         |
-            object::ATTR_SPACIAL_ENTRY      |
-            object::ATTR_NEEDS_LOGIC_TIME   |
-            object::ATTR_DESTRUCTABLE_OBJECT|
+            object::ATTR_COLLIDABLE             |
+            object::ATTR_BLOCKS_ALL_PROJECTILES |
+            object::ATTR_BLOCKS_ALL_ACTORS      |
+            object::ATTR_BLOCKS_RAGDOLL         |
+            object::ATTR_BLOCKS_CHARACTER_LOS   |
+            object::ATTR_BLOCKS_PLAYER_LOS      |
+            object::ATTR_BLOCKS_PAIN_LOS        |
+            object::ATTR_BLOCKS_SMALL_DEBRIS    |
+            object::ATTR_RENDERABLE             |
+            object::ATTR_SPACIAL_ENTRY          |
+            object::ATTR_NEEDS_LOGIC_TIME       |
+            object::ATTR_DESTRUCTABLE_OBJECT    |
+            object::ATTR_CAST_SHADOWS           |
+            object::ATTR_RECEIVE_SHADOWS        |
             object::ATTR_DAMAGEABLE, 
 
             FLAGS_GENERIC_EDITOR_CREATE | 
@@ -257,6 +259,7 @@ void destructible_obj::OnRender( void )
     
     if( pRigidGeom )
     {
+        const matrix4& RenderL2W = GetRenderL2W();
         u32 Flags = (GetFlagBits() & object::FLAG_CHECK_PLANES) ? render::CLIPPED : 0;
         
         if ( pRigidGeom->m_nBones > 1 )
@@ -265,7 +268,7 @@ void destructible_obj::OnRender( void )
         }
         else
         {
-            m_Inst.Render( &GetL2W(), Flags | GetRenderMode() );
+            m_Inst.Render( &RenderL2W, Flags | GetRenderMode() );
         }
     }
     else

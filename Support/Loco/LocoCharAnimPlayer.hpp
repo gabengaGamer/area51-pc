@@ -128,6 +128,7 @@ virtual void                SetAnimGroup            ( const anim_group::handle& 
         s32                 GetBoneIndex        ( const char* pBoneName ) const; // Index of bone, or -1 if not found
         const anim_bone&    GetBone             ( s32 iBone ) const;             // Info for bone
         const matrix4*      GetBoneL2Ws         ( void ) ;                      // All bone L2W matrices
+        void                GetBoneL2Ws         ( matrix4* pBoneL2W, xbool bApplyBindPose );
         const matrix4&      GetBoneL2W          ( s32 iBone ) ;                 // Bone L2W matrix
               vector3       GetBonePosition     ( s32 iBone ) ;                 // Bone position
         const vector3&      GetBoneBindPosition ( s32 iBone ) const;             // Bone bind position

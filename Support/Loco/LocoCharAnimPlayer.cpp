@@ -1175,6 +1175,63 @@ const matrix4& loco_char_anim_player::GetCachedL2W( s32 iBone )
 
 //=========================================================================
 
+void loco_char_anim_player::GetBoneL2Ws( matrix4* pBoneL2W, xbool bApplyBindPose )
+{
+    ASSERT( pBoneL2W );
+
+    if( m_nActiveBones <= 0 )
+        return;
+
+    anim_key* MixBuffer = base_player::GetMixBuffer( base_player::MIX_BUFFER_PLAYER );
+    ASSERT( MixBuffer );
+
+    matrix4 L2W;
+    L2W.Identity();
+    L2W.SetTranslation( m_WorldPos );
+
+    GetInterpKeys( L2W, MixBuffer );
+
+    ASSERT( GetAnimGroup() );
+    const anim_group& AnimGroup = *GetAnimGroup();
+
+    AnimGroup.ComputeBonesL2W( L2W, MixBuffer, m_nActiveBones, pBoneL2W, FALSE );
+
+    if( m_pIKSolver )
+    {
+        matrix4 IKMatrices[MAX_ANIM_BONES];
+
+        for( s32 i = 0; i < m_nActiveBones; i++ )
+            IKMatrices[i] = pBoneL2W[i] * AnimGroup.GetBoneBindInvMatrix( i );
+
+        m_pIKSolver->Solve( IKMatrices, m_nActiveBones );
+
+        if( bApplyBindPose )
+        {
+            for( s32 i = 0; i < m_nActiveBones; i++ )
+                pBoneL2W[i] = IKMatrices[i];
+        }
+        else
+        {
+            for( s32 i = 0; i < m_nActiveBones; i++ )
+            {
+                matrix4 BindM = AnimGroup.GetBoneBindInvMatrix( i );
+                BindM.Invert();
+                pBoneL2W[i] = IKMatrices[i] * BindM;
+            }
+        }
+
+        return;
+    }
+
+    if( bApplyBindPose )
+    {
+        for( s32 i = 0; i < m_nActiveBones; i++ )
+            pBoneL2W[i] = pBoneL2W[i] * AnimGroup.GetBoneBindInvMatrix( i );
+    }
+}
+
+//=========================================================================
+
 void loco_char_anim_player::UpdateCachedL2Ws( void )
 {
     LOG_STAT( k_stats_Animation );

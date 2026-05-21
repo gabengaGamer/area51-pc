@@ -7,6 +7,7 @@
 #include "GameLib\RigidGeomCollision.hpp"
 #include "Render\Render.hpp"
 #include "Debris\Debris_mgr.hpp"
+#include "Objects\Interpolation\InterpolationMath.hpp"
 #include "..\MiscUtils\SimpleUtils.hpp"
 
 xbool ShowCollision = FALSE;
@@ -32,6 +33,7 @@ static struct play_surface_desc : public object_desc
             object::ATTR_BLOCKS_PAIN_LOS        | 
             object::ATTR_BLOCKS_SMALL_DEBRIS    | 
             object::ATTR_RENDERABLE             |
+            object::ATTR_CAST_SHADOWS           |
             object::ATTR_RECEIVE_SHADOWS        |
             object::ATTR_EDITOR_TEMP_OBJECT     |
             object::ATTR_SPACIAL_ENTRY,
@@ -82,8 +84,18 @@ const object_desc&  play_surface::GetObjectType( void )
 // FUNCTIONS
 //=============================================================================
 
-play_surface::play_surface( void )  
+static xbool ShouldSnapPlaySurfaceState( const matrix4& Prev, const matrix4& Curr )
 {
+    return ShouldSnapInterpL2W( Prev, Curr );
+}
+
+play_surface::play_surface( void )
+{
+    m_RenderPrevL2W.Identity();
+    m_RenderCurrL2W.Identity();
+    m_RenderInterpL2W.Identity();
+    m_RenderStateValid   = FALSE;
+    m_RenderInterpActive = FALSE;
 }
 
 //=============================================================================
@@ -135,6 +147,7 @@ void play_surface::OnRender( void )
     
     if( pRigidGeom )
     {
+        const matrix4& RenderL2W = GetRenderL2W();
         u32 Flags = (GetFlagBits() & object::FLAG_CHECK_PLANES) ? render::CLIPPED : 0;
         if( GetAttrBits() & object::ATTR_DISABLE_PROJ_SHADOWS )
             Flags |= render::DISABLE_PROJ_SHADOWS;
@@ -163,12 +176,12 @@ void play_surface::OnRender( void )
                 // playsurfaces don't get to choose which meshes render on the
                 // consoles (performance and data optimization), so make sure the
                 // editor behaves the same way.
-                m_Inst.Render( &GetL2W(), Flags | GetRenderMode(), (u64)0xffffffffffffffffL, (u8)255 );
+                m_Inst.Render( &RenderL2W, Flags | GetRenderMode(), (u64)0xffffffffffffffffL, (u8)255 );
             }
             else
 #endif
             {
-                m_Inst.Render( &GetL2W(), Flags | GetRenderMode() );
+                m_Inst.Render( &RenderL2W, Flags | GetRenderMode() );
             }
         }
     }
@@ -259,7 +272,7 @@ xbool play_surface::GetColDetails( s32 Key, detail_tri& Tri )
 const matrix4* play_surface::GetBoneL2Ws( void )
 {
     // Just 1 bone in a play surface
-    return &GetL2W() ;
+    return &GetRenderL2W() ;
 }
 
 //=============================================================================
@@ -296,6 +309,64 @@ void play_surface::OnKill( void )
     g_PolyCache.InvalidateCells( GetBBox(), GetGuid() );
 
     object::OnKill();
+}
+
+//==============================================================================
+
+const matrix4& play_surface::GetRenderL2W( void ) const
+{
+    if( m_RenderInterpActive )
+        return m_RenderInterpL2W;
+
+    return GetL2W();
+}
+
+//==============================================================================
+
+void play_surface::CaptureRenderInterpState( void )
+{
+    const matrix4& L2W = GetL2W();
+
+    if( !m_RenderStateValid )
+    {
+        m_RenderPrevL2W      = L2W;
+        m_RenderCurrL2W      = L2W;
+        m_RenderInterpL2W    = L2W;
+        m_RenderStateValid   = TRUE;
+        m_RenderInterpActive = FALSE;
+        return;
+    }
+
+    m_RenderPrevL2W = m_RenderCurrL2W;
+    m_RenderCurrL2W = L2W;
+
+    if( ShouldSnapPlaySurfaceState( m_RenderPrevL2W, m_RenderCurrL2W ) )
+        m_RenderPrevL2W = m_RenderCurrL2W;
+
+    if( x_memcmp( &m_RenderPrevL2W, &m_RenderCurrL2W, sizeof( matrix4 ) ) != 0 )
+        RegisterRenderInterpUpdate();
+}
+
+//==============================================================================
+
+void play_surface::UpdateRenderInterpState( f32 Alpha )
+{
+    if( !m_RenderStateValid )
+    {
+        m_RenderInterpActive = FALSE;
+        return;
+    }
+
+    Alpha = MAX( 0.0f, MIN( Alpha, 1.0f ) );
+    m_RenderInterpL2W = InterpMatrix( m_RenderPrevL2W, m_RenderCurrL2W, Alpha );
+    m_RenderInterpActive = TRUE;
+}
+
+//==============================================================================
+
+void play_surface::ClearRenderInterpState( void )
+{
+    m_RenderInterpActive = FALSE;
 }
 
 //==============================================================================

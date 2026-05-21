@@ -63,14 +63,16 @@ static struct bomb_object_desc : public object_desc
         object::TYPE_BOMB, 
         "Bomb Object",
         "PROPS",
-        object::ATTR_RENDERABLE             | 
-        object::ATTR_COLLIDABLE             | 
-        object::ATTR_BLOCKS_ALL_PROJECTILES | 
-        object::ATTR_BLOCKS_ALL_ACTORS      | 
-        object::ATTR_BLOCKS_RAGDOLL         | 
-        object::ATTR_BLOCKS_SMALL_DEBRIS    | 
+        object::ATTR_RENDERABLE             |
+        object::ATTR_COLLIDABLE             |
+        object::ATTR_BLOCKS_ALL_PROJECTILES |
+        object::ATTR_BLOCKS_ALL_ACTORS      |
+        object::ATTR_BLOCKS_RAGDOLL         |
+        object::ATTR_BLOCKS_SMALL_DEBRIS    |
         object::ATTR_DAMAGEABLE             |
         object::ATTR_SPACIAL_ENTRY          |
+        object::ATTR_CAST_SHADOWS           |
+        object::ATTR_RECEIVE_SHADOWS        |
         object::ATTR_NEEDS_LOGIC_TIME,
 
         FLAGS_IS_DYNAMIC | FLAGS_TARGETS_OBJS | FLAGS_GENERIC_EDITOR_CREATE |
@@ -198,6 +200,7 @@ void bomb_object::OnRender( void )
     rigid_geom* pRigidGeom = m_Inst.GetRigidGeom();
     if( pRigidGeom )
     {
+        const matrix4& RenderL2W = GetRenderL2W();
         u32 Flags = (GetFlagBits() & object::FLAG_CHECK_PLANES) ? render::CLIPPED : 0;
         
         if ( pRigidGeom->m_nBones > 1 )
@@ -207,7 +210,7 @@ void bomb_object::OnRender( void )
         else
         {
             DisplayBombCount(m_BombTimerMinutes, m_BombTimerSeconds);
-            m_Inst.Render( &GetL2W(), Flags | GetRenderMode(), m_MeshMask);
+            m_Inst.Render( &RenderL2W, Flags | GetRenderMode(), m_MeshMask);
         }
     }
     else

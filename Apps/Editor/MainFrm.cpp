@@ -40,15 +40,14 @@ extern const char* g_pBuildDate;
 /////////////////////////////////////////////////////////////////////////////
 // CMainFrame
  
-IMPLEMENT_DYNAMIC(CMainFrame, CXTMDIFrameWnd)
+IMPLEMENT_DYNAMIC(CMainFrame, CMDIFrameWnd)
 
-BEGIN_MESSAGE_MAP(CMainFrame, CXTMDIFrameWnd)
+BEGIN_MESSAGE_MAP(CMainFrame, CMDIFrameWnd)
 	//{{AFX_MSG_MAP(CMainFrame)
 	ON_WM_CREATE()
 	ON_WM_CLOSE()
     ON_MESSAGE(WM_USER_MSG_UPDATE_STATUS_BAR, UpdateStatusBar)
     ON_MESSAGE(WM_USER_MSG_MODIFY_MENU_BAR, ModifyMenuBar)
- 	ON_MESSAGE(TIN_XT_TRAYICON, OnTrayIconNotify)
     ON_UPDATE_COMMAND_UI(ID_ADD_RES_DESC_01, OnUpdateAdditionalViews)
     ON_COMMAND_RANGE(ID_ADD_RES_DESC_01, ID_ADD_RES_DESC_10, OnAdditionalView)
 	ON_COMMAND(ID_MENU_FILE_CLOSE, OnMenuFileClose)
@@ -77,6 +76,8 @@ END_MESSAGE_MAP()
 static UINT indicators[] =
 {
 	ID_SEPARATOR,           // status line indicator
+	ID_INDICATOR_MODE,
+	ID_INDICATOR_DATA,
 	ID_INDICATOR_CAPS,
 	ID_INDICATOR_NUM,
 	ID_INDICATOR_SCRL,
@@ -87,14 +88,10 @@ static UINT indicators[] =
 
 CMainFrame::CMainFrame() 
 {
-    // Enable/Disable XP GUI Mode
-    xtAfxData.bXPMode = TRUE;
-
-    // Enable/Disable Menu Shadows
-    xtAfxData.bMenuShadows = TRUE;
-
     // Recent files list
     m_pRecentFiles = NULL;
+    m_pwndProgCtrl  = NULL;
+    m_pwndProgCtrl2 = NULL;
 }
 
 //=========================================================================
@@ -108,16 +105,7 @@ CMainFrame::~CMainFrame()
     // Clear window layout from Registry?
     if( g_ResetWindowLayout )
     {
-        CXTRegistryManager RegMgr;
-        CStringArray Keys;
-        RegMgr.EnumKeys( "", Keys );
-        for( int i=0 ; i<Keys.GetCount() ; i++ )
-        {
-            if( Keys[i].Find( "BarState -" ) != -1 )
-            {
-                RegMgr.DeleteKey( "", Keys[i] );
-            }
-        }
+        // Legacy XT registry cleanup removed with the MFC migration.
     }
 
     s_pMainFrame = NULL;
@@ -190,7 +178,7 @@ static void HandleDebugMsg( const char* pMessage )
 
 int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 {
-    if (CXTMDIFrameWnd::OnCreate(lpCreateStruct) == -1)
+    if (CMDIFrameWnd::OnCreate(lpCreateStruct) == -1)
         return -1;
 
     //
@@ -213,24 +201,13 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
     m_pRecentFiles = new CRecentFileList( 0, _T("Recent Files" ), _T( "File%d" ), 9 );
     m_pRecentFiles->ReadList();
 
-    // Create menu bar
-	if (!m_wndMenuBar.CreateEx(this, TBSTYLE_FLAT, WS_CHILD | WS_VISIBLE | CBRS_TOP
-		| CBRS_GRIPPER | CBRS_TOOLTIPS | CBRS_FLYBY | CBRS_SIZE_DYNAMIC, CRect(0, 0, 0, 0), AFX_IDW_MENUBAR) ||
-		!m_wndMenuBar.LoadMenuBar(IDR_MENU_MAINFRAME))
-	{
-		TRACE0("Failed to create menubar\n");
-		return -1;      // fail to create
-	}
-
-    
-
     //
     // Set the output bar as soon as possible
     //
     {
 	    // Create the output bar.
 	    if (!m_wndOutputBar.Create(this, IDW_OUTPUTBAR, _T("Output"),
-		    CSize(150, 150), CBRS_BOTTOM, CBRS_XT_BUTTONS | CBRS_XT_GRIPPER | CBRS_XT_CLIENT_STATIC)) //(AFX_IDW_TOOLBAR + 10) ))
+		    CSize(150, 150), CBRS_BOTTOM, 0)) //(AFX_IDW_TOOLBAR + 10) ))
 	    {
 		    TRACE0("Failed to create output dock window\n");
 		    return -1;		// fail to create
@@ -271,39 +248,30 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 
 	// TODO: Delete these three lines if you don't want the toolbar to
 	//  be dockable
-	m_wndMenuBar.EnableDockingEx(CBRS_ALIGN_TOP, CBRS_XT_ALL_FLAT);
-//	m_wndToolBar.EnableDockingEx(CBRS_ALIGN_ANY, CBRS_XT_ALL_FLAT);
-	m_wndOutputBar.EnableDockingEx(CBRS_ALIGN_ANY, CBRS_XT_ALL_FLAT|CBRS_XT_GRIPPER_GRAD);
-	EnableDockingEx(CBRS_ALIGN_ANY, CBRS_XT_ALL_FLAT);
-	DockControlBar(&m_wndMenuBar);
+	m_wndOutputBar.EnableDocking(CBRS_ALIGN_ANY);
+	EnableDocking(CBRS_ALIGN_ANY);
 //	DockControlBar(&m_wndToolBar);
 	DockControlBar(&m_wndOutputBar,AFX_IDW_DOCKBAR_BOTTOM);
 
-	// Insert company name into the status bar.
-	AddLogo();
-
-  	// add the indicator to the status bar.
-	m_wndStatusBar.AddIndicator(ID_INDICATOR_MODE, 2);
+	// add the indicator to the status bar.
 	int nIndex = m_wndStatusBar.CommandToIndex(ID_INDICATOR_MODE);
 	ASSERT (nIndex != -1);
-	m_wndStatusBar.SetPaneWidth(nIndex, 150);
-	m_wndStatusBar.SetPaneStyle(nIndex, m_wndStatusBar.GetPaneStyle(nIndex) | SBPS_POPOUT);
-	m_wndStatusBar.AddIndicator(ID_INDICATOR_DATA, 3);
+    {
+        UINT nID = 0;
+        UINT nStyle = 0;
+        int  cxWidth = 0;
+        m_wndStatusBar.GetPaneInfo(nIndex, nID, nStyle, cxWidth);
+	    m_wndStatusBar.SetPaneInfo(nIndex, nID, nStyle | SBPS_POPOUT, 150);
+    }
 	nIndex = m_wndStatusBar.CommandToIndex(ID_INDICATOR_DATA);
 	ASSERT (nIndex != -1);
-	m_wndStatusBar.SetPaneWidth(nIndex, 300);
-	m_wndStatusBar.SetPaneStyle(nIndex, m_wndStatusBar.GetPaneStyle(nIndex) | SBPS_POPOUT);
-
-    // Add the progress bar
-    AddProgress();
-
-	// TODO: Remove this line if you don't want cool menus.
-    UINT Toolbars[] = {IDR_MAINFRAME, IDR_MENU_WORLD, IDR_WORLDEDITOR};
-	InstallCoolMenus( Toolbars, sizeof(Toolbars)/sizeof(Toolbars[0]) );
-
-	// Install the MDI tab window and set the popup menu id.
-	m_wndMDITabWindow.Install(this, TCS_HOTTRACK, FALSE);
-    m_wndMDITabWindow.SetBorderGap(1);
+    {
+        UINT nID = 0;
+        UINT nStyle = 0;
+        int  cxWidth = 0;
+        m_wndStatusBar.GetPaneInfo(nIndex, nID, nStyle, cxWidth);
+	    m_wndStatusBar.SetPaneInfo(nIndex, nID, nStyle | SBPS_POPOUT, 300);
+    }
 
     // Restore control bar postion.
     LoadBarState(_T("BarState - Main"));
@@ -395,7 +363,7 @@ void CMainFrame::OnAdditionalView(UINT nID)
 
 BOOL CMainFrame::PreCreateWindow(CREATESTRUCT& cs)
 {    
-	if( !CXTMDIFrameWnd::PreCreateWindow(cs) )
+	if( !CMDIFrameWnd::PreCreateWindow(cs) )
 		return FALSE;
 	// TODO: Modify the Window class or styles here by modifying
 	//  the CREATESTRUCT cs
@@ -416,12 +384,12 @@ BOOL CMainFrame::PreCreateWindow(CREATESTRUCT& cs)
 #ifdef _DEBUG
 void CMainFrame::AssertValid() const
 {
-	CXTMDIFrameWnd::AssertValid();
+	CMDIFrameWnd::AssertValid();
 }
 
 void CMainFrame::Dump(CDumpContext& dc) const
 {
-	CXTMDIFrameWnd::Dump(dc);
+	CMDIFrameWnd::Dump(dc);
 }
 
 #endif //_DEBUG
@@ -452,7 +420,7 @@ LRESULT CMainFrame::UpdateStatusBar(WPARAM wParam, LPARAM lParam)
 // LRESULT is the index of the inserted item or -1 for failure
 LRESULT CMainFrame::ModifyMenuBar(WPARAM wParam, LPARAM lParam)
 {
-    CMenu* pMenu = m_wndMenuBar.GetMenu();
+    CMenu* pMenu = GetMenu();
     int iInsertLocation = -1;
 
     // Insert the menu.
@@ -491,7 +459,7 @@ LRESULT CMainFrame::ModifyMenuBar(WPARAM wParam, LPARAM lParam)
 		        // remove from the other menu!
 		        objectMenu.RemoveMenu(0, MF_BYPOSITION);   
         
-                m_wndMenuBar.LoadMenu(pMenu->m_hMenu,NULL);
+                DrawMenuBar();
             }
         }
         else
@@ -501,7 +469,7 @@ LRESULT CMainFrame::ModifyMenuBar(WPARAM wParam, LPARAM lParam)
             if (uPos < pMenu->GetMenuItemCount())
             {
                 VERIFY(pMenu->RemoveMenu( uPos, MF_BYPOSITION ));
-                m_wndMenuBar.LoadMenu(pMenu->m_hMenu,NULL);
+                DrawMenuBar();
                 iInsertLocation = 0;
             }
         }
@@ -522,21 +490,16 @@ LRESULT CMainFrame::OnTrayIconNotify(WPARAM wParam, LPARAM lParam)
 	{
 		case WM_RBUTTONUP:
 		{
-			CXTMenu menu;
+			CMenu menu;
 			VERIFY(menu.LoadMenu(IDR_MAINFRAME));
 			
-			CXTMenu* pPopup = menu.GetSubMenu(0);
+			CMenu* pPopup = menu.GetSubMenu(0);
 			ASSERT(pPopup != NULL);
 			
 			// Make ID_FILE_OPEN menu item the default (bold font)
 			::SetMenuDefaultItem(pPopup->m_hMenu, ID_FILE_OPEN, FALSE);
 
-			// Display the menu at the current mouse location. There's a "bug"
-			// (Microsoft calls it a feature) in Windows 95 that requires calling
-			// SetForegroundWindow. To find out more, search for Q135788 in MSDN.
-			if (xtAfxData.bWin95) {
-				::SetForegroundWindow(m_hWnd);
-			}
+			::SetForegroundWindow(m_hWnd);
 
 			CPoint point;
 			GetCursorPos( &point );
@@ -558,31 +521,14 @@ LRESULT CMainFrame::OnTrayIconNotify(WPARAM wParam, LPARAM lParam)
 
 void CMainFrame::AddLogo()
 {
-	if (!m_wndLogoPane.Create(_T("I.E."), &m_wndStatusBar))
-	{
-		TRACE0("Failed to create logo control.\n");
-		return;
-	}
-
-	int nWidth = m_wndLogoPane.GetTextSize().cx;
-
-	// add the indicator to the status bar.
-	m_wndStatusBar.AddIndicator(ID_INDICATOR_LOGO, 0);
-	
-	// Initialize the pane info and add the control.
-	int nIndex = m_wndStatusBar.CommandToIndex(ID_INDICATOR_LOGO);
-	ASSERT (nIndex != -1);
-	
-	m_wndStatusBar.SetPaneWidth(nIndex, nWidth);
-	m_wndStatusBar.SetPaneStyle(nIndex, m_wndStatusBar.GetPaneStyle(nIndex) | SBPS_POPOUT);
-	m_wndStatusBar.AddControl(&m_wndLogoPane, ID_INDICATOR_LOGO, FALSE);
+    // Legacy XT status-bar logo pane removed with the MFC migration.
 }
 
 //=========================================================================
 
 void CMainFrame::RemoveLogo()
 {
-	m_wndStatusBar.RemoveIndicator(ID_INDICATOR_LOGO);
+    // Legacy XT status-bar logo pane removed with the MFC migration.
 }
 
 //=========================================================================
@@ -611,12 +557,8 @@ void CMainFrame::OnClose()
 	    // Save control bar postion.
 	    SaveBarState(_T("BarState - Main"));
 
-	    // Save frame window size and position.
-	    m_wndPosition.SaveWindowPos(this);
-
-
         RemoveProgress();
-        CXTMDIFrameWnd::OnClose();
+        CMDIFrameWnd::OnClose();
 
         //
         // Destroy the engine ( NOTE/TODO: This may need to go into the OnDestroy message ).
@@ -632,10 +574,6 @@ BOOL CMainFrame::ShowWindowEx(int nCmdShow)
 {
 	ASSERT_VALID(this);
 
-	// Restore frame window size and position.
-	m_wndPosition.LoadWindowPos(this);
-	nCmdShow = m_wndPosition.showCmd;
-
 	return ShowWindow(nCmdShow);
 }
 
@@ -644,73 +582,28 @@ BOOL CMainFrame::ShowWindowEx(int nCmdShow)
 #define ID_INDICATOR_PROG 1010
 void CMainFrame::AddProgress()
 {
-	int iIndex = m_wndStatusBar.GetPaneCount();
-
-    m_pwndProgCtrl = new CProgressCtrl;
-	// Create the edit control and add it to the status bar
-	if (!m_pwndProgCtrl->Create(WS_CHILD|WS_VISIBLE|PBS_SMOOTH,
-		CRect(0,0,0,0), &m_wndStatusBar, 0))
-	{
-		TRACE0("Failed to create edit control.\n");
-		return;
-	}
-	
-	// add the indicator to the status bar.
-	m_wndStatusBar.AddIndicator(ID_INDICATOR_PROG, iIndex);
-	
-	// Initialize the pane info and add the control.
-	int nIndex = m_wndStatusBar.CommandToIndex(ID_INDICATOR_PROG);
-	ASSERT (nIndex != -1);
-	
-	m_wndStatusBar.SetPaneWidth(nIndex, 150);
-	m_wndStatusBar.SetPaneStyle(nIndex, m_wndStatusBar.GetPaneStyle(nIndex) | SBPS_NOBORDERS);
-	m_wndStatusBar.AddControl(m_pwndProgCtrl, ID_INDICATOR_PROG, FALSE);
-
-	// initialize progress control.
-	m_pwndProgCtrl->SetRange (0, 5);
-	m_pwndProgCtrl->SetPos   (5);
-	m_pwndProgCtrl->SetStep  (1);
-
-    {
-	    int iIndex = m_wndStatusBar.GetPaneCount();
-
-        m_pwndProgCtrl2 = new CProgressCtrl;
-	    // Create the edit control and add it to the status bar
-	    if (!m_pwndProgCtrl2->Create(WS_CHILD|WS_VISIBLE,
-		    CRect(0,0,0,0), &m_wndStatusBar, 0))
-	    {
-		    TRACE0("Failed to create edit control.\n");
-		    return;
-	    }
-	    
-	    // add the indicator to the status bar.
-	    m_wndStatusBar.AddIndicator(1011, iIndex);
-	    
-	    // Initialize the pane info and add the control.
-	    int nIndex = m_wndStatusBar.CommandToIndex(1011);
-	    ASSERT (nIndex != -1);
-	    
-	    m_wndStatusBar.SetPaneWidth(nIndex, 150);
-	    m_wndStatusBar.SetPaneStyle(nIndex, m_wndStatusBar.GetPaneStyle(nIndex) | SBPS_NOBORDERS);
-	    m_wndStatusBar.AddControl(m_pwndProgCtrl2, 1011, FALSE);
-
-	    // initialize progress control.
-	    m_pwndProgCtrl2->SetRange (0, 5);
-	    m_pwndProgCtrl2->SetPos   (5);
-	    m_pwndProgCtrl2->SetStep  (1);
-    }
-
+    // Legacy XT status-bar hosted progress controls removed with the MFC migration.
 }
 
 //=========================================================================
 
 void CMainFrame::RemoveProgress()
 {
-    m_wndStatusBar.RemoveIndicator(1011 );
-    delete m_pwndProgCtrl2;
+    if( m_pwndProgCtrl2 )
+    {
+        if( ::IsWindow( m_pwndProgCtrl2->GetSafeHwnd() ) )
+            m_pwndProgCtrl2->DestroyWindow();
+        delete m_pwndProgCtrl2;
+        m_pwndProgCtrl2 = NULL;
+    }
 
-	m_wndStatusBar.RemoveIndicator(ID_INDICATOR_PROG);
-    delete m_pwndProgCtrl;
+    if( m_pwndProgCtrl )
+    {
+        if( ::IsWindow( m_pwndProgCtrl->GetSafeHwnd() ) )
+            m_pwndProgCtrl->DestroyWindow();
+        delete m_pwndProgCtrl;
+        m_pwndProgCtrl = NULL;
+    }
 }
 
 //=========================================================================
@@ -851,8 +744,8 @@ bool CMainFrame::DoFileOpen( const char* pFileName )
     x_ContextEnableProfiling();
     x_ContextResetProfile();
 
-    extern xarray<xstring> g_AuditionPackages;
-    g_AuditionPackages.Clear();
+    //extern xarray<xstring> g_AuditionPackages;
+    //g_AuditionPackages.Clear();
 
     {
         CONTEXT( "CMainFrame::DoFileOpen" );

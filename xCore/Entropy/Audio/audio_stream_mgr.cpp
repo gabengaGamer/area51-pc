@@ -511,8 +511,15 @@ void audio_stream_mgr::Update( void )
                 ASSERT( pStream->FileHandle );
                 g_IOFSMgr.EnableChecksum( pStream->FileHandle, FALSE );
 
-                // Now warm up the stream.
-                g_AudioStreamMgr.WarmStream( pStream );
+                if( pStream->CompressionType == MP3 )
+                {
+                    pStream->bStartStream = TRUE;
+                }
+                else
+                {
+                    // Now warm up the stream.
+                    g_AudioStreamMgr.WarmStream( pStream );
+                }
             }
             else
             {
@@ -544,8 +551,11 @@ void audio_stream_mgr::Update( void )
             {
                 g_AudioMP3Mgr.Open( pStream );
 
-                // De-compress first part of it and dma it to aram.
-                g_AudioHardware.UpdateMP3( pStream );
+                // Pre-decompress half of the PCM ring before playback starts.
+                for( s32 i=0 ; i<(STREAM_BUFFER_SIZE/(512*sizeof(s16))) ; i++ )
+                {
+                    g_AudioHardware.UpdateMP3( pStream );
+                }
             }
 #endif
 

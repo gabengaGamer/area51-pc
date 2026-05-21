@@ -7,6 +7,7 @@
 //=========================================================================
 
 #include "Objects\PlaySurface.hpp"
+#include "Objects\Interpolation\SimpleAnimInterpolation.hpp"
 #include "Animation\AnimPlayer.hpp"
 #include "ZoneMgr\ZoneMgr.hpp"
 
@@ -52,6 +53,13 @@ public:
 
 protected:
 
+    virtual void                CaptureRenderInterpState ( void );
+    virtual void                UpdateRenderInterpState  ( f32 Alpha );
+    virtual void                ClearRenderInterpState   ( void );
+    void                        InvalidateRenderState( void );
+    const matrix4&              GetRenderL2W       ( void ) const;
+    xbool                       GetRenderBoneL2W   ( s32 iBone, matrix4& L2W );
+
     virtual void                OnRender        ( void );
     virtual void                OnColCheck      ( void );
 
@@ -68,6 +76,7 @@ protected:
     anim_group::handle          m_hAnimGroup;
     rhandle<char>               m_hAudioPackage;
     simple_anim_player          m_AnimPlayer;
+    simple_anim_interp_cache    m_RenderCache;
     s16                         m_iBackupAnimString;
     zone_mgr::tracker           m_ZoneTracker;
 };

@@ -11,10 +11,6 @@
 #include "PlaySurface.hpp"
 #include "GameLib\RenderContext.hpp"
 
-#if defined(TARGET_PC)
-xbool g_bPipRenderActive = FALSE;
-#endif
-
 #ifdef TARGET_XBOX
 extern s32 xbox_GetPipTexture(void);
 #endif
@@ -211,55 +207,10 @@ void pip::OnInit( void )
 #endif
 
 #if defined(TARGET_PC)
-    if( m_RenderTarget.bValid )
-    {
-        vram_Unregister( m_RenderTarget.VRAMID );
-        rtarget_Destroy( m_RenderTarget.ColorTarget );
-        rtarget_Destroy( m_RenderTarget.DepthTarget );
-        m_RenderTarget = pip_render_target_pc();
-    }
-
-    m_RenderTarget.Width  = m_Width;
-    m_RenderTarget.Height = m_Height;
-
-    rtarget_desc colorDesc;
-    x_memset( &colorDesc, 0, sizeof(colorDesc) );
-    colorDesc.Width         = (u32)m_Width;
-    colorDesc.Height        = (u32)m_Height;
-    colorDesc.Format        = RTARGET_FORMAT_RGBA8;
-    colorDesc.SampleCount   = 1;
-    colorDesc.SampleQuality = 0;
-    colorDesc.bBindAsTexture = TRUE;
-
-    if( rtarget_Create( m_RenderTarget.ColorTarget, colorDesc ) )
-    {
-        rtarget_desc depthDesc = colorDesc;
-        depthDesc.Format        = RTARGET_FORMAT_DEPTH24_STENCIL8;
-        depthDesc.bBindAsTexture = FALSE;
-
-        if( rtarget_Create( m_RenderTarget.DepthTarget, depthDesc ) )
-        {
-            m_RenderTarget.VRAMID = vram_Register( m_RenderTarget.ColorTarget.pTexture );
-            if( m_RenderTarget.VRAMID )
-            {
-                m_RenderTarget.bValid = TRUE;
-            }
-        }
-    }
-
-    if( m_RenderTarget.bValid )
-    {
+    if( m_RenderTarget.Create( m_Width, m_Height ) )
         m_PipVramID = m_RenderTarget.VRAMID;
-    }
     else
-    {
-        if( m_RenderTarget.ColorTarget.pTexture )
-            rtarget_Destroy( m_RenderTarget.ColorTarget );
-        if( m_RenderTarget.DepthTarget.pTexture )
-            rtarget_Destroy( m_RenderTarget.DepthTarget );
-        m_RenderTarget = pip_render_target_pc();
         m_PipVramID = 0;
-    }
 #endif
 
     // Reset state
@@ -285,10 +236,7 @@ void pip::OnKill( void )
 #if defined(TARGET_PC)
     if( m_RenderTarget.bValid )
     {
-        vram_Unregister( m_PipVramID );
-        rtarget_Destroy( m_RenderTarget.ColorTarget );
-        rtarget_Destroy( m_RenderTarget.DepthTarget );
-        m_RenderTarget = pip_render_target_pc();
+        m_RenderTarget.Destroy();
         m_PipVramID = 0;
     }
 #endif
@@ -455,15 +403,16 @@ void pip::RenderView( void )
         Viewport.b = m_Height;
 
 #if defined(TARGET_PC)
-        g_RenderContext.SetActivePipTarget( &m_RenderTarget );
-		g_bPipRenderActive = TRUE;
-#endif
+        if( !g_RenderContext.BeginPipRender( &m_RenderTarget ) )
+            return;
+#else
         g_RenderContext.SetPipRender( TRUE );
+#endif
         pCamera->RenderView(Viewport, m_PipVramID, m_Width, m_Height);
-        g_RenderContext.SetPipRender( FALSE );
 #if defined(TARGET_PC)
-        g_bPipRenderActive = FALSE;
-        g_RenderContext.SetActivePipTarget( NULL );
+        g_RenderContext.EndPipRender();
+#else
+        g_RenderContext.SetPipRender( FALSE );
 #endif		
     }
 }

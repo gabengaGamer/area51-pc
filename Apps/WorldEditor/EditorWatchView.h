@@ -9,7 +9,6 @@
 #include "EditorPaletteDoc.h"
 #include "..\Editor\PaletteView.h"
 #include "..\Support\Globals\Global_Variables_Manager.hpp"
-#include "..\WinControls\XTSortListCtrl.h"
 
 /////////////////////////////////////////////////////////////////////////////
 // CEditorWatchView view
@@ -24,7 +23,7 @@ protected:
 public:
 	CEditorPaletteDoc* GetDocument();
 
-    CXTSortListCtrl    m_Watch;
+    CListCtrl          m_Watch;
 
     static CEditorWatchView* GetEditorWatchView(void) { return s_WatchView; }
     virtual void    OnTabActivate( BOOL bActivate );

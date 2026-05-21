@@ -16,8 +16,8 @@
 #include "transaction_mgr.hpp"
 #include "transaction_file_data.hpp"
 
-#include "..\MeshViewer\RigidDesc.hpp"
-#include "..\MeshViewer\SkinDesc.hpp"
+//#include "..\MeshViewer\RigidDesc.hpp"
+//#include "..\MeshViewer\SkinDesc.hpp"
 
 #include "Objects\PlaySurface.hpp"
 #include "Objects\PropSurface.hpp"
@@ -381,8 +381,7 @@ void CEditorBlueprintView::OnSize(UINT nType, int cx, int cy)
 	CPaletteView::OnSize(nType, cx, cy);
 
     int nHt = cx/2;
-	CSize size = m_wndToolBar.CalcLayout(LM_HORZ| LM_COMMIT,nHt);
-	m_wndToolBar.MoveWindow(0,0,size.cx,size.cy);
+	CSize size = SizeToolBar(cx, cy);
 
     if (nHt > (cy/2)) nHt = cy/2;
 
@@ -732,7 +731,7 @@ void CEditorBlueprintView::OnBptbShatterBlueprint()
     }
 
     //add new objects to layer view
-    for (i=0; i<lstItemsAdded.GetCount(); i++)
+    for (int i=0; i<lstItemsAdded.GetCount(); i++)
     {
         editor_item_descript Description = lstItemsAdded.GetAt(i);
         CString strName;
@@ -787,7 +786,7 @@ void CEditorBlueprintView::OnBptbShatterBlueprintForEdit()
     }
 
     //add new objects to layer view
-    for (i=0; i<lstItemsAdded.GetCount(); i++)
+    for (int i=0; i<lstItemsAdded.GetCount(); i++)
     {
         editor_item_descript Description = lstItemsAdded.GetAt(i);
         CString strName;

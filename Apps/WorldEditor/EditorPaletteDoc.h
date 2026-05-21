@@ -10,6 +10,7 @@
 /////////////////////////////////////////////////////////////////////////////
 // CEditorPaletteDoc document
 class CEditorFrame;
+class CWorkspaceTabCtrl;
 
 class CEditorPaletteDoc : public CDocument
 {
@@ -17,12 +18,12 @@ public:
 	CEditorPaletteDoc();           // protected constructor used by dynamic creation
     void SetFramePointer(CEditorFrame* pFrame) { m_pFrameEdit = pFrame; }
     CEditorFrame* GetFramePointer() { return m_pFrameEdit; }
-    void SetTabParent(CXTTabCtrlBar *pParent) { m_pTabParent = pParent; }
-    CXTTabCtrlBar* GetTabParent() { return m_pTabParent; }
+    void SetTabParent(CWorkspaceTabCtrl *pParent) { m_pTabParent = pParent; }
+    CWorkspaceTabCtrl* GetTabParent() { return m_pTabParent; }
 
 private:
     CEditorFrame*   m_pFrameEdit;
-    CXTTabCtrlBar*  m_pTabParent;
+    CWorkspaceTabCtrl*  m_pTabParent;
 
 protected: // create from serialization only
 	DECLARE_DYNCREATE(CEditorPaletteDoc)

@@ -50,7 +50,7 @@ protected:
     ui_frame*           m_pFrame1;
     ui_text*            m_pWaitText;
     xbool               m_StartWaiting;
-    s32                 m_Countdown;
+    f32                 m_Countdown;
 };
 
 //==============================================================================

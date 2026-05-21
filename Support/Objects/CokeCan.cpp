@@ -154,7 +154,6 @@ extern xbool g_game_running;
 extern xbool g_level_loading;
 #endif
 
-
 //=========================================================================
 // EDITOR UTILITY FUNCTIONS
 //=========================================================================
@@ -328,6 +327,7 @@ static struct coke_can_desc : public object_desc
                                         object::ATTR_BLOCKS_RAGDOLL         | 
                                         object::ATTR_DAMAGEABLE             |
                                         object::ATTR_NO_RUNTIME_SAVE        |
+										object::ATTR_CAST_SHADOWS           |
                                         object::ATTR_RENDERABLE,
 
                                         FLAGS_GENERIC_EDITOR_CREATE | FLAGS_NO_ICON |
@@ -366,8 +366,6 @@ const object_desc& coke_can::GetObjectType( void )
 }
 
 //=========================================================================
-// FUNCTIONS
-//=========================================================================
 
 //=========================================================================
 
@@ -383,16 +381,46 @@ coke_can::coke_can( void ) :
     m_iMajorAxis        ( 0 ),      // Longest axis of can
     m_MinInitVel        ( 0,0,0 ),  // Min initial velocity
     m_MaxInitVel        ( 0,0,0 ),  // Max initial velocity
-    m_RollAudioID       ( 0 )       // Can rolling audio id
+    m_RollAudioID       ( 0 ),      // Can rolling audio id
+    m_iProfile          ( PROFILE_CAN )
 {
     m_FloorProperties.Init( 100.0f, 0.128f );
-    m_iProfile = PROFILE_CAN;
+
+    InitSimpleAnimInterpCache( m_RenderCache );
 }
 
 //=========================================================================
 
 coke_can::~coke_can()
 {
+}
+
+//=========================================================================
+
+void coke_can::CaptureRenderInterpState( void )
+{
+    simple_anim_interp_state& Snapshot = BeginCaptureInterpCache( m_RenderCache );
+    InitSimpleAnimInterpState( Snapshot );
+    Snapshot.Valid    = TRUE;
+    Snapshot.NBones   = 1;
+    Snapshot.L2W      = GetL2W();
+    Snapshot.Bones[0] = Snapshot.L2W;
+    FinishCaptureInterpCache( m_RenderCache, ShouldSnapSimpleAnimInterpState );
+    RegisterRenderInterpUpdate();
+}
+
+//=========================================================================
+
+void coke_can::UpdateRenderInterpState( f32 Alpha )
+{
+    UpdateSimpleAnimInterpCache( m_RenderCache, Alpha );
+}
+
+//=========================================================================
+
+void coke_can::ClearRenderInterpState( void )
+{
+    ClearSimpleAnimInterpCache( m_RenderCache );
 }
 
 //=========================================================================
@@ -465,8 +493,11 @@ void coke_can::OnRender( void )
     // Can only support 1 boned cans!
     ASSERTS( pSkinGeom->m_nBones == 1, "Coke cans can only have 1 bone!!" );        
 
+    const xbool bUseRenderCache = HasSimpleAnimInterpCache( m_RenderCache );
+    const matrix4& RenderL2W = bUseRenderCache ? m_RenderCache.Interp.L2W : GetL2W();
+
     // Compute LOD mask
-    u64 LODMask = m_SkinInst.GetLODMask( GetL2W() );
+    u64 LODMask = m_SkinInst.GetLODMask( RenderL2W );
     if( LODMask == 0 )
         return;
 
@@ -474,11 +505,6 @@ void coke_can::OnRender( void )
     u32    Flags   = ( GetFlagBits() & object::FLAG_CHECK_PLANES ) ? render::CLIPPED : 0;
     xcolor Ambient = m_FloorProperties.GetColor();
     
-    // Render that puppy!
-    matrix4* pBackedUpMtx = ( matrix4* )smem_BufferAlloc( sizeof( matrix4 ) );
-    ASSERT( pBackedUpMtx );
-    *pBackedUpMtx = GetL2W();
-
 #ifdef X_EDITOR
     // Render transparent if selected in editor so you can see collision
     if ( GetAttrBits() & object::ATTR_EDITOR_SELECTED )
@@ -492,8 +518,9 @@ void coke_can::OnRender( void )
     }
 #endif
 
-    m_SkinInst.Render( pBackedUpMtx,
-                       pBackedUpMtx,
+    const matrix4* pRenderBone = bUseRenderCache ? m_RenderCache.Interp.Bones : &RenderL2W;
+    m_SkinInst.Render( &RenderL2W,
+                       pRenderBone,
                        1, Flags | GetRenderMode(),
                        LODMask, 
                        Ambient );
@@ -506,6 +533,39 @@ void coke_can::OnRender( void )
     if( ( DEBUG_COKE_CAN ) && ( GetEnergy() > Profile.ACTIVE_ENERGY ) )
         OnColRender( FALSE );
 #endif
+}
+
+//===============================================================================
+
+void coke_can::OnRenderShadowCast( u64 ProjMask )
+{
+    // Lookup skin geometry
+    skin_geom* pSkinGeom = m_SkinInst.GetSkinGeom();
+    if( !pSkinGeom )
+        return;
+
+    // Coke cans can only support a single bone.
+    ASSERTS( pSkinGeom->m_nBones == 1, "Coke cans can only have 1 bone!!" );
+
+    // Compute LOD mask for the shadow render (by forcing 0 for the screen size
+    // we are sure to get the lowest LOD)
+    u64 ShadLODMask = m_SkinInst.GetLODMask( 0 );
+    if( ShadLODMask == 0 )
+        return;
+
+    // Setup render flags
+    u32 Flags = ( GetFlagBits() & object::FLAG_CHECK_PLANES ) ? render::CLIPPED : 0;
+
+    // Render
+    const xbool bUseRenderCache = HasSimpleAnimInterpCache( m_RenderCache );
+    const matrix4& RenderL2W = bUseRenderCache ? m_RenderCache.Interp.L2W : GetL2W();
+    const matrix4* pRenderBone = bUseRenderCache ? m_RenderCache.Interp.Bones : &RenderL2W;
+    m_SkinInst.RenderShadowCast( &RenderL2W,
+                                 pRenderBone,
+                                 1,
+                                 Flags,
+                                 ShadLODMask,
+                                 ProjMask );
 }
 
 //===============================================================================
@@ -558,7 +618,7 @@ void coke_can::OnAdvanceLogic( f32 DeltaTime )
     {
         // Update physics?
         m_DeltaTime += DeltaTime;
-        if( m_DeltaTime >= Profile.TIME_STEP )
+        while( m_DeltaTime >= Profile.TIME_STEP )
         {
             // Update time
             m_DeltaTime -= Profile.TIME_STEP;

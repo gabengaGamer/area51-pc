@@ -224,7 +224,7 @@ void notepad_object::OnRender ( void )
                 text_PopColor();
 
                 // Draw away.
-                draw_Begin( DRAW_QUADS, DRAW_2D | DRAW_UI_RTARGET );
+                draw_Begin( DRAW_QUADS, DRAW_2D );
                 {
                     s32 nX = nWidthMax/2 + 4;
                     s32 nY = (CharHeight*NLines)/2 + 4;

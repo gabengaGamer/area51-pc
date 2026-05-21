@@ -9,8 +9,7 @@
 #pragma once
 #endif // _MSC_VER > 1000
 #include "OutputBar.h"
-
-class CMainFrame : public CXTMDIFrameWnd
+class CMainFrame : public CMDIFrameWnd
 {
 public:  // control bar embedded members
 	enum ALIGNMENT { left, top, right, bottom };
@@ -23,12 +22,10 @@ public:  // control bar embedded members
     void RemoveProgress();
 
 
-	CXTLogoPane      m_wndLogoPane;
-	CXTTrayIcon	     m_trayIcon;
+	CWnd             m_wndLogoPane;
+	CWnd	         m_trayIcon;
 	COutputBar       m_wndOutputBar;
-	CXTStatusBar     m_wndStatusBar;
-//	CXTToolBar       m_wndToolBar;
-    CXTMDIWndTab     m_wndMDITabWindow;
+	CStatusBar       m_wndStatusBar;
     CProgressCtrl*   m_pwndProgCtrl;
     CProgressCtrl*   m_pwndProgCtrl2;
     static CMainFrame* s_pMainFrame;
@@ -41,7 +38,6 @@ public:
 
 /////////////////////////////////////////////////////////////////////////////
 protected:
-	CXTWindowPos        m_wndPosition;
     CMenu               m_PopupMenuAddedViews;
     CRecentFileList*    m_pRecentFiles;
 

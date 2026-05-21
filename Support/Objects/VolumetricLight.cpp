@@ -80,6 +80,7 @@ volumetric_light_obj::volumetric_light_obj( void ) :
     m_nBytesAlloced ( 0 ),
     m_pData         ( NULL )
 {
+    InvalidateRenderState();
 }
 
 //==============================================================================
@@ -89,6 +90,45 @@ volumetric_light_obj::~volumetric_light_obj( void )
     m_nBytesAlloced = 0;
     if( m_pData )
         x_free( m_pData );
+}
+
+//==============================================================================
+
+void volumetric_light_obj::InvalidateRenderState( void )
+{
+    InitTransformInterpCache( m_RenderCache );
+}
+
+//==============================================================================
+
+void volumetric_light_obj::CaptureRenderInterpState( void )
+{
+    transform_interp_state Snapshot;
+    CaptureTransformInterpState( Snapshot, GetL2W() );
+    CaptureTransformInterpCache( m_RenderCache, Snapshot );
+    if( HasTransformInterpCacheChange( m_RenderCache ) )
+        RegisterRenderInterpUpdate();
+}
+
+//==============================================================================
+
+void volumetric_light_obj::UpdateRenderInterpState( f32 Alpha )
+{
+    UpdateTransformInterpCache( m_RenderCache, Alpha );
+}
+
+//==============================================================================
+
+void volumetric_light_obj::ClearRenderInterpState( void )
+{
+    ClearTransformInterpCache( m_RenderCache );
+}
+
+//==============================================================================
+
+const matrix4& volumetric_light_obj::GetRenderL2W( void ) const
+{
+    return GetTransformInterpCacheL2W( m_RenderCache, GetL2W() );
 }
 
 //==============================================================================
@@ -169,7 +209,8 @@ void volumetric_light_obj::OnRenderTransparent( void )
 
     // render using our already compiled data
     render::SetDiffuseMaterial( pProjTex->m_Bitmap, render::BLEND_MODE_ADDITIVE, TRUE );
-    render::Render3dSprites( m_nSprites, 1.0f, &GetL2W(), pPositions, pRotScales, pColors );
+    const matrix4& RenderL2W = GetRenderL2W();
+    render::Render3dSprites( m_nSprites, 1.0f, &RenderL2W, pPositions, pRotScales, pColors );
 }
 
 //==============================================================================

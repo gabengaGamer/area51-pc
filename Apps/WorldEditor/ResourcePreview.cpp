@@ -5,8 +5,8 @@
 #include "ResourcePreview.h"
 #include "..\WinControls\FileSearch.h"
 #include "..\EDRscDesc\RSCDesc.hpp"
-#include "..\MeshViewer\RigidDesc.hpp"
-#include "..\MeshViewer\SkinDesc.hpp"
+//#include "..\MeshViewer\RigidDesc.hpp"
+//#include "..\MeshViewer\SkinDesc.hpp"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -62,23 +62,23 @@ int CResourcePreview::OnCreate(LPCREATESTRUCT lpCreateStruct)
 
 void CResourcePreview::OnPaint() 
 {
-	CPaintDC dc(this); // device context for painting
-	
-    d3deng_UpdateDisplayWindow( GetSafeHwnd() );
-
-    eng_MaximizeViewport( m_View );
-    eng_SetView         ( m_View );
-
-    if( eng_Begin("Preview") )
-    {
-        m_Grid.Render();
-        m_Axis.Render();
-        m_Viewer.SetBackFacets( TRUE );
-        m_Viewer.Render();
-        eng_End();
-    }
-
-    eng_PageFlip();
+	//CPaintDC dc(this); // device context for painting
+	//
+    //d3deng_UpdateDisplayWindow( GetSafeHwnd() );
+	//
+    //eng_MaximizeViewport( m_View );
+    //eng_SetView         ( m_View );
+	//
+    //if( eng_Begin("Preview") )
+    //{
+    //    m_Grid.Render();
+    //    m_Axis.Render();
+    //    m_Viewer.SetBackFacets( TRUE );
+    //    m_Viewer.Render();
+    //    eng_End();
+    //}
+	//
+    //eng_PageFlip();
 
 //    g_pd3dDevice->Clear( 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER,
 //                         0x00000000, 1.0f, 0L ); 
@@ -88,55 +88,56 @@ void CResourcePreview::OnPaint()
 
 BOOL CResourcePreview::LoadGeom(CString strType, CString strPath, BOOL bAdditional, const vector3& Pos, const radian3& Rot ) 
 {
-    BOOL bReturn = FALSE;
-
-    text_in GeomFile;
-    GeomFile.OpenFile(strPath);
-    prop_query propQuery;
-    char cMatxString[MAX_PATH];
-    propQuery.RQueryFileName( "ResDesc\\FileName", &cMatxString[0]);
-
-    if (strType.CompareNoCase("RigidGeom")==0)
-    {
-        rigidgeom_rsc_desc RscDesc;
-        RscDesc.OnLoad(GeomFile);
-        if (RscDesc.OnProperty(propQuery)) bReturn = TRUE;
-    }
-    else if (strType.CompareNoCase("SkinGeom")==0)
-    {
-        skingeom_rsc_desc RscDesc;
-        RscDesc.OnLoad(GeomFile);
-        if (RscDesc.OnProperty(propQuery)) bReturn = TRUE;
-    }
-
-    if (bReturn)
-    {
-        if(bAdditional)
-        {
-            m_Viewer.LoadAdditional(cMatxString, Pos, Rot);
-        }
-        else
-        {
-            m_Viewer.Load(cMatxString);
-        }
-        bbox Bounds = m_Viewer.GetBBox();
-        f32 fMax = Bounds.GetRadius();
-        m_View.SetPosition( fMax*m_v3Mult );
-
-        f32 fMaxY = Bounds.Max.GetY() * 0.6f;
-        if (bAdditional)
-        {
-            m_LastMaxY = MAX(fMaxY, m_LastMaxY);
-        }
-        else
-        {
-            m_LastMaxY = fMaxY;
-        }
-    }
-
-    GeomFile.CloseFile();
-
-    return bReturn;
+    //BOOL bReturn = FALSE;
+	//
+    //text_in GeomFile;
+    //GeomFile.OpenFile(strPath);
+    //prop_query propQuery;
+    //char cMatxString[MAX_PATH];
+    //propQuery.RQueryFileName( "ResDesc\\FileName", &cMatxString[0]);
+	//
+    //if (strType.CompareNoCase("RigidGeom")==0)
+    //{
+    //    rigidgeom_rsc_desc RscDesc;
+    //    RscDesc.OnLoad(GeomFile);
+    //    if (RscDesc.OnProperty(propQuery)) bReturn = TRUE;
+    //}
+    //else if (strType.CompareNoCase("SkinGeom")==0)
+    //{
+    //    skingeom_rsc_desc RscDesc;
+    //    RscDesc.OnLoad(GeomFile);
+    //    if (RscDesc.OnProperty(propQuery)) bReturn = TRUE;
+    //}
+	//
+    //if (bReturn)
+    //{
+    //    if(bAdditional)
+    //    {
+    //        m_Viewer.LoadAdditional(cMatxString, Pos, Rot);
+    //    }
+    //    else
+    //    {
+    //        m_Viewer.Load(cMatxString);
+    //    }
+    //    bbox Bounds = m_Viewer.GetBBox();
+    //    f32 fMax = Bounds.GetRadius();
+    //    m_View.SetPosition( fMax*m_v3Mult );
+	//
+    //    f32 fMaxY = Bounds.Max.GetY() * 0.6f;
+    //    if (bAdditional)
+    //    {
+    //        m_LastMaxY = MAX(fMaxY, m_LastMaxY);
+    //    }
+    //    else
+    //    {
+    //        m_LastMaxY = fMaxY;
+    //    }
+    //}
+	//
+    //GeomFile.CloseFile();
+	//
+    //return bReturn;
+	return true;
 }
 
 //=========================================================================
@@ -145,7 +146,7 @@ void CResourcePreview::ClearGeom()
 {
     m_LastMaxY = 0;
     OnStopTimer();
-    m_Viewer.CleanUp();
+    //m_Viewer.CleanUp();
     RedrawWindow();
 }
 

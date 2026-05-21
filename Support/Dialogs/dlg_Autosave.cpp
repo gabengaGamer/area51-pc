@@ -143,7 +143,7 @@ void dlg_autosave::Destroy( void )
 
 void dlg_autosave::Render( s32 ox, s32 oy )
 {
-    static s32 offset   =  0;
+    const s32 offset = (s32)(g_UiMgr->GetAlphaTime() * 60.0f) % 10;
     static s32 gap      =  9;
     static s32 width    =  4;
 
@@ -203,10 +203,6 @@ void dlg_autosave::Render( s32 ox, s32 oy )
 
             y+=gap;
         }
-    
-        // increment the offset
-        if (++offset > 9)
-            offset = 0;
     }
 
     // render the normal dialog stuff

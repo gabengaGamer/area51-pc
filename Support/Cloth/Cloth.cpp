@@ -15,9 +15,16 @@
 #include "PainMgr\Pain.hpp"
 #include "Objects\Actor\Actor.hpp"
 #include "GameLib\RenderContext.hpp"
+#include "Entropy\e_VRAM.hpp"
 
 #if defined(TARGET_PS2)
 #include "Entropy\PS2\ps2_misc.hpp"
+#endif
+
+#if defined(TARGET_PC)
+#include "Render\PC\GBufferMgr.hpp"
+#include "Entropy\D3DEngine\d3deng_shader.hpp"
+#include "Entropy\D3DEngine\d3deng_rtarget.hpp"
 #endif
 
 #ifdef TARGET_XBOX
@@ -46,6 +53,231 @@ static f32      CLOTH_TIME_STEP                     = 1.0f / 30.0f;
 static xbool    CLOTH_DAMAGE                        = TRUE;
 static f32      CLOTH_PAIN_EXPLOSION_FORCE_SCALE    = 200.0f;
 static f32      CLOTH_PAIN_MELEE_FORCE_SCALE        = 500.0f;
+
+#ifdef TARGET_PC
+static
+void cloth_UpdateDamageBitmapVRAM( xbitmap& DamageBMP )
+{
+    if( !g_pd3dContext )
+        return;
+
+    if( DamageBMP.GetVRAMID() <= 0 )
+        return;
+
+    ID3D11Texture2D* pTexture = vram_GetTexture2D( DamageBMP );
+    ID3D11ShaderResourceView* pSRV = vram_GetSRV( DamageBMP );
+    if( !pTexture || !pSRV )
+        return;
+
+    const s32 Pitch = ( DamageBMP.GetPWidth() * DamageBMP.GetFormatInfo().BPP ) / 8;
+
+    g_pd3dContext->UpdateSubresource( pTexture,
+                                      0,
+                                      NULL,
+                                      DamageBMP.GetPixelData(),
+                                      Pitch,
+                                      Pitch * DamageBMP.GetHeight() );
+    g_pd3dContext->GenerateMips( pSRV );
+}
+
+static
+s32 cloth_DamageAlphaToStatus( u8 Alpha )
+{
+    return MIN( 15, ( (s32)Alpha * 15 + 127 ) / 255 );
+}
+
+static
+ID3D11PixelShader* cloth_GetPCDamageShader( void )
+{
+    static ID3D11PixelShader* s_pShader = NULL;
+
+    if( s_pShader || !g_pd3dDevice )
+        return s_pShader;
+
+    static const char* s_pShaderSource =
+    "Texture2D txDiffuse : register(t0);\n"
+    "Texture2D txDamage  : register(t1);\n"
+    "SamplerState samLinear : register(s0);\n"
+    "struct PS_INPUT\n"
+    "{\n"
+    "    float4 Pos   : SV_POSITION;\n"
+    "    float4 Color : COLOR;\n"
+    "    float2 UV    : TEXCOORD;\n"
+    "};\n"
+    "float4 main(PS_INPUT input) : SV_Target\n"
+    "{\n"
+    "    float4 diffuse = txDiffuse.Sample( samLinear, input.UV );\n"
+    "    float  damage  = txDamage.Sample( samLinear, input.UV ).a;\n"
+    "    float  alpha   = saturate( diffuse.a * damage );\n"
+    "    clip( alpha - 0.05f );\n"
+    "    float edge = saturate( ( alpha - 0.05f ) * 4.0f );\n"
+    "    float3 color = diffuse.rgb * input.Color.rgb * lerp( 0.65f, 1.0f, edge );\n"
+    "    return float4( color, 1.0f );\n"
+    "}\n";
+
+    s_pShader = shader_CompilePixel( s_pShaderSource, "main", "ps_5_0", "cloth_pc_damage" );
+    return s_pShader;
+}
+
+struct cloth_pc_gbuffer_constants
+{
+    f32 NearZ;
+    f32 FarZ;
+    f32 Pad0;
+    f32 Pad1;
+};
+
+static
+ID3D11VertexShader* cloth_GetPCGBufferVertexShader( void )
+{
+    static ID3D11VertexShader* s_pShader = NULL;
+
+    if( s_pShader || !g_pd3dDevice )
+        return s_pShader;
+
+    static const char* s_pShaderSource =
+    "cbuffer cbMatrices : register(b0)\n"
+    "{\n"
+    "    float4x4 World;\n"
+    "    float4x4 View;\n"
+    "    float4x4 Projection;\n"
+    "};\n"
+    "struct VS_INPUT\n"
+    "{\n"
+    "    float3 Pos   : POSITION;\n"
+    "    float4 Color : COLOR;\n"
+    "    float2 UV    : TEXCOORD;\n"
+    "};\n"
+    "struct VS_OUTPUT\n"
+    "{\n"
+    "    float4 Pos      : SV_POSITION;\n"
+    "    float2 UV       : TEXCOORD0;\n"
+    "    float4 Color    : COLOR0;\n"
+    "    float3 WorldPos : TEXCOORD1;\n"
+    "    float3 ViewPos  : TEXCOORD2;\n"
+    "};\n"
+    "VS_OUTPUT main( VS_INPUT input )\n"
+    "{\n"
+    "    VS_OUTPUT output;\n"
+    "    float4 worldPos = mul( World, float4( input.Pos, 1.0f ) );\n"
+    "    float4 viewPos  = mul( View, worldPos );\n"
+    "    output.Pos      = mul( Projection, viewPos );\n"
+    "    output.UV       = input.UV;\n"
+    "    output.Color    = input.Color;\n"
+    "    output.WorldPos = worldPos.xyz;\n"
+    "    output.ViewPos  = viewPos.xyz;\n"
+    "    return output;\n"
+    "}\n";
+
+    s_pShader = shader_CompileVertex( s_pShaderSource, "main", "vs_5_0", "cloth_pc_gbuffer_vs" );
+    return s_pShader;
+}
+
+static
+ID3D11PixelShader* cloth_GetPCGBufferPixelShader( void )
+{
+    static ID3D11PixelShader* s_pShader = NULL;
+
+    if( s_pShader || !g_pd3dDevice )
+        return s_pShader;
+
+    static const char* s_pShaderSource =
+    "Texture2D txDiffuse : register(t0);\n"
+    "Texture2D txDamage  : register(t1);\n"
+    "SamplerState samLinear : register(s0);\n"
+    "cbuffer ClothParams : register(b4)\n"
+    "{\n"
+    "    float NearZ;\n"
+    "    float FarZ;\n"
+    "    float Pad0;\n"
+    "    float Pad1;\n"
+    "};\n"
+    "struct VS_OUTPUT\n"
+    "{\n"
+    "    float4 Pos      : SV_POSITION;\n"
+    "    float2 UV       : TEXCOORD0;\n"
+    "    float4 Color    : COLOR0;\n"
+    "    float3 WorldPos : TEXCOORD1;\n"
+    "    float3 ViewPos  : TEXCOORD2;\n"
+    "};\n"
+    "struct PS_OUTPUT\n"
+    "{\n"
+    "    float4 FinalColor  : SV_Target0;\n"
+    "    float4 Albedo      : SV_Target1;\n"
+    "    float4 Normal      : SV_Target2;\n"
+    "    float4 LinearDepth : SV_Target3;\n"
+    "    float4 Glow        : SV_Target4;\n"
+    "};\n"
+    "PS_OUTPUT main( VS_OUTPUT input )\n"
+    "{\n"
+    "    PS_OUTPUT output;\n"
+    "    float4 diffuse = txDiffuse.Sample( samLinear, input.UV );\n"
+    "    float  damage  = txDamage.Sample( samLinear, input.UV ).a;\n"
+    "    float  alpha   = saturate( diffuse.a * damage );\n"
+    "    clip( alpha - 0.05f );\n"
+    "    float edge = saturate( ( alpha - 0.05f ) * 4.0f );\n"
+    "    float3 litColor = saturate( diffuse.rgb * input.Color.rgb * lerp( 0.65f, 1.0f, edge ) );\n"
+    "    float3 dViewX = ddx( input.ViewPos );\n"
+    "    float3 dViewY = ddy( input.ViewPos );\n"
+    "    float3 viewNormal = normalize( cross( dViewX, dViewY ) );\n"
+    "    float3 viewDir = normalize( -input.ViewPos );\n"
+    "    if( dot( viewNormal, viewDir ) < 0.0f )\n"
+    "        viewNormal = -viewNormal;\n"
+    "    float linearDepth = saturate( ( input.ViewPos.z - NearZ ) / max( FarZ - NearZ, 1e-5f ) );\n"
+    "    output.FinalColor  = float4( litColor, 1.0f );\n"
+    "    output.Albedo      = float4( diffuse.rgb, 1.0f );\n"
+    "    output.Normal      = float4( viewNormal * 0.5f + 0.5f, 0.0f );\n"
+    "    output.LinearDepth = linearDepth.xxxx;\n"
+    "    output.Glow        = 0.0f;\n"
+    "    return output;\n"
+    "}\n";
+
+    s_pShader = shader_CompilePixel( s_pShaderSource, "main", "ps_5_0", "cloth_pc_gbuffer_ps" );
+    return s_pShader;
+}
+
+static
+ID3D11Buffer* cloth_GetPCGBufferConstantBuffer( void )
+{
+    static ID3D11Buffer* s_pBuffer = NULL;
+
+    if( s_pBuffer || !g_pd3dDevice )
+        return s_pBuffer;
+
+    s_pBuffer = shader_CreateConstantBuffer( sizeof(cloth_pc_gbuffer_constants), CB_TYPE_DYNAMIC );
+    return s_pBuffer;
+}
+
+static
+xbool cloth_BindPCGBufferShader( const xbitmap& DamageBMP )
+{
+    if( !g_pd3dContext )
+        return FALSE;
+
+    ID3D11VertexShader* pVS = cloth_GetPCGBufferVertexShader();
+    ID3D11PixelShader*  pPS = cloth_GetPCGBufferPixelShader();
+    ID3D11Buffer*       pCB = cloth_GetPCGBufferConstantBuffer();
+    ID3D11ShaderResourceView* pDamageSRV = vram_GetSRV( DamageBMP );
+    const view* pView = eng_GetView();
+
+    if( !pVS || !pPS || !pCB || !pDamageSRV || !pView )
+        return FALSE;
+
+    cloth_pc_gbuffer_constants CBData;
+    pView->GetZLimits( CBData.NearZ, CBData.FarZ );
+    CBData.Pad0 = 0.0f;
+    CBData.Pad1 = 0.0f;
+
+    shader_UpdateConstantBuffer( pCB, &CBData, sizeof(CBData) );
+    g_pd3dContext->VSSetConstantBuffers( 4, 1, &pCB );
+    g_pd3dContext->PSSetConstantBuffers( 4, 1, &pCB );
+    g_pd3dContext->PSSetShaderResources( 1, 1, &pDamageSRV );
+
+    shader_SetVertexShader( pVS );
+    shader_SetPixelShader( pPS );
+    return TRUE;
+}
+#endif
 
 
 #ifdef X_EDITOR
@@ -890,7 +1122,7 @@ void cloth::Init( void )
         Particle2.m_Normal += Normal;
     }
 
-#if defined TARGET_PS2 || defined TARGET_XBOX
+#if defined(TARGET_PS2) || defined(TARGET_XBOX) || defined(TARGET_PC)
 
     // Initialize damage bitmap
     if (pTexture)
@@ -939,6 +1171,14 @@ void cloth::Init( void )
             for (s32 x = 0; x < Width; x++)
             {
                 m_DamageBMP.SetPixelColor( xcolor( 255,255,255 ),x,y);    // Full bright, opaque
+            }
+        }
+#elif defined(TARGET_PC)
+        for (s32 y = 0; y < Height; y++)
+        {
+            for (s32 x = 0; x < Width; x++)
+            {
+                m_DamageBMP.SetPixelColor( xcolor( 255,255,255,255 ), x, y );
             }
         }
 #else
@@ -1030,7 +1270,7 @@ void cloth::Reset( void )
 
 void cloth::Kill( void )
 {
-#if defined TARGET_PS2 || defined TARGET_XBOX
+#if defined(TARGET_PS2) || defined(TARGET_XBOX) || defined(TARGET_PC)
     // Unregister if bitmap was registered
     if( m_DamageBMP.GetVRAMID() )
         vram_Unregister(m_DamageBMP);
@@ -1851,10 +2091,64 @@ s32 cloth::PunchDamage( f32 U, f32 V )
     return Status;
 #else
     
-    // PC - no damage bitmap present...
+#ifdef TARGET_PC
+
+    if( !m_DamageBMP.GetWidth() || !m_DamageBMP.GetHeight() )
+        return 15;
+
+    const s32 W = m_DamageBMP.GetWidth()  - 1;
+    const s32 H = m_DamageBMP.GetHeight() - 1;
+    const s32 X = (s32)( U * W );
+    const s32 Y = (s32)( V * H );
+
+    const s32 Status = cloth_DamageAlphaToStatus( m_DamageBMP.GetPixelColor( X, Y ).A );
+
+    const f32 RadiusScale = MAX( 2.0f, (f32)MIN( W, H ) / 128.0f );
+    const f32 InnerRadius = RadiusScale * ( 1.2f + (f32)x_irand( 0, 2 ) * 0.35f );
+    const f32 OuterRadius = InnerRadius + RadiusScale * 1.8f;
+    const s32 MinX = MAX( 0, (s32)( X - OuterRadius - 1.0f ) );
+    const s32 MaxX = MIN( W, (s32)( X + OuterRadius + 1.0f ) );
+    const s32 MinY = MAX( 0, (s32)( Y - OuterRadius - 1.0f ) );
+    const s32 MaxY = MIN( H, (s32)( Y + OuterRadius + 1.0f ) );
+
+    for( s32 iy = MinY; iy <= MaxY; iy++ )
+    {
+        for( s32 ix = MinX; ix <= MaxX; ix++ )
+        {
+            const f32 DX = (f32)( ix - X );
+            const f32 DY = (f32)( iy - Y );
+            const f32 Dist = x_sqrt( DX*DX + DY*DY );
+
+            if( Dist > OuterRadius )
+                continue;
+
+            f32 KeepAlpha = 0.0f;
+            if( Dist > InnerRadius )
+            {
+                KeepAlpha = ( Dist - InnerRadius ) / ( OuterRadius - InnerRadius );
+            }
+
+            u8 Alpha = (u8)( KeepAlpha * 255.0f );
+            xcolor Current = m_DamageBMP.GetPixelColor( ix, iy );
+            if( Alpha < Current.A )
+            {
+                Current.R = Alpha;
+                Current.G = Alpha;
+                Current.B = Alpha;
+                Current.A = Alpha;
+                m_DamageBMP.SetPixelColor( Current, ix, iy );
+            }
+        }
+    }
+
+    cloth_UpdateDamageBitmapVRAM( m_DamageBMP );
+    return Status;
+
+#else
     (void)U;
     (void)V;
     return 15;
+#endif
 
 #endif
 }
@@ -1893,10 +2187,21 @@ s32 cloth::CheckDamage( f32 U, f32 V )
 
 #else
     
-    // PC - no damage bitmap present...
+#ifdef TARGET_PC
+    if( !m_DamageBMP.GetWidth() || !m_DamageBMP.GetHeight() )
+        return 15;
+
+    const s32 W = m_DamageBMP.GetWidth()  - 1;
+    const s32 H = m_DamageBMP.GetHeight() - 1;
+    const s32 X = (s32)(U * W);
+    const s32 Y = (s32)(V * H);
+
+    return cloth_DamageAlphaToStatus( m_DamageBMP.GetPixelColor( X, Y ).A );
+#else
     (void)U;
     (void)V;
     return 15;
+#endif
 
 #endif
 }
@@ -2514,11 +2819,65 @@ void cloth::RenderClothGeometry( s32 VTexture /*= 0*/ )
 
 #else
 
-        // PC VERSION - Just render diffuse map
+        if( CLOTH_DAMAGE && ( m_DamageBMP.GetVRAMID() == 0 ) && m_DamageBMP.GetPixelData() )
+        {
+            vram_Register( m_DamageBMP );
+            cloth_UpdateDamageBitmapVRAM( m_DamageBMP );
+        }
 
-        // Render diffuse map blended with damage texture
-        draw_SetTexture(pTexture->m_Bitmap);
-        draw_Begin(DRAW_TRIANGLES, DRAW_TEXTURED | DRAW_CULL_NONE);
+        const xbool bGBufferPass = g_GBufferMgr.IsGBufferEnabled() && ( rtarget_GetCurrentCount() > 1 );
+        if( bGBufferPass && cloth_BindPCGBufferShader( m_DamageBMP ) )
+        {
+            draw_SetTexture( pTexture->m_Bitmap );
+            draw_Begin( DRAW_TRIANGLES,
+                        DRAW_TEXTURED |
+                        DRAW_CULL_NONE |
+                        DRAW_UV_CLAMP |
+                        DRAW_CUSTOM_VS_SHADER |
+                        DRAW_CUSTOM_PS_SHADER );
+            for (i = 0; i < m_Triangles.GetCount(); i++)
+            {
+                cloth_triangle& Triangle = m_Triangles[i];
+                for (j = 0; j < 3; j++)
+                {
+                    cloth_particle& Particle = m_Particles[(s32)Triangle.m_Particles[j]];
+                    draw_Color (Particle.m_Color);
+                    draw_UV    (Particle.m_UV);
+                    draw_Vertex(Particle.m_Pos);
+                }
+            }
+            draw_End();
+
+            ID3D11ShaderResourceView* pNullSRV = NULL;
+            g_pd3dContext->PSSetShaderResources( 1, 1, &pNullSRV );
+            return;
+        }
+
+        const xbool bRestoreGBufferTargets = g_GBufferMgr.IsGBufferEnabled() && ( rtarget_GetCurrentCount() > 1 );
+        ID3D11PixelShader* pDamageShader = NULL;
+        ID3D11ShaderResourceView* pDamageSRV = NULL;
+        xbool bUseDamageShader = FALSE;
+
+        if( CLOTH_DAMAGE && ( m_DamageBMP.GetVRAMID() > 0 ) )
+        {
+            pDamageShader = cloth_GetPCDamageShader();
+            pDamageSRV = vram_GetSRV( m_DamageBMP );
+            bUseDamageShader = ( pDamageShader != NULL ) && ( pDamageSRV != NULL );
+
+            if( bUseDamageShader )
+            {
+                g_pd3dContext->PSSetShaderResources( 1, 1, &pDamageSRV );
+                shader_SetPixelShader( pDamageShader );
+            }
+        }
+
+        draw_SetTexture( pTexture->m_Bitmap );
+        draw_Begin( DRAW_TRIANGLES,
+                    DRAW_TEXTURED |
+                    DRAW_CULL_NONE |
+                    DRAW_UV_CLAMP |
+                    DRAW_USE_GDEPTH |
+                    ( bUseDamageShader ? DRAW_CUSTOM_PS_SHADER : 0 ) );
         for (i = 0; i < m_Triangles.GetCount(); i++)
         {
             // Lookup triangle
@@ -2537,6 +2896,15 @@ void cloth::RenderClothGeometry( s32 VTexture /*= 0*/ )
             }
         }
         draw_End();
+
+        if( bUseDamageShader )
+        {
+            pDamageSRV = NULL;
+            g_pd3dContext->PSSetShaderResources( 1, 1, &pDamageSRV );
+        }
+
+        if( bRestoreGBufferTargets )
+            g_GBufferMgr.SetGBufferTargets();
 
 #endif  // #ifdef TARGET_PS2
 

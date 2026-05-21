@@ -109,7 +109,7 @@ void MakeUserNameFromUserID( s32 UserID, char* pStr )
     for( s32 i=0; i<5; i++ )
         pStr[i] = s_LetterList[ (UserID>>(4*(4-i))) & 0xF ];
 
-    pStr[i] = 0;
+    pStr[5] = 0;
 }
 
 //==============================================================================

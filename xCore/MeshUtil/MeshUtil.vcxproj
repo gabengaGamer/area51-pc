@@ -255,8 +255,8 @@
       <Optimization>Disabled</Optimization>
       <AdditionalIncludeDirectories>$(X)\Auxiliary\Parsing;$(X)\..\Support;$(X)\MeshUtil;$(X)\x_files;$(X)\Auxiliary\Bitmap;$(X)\Parsing;$(X);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>TARGET_PC;CONFIG_DEBUG;X_EDITOR;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
-      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <BasicRuntimeChecks>Default</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
     </ClCompile>
   </ItemDefinitionGroup>

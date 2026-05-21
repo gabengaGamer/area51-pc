@@ -39,6 +39,7 @@ enum composite_blend_mode
     COMPOSITE_BLEND_ADDITIVE,   // Additive blending
     COMPOSITE_BLEND_MULTIPLY,   // Multiply blending
     COMPOSITE_BLEND_OVERLAY,    // Overlay blending
+    COMPOSITE_BLEND_COPY,       // Copy source color directly
     
     COMPOSITE_BLEND_COUNT
 };

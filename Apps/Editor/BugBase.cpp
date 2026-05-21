@@ -16,7 +16,7 @@ static char THIS_FILE[] = __FILE__;
 /////////////////////////////////////////////////////////////////////////////
 // CBugBase
 
-IMPLEMENT_DYNCREATE(CBugBase, CXTHtmlView)
+IMPLEMENT_DYNCREATE(CBugBase, CHtmlView)
 
 CBugBase::CBugBase()
 {
@@ -33,14 +33,14 @@ CBugBase::~CBugBase()
 
 void CBugBase::DoDataExchange(CDataExchange* pDX)
 {
-	CXTHtmlView::DoDataExchange(pDX);
+	CHtmlView::DoDataExchange(pDX);
 	//{{AFX_DATA_MAP(CBugBase)
 		// NOTE: the ClassWizard will add DDX and DDV calls here
 	//}}AFX_DATA_MAP
 }
 
 
-BEGIN_MESSAGE_MAP(CBugBase, CXTHtmlView)
+BEGIN_MESSAGE_MAP(CBugBase, CHtmlView)
 	//{{AFX_MSG_MAP(CBugBase)
 	ON_COMMAND(ID_BACK,    OnGoBack)
     ON_COMMAND(ID_FOWARD,  OnGoFoward)
@@ -71,12 +71,12 @@ void CBugBase::OnEnable(CCmdUI* pCmdUI){}
 #ifdef _DEBUG
 void CBugBase::AssertValid() const
 {
-	CXTHtmlView::AssertValid();
+	CHtmlView::AssertValid();
 }
 
 void CBugBase::Dump(CDumpContext& dc) const
 {
-	CXTHtmlView::Dump(dc);
+	CHtmlView::Dump(dc);
 }
 #endif //_DEBUG
 
@@ -91,7 +91,13 @@ void CBugBase::OnInitialUpdate()
 
     if( !m_bInitialize )
     {
-	    if (!m_wndToolBar.CreateEx( GetParent(), TBSTYLE_FLAT | TBSTYLE_LIST ) ||
+        CHtmlView::OnInitialUpdate();
+
+	    if (!m_wndToolBar.CreateEx(GetParent(),
+                                   TBSTYLE_FLAT | TBSTYLE_LIST,
+                                   WS_CHILD | WS_VISIBLE | CBRS_TOP,
+                                   CRect(0, 0, 0, 0),
+                                   AFX_IDW_TOOLBAR + 50) ||
 		    !m_wndToolBar.LoadToolBar(IDR_HELP_BROSWER))
 	    {
 		    TRACE0("Failed to create toolbar\n");
@@ -120,12 +126,12 @@ void CBugBase::OnPaint()
     }
 	// TODO: Add your message handler code here
 	
-	// Do not call CXTHtmlView::OnPaint() for painting messages
+	// Do not call CHtmlView::OnPaint() for painting messages
 }
 
 void CBugBase::OnSize(UINT nType, int cx, int cy) 
 {
-	CXTHtmlView::OnSize(nType, cx, cy);
+	CHtmlView::OnSize(nType, cx, cy);
 	
 	// TODO: Add your message handler code here
     if( m_bInitialize )
@@ -141,11 +147,11 @@ void CBugBase::OnSize(UINT nType, int cx, int cy)
 void CBugBase::OnBeforeNavigate2(LPCTSTR lpszURL, DWORD nFlags, LPCTSTR lpszTargetFrameName, CByteArray& baPostedData, LPCTSTR lpszHeaders, BOOL* pbCancel)
 {
     m_wndAnimateBar.Play( 0, -1, -1);
-    CXTHtmlView::OnBeforeNavigate2(lpszURL, nFlags, lpszTargetFrameName, baPostedData, lpszHeaders,pbCancel);
+    CHtmlView::OnBeforeNavigate2(lpszURL, nFlags, lpszTargetFrameName, baPostedData, lpszHeaders,pbCancel);
 }
 
 void CBugBase::OnNavigateComplete2(LPCTSTR strURL)
 {
     m_wndAnimateBar.Stop();
-    CXTHtmlView::OnNavigateComplete2(strURL);
+    CHtmlView::OnNavigateComplete2(strURL);
 }

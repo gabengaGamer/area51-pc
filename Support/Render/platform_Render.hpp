@@ -1,5 +1,15 @@
+//=============================================================================
+//  
+//  platform_Render.hpp  
+//
+//=============================================================================
+
 #ifndef PLATFORM_RENDER_HPP
 #define PLATFORM_RENDER_HPP
+
+//=============================================================================
+//  includes
+//=============================================================================
 
 #include "Render\Render.hpp"
 
@@ -135,19 +145,25 @@ static void     platform_SetShadowProjectionMatrix  ( s32                       
                                                       const matrix4&            Matrix      )   X_SECTION( render_infrequent );
 
 //=============================================================================
-// projected shadows
+// dynamic shadow-map sources
 //=============================================================================
 
-static void     platform_ClearShadowProjectorList   ( void )                            X_SECTION( render_infrequent );
-static void     platform_AddPointShadowProjection   ( const matrix4&         L2W,
+static void     platform_ClearShadowSourceList      ( void )                            X_SECTION( render_infrequent );
+static void     platform_FinalizeShadowSourceList   ( void )                            X_SECTION( render_infrequent );
+static void     platform_AddPointShadowMapSource    ( const matrix4&         L2W,
                                                       radian                 FOV,
-                                                      f32                    NearZ,
-                                                      f32                    FarZ )     X_SECTION( render_add_shadow );
-static void     platform_AddDirShadowProjection     ( const matrix4&         L2W,
-                                                      f32                    Width,
-                                                      f32                    Height,
-                                                      f32                    NearZ,
-                                                      f32                    FarZ )     X_SECTION( render_add_shadow );
+                                                      f32                    LightRadius,
+                                                      f32                    LightFalloff,
+                                                      s32                    ShadowMapResolution,
+                                                      s32                    ShadowPriority,
+                                                      f32                    ShadowScore ) X_SECTION( render_add_shadow );
+static void     platform_AddSpotShadowMapSource     ( const matrix4&         L2W,
+                                                      radian                 FOV,
+                                                      f32                    LightRadius,
+                                                      f32                    LightFalloff,
+                                                      s32                    ShadowMapResolution,
+                                                      s32                    ShadowPriority,
+                                                      f32                    ShadowScore ) X_SECTION( render_add_shadow );
 static void     platform_BeginShadowShaders         ( void )                            X_SECTION( render_infrequent );
 static void     platform_EndShadowShaders           ( void )                            X_SECTION( render_infrequent );
 static void     platform_StartShadowCast            ( void )                            X_SECTION( render_infrequent );
@@ -161,12 +177,12 @@ static void     platform_EndShadowCastRigid         ( void )                    
 static void     platform_BeginShadowCastSkin        ( geom*            pGeom,
                                                       s32              iSubMesh )       X_SECTION( render_deferred_shadow );
 static void     platform_RenderShadowCastSkin       ( render_instance& Inst,
-                                                      s32              iProj    )       X_SECTION( render_deferred_shadow );
+                                                      s32              iShadowSource )  X_SECTION( render_deferred_shadow );
 static void     platform_EndShadowCastSkin          ( void )                            X_SECTION( render_deferred_shadow );
 static void     platform_BeginShadowReceiveRigid    ( geom*            pGeom,
                                                       s32              iSubMesh )       X_SECTION( render_deferred_shadow );
 static void     platform_RenderShadowReceiveRigid   ( render_instance& Inst,
-                                                      s32              iProj    )       X_SECTION( render_deferred_shadow );
+                                                      s32              iShadowSource )  X_SECTION( render_deferred_shadow );
 static void     platform_EndShadowReceiveRigid      ( void )                            X_SECTION( render_deferred_shadow );
 static void     platform_BeginShadowReceiveSkin     ( geom*            pGeom,
                                                       s32              iSubMesh )       X_SECTION( render_deferred_shadow );

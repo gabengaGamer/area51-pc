@@ -26,6 +26,8 @@
 #include "Loco\LocoAnimController.hpp"
 #include "Loco\Loco.hpp"
 #include "Decals\DecalPackage.hpp"
+#include "Objects\Interpolation\InterpolationCache.hpp"
+#include "Objects\Interpolation\SkinnedInterpolation.hpp"
 
 //==============================================================================
 
@@ -454,6 +456,17 @@ virtual void            OnRender                ( void );
 virtual void            OnRenderShadowCast      ( u64 ProjMask );
 virtual void            OnRenderTransparent     ( void );
 virtual void            OnRenderWeapon          ( void );
+virtual void            CaptureRenderInterpState      ( void );
+virtual void            UpdateRenderInterpState       ( f32 Alpha );
+virtual void            ClearRenderInterpState        ( void );
+        void            CaptureActorRenderInterpState ( void );
+        void            UpdateActorRenderInterpState  ( f32 Alpha );
+        void            ClearActorRenderInterpState   ( void );
+virtual xbool           GetRenderWeaponL2W      ( matrix4& L2W,
+                                                   new_weapon::render_state RenderState = new_weapon::RENDER_STATE_NPC ) const;
+virtual const matrix4*  GetRenderWeaponBones    ( s32& nBones,
+                                                   new_weapon::render_state RenderState = new_weapon::RENDER_STATE_NPC ) const;
+virtual const vector3&  GetRenderWeaponCollisionOffset( new_weapon::render_state RenderState = new_weapon::RENDER_STATE_NPC ) const;
 virtual void            OnColCheck              ( void );    
 virtual void            OnMove                  ( const vector3& NewPos );
 virtual void            OnTransform             ( const matrix4& L2W );
@@ -689,6 +702,9 @@ virtual void            OnAttachedMove          ( s32 iAttachPt, const matrix4& 
 
 // Rendering functions
 const   matrix4*        GetBonesForRender       ( u64 LODMask, s32& nActiveBones );
+const   matrix4&        GetActorRenderL2W      ( void ) const;
+        xbool           GetActorRenderBoneL2W  ( s32 iBone, matrix4& L2W ) const;
+        void            InvalidateActorRenderInterpState( void );
         void            RenderHitLocations      ( void );
         f32             TimeSinceLastRender     ( void );
 virtual skin_inst&      GetSkinInst             ( void ) { return m_SkinInst; }
@@ -757,6 +773,12 @@ static  s32                     m_nActive;
         actor*                  m_pPrevActive;
 
 protected:
+        struct actor_interp_state
+        {
+            xbool                Valid;
+            skinned_interp_state Body;
+            weapon_interp_state  Weapon;
+        };
 
         // Active info
         xbool                   m_bIsActive ;           // TRUE if character is within active area
@@ -832,6 +854,7 @@ protected:
         floor_properties        m_FloorProperties;
         skin_inst               m_SkinInst ;            // Render instance
         anim_group::handle      m_hAnimGroup ;          // Animation group handle
+        interp_cache<actor_interp_state> m_ActorRenderCache;
         f32                     m_TimeSinceLastRender;  // Last time character was rendered
         f32                     m_LeanAmount;           // -1.0f to 1.0f indicates leaning all the way left
                                                         //       to all the way right, respectively

@@ -329,22 +329,19 @@ void CPropertyGrid::OnButtonBrowse(int iItem, int iSubItem)
 
 void CPropertyGrid::OnButtonColorPick(int iItem, int iSubItem)
 {
-	CPropertyTreeColor *pColor = (CPropertyTreeColor*) GetTreeItem(iItem);
-
-	CXTColorDialog dlgColor(pColor->m_cr, pColor->m_cr,0,this);
-	if (dlgColor.DoModal() == IDOK)
-	{
-		CString strColor;
-		COLORREF color = dlgColor.GetColor();
-		strColor.Format("%u, %u, %u, %u",GetRValue(color), GetGValue(color), GetBValue(color), pColor->m_alpha);
-		SetItemText(iItem, iSubItem, strColor);
-
-		CGridItemInfo* lp = GetData(pColor);
-		lp->SetSubItemText(iSubItem-1, strColor);
-
-		pColor->NotifyOfChange(this);
-		OnGridItemChange(pColor);
-	}
+    CPropertyTreeColor *pColor = (CPropertyTreeColor*) GetTreeItem(iItem);
+    CColorDialog dlgColor(pColor->m_cr, CC_FULLOPEN, this);
+    if (dlgColor.DoModal() == IDOK)
+    {
+        CString strColor;
+        COLORREF color = dlgColor.GetColor();
+        strColor.Format("%u, %u, %u, %u", GetRValue(color), GetGValue(color), GetBValue(color), pColor->m_alpha);
+        SetItemText(iItem, iSubItem, strColor);
+        CGridItemInfo* lp = GetData(pColor);
+        lp->SetSubItemText(iSubItem-1, strColor);
+        pColor->NotifyOfChange(this);
+        OnGridItemChange(pColor);
+    }
 }
 
 void CPropertyGrid::DrawControl(CDC* pDC, CGridTreeItem *pSelItem, int nItem, int nColumn, COLORREF crBorder)

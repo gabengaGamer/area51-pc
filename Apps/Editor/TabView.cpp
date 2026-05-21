@@ -15,9 +15,9 @@ static char THIS_FILE[] = __FILE__;
 /////////////////////////////////////////////////////////////////////////////
 // CTabView
 
-IMPLEMENT_DYNCREATE(CTabView, CXTTreeView)
+IMPLEMENT_DYNCREATE(CTabView, CTreeView)
 
-BEGIN_MESSAGE_MAP(CTabView, CXTTreeView)
+BEGIN_MESSAGE_MAP(CTabView, CTreeView)
 	//{{AFX_MSG_MAP(CTabView)
 	ON_WM_ERASEBKGND()
 	ON_WM_PAINT()
@@ -42,7 +42,7 @@ CTabView::~CTabView()
 
 BOOL CTabView::PreCreateWindow(CREATESTRUCT& cs)
 {
-	if( !CXTTreeView::PreCreateWindow( cs ))
+	if( !CTreeView::PreCreateWindow( cs ))
 		return FALSE;
 
 	// Set the style for the tree control.
@@ -60,12 +60,12 @@ BOOL CTabView::PreCreateWindow(CREATESTRUCT& cs)
 #ifdef _DEBUG
 void CTabView::AssertValid() const
 {
-	CXTTreeView::AssertValid();
+	CTreeView::AssertValid();
 }
 
 void CTabView::Dump(CDumpContext& dc) const
 {
-	CXTTreeView::Dump(dc);
+	CTreeView::Dump(dc);
 }
 
 CTabDoc* CTabView::GetDocument() // non-debug version is inline
@@ -82,10 +82,7 @@ void CTabView::OnPaint()
 {
 	// Helps to reduce screen flicker.
 	CPaintDC dc(this);
-	CRect rectClient;
-	GetClientRect(&rectClient);
-	CXTMemDC memDC(&dc, rectClient, xtAfxData.clrWindow);
-	CWnd::DefWindowProc( WM_PAINT, (WPARAM)memDC.m_hDC, 0 );
+	CTreeView::OnPaint();
 }
 
 BOOL CTabView::OnEraseBkgnd(CDC* pDC) 
@@ -97,7 +94,7 @@ BOOL CTabView::OnEraseBkgnd(CDC* pDC)
 
 int CTabView::OnCreate(LPCREATESTRUCT lpCreateStruct) 
 {
-	if (CXTTreeView::OnCreate(lpCreateStruct) == -1)
+	if (CTreeView::OnCreate(lpCreateStruct) == -1)
 		return -1;
 
 	// Create the image list used by the tree control.
@@ -125,7 +122,7 @@ int CTabView::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	return 0;
 }
 
-UINT CTabView::OnNcHitTest(CPoint point) 
+LRESULT CTabView::OnNcHitTest(CPoint point) 
 {
 #if _MSC_VER >= 1200 //MFC 6.0
 	UINT uFlag=0;
@@ -146,5 +143,5 @@ UINT CTabView::OnNcHitTest(CPoint point)
 	}
 #endif //MFC 6.0
 	
-	return CXTTreeView::OnNcHitTest(point);
+	return CTreeView::OnNcHitTest(point);
 }

@@ -154,8 +154,7 @@ void CEditorObjectView::OnSize(UINT nType, int cx, int cy)
 	CPaletteView::OnSize(nType, cx, cy);
     int nHt = cx/2;
 
-	CSize size = m_wndToolBar.CalcLayout(LM_HORZ| LM_COMMIT,nHt);
-	m_wndToolBar.MoveWindow(0,0,size.cx,size.cy);
+	CSize size = SizeToolBar(cx, cy);
 
     if (nHt > (cy/2)) nHt = cy/2;
 

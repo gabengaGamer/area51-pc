@@ -244,6 +244,8 @@ protected:
     virtual         void        OnRender                ( void );
     virtual         void        OnRenderTransparent     ( void );
     virtual         void        OnAdvanceLogic          ( f32 DeltaTime );    
+    virtual         void        UpdateRenderInterpState       ( f32 Alpha );
+    virtual         void        ClearRenderInterpState        ( void );
 
 #ifndef X_RETAIL
     virtual         void        OnDebugRender           ( void );    
@@ -259,6 +261,7 @@ protected:
                     void        PlayRepeatedLogic       ( f32 DeltaTime );
                     void        PlayForeverLogic        ( f32 DeltaTime );
                     void        PlayPresistantLogic     ( f32 DeltaTime );
+                    void        SyncFXTransform         ( void );
      
 public:
 

@@ -216,8 +216,8 @@
       <AdditionalIncludeDirectories>$(X);$(X)\x_files;$(X)\Entropy;$(X)\..\Support;$(X)\Auxiliary;$(X)\3rdParty\ffmpeg-win32\include;$(X)\Parsing;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>TARGET_PC;CONFIG_DEBUG;X_EDITOR;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>false</MinimalRebuild>
-      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
-      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <BasicRuntimeChecks>Default</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <WarningLevel>Level3</WarningLevel>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
@@ -653,6 +653,7 @@
     <ClCompile Include="..\InputMgr\GamePad.cpp" />
     <ClCompile Include="..\InputMgr\InputMgr.cpp" />
     <ClCompile Include="..\InputMgr\Monkey.cpp" />
+    <ClCompile Include="..\DeltaMgr\InterpolationMgr.cpp" />
     <ClCompile Include="..\Inventory\CollectableAntiMutagen.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='EDITOR-Debug|Win32'">true</ExcludedFromBuild>
@@ -863,6 +864,7 @@
     </ClCompile>
     <ClCompile Include="..\Objects\DestructibleObj.cpp" />
     <ClCompile Include="..\Objects\Door.cpp" />
+    <ClCompile Include="..\Objects\Flashlight.cpp" />
     <ClCompile Include="..\Objects\feedbackemitter.cpp" />
     <ClCompile Include="..\Objects\Flag.cpp" />
     <ClCompile Include="..\Objects\FlagBase.cpp" />
@@ -1431,6 +1433,7 @@
     <ClInclude Include="..\InputMgr\GamePad.hpp" />
     <ClInclude Include="..\InputMgr\InputMgr.hpp" />
     <ClInclude Include="..\InputMgr\Monkey.hpp" />
+    <ClInclude Include="..\DeltaMgr\InterpolationMgr.hpp" />
     <ClInclude Include="..\Inventory\CollectableAntiMutagen.hpp" />
     <ClInclude Include="..\Inventory\CollectableHealthPack.hpp" />
     <ClInclude Include="..\Inventory\CollectableKeyCard.hpp" />
@@ -1512,6 +1515,7 @@
     <ClInclude Include="..\Objects\DestructibleObj.hpp" />
     <ClInclude Include="..\Objects\Door.hpp" />
     <ClInclude Include="..\Objects\Event.hpp" />
+    <ClInclude Include="..\Objects\Flashlight.hpp" />
     <ClInclude Include="..\Objects\feedbackemitter.hpp" />
     <ClInclude Include="..\Objects\Flag.hpp" />
     <ClInclude Include="..\Objects\FlagBase.hpp" />

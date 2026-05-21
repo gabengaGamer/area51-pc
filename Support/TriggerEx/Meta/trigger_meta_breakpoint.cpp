@@ -12,7 +12,7 @@
 #include "..\TriggerEx_Object.hpp"
 
 #ifdef X_EDITOR
-extern g_EditorBreakpoint;
+extern xbool g_EditorBreakpoint;
 #endif // X_EDITOR
 
 //=========================================================================

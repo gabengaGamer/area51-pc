@@ -125,6 +125,7 @@ xbool dlg_end_pause::Create( s32                        UserID,
 
     // initialize wait flag
     m_StartWaiting = FALSE;
+    m_Countdown    = 0.0f;
 
     // disable the highlight
     g_UiMgr->DisableScreenHighlight();
@@ -175,13 +176,14 @@ void dlg_end_pause::Render( s32 ox, s32 oy )
 void dlg_end_pause::OnUpdate ( ui_win* pWin, f32 DeltaTime )
 {
     (void)pWin;
-    (void)DeltaTime;
 
     // update countdown
-    if (m_Countdown)
+    if( m_Countdown > 0.0f )
     {
-        if (--m_Countdown == 0)
+        m_Countdown -= DeltaTime;
+        if( m_Countdown <= 0.0f )
         {
+            m_Countdown = 0.0f;
             // return to main menu
             m_State = DIALOG_STATE_SELECT;
         }
@@ -200,7 +202,7 @@ void dlg_end_pause::OnUpdate ( ui_win* pWin, f32 DeltaTime )
             #endif
                 // set flag to start loading screen
                 m_StartWaiting = TRUE;
-                m_Countdown = 10;
+                m_Countdown = (10.0f / 60.0f);
             }
             else
             {    

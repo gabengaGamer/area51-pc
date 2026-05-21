@@ -2,7 +2,7 @@
 // 
 //  PostMgr.cpp
 // 
-//  Post-processing manager entry points for PC platform
+//  Post-processing manager implementation for the PC platform.
 // 
 //==============================================================================
 
@@ -28,10 +28,6 @@
 
 post_mgr g_PostMgr;
 
-//==============================================================================
-//  FORWARD DECLARATIONS
-//==============================================================================
-
 static const eng_frame_stage s_PostFrameStage =
 {
     post_mgr::PostStage_BeginFrameThunk,
@@ -39,7 +35,7 @@ static const eng_frame_stage s_PostFrameStage =
 };
 
 //==============================================================================
-//  FUNCTIONS
+//  MANAGER LIFETIME
 //==============================================================================
 
 void post_mgr::Init( void )
@@ -55,23 +51,32 @@ void post_mgr::Init( void )
     m_PostFarZ = 2.0f;
     m_pMipTexture = NULL;
 
-    for( s32 i = 0; i < 3; i++ )
+    for( s32 i = 0; i < 5; i++ )
     {
         m_bFogValid[i] = FALSE;
+        x_memset( m_FogSourcePalette[i], 0, sizeof(m_FogSourcePalette[i]) );
+        x_memset( m_FogPalette[i], 0, sizeof(m_FogPalette[i]) );
+        m_FogColor[i].Set( 0.0f, 0.0f, 0.0f, 0.0f );
+        m_FogConst[i].Set( 0.0f, 0.0f, 0.0f, 0.0f );
+        m_FogStart[i] = 0.0f;
     }
 
     m_Flags = post_effect_flags();
     m_MotionBlur = post_motion_blur_params();
     m_Glow = post_glow_params();
-    m_MultScreen = post_mult_screen_params();
     m_RadialBlur = post_radial_blur_params();
+    m_ScreenWarp = post_screen_warp_params();
     m_FogFilter = post_fog_filter_params();
     m_MipFilter = post_mip_filter_params();
     m_Simple = post_simple_params();
 
     m_bPostStageRegistered = FALSE;
+    m_FogResources = fog_resources();
+    m_FogResources.Initialize();
     m_GlowResources = glow_resources();
     m_GlowResources.Initialize();
+    m_FilterResources = filter_resources();
+    m_FilterResources.Initialize();
 
     d3deng_RegisterFrameStage( s_PostFrameStage );
     m_bPostStageRegistered = TRUE;
@@ -95,12 +100,16 @@ void post_mgr::Kill( void )
         m_bPostStageRegistered = FALSE;
     }
 
+    m_FogResources.Shutdown();
     m_GlowResources.Shutdown();
+    m_FilterResources.Shutdown();
 
     m_bInitialized = FALSE;
     x_DebugMsg( "PostMgr: Post-processing manager shutdown complete\n" );
 }
 
+//==============================================================================
+//  POST-PROCESSING PIPELINE
 //==============================================================================
 
 void post_mgr::BeginPostEffects( void )
@@ -113,13 +122,13 @@ void post_mgr::BeginPostEffects( void )
 
     ASSERT( !m_bInPost );
     m_bInPost = TRUE;
+    m_FilterResources.ResetPostChain();
 
     if( m_Flags.Override )
         return;
 
     m_Flags.DoMotionBlur    = FALSE;
     m_Flags.DoSelfIllumGlow = FALSE;
-    m_Flags.DoMultScreen    = FALSE;
     m_Flags.DoRadialBlur    = FALSE;
     m_Flags.DoZFogFn        = FALSE;
     m_Flags.DoZFogCustom    = FALSE;
@@ -128,6 +137,7 @@ void post_mgr::BeginPostEffects( void )
     m_Flags.DoNoise         = FALSE;
     m_Flags.DoScreenFade    = FALSE;
 
+    m_ScreenWarp.Count = 0;
     m_pMipTexture = NULL;
 }
 
@@ -166,21 +176,28 @@ void post_mgr::EndPostEffects( void )
     if( m_Flags.DoSelfIllumGlow )
     {
         ExecuteSelfIllumGlow();
+        CompositePendingGlow();
     }
 
-    if( m_Flags.DoMultScreen || m_Flags.DoRadialBlur )
+    if( m_Flags.DoRadialBlur || (m_ScreenWarp.Count > 0) )
     {
         CopyBackBuffer();
-    }
-
-    if( m_Flags.DoMultScreen )
-    {
-        ExecuteMultScreen();
     }
 
     if( m_Flags.DoRadialBlur )
     {
         ExecuteRadialBlur();
+    }
+
+    if( m_ScreenWarp.Count > 0 )
+    {
+        ExecuteScreenWarps();
+    }
+
+    if( m_FilterResources.IsPostChainActive() )
+    {
+        g_GBufferMgr.SetFinalColorTarget();
+        m_FilterResources.ResolvePostChain();
     }
 
     if( m_Flags.DoNoise )
@@ -197,6 +214,8 @@ void post_mgr::EndPostEffects( void )
 }
 
 //==============================================================================
+//  EFFECT REQUEST RECORDING
+//==============================================================================
 
 void post_mgr::ApplySelfIllumGlows( f32 MotionBlurIntensity, s32 GlowCutoff )
 {
@@ -207,6 +226,24 @@ void post_mgr::ApplySelfIllumGlows( f32 MotionBlurIntensity, s32 GlowCutoff )
     m_Flags.DoSelfIllumGlow = TRUE;
     m_Glow.MotionBlurIntensity = MotionBlurIntensity;
     m_Glow.Cutoff = GlowCutoff;
+}
+
+//==============================================================================
+
+void post_mgr::AddScreenWarp( const vector3& WorldPos, f32 Radius, f32 WarpAmount )
+{
+    if( !m_bInitialized || m_Flags.Override )
+        return;
+
+    ASSERT( m_bInPost );
+    if( m_ScreenWarp.Count >= MAX_POST_SCREEN_WARPS )
+        return;
+
+    const s32 Index = m_ScreenWarp.Count;
+    m_ScreenWarp.WorldPos[Index] = WorldPos;
+    m_ScreenWarp.Radius[Index]   = Radius;
+    m_ScreenWarp.Amount[Index]   = WarpAmount;
+    m_ScreenWarp.Count++;
 }
 
 //==============================================================================
@@ -233,7 +270,6 @@ void post_mgr::ZFogFilter( render::post_falloff_fn Fn, xcolor Color, f32 Param1,
 
     BuildFogPalette( Fn, Color, Param1, Param2 );
     m_Flags.DoZFogFn = TRUE;
-    m_FogFilter.PaletteIndex = 2;
 }
 
 //==============================================================================
@@ -330,9 +366,8 @@ void post_mgr::MultScreen( xcolor MultColor, render::post_screen_blend FinalBlen
         return;
 
     ASSERT( m_bInPost );
-    m_Flags.DoMultScreen = TRUE;
-    m_MultScreen.Color = MultColor;
-    m_MultScreen.Blend = FinalBlend;
+    (void)MultColor;
+    (void)FinalBlend;
 }
 
 //==============================================================================
@@ -351,14 +386,7 @@ void post_mgr::RadialBlur( f32 Zoom, radian Angle, f32 AlphaSub, f32 AlphaScale 
 }
 
 //==============================================================================
-
-xcolor post_mgr::GetFogValue( const vector3& WorldPos, s32 PaletteIndex )
-{
-    (void)WorldPos;
-    (void)PaletteIndex;
-    return xcolor(255, 255, 255, 0);
-}
-
+//  COMMON STATE HELPERS
 //==============================================================================
 
 void post_mgr::PrepareFullscreenQuad( void ) const
@@ -377,6 +405,14 @@ void post_mgr::RestoreDefaultState( void ) const
 }
 
 //==============================================================================
+
+void post_mgr::InvalidateTemporalHistory( void )
+{
+    m_FilterResources.InvalidateHistory();
+    m_GlowResources.InvalidateHistory();
+}
+
+//==============================================================================
 //  FRAME STAGE THUNKS
 //==============================================================================
 
@@ -385,7 +421,7 @@ void post_mgr::PostStage_BeginFrameThunk( void )
     if( !g_PostMgr.m_bInitialized )
         return;
 
-    // GS: NOTE: Dispatch additional post-processing stages here (glow, blur, etc.)
+    g_GBufferMgr.BeginFrame();
     g_PostMgr.UpdateGlowStageBegin();
 }
 
@@ -396,6 +432,12 @@ void post_mgr::PostStage_BeforePresentThunk( void )
     if( !g_PostMgr.m_bInitialized )
         return;
 
-    // GS: NOTE: Dispatch additional post-processing stages here (glow, blur, etc.)
-    g_PostMgr.CompositePendingGlow();
+    if( !g_GBufferMgr.WasSceneRenderedThisFrame() )
+    {
+        g_PostMgr.InvalidateTemporalHistory();
+        return;
+    }
+
+    g_PostMgr.UpdateFilterHistoryBeforePresent();
+    g_GBufferMgr.PresentFinalColor();
 }

@@ -123,58 +123,56 @@ namespace render
         INSTFLAG_GLOWING       = 0x00000100,    // we have forced something that doesn't normally glow to glow
         INSTFLAG_SHADOW_PASS   = 0x00000200,    // we are receiving dynamic shadows
         INSTFLAG_FILTERLIGHT   = 0x00000400,    // modulate vertex lighting (i.e. emergency red light situation)
-        INSTFLAG_SPOTLIGHT     = 0x00000800,    // The instance receives a spotlight projection (flashlight)
+        INSTFLAG_SPOTLIGHT     = 0x00000800,    // we are receiving projected (art) lights
         INSTFLAG_FADING_ALPHA  = 0x00001000,    // the geometry is fading out
         INSTFLAG_DYNAMICLIGHT  = 0x00002000,    // dynamic lighting is on (point or directional
         INSTFLAG_DETAIL        = 0x00004000,    // detail mapping is on (material still has it, but the object is distant)
-        INSTFLAG_PROJ_SHADOW_1 = 0x00010000,    // we are receiving the first projected shadow
-        INSTFLAG_PROJ_SHADOW_2 = 0x00020000,    // we are receiving the second projected shadow
+        INSTFLAG_PROJ_SHADOW   = 0x00010000,    // we are receiving projected (art) shadows
+        // INSTFLAG_PROJ_SHADOW_1 = 0x00010000, // legacy per-slot projected shadow flag
+        // INSTFLAG_PROJ_SHADOW_2 = 0x00020000, // legacy per-slot projected shadow flag		
     };
 
-    // shadow creation routines--we can handle up to 64 shadow textures, that way
-    // each caster should be able to have it's own texture to reduce aliasing
-    // The projection mask says which receivers receive which textures,
-    // and also which casters cast into which textures.
-    enum
-    {
-        MAX_SHADOW_CASTERS = 64,
-    };
     void    BeginShadowCreation     ( void ) X_SECTION( render_infrequent );
     void    EndShadowCreation       ( void ) X_SECTION( render_deferred_shadow );
-    void    AddPointShadowProjection( const matrix4&         L2W,
+    void    AddPointShadowMapSource ( const matrix4&         L2W,
                                       radian                 FOV,
-                                      f32                    NearZ,
-                                      f32                    FarZ       ) X_SECTION( render_add_shadow );
-    void    AddDirShadowProjection  ( const matrix4&         L2W,
-                                      f32                    Width,
-                                      f32                    Height,
-                                      f32                    NearZ,
-                                      f32                    FarZ       ) X_SECTION( render_add_shadow );
+                                      f32                    LightRadius,
+                                      f32                    LightFalloff,
+                                      s32                    ShadowMapResolution,
+                                      s32                    ShadowPriority,
+                                      f32                    ShadowScore ) X_SECTION( render_add_shadow );
+    void    AddSpotShadowMapSource  ( const matrix4&         L2W,
+                                      radian                 FOV,
+                                      f32                    LightRadius,
+                                      f32                    LightFalloff,
+                                      s32                    ShadowMapResolution,
+                                      s32                    ShadowPriority,
+                                      f32                    ShadowScore ) X_SECTION( render_add_shadow );
     void    AddRigidCasterSimple    ( hgeom_inst             hInst,
                                       const matrix4*         pL2W,  // will be DMA ref'd to!
-                                      u64                    ProjMask   ) X_SECTION( render_add_shadow );
+                                      u64                    ShadowSourceMask ) X_SECTION( render_add_shadow );
     void    AddRigidCaster          ( hgeom_inst             hInst,
                                       const matrix4*         pL2W,
                                       u64                    Mask,
-                                      u64                    ProjMask   ) X_SECTION( render_add_shadow );
+                                      u64                    ShadowSourceMask ) X_SECTION( render_add_shadow );
     void    AddSkinCaster           ( hgeom_inst             hInst,
                                       const matrix4*         pBone,
                                       u64                    Mask,
-                                      u64                    ProjMask   ) X_SECTION( render_add_shadow );
+                                      u64                    ShadowSourceMask ) X_SECTION( render_add_shadow );
     void    AddRigidReceiverSimple  ( hgeom_inst             hInst,
                                       const matrix4*         pL2W,  // will be DMA ref'd to!
                                       u32                    Flags,
-                                      u64                    ProjMask   ) X_SECTION( render_add_shadow );
+                                      u64                    ShadowSourceMask ) X_SECTION( render_add_shadow );
     void    AddRigidReceiver        ( hgeom_inst             hInst,
                                       const matrix4*         pL2W,
                                       u64                    Mask,
                                       u32                    Flags,
-                                      u64                    ProjMask   ) X_SECTION( render_add_shadow );
+                                      u64                    ShadowSourceMask ) X_SECTION( render_add_shadow );
     void    AddSkinReceiver         ( hgeom_inst             hInst,
                                       const matrix4*         pBone,
                                       u64                    Mask,
                                       u32                    Flags,
-                                      u64                    ProjMask   ) X_SECTION( render_add_shadow );
+                                      u64                    ShadowSourceMask ) X_SECTION( render_add_shadow );
 
 
     // basic instance-rendering routines

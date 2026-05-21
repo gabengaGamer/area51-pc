@@ -79,17 +79,74 @@ light_obj::light_obj( void )
     m_Ambient.Set(0,0,0,255);
     m_Intensity = 1;
     m_bAccentAngle = FALSE;
+
+    InvalidateRenderState();
+}
+
+//=========================================================================
+
+light_obj::~light_obj( void )
+{
+}
+
+//=========================================================================
+
+void light_obj::InvalidateRenderState( void )
+{
+    InitTransformInterpCache( m_RenderCache );
+}
+
+//=========================================================================
+
+void light_obj::CaptureRenderInterpState( void )
+{
+    transform_interp_state Snapshot;
+    CaptureTransformInterpState( Snapshot, GetL2W() );
+    CaptureTransformInterpCache( m_RenderCache, Snapshot );
+    if( HasTransformInterpCacheChange( m_RenderCache ) )
+        RegisterRenderInterpUpdate();
+}
+
+//=========================================================================
+
+void light_obj::UpdateRenderInterpState( f32 Alpha )
+{
+    UpdateTransformInterpCache( m_RenderCache, Alpha );
+}
+
+//=========================================================================
+
+void light_obj::ClearRenderInterpState( void )
+{
+    ClearTransformInterpCache( m_RenderCache );
+}
+
+//=========================================================================
+
+const matrix4& light_obj::GetRenderL2W( void ) const
+{
+    return GetTransformInterpCacheL2W( m_RenderCache, GetL2W() );
 }
 
 //=========================================================================
 
 void light_obj::OnRender( void )
 {
-    CONTEXT( "light_obj::OnRender" );
+}
+
+//=========================================================================
+
+void light_obj::OnCollectLight( void )
+{
+    CONTEXT( "light_obj::OnCollectLight" );
 
     if ( IsDynamic() )
     {
-        g_LightMgr.AddDynamicLight( GetPosition(), m_Color, m_Sphere.R, m_Intensity, TRUE );
+        g_LightMgr.AddDynamicLight( GetRenderL2W().GetTranslation(),
+                                    m_Color,
+                                    m_Sphere.R,
+                                    m_Intensity,
+                                    TRUE );
     }
 }
 
@@ -112,13 +169,12 @@ void light_obj::OnDebugRender( void )
 void light_obj::OnEnumProp( prop_enum& List )
 {
     object::OnEnumProp( List );
-
     List.PropEnumHeader( "Light", "Light Properties", 0 );
-    List.PropEnumFloat ( "Light\\Radious",       "This is the radious of the light", 0 );
-    List.PropEnumColor ( "Light\\LightColor",    "This is the color of the light", 0 );
-    List.PropEnumColor ( "Light\\AmbientColor",  "This color gets added to the light object not matter what. It is the ambient color.", 0 );    
-    List.PropEnumFloat ( "Light\\Intensity",     "Make the light start to saturate (powerfull) but still attenuates at the same distance. Note that maximun values are [-5,5]", 0 );    
-    List.PropEnumBool  ( "Light\\AngleAccentuation", "Make the angle in which the light hits the surface be more contrasty.", 0 );    
+    List.PropEnumFloat ( "Light\\Radious",            "The radius of the light", 0 );
+    List.PropEnumColor ( "Light\\LightColor",         "This is the color of the light", 0 );
+    List.PropEnumColor ( "Light\\AmbientColor",       "This color gets added to the light object not matter what. It is the ambient color.", 0 );
+    List.PropEnumFloat ( "Light\\Intensity",          "Make the light start to saturate (powerfull) but still attenuates at the same distance. Note that maximun values are [-5,5]", 0 );
+    List.PropEnumBool  ( "Light\\AngleAccentuation",  "Make the angle in which the light hits the surface be more contrasty.", 0 );
 }
 
 //=============================================================================
@@ -132,7 +188,6 @@ xbool light_obj::OnProperty( prop_query& I )
     {
         if( !I.IsRead() )
         {
-            // This is to force recompute the bbox
             OnMove( GetPosition() );
         }
     }
@@ -144,7 +199,7 @@ xbool light_obj::OnProperty( prop_query& I )
     }
     else if( I.VarFloat("Light\\Intensity", m_Intensity, -5, 5 ) )
     {
-    }   
+    }
     else if( I.VarBool("Light\\AngleAccentuation", m_bAccentAngle ) )
     {
     }
@@ -225,11 +280,10 @@ const object_desc& character_light_obj::GetObjectType( void )
 void character_light_obj::OnEnumProp( prop_enum& List )
 {
     object::OnEnumProp( List );
-
     List.PropEnumHeader( "Light", "Character Light Properties", 0 );
-    List.PropEnumFloat ( "Light\\Radious",       "This is the radious of the light", 0 );
-    List.PropEnumColor ( "Light\\LightColor",    "This is the color of the light", 0 );
-    List.PropEnumFloat ( "Light\\Intensity",     "Make the light start to saturate (powerfull) but still attenuates at the same distance. Note that maximun values are [-5,5]", 0 );    
+    List.PropEnumFloat ( "Light\\Radious",    "The radius of the light", 0 );
+    List.PropEnumColor ( "Light\\LightColor", "This is the color of the light", 0 );
+    List.PropEnumFloat ( "Light\\Intensity",  "Make the light start to saturate (powerfull) but still attenuates at the same distance. Note that maximun values are [-5,5]", 0 );
 }
 
 
@@ -302,19 +356,27 @@ const object_desc& dynamic_light_obj::GetObjectType( void )
 
 dynamic_light_obj::dynamic_light_obj( void ) :
     light_obj(),
-    m_LightType     (TYPE_CONSTANT),
-    m_FlashRate     (1.0f),
-    m_FadeInTime    (0.05f),
-    m_FadeOutTime   (0.05f),
-    m_RandTimeOffMin(0.0f),
-    m_RandTimeOffMax(0.3f),
-    m_RandTimeOnMin (0.0f),
-    m_RandTimeOnMax (0.1f),
-    m_LightFlags    (LIGHT_ACTIVE),
-    m_LightState    (STATE_ON),
-    m_FadeTimeLeft  (0.0f),
-    m_FlashTimeLeft (0.0f),
-    m_DoneAction    (ACTION_DESTROY)
+    m_EmitterType        (EMITTER_TYPE_OMNI),
+    m_Falloff            (1.0f),
+    m_hCookie            (     ),
+    m_bCastShadows       (TRUE),
+    m_ShadowMapResolution(SHADOW_MAP_RESOLUTION_512),
+    m_ShadowPriority     (SHADOW_PRIORITY_MEDIUM),
+    m_InnerAngle         (30.0f),
+    m_OuterAngle         (45.0f),
+    m_LightBehavior          (BEHAVIOR_CONSTANT),
+    m_FlashRate          (1.0f),
+    m_FadeInTime         (0.05f),
+    m_FadeOutTime        (0.05f),
+    m_RandTimeOffMin     (0.0f),
+    m_RandTimeOffMax     (0.3f),
+    m_RandTimeOnMin      (0.0f),
+    m_RandTimeOnMax      (0.1f),
+    m_LightFlags         (LIGHT_ACTIVE),
+    m_LightState         (STATE_ON),
+    m_FadeTimeLeft       (0.0f),
+    m_FlashTimeLeft      (0.0f),
+    m_DoneAction         (ACTION_DESTROY)
 {
 }
 
@@ -324,12 +386,61 @@ void dynamic_light_obj::OnEnumProp( prop_enum& List )
 {
     object::OnEnumProp( List );
 
-    List.PropEnumHeader( "Light",                               "Dynamic Light Properties", 0                        );
-    List.PropEnumEnum  ( "Light\\Type", "CONSTANT\0FLASHING\0RANDOM\0ONESHOT FADE\0",
-                                                           "The type of behavior for this light.", 0            );
-    List.PropEnumFloat ( "Light\\Radious",                      "This is the radious of the light", 0                );
-    List.PropEnumColor ( "Light\\LightColor",                   "This is the color of the light", 0                  );
-    List.PropEnumFloat ( "Light\\Intensity",                    "Make the light start to saturate (powerfull) but still attenuates at the same distance. Note that maximun values are [-5,5]", 0 );
+    List.PropEnumHeader( "Light", "Dynamic Light Properties", 0 );
+    List.PropEnumEnum  ( "Light\\EmitterType",
+                         "OMNI\0"
+                         "SPOT\0",	
+                         "Runtime light emitter type.",
+                         0 );
+    List.PropEnumFloat ( "Light\\Range",
+                         "Maximum distance that the light can reach.",
+                         0 );
+    List.PropEnumFloat ( "Light\\Falloff",
+                         "0 gives a hard edge, 1 gives a very soft transition to darkness.",
+                         0 );
+    if( m_EmitterType == EMITTER_TYPE_SPOT )
+    {
+        List.PropEnumFloat( "Light\\InnerAngle",
+                            "Inner spotlight cone angle in degrees.",
+                            0 );
+        List.PropEnumFloat( "Light\\OuterAngle",
+                            "Outer spotlight cone angle in degrees.",
+                            0 );
+        List.PropEnumExternal( "Light\\Cookie",
+                               "Resource\0xbmp\0",
+                               "2D texture mask multiplied into this spot light.",
+                               0 );
+    }
+    List.PropEnumColor ( "Light\\LightColor",
+                         "This is the color of the light",
+                         0 );
+    List.PropEnumFloat ( "Light\\Intensity",
+                         "Make the light start to saturate (powerfull) but still attenuates at the same distance. Note that maximun values are [-5,5]",
+                         0 );
+    List.PropEnumBool  ( "Light\\CastShadows",
+                         "Can this light be selected for dynamic shadow casting?",
+                         0 );
+    if( m_bCastShadows )
+    {
+        List.PropEnumEnum( "Light\\ShadowMapResolution",
+                           "256\0"
+                           "512\0"
+                           "1024\0"
+                           "2048\0"
+                           "4096\0",
+                           "Requested shadow map resolution for this light.",
+                           0 );
+        List.PropEnumEnum( "Light\\ShadowPriority",
+                           "LOWEST\0"
+                           "LOW\0"
+                           "MEDIUM\0"
+                           "HIGH\0"
+                           "HIGHEST\0",
+                           "Shadow update priority for this light.",
+                           0 );
+    }
+    List.PropEnumEnum  ( "Light\\Behavior",                     "CONSTANT\0FLASHING\0RANDOM\0ONESHOT FADE\0",
+                                                                "The animation behavior for this light.", 0          );
     List.PropEnumBool  ( "Light\\StartActive",                  "Does this light start as active or inactive?", 0    );
     List.PropEnumFloat ( "Light\\FlashRate",                    "How fast a flashing light toggles on/off states", 0 );
     List.PropEnumFloat ( "Light\\FadeInTime",                   "Time light takes to fade in after activation", 0    );
@@ -348,15 +459,157 @@ xbool dynamic_light_obj::OnProperty( prop_query& I )
     if( light_obj::OnProperty( I ) )
     {
     }
-    else
-    if (I.IsVar("Light\\ActionWhenDone"))
+    else if( I.VarFloat("Light\\Range", m_Sphere.R ) )
+    {
+        if( !I.IsRead() )
+        {
+            OnMove( GetPosition() );
+        }
+    }
+    else if( I.VarFloat("Light\\Falloff", m_Falloff, 0.0f, 1.0f ) )
+    {
+    }
+    else if( I.IsVar( "Light\\Cookie" ) )
+    {
+        if( I.IsRead() )
+        {
+            I.SetVarExternal( m_hCookie.GetName(), RESOURCE_NAME_SIZE );
+        }
+        else
+        {
+            m_hCookie.SetName( I.GetVarExternal() );
+        }
+    }
+    else if( I.IsVar("Light\\InnerRadius") )
+    {
+        if( I.IsRead() )
+        {
+            I.SetVarFloat( MAX( 0.0f, m_Sphere.R * ( 1.0f - m_Falloff ) ) );
+        }
+        else
+        {
+            f32 InnerRadius = I.GetVarFloat();
+            if( InnerRadius < 0.0f )
+                InnerRadius = 0.0f;
+            if( InnerRadius > m_Sphere.R )
+                InnerRadius = m_Sphere.R;
+
+            if( m_Sphere.R > 0.0f )
+                m_Falloff = 1.0f - ( InnerRadius / m_Sphere.R );
+            else
+                m_Falloff = 1.0f;
+        }
+    }
+    else if( I.IsVar("Light\\EmitterType") )
+    {
+        if( I.IsRead() )
+        {
+            switch( m_EmitterType )
+            {
+            default:
+            case EMITTER_TYPE_OMNI: I.SetVarEnum("OMNI"); break;
+            case EMITTER_TYPE_SPOT: I.SetVarEnum("SPOT"); break;
+            }
+        }
+        else
+        {
+            if( !x_strcmp( I.GetVarEnum(), "OMNI" ) )
+                m_EmitterType = EMITTER_TYPE_OMNI;
+            else if( !x_strcmp( I.GetVarEnum(), "SPOT" ) )
+                m_EmitterType = EMITTER_TYPE_SPOT;
+        }
+    }
+    else if( I.IsVar("Light\\Shape") )
+    {
+        if( I.IsRead() )
+        {
+            I.SetVarEnum( (m_EmitterType == EMITTER_TYPE_SPOT) ? "SPOT" : "OMNI" );
+        }
+        else
+        {
+            if( !x_strcmp( I.GetVarEnum(), "SPOT" ) )
+                m_EmitterType = EMITTER_TYPE_SPOT;
+            else
+                m_EmitterType = EMITTER_TYPE_OMNI;
+        }
+    }
+    else if( I.VarBool("Light\\CastShadows", m_bCastShadows ) )
+    {
+    }
+    else if( I.IsVar("Light\\ShadowMapResolution") )
+    {
+        if( I.IsRead() )
+        {
+            switch( m_ShadowMapResolution )
+            {
+            default:
+            case SHADOW_MAP_RESOLUTION_256:  I.SetVarEnum("256");  break;
+            case SHADOW_MAP_RESOLUTION_512:  I.SetVarEnum("512");  break;
+            case SHADOW_MAP_RESOLUTION_1024: I.SetVarEnum("1024"); break;
+            case SHADOW_MAP_RESOLUTION_2048: I.SetVarEnum("2048"); break;
+            case SHADOW_MAP_RESOLUTION_4096: I.SetVarEnum("4096"); break;
+            }
+        }
+        else
+        {
+            if( !x_strcmp( I.GetVarEnum(), "256" ) )
+                m_ShadowMapResolution = SHADOW_MAP_RESOLUTION_256;
+            else if( !x_strcmp( I.GetVarEnum(), "512" ) )
+                m_ShadowMapResolution = SHADOW_MAP_RESOLUTION_512;
+            else if( !x_strcmp( I.GetVarEnum(), "1024" ) )
+                m_ShadowMapResolution = SHADOW_MAP_RESOLUTION_1024;
+            else if( !x_strcmp( I.GetVarEnum(), "2048" ) )
+                m_ShadowMapResolution = SHADOW_MAP_RESOLUTION_2048;
+            else if( !x_strcmp( I.GetVarEnum(), "4096" ) )
+                m_ShadowMapResolution = SHADOW_MAP_RESOLUTION_4096;
+        }
+    }
+    else if( I.IsVar("Light\\ShadowPriority") )
+    {
+        if( I.IsRead() )
+        {
+            switch( m_ShadowPriority )
+            {
+            default:
+            case SHADOW_PRIORITY_LOWEST:   I.SetVarEnum("LOWEST");   break;
+            case SHADOW_PRIORITY_LOW:      I.SetVarEnum("LOW");      break;
+            case SHADOW_PRIORITY_MEDIUM:   I.SetVarEnum("MEDIUM");   break;
+            case SHADOW_PRIORITY_HIGH:     I.SetVarEnum("HIGH");     break;
+            case SHADOW_PRIORITY_HIGHEST:  I.SetVarEnum("HIGHEST");  break;
+            }
+        }
+        else
+        {
+            if( !x_strcmp( I.GetVarEnum(), "LOWEST" ) )
+                m_ShadowPriority = SHADOW_PRIORITY_LOWEST;
+            else if( !x_strcmp( I.GetVarEnum(), "LOW" ) )
+                m_ShadowPriority = SHADOW_PRIORITY_LOW;	
+            else if( !x_strcmp( I.GetVarEnum(), "MEDIUM" ) )
+                m_ShadowPriority = SHADOW_PRIORITY_MEDIUM;
+            else if( !x_strcmp( I.GetVarEnum(), "HIGH" ) )
+                m_ShadowPriority = SHADOW_PRIORITY_HIGH;
+            else if( !x_strcmp( I.GetVarEnum(), "HIGHEST" ) )
+                m_ShadowPriority = SHADOW_PRIORITY_HIGHEST;
+        }
+    }
+    else if( I.VarFloat("Light\\InnerAngle", m_InnerAngle, 0.0f, 180.0f ) )
+    {
+        if( !I.IsRead() && (m_InnerAngle > m_OuterAngle) )
+            m_InnerAngle = m_OuterAngle;
+    }
+    else if( I.VarFloat("Light\\OuterAngle", m_OuterAngle, 0.0f, 180.0f ) )
+    {
+        if( !I.IsRead() && (m_OuterAngle < m_InnerAngle) )
+            m_InnerAngle = m_OuterAngle;
+    }
+    else if (I.IsVar("Light\\ActionWhenDone"))
     {
         if( I.IsRead() )
         {
             switch(m_DoneAction)
             {
             case ACTION_DESTROY:        I.SetVarEnum("DESTROY");    break ;
-            case ACTION_DEACTIVATE:     I.SetVarEnum("DEACTIVATE"); break ;            
+            case ACTION_DEACTIVATE:     I.SetVarEnum("DEACTIVATE"); break ;
             }
         }
         else
@@ -367,32 +620,32 @@ xbool dynamic_light_obj::OnProperty( prop_query& I )
                 m_DoneAction = ACTION_DEACTIVATE;            
         }        
     }
-    else if( I.IsVar("Light\\Type") )
+    else if( I.IsVar("Light\\Behavior") || I.IsVar("Light\\Type") )
     {
         if ( I.IsRead() )
         {
-            switch ( m_LightType )
+            switch ( m_LightBehavior )
             {
             default:  ASSERT( FALSE );
-            case TYPE_CONSTANT:     I.SetVarEnum("CONSTANT");       break;
-            case TYPE_FLASHING:     I.SetVarEnum("FLASHING");       break;
-            case TYPE_RANDOM:       I.SetVarEnum("RANDOM");         break;
-            case TYPE_ONESHOT_FADE: I.SetVarEnum("ONESHOT FADE");   break;
+            case BEHAVIOR_CONSTANT:     I.SetVarEnum("CONSTANT");       break;
+            case BEHAVIOR_FLASHING:     I.SetVarEnum("FLASHING");       break;
+            case BEHAVIOR_RANDOM:       I.SetVarEnum("RANDOM");         break;
+            case BEHAVIOR_ONESHOT_FADE: I.SetVarEnum("ONESHOT FADE");   break;
             }
         }
         else
         {
             if ( !x_strcmp("CONSTANT", I.GetVarEnum()) )
-                m_LightType = TYPE_CONSTANT;
+                m_LightBehavior = BEHAVIOR_CONSTANT;
             else
             if ( !x_strcmp("FLASHING", I.GetVarEnum()) )
-                m_LightType = TYPE_FLASHING;
+                m_LightBehavior = BEHAVIOR_FLASHING;
             else
             if ( !x_strcmp("RANDOM", I.GetVarEnum()) )
-                m_LightType = TYPE_RANDOM;
+                m_LightBehavior = BEHAVIOR_RANDOM;
             else
             if ( !x_strcmp("ONESHOT FADE", I.GetVarEnum()) )
-                m_LightType = TYPE_ONESHOT_FADE;
+                m_LightBehavior = BEHAVIOR_ONESHOT_FADE;
         }
     }
     else if( I.IsVar("Light\\StartActive") )
@@ -598,13 +851,13 @@ void dynamic_light_obj::OnActivate( xbool Flag )
     {
         // activate the light
         m_LightFlags |= LIGHT_ACTIVE;
-        switch( m_LightType )
+        switch( m_LightBehavior )
         {
         default: ASSERT( FALSE );
-        case TYPE_CONSTANT:     ActivateConstant(Flag);     break;
-        case TYPE_FLASHING:     ActivateFlashing(Flag);     break;
-        case TYPE_RANDOM:       ActivateRandom(Flag);       break;
-        case TYPE_ONESHOT_FADE: ActivateOneShotFade(Flag);  break;
+        case BEHAVIOR_CONSTANT:     ActivateConstant(Flag);     break;
+        case BEHAVIOR_FLASHING:     ActivateFlashing(Flag);     break;
+        case BEHAVIOR_RANDOM:       ActivateRandom(Flag);       break;
+        case BEHAVIOR_ONESHOT_FADE: ActivateOneShotFade(Flag);  break;
         }
     }
     else
@@ -612,13 +865,13 @@ void dynamic_light_obj::OnActivate( xbool Flag )
     {
         // deactivate the light
         m_LightFlags &= ~LIGHT_ACTIVE;
-        switch( m_LightType )
+        switch( m_LightBehavior )
         {
         default: ASSERT( FALSE );
-        case TYPE_CONSTANT:     ActivateConstant(Flag);     break;
-        case TYPE_FLASHING:     ActivateFlashing(Flag);     break;
-        case TYPE_RANDOM:       ActivateRandom(Flag);       break;
-        case TYPE_ONESHOT_FADE: ActivateOneShotFade(Flag);  break;
+        case BEHAVIOR_CONSTANT:     ActivateConstant(Flag);     break;
+        case BEHAVIOR_FLASHING:     ActivateFlashing(Flag);     break;
+        case BEHAVIOR_RANDOM:       ActivateRandom(Flag);       break;
+        case BEHAVIOR_ONESHOT_FADE: ActivateOneShotFade(Flag);  break;
         }
     }
 }
@@ -769,13 +1022,13 @@ void dynamic_light_obj::OnAdvanceLogic( f32 DeltaTime )
 {
     CONTEXT( "dynamic_light_obj::OnAdvanceLogic" );
 
-    switch ( m_LightType )
+    switch ( m_LightBehavior )
     {
     default: ASSERT( FALSE );
-    case TYPE_CONSTANT:     ConstantLogic(DeltaTime);       break;
-    case TYPE_FLASHING:     FlashingLogic(DeltaTime);       break;
-    case TYPE_RANDOM:       RandomLogic(DeltaTime);         break;
-    case TYPE_ONESHOT_FADE: OneShotFadeLogic(DeltaTime);    break;
+    case BEHAVIOR_CONSTANT:     ConstantLogic(DeltaTime);       break;
+    case BEHAVIOR_FLASHING:     FlashingLogic(DeltaTime);       break;
+    case BEHAVIOR_RANDOM:       RandomLogic(DeltaTime);         break;
+    case BEHAVIOR_ONESHOT_FADE: OneShotFadeLogic(DeltaTime);    break;
     }
 }
 
@@ -783,14 +1036,50 @@ void dynamic_light_obj::OnAdvanceLogic( f32 DeltaTime )
 
 void dynamic_light_obj::OnRender( void )
 {
-    f32 T = CalcT();
-    
-    if ( T > 0.0f )
-        g_LightMgr.AddDynamicLight( GetPosition(), m_Color, m_Sphere.R, T*m_Intensity, FALSE );
 }
 
 //=========================================================================
 
+void dynamic_light_obj::OnCollectLight( void )
+{
+    CONTEXT( "dynamic_light_obj::OnCollectLight" );
+
+    f32 T = CalcT();
+    
+    if ( T > 0.0f )
+    {
+        const matrix4& RenderL2W = GetRenderL2W();
+        vector3 Direction = RenderL2W.RotateVector( vector3( 0.0f, 0.0f, 1.0f ) );
+        f32     InnerRadius = MAX( 0.0f, m_Sphere.R * ( 1.0f - m_Falloff ) );
+
+        if( !Direction.SafeNormalize() )
+        {
+            Direction.Set( 0.0f, 0.0f, 1.0f );
+        }
+
+        s32 Shape = light_mgr::LIGHT_SHAPE_OMNI;
+        if( m_EmitterType == EMITTER_TYPE_SPOT )
+            Shape = light_mgr::LIGHT_SHAPE_SPOT;
+
+        g_LightMgr.AddDynamicLight( RenderL2W.GetTranslation(),
+                                    m_Color,
+                                    m_Sphere.R,
+                                    T*m_Intensity,
+                                    FALSE,
+                                    Shape,
+                                    m_bCastShadows,
+                                    InnerRadius,
+                                    Direction,
+                                    m_Falloff,
+                                    m_InnerAngle,
+                                    m_OuterAngle,
+                                    m_ShadowMapResolution,
+                                    m_ShadowPriority,
+                                    m_hCookie );
+    }
+}
+
+//=========================================================================
 
 void light_obj::Setup( const    vector3&    Position,
                       xcolor      Color,
@@ -805,7 +1094,3 @@ void light_obj::Setup( const    vector3&    Position,
     m_Intensity = Intensity;
     (void)bCharacterOnly;
 }
-
-//=========================================================================
-
-// EOF

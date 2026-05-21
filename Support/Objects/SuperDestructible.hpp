@@ -16,6 +16,7 @@
 #include "Objects\PlaySurface.hpp"
 #include "Debris\debris_mgr.hpp"
 #include "Decals\DecalPackage.hpp"
+#include "Objects\Interpolation\SimpleAnimInterpolation.hpp"
 #include "Animation\AnimPlayer.hpp"
 #include "ZoneMgr\ZoneMgr.hpp"
 #include "Objects\Render\VirtualMeshMask.hpp"
@@ -45,6 +46,7 @@ public:
     virtual xbool           OnProperty                  ( prop_query&   I           );
     virtual void            OnPain                      ( const pain& Pain          ); 
     virtual void            OnRender                    ( void                      );
+    virtual void            OnRenderShadowCast          ( u64 ProjMask              );
     virtual void            OnMove                      ( const vector3& NewPos     );      
     virtual void            OnTransform                 ( const matrix4& L2W        );
     virtual void            OnAdvanceLogic              ( f32 DeltaTime             );
@@ -67,6 +69,12 @@ public:
     virtual anim_group::handle* GetAnimGroupHandlePtr   ( void );
 
     const matrix4*          GetBoneL2Ws                 ( void );
+    virtual void            CaptureRenderInterpState          ( void );
+    virtual void            UpdateRenderInterpState           ( f32 Alpha );
+    virtual void            ClearRenderInterpState            ( void );
+    void                    InvalidateRenderState       ( void );
+    const matrix4&          GetRenderL2W                ( void ) const;
+    xbool                   GetRenderBoneL2W            ( s32 iBone, matrix4& L2W );
     virtual bbox            GetLocalBBox                ( void ) const;      
             s32             GetNumStages                ( void ) { return( m_Stages.GetCount() ); }
 
@@ -99,6 +107,7 @@ public:
 protected:                                              
     anim_group::handle      m_hAnimGroup;
     simple_anim_player      m_AnimPlayer;
+    simple_anim_interp_cache m_RenderCache;
     rhandle<char>           m_hAudioPackage;
     rhandle<decal_package>  m_hDecalPackage;
     zone_mgr::tracker       m_ZoneTracker;

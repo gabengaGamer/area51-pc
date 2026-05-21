@@ -393,6 +393,14 @@ public:
             vector3         GetDefaultViewPos   ( void );
 
             void            ComputeView         ( view& View, view_flags Flags = player::VIEW_NULL );
+    virtual void            CaptureRenderInterpState  ( void );
+    virtual void            UpdateRenderInterpState   ( f32 Alpha );
+    virtual void            ClearRenderInterpState    ( void );
+    virtual void            ClearRenderInterpStatePerView( void );
+    virtual xbool           GetRenderWeaponL2W  ( matrix4& L2W,
+                                                   new_weapon::render_state RenderState = new_weapon::RENDER_STATE_PLAYER ) const;
+    virtual const matrix4*  GetRenderWeaponBones( s32& nBones,
+                                                   new_weapon::render_state RenderState = new_weapon::RENDER_STATE_PLAYER ) const;
     virtual void            Push                ( const vector3& PushVector );
 
       const xarray<pain>&   GetLastPainEvents   ( void ){ return m_LastPainEvent; }
@@ -453,15 +461,14 @@ public:
 #ifdef X_EDITOR
     virtual void            OnEditorRender          ( void );
 #endif // X_EDITOR
+    virtual void            OnCollectLight          ( void );
 
     //=========================================================================
     // FLASHLIGHT STUFF
     //=========================================================================
-            void            InitFlashlight      ( const vector3& rInitPos );
     virtual xbool           IsFlashlightOn      ( void )            { return m_bUsingFlashlight; }
             xbool           IsFlashlightActive  ( void );            
             void            SetFlashlightActive ( xbool bOn );
-            void            MoveFlashlight      ( void );
             void            UpdateFlashlightBattery ( f32 nDeltaTime );
     virtual xbool           AddBattery              ( const f32& nDeltaBattery );
     virtual f32             GetBattery              ( void ) { return m_Battery; }
@@ -469,7 +476,8 @@ public:
 
     virtual void            DegradeAim                      ( f32 fAmountToDegradeBy );
     virtual void            SetAimRecoverSpeed              ( f32 fRecover ) { m_AimRecoverSpeed = fRecover; }    
-      const vector3&        GetCurrentWeaponCollisionOffset ( void ) { return m_WeaponCollisionOffset; }
+    virtual const vector3&  GetRenderWeaponCollisionOffset( new_weapon::render_state RenderState = new_weapon::RENDER_STATE_PLAYER ) const;
+      const vector3&        GetCurrentWeaponCollisionOffset ( void ) const;
 
     virtual xbool           IsPlayer            ( void )                    { return TRUE; }
 
@@ -1090,9 +1098,19 @@ public:
 //==============================================================================
 
 protected:
+    struct player_interp_state
+    {
+        xbool                Valid;
+        view                 View;
+        skinned_interp_state Arms;
+        weapon_interp_state  Weapon;
+        vector3              WeaponCollisionOffset;
+    };
+
     static view             m_Views[MAX_LOCAL_PLAYERS];     // Views for all the players
     view_info               m_ViewInfo;                     // persistent information for the player's view
     view_info               m_OriginalViewInfo;             // original persistent information for the player's view
+    interp_cache<player_interp_state> m_RenderCache;
     vector3                 m_RespawnPosition;              // Position where the player re-spawns after dying
     u8                      m_RespawnZone;                  // Zone to respawn in
     guid                    m_ThirdPersonCameraGuid;        // GUID of third person camera if we're using one
@@ -1329,7 +1347,6 @@ protected:
     //------------------------------------------------------------------------------
     xbool                   m_bUsingFlashlight;
     xbool                   m_bUsingFlashlightBeforeCinema;
-    guid                    m_FlashlightGuid;                   // guid to a projected texture (attached to the gun)
     f32                     m_BatteryChangeTime;                // what is the accumulated time for changing battery value
     f32                     m_Battery;
     f32                     m_MaxBattery;
