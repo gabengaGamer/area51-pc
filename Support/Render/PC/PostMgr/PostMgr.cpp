@@ -405,6 +405,14 @@ void post_mgr::RestoreDefaultState( void ) const
 }
 
 //==============================================================================
+
+void post_mgr::InvalidateTemporalHistory( void )
+{
+    m_FilterResources.InvalidateHistory();
+    m_GlowResources.InvalidateHistory();
+}
+
+//==============================================================================
 //  FRAME STAGE THUNKS
 //==============================================================================
 
@@ -413,6 +421,7 @@ void post_mgr::PostStage_BeginFrameThunk( void )
     if( !g_PostMgr.m_bInitialized )
         return;
 
+    g_GBufferMgr.BeginFrame();
     g_PostMgr.UpdateGlowStageBegin();
 }
 
@@ -422,6 +431,12 @@ void post_mgr::PostStage_BeforePresentThunk( void )
 {
     if( !g_PostMgr.m_bInitialized )
         return;
+
+    if( !g_GBufferMgr.WasSceneRenderedThisFrame() )
+    {
+        g_PostMgr.InvalidateTemporalHistory();
+        return;
+    }
 
     g_PostMgr.UpdateFilterHistoryBeforePresent();
     g_GBufferMgr.PresentFinalColor();

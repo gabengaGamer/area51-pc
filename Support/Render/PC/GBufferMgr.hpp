@@ -65,10 +65,12 @@ public:
     void           SetFinalColorTarget ( void );
     void           PresentFinalColor   ( void );
     void           ClearGBuffer        ( void );
+    void           BeginFrame          ( void );
     void           SetTargetOverride   ( const rtarget* pColor, const rtarget* pDepth );
 
     const rtarget* GetGBufferTarget    ( gbuffer_target Target ) const;
     xbool          IsGBufferEnabled    ( void ) const { return m_bGBufferValid; }
+    xbool          WasSceneRenderedThisFrame( void ) const { return m_bSceneColorRenderedThisFrame; }
     void           GetGBufferSize      ( u32& Width, u32& Height ) const;
 
 private:
@@ -79,6 +81,7 @@ private:
     xbool          m_bInitialized;
     xbool          m_bGBufferValid;
     xbool          m_bGBufferTargetsActive;
+    xbool          m_bSceneColorRenderedThisFrame;
     u32            m_GBufferWidth;
     u32            m_GBufferHeight;
 

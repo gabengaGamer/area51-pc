@@ -237,6 +237,7 @@ protected:
     void        UpdateGlowStageBegin        ( void );
     void        CompositePendingGlow        ( void );
     void        UpdateFilterHistoryBeforePresent( void );
+    void        InvalidateTemporalHistory   ( void );
 
     //--------------------------------------------------------------------------
     // Internal Helpers
@@ -321,6 +322,7 @@ protected:
 
         // Per-frame state
         void    ResetFrame                 ( void );
+        void    InvalidateHistory          ( void );
         xbool   ResizeIfNeeded             ( u32 SourceWidth, u32 SourceHeight );
         const rtarget*
                 BindForComposite          ( void ) const;
@@ -372,6 +374,7 @@ protected:
         xbool   EnsureCopyTargets           ( const rtarget* pSourceTarget );
         xbool   EnsureMipTargets            ( const rtarget* pSourceTarget );
         xbool   CaptureHistory              ( const rtarget* pSourceTarget );
+        void    InvalidateHistory           ( void );
         xbool   BeginPostChain              ( const rtarget* pSourceTarget );
         xbool   BindPostTarget              ( void );
         xbool   PrimePostTarget             ( void );

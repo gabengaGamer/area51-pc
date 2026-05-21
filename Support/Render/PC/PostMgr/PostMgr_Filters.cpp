@@ -399,6 +399,14 @@ xbool post_mgr::filter_resources::CaptureHistory( const rtarget* pSourceTarget )
 
 //==============================================================================
 
+void post_mgr::filter_resources::InvalidateHistory( void )
+{
+    bHistoryValid = FALSE;
+    ResetPostChain();
+}
+
+//==============================================================================
+
 const rtarget* post_mgr::filter_resources::GetPostSource( void ) const
 {
     if( !bPostChainActive )

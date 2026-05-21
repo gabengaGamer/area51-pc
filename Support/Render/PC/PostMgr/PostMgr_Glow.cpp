@@ -190,6 +190,25 @@ void post_mgr::glow_resources::ResetFrame( void )
 
 //==============================================================================
 
+void post_mgr::glow_resources::InvalidateHistory( void )
+{
+    ResetFrame();
+
+    if( !g_pd3dContext || !History.pRenderTargetView )
+        return;
+
+    if( !rtarget_PushTargets() )
+        return;
+
+    static const f32 clearColor[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
+
+    rtarget_SetTargets( &History, 1, NULL );
+    rtarget_Clear( RTARGET_CLEAR_COLOR, clearColor, 1.0f, 0 );
+    rtarget_PopTargets();
+}
+
+//==============================================================================
+
 xbool post_mgr::glow_resources::ResizeIfNeeded( u32 SourceWidth, u32 SourceHeight )
 {
     if( SourceWidth == 0 || SourceHeight == 0 )

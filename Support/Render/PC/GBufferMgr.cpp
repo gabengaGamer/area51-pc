@@ -70,13 +70,14 @@ gbuffer_mgr g_GBufferMgr;
 //==============================================================================
 
 gbuffer_mgr::gbuffer_mgr( void ) :
-    m_bInitialized          ( FALSE ),
-    m_bGBufferValid         ( FALSE ),
-    m_bGBufferTargetsActive ( FALSE ),
-    m_GBufferWidth          ( 0 ),
-    m_GBufferHeight         ( 0 ),
-    m_pOverrideColor        ( NULL ),
-    m_pOverrideDepth        ( NULL )
+    m_bInitialized                 ( FALSE ),
+    m_bGBufferValid                ( FALSE ),
+    m_bGBufferTargetsActive        ( FALSE ),
+    m_bSceneColorRenderedThisFrame ( FALSE ),
+    m_GBufferWidth                 ( 0 ),
+    m_GBufferHeight                ( 0 ),
+    m_pOverrideColor               ( NULL ),
+    m_pOverrideDepth               ( NULL )
 {
 }
 
@@ -105,6 +106,13 @@ void gbuffer_mgr::Kill( void )
 
     DestroyGBuffer();
     m_bInitialized = FALSE;
+}
+
+//==============================================================================
+
+void gbuffer_mgr::BeginFrame( void )
+{
+    m_bSceneColorRenderedThisFrame = FALSE;
 }
 
 //==============================================================================
@@ -185,6 +193,7 @@ void gbuffer_mgr::DestroyGBuffer( void )
     rtarget_Destroy   ( m_GBufferDepth );
 
     m_bGBufferValid = FALSE;
+    m_bSceneColorRenderedThisFrame = FALSE;
     m_GBufferWidth  = 0;
     m_GBufferHeight = 0;
 }
@@ -210,7 +219,11 @@ xbool gbuffer_mgr::SetGBufferTargets( void )
         return FALSE;
 
     if( m_bGBufferTargetsActive )
+    {
+        if( !m_pOverrideColor )
+            m_bSceneColorRenderedThisFrame = TRUE;
         return TRUE;
+    }
 
     if( !rtarget_GetBackBuffer() )
     {
@@ -234,6 +247,8 @@ xbool gbuffer_mgr::SetGBufferTargets( void )
         return FALSE;
 
     m_bGBufferTargetsActive = TRUE;
+    if( !m_pOverrideColor )
+        m_bSceneColorRenderedThisFrame = TRUE;
     return TRUE;
 }
 
@@ -257,7 +272,7 @@ void gbuffer_mgr::SetFinalColorTarget( void )
 
 void gbuffer_mgr::PresentFinalColor( void )
 {
-    if( !m_bGBufferValid || !m_SceneColorTarget.pShaderResourceView )
+    if( !m_bGBufferValid || !m_bSceneColorRenderedThisFrame || !m_SceneColorTarget.pShaderResourceView )
         return;
 
     if( m_pOverrideColor )
