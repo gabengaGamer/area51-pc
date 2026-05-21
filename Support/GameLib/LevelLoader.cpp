@@ -697,6 +697,7 @@ __asm wbinvd
 
 void level_loader::UnloadLevel( xbool bFullUnload )
 {
+    g_GameTextMgr.Reset();
     g_MusicStateMgr.Init();
     g_MusicMgr.Kill();
 
