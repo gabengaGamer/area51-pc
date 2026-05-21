@@ -655,7 +655,7 @@ void platform_RenderRawStrips( s32               nVerts,
 
         // Intensity decals ignore vertex color and always render white
         const xcolor White( 255, 255, 255, 255 );
-        if( s_DrawFlags == render::BLEND_MODE_INTENSITY )
+        if( s_DrawFlags & DRAW_BLEND_INTENSITY )
         {
             draw_Color( White ); draw_UV( UV0 ); draw_Vertex( Pos0 );
             draw_Color( White ); draw_UV( UV1 ); draw_Vertex( Pos1 );
