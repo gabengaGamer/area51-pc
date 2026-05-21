@@ -422,11 +422,11 @@ xbool corpse::ReachedMaxActiveLimit( void )
 
 //===========================================================================
 
-void corpse::CaptureRenderState( void )
+void corpse::CaptureRenderInterpState( void )
 {
-    simple_anim_interp_state Snapshot;
+    simple_anim_interp_state& Snapshot = BeginCaptureInterpCache( m_RenderCache );
     InitSimpleAnimInterpState( Snapshot );
-    m_PhysicsInst.CaptureRenderState( Snapshot );
+    m_PhysicsInst.CaptureRenderInterpState( Snapshot );
 
     if( !Snapshot.Valid )
     {
@@ -434,19 +434,20 @@ void corpse::CaptureRenderState( void )
         return;
     }
 
-    CaptureSimpleAnimInterpCache( m_RenderCache, Snapshot );
+    FinishCaptureInterpCache( m_RenderCache, ShouldSnapSimpleAnimInterpState );
+    RegisterRenderInterpUpdate();
 }
 
 //===========================================================================
 
-void corpse::UpdateRenderState( f32 Alpha )
+void corpse::UpdateRenderInterpState( f32 Alpha )
 {
     UpdateSimpleAnimInterpCache( m_RenderCache, Alpha );
 }
 
 //===========================================================================
 
-void corpse::ClearRenderState( void )
+void corpse::ClearRenderInterpState( void )
 {
     ClearSimpleAnimInterpCache( m_RenderCache );
 }

@@ -152,23 +152,25 @@ void team_light::InvalidateRenderState( void )
 
 //=========================================================================
 
-void team_light::CaptureRenderState( void )
+void team_light::CaptureRenderInterpState( void )
 {
     transform_interp_state Snapshot;
     CaptureTransformInterpState( Snapshot, GetL2W() );
     CaptureTransformInterpCache( m_RenderCache, Snapshot );
+    if( HasTransformInterpCacheChange( m_RenderCache ) )
+        RegisterRenderInterpUpdate();
 }
 
 //=========================================================================
 
-void team_light::UpdateRenderState( f32 Alpha )
+void team_light::UpdateRenderInterpState( f32 Alpha )
 {
     UpdateTransformInterpCache( m_RenderCache, Alpha );
 }
 
 //=========================================================================
 
-void team_light::ClearRenderState( void )
+void team_light::ClearRenderInterpState( void )
 {
     ClearTransformInterpCache( m_RenderCache );
 }

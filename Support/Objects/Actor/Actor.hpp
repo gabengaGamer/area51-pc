@@ -456,12 +456,12 @@ virtual void            OnRender                ( void );
 virtual void            OnRenderShadowCast      ( u64 ProjMask );
 virtual void            OnRenderTransparent     ( void );
 virtual void            OnRenderWeapon          ( void );
-virtual void            CaptureRenderState      ( void );
-virtual void            UpdateRenderState       ( f32 Alpha );
-virtual void            ClearRenderState        ( void );
-        void            CaptureActorRenderState ( void );
-        void            UpdateActorRenderState  ( f32 Alpha );
-        void            ClearActorRenderState   ( void );
+virtual void            CaptureRenderInterpState      ( void );
+virtual void            UpdateRenderInterpState       ( f32 Alpha );
+virtual void            ClearRenderInterpState        ( void );
+        void            CaptureActorRenderInterpState ( void );
+        void            UpdateActorRenderInterpState  ( f32 Alpha );
+        void            ClearActorRenderInterpState   ( void );
 virtual xbool           GetRenderWeaponL2W      ( matrix4& L2W,
                                                    new_weapon::render_state RenderState = new_weapon::RENDER_STATE_NPC ) const;
 virtual const matrix4*  GetRenderWeaponBones    ( s32& nBones,
@@ -704,7 +704,7 @@ virtual void            OnAttachedMove          ( s32 iAttachPt, const matrix4& 
 const   matrix4*        GetBonesForRender       ( u64 LODMask, s32& nActiveBones );
 const   matrix4&        GetActorRenderL2W      ( void ) const;
         xbool           GetActorRenderBoneL2W  ( s32 iBone, matrix4& L2W ) const;
-        void            InvalidateActorRenderState( void );
+        void            InvalidateActorRenderInterpState( void );
         void            RenderHitLocations      ( void );
         f32             TimeSinceLastRender     ( void );
 virtual skin_inst&      GetSkinInst             ( void ) { return m_SkinInst; }

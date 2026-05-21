@@ -24,6 +24,8 @@ struct interp_cache
 //  IMPLEMENTATION
 //==============================================================================
 
+// interp_state must expose a Valid flag used by the generic cache helpers.
+
 template< class interp_state >
 inline 
 void InitInterpCache( interp_cache<interp_state>& Cache,
@@ -37,14 +39,27 @@ void InitInterpCache( interp_cache<interp_state>& Cache,
 
 //==============================================================================
 
-template< class interp_state, class should_snap_fn >
-inline 
-void CaptureInterpCache( interp_cache<interp_state>& Cache,
-                                const interp_state&        Snapshot,
-                                should_snap_fn             ShouldSnap )
+template< class interp_state >
+inline
+interp_state& BeginCaptureInterpCache( interp_cache<interp_state>& Cache )
 {
-    Cache.Prev = Cache.Curr;
-    Cache.Curr = Snapshot;
+    if( Cache.Curr.Valid )
+        Cache.Prev = Cache.Curr;
+    else
+        Cache.Prev.Valid = FALSE;
+
+    return Cache.Curr;
+}
+
+//==============================================================================
+
+template< class interp_state, class should_snap_fn >
+inline
+void FinishCaptureInterpCache( interp_cache<interp_state>& Cache,
+                                      should_snap_fn             ShouldSnap )
+{
+    if( !Cache.Curr.Valid )
+        return;
 
     if( !Cache.Prev.Valid )
     {
@@ -54,6 +69,19 @@ void CaptureInterpCache( interp_cache<interp_state>& Cache,
 
     if( ShouldSnap( Cache.Prev, Cache.Curr ) )
         Cache.Prev = Cache.Curr;
+}
+
+//==============================================================================
+
+template< class interp_state, class should_snap_fn >
+inline
+void CaptureInterpCache( interp_cache<interp_state>& Cache,
+                                const interp_state&        Snapshot,
+                                should_snap_fn             ShouldSnap )
+{
+    interp_state& Curr = BeginCaptureInterpCache( Cache );
+    Curr = Snapshot;
+    FinishCaptureInterpCache( Cache, ShouldSnap );
 }
 
 //==============================================================================

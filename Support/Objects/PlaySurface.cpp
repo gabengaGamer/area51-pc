@@ -323,7 +323,7 @@ const matrix4& play_surface::GetRenderL2W( void ) const
 
 //==============================================================================
 
-void play_surface::CaptureRenderState( void )
+void play_surface::CaptureRenderInterpState( void )
 {
     const matrix4& L2W = GetL2W();
 
@@ -342,11 +342,14 @@ void play_surface::CaptureRenderState( void )
 
     if( ShouldSnapPlaySurfaceState( m_RenderPrevL2W, m_RenderCurrL2W ) )
         m_RenderPrevL2W = m_RenderCurrL2W;
+
+    if( x_memcmp( &m_RenderPrevL2W, &m_RenderCurrL2W, sizeof( matrix4 ) ) != 0 )
+        RegisterRenderInterpUpdate();
 }
 
 //==============================================================================
 
-void play_surface::UpdateRenderState( f32 Alpha )
+void play_surface::UpdateRenderInterpState( f32 Alpha )
 {
     if( !m_RenderStateValid )
     {
@@ -361,7 +364,7 @@ void play_surface::UpdateRenderState( f32 Alpha )
 
 //==============================================================================
 
-void play_surface::ClearRenderState( void )
+void play_surface::ClearRenderInterpState( void )
 {
     m_RenderInterpActive = FALSE;
 }

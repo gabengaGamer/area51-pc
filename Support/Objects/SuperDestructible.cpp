@@ -217,23 +217,22 @@ void super_destructible_obj::InvalidateRenderState( void )
 
 //=========================================================================
 
-void super_destructible_obj::CaptureRenderState( void )
+void super_destructible_obj::CaptureRenderInterpState( void )
 {
-    simple_anim_interp_state Snapshot;
-    CaptureSimpleAnimInterpState( Snapshot, GetL2W(), m_AnimPlayer );
-    CaptureSimpleAnimInterpCache( m_RenderCache, Snapshot );
+    CaptureSimpleAnimInterpCache( m_RenderCache, GetL2W(), m_AnimPlayer );
+    RegisterRenderInterpUpdate();
 }
 
 //=========================================================================
 
-void super_destructible_obj::UpdateRenderState( f32 Alpha )
+void super_destructible_obj::UpdateRenderInterpState( f32 Alpha )
 {
     UpdateSimpleAnimInterpCache( m_RenderCache, Alpha );
 }
 
 //=========================================================================
 
-void super_destructible_obj::ClearRenderState( void )
+void super_destructible_obj::ClearRenderInterpState( void )
 {
     ClearSimpleAnimInterpCache( m_RenderCache );
 }

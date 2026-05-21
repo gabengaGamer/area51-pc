@@ -56,9 +56,9 @@ public:
 
 protected:
 
-    virtual void                CaptureRenderState ( void );
-    virtual void                UpdateRenderState  ( f32 Alpha );
-    virtual void                ClearRenderState   ( void );
+    virtual void                CaptureRenderInterpState ( void );
+    virtual void                UpdateRenderInterpState  ( f32 Alpha );
+    virtual void                ClearRenderInterpState   ( void );
     void                        InvalidateRenderState( void );
     const matrix4&              GetRenderL2W       ( void ) const;
     xbool                       GetRenderBoneL2W   ( s32 iBone, matrix4& L2W );

@@ -78,6 +78,10 @@ matrix4 BuildInterpL2W( const vector3& Pos, const radian3& Rot )
 inline 
 matrix4 InterpMatrix( const matrix4& A, const matrix4& B, f32 T )
 {
+    // Many bone matrices are unchanged between captures; skip decomposition.
+    if( x_memcmp( &A, &B, sizeof( matrix4 ) ) == 0 )
+        return B;
+
     return BuildInterpL2W( InterpVector( A.GetTranslation(), B.GetTranslation(), T ),
                            InterpRotation( A.GetRotation(), B.GetRotation(), T ) );
 }
@@ -107,16 +111,35 @@ void UpdateInterpMatrices( matrix4*       pInterp,
                                   s32            CurrCount,
                                   f32            T )
 {
-    if( (PrevCount == CurrCount) && (CurrCount > 0) )
+    if( CurrCount <= 0 )
+        return;
+
+    if( PrevCount != CurrCount )
     {
-        for( s32 i = 0; i < CurrCount; i++ )
-            pInterp[i] = InterpMatrix( pPrev[i], pCurr[i], T );
+        x_memcpy( pInterp, pCurr, CurrCount * sizeof( matrix4 ) );
+        return;
     }
-    else
+
+    if( T <= 0.0f )
     {
-        for( s32 i = 0; i < CurrCount; i++ )
-            pInterp[i] = pCurr[i];
+        x_memcpy( pInterp, pPrev, CurrCount * sizeof( matrix4 ) );
+        return;
     }
+
+    if( T >= 1.0f )
+    {
+        x_memcpy( pInterp, pCurr, CurrCount * sizeof( matrix4 ) );
+        return;
+    }
+
+    if( x_memcmp( pPrev, pCurr, CurrCount * sizeof( matrix4 ) ) == 0 )
+    {
+        x_memcpy( pInterp, pCurr, CurrCount * sizeof( matrix4 ) );
+        return;
+    }
+
+    for( s32 i = 0; i < CurrCount; i++ )
+        pInterp[i] = InterpMatrix( pPrev[i], pCurr[i], T );
 }
 
 //==============================================================================

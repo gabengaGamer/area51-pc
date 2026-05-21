@@ -104,23 +104,22 @@ void anim_surface::InvalidateRenderState( void )
 
 //=============================================================================
 
-void anim_surface::CaptureRenderState( void )
+void anim_surface::CaptureRenderInterpState( void )
 {
-    simple_anim_interp_state Snapshot;
-    CaptureSimpleAnimInterpState( Snapshot, GetL2W(), m_AnimPlayer );
-    CaptureSimpleAnimInterpCache( m_RenderCache, Snapshot );
+    CaptureSimpleAnimInterpCache( m_RenderCache, GetL2W(), m_AnimPlayer );
+    RegisterRenderInterpUpdate();
 }
 
 //=============================================================================
 
-void anim_surface::UpdateRenderState( f32 Alpha )
+void anim_surface::UpdateRenderInterpState( f32 Alpha )
 {
     UpdateSimpleAnimInterpCache( m_RenderCache, Alpha );
 }
 
 //=============================================================================
 
-void anim_surface::ClearRenderState( void )
+void anim_surface::ClearRenderInterpState( void )
 {
     ClearSimpleAnimInterpCache( m_RenderCache );
 }

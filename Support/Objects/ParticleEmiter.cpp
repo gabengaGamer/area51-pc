@@ -320,17 +320,17 @@ void particle_emitter::SyncFXTransform( void )
 
 //=========================================================================
 
-void particle_emitter::UpdateRenderState( f32 Alpha )
+void particle_emitter::UpdateRenderInterpState( f32 Alpha )
 {
-    object::UpdateRenderState( Alpha );
+    object::UpdateRenderInterpState( Alpha );
     SyncFXTransform();
 }
 
 //=========================================================================
 
-void particle_emitter::ClearRenderState( void )
+void particle_emitter::ClearRenderInterpState( void )
 {
-    object::ClearRenderState();
+    object::ClearRenderInterpState();
     SyncFXTransform();
 }
 

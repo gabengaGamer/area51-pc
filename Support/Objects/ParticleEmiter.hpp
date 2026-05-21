@@ -244,8 +244,8 @@ protected:
     virtual         void        OnRender                ( void );
     virtual         void        OnRenderTransparent     ( void );
     virtual         void        OnAdvanceLogic          ( f32 DeltaTime );    
-    virtual         void        UpdateRenderState       ( f32 Alpha );
-    virtual         void        ClearRenderState        ( void );
+    virtual         void        UpdateRenderInterpState       ( f32 Alpha );
+    virtual         void        ClearRenderInterpState        ( void );
 
 #ifndef X_RETAIL
     virtual         void        OnDebugRender           ( void );    

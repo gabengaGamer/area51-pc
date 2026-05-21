@@ -288,23 +288,22 @@ void turret::InvalidateRenderState( void )
 
 //=============================================================================
 
-void turret::CaptureRenderState( void )
+void turret::CaptureRenderInterpState( void )
 {
-    simple_anim_interp_state Snapshot;
-    CaptureSimpleAnimInterpState( Snapshot, GetL2W(), m_AnimPlayer );
-    CaptureSimpleAnimInterpCache( m_RenderCache, Snapshot );
+    CaptureSimpleAnimInterpCache( m_RenderCache, GetL2W(), m_AnimPlayer );
+    RegisterRenderInterpUpdate();
 }
 
 //=============================================================================
 
-void turret::UpdateRenderState( f32 Alpha )
+void turret::UpdateRenderInterpState( f32 Alpha )
 {
     UpdateSimpleAnimInterpCache( m_RenderCache, Alpha );
 }
 
 //=============================================================================
 
-void turret::ClearRenderState( void )
+void turret::ClearRenderInterpState( void )
 {
     ClearSimpleAnimInterpCache( m_RenderCache );
 }

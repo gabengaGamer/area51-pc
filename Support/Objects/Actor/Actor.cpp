@@ -188,7 +188,7 @@ actor::actor( void ) :
 
     m_BigPainTakenTime = (f32)x_GetTimeSec();
     m_pEffects = NULL;    
-    InvalidateActorRenderState();
+    InvalidateActorRenderInterpState();
 
     SetAvatarMutationState( AVATAR_NORMAL );
 
@@ -262,7 +262,7 @@ void actor::OnKill( void )
 
 //=========================================================================
 
-void actor::InvalidateActorRenderState( void )
+void actor::InvalidateActorRenderInterpState( void )
 {
     actor_interp_state InitialState;
     InitialState.Valid = FALSE;
@@ -274,38 +274,39 @@ void actor::InvalidateActorRenderState( void )
 
 //=========================================================================
 
-void actor::CaptureRenderState( void )
+void actor::CaptureRenderInterpState( void )
 {
     if( !m_bIsActive )
     {
-        ClearActorRenderState();
+        ClearActorRenderInterpState();
         return;
     }
 
-    CaptureActorRenderState();
+    CaptureActorRenderInterpState();
+    RegisterRenderInterpUpdate();
 }
 
 //=========================================================================
 
-void actor::UpdateRenderState( f32 Alpha )
+void actor::UpdateRenderInterpState( f32 Alpha )
 {
     if( m_bIsActive )
-        UpdateActorRenderState( Alpha );
+        UpdateActorRenderInterpState( Alpha );
 }
 
 //=========================================================================
 
-void actor::ClearRenderState( void )
+void actor::ClearRenderInterpState( void )
 {
     if( m_bIsActive )
-        ClearActorRenderState();
+        ClearActorRenderInterpState();
 }
 
 //=========================================================================
 
-void actor::CaptureActorRenderState( void )
+void actor::CaptureActorRenderInterpState( void )
 {
-    actor_interp_state Snapshot;
+    actor_interp_state& Snapshot = BeginCaptureInterpCache( m_ActorRenderCache );
     Snapshot.Valid = TRUE;
     CaptureSkinnedInterpState( Snapshot.Body, GetL2W() );
     InitWeaponInterpState( Snapshot.Weapon );
@@ -357,18 +358,18 @@ void actor::CaptureActorRenderState( void )
         pWeapon->SetRenderState( OldState );
     }
 
-    CaptureInterpCache( m_ActorRenderCache, Snapshot,
-                        []( const actor_interp_state& Prev, const actor_interp_state& Curr )
-                             {
-                                 return ShouldSnapSkinnedInterpState( Prev.Body, Curr.Body ) ||
-                                        (Prev.Weapon.Active != Curr.Weapon.Active) ||
-                                        (Prev.Weapon.NBones != Curr.Weapon.NBones);
-                             } );
+    FinishCaptureInterpCache( m_ActorRenderCache,
+                              []( const actor_interp_state& Prev, const actor_interp_state& Curr )
+                                   {
+                                       return ShouldSnapSkinnedInterpState( Prev.Body, Curr.Body ) ||
+                                              (Prev.Weapon.Active != Curr.Weapon.Active) ||
+                                              (Prev.Weapon.NBones != Curr.Weapon.NBones);
+                                   } );
 }
 
 //=========================================================================
 
-void actor::UpdateActorRenderState( f32 Alpha )
+void actor::UpdateActorRenderInterpState( f32 Alpha )
 {
     UpdateInterpCache( m_ActorRenderCache, Alpha,
                        []( const actor_interp_state& Prev,
@@ -376,7 +377,7 @@ void actor::UpdateActorRenderState( f32 Alpha )
                                  actor_interp_state& Interp,
                                  f32                 T )
                             {
-                                Interp = Curr;
+                                Interp.Valid = Curr.Valid;
                                 UpdateSkinnedInterpState( Prev.Body, Curr.Body, Interp.Body, T );
                                 UpdateWeaponInterpState( Prev.Weapon, Curr.Weapon, Interp.Weapon, T );
                             } );
@@ -384,7 +385,7 @@ void actor::UpdateActorRenderState( f32 Alpha )
 
 //=========================================================================
 
-void actor::ClearActorRenderState( void )
+void actor::ClearActorRenderInterpState( void )
 {
     ClearInterpCache( m_ActorRenderCache );
 }
@@ -4290,7 +4291,7 @@ void  actor::SetIsActive( xbool bIsActive )
     if( m_bIsActive == bIsActive )
         return;
 
-    InvalidateActorRenderState();
+    InvalidateActorRenderInterpState();
 
     if( bIsActive )
     {

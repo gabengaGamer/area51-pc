@@ -397,27 +397,28 @@ coke_can::~coke_can()
 
 //=========================================================================
 
-void coke_can::CaptureRenderState( void )
+void coke_can::CaptureRenderInterpState( void )
 {
-    simple_anim_interp_state Snapshot;
+    simple_anim_interp_state& Snapshot = BeginCaptureInterpCache( m_RenderCache );
     InitSimpleAnimInterpState( Snapshot );
     Snapshot.Valid    = TRUE;
     Snapshot.NBones   = 1;
     Snapshot.L2W      = GetL2W();
     Snapshot.Bones[0] = Snapshot.L2W;
-    CaptureSimpleAnimInterpCache( m_RenderCache, Snapshot );
+    FinishCaptureInterpCache( m_RenderCache, ShouldSnapSimpleAnimInterpState );
+    RegisterRenderInterpUpdate();
 }
 
 //=========================================================================
 
-void coke_can::UpdateRenderState( f32 Alpha )
+void coke_can::UpdateRenderInterpState( f32 Alpha )
 {
     UpdateSimpleAnimInterpCache( m_RenderCache, Alpha );
 }
 
 //=========================================================================
 
-void coke_can::ClearRenderState( void )
+void coke_can::ClearRenderInterpState( void )
 {
     ClearSimpleAnimInterpCache( m_RenderCache );
 }

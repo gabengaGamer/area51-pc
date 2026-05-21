@@ -43,17 +43,28 @@ struct object_render_interp_state
     matrix4 BackupL2W;
     xbool   Valid;
     xbool   Active;
+    xbool   Changed;
+    s32     QueueID;
+};
+
+struct object_render_update_entry
+{
+    slot_id SlotID;
+    guid    Guid;
 };
 
 static object_render_interp_state s_ObjectRenderInterp[ obj_mgr::MAX_OBJECTS ];
-static interpolation_mgr::provider s_ObjectInterpolationProvider( object::CaptureRenderStates,
-                                                                  object::UpdateRenderStates,
-                                                                  object::ClearRenderStates,
+static object_render_update_entry s_ObjectRenderUpdate[ obj_mgr::MAX_OBJECTS ];
+static s32                        s_nObjectRenderUpdates = 0;
+static s32                        s_ObjectRenderQueueID  = 0;
+static interpolation_mgr::provider s_ObjectInterpolationProvider( object::CaptureRenderInterpStates,
+                                                                  object::UpdateRenderInterpStates,
+                                                                  object::ClearRenderInterpStates,
                                                                   interpolation_mgr::CLEAR_STAGE_END_FRAME,
                                                                   1000 );
 static interpolation_mgr::provider s_ObjectPerViewInterpolationProvider( NULL,
                                                                          NULL,
-                                                                         object::ClearRenderStatesPerView,
+                                                                         object::ClearRenderInterpStatesPerView,
                                                                          interpolation_mgr::CLEAR_STAGE_PER_VIEW,
                                                                          1000 );
 
@@ -142,7 +153,7 @@ static matrix4 InterpObjectL2W( const matrix4& PrevL2W, const matrix4& CurrL2W, 
 
 //==============================================================================
 
-static xbool ShouldSnapObjectRenderState( const matrix4& PrevL2W, const matrix4& CurrL2W )
+static xbool ShouldSnapObjectRenderInterpState( const matrix4& PrevL2W, const matrix4& CurrL2W )
 {
     const vector3 Delta = CurrL2W.GetTranslation() - PrevL2W.GetTranslation();
 
@@ -160,8 +171,33 @@ static object_render_interp_state& GetObjectRenderInterpState( const object& Obj
 
 //==============================================================================
 
-void object::CaptureRenderStates( void )
+void object::RegisterRenderInterpUpdate( void )
 {
+    if( !(GetAttrBits() & object::ATTR_RENDERABLE) ||
+        ( GetAttrBits() & object::ATTR_DESTROY    ) )
+    {
+        return;
+    }
+
+    object_render_interp_state& State = GetObjectRenderInterpState( *this );
+    if( State.QueueID == s_ObjectRenderQueueID )
+        return;
+
+    ASSERT( s_nObjectRenderUpdates < obj_mgr::MAX_OBJECTS );
+    State.QueueID = s_ObjectRenderQueueID;
+
+    s_ObjectRenderUpdate[ s_nObjectRenderUpdates ].SlotID = m_SlotID;
+    s_ObjectRenderUpdate[ s_nObjectRenderUpdates ].Guid   = m_Guid;
+    s_nObjectRenderUpdates++;
+}
+
+//==============================================================================
+
+void object::CaptureRenderInterpStates( void )
+{
+    s_nObjectRenderUpdates = 0;
+    s_ObjectRenderQueueID++;
+
     for( s32 Type = object::TYPE_NULL + 1; Type < object::TYPE_END_OF_LIST; Type++ )
     {
         slot_id SlotID = g_ObjMgr.GetFirst( (object::type)Type );
@@ -171,7 +207,7 @@ void object::CaptureRenderStates( void )
             slot_id NextSlotID = g_ObjMgr.GetNext( SlotID );
 
             if( pObject )
-                pObject->CaptureRenderState();
+                pObject->CaptureRenderInterpState();
 
             SlotID = NextSlotID;
         }
@@ -180,67 +216,50 @@ void object::CaptureRenderStates( void )
 
 //==============================================================================
 
-void object::UpdateRenderStates( f32 Alpha )
+void object::UpdateRenderInterpStates( f32 Alpha )
 {
-    for( s32 Type = object::TYPE_NULL + 1; Type < object::TYPE_END_OF_LIST; Type++ )
+    for( s32 i = 0; i < s_nObjectRenderUpdates; i++ )
     {
-        slot_id SlotID = g_ObjMgr.GetFirst( (object::type)Type );
-        while( SlotID != SLOT_NULL )
-        {
-            object* pObject = g_ObjMgr.GetObjectBySlot( SlotID );
-            slot_id NextSlotID = g_ObjMgr.GetNext( SlotID );
+        object* pObject = g_ObjMgr.GetObjectBySlot( s_ObjectRenderUpdate[i].SlotID );
 
-            if( pObject )
-                pObject->UpdateRenderState( Alpha );
-
-            SlotID = NextSlotID;
-        }
+        if( pObject && (pObject->GetGuid() == s_ObjectRenderUpdate[i].Guid) )
+            pObject->UpdateRenderInterpState( Alpha );
     }
 }
 
 //==============================================================================
 
-void object::ClearRenderStates( void )
+void object::ClearRenderInterpStates( void )
 {
-    for( s32 Type = object::TYPE_NULL + 1; Type < object::TYPE_END_OF_LIST; Type++ )
+    for( s32 i = 0; i < s_nObjectRenderUpdates; i++ )
     {
-        slot_id SlotID = g_ObjMgr.GetFirst( (object::type)Type );
-        while( SlotID != SLOT_NULL )
-        {
-            object* pObject = g_ObjMgr.GetObjectBySlot( SlotID );
-            slot_id NextSlotID = g_ObjMgr.GetNext( SlotID );
+        object* pObject = g_ObjMgr.GetObjectBySlot( s_ObjectRenderUpdate[i].SlotID );
 
-            if( pObject )
-                pObject->ClearRenderState();
-
-            SlotID = NextSlotID;
-        }
+        if( pObject && (pObject->GetGuid() == s_ObjectRenderUpdate[i].Guid) )
+            pObject->ClearRenderInterpState();
     }
 }
 
 //==============================================================================
 
-void object::ClearRenderStatesPerView( void )
+void object::ClearRenderInterpStatesPerView( void )
 {
-    for( s32 Type = object::TYPE_NULL + 1; Type < object::TYPE_END_OF_LIST; Type++ )
+    slot_id SlotID = g_ObjMgr.GetFirst( object::TYPE_PLAYER );
+    while( SlotID != SLOT_NULL )
     {
-        slot_id SlotID = g_ObjMgr.GetFirst( (object::type)Type );
-        while( SlotID != SLOT_NULL )
-        {
-            object* pObject = g_ObjMgr.GetObjectBySlot( SlotID );
-            slot_id NextSlotID = g_ObjMgr.GetNext( SlotID );
+        object* pObject = g_ObjMgr.GetObjectBySlot( SlotID );
+        slot_id NextSlotID = g_ObjMgr.GetNext( SlotID );
 
-            if( pObject )
-                pObject->ClearRenderStatePerView();
+        if( pObject )
+            pObject->ClearRenderInterpStatePerView();
 
-            SlotID = NextSlotID;
-        }
+        SlotID = NextSlotID;
     }
 }
 
 //==============================================================================
 
-void object::CaptureRenderState( void )
+void object::CaptureRenderInterpState( void )
 {
     object_render_interp_state& State = GetObjectRenderInterpState( *this );
 
@@ -249,12 +268,16 @@ void object::CaptureRenderState( void )
         State.Guid   = GetGuid();
         State.Valid  = FALSE;
         State.Active = FALSE;
+        State.Changed = FALSE;
+        State.QueueID = 0;
     }
 
     if( !(GetAttrBits() & object::ATTR_RENDERABLE) ||
         ( GetAttrBits() & object::ATTR_DESTROY    ) )
     {
-        State.Valid = FALSE;
+        State.Valid   = FALSE;
+        State.Active  = FALSE;
+        State.Changed = FALSE;
         return;
     }
 
@@ -265,26 +288,35 @@ void object::CaptureRenderState( void )
         State.PrevL2W = L2W;
         State.CurrL2W = L2W;
         State.Valid   = TRUE;
+        State.Changed = FALSE;
         return;
     }
 
     State.PrevL2W = State.CurrL2W;
     State.CurrL2W = L2W;
+    State.Changed = (x_memcmp( &State.PrevL2W, &State.CurrL2W, sizeof( matrix4 ) ) != 0);
 
-    if( ShouldSnapObjectRenderState( State.PrevL2W, State.CurrL2W ) )
+    if( ShouldSnapObjectRenderInterpState( State.PrevL2W, State.CurrL2W ) )
+    {
         State.PrevL2W = State.CurrL2W;
+        State.Changed = FALSE;
+    }
+
+    if( State.Changed )
+        RegisterRenderInterpUpdate();
 }
 
 //==============================================================================
 
-void object::UpdateRenderState( f32 Alpha )
+void object::UpdateRenderInterpState( f32 Alpha )
 {
     object_render_interp_state& State = GetObjectRenderInterpState( *this );
 
     if( State.Active )
-        object::ClearRenderState();
+        object::ClearRenderInterpState();
 
     if( !State.Valid ||
+        !State.Changed ||
         !(GetAttrBits() & object::ATTR_RENDERABLE) ||
         ( GetAttrBits() & object::ATTR_DESTROY    ) )
     {
@@ -303,7 +335,7 @@ void object::UpdateRenderState( f32 Alpha )
 
 //==============================================================================
 
-void object::ClearRenderState( void )
+void object::ClearRenderInterpState( void )
 {
     object_render_interp_state& State = GetObjectRenderInterpState( *this );
 

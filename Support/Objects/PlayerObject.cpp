@@ -2071,9 +2071,9 @@ void player::ComputeView( view& View, view_flags Flags )
 
 //===========================================================================
 
-void player::CaptureRenderState( void )
+void player::CaptureRenderInterpState( void )
 {
-    actor::CaptureRenderState();
+    actor::CaptureRenderInterpState();
 
     if( GetLocalSlot() == -1 )
     {
@@ -2081,7 +2081,7 @@ void player::CaptureRenderState( void )
         return;
     }
 
-    player_interp_state Snapshot;
+    player_interp_state& Snapshot = BeginCaptureInterpCache( m_RenderCache );
     Snapshot.Valid = TRUE;
     Snapshot.View = m_Views[ GetLocalSlot() ];
     ComputeView( Snapshot.View, player::VIEW_NULL );
@@ -2114,21 +2114,23 @@ void player::CaptureRenderState( void )
     TransformSkinnedInterpState( Snapshot.Arms, WorldToView );
     TransformWeaponInterpState( Snapshot.Weapon, WorldToView );
 
-    CaptureInterpCache( m_RenderCache, Snapshot,
-                        []( const player_interp_state& Prev, const player_interp_state& Curr )
-                             {
-                                 return ShouldSnapInterpL2W( Prev.View.GetV2W(), Curr.View.GetV2W() ) ||
-                                        (Prev.Weapon.Active != Curr.Weapon.Active) ||
-                                        (Prev.Arms.NBones != Curr.Arms.NBones) ||
-                                        (Prev.Weapon.NBones != Curr.Weapon.NBones);
-                             } );
+    FinishCaptureInterpCache( m_RenderCache,
+                              []( const player_interp_state& Prev, const player_interp_state& Curr )
+                                   {
+                                       return ShouldSnapInterpL2W( Prev.View.GetV2W(), Curr.View.GetV2W() ) ||
+                                              (Prev.Weapon.Active != Curr.Weapon.Active) ||
+                                              (Prev.Arms.NBones != Curr.Arms.NBones) ||
+                                              (Prev.Weapon.NBones != Curr.Weapon.NBones);
+                                   } );
+
+    RegisterRenderInterpUpdate();
 }
 
 //===========================================================================
 
-void player::UpdateRenderState( f32 Alpha )
+void player::UpdateRenderInterpState( f32 Alpha )
 {
-    actor::UpdateRenderState( Alpha );
+    actor::UpdateRenderInterpState( Alpha );
 
     if( GetLocalSlot() == -1 )
         return;
@@ -2139,7 +2141,8 @@ void player::UpdateRenderState( f32 Alpha )
                                      player_interp_state& Interp,
                                      f32                  T )
                             {
-                                Interp = Curr;
+                                Interp.Valid = Curr.Valid;
+                                Interp.View  = Curr.View;
                                 T = ClampInterpAlpha( T );
                                 Interp.View.SetV2W( InterpMatrix( Prev.View.GetV2W(), Curr.View.GetV2W(), T ) );
                                 Interp.View.SetXFOV( InterpScalar( Prev.View.GetXFOV(), Curr.View.GetXFOV(), T ) );
@@ -2169,18 +2172,18 @@ void player::UpdateRenderState( f32 Alpha )
 
 //===========================================================================
 
-void player::ClearRenderState( void )
+void player::ClearRenderInterpState( void )
 {
     ClearInterpCache( m_RenderCache );
-    actor::ClearRenderState();
+    actor::ClearRenderInterpState();
 }
 
 //===========================================================================
 
-void player::ClearRenderStatePerView( void )
+void player::ClearRenderInterpStatePerView( void )
 {
     if( (GetLocalSlot() != -1) && IsActivePlayer() )
-        ClearRenderState();
+        ClearRenderInterpState();
 }
 
 //===========================================================================

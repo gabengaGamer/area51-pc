@@ -949,7 +949,7 @@ const matrix4* physics_inst::GetBoneL2Ws( u64& LODMask, s32& nActiveBones )
 
 //==============================================================================
 
-xbool physics_inst::CaptureRenderState( simple_anim_interp_state& Snapshot ) const
+xbool physics_inst::CaptureRenderInterpState( simple_anim_interp_state& Snapshot ) const
 {
     InitSimpleAnimInterpState( Snapshot );
 

@@ -42,6 +42,27 @@ struct weapon_interp_state
 //  IMPLEMENTATION
 //==============================================================================
 
+inline
+void SetInterpStateBoneMatrices( matrix4*       pStateBones,
+                                        s32&           StateNBones,
+                                        const matrix4* pBones,
+                                        s32            NBones )
+{
+    if( !pBones || (NBones <= 0) )
+    {
+        StateNBones = 0;
+        return;
+    }
+
+    NBones      = MIN( NBones, MAX_ANIM_BONES );
+    StateNBones = NBones;
+    x_memcpy( pStateBones, pBones, NBones * sizeof( matrix4 ) );
+}
+
+//==============================================================================
+//  SKINNED STATE
+//==============================================================================
+
 inline 
 void InitSkinnedInterpState( skinned_interp_state& State )
 {
@@ -67,15 +88,7 @@ void SetSkinnedInterpStateBones( skinned_interp_state& State,
                                         const matrix4*        pBones,
                                         s32                   NBones )
 {
-    if( !pBones || (NBones <= 0) )
-    {
-        State.NBones = 0;
-        return;
-    }
-
-    NBones = MIN( NBones, MAX_ANIM_BONES );
-    State.NBones = NBones;
-    x_memcpy( State.Bones, pBones, NBones * sizeof( matrix4 ) );
+    SetInterpStateBoneMatrices( State.Bones, State.NBones, pBones, NBones );
 }
 
 //==============================================================================
@@ -98,7 +111,8 @@ void UpdateSkinnedInterpState( const skinned_interp_state& Prev,
 {
     Alpha = ClampInterpAlpha( Alpha );
 
-    Interp = Curr;
+    Interp.Valid  = Curr.Valid;
+    Interp.NBones = Curr.NBones;
     Interp.L2W = InterpMatrix( Prev.L2W, Curr.L2W, Alpha );
     UpdateInterpMatrices( Interp.Bones, Prev.Bones, Prev.NBones, Curr.Bones, Curr.NBones, Alpha );
 }
@@ -152,6 +166,8 @@ void TransformSkinnedInterpState( skinned_interp_state& State, const matrix4& M 
 }
 
 //==============================================================================
+//  WEAPON STATE
+//==============================================================================
 
 inline 
 void InitWeaponInterpState( weapon_interp_state& State )
@@ -178,15 +194,7 @@ void SetWeaponInterpStateBones( weapon_interp_state& State,
                                        const matrix4*       pBones,
                                        s32                  NBones )
 {
-    if( !pBones || (NBones <= 0) )
-    {
-        State.NBones = 0;
-        return;
-    }
-
-    NBones = MIN( NBones, MAX_ANIM_BONES );
-    State.NBones = NBones;
-    x_memcpy( State.Bones, pBones, NBones * sizeof( matrix4 ) );
+    SetInterpStateBoneMatrices( State.Bones, State.NBones, pBones, NBones );
 }
 
 //==============================================================================
@@ -199,7 +207,9 @@ void UpdateWeaponInterpState( const weapon_interp_state& Prev,
 {
     Alpha = ClampInterpAlpha( Alpha );
 
-    Interp = Curr;
+    Interp.Active = Curr.Active;
+    Interp.NBones = Curr.NBones;
+    Interp.L2W    = Curr.L2W;
     if( !Curr.Active )
         return;
 

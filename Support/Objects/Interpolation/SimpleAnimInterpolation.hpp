@@ -30,20 +30,14 @@ typedef interp_cache<simple_anim_interp_state> simple_anim_interp_cache;
 //  IMPLEMENTATION
 //==============================================================================
 
+//==============================================================================
+//  STATE
+//==============================================================================
+
 inline 
 void InitSimpleAnimInterpState( simple_anim_interp_state& State )
 {
     InitSkinnedInterpState( State );
-}
-
-//==============================================================================
-
-inline 
-void InitSimpleAnimInterpCache( simple_anim_interp_cache& Cache )
-{
-    simple_anim_interp_state InitialState;
-    InitSimpleAnimInterpState( InitialState );
-    InitInterpCache( Cache, InitialState );
 }
 
 //==============================================================================
@@ -114,12 +108,27 @@ const matrix4* BuildSimpleAnimInterpMatrices( const simple_anim_interp_state& St
 }
 
 //==============================================================================
+//  CACHE
+//==============================================================================
 
 inline 
-void CaptureSimpleAnimInterpCache( simple_anim_interp_cache&      Cache,
-                                          const simple_anim_interp_state& Snapshot )
+void InitSimpleAnimInterpCache( simple_anim_interp_cache& Cache )
 {
-    CaptureInterpCache( Cache, Snapshot, ShouldSnapSimpleAnimInterpState );
+    simple_anim_interp_state InitialState;
+    InitSimpleAnimInterpState( InitialState );
+    InitInterpCache( Cache, InitialState );
+}
+
+//==============================================================================
+
+inline
+void CaptureSimpleAnimInterpCache( simple_anim_interp_cache& Cache,
+                                          const matrix4&            L2W,
+                                          simple_anim_player&       AnimPlayer )
+{
+    simple_anim_interp_state& Snapshot = BeginCaptureInterpCache( Cache );
+    CaptureSimpleAnimInterpState( Snapshot, L2W, AnimPlayer );
+    FinishCaptureInterpCache( Cache, ShouldSnapSimpleAnimInterpState );
 }
 
 //==============================================================================
@@ -150,18 +159,6 @@ xbool HasSimpleAnimInterpCache( const simple_anim_interp_cache& Cache )
 //==============================================================================
 
 inline 
-const matrix4& GetSimpleAnimInterpCacheL2W( const simple_anim_interp_cache& Cache,
-                                                   const matrix4&                  FallbackL2W )
-{
-    if( Cache.Active )
-        return Cache.Interp.L2W;
-
-    return FallbackL2W;
-}
-
-//==============================================================================
-
-inline 
 xbool GetSimpleAnimInterpCacheBoneL2W( const simple_anim_interp_cache& Cache,
                                               s32                             iBone,
                                               matrix4&                        L2W )
@@ -170,6 +167,18 @@ xbool GetSimpleAnimInterpCacheBoneL2W( const simple_anim_interp_cache& Cache,
         return FALSE;
 
     return GetSimpleAnimInterpBoneL2W( Cache.Interp, iBone, L2W );
+}
+
+//==============================================================================
+
+inline 
+const matrix4& GetSimpleAnimInterpCacheL2W( const simple_anim_interp_cache& Cache,
+                                                   const matrix4&                  FallbackL2W )
+{
+    if( HasSimpleAnimInterpCache( Cache ) )
+        return Cache.Interp.L2W;
+
+    return FallbackL2W;
 }
 
 //==============================================================================

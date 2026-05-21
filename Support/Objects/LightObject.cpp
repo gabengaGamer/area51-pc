@@ -98,23 +98,25 @@ void light_obj::InvalidateRenderState( void )
 
 //=========================================================================
 
-void light_obj::CaptureRenderState( void )
+void light_obj::CaptureRenderInterpState( void )
 {
     transform_interp_state Snapshot;
     CaptureTransformInterpState( Snapshot, GetL2W() );
     CaptureTransformInterpCache( m_RenderCache, Snapshot );
+    if( HasTransformInterpCacheChange( m_RenderCache ) )
+        RegisterRenderInterpUpdate();
 }
 
 //=========================================================================
 
-void light_obj::UpdateRenderState( f32 Alpha )
+void light_obj::UpdateRenderInterpState( f32 Alpha )
 {
     UpdateTransformInterpCache( m_RenderCache, Alpha );
 }
 
 //=========================================================================
 
-void light_obj::ClearRenderState( void )
+void light_obj::ClearRenderInterpState( void )
 {
     ClearTransformInterpCache( m_RenderCache );
 }

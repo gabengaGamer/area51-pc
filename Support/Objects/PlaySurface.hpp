@@ -53,9 +53,9 @@ protected:
             void                DoColRender     ( const matrix4* pBones, xbool High );
 #endif // X_RETAIL
     virtual const matrix4&      GetRenderL2W    ( void ) const;
-    virtual void                CaptureRenderState( void );
-    virtual void                UpdateRenderState( f32 Alpha );
-    virtual void                ClearRenderState( void );
+    virtual void                CaptureRenderInterpState( void );
+    virtual void                UpdateRenderInterpState( f32 Alpha );
+    virtual void                ClearRenderInterpState( void );
 
 protected:
 

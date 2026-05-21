@@ -32,21 +32,15 @@ typedef interp_cache<transform_interp_state> transform_interp_cache;
 //  IMPLEMENTATION
 //==============================================================================
 
+//==============================================================================
+//  STATE
+//==============================================================================
+
 inline 
 void InitTransformInterpState( transform_interp_state& State )
 {
     State.Valid = FALSE;
     State.L2W.Identity();
-}
-
-//==============================================================================
-
-inline 
-void InitTransformInterpCache( transform_interp_cache& Cache )
-{
-    transform_interp_state InitialState;
-    InitTransformInterpState( InitialState );
-    InitInterpCache( Cache, InitialState );
 }
 
 //==============================================================================
@@ -79,8 +73,20 @@ void UpdateTransformInterpState( const transform_interp_state& Prev,
 {
     Alpha = ClampInterpAlpha( Alpha );
 
-    Interp = Curr;
+    Interp.Valid = Curr.Valid;
     Interp.L2W = InterpMatrix( Prev.L2W, Curr.L2W, Alpha );
+}
+
+//==============================================================================
+//  CACHE
+//==============================================================================
+
+inline
+void InitTransformInterpCache( transform_interp_cache& Cache )
+{
+    transform_interp_state InitialState;
+    InitTransformInterpState( InitialState );
+    InitInterpCache( Cache, InitialState );
 }
 
 //==============================================================================
@@ -119,16 +125,26 @@ xbool HasTransformInterpCache( const transform_interp_cache& Cache )
 
 //==============================================================================
 
+inline
+xbool HasTransformInterpCacheChange( const transform_interp_cache& Cache )
+{
+    return Cache.Prev.Valid &&
+           Cache.Curr.Valid &&
+           (x_memcmp( &Cache.Prev.L2W, &Cache.Curr.L2W, sizeof( matrix4 ) ) != 0);
+}
+
+//==============================================================================
+
 inline 
 const matrix4& GetTransformInterpCacheL2W( const transform_interp_cache& Cache,
                                                   const matrix4&                FallbackL2W )
 {
-    if( Cache.Active )
+    if( HasTransformInterpCache( Cache ) )
         return Cache.Interp.L2W;
 
     return FallbackL2W;
 }
 
 //==============================================================================
-#endif
+#endif //TRANSFORM_INTERPOLATION_HPP
 //==============================================================================
