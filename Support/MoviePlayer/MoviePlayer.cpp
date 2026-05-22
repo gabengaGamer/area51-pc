@@ -7,9 +7,11 @@
 #include "Entropy.hpp"
 #include "movieplayer.hpp"
 #include "StateMgr\StateMgr.hpp"
-#include "inputmgr\inputmgr.hpp"
+#include "inputmgr\gamepad.hpp"
 
-//==============================================================================
+//=========================================================================
+// FUNCTIONS
+//=========================================================================
 
 movie_player::movie_player(void)
 {
@@ -102,40 +104,46 @@ s32 PlaySimpleMovie(const char* movieName)
         xbool done = FALSE;
         xbool allowSkip = FALSE;
 
-        while(!done)
+        while( !done )
         {
-            if (ret)
+            if( !Movie.IsPlaying() )
             {
-                if (!Movie.IsPlaying())
-                    break;
-                    
-                g_InputMgr.Update  ( 1.0f / 60.0f );
-                g_NetworkMgr.Update( 1.0f / 60.0f );
-                
-                Movie.Render();
-                eng_PageFlip();
-
-#if defined(TARGET_PC)
-                // Wait until the user release all keys,
-                // because if not do this, some videos to be accidentally skipped
-                if( !allowSkip )
+                break;
+            }
+        
+            g_InputMgr.Update  ( 1.0f / 60.0f );
+            g_NetworkMgr.Update( 1.0f / 60.0f );
+        
+            Movie.Render();
+            eng_PageFlip();
+        
+            // Wait until the user release all keys,
+            // because if not do this, some videos to be accidentally skipped		
+            xbool anyHeld = FALSE;
+            for( s32 i = 0; i < MAX_LOCAL_PLAYERS; i++ )
+            {
+                const auto& pad = g_IngamePad[i];
+                if( pad.GetLogical( ingame_pad::UI_SELECT   ).IsValue > 0.0f ||
+                    pad.GetLogical( ingame_pad::UI_BACK     ).IsValue > 0.0f ||
+                    pad.GetLogical( ingame_pad::UI_ACTIVATE ).IsValue > 0.0f )
                 {
-                    if( !input_IsPressed( INPUT_KBD_RETURN, 0 ) &&
-                        !input_IsPressed( INPUT_KBD_ESCAPE, 0 ) &&
-                        !input_IsPressed( INPUT_KBD_SPACE, 0 ) )
+                    anyHeld = TRUE;
+                }
+        
+                if( allowSkip )
+                {
+                    if( pad.GetLogical( ingame_pad::UI_SELECT   ).WasValue > 0.0f ||
+                        pad.GetLogical( ingame_pad::UI_BACK     ).WasValue > 0.0f ||
+                        pad.GetLogical( ingame_pad::UI_ACTIVATE ).WasValue > 0.0f )
                     {
-                        allowSkip = TRUE;
+                        done = TRUE;
                     }
                 }
-                else if( input_WasPressed( INPUT_KBD_RETURN, 0 ) ||
-                         input_WasPressed( INPUT_KBD_ESCAPE, 0 ) ||
-                         input_WasPressed( INPUT_KBD_SPACE, 0 ) )
-                {
-                    done = TRUE;
-                }
-#else
-                #error Put your platform code here :)
-#endif
+            }
+        
+            if( !anyHeld )
+            {
+                allowSkip = TRUE;
             }
         }
         eng_PageFlip();
