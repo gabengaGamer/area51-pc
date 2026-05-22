@@ -349,53 +349,10 @@ xbool HandleInput( f32 DeltaTime )
             g_InputMgr.Update( DeltaTime ); // do the update again, otherwise, the update will drop out.
             return( TRUE );
         }
-        
-        #if !defined(X_RETAIL) && !defined(TARGET_PC)
-        // if screenshot enabled, take screenshot on L3 + Select or CROSS on controller 2
-        if( (g_ScreenShotModeEnabled == TRUE) &&
-            (!eng_ScreenShotActive()) &&
-            (g_StateMgr.IsPaused() != TRUE) &&
-            (g_NetworkMgr.GetLocalPlayerCount() == 1) &&
-            (   (   input_IsPressed(INPUT_PS2_BTN_L_STICK, 0) 
-                 && input_IsPressed(INPUT_PS2_BTN_R_STICK, 0)) 
-              ||    input_IsPressed(INPUT_PS2_BTN_CROSS,   1) ) )
-        {
-            eng_ScreenShot(DEBUG_SCREEN_SHOT_DIR, g_ScreenShotSize + 1);
-
-            // these reset the logical inputs associated with the button.
-            player* pPlayer = SMP_UTIL_GetActivePlayer();
-            if( pPlayer )
-            {
-                g_IngamePad[pPlayer->GetActivePlayerPad()].SetLogical( INPUT_PLATFORM_PS2, INPUT_PS2_BTN_L_STICK );
-                g_IngamePad[pPlayer->GetActivePlayerPad()].SetLogical( INPUT_PLATFORM_PS2, INPUT_PS2_BTN_R_STICK );
-            }
-            return (TRUE);
-        }
-        #endif // !defined(X_RETAIL) && !defined(TARGET_PC)
-
     #endif // defined( ENABLE_DEBUG_MENU )
 
         if( !g_StateMgr.InSystemError() )
         {
-            // Player has hit the Select button.. trigger off the objective text.
-            if( input_IsPressed(INPUT_PS2_BTN_SELECT) && !g_StateMgr.IsPaused() && ( GameMgr.GetGameType() == GAME_CAMPAIGN ) ) 
-            {
-                slot_id SlotID  = g_ObjMgr.GetFirst( object::TYPE_HUD_OBJECT );
-
-                if( SlotID != SLOT_NULL )
-                {
-                    object* pObj    = g_ObjMgr.GetObjectBySlot( SlotID );
-                    hud_object& Hud = hud_object::GetSafeType( *pObj );
-
-                    if( !Hud.m_Initialized )
-                    {
-                        return FALSE;
-                    }
-
-                    Hud.RenderObjectiveText();
-                }
-            }        
-
             // check for pause 
             s32 PausingController;
 

@@ -38,6 +38,14 @@ struct mapping_definition
     u32                     ContextMask;
 };
 
+//-------------------------------------------------------------------------
+
+struct prompt_definition
+{
+    const char*             pToken;
+    ingame_pad::logical_id  LogicalID;
+};
+
 //=========================================================================
 // LOGICAL DEFINITIONS
 //=========================================================================
@@ -119,68 +127,110 @@ const mapping_definition s_GameplayMappings[] =
 {
     { INPUT_PLATFORM_XBOX, ingame_pad::MOVE_FORWARD,              INPUT_XBOX_STICK_LEFT_Y,   FALSE,  1.0f, INGAME_CONTEXT },
     { INPUT_PLATFORM_XBOX, ingame_pad::MOVE_BACKWARD,             INPUT_XBOX_STICK_LEFT_Y,   FALSE, -1.0f, INGAME_CONTEXT },
-    { INPUT_PLATFORM_XBOX, ingame_pad::STRAFE_RIGHT,              INPUT_XBOX_STICK_LEFT_X,   FALSE,  1.0f, INGAME_CONTEXT },
     { INPUT_PLATFORM_XBOX, ingame_pad::STRAFE_LEFT,               INPUT_XBOX_STICK_LEFT_X,   FALSE, -1.0f, INGAME_CONTEXT },
+    { INPUT_PLATFORM_XBOX, ingame_pad::STRAFE_RIGHT,              INPUT_XBOX_STICK_LEFT_X,   FALSE,  1.0f, INGAME_CONTEXT },
     { INPUT_PLATFORM_XBOX, ingame_pad::LOOK_HORIZONTAL,           INPUT_XBOX_STICK_RIGHT_X,  FALSE,  1.0f, INGAME_CONTEXT },
-    { INPUT_PLATFORM_XBOX, ingame_pad::LOOK_VERTICAL,             INPUT_XBOX_STICK_RIGHT_Y,  FALSE,  1.0f, INGAME_CONTEXT },
-    { INPUT_PLATFORM_XBOX, ingame_pad::ACTION_PRIMARY,            INPUT_XBOX_BTN_R_STICK,    TRUE,   1.0f, INGAME_CONTEXT },
-    { INPUT_PLATFORM_XBOX, ingame_pad::ACTION_SECONDARY,          INPUT_XBOX_R_TRIGGER,      TRUE,   1.0f, INGAME_CONTEXT },
-    { INPUT_PLATFORM_XBOX, ingame_pad::ACTION_JUMP,               INPUT_XBOX_BTN_L_STICK,    TRUE,   1.0f, INGAME_CONTEXT },
-    { INPUT_PLATFORM_XBOX, ingame_pad::ACTION_CROUCH,             INPUT_XBOX_L_TRIGGER,      TRUE,   1.0f, INGAME_CONTEXT },
-    { INPUT_PLATFORM_XBOX, ingame_pad::ACTION_RELOAD,             INPUT_XBOX_BTN_Y,          TRUE,   1.0f, INGAME_CONTEXT },
+    { INPUT_PLATFORM_XBOX, ingame_pad::LOOK_VERTICAL,             INPUT_XBOX_STICK_RIGHT_Y,  FALSE, -1.0f, INGAME_CONTEXT },
+    { INPUT_PLATFORM_XBOX, ingame_pad::ACTION_JUMP,               INPUT_XBOX_BTN_A,          TRUE,   1.0f, INGAME_CONTEXT },
+    { INPUT_PLATFORM_XBOX, ingame_pad::ACTION_CROUCH,             INPUT_XBOX_BTN_L_STICK,    TRUE,   1.0f, INGAME_CONTEXT },
+    { INPUT_PLATFORM_XBOX, ingame_pad::ACTION_PRIMARY,            INPUT_XBOX_R_TRIGGER,      TRUE,   1.0f, INGAME_CONTEXT },
+    { INPUT_PLATFORM_XBOX, ingame_pad::ACTION_SECONDARY,          INPUT_XBOX_L_TRIGGER,      TRUE,   1.0f, INGAME_CONTEXT },
+    { INPUT_PLATFORM_XBOX, ingame_pad::ACTION_RELOAD,             INPUT_XBOX_BTN_X,          TRUE,   1.0f, INGAME_CONTEXT },
+    { INPUT_PLATFORM_XBOX, ingame_pad::ACTION_MUTATION,           INPUT_XBOX_BTN_UP,         TRUE,   1.0f, INGAME_CONTEXT },
+    { INPUT_PLATFORM_XBOX, ingame_pad::ACTION_CYCLE_RIGHT,        INPUT_XBOX_BTN_Y,          TRUE,   1.0f, INGAME_CONTEXT },
     { INPUT_PLATFORM_XBOX, ingame_pad::ACTION_USE,                INPUT_XBOX_BTN_X,          TRUE,   1.0f, INGAME_CONTEXT },
-    { INPUT_PLATFORM_XBOX, ingame_pad::ACTION_FLASHLIGHT,         INPUT_XBOX_BTN_WHITE,      TRUE,   1.0f, INGAME_CONTEXT },
-    { INPUT_PLATFORM_XBOX, ingame_pad::ACTION_CHAT,               INPUT_XBOX_BTN_BLACK,      TRUE,   1.0f, INGAME_CONTEXT },
-    { INPUT_PLATFORM_XBOX, ingame_pad::ACTION_TALK_MODE_TOGGLE,   INPUT_XBOX_BTN_BLACK,      TRUE,   1.0f, INGAME_CONTEXT },
-    { INPUT_PLATFORM_XBOX, ingame_pad::ACTION_SPEAK_FOLLOW_STAY,  INPUT_XBOX_BTN_UP,         TRUE,   1.0f, INGAME_CONTEXT },
-    { INPUT_PLATFORM_XBOX, ingame_pad::ACTION_SPEAK_USE_ACTIVATE, INPUT_XBOX_BTN_LEFT,       TRUE,   1.0f, INGAME_CONTEXT },
-    { INPUT_PLATFORM_XBOX, ingame_pad::ACTION_SPEAK_COVER_ME,     INPUT_XBOX_BTN_RIGHT,      TRUE,   1.0f, INGAME_CONTEXT },
-    { INPUT_PLATFORM_XBOX, ingame_pad::ACTION_SPEAK_ATTACK_COVER, INPUT_XBOX_BTN_DOWN,       TRUE,   1.0f, INGAME_CONTEXT },
+    { INPUT_PLATFORM_XBOX, ingame_pad::ACTION_FLASHLIGHT,         INPUT_XBOX_BTN_DOWN,       TRUE,   1.0f, INGAME_CONTEXT },
+    { INPUT_PLATFORM_XBOX, ingame_pad::ACTION_THROW_GRENADE,      INPUT_XBOX_BTN_B,          TRUE,   1.0f, INGAME_CONTEXT },
+    { INPUT_PLATFORM_XBOX, ingame_pad::ACTION_MELEE_ATTACK,       INPUT_XBOX_BTN_R_STICK,    TRUE,   1.0f, INGAME_CONTEXT },
+    { INPUT_PLATFORM_XBOX, ingame_pad::ACTION_CYCLE_LEFT,         INPUT_XBOX_BTN_BLACK,      TRUE,   1.0f, INGAME_CONTEXT },
+    { INPUT_PLATFORM_XBOX, ingame_pad::ACTION_VOTE_MENU_ON,       INPUT_XBOX_BTN_DOWN,       TRUE,   1.0f, INGAME_CONTEXT },
+    { INPUT_PLATFORM_XBOX, ingame_pad::ACTION_VOTE_MENU_OFF,      INPUT_XBOX_BTN_DOWN,       TRUE,   1.0f, INGAME_CONTEXT },
+    { INPUT_PLATFORM_XBOX, ingame_pad::ACTION_VOTE_YES,           INPUT_XBOX_BTN_RIGHT,      TRUE,   1.0f, INGAME_CONTEXT },
+    { INPUT_PLATFORM_XBOX, ingame_pad::ACTION_VOTE_NO,            INPUT_XBOX_BTN_LEFT,       TRUE,   1.0f, INGAME_CONTEXT },
+    { INPUT_PLATFORM_XBOX, ingame_pad::ACTION_VOTE_ABSTAIN,       INPUT_XBOX_BTN_UP,         TRUE,   1.0f, INGAME_CONTEXT },
+    { INPUT_PLATFORM_XBOX, ingame_pad::ACTION_CHAT,               INPUT_XBOX_BTN_WHITE,      TRUE,   1.0f, INGAME_CONTEXT },
+    { INPUT_PLATFORM_XBOX, ingame_pad::LEAN_LEFT,                 INPUT_XBOX_BTN_LEFT,       TRUE,   1.0f, INGAME_CONTEXT },
+    { INPUT_PLATFORM_XBOX, ingame_pad::LEAN_RIGHT,                INPUT_XBOX_BTN_RIGHT,      TRUE,   1.0f, INGAME_CONTEXT },
+    { INPUT_PLATFORM_XBOX, ingame_pad::ACTION_TALK_MODE_TOGGLE,   INPUT_XBOX_BTN_WHITE,      TRUE,   1.0f, INGAME_CONTEXT },
+    { INPUT_PLATFORM_XBOX, ingame_pad::ACTION_FIRE_PARASITES,     INPUT_XBOX_R_TRIGGER,      TRUE,   1.0f, INGAME_CONTEXT },
+    { INPUT_PLATFORM_XBOX, ingame_pad::ACTION_FIRE_CONTAGION,     INPUT_XBOX_L_TRIGGER,      TRUE,   1.0f, INGAME_CONTEXT },
+    { INPUT_PLATFORM_XBOX, ingame_pad::ACTION_MUTANT_MELEE,       INPUT_XBOX_BTN_R_STICK,    TRUE,   1.0f, INGAME_CONTEXT },
+    { INPUT_PLATFORM_XBOX, ingame_pad::ACTION_MP_FLASHLIGHT,      INPUT_XBOX_BTN_DOWN,       TRUE,   1.0f, INGAME_CONTEXT },
+    { INPUT_PLATFORM_XBOX, ingame_pad::ACTION_MP_MUTATE,          INPUT_XBOX_BTN_UP,         TRUE,   1.0f, INGAME_CONTEXT },
+    { INPUT_PLATFORM_XBOX, ingame_pad::ACTION_DROP_FLAG,          INPUT_XBOX_BTN_DOWN,       TRUE,   1.0f, INGAME_CONTEXT },
 
-    { INPUT_PLATFORM_PC,   ingame_pad::ACTION_PRIMARY,            INPUT_MOUSE_BTN_L,         TRUE,   1.0f, INGAME_CONTEXT },
-    { INPUT_PLATFORM_PC,   ingame_pad::ACTION_SECONDARY,          INPUT_MOUSE_BTN_R,         TRUE,   1.0f, INGAME_CONTEXT },
-    { INPUT_PLATFORM_PC,   ingame_pad::LOOK_HORIZONTAL,           INPUT_MOUSE_X_REL,         FALSE,  1.0f, INGAME_CONTEXT },
-    { INPUT_PLATFORM_PC,   ingame_pad::LOOK_VERTICAL,             INPUT_MOUSE_Y_REL,         FALSE,  1.0f, INGAME_CONTEXT },
-    { INPUT_PLATFORM_PC,   ingame_pad::ACTION_CYCLE_RIGHT,        INPUT_MOUSE_WHEEL_REL,     FALSE,  1.0f, INGAME_CONTEXT },
-    { INPUT_PLATFORM_PC,   ingame_pad::ACTION_CYCLE_LEFT,         INPUT_MOUSE_WHEEL_REL,     FALSE, -1.0f, INGAME_CONTEXT },
     { INPUT_PLATFORM_PC,   ingame_pad::MOVE_FORWARD,              INPUT_KBD_W,               FALSE,  1.0f, INGAME_CONTEXT },
     { INPUT_PLATFORM_PC,   ingame_pad::MOVE_BACKWARD,             INPUT_KBD_S,               FALSE,  1.0f, INGAME_CONTEXT },
     { INPUT_PLATFORM_PC,   ingame_pad::STRAFE_LEFT,               INPUT_KBD_A,               FALSE,  1.0f, INGAME_CONTEXT },
     { INPUT_PLATFORM_PC,   ingame_pad::STRAFE_RIGHT,              INPUT_KBD_D,               FALSE,  1.0f, INGAME_CONTEXT },
+    { INPUT_PLATFORM_PC,   ingame_pad::LOOK_HORIZONTAL,           INPUT_MOUSE_X_REL,         FALSE,  1.0f, INGAME_CONTEXT },
+    { INPUT_PLATFORM_PC,   ingame_pad::LOOK_VERTICAL,             INPUT_MOUSE_Y_REL,         FALSE,  1.0f, INGAME_CONTEXT },
     { INPUT_PLATFORM_PC,   ingame_pad::ACTION_JUMP,               INPUT_KBD_SPACE,           TRUE,   1.0f, INGAME_CONTEXT },
     { INPUT_PLATFORM_PC,   ingame_pad::ACTION_CROUCH,             INPUT_KBD_LCONTROL,        TRUE,   1.0f, INGAME_CONTEXT },
+    { INPUT_PLATFORM_PC,   ingame_pad::ACTION_PRIMARY,            INPUT_MOUSE_BTN_L,         TRUE,   1.0f, INGAME_CONTEXT },
+    { INPUT_PLATFORM_PC,   ingame_pad::ACTION_SECONDARY,          INPUT_MOUSE_BTN_R,         TRUE,   1.0f, INGAME_CONTEXT },
+    { INPUT_PLATFORM_PC,   ingame_pad::ACTION_RELOAD,             INPUT_KBD_R,               TRUE,   1.0f, INGAME_CONTEXT },
+    { INPUT_PLATFORM_PC,   ingame_pad::ACTION_MUTATION,           INPUT_KBD_X,               TRUE,   1.0f, INGAME_CONTEXT },
+    { INPUT_PLATFORM_PC,   ingame_pad::ACTION_CYCLE_RIGHT,        INPUT_MOUSE_WHEEL_REL,     FALSE,  1.0f, INGAME_CONTEXT },
+    { INPUT_PLATFORM_PC,   ingame_pad::ACTION_USE,                INPUT_KBD_TAB,             TRUE,   1.0f, INGAME_CONTEXT },
+    { INPUT_PLATFORM_PC,   ingame_pad::ACTION_FLASHLIGHT,         INPUT_KBD_F,               TRUE,   1.0f, INGAME_CONTEXT },
+    { INPUT_PLATFORM_PC,   ingame_pad::ACTION_SPEAK_FOLLOW_STAY,  INPUT_UNDEFINED,           TRUE,   1.0f, INGAME_CONTEXT },
+    { INPUT_PLATFORM_PC,   ingame_pad::ACTION_SPEAK_USE_ACTIVATE, INPUT_UNDEFINED,           TRUE,   1.0f, INGAME_CONTEXT },
+    { INPUT_PLATFORM_PC,   ingame_pad::ACTION_SPEAK_COVER_ME,     INPUT_UNDEFINED,           TRUE,   1.0f, INGAME_CONTEXT },
+    { INPUT_PLATFORM_PC,   ingame_pad::ACTION_SPEAK_ATTACK_COVER, INPUT_UNDEFINED,           TRUE,   1.0f, INGAME_CONTEXT },
+    { INPUT_PLATFORM_PC,   ingame_pad::ACTION_THROW_GRENADE,      INPUT_KBD_G,               TRUE,   1.0f, INGAME_CONTEXT },
+    { INPUT_PLATFORM_PC,   ingame_pad::ACTION_MELEE_ATTACK,       INPUT_KBD_V,               TRUE,   1.0f, INGAME_CONTEXT },
+    { INPUT_PLATFORM_PC,   ingame_pad::ACTION_CYCLE_LEFT,         INPUT_MOUSE_WHEEL_REL,     FALSE, -1.0f, INGAME_CONTEXT },
+    { INPUT_PLATFORM_PC,   ingame_pad::ACTION_VOTE_MENU_ON,       INPUT_UNDEFINED,           TRUE,   1.0f, INGAME_CONTEXT },
+    { INPUT_PLATFORM_PC,   ingame_pad::ACTION_VOTE_MENU_OFF,      INPUT_UNDEFINED,           TRUE,   1.0f, INGAME_CONTEXT },
+    { INPUT_PLATFORM_PC,   ingame_pad::ACTION_VOTE_YES,           INPUT_UNDEFINED,           TRUE,   1.0f, INGAME_CONTEXT },
+    { INPUT_PLATFORM_PC,   ingame_pad::ACTION_VOTE_NO,            INPUT_UNDEFINED,           TRUE,   1.0f, INGAME_CONTEXT },
+    { INPUT_PLATFORM_PC,   ingame_pad::ACTION_VOTE_ABSTAIN,       INPUT_UNDEFINED,           TRUE,   1.0f, INGAME_CONTEXT },
+    { INPUT_PLATFORM_PC,   ingame_pad::ACTION_CHAT,               INPUT_UNDEFINED,           TRUE,   1.0f, INGAME_CONTEXT },
     { INPUT_PLATFORM_PC,   ingame_pad::LEAN_LEFT,                 INPUT_KBD_Q,               TRUE,   1.0f, INGAME_CONTEXT },
     { INPUT_PLATFORM_PC,   ingame_pad::LEAN_RIGHT,                INPUT_KBD_E,               TRUE,   1.0f, INGAME_CONTEXT },
-    { INPUT_PLATFORM_PC,   ingame_pad::ACTION_RELOAD,             INPUT_KBD_R,               TRUE,   1.0f, INGAME_CONTEXT },
-    { INPUT_PLATFORM_PC,   ingame_pad::ACTION_THROW_GRENADE,      INPUT_KBD_G,               TRUE,   1.0f, INGAME_CONTEXT },
-    { INPUT_PLATFORM_PC,   ingame_pad::ACTION_USE,                INPUT_KBD_TAB,             TRUE,   1.0f, INGAME_CONTEXT },
-    { INPUT_PLATFORM_PC,   ingame_pad::ACTION_MUTATION,           INPUT_KBD_X,               TRUE,   1.0f, INGAME_CONTEXT },
-    { INPUT_PLATFORM_PC,   ingame_pad::ACTION_MP_MUTATE,          INPUT_KBD_X,               TRUE,   1.0f, INGAME_CONTEXT },
-    { INPUT_PLATFORM_PC,   ingame_pad::ACTION_MELEE_ATTACK,       INPUT_KBD_V,               TRUE,   1.0f, INGAME_CONTEXT },
+    { INPUT_PLATFORM_PC,   ingame_pad::ACTION_TALK_MODE_TOGGLE,   INPUT_UNDEFINED,           TRUE,   1.0f, INGAME_CONTEXT },
+    { INPUT_PLATFORM_PC,   ingame_pad::ACTION_FIRE_PARASITES,     INPUT_UNDEFINED,           TRUE,   1.0f, INGAME_CONTEXT },
+    { INPUT_PLATFORM_PC,   ingame_pad::ACTION_FIRE_CONTAGION,     INPUT_UNDEFINED,           TRUE,   1.0f, INGAME_CONTEXT },
     { INPUT_PLATFORM_PC,   ingame_pad::ACTION_MUTANT_MELEE,       INPUT_KBD_V,               TRUE,   1.0f, INGAME_CONTEXT },
-    { INPUT_PLATFORM_PC,   ingame_pad::ACTION_FLASHLIGHT,         INPUT_KBD_F,               TRUE,   1.0f, INGAME_CONTEXT },
+    { INPUT_PLATFORM_PC,   ingame_pad::ACTION_MP_FLASHLIGHT,      INPUT_KBD_F,               TRUE,   1.0f, INGAME_CONTEXT },
+    { INPUT_PLATFORM_PC,   ingame_pad::ACTION_MP_MUTATE,          INPUT_KBD_X,               TRUE,   1.0f, INGAME_CONTEXT },
+    { INPUT_PLATFORM_PC,   ingame_pad::ACTION_DROP_FLAG,          INPUT_UNDEFINED,           TRUE,   1.0f, INGAME_CONTEXT },
 
     { INPUT_PLATFORM_PS2,  ingame_pad::MOVE_FORWARD,              INPUT_PS2_STICK_LEFT_Y,    FALSE,  1.0f, INGAME_CONTEXT },
     { INPUT_PLATFORM_PS2,  ingame_pad::MOVE_BACKWARD,             INPUT_PS2_STICK_LEFT_Y,    FALSE, -1.0f, INGAME_CONTEXT },
-    { INPUT_PLATFORM_PS2,  ingame_pad::STRAFE_RIGHT,              INPUT_PS2_STICK_LEFT_X,    FALSE,  1.0f, INGAME_CONTEXT },
     { INPUT_PLATFORM_PS2,  ingame_pad::STRAFE_LEFT,               INPUT_PS2_STICK_LEFT_X,    FALSE, -1.0f, INGAME_CONTEXT },
-    { INPUT_PLATFORM_PS2,  ingame_pad::ACTION_CHAT,               INPUT_PS2_BTN_L_STICK,     TRUE,   1.0f, INGAME_CONTEXT },
+    { INPUT_PLATFORM_PS2,  ingame_pad::STRAFE_RIGHT,              INPUT_PS2_STICK_LEFT_X,    FALSE,  1.0f, INGAME_CONTEXT },
     { INPUT_PLATFORM_PS2,  ingame_pad::LOOK_HORIZONTAL,           INPUT_PS2_STICK_RIGHT_X,   FALSE,  1.0f, INGAME_CONTEXT },
-    { INPUT_PLATFORM_PS2,  ingame_pad::LOOK_VERTICAL,             INPUT_PS2_STICK_RIGHT_Y,   FALSE,  1.0f, INGAME_CONTEXT },
-    { INPUT_PLATFORM_PS2,  ingame_pad::ACTION_PRIMARY,            INPUT_PS2_BTN_R1,          TRUE,   1.0f, INGAME_CONTEXT },
-    { INPUT_PLATFORM_PS2,  ingame_pad::ACTION_SECONDARY,          INPUT_PS2_BTN_R2,          TRUE,   1.0f, INGAME_CONTEXT },
+    { INPUT_PLATFORM_PS2,  ingame_pad::LOOK_VERTICAL,             INPUT_PS2_STICK_RIGHT_Y,   FALSE, -1.0f, INGAME_CONTEXT },
     { INPUT_PLATFORM_PS2,  ingame_pad::ACTION_JUMP,               INPUT_PS2_BTN_L1,          TRUE,   1.0f, INGAME_CONTEXT },
     { INPUT_PLATFORM_PS2,  ingame_pad::ACTION_CROUCH,             INPUT_PS2_BTN_L2,          TRUE,   1.0f, INGAME_CONTEXT },
-    { INPUT_PLATFORM_PS2,  ingame_pad::ACTION_RELOAD,             INPUT_PS2_BTN_SQUARE,      TRUE,   1.0f, INGAME_CONTEXT },
+    { INPUT_PLATFORM_PS2,  ingame_pad::ACTION_PRIMARY,            INPUT_PS2_BTN_R1,          TRUE,   1.0f, INGAME_CONTEXT },
+    { INPUT_PLATFORM_PS2,  ingame_pad::ACTION_SECONDARY,          INPUT_PS2_BTN_R2,          TRUE,   1.0f, INGAME_CONTEXT },
+    { INPUT_PLATFORM_PS2,  ingame_pad::ACTION_RELOAD,             INPUT_PS2_BTN_CROSS,       TRUE,   1.0f, INGAME_CONTEXT },
+    { INPUT_PLATFORM_PS2,  ingame_pad::ACTION_MUTATION,           INPUT_PS2_BTN_L_UP,        TRUE,   1.0f, INGAME_CONTEXT },
+    { INPUT_PLATFORM_PS2,  ingame_pad::ACTION_CYCLE_RIGHT,        INPUT_PS2_BTN_CIRCLE,      TRUE,   1.0f, INGAME_CONTEXT },
     { INPUT_PLATFORM_PS2,  ingame_pad::ACTION_USE,                INPUT_PS2_BTN_CROSS,       TRUE,   1.0f, INGAME_CONTEXT },
-    { INPUT_PLATFORM_PS2,  ingame_pad::ACTION_FLASHLIGHT,         INPUT_PS2_BTN_CIRCLE,      TRUE,   1.0f, INGAME_CONTEXT },
-    { INPUT_PLATFORM_PS2,  ingame_pad::ACTION_SPEAK_FOLLOW_STAY,  INPUT_PS2_BTN_L_UP,        TRUE,   1.0f, INGAME_CONTEXT },
-    { INPUT_PLATFORM_PS2,  ingame_pad::ACTION_SPEAK_USE_ACTIVATE, INPUT_PS2_BTN_L_LEFT,      TRUE,   1.0f, INGAME_CONTEXT },
-    { INPUT_PLATFORM_PS2,  ingame_pad::ACTION_SPEAK_COVER_ME,     INPUT_PS2_BTN_L_RIGHT,     TRUE,   1.0f, INGAME_CONTEXT },
-    { INPUT_PLATFORM_PS2,  ingame_pad::ACTION_SPEAK_ATTACK_COVER, INPUT_PS2_BTN_L_DOWN,      TRUE,   1.0f, INGAME_CONTEXT },
+    { INPUT_PLATFORM_PS2,  ingame_pad::ACTION_FLASHLIGHT,         INPUT_PS2_BTN_L_STICK,     TRUE,   1.0f, INGAME_CONTEXT },
+    { INPUT_PLATFORM_PS2,  ingame_pad::ACTION_SPEAK_USE_ACTIVATE, INPUT_PS2_BTN_CROSS,       TRUE,   1.0f, INGAME_CONTEXT },
+    { INPUT_PLATFORM_PS2,  ingame_pad::ACTION_THROW_GRENADE,      INPUT_PS2_BTN_SQUARE,      TRUE,   1.0f, INGAME_CONTEXT },
+    { INPUT_PLATFORM_PS2,  ingame_pad::ACTION_MELEE_ATTACK,       INPUT_PS2_BTN_R_STICK,     TRUE,   1.0f, INGAME_CONTEXT },
+    { INPUT_PLATFORM_PS2,  ingame_pad::ACTION_CYCLE_LEFT,         INPUT_PS2_BTN_TRIANGLE,    TRUE,   1.0f, INGAME_CONTEXT },
+    { INPUT_PLATFORM_PS2,  ingame_pad::ACTION_VOTE_MENU_ON,       INPUT_PS2_BTN_L_DOWN,      TRUE,   1.0f, INGAME_CONTEXT },
+    { INPUT_PLATFORM_PS2,  ingame_pad::ACTION_VOTE_MENU_OFF,      INPUT_PS2_BTN_L_DOWN,      TRUE,   1.0f, INGAME_CONTEXT },
+    { INPUT_PLATFORM_PS2,  ingame_pad::ACTION_VOTE_YES,           INPUT_PS2_BTN_L_RIGHT,     TRUE,   1.0f, INGAME_CONTEXT },
+    { INPUT_PLATFORM_PS2,  ingame_pad::ACTION_VOTE_NO,            INPUT_PS2_BTN_L_LEFT,      TRUE,   1.0f, INGAME_CONTEXT },
+    { INPUT_PLATFORM_PS2,  ingame_pad::ACTION_VOTE_ABSTAIN,       INPUT_PS2_BTN_L_UP,        TRUE,   1.0f, INGAME_CONTEXT },
+    { INPUT_PLATFORM_PS2,  ingame_pad::ACTION_CHAT,               INPUT_PS2_BTN_L_STICK,     TRUE,   1.0f, INGAME_CONTEXT },
     { INPUT_PLATFORM_PS2,  ingame_pad::LEAN_LEFT,                 INPUT_PS2_BTN_L_LEFT,      TRUE,   1.0f, INGAME_CONTEXT },
     { INPUT_PLATFORM_PS2,  ingame_pad::LEAN_RIGHT,                INPUT_PS2_BTN_L_RIGHT,     TRUE,   1.0f, INGAME_CONTEXT },
     { INPUT_PLATFORM_PS2,  ingame_pad::ACTION_TALK_MODE_TOGGLE,   INPUT_PS2_BTN_SELECT,      TRUE,   1.0f, INGAME_CONTEXT },
+    { INPUT_PLATFORM_PS2,  ingame_pad::ACTION_FIRE_PARASITES,     INPUT_PS2_BTN_R1,          TRUE,   1.0f, INGAME_CONTEXT },
+    { INPUT_PLATFORM_PS2,  ingame_pad::ACTION_FIRE_CONTAGION,     INPUT_PS2_BTN_R2,          TRUE,   1.0f, INGAME_CONTEXT },
+    { INPUT_PLATFORM_PS2,  ingame_pad::ACTION_MUTANT_MELEE,       INPUT_PS2_BTN_R_STICK,     TRUE,   1.0f, INGAME_CONTEXT },
+    { INPUT_PLATFORM_PS2,  ingame_pad::ACTION_MP_FLASHLIGHT,      INPUT_PS2_BTN_L_STICK,     TRUE,   1.0f, INGAME_CONTEXT },
+    { INPUT_PLATFORM_PS2,  ingame_pad::ACTION_MP_MUTATE,          INPUT_PS2_BTN_L_UP,        TRUE,   1.0f, INGAME_CONTEXT },
+    { INPUT_PLATFORM_PS2,  ingame_pad::ACTION_DROP_FLAG,          INPUT_PS2_BTN_L_DOWN,      TRUE,   1.0f, INGAME_CONTEXT },
 };
 
 //-------------------------------------------------------------------------
@@ -215,6 +265,7 @@ const mapping_definition s_FrontendMappings[] =
     { INPUT_PLATFORM_XBOX, ingame_pad::UI_SHOULDER_R,                INPUT_XBOX_BTN_BLACK,     TRUE,   1.0f, FRONTEND_CONTEXT },
     { INPUT_PLATFORM_XBOX, ingame_pad::UI_SHOULDER_L2,               INPUT_XBOX_L_TRIGGER,     TRUE,   1.0f, FRONTEND_CONTEXT },
     { INPUT_PLATFORM_XBOX, ingame_pad::UI_SHOULDER_R2,               INPUT_XBOX_R_TRIGGER,     TRUE,   1.0f, FRONTEND_CONTEXT },
+    { INPUT_PLATFORM_XBOX, ingame_pad::UI_HELP,                      INPUT_XBOX_BTN_START,     TRUE,   1.0f, FRONTEND_CONTEXT },
 
     { INPUT_PLATFORM_PC,   ingame_pad::UI_UP,                        INPUT_KBD_UP,             TRUE,   1.0f, FRONTEND_CONTEXT },
     { INPUT_PLATFORM_PC,   ingame_pad::UI_DOWN,                      INPUT_KBD_DOWN,           TRUE,   1.0f, FRONTEND_CONTEXT },
@@ -225,6 +276,11 @@ const mapping_definition s_FrontendMappings[] =
     { INPUT_PLATFORM_PC,   ingame_pad::UI_DELETE,                    INPUT_KBD_DELETE,         TRUE,   1.0f, FRONTEND_CONTEXT },
     { INPUT_PLATFORM_PC,   ingame_pad::UI_DELETE,                    INPUT_KBD_BACK,           TRUE,   1.0f, FRONTEND_CONTEXT },
     { INPUT_PLATFORM_PC,   ingame_pad::UI_ACTIVATE,                  INPUT_KBD_R,              TRUE,   1.0f, FRONTEND_CONTEXT },
+    { INPUT_PLATFORM_PC,   ingame_pad::UI_HELP,                      INPUT_KBD_RETURN,         TRUE,   1.0f, FRONTEND_CONTEXT },
+    { INPUT_PLATFORM_PC,   ingame_pad::UI_SHOULDER_L,                INPUT_UNDEFINED,          TRUE,   1.0f, FRONTEND_CONTEXT },
+    { INPUT_PLATFORM_PC,   ingame_pad::UI_SHOULDER_R,                INPUT_UNDEFINED,          TRUE,   1.0f, FRONTEND_CONTEXT },
+    { INPUT_PLATFORM_PC,   ingame_pad::UI_SHOULDER_L2,               INPUT_UNDEFINED,          TRUE,   1.0f, FRONTEND_CONTEXT },
+    { INPUT_PLATFORM_PC,   ingame_pad::UI_SHOULDER_R2,               INPUT_UNDEFINED,          TRUE,   1.0f, FRONTEND_CONTEXT },
 
     { INPUT_PLATFORM_PS2,  ingame_pad::UI_UP,                        INPUT_PS2_BTN_L_UP,       TRUE,   1.0f, FRONTEND_CONTEXT },
     { INPUT_PLATFORM_PS2,  ingame_pad::UI_DOWN,                      INPUT_PS2_BTN_L_DOWN,     TRUE,   1.0f, FRONTEND_CONTEXT },
@@ -242,6 +298,57 @@ const mapping_definition s_FrontendMappings[] =
     { INPUT_PLATFORM_PS2,  ingame_pad::UI_SHOULDER_R,                INPUT_PS2_BTN_R1,         TRUE,   1.0f, FRONTEND_CONTEXT },
     { INPUT_PLATFORM_PS2,  ingame_pad::UI_SHOULDER_L2,               INPUT_PS2_BTN_L2,         TRUE,   1.0f, FRONTEND_CONTEXT },
     { INPUT_PLATFORM_PS2,  ingame_pad::UI_SHOULDER_R2,               INPUT_PS2_BTN_R2,         TRUE,   1.0f, FRONTEND_CONTEXT },
+    { INPUT_PLATFORM_PS2,  ingame_pad::UI_HELP,                      INPUT_PS2_BTN_START,      TRUE,   1.0f, FRONTEND_CONTEXT },
+};
+
+//=========================================================================
+
+static
+const prompt_definition s_PromptDefinitions[] =
+{
+    { "x",          ingame_pad::UI_SELECT             },
+    { "q",          ingame_pad::UI_DELETE             },
+    { "a",          ingame_pad::UI_BACK               },
+    { "o",          ingame_pad::UI_ACTIVATE           },
+    { "X",          ingame_pad::UI_DELETE             },
+    { "Y",          ingame_pad::UI_ACTIVATE           },
+    { "A",          ingame_pad::UI_SELECT             },
+    { "B",          ingame_pad::UI_BACK               },
+    { "S",          ingame_pad::UI_HELP               },
+    { "SQUARE",     ingame_pad::UI_DELETE             },
+    { "CROSS",      ingame_pad::UI_SELECT             },
+    { "TRIANGLE",   ingame_pad::UI_ACTIVATE           },
+    { "CIRCLE",     ingame_pad::UI_BACK               },
+    { "DOWN",       ingame_pad::UI_DOWN               },
+    { "LEFT",       ingame_pad::UI_LEFT               },
+    { "UP",         ingame_pad::UI_UP                 },
+    { "RIGHT",      ingame_pad::UI_RIGHT              },
+    { "UPDOWN",     ingame_pad::UI_UP                 },
+    { "LEFTRIGHT",  ingame_pad::UI_LEFT               },
+    { "PAUSE",      ingame_pad::ACTION_PAUSE_CONTEXT  },
+    { "START",      ingame_pad::UI_HELP               },
+    { "SELECT",     ingame_pad::UI_SELECT             },
+    { "BACK",       ingame_pad::UI_BACK               },
+    { "DELETE",     ingame_pad::UI_DELETE             },
+    { "ACTIVATE",   ingame_pad::UI_ACTIVATE           },
+    { "GRENADE",    ingame_pad::ACTION_THROW_GRENADE  },
+    { "RELOAD",     ingame_pad::ACTION_RELOAD         },
+    { "USE",        ingame_pad::ACTION_USE            },
+    { "PREVWEAPON", ingame_pad::ACTION_CYCLE_LEFT     },
+    { "NEXTWEAPON", ingame_pad::ACTION_CYCLE_RIGHT    },
+    { "LEANLEFT",   ingame_pad::LEAN_LEFT             },
+    { "LEANRIGHT",  ingame_pad::LEAN_RIGHT            },
+    { "LEAN",       ingame_pad::LEAN_LEFT             },
+    { "MUTATE",     ingame_pad::ACTION_MUTATION       },
+    { "TRANSFORM",  ingame_pad::ACTION_MUTATION       },
+    { "JUMP",       ingame_pad::ACTION_JUMP           },
+    { "CROUCH",     ingame_pad::ACTION_CROUCH         },
+    { "FLASHLIGHT", ingame_pad::ACTION_FLASHLIGHT     },
+    { "FIRE",       ingame_pad::ACTION_PRIMARY        },
+    { "SECONDARY",  ingame_pad::ACTION_SECONDARY      },
+    { "MELEE",      ingame_pad::ACTION_MELEE_ATTACK   },
+    { "PARASITE",   ingame_pad::ACTION_FIRE_PARASITES },
+    { "CONTAGION",  ingame_pad::ACTION_FIRE_CONTAGION },
 };
 
 //=========================================================================
@@ -284,7 +391,96 @@ void RegisterMappings( ingame_pad& Pad, const mapping_definition* pDefinitions, 
 
 //=========================================================================
 
-static 
+static
+xbool PromptTokenEquals( const xwchar* pToken, const char* pReference )
+{
+    ASSERT( pToken );
+    ASSERT( pReference );
+
+    while( *pReference )
+    {
+        if( (*pToken == 0) || (*pToken == 0xBB) )
+            return FALSE;
+
+        if( (char)*pToken != *pReference )
+            return FALSE;
+
+        pToken++;
+        pReference++;
+    }
+
+    return( (*pToken == 0) || (*pToken == 0xBB) );
+}
+
+//=========================================================================
+
+static
+xbool IsCompositePromptToken( const xwchar* pToken )
+{
+    return(   PromptTokenEquals( pToken, "UPDOWN" )
+           || PromptTokenEquals( pToken, "LEFTRIGHT" )
+           || PromptTokenEquals( pToken, "LEAN" ) );
+}
+
+//=========================================================================
+
+static
+xbool IsGamepadPromptPlatform( input_platform Platform )
+{
+    return( (Platform == INPUT_PLATFORM_XBOX) || (Platform == INPUT_PLATFORM_PS2) );
+}
+
+//=========================================================================
+
+static
+const prompt_definition* FindPromptDefinition( const xwchar* pToken )
+{
+    for( s32 i = 0; i < CountOf( s_PromptDefinitions ); i++ )
+    {
+        if( PromptTokenEquals( pToken, s_PromptDefinitions[i].pToken ) )
+            return &s_PromptDefinitions[i];
+    }
+
+    return NULL;
+}
+
+//=========================================================================
+
+static
+const mapping_definition* FindMapping( const mapping_definition* pMappings, s32 Count, ingame_pad::logical_id LogicalID, input_platform Platform )
+{
+    for( s32 i = 0; i < Count; i++ )
+    {
+        if( (pMappings[i].Platform == Platform) &&
+            (pMappings[i].LogicalID == LogicalID) &&
+            (pMappings[i].GadgetID != INPUT_UNDEFINED) )
+        {
+            return &pMappings[i];
+        }
+    }
+
+    return NULL;
+}
+
+//=========================================================================
+
+static
+const mapping_definition* FindPromptMapping( ingame_pad::logical_id LogicalID, input_platform Platform )
+{
+    const mapping_definition* pMapping = FindMapping( s_FrontendMappings, CountOf( s_FrontendMappings ), LogicalID, Platform );
+    if( pMapping )
+        return pMapping;
+
+    pMapping = FindMapping( s_SystemMappings, CountOf( s_SystemMappings ), LogicalID, Platform );
+    if( pMapping )
+        return pMapping;
+
+    return FindMapping( s_GameplayMappings, CountOf( s_GameplayMappings ), LogicalID, Platform );
+}
+
+//=========================================================================
+
+static
 const char* FindLogicalName( const logical_definition* pDefinitions, s32 Count, s32 LogicalID )
 {
     for( s32 i = 0; i < Count; i++ )
@@ -380,6 +576,26 @@ ingame_pad::logical_id ingame_pad::GetLogicalIDByName( const char* pName )
     }
 
     return ACTION_NULL;
+}
+
+//=========================================================================
+
+input_gadget ingame_pad::GetInputPromptGadget( const xwchar* pToken )
+{
+    const prompt_definition* pPrompt = FindPromptDefinition( pToken );
+    if( !pPrompt || IsCompositePromptToken( pToken ) )
+        return INPUT_UNDEFINED;
+
+    if( !g_InputMgr.IsGamepadActive() )
+        return INPUT_UNDEFINED;
+
+    input_platform Platform = g_InputMgr.GetActivePlatform();
+
+    if( !IsGamepadPromptPlatform( Platform ) )
+        return INPUT_UNDEFINED;
+
+    const mapping_definition* pMapping = FindPromptMapping( pPrompt->LogicalID, Platform );
+    return pMapping ? pMapping->GadgetID : INPUT_UNDEFINED;
 }
 
 //=========================================================================

@@ -41,36 +41,52 @@
 #include "stringmgr\stringmgr.hpp"
 #include "AudioMgr\AudioMgr.hpp"
 
-#ifdef TARGET_PC
 static const char*  m_ButtonTexturesNames[] = {
-PRELOAD_PS2_FILE("UI_ButtonsPS2_x.xbmp"),                
-PRELOAD_PS2_FILE("UI_ButtonsPS2_square.xbmp"),           
-PRELOAD_PS2_FILE("UI_ButtonsPS2_triangle.xbmp"),         
-PRELOAD_PS2_FILE("UI_ButtonsPS2_circle.xbmp"),           
-PRELOAD_PS2_FILE("UI_ButtonsPS2_directionalDown.xbmp"),  
-PRELOAD_PS2_FILE("UI_ButtonsPS2_directionalLeft.xbmp"),  
-PRELOAD_PS2_FILE("UI_ButtonsPS2_directionalUp.xbmp"),    
+PRELOAD_XBOX_FILE("UI_ButtonsXBOX_A.xbmp"),
+PRELOAD_XBOX_FILE("UI_ButtonsXBOX_B.xbmp"),
+PRELOAD_XBOX_FILE("UI_ButtonsXBOX_X.xbmp"),
+PRELOAD_XBOX_FILE("UI_ButtonsXBOX_Y.xbmp"),
+PRELOAD_XBOX_FILE("UI_ButtonsXBOX_DirectionalDown.xbmp"),
+PRELOAD_XBOX_FILE("UI_ButtonsXBOX_DirectionalLeft.xbmp"),
+PRELOAD_XBOX_FILE("UI_ButtonsXBOX_Directionalup.xbmp"),
+PRELOAD_XBOX_FILE("UI_ButtonsXBOX_DirectionalRight.xbmp"),
+PRELOAD_XBOX_FILE("UI_ButtonsPS2_directionalUpDown.xbmp"),
+PRELOAD_XBOX_FILE("UI_ButtonsPS2_directionalLeftRight.xbmp"),
+PRELOAD_XBOX_FILE("UI_ButtonsXBOX_StickR.xbmp"),
+PRELOAD_XBOX_FILE("UI_ButtonsXBOX_StickL.xbmp"),
+PRELOAD_XBOX_FILE("UI_ButtonsXBOX_TriggerL.xbmp"),
+PRELOAD_XBOX_FILE("UI_ButtonsXBOX_TriggerR.xbmp"),
+PRELOAD_XBOX_FILE("UI_ButtonsXBOX_Black.xbmp"),
+PRELOAD_XBOX_FILE("UI_ButtonsXBOX_White.xbmp"),
+PRELOAD_XBOX_FILE("UI_ButtonsXBOX_Start.xbmp"),
+
+PRELOAD_PS2_FILE("UI_ButtonsPS2_x.xbmp"),
+PRELOAD_PS2_FILE("UI_ButtonsPS2_square.xbmp"),
+PRELOAD_PS2_FILE("UI_ButtonsPS2_triangle.xbmp"),
+PRELOAD_PS2_FILE("UI_ButtonsPS2_circle.xbmp"),
+PRELOAD_PS2_FILE("UI_ButtonsPS2_directionalDown.xbmp"),
+PRELOAD_PS2_FILE("UI_ButtonsPS2_directionalLeft.xbmp"),
+PRELOAD_PS2_FILE("UI_ButtonsPS2_directionalUp.xbmp"),
 PRELOAD_PS2_FILE("UI_ButtonsPS2_directionalRight.xbmp"),
 PRELOAD_PS2_FILE("UI_ButtonsPS2_directionalUpDown.xbmp"),
 PRELOAD_PS2_FILE("UI_ButtonsPS2_directionalLeftRight.xbmp"),
-PRELOAD_PS2_FILE("UI_ButtonsPS2_stickR.xbmp"),           
-PRELOAD_PS2_FILE("UI_ButtonsPS2_stickL.xbmp"),           
-PRELOAD_PS2_FILE("UI_ButtonsPS2_L1.xbmp"),               
-PRELOAD_PS2_FILE("UI_ButtonsPS2_L2.xbmp"),               
-PRELOAD_PS2_FILE("UI_ButtonsPS2_R1.xbmp"),               
-PRELOAD_PS2_FILE("UI_ButtonsPS2_R2.xbmp"),               
-PRELOAD_PS2_FILE("UI_ButtonsPS2_start.xbmp"),            
-PRELOAD_PS2_FILE("UI_KillsIcon.xbmp"),
-PRELOAD_PS2_FILE("UI_TeamKillsIcon.xbmp"),
-PRELOAD_PS2_FILE("UI_DeathIcon.xbmp"),
-PRELOAD_PS2_FILE("UI_FlagsIcon.xbmp"),
-PRELOAD_PS2_FILE("UI_VotesIcon.xbmp"),
-PRELOAD_PS2_FILE("UI_FlagsIcon.xbmp"),  // DUMMY
-PRELOAD_PS2_FILE("UI_FlagsIcon.xbmp"),  // DUMMY
-PRELOAD_PS2_FILE("UI_FlagsIcon.xbmp")   // DUMMY
+PRELOAD_PS2_FILE("UI_ButtonsPS2_stickR.xbmp"),
+PRELOAD_PS2_FILE("UI_ButtonsPS2_stickL.xbmp"),
+PRELOAD_PS2_FILE("UI_ButtonsPS2_L1.xbmp"),
+PRELOAD_PS2_FILE("UI_ButtonsPS2_L2.xbmp"),
+PRELOAD_PS2_FILE("UI_ButtonsPS2_R1.xbmp"),
+PRELOAD_PS2_FILE("UI_ButtonsPS2_R2.xbmp"),
+PRELOAD_PS2_FILE("UI_ButtonsPS2_start.xbmp"),
+
+PRELOAD_FILE("UI_KillsIcon.xbmp"),
+PRELOAD_FILE("UI_TeamKillsIcon.xbmp"),
+PRELOAD_FILE("UI_DeathIcon.xbmp"),
+PRELOAD_FILE("UI_FlagsIcon.xbmp"),
+PRELOAD_FILE("UI_VotesIcon.xbmp"),
+PRELOAD_FILE("UI_FlagsIcon.xbmp"),  // DUMMY
+PRELOAD_FILE("UI_FlagsIcon.xbmp"),  // DUMMY
+PRELOAD_FILE("UI_FlagsIcon.xbmp")   // DUMMY
 };
-#else
-#endif
 
 #define NUM_BUTTON_CODES        58
 
@@ -84,8 +100,10 @@ struct button_code
     s32             ButtonCode;
 };
 
-#ifdef TARGET_PC //DUMMY
-static const button_code m_ButtonCodeTable[NUM_BUTTON_CODES] = {
+//-------------------------------------------------------------------------
+
+static 
+const button_code s_PS2ButtonCodeTable[NUM_BUTTON_CODES] = {
     {   "x",            PS2_BUTTON_CROSS            },
     {   "q",            PS2_BUTTON_SQUARE           },
     {   "a",            PS2_BUTTON_TRIANGLE         },
@@ -118,35 +136,152 @@ static const button_code m_ButtonCodeTable[NUM_BUTTON_CODES] = {
     {   "R2",           PS2_BUTTON_R2               },
     {   "R3",           PS2_BUTTON_STICK_RIGHT      },
     {   "PAUSE",        PS2_BUTTON_START            },
-    {   "GRENADE",      PS2_BUTTON_SQUARE           }, 
-    {   "RELOAD",       PS2_BUTTON_CROSS            }, 
-    {   "USE",          PS2_BUTTON_CROSS            }, 
-    {   "PREVWEAPON",   PS2_BUTTON_TRIANGLE         }, 
-    {   "NEXTWEAPON",   PS2_BUTTON_CIRCLE           }, 
-    {   "LEANLEFT",     PS2_BUTTON_DPAD_LEFT        }, 
-    {   "LEANRIGHT",    PS2_BUTTON_DPAD_RIGHT       }, 
-    {   "LEAN",         PS2_BUTTON_DPAD_LEFTRIGHT   }, 
-    {   "MUTATE",       PS2_BUTTON_DPAD_UP          }, 
-    {   "TRANSFORM",    PS2_BUTTON_DPAD_UP          }, 
-    {   "JUMP",         PS2_BUTTON_L1               }, 
-    {   "CROUCH",       PS2_BUTTON_L2               }, 
-    {   "FLASHLIGHT",   PS2_BUTTON_STICK_LEFT       }, 
-    {   "FIRE",         PS2_BUTTON_R1               }, 
-    {   "SECONDARY",    PS2_BUTTON_R2               }, 
-    {   "MELEE",        PS2_BUTTON_STICK_RIGHT      }, 
-    {   "PARASITE",     PS2_BUTTON_R1               }, 
-    {   "CONTAGION",    PS2_BUTTON_R2               }, 
+    {   "GRENADE",      PS2_BUTTON_SQUARE           },
+    {   "RELOAD",       PS2_BUTTON_CROSS            },
+    {   "USE",          PS2_BUTTON_CROSS            },
+    {   "PREVWEAPON",   PS2_BUTTON_TRIANGLE         },
+    {   "NEXTWEAPON",   PS2_BUTTON_CIRCLE           },
+    {   "LEANLEFT",     PS2_BUTTON_DPAD_LEFT        },
+    {   "LEANRIGHT",    PS2_BUTTON_DPAD_RIGHT       },
+    {   "LEAN",         PS2_BUTTON_DPAD_LEFTRIGHT   },
+    {   "MUTATE",       PS2_BUTTON_DPAD_UP          },
+    {   "TRANSFORM",    PS2_BUTTON_DPAD_UP          },
+    {   "JUMP",         PS2_BUTTON_L1               },
+    {   "CROUCH",       PS2_BUTTON_L2               },
+    {   "FLASHLIGHT",   PS2_BUTTON_STICK_LEFT       },
+    {   "FIRE",         PS2_BUTTON_R1               },
+    {   "SECONDARY",    PS2_BUTTON_R2               },
+    {   "MELEE",        PS2_BUTTON_STICK_RIGHT      },
+    {   "PARASITE",     PS2_BUTTON_R1               },
+    {   "CONTAGION",    PS2_BUTTON_R2               },
     {   "KILLS",        KILL_ICON                   },
     {   "DEATHS",       DEATH_ICON                  },
     {   "TKS",          TEAM_KILL_ICON              },
     {   "FLAGS",        FLAG_ICON                   },
     {   "VOTES",        VOTE_ICON                   },
-    {   "NEWPAGE",      NEW_CREDIT_PAGE,            },
-    {   "TITLE",        CREDIT_TITLE_LINE,          },
-    {   "CREDITEND",    CREDIT_END,                 }
+    {   "NEWPAGE",      NEW_CREDIT_PAGE             },
+    {   "TITLE",        CREDIT_TITLE_LINE           },
+    {   "CREDITEND",    CREDIT_END                  },
 };
-#else
-#endif
+
+//-------------------------------------------------------------------------
+
+static 
+const button_code s_XboxButtonCodeTable[NUM_BUTTON_CODES] = {
+    {   "x",            XBOX_BUTTON_A               },
+    {   "q",            XBOX_BUTTON_X               },
+    {   "a",            XBOX_BUTTON_B               },
+    {   "o",            XBOX_BUTTON_Y               },
+    {   "d",            XBOX_BUTTON_DPAD_DOWN       },
+    {   "l",            XBOX_BUTTON_DPAD_LEFT       },
+    {   "u",            XBOX_BUTTON_DPAD_UP         },
+    {   "r",            XBOX_BUTTON_DPAD_RIGHT      },
+    {   "R",            XBOX_BUTTON_STICK_RIGHT     },
+    {   "L",            XBOX_BUTTON_STICK_LEFT      },
+    {   "1",            XBOX_BUTTON_TRIGGER_L       },
+    {   "2",            XBOX_BUTTON_BLACK           },
+    {   "3",            XBOX_BUTTON_TRIGGER_R       },
+    {   "4",            XBOX_BUTTON_WHITE           },
+    {   "S",            XBOX_BUTTON_START           },
+    {   "A",            XBOX_BUTTON_A               },
+    {   "B",            XBOX_BUTTON_B               },
+    {   "X",            XBOX_BUTTON_X               },
+    {   "Y",            XBOX_BUTTON_Y               },
+    {   "DOWN",         XBOX_BUTTON_DPAD_DOWN       },
+    {   "LEFT",         XBOX_BUTTON_DPAD_LEFT       },
+    {   "UP",           XBOX_BUTTON_DPAD_UP         },
+    {   "RIGHT",        XBOX_BUTTON_DPAD_RIGHT      },
+    {   "UPDOWN",       XBOX_BUTTON_DPAD_UPDOWN     },
+    {   "LEFTRIGHT",    XBOX_BUTTON_DPAD_LEFTRIGHT  },
+    {   "LTRIG",        XBOX_BUTTON_TRIGGER_L       },
+    {   "BLACK",        XBOX_BUTTON_BLACK           },
+    {   "STICKL",       XBOX_BUTTON_STICK_LEFT      },
+    {   "RTRIG",        XBOX_BUTTON_TRIGGER_R       },
+    {   "WHITE",        XBOX_BUTTON_WHITE           },
+    {   "STICKR",       XBOX_BUTTON_STICK_RIGHT     },
+    {   "PAUSE",        XBOX_BUTTON_START           },
+    {   "GRENADE",      XBOX_BUTTON_B               },
+    {   "RELOAD",       XBOX_BUTTON_X               },
+    {   "USE",          XBOX_BUTTON_X               },
+    {   "PREVWEAPON",   XBOX_BUTTON_BLACK           },
+    {   "NEXTWEAPON",   XBOX_BUTTON_Y               },
+    {   "LEANLEFT",     XBOX_BUTTON_DPAD_LEFT       },
+    {   "LEANRIGHT",    XBOX_BUTTON_DPAD_RIGHT      },
+    {   "LEAN",         XBOX_BUTTON_DPAD_LEFTRIGHT  },
+    {   "MUTATE",       XBOX_BUTTON_DPAD_UP         },
+    {   "TRANSFORM",    XBOX_BUTTON_DPAD_UP         },
+    {   "JUMP",         XBOX_BUTTON_A               },
+    {   "CROUCH",       XBOX_BUTTON_STICK_LEFT      },
+    {   "FLASHLIGHT",   XBOX_BUTTON_DPAD_DOWN       },
+    {   "FIRE",         XBOX_BUTTON_TRIGGER_R       },
+    {   "SECONDARY",    XBOX_BUTTON_TRIGGER_L       },
+    {   "MELEE",        XBOX_BUTTON_STICK_RIGHT     },
+    {   "PARASITE",     XBOX_BUTTON_TRIGGER_R       },
+    {   "CONTAGION",    XBOX_BUTTON_TRIGGER_L       },
+    {   "KILLS",        KILL_ICON                   },
+    {   "DEATHS",       DEATH_ICON                  },
+    {   "TKS",          TEAM_KILL_ICON              },
+    {   "FLAGS",        FLAG_ICON                   },
+    {   "VOTES",        VOTE_ICON                   },
+    {   "NEWPAGE",      NEW_CREDIT_PAGE             },
+    {   "TITLE",        CREDIT_TITLE_LINE           },
+    {   "CREDITEND",    CREDIT_END                  },
+};
+
+//=========================================================================
+
+static
+const button_code* GetButtonCodeTable( input_platform Platform )
+{
+    if( Platform == INPUT_PLATFORM_PS2 )
+        return s_PS2ButtonCodeTable;
+
+    if( Platform == INPUT_PLATFORM_XBOX )
+        return s_XboxButtonCodeTable;
+
+    return s_XboxButtonCodeTable; //TODO PC or something
+}
+
+//=========================================================================
+
+static
+xbool UseLocalizedXboxButtonTexture( s32 ButtonCode )
+{
+    if( (ButtonCode != XBOX_BUTTON_TRIGGER_L) && (ButtonCode != XBOX_BUTTON_TRIGGER_R) )
+        return FALSE;
+
+    if( x_GetTerritory() == XL_TERRITORY_AMERICA )
+        return FALSE;
+
+    switch( x_GetLocale() )
+    {
+    case XL_LANG_ENGLISH:
+    case XL_LANG_GERMAN:
+        return FALSE;
+    default:
+        return TRUE;
+    }
+}
+
+//=========================================================================
+
+static
+void SetButtonTextureName( rhandle<xbitmap>& Texture, s32 ButtonCode )
+{
+    if( UseLocalizedXboxButtonTexture( ButtonCode ) )
+    {
+        xstring ButtonName( m_ButtonTexturesNames[ButtonCode] );
+        ButtonName.Delete( ButtonName.GetLength()-5, 5 );
+        ButtonName += "_";
+        ButtonName += x_GetLocaleString();
+        ButtonName += ".xbmp";
+        Texture.SetName( ButtonName );
+    }
+    else
+    {
+        Texture.SetName( m_ButtonTexturesNames[ButtonCode] );
+    }
+}
 
 //=========================================================================
 //  Defines
@@ -229,6 +364,49 @@ xbool IsUILogicalDown( s32 ControllerID, ingame_pad::logical_id LogicalID )
     ASSERT( ControllerID < MAX_LOCAL_PLAYERS );
 
     return( g_IngamePad[ControllerID].GetLogical( LogicalID ).IsValue > 0.25f );
+}
+
+//=========================================================================
+
+static
+s32 GetButtonCodeForGadget( input_gadget GadgetID )
+{
+    switch( GadgetID )
+    {
+    case INPUT_PS2_BTN_CROSS:       return PS2_BUTTON_CROSS;
+    case INPUT_PS2_BTN_SQUARE:      return PS2_BUTTON_SQUARE;
+    case INPUT_PS2_BTN_TRIANGLE:    return PS2_BUTTON_TRIANGLE;
+    case INPUT_PS2_BTN_CIRCLE:      return PS2_BUTTON_CIRCLE;
+    case INPUT_PS2_BTN_L_DOWN:      return PS2_BUTTON_DPAD_DOWN;
+    case INPUT_PS2_BTN_L_LEFT:      return PS2_BUTTON_DPAD_LEFT;
+    case INPUT_PS2_BTN_L_UP:        return PS2_BUTTON_DPAD_UP;
+    case INPUT_PS2_BTN_L_RIGHT:     return PS2_BUTTON_DPAD_RIGHT;
+    case INPUT_PS2_BTN_R_STICK:     return PS2_BUTTON_STICK_RIGHT;
+    case INPUT_PS2_BTN_L_STICK:     return PS2_BUTTON_STICK_LEFT;
+    case INPUT_PS2_BTN_L1:          return PS2_BUTTON_L1;
+    case INPUT_PS2_BTN_L2:          return PS2_BUTTON_L2;
+    case INPUT_PS2_BTN_R1:          return PS2_BUTTON_R1;
+    case INPUT_PS2_BTN_R2:          return PS2_BUTTON_R2;
+    case INPUT_PS2_BTN_START:       return PS2_BUTTON_START;
+
+    case INPUT_XBOX_BTN_A:          return XBOX_BUTTON_A;
+    case INPUT_XBOX_BTN_X:          return XBOX_BUTTON_X;
+    case INPUT_XBOX_BTN_Y:          return XBOX_BUTTON_Y;
+    case INPUT_XBOX_BTN_B:          return XBOX_BUTTON_B;
+    case INPUT_XBOX_BTN_DOWN:       return XBOX_BUTTON_DPAD_DOWN;
+    case INPUT_XBOX_BTN_LEFT:       return XBOX_BUTTON_DPAD_LEFT;
+    case INPUT_XBOX_BTN_UP:         return XBOX_BUTTON_DPAD_UP;
+    case INPUT_XBOX_BTN_RIGHT:      return XBOX_BUTTON_DPAD_RIGHT;
+    case INPUT_XBOX_BTN_R_STICK:    return XBOX_BUTTON_STICK_RIGHT;
+    case INPUT_XBOX_BTN_L_STICK:    return XBOX_BUTTON_STICK_LEFT;
+    case INPUT_XBOX_BTN_WHITE:      return XBOX_BUTTON_WHITE;
+    case INPUT_XBOX_BTN_BLACK:      return XBOX_BUTTON_BLACK;
+    case INPUT_XBOX_L_TRIGGER:      return XBOX_BUTTON_TRIGGER_L;
+    case INPUT_XBOX_R_TRIGGER:      return XBOX_BUTTON_TRIGGER_R;
+    case INPUT_XBOX_BTN_START:      return XBOX_BUTTON_START;
+    case INPUT_XBOX_BTN_BACK:       return XBOX_BUTTON_START;
+    default:                        return -1;
+    }
 }
 
 //=========================================================================
@@ -423,8 +601,6 @@ s32 ui_manager::Init( void )
     g_StringTableMgr.LoadTable( "lore_ingame", "ENG_ingame_lore_strings.stringbin");
 
     //-- Load Elements
-    (void)m_ButtonTexturesNames;
-
     //-- Fonts
     LoadFont        ( "large",          PRELOAD_FILE("UI_A51FontLarge.xbmp"  ) ); // PRELOAD_FILE("UI_A51FontLarge.font"  )  
     LoadFont        ( "small",          PRELOAD_FILE("UI_A51FontLegal.xbmp"  ) ); // PRELOAD_FILE("UI_A51FontLegal.font"  ) 
@@ -475,7 +651,7 @@ s32 ui_manager::Init( void )
 #ifdef TARGET_PC //DUMMY
     for (s32 i=0;i<NUM_BUTTON_TEXTURES;i++)
     {
-        m_ButtonTextures[i].SetName(m_ButtonTexturesNames[i]);
+        SetButtonTextureName( m_ButtonTextures[i], i );
     }    
 #endif
 
@@ -1529,6 +1705,13 @@ xbool ui_manager::GetMouseVisible( s32 UserID ) const
 
 //=========================================================================
 
+xbool ui_manager::IsGamepadActiveInput( void ) const
+{
+    return g_InputMgr.IsGamepadActive();
+}
+
+//=========================================================================
+
 void ui_manager::SetMousePos( s32 UserID, s32 x, s32 y )
 {
     ASSERT( (m_Users.Find( (user*)UserID )) != -1 );
@@ -1741,10 +1924,16 @@ xbool ui_manager::ProcessInput( f32 DeltaTime, s32 UserID )
         ui_win* pWin = pUser->pCaptureWindow;
 
         // Update mouse position and switch to mouse mode if it moved
-#if defined( TARGET_PC ) && !defined( X_EDITOR )
         {
-            s32 dx = (s32)input_GetValue(INPUT_MOUSE_X_REL);
-            s32 dy = (s32)input_GetValue(INPUT_MOUSE_Y_REL);
+            s32 dx = g_InputMgr.GetMouseDeltaX();
+            s32 dy = g_InputMgr.GetMouseDeltaY();
+
+            if( g_InputMgr.GetActiveDevice() == INPUT_DEVICE_MOUSE )
+            {
+                pUser->bMouseMode   = TRUE;
+                pUser->MouseVisible = TRUE;
+            }
+
             if( dx || dy )
             {
                 pUser->MouseX += dx;
@@ -1773,7 +1962,6 @@ xbool ui_manager::ProcessInput( f32 DeltaTime, s32 UserID )
                     SetFocusWindow( (s32)pUser, pWindowUnderMouse );
             }
         }
-#endif
 
         // Determine which window receives input this frame
         if( pWin == NULL )
@@ -1831,11 +2019,9 @@ xbool ui_manager::ProcessInput( f32 DeltaTime, s32 UserID )
         }
 
         // Update mouse buttons
-#ifdef TARGET_PC
-        UpdateButton( pUser->ButtonLB, input_IsPressed( INPUT_MOUSE_BTN_L ), DeltaTime );
-        UpdateButton( pUser->ButtonMB, input_IsPressed( INPUT_MOUSE_BTN_C ), DeltaTime );
-        UpdateButton( pUser->ButtonRB, input_IsPressed( INPUT_MOUSE_BTN_R ), DeltaTime );
-#endif
+        UpdateButton( pUser->ButtonLB, g_InputMgr.IsMouseButtonDown( INPUT_MOUSE_BUTTON_LEFT ),   DeltaTime );
+        UpdateButton( pUser->ButtonMB, g_InputMgr.IsMouseButtonDown( INPUT_MOUSE_BUTTON_MIDDLE ), DeltaTime );
+        UpdateButton( pUser->ButtonRB, g_InputMgr.IsMouseButtonDown( INPUT_MOUSE_BUTTON_RIGHT ),  DeltaTime );
 
         // Only do this if there is a target window
         if( pWin )
@@ -1922,8 +2108,11 @@ xbool ui_manager::ProcessInput( f32 DeltaTime, s32 UserID )
                     tDPadLeft       += pUser->LStickLeft[i].nPresses  + pUser->LStickLeft[i].nRepeats;
                     tDPadRight      += pUser->LStickRight[i].nPresses + pUser->LStickRight[i].nRepeats;
 
-                    // Pad input switches to gamepad mode, hiding the mouse cursor
-                    if( tDPadUp || tDPadDown || tDPadLeft || tDPadRight )
+                    // Gamepad input hides the mouse cursor. Keyboard navigation remains a PC input mode.
+                    if(   g_InputMgr.IsGamepadActive()
+                       && (   tDPadUp || tDPadDown || tDPadLeft || tDPadRight
+                           || PadSelect || PadBack || PadDelete || PadActivate || PadHelp
+                           || PadShoulderL || PadShoulderR || PadShoulderL2 || PadShoulderR2 ) )
                     {
                         pUser->bMouseMode   = FALSE;
                         pUser->MouseVisible = FALSE;
@@ -2660,36 +2849,61 @@ xbitmap* ui_manager::GetButtonTexture( s32 buttonCode )
 
 //=========================================================================
 
-s32 ui_manager::LookUpButtonCode( const xwchar* pString, s32 iStart ) const
+static
+xbool ReadButtonCodeString( const xwchar* pString, s32 iStart, xwstring& CodeString )
 {
-    s32      c;
-    xwstring codeString;
+    s32 c = pString[iStart];
 
-    c = pString[iStart];
-    while( c && (c != 0xBB ) ) // '»'
+    CodeString.Clear();
+    while( c && (c != 0xBB) )
     {
-        // add this character to the string
-        codeString += pString[iStart];
+        CodeString += pString[iStart];
         iStart++;
         c = pString[iStart];
     }
-    
-    if( codeString.GetLength() == 0 )
-    {
-        return -1;
-    }
 
-    // look for the string in the code table
-    for (s32 i=0; i<NUM_BUTTON_CODES; i++)
+    return( CodeString.GetLength() > 0 );
+}
+
+//=========================================================================
+
+
+s32 ui_manager::LookUpButtonCode( const xwchar* pString, s32 iStart ) const
+{
+    xwstring codeString;
+
+    if( !pString )
+        return -1;
+
+    while( pString[iStart] == 0xAB )
+        iStart++;
+ 
+    if( IsGamepadActiveInput() )
     {
-        if( x_wstrcmp( codeString, m_ButtonCodeTable[i].CodeString ) == 0 )
+        input_gadget GadgetID = ingame_pad::GetInputPromptGadget( pString + iStart );
+        if( GadgetID != INPUT_UNDEFINED )
         {
-            // found a match
-            return (m_ButtonCodeTable[i].ButtonCode);
+            s32 ButtonCode = GetButtonCodeForGadget( GadgetID );
+            if( ButtonCode != -1 )
+                return ButtonCode;
         }
     }
-
-    // not found
+ 
+    if( !ReadButtonCodeString( pString, iStart, codeString ) )
+        return -1;
+ 
+    // On keyboard/mouse, don't show any button prompts (stub)
+    if( !IsGamepadActiveInput() )
+        return -1;
+ 
+    const button_code* pButtonCodeTable = GetButtonCodeTable( g_InputMgr.GetActivePlatform() );
+ 
+    for( s32 i = 0; i < NUM_BUTTON_CODES; i++ )
+    {
+        if( x_wstrcmp( codeString, pButtonCodeTable[i].CodeString ) == 0 )
+            return pButtonCodeTable[i].ButtonCode;
+    }
+ 
     return -1;
 }
 

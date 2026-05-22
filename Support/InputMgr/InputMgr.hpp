@@ -35,6 +35,26 @@ enum input_context
     ALL_CONTEXTS     = INGAME_CONTEXT | FRONTEND_CONTEXT
 };
 
+//-------------------------------------------------------------------------
+
+enum input_device
+{
+    INPUT_DEVICE_NONE,
+    INPUT_DEVICE_KEYBOARD,
+    INPUT_DEVICE_MOUSE,
+    INPUT_DEVICE_GAMEPAD
+};
+
+//-------------------------------------------------------------------------
+
+enum input_mouse_button
+{
+    INPUT_MOUSE_BUTTON_LEFT,
+    INPUT_MOUSE_BUTTON_MIDDLE,
+    INPUT_MOUSE_BUTTON_RIGHT,
+    INPUT_MOUSE_BUTTON_COUNT
+};
+
 //=========================================================================
 // CLASSES 
 //=========================================================================
@@ -130,13 +150,29 @@ public:
     xbool               Update          ( f32 DeltaTime );
     void                RegisterPad     ( input_pad& Pad );
     s32                 WasPausePressed ( void );
+    input_device        GetActiveDevice ( void ) const      { return m_ActiveDevice; }
+    input_platform      GetActivePlatform( void ) const     { return m_ActivePlatform; }
+    xbool               IsGamepadActive ( void ) const      { return( m_ActiveDevice == INPUT_DEVICE_GAMEPAD ); }
+    s32                 GetMouseDeltaX  ( void ) const      { return m_MouseDeltaX; }
+    s32                 GetMouseDeltaY  ( void ) const      { return m_MouseDeltaY; }
+    xbool               IsMouseButtonDown( input_mouse_button Button ) const;
     void                SetContext      ( u32 ContextMask );
     void                EnableContext   ( u32 ContextMask );
     void                DisableContext  ( u32 ContextMask );
 
+    void                NotifyInputActivity( input_gadget GadgetID, f32 Value );
+
 protected:
 
     static input_pad* s_pHead;    
+    void                UpdateDeviceState( void );
+    void                SetActiveDevice ( input_device Device );
+
+    input_device        m_ActiveDevice;
+    input_platform      m_ActivePlatform;
+    s32                 m_MouseDeltaX;
+    s32                 m_MouseDeltaY;
+    xbool               m_MouseButtons[INPUT_MOUSE_BUTTON_COUNT];
 
 };
 

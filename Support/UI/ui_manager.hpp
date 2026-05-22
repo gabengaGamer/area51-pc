@@ -22,24 +22,7 @@
 //  Controller button mapping
 //==============================================================================
 
-#ifdef TARGET_PC
-#define INPUT_BUTTON_UP         INPUT_KBD_UP      
-#define INPUT_BUTTON_DOWN       INPUT_KBD_DOWN
-#define INPUT_BUTTON_LEFT       INPUT_KBD_LEFT
-#define INPUT_BUTTON_RIGHT      INPUT_KBD_RIGHT
-#define INPUT_STICK_X           INPUT_PS2_STICK_LEFT_X   
-#define INPUT_STICK_Y           INPUT_PS2_STICK_LEFT_Y
-#define INPUT_STICK_X_C         INPUT_PS2_STICK_RIGHT_X
-#define INPUT_STICK_Y_C         INPUT_PS2_STICK_RIGHT_Y
-#define INPUT_SELECT            INPUT_PS2_BTN_CROSS
-#define INPUT_CANCEL            INPUT_PS2_BTN_SQUARE
-#define INPUT_PREV_MENU         INPUT_PS2_BTN_L1
-#define INPUT_NEXT_MENU         INPUT_PS2_BTN_R1
-#define INPUT_BUTTON_Z          INPUT_PS2_BTN_R2
-#define INPUT_BUTTON_START      INPUT_PS2_BTN_START
 #define INPUT_MAX_CONTROLLER_COUNT 2
-#else
-#endif
 
 //==============================================================================
 //  Externals
@@ -61,9 +44,26 @@ extern xbool bInProcessInput;
 //==============================================================================
 #define BUTTON_SPRITE_WIDTH     18
 
-#ifdef TARGET_PC
 enum
 {
+    XBOX_BUTTON_A,
+    XBOX_BUTTON_B,
+    XBOX_BUTTON_X,
+    XBOX_BUTTON_Y,
+    XBOX_BUTTON_DPAD_DOWN,
+    XBOX_BUTTON_DPAD_LEFT,
+    XBOX_BUTTON_DPAD_UP,
+    XBOX_BUTTON_DPAD_RIGHT,
+    XBOX_BUTTON_DPAD_UPDOWN,
+    XBOX_BUTTON_DPAD_LEFTRIGHT,
+    XBOX_BUTTON_STICK_RIGHT,
+    XBOX_BUTTON_STICK_LEFT,
+    XBOX_BUTTON_TRIGGER_L,
+    XBOX_BUTTON_TRIGGER_R,
+    XBOX_BUTTON_BLACK,
+    XBOX_BUTTON_WHITE,
+    XBOX_BUTTON_START,
+
     PS2_BUTTON_CROSS, 
     PS2_BUTTON_SQUARE, 
     PS2_BUTTON_TRIANGLE, 
@@ -81,6 +81,7 @@ enum
     PS2_BUTTON_R1, 
     PS2_BUTTON_R2,
     PS2_BUTTON_START,
+
     KILL_ICON,
     TEAM_KILL_ICON,
     DEATH_ICON,
@@ -89,10 +90,9 @@ enum
     NEW_CREDIT_PAGE,
     CREDIT_TITLE_LINE,
     CREDIT_END,
+
     NUM_BUTTON_TEXTURES,
 };
-#else
-#endif
 
 //==============================================================================
 //  Logging
@@ -402,6 +402,7 @@ public:
     ui_win*         GetFocusedWindow        ( s32 UserID ) const;
     void            SetMouseVisible         ( s32 UserID, xbool State );
     xbool           GetMouseVisible         ( s32 UserID ) const;
+    xbool           IsGamepadActiveInput    ( void ) const;
     void            SetMousePos             ( s32 UserID, s32  x, s32  y );
     void            GetMousePos             ( s32 UserID, s32& x, s32& y ) const;
     void            SetFocusWindow          ( s32 UserID, ui_win* pWin );

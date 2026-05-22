@@ -106,6 +106,7 @@ public:
     static  const char* GetLogicalIDName    ( s32 Index );
     static  const char* GetLogicalIDEnum    ( void );
     static  logical_id  GetLogicalIDByName  ( const char* pName );
+    static  input_gadget GetInputPromptGadget( const xwchar* pToken );
 
 protected:
 

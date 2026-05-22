@@ -26,7 +26,7 @@ extern xtimer g_DemoIdleTimer;
 #endif
 
 //=========================================================================
-// HELPER FUNCTIONS
+// INPUT_PAD HELPER FUNCTIONS
 //=========================================================================
 
 static 
@@ -54,22 +54,8 @@ void AccumulateAnalogValue( input_pad::logical& Log, f32 Value )
         Log.MapsWasValue = Log.IsValue;
 }
 
-//==============================================================================
-
-static 
-u32 GetStateMgrInputContext( void )
-{
-    if( g_StateMgr.IsPaused() || g_StateMgr.InSystemError() )
-        return FRONTEND_CONTEXT;
-
-    if( g_StateMgr.GetState() == SM_PLAYING_GAME )
-        return INGAME_CONTEXT;
-
-    return FRONTEND_CONTEXT;
-}
-
 //=========================================================================
-// FUNCTIONS
+// INPUT_PAD FUNCTIONS
 //=========================================================================
 
 input_pad::logical::logical( void )
@@ -284,6 +270,9 @@ void input_pad::UpdateButtonMapping( const mapping& Mapping, s32 ControllerID, f
     logical& Log = m_Logicals[ Mapping.LogicalID ];
     f32      Value = (f32)input_IsPressed( Mapping.GadgetID, ControllerID );
 
+    if( input_WasPressed( Mapping.GadgetID, ControllerID ) )
+        g_InputMgr.NotifyInputActivity( Mapping.GadgetID, 1.0f );
+
 #if CONFIG_IS_DEMO && !defined( X_EDITOR )
     if( Value )
     {
@@ -351,6 +340,8 @@ void input_pad::UpdateAnalogMapping( const mapping& Mapping, s32 ControllerID )
     if( Mapping.GadgetID != INPUT_UNDEFINED )
         Value = input_GetValue( Mapping.GadgetID, ControllerID );
 
+    g_InputMgr.NotifyInputActivity( Mapping.GadgetID, Value );
+
     if( g_MonkeyOptions.Enabled )
         Value = g_Monkey.GetValue( Mapping.LogicalID );
 
@@ -370,6 +361,9 @@ void input_pad::UpdateAnalogMapping( const mapping& Mapping, s32 ControllerID )
 void input_pad::UpdateMapping( const mapping& Mapping, s32 ControllerID, f32 DeltaTime )
 {
     if( (Mapping.ContextMask & m_ActiveContext) == 0 )
+        return;
+
+    if( Mapping.GadgetID == INPUT_UNDEFINED )
         return;
 
     if( Mapping.bButton )
@@ -419,11 +413,93 @@ xbool input_pad::IsPausePressed( void ) const
 }
 
 //==============================================================================
-// FUNCTIONS
+// INPUT_MGR HELPER FUNCTIONS
+//==============================================================================
+
+static
+xbool IsGadgetInRange( input_gadget GadgetID, input_gadget Begin, input_gadget End )
+{
+    return( (GadgetID > Begin) && (GadgetID < End) );
+}
+
+//==============================================================================
+
+static
+input_device GetInputDeviceForGadget( input_gadget GadgetID )
+{
+    if( IsGadgetInRange( GadgetID, INPUT_MOUSE__BEGIN, INPUT_MOUSE__END ) )
+        return INPUT_DEVICE_MOUSE;
+
+    if( IsGadgetInRange( GadgetID, INPUT_KBD__BEGIN, INPUT_KBD__END ) )
+        return INPUT_DEVICE_KEYBOARD;
+
+    if( IsGadgetInRange( GadgetID, INPUT_PS2__BEGIN,  INPUT_PS2__END  ) ||
+        IsGadgetInRange( GadgetID, INPUT_XBOX__BEGIN, INPUT_XBOX__END ) ||
+        IsGadgetInRange( GadgetID, INPUT_PC__BEGIN,   INPUT_PC__END   ) )
+    {
+        return INPUT_DEVICE_GAMEPAD;
+    }
+
+    return INPUT_DEVICE_NONE;
+}
+
+//==============================================================================
+
+static
+input_platform GetInputPlatformForGadget( input_gadget GadgetID )
+{
+    if( IsGadgetInRange( GadgetID, INPUT_PS2__BEGIN, INPUT_PS2__END ) )
+        return INPUT_PLATFORM_PS2;
+
+    if( IsGadgetInRange( GadgetID, INPUT_XBOX__BEGIN, INPUT_XBOX__END ) )
+        return INPUT_PLATFORM_XBOX;
+
+    return INPUT_PLATFORM_PC;
+}
+
+//==============================================================================
+
+static
+xbool WasAnyKeyboardPressed( void )
+{
+    for( s32 i = INPUT_KBD__BEGIN + 1; i < INPUT_KBD__END; i++ )
+    {
+        if( input_WasPressed( (input_gadget)i ) )
+            return TRUE;
+    }
+
+    return FALSE;
+}
+
+//==============================================================================
+
+static 
+u32 GetStateMgrInputContext( void )
+{
+    if( g_StateMgr.IsPaused() || g_StateMgr.InSystemError() )
+        return FRONTEND_CONTEXT;
+
+    if( g_StateMgr.GetState() == SM_PLAYING_GAME )
+        return INGAME_CONTEXT;
+
+    return FRONTEND_CONTEXT;
+}
+
+//==============================================================================
+// INPUT_MGR FUNCTIONS
 //==============================================================================
 
 input_mgr::input_mgr( void )
 {
+    m_ActiveDevice   = INPUT_DEVICE_KEYBOARD;
+    m_ActivePlatform = INPUT_PLATFORM_PC;
+    m_MouseDeltaX    = 0;
+    m_MouseDeltaY    = 0;
+
+    for( s32 i = 0; i < INPUT_MOUSE_BUTTON_COUNT; i++ )
+    {
+        m_MouseButtons[i] = FALSE;
+    }
 }
 
 //==============================================================================
@@ -481,6 +557,8 @@ xbool input_mgr::Update( f32 DeltaTime )
         if( input_IsPressed( INPUT_MSG_EXIT ) )
             return TRUE;
     }
+
+    UpdateDeviceState();
     
     if( g_MonkeyOptions.Enabled )
     {
@@ -496,6 +574,70 @@ xbool input_mgr::Update( f32 DeltaTime )
     }
 
     return FALSE;
+}
+
+//==============================================================================
+
+void input_mgr::SetActiveDevice( input_device Device )
+{
+    if( Device != INPUT_DEVICE_NONE )
+        m_ActiveDevice = Device;
+}
+
+//==============================================================================
+
+void input_mgr::NotifyInputActivity( input_gadget GadgetID, f32 Value )
+{
+    if( x_abs( Value ) <= 0.25f )
+        return;
+
+    input_device Device = GetInputDeviceForGadget( GadgetID );
+    SetActiveDevice( Device );
+
+    if( Device != INPUT_DEVICE_NONE )
+        m_ActivePlatform = GetInputPlatformForGadget( GadgetID );
+}
+
+//==============================================================================
+
+void input_mgr::UpdateDeviceState( void )
+{
+    m_MouseDeltaX = (s32)input_GetValue( INPUT_MOUSE_X_REL );
+    m_MouseDeltaY = (s32)input_GetValue( INPUT_MOUSE_Y_REL );
+
+    m_MouseButtons[INPUT_MOUSE_BUTTON_LEFT]   = input_IsPressed( INPUT_MOUSE_BTN_L );
+    m_MouseButtons[INPUT_MOUSE_BUTTON_MIDDLE] = input_IsPressed( INPUT_MOUSE_BTN_C );
+    m_MouseButtons[INPUT_MOUSE_BUTTON_RIGHT]  = input_IsPressed( INPUT_MOUSE_BTN_R );
+
+    if(   m_MouseDeltaX
+       || m_MouseDeltaY
+       || x_abs( input_GetValue( INPUT_MOUSE_WHEEL_REL ) ) > 0.25f
+       || input_WasPressed( INPUT_MOUSE_BTN_L )
+       || input_WasPressed( INPUT_MOUSE_BTN_C )
+       || input_WasPressed( INPUT_MOUSE_BTN_R ) )
+    {
+        SetActiveDevice( INPUT_DEVICE_MOUSE );
+        m_ActivePlatform = INPUT_PLATFORM_PC;
+    }
+
+    if( WasAnyKeyboardPressed() )
+    {
+        SetActiveDevice( INPUT_DEVICE_KEYBOARD );
+        m_ActivePlatform = INPUT_PLATFORM_PC;
+    }
+}
+
+//==============================================================================
+
+xbool input_mgr::IsMouseButtonDown( input_mouse_button Button ) const
+{
+    ASSERT( Button >= 0 );
+    ASSERT( Button < INPUT_MOUSE_BUTTON_COUNT );
+
+    if( (Button < 0) || (Button >= INPUT_MOUSE_BUTTON_COUNT) )
+        return FALSE;
+
+    return m_MouseButtons[Button];
 }
 
 //==============================================================================
