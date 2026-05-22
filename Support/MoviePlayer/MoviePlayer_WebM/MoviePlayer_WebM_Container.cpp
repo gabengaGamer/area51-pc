@@ -123,6 +123,88 @@ int file_reader::Length(long long* total, long long* available)
 }
 
 //==============================================================================
+// CONTAINER HELPER IMPLEMENTATION
+//==============================================================================
+
+static 
+const char* GetPreferredAudioLanguage(void)
+{
+    const char* pLocale = x_GetLocaleString(XL_LOCALE_CODE_ISO_639_2);
+
+    if (!pLocale || !pLocale[0])
+        return "eng";
+
+    // TODO: Update thiese ISO_639_2 CODES !!!!
+    if (x_stricmp(pLocale, "FRE") == 0)
+        return "fra";
+
+    if (x_stricmp(pLocale, "GER") == 0)
+        return "deu";
+
+    return pLocale;
+}
+
+//==============================================================================
+
+static 
+xbool IsAudioLanguageMatch(const mkvparser::Track* pTrack, const char* pLanguage)
+{
+    if (!pTrack || !pLanguage || !pLanguage[0])
+        return FALSE;
+
+    const char* pTrackLanguage = pTrack->GetLanguage();
+
+    if (!pTrackLanguage || !pTrackLanguage[0])
+        return FALSE;
+
+    if (x_stricmp(pTrackLanguage, pLanguage) == 0)
+        return TRUE;
+
+    // TODO: Update thiese ISO_639_2 CODES !!!!
+    if ((x_stricmp(pLanguage, "fra") == 0) && (x_stricmp(pTrackLanguage, "fre") == 0))
+        return TRUE;
+
+    if ((x_stricmp(pLanguage, "deu") == 0) && (x_stricmp(pTrackLanguage, "ger") == 0))
+        return TRUE;
+
+    return FALSE;
+}
+
+//==============================================================================
+
+static 
+void ApplyAudioTrackConfig(player_config& Config, const mkvparser::Track* pTrack)
+{
+    Config.AudioTrack = (s32)pTrack->GetNumber();
+    Config.HasAudio   = TRUE;
+    Config.AudioCodecId = pTrack->GetCodecId();
+
+    const mkvparser::AudioTrack* pAudio = static_cast<const mkvparser::AudioTrack*>(pTrack);
+    Config.AudioChannels   = (s32)pAudio->GetChannels();
+    Config.AudioSampleRate = (s32)pAudio->GetSamplingRate();
+    Config.AudioBitDepth   = (s32)pAudio->GetBitDepth();
+
+    if (Config.AudioChannels <= 0)
+        Config.AudioChannels = 2;
+
+    if (Config.AudioSampleRate <= 0)
+        Config.AudioSampleRate = 48000;
+
+    if (Config.AudioBitDepth <= 0)
+        Config.AudioBitDepth = 16;
+
+    Config.AudioCodecPrivate.Clear();
+
+    size_t privateSize = 0;
+    const unsigned char* pPrivate = pTrack->GetCodecPrivate(privateSize);
+    if (pPrivate && (privateSize > 0) && (privateSize <= INT_MAX))
+    {
+        Config.AudioCodecPrivate.SetCount((s32)privateSize);
+        x_memcpy(Config.AudioCodecPrivate.GetPtr(), pPrivate, (s32)privateSize);
+    }
+}
+
+//==============================================================================
 // CONTAINER IMPLEMENTATION
 //==============================================================================
 
@@ -323,6 +405,9 @@ xbool container::SelectTracks(player_config& Config)
         return FALSE;
 
     const u32 trackCount = (u32)m_pTracks->GetTracksCount();
+    const char* pPreferredAudioLanguage = GetPreferredAudioLanguage();
+    const mkvparser::Track* pFirstAudioTrack = NULL;
+    const mkvparser::Track* pSelectedAudioTrack = NULL;
 
     for (u32 i = 0; i < trackCount; ++i)
     {
@@ -341,37 +426,23 @@ xbool container::SelectTracks(player_config& Config)
             Config.Height = (s32)pVideo->GetHeight();
             Config.FrameRate = (f32)pVideo->GetFrameRate();
         }
-        else if ((pTrack->GetType() == mkvparser::Track::kAudio) && (m_AudioTrack < 0))
+        else if (pTrack->GetType() == mkvparser::Track::kAudio)
         {
-            m_AudioTrack      = (s32)pTrack->GetNumber();
-            Config.AudioTrack = m_AudioTrack;
-            Config.HasAudio   = TRUE;
-            Config.AudioCodecId = pTrack->GetCodecId();
+            if (!pFirstAudioTrack)
+                pFirstAudioTrack = pTrack;
 
-            const mkvparser::AudioTrack* pAudio = static_cast<const mkvparser::AudioTrack*>(pTrack);
-            Config.AudioChannels   = (s32)pAudio->GetChannels();
-            Config.AudioSampleRate = (s32)pAudio->GetSamplingRate();
-            Config.AudioBitDepth   = (s32)pAudio->GetBitDepth();
-
-            if (Config.AudioChannels <= 0)
-                Config.AudioChannels = 2;
-
-            if (Config.AudioSampleRate <= 0)
-                Config.AudioSampleRate = 48000;
-
-            if (Config.AudioBitDepth <= 0)
-                Config.AudioBitDepth = 16;
-
-            Config.AudioCodecPrivate.Clear();
-
-            size_t privateSize = 0;
-            const unsigned char* pPrivate = pTrack->GetCodecPrivate(privateSize);
-            if (pPrivate && (privateSize > 0) && (privateSize <= INT_MAX))
-            {
-                Config.AudioCodecPrivate.SetCount((s32)privateSize);
-                x_memcpy(Config.AudioCodecPrivate.GetPtr(), pPrivate, (s32)privateSize);
-            }
+            if (!pSelectedAudioTrack && IsAudioLanguageMatch(pTrack, pPreferredAudioLanguage))
+                pSelectedAudioTrack = pTrack;
         }
+    }
+
+    if (!pSelectedAudioTrack)
+        pSelectedAudioTrack = pFirstAudioTrack;
+
+    if (pSelectedAudioTrack)
+    {
+        m_AudioTrack = (s32)pSelectedAudioTrack->GetNumber();
+        ApplyAudioTrackConfig(Config, pSelectedAudioTrack);
     }
 
     return (m_VideoTrack >= 0);

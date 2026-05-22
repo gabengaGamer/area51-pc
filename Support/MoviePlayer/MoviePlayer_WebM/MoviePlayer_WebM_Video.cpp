@@ -38,16 +38,19 @@
 using namespace movie_webm;
 
 //==============================================================================
-// VIDEO DECODER IMPLEMENTATION
+// VIDEO DECODER HELPER IMPLEMENTATION
 //==============================================================================
 
-static inline u8 ClampByte(s32 Value)
+static 
+inline u8 ClampByte(s32 Value)
 {
     if (Value < 0)   return 0;
     if (Value > 255) return 255;
     return (u8)Value;
 }
 
+//==============================================================================
+// VIDEO DECODER IMPLEMENTATION
 //==============================================================================
 
 video_decoder::video_decoder(void)
