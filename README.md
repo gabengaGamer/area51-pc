@@ -15,13 +15,6 @@ The main goal is to get the source code into a buildable state on modern systems
 
 [![Join our Discord](https://github.com/gabengaGamer/area51-pc/assets/54669564/bac6c8a8-2d95-4513-8943-c5c26bd09173)](https://discord.gg/7gGhFSjxsq)
 
-## PC Code Issues
-
-1. **Console UI (Incomplete Interface):**
-The PC version is currently using the console UI. This results in:
-
-  - Missing PC-specific settings (graphics, keybindings, etc.)
-
 ## Building PC Code
 
 The following prerequisites are required to build the source tree for PC:
