@@ -80,6 +80,8 @@ protected:
 
     void                ResetSlides          ( void );
     void                ReleaseSlides        ( void );
+    void                ResetSlideshowClock  ( void );
+    void                AdvanceSlideshowClock( f32 DeltaTime );
     irect               ScaleBaseRect        ( s32 L, s32 T, s32 R, s32 B ) const;
     irect               GetScreenRect        ( void ) const;
     irect               GetLevelNameRect     ( void ) const;
@@ -102,6 +104,8 @@ protected:
     xbool               m_FinalFadeoutStarted;
     f32                 m_ElapsedTime;
     f32                 m_FadeTimeElapsed;
+    f32                 m_AudioPrevTime;
+    f32                 m_AudioPredictedTime;
 };
 
 //==============================================================================

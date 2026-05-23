@@ -20,6 +20,8 @@
 #define LOAD_BASE_WIDTH             512
 #define LOAD_BASE_HEIGHT            448
 #define FINAL_FADE_OUT_TIME         1.0f
+#define SLIDESHOW_MAX_AUDIO_ERROR_TIME (2.5f / 30.0f)
+#define SLIDESHOW_MAX_AUDIO_ERROR_FIX  (1.0f / 3.0f)
 
 #define LEVEL_NAME_LEFT            -50
 #define LEVEL_NAME_TOP             313
@@ -113,6 +115,8 @@ xbool dlg_load_game::Create( s32                        UserID,
     m_FinalFadeoutStarted   = FALSE;
     m_ElapsedTime           = 0.0f;
     m_FadeTimeElapsed       = 0.0f;
+    m_AudioPrevTime         = 0.0f;
+    m_AudioPredictedTime    = 0.0f;
 
     ResetSlides();
 
@@ -160,6 +164,66 @@ void dlg_load_game::ReleaseSlides( void )
         }
 
         m_Slides[i].BMP.Kill();
+    }
+}
+
+//=========================================================================
+
+void dlg_load_game::ResetSlideshowClock( void )
+{
+    m_ElapsedTime        = 0.0f;
+    m_AudioPrevTime      = 0.0f;
+    m_AudioPredictedTime = 0.0f;
+}
+
+//=========================================================================
+
+void dlg_load_game::AdvanceSlideshowClock( f32 DeltaTime )
+{
+    if( DeltaTime <= 0.0f )
+        return;
+
+    if( g_AudioMgr.IsValidVoiceId( m_VoiceID ) )
+    {
+        f32 AudioTime = g_AudioMgr.GetCurrentPlayTime( m_VoiceID );
+
+        if( AudioTime <= 0.0f )
+        {
+            if( m_AudioPrevTime <= 0.0f )
+                return;
+
+            AudioTime = m_AudioPrevTime;
+        }
+
+        f32 AudioDeltaTime = AudioTime - m_AudioPrevTime;
+        if( AudioDeltaTime < 0.0f )
+        {
+            AudioDeltaTime = 0.0f;
+            AudioTime      = m_AudioPrevTime;
+        }
+
+        m_AudioPrevTime = AudioTime;
+
+        if( AudioDeltaTime > 0.0f )
+            m_AudioPredictedTime = AudioTime;
+        else
+            m_AudioPredictedTime += DeltaTime;
+
+        if( m_ElapsedTime <= 0.0f )
+            m_ElapsedTime = AudioTime;
+        else
+            m_ElapsedTime += DeltaTime;
+
+        f32 Error = m_AudioPredictedTime - m_ElapsedTime;
+        if( x_abs( Error ) > SLIDESHOW_MAX_AUDIO_ERROR_TIME )
+        {
+            f32 MaxError = DeltaTime * SLIDESHOW_MAX_AUDIO_ERROR_FIX;
+            m_ElapsedTime += MINMAX( -MaxError, Error, MaxError );
+        }
+    }
+    else
+    {
+        m_ElapsedTime += DeltaTime;
     }
 }
 
@@ -411,7 +475,7 @@ void dlg_load_game::OnPadSelect( ui_win* pWin )
             g_AudioMgr.Release( m_VoiceID, 0.0f );
 
         m_SlideshowState = STATE_LOADING;
-        m_ElapsedTime    = 0.0f;
+        ResetSlideshowClock();
     }
 }
 
@@ -432,10 +496,7 @@ void dlg_load_game::OnUpdate( ui_win* pWin, f32 DeltaTime )
 
     if( m_SlideshowState == STATE_SLIDESHOW )
     {
-        if( g_AudioMgr.IsValidVoiceId( m_VoiceID ) )
-            m_ElapsedTime = g_AudioMgr.GetCurrentPlayTime( m_VoiceID );
-        else
-            m_ElapsedTime += DeltaTime;
+        AdvanceSlideshowClock( DeltaTime );
 
         if( m_LoadingComplete &&
             !m_FinalFadeoutStarted &&
@@ -484,8 +545,8 @@ void dlg_load_game::StartLoadingProcess( void )
     m_SlideshowState      = STATE_SETUP;
     m_LoadingComplete     = FALSE;
     m_FinalFadeoutStarted = FALSE;
-    m_ElapsedTime         = 0.0f;
     m_FadeTimeElapsed     = 0.0f;
+    ResetSlideshowClock();
 
     m_NameText.Clear();
     m_NameText += g_ActiveConfig.GetLevelName();
@@ -583,7 +644,7 @@ void dlg_load_game::StartSlideshow( void )
     ASSERT( m_SlideshowState == STATE_SETUP );
 
     m_SlideshowState = (m_nSlides > 0) ? STATE_SLIDESHOW : STATE_LOADING;
-    m_ElapsedTime    = 0.0f;
+    ResetSlideshowClock();
 }
 
 //=========================================================================
