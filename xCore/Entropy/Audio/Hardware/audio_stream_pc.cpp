@@ -6,6 +6,7 @@
 
 #include "audio_hardware.hpp"
 #include "audio_stream_mgr.hpp"
+#include "audio_mp3_mgr.hpp"
 #include "e_Virtual.hpp"
 
 //------------------------------------------------------------------------------
@@ -147,6 +148,15 @@ void audio_stream_mgr::Kill( void )
     // For each stream...
     for( s32 i=0 ; i<MAX_AUDIO_STREAMS ; i++ )
     {
+        if( (m_AudioStreams[i].CompressionType == MP3) && m_AudioStreams[i].HandleMP3 )
+            g_AudioMP3Mgr.Close( &m_AudioStreams[i] );
+
+        if( m_AudioStreams[i].FileHandle )
+        {
+            g_IOFSMgr.Close( m_AudioStreams[i].FileHandle );
+            m_AudioStreams[i].FileHandle = NULL;
+        }
+
         // Delete the streams io_request.
         delete [] m_AudioStreams[ i ].pIoRequest;
     }

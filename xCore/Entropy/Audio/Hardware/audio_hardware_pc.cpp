@@ -260,6 +260,9 @@ void audio_hardware::Kill( void )
 {
     ASSERT( s_IsInitialized );
 
+	// Shut down the mp3 decoder while the stream table is still valid.
+	g_AudioMP3Mgr.Kill();
+
     // Kill IAL
     IAL_Kill();
 
@@ -621,11 +624,22 @@ FILE* fR = NULL;
 
 void audio_hardware::UpdateMP3( audio_stream* pStream )
 {
-	if( !pStream || !pStream->pChannel[0] )
+	if( !pStream )
         return;
+
+	g_AudioHardware.Lock();
+
+	if( (pStream->Type == INACTIVE) || !pStream->pChannel[0] )
+	{
+		g_AudioHardware.Unlock();
+        return;
+	}
         
     if( pStream->Type == STEREO_STREAM && !pStream->pChannel[1] )
+	{
+		g_AudioHardware.Unlock();
         return;
+	}
 	
 	u32 ARAM;
 	u32 Cursor;
@@ -658,6 +672,8 @@ void audio_hardware::UpdateMP3( audio_stream* pStream )
 	// Switch buffers.
 	if( ++s_WhichBuffer >= MAX_AUDIO_STREAMS )
 		s_WhichBuffer = 0;
+
+	g_AudioHardware.Unlock();
 }
 
 //------------------------------------------------------------------------------

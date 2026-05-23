@@ -66,6 +66,24 @@ audio_stream_mgr g_AudioStreamMgr;
 //------------------------------------------------------------------------------
 // Helper functions.
 
+static void audio_stream_close_file( audio_stream* pStream )
+{
+    ASSERT( pStream );
+
+#if defined(TARGET_PC)
+    if( (pStream->CompressionType == MP3) && pStream->HandleMP3 )
+        g_AudioMP3Mgr.Close( pStream );
+#endif
+
+    if( pStream->FileHandle )
+    {
+        g_IOFSMgr.Close( pStream->FileHandle );
+        pStream->FileHandle = NULL;
+    }
+}
+
+//------------------------------------------------------------------------------
+
 static void read_callback_0_0( io_request* pRequest )
 {
     audio_stream_read_callback( pRequest, &g_AudioStreamMgr.m_AudioStreams[0], 0 );
@@ -353,6 +371,16 @@ void audio_stream_mgr::ReleaseStream( audio_stream* pStream )
     // TODO: Error check.
     pStream->Type = INACTIVE;
 
+    if( pStream->CompressionType == MP3 )
+    {
+        pStream->bOpenStream  = FALSE;
+        pStream->bStartStream = FALSE;
+        pStream->bStopStream  = FALSE;
+        pStream->StreamDone   = TRUE;
+        audio_stream_close_file( pStream );
+        return;
+    }
+
     // Stop it now..
     pStream->bStopStream = TRUE;
 }
@@ -490,6 +518,11 @@ void audio_stream_mgr::Update( void )
 
 
         // Need to open the stream?
+        if( pStream->bOpenStream && (pStream->Type == INACTIVE) )
+        {
+            pStream->bOpenStream = FALSE;
+        }
+
         if( pStream->bOpenStream )
         {
 #ifdef LOG_AUDIO_STREAM_UPDATE
@@ -498,27 +531,41 @@ void audio_stream_mgr::Update( void )
                 pVoice = pStream->pChannel[0]->pElement->pVoice;
             LOG_MESSAGE( LOG_AUDIO_STREAM_UPDATE, "Open! pStream: 0x%08x, pVoice: 0x%08x", pStream, pVoice  );
 #endif            
+            g_AudioHardware.Lock();
+
             // Reset flag.
             pStream->bOpenStream = FALSE;
 
             // Open the file.
             ASSERT( pStream->FileHandle == NULL );
-            ASSERT( VALID_CHANNEL( pStream->pChannel[0] ) );
-            if( pStream->pChannel[0]->pElement && pStream->pChannel[0]->pElement->pVoice && pStream->pChannel[0]->pElement->pVoice->pPackage )
+            if( (pStream->Type != INACTIVE) &&
+                pStream->pChannel[0] &&
+                VALID_CHANNEL( pStream->pChannel[0] ) &&
+                pStream->pChannel[0]->pElement &&
+                pStream->pChannel[0]->pElement->pVoice &&
+                pStream->pChannel[0]->pElement->pVoice->pPackage )
             {
                 // Open the file to stream from.
                 pStream->FileHandle = g_IOFSMgr.Open( pStream->pChannel[0]->pElement->pVoice->pPackage->m_Filename, "rb" ); 
                 ASSERT( pStream->FileHandle );
-                g_IOFSMgr.EnableChecksum( pStream->FileHandle, FALSE );
 
-                if( pStream->CompressionType == MP3 )
+                if( pStream->FileHandle )
                 {
-                    pStream->bStartStream = TRUE;
+                    g_IOFSMgr.EnableChecksum( pStream->FileHandle, FALSE );
+
+                    if( pStream->CompressionType == MP3 )
+                    {
+                        pStream->bStartStream = TRUE;
+                    }
+                    else
+                    {
+                        // Now warm up the stream.
+                        g_AudioStreamMgr.WarmStream( pStream );
+                    }
                 }
                 else
                 {
-                    // Now warm up the stream.
-                    g_AudioStreamMgr.WarmStream( pStream );
+                    pStream->bStopStream = TRUE;
                 }
             }
             else
@@ -530,6 +577,8 @@ void audio_stream_mgr::Update( void )
                 LOG_MESSAGE( LOG_AUDIO_STREAM_UPDATE, "Open Failed! pStream: 0x%08x, pVoice: 0x%08x", pStream, pVoice  );
 #endif            
             }
+
+            g_AudioHardware.Unlock();
         }
 
         // Start the stream?
@@ -542,6 +591,14 @@ void audio_stream_mgr::Update( void )
             LOG_MESSAGE( LOG_AUDIO_STREAM_UPDATE, "Start! pStream: 0x%08x, pVoice: 0x%08x", pStream, pVoice  );
 #endif
             
+            g_AudioHardware.Lock();
+
+            if( pStream->Type == INACTIVE )
+            {
+                g_AudioHardware.Unlock();
+                continue;
+            }
+
             // Clear the flag
             pStream->bStartStream = FALSE;
             
@@ -638,6 +695,8 @@ void audio_stream_mgr::Update( void )
                     ASSERT( 0 );
                     break;
             }
+
+            g_AudioHardware.Unlock();
         }
         // Stop the stream?
         else if( pStream->bStopStream )
@@ -658,28 +717,9 @@ void audio_stream_mgr::Update( void )
                 
                 // Clear flag
                 pStream->bStopStream = FALSE;
-
-#if defined(TARGET_PC)
-                // Nuke the mp3 stream.
-                if( (pStream->CompressionType == MP3) && pStream->HandleMP3 )
-                    g_AudioMP3Mgr.Close( pStream );
-#endif
-
-                // Close the file.
-                if( pStream->FileHandle )
-                {
-                    g_IOFSMgr.Close( pStream->FileHandle );
-                    pStream->FileHandle = NULL;
-                }
-                else
-                {
-#ifdef LOG_AUDIO_STREAM_UPDATE
-                    voice* pVoice = NULL;
-                    if( pStream->pChannel[0] && pStream->pChannel[0]->pElement )
-                        pVoice = pStream->pChannel[0]->pElement->pVoice;
-                    LOG_MESSAGE( LOG_AUDIO_STREAM_UPDATE, "Stop Failed! pStream: 0x%08x, pVoice: 0x%08x", pStream, pVoice );
-#endif
-                }
+                pStream->bOpenStream  = FALSE;
+                pStream->bStartStream = FALSE;
+                audio_stream_close_file( pStream );
             }
         }
         // If its active, then just do the hardware stream update...
