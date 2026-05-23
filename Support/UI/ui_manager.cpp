@@ -245,6 +245,15 @@ const button_code* GetButtonCodeTable( input_platform Platform )
 //=========================================================================
 
 static
+xbool IsControllerButtonCode( s32 ButtonCode )
+{
+    return( ((ButtonCode >= XBOX_BUTTON_A)     && (ButtonCode <= XBOX_BUTTON_START)) ||
+            ((ButtonCode >= PS2_BUTTON_CROSS) && (ButtonCode <= PS2_BUTTON_START )) );
+}
+
+//=========================================================================
+
+static
 xbool UseLocalizedXboxButtonTexture( s32 ButtonCode )
 {
     if( (ButtonCode != XBOX_BUTTON_TRIGGER_L) && (ButtonCode != XBOX_BUTTON_TRIGGER_R) )
@@ -2871,6 +2880,7 @@ xbool ReadButtonCodeString( const xwchar* pString, s32 iStart, xwstring& CodeStr
 s32 ui_manager::LookUpButtonCode( const xwchar* pString, s32 iStart ) const
 {
     xwstring codeString;
+    xbool    IsGamepadActive = IsGamepadActiveInput();
 
     if( !pString )
         return -1;
@@ -2878,7 +2888,7 @@ s32 ui_manager::LookUpButtonCode( const xwchar* pString, s32 iStart ) const
     while( pString[iStart] == 0xAB )
         iStart++;
  
-    if( IsGamepadActiveInput() )
+    if( IsGamepadActive )
     {
         input_gadget GadgetID = ingame_pad::GetInputPromptGadget( pString + iStart );
         if( GadgetID != INPUT_UNDEFINED )
@@ -2892,16 +2902,19 @@ s32 ui_manager::LookUpButtonCode( const xwchar* pString, s32 iStart ) const
     if( !ReadButtonCodeString( pString, iStart, codeString ) )
         return -1;
  
-    // On keyboard/mouse, don't show any button prompts (stub)
-    if( !IsGamepadActiveInput() )
-        return -1;
- 
     const button_code* pButtonCodeTable = GetButtonCodeTable( g_InputMgr.GetActivePlatform() );
  
     for( s32 i = 0; i < NUM_BUTTON_CODES; i++ )
     {
         if( x_wstrcmp( codeString, pButtonCodeTable[i].CodeString ) == 0 )
-            return pButtonCodeTable[i].ButtonCode;
+        {
+            s32 ButtonCode = pButtonCodeTable[i].ButtonCode;
+
+            if( !IsGamepadActive && IsControllerButtonCode( ButtonCode ) )
+                return -1;
+
+            return ButtonCode;
+        }
     }
  
     return -1;
