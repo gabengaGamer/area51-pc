@@ -33,49 +33,48 @@ static  x_console_territory s_Territory = XL_TERRITORY_AMERICA;
 
 
 //==============================================================================
-//  INTERNALS
+//  HELPER FUNCTIONS
 //==============================================================================
 
 // GS: Let's continue to obtain the system language this way for now; 
 // in the future, the user will have to specify it in the UI themselves.
 
 #ifdef TARGET_PC
-static x_language x_MapWindowsLanguage( LANGID const LangId )
+static 
+x_language x_MapWindowsLanguage( LANGID const LangId )
 {
     WORD const Primary = PRIMARYLANGID( LangId );
 
-    // Fonts is still broken, so skip this stuff, for now.
-
-    //switch( Primary )
-    //{
-    //    case LANG_ENGLISH:     return XL_LANG_ENGLISH;
-    //    case LANG_FRENCH:      return XL_LANG_FRENCH;
-    //    case LANG_GERMAN:      return XL_LANG_GERMAN;
-    //    case LANG_ITALIAN:     return XL_LANG_ITALIAN;
-    //    case LANG_SPANISH:     return XL_LANG_SPANISH;    
-    //    case LANG_DUTCH:       return XL_LANG_DUTCH;    
-    //    case LANG_JAPANESE:    return XL_LANG_JAPANESE;   
-    //    case LANG_KOREAN:      return XL_LANG_KOREAN;   
-    //    case LANG_PORTUGUESE:  return XL_LANG_PORTUGUESE; 
-    //    case LANG_RUSSIAN:     return XL_LANG_RUSSIAN;    
-    //    case LANG_CHINESE:
-    //    {
-    //        WORD const SubLang = SUBLANGID( LangId );
-	//
-    //        switch( SubLang )
-    //        {
-    //            case SUBLANG_CHINESE_TRADITIONAL:
-    //            case SUBLANG_CHINESE_HONGKONG:
-    //            case SUBLANG_CHINESE_MACAU: // TODO: 
-    //                return XL_LANG_ENGLISH; //XL_LANG_TCHINESE
-    //            default:
-    //                break;
-    //        }
-    //        break;
-    //    }
-    //    default:
-	//	    return XL_LANG_ENGLISH;
-    //}
+    switch( Primary )
+    {
+        case LANG_ENGLISH:     return XL_LANG_ENGLISH;
+        case LANG_FRENCH:      return XL_LANG_FRENCH;
+        case LANG_GERMAN:      return XL_LANG_GERMAN;
+        case LANG_ITALIAN:     return XL_LANG_ITALIAN;
+        case LANG_SPANISH:     return XL_LANG_SPANISH;    
+        //case LANG_DUTCH:       return XL_LANG_DUTCH;    
+        //case LANG_JAPANESE:    return XL_LANG_JAPANESE;   
+        //case LANG_KOREAN:      return XL_LANG_KOREAN;   
+        //case LANG_PORTUGUESE:  return XL_LANG_PORTUGUESE; 
+        //case LANG_RUSSIAN:     return XL_LANG_RUSSIAN;    
+        //case LANG_CHINESE:
+        //{
+        //    WORD const SubLang = SUBLANGID( LangId );
+		//
+        //    switch( SubLang )
+        //    {
+        //        case SUBLANG_CHINESE_TRADITIONAL:
+        //        case SUBLANG_CHINESE_HONGKONG:
+        //        case SUBLANG_CHINESE_MACAU:
+        //            return XL_LANG_TCHINESE;
+        //        default:
+        //            break;
+        //    }
+        //    break;
+        //}
+        default:
+		    return XL_LANG_ENGLISH;
+    }
 	
 	return XL_LANG_ENGLISH;
 }
@@ -87,7 +86,8 @@ static x_language x_MapWindowsLanguage( LANGID const LangId )
 // please stick to this standard when adding new languages.
 // Note also, that these must appear in the same order as the language enums!!
 
-static const char* const s_pLanguageStrISO639_2[] =
+static 
+const char* const s_pLanguageStrISO639_2[] =
 {
     "ENG",      // XL_LANG_ENGLISH
     "FRE",      // XL_LANG_FRENCH
@@ -104,7 +104,8 @@ static const char* const s_pLanguageStrISO639_2[] =
 
 //==============================================================================
 
-static const char* const s_pLanguageStrISO639_1[] =
+static 
+const char* const s_pLanguageStrISO639_1[] =
 {
     "en",       // XL_LANG_ENGLISH
     "fr",       // XL_LANG_FRENCH
@@ -121,7 +122,8 @@ static const char* const s_pLanguageStrISO639_1[] =
 
 //==============================================================================
 
-static const char* x_GetLocaleStringInternal( x_language const lang, x_locale_code_format const format )
+static 
+const char* x_GetLocaleStringInternal( x_language const lang, x_locale_code_format const format )
 {
     ASSERT( lang < XL_NUM_LANGUAGES );
     ASSERT( format < XL_NUM_LOCALE_CODE_FORMATS );
@@ -139,7 +141,7 @@ static const char* x_GetLocaleStringInternal( x_language const lang, x_locale_co
 }
 
 //==============================================================================
-//  IMPLEMENTATION
+//  FUNCTIONS
 //==============================================================================
 
 //==============================================================================
@@ -161,12 +163,6 @@ const x_language x_GetConsoleLanguage( void )
 #ifdef TARGET_PC
     LANGID const LangId = GetUserDefaultLangID();
     x_language const Lang = x_MapWindowsLanguage( LangId );
-
-    if( (Lang == XL_LANG_ENGLISH) && (PRIMARYLANGID( LangId ) != LANG_ENGLISH) )
-    {
-        x_DebugMsg( "x_GetConsoleLanguage: Unsupported Windows language (%u), defaulting to English.\n", LangId );
-    }
-
     return Lang;
 #else
     return XL_LANG_ENGLISH;
