@@ -426,7 +426,7 @@ void Update( f32 DeltaTime )
     g_PolyCache.Update();
     #endif
 
-    if( HandleInput( DeltaTime )==FALSE )
+    if( !g_StateMgr.IsPaused() && (HandleInput( DeltaTime )==FALSE) )
     {
         g_ActiveConfig.SetExitReason( GAME_EXIT_PLAYER_QUIT );
     }
@@ -446,7 +446,10 @@ void Update( f32 DeltaTime )
 
     ASSERT( g_StateMgr.IsBackgroundThreadRunning()==FALSE );
     // run pause menu
-    g_StateMgr.Update( DeltaTime );
+    if( !g_StateMgr.IsPaused() )
+    {
+        g_StateMgr.Update( DeltaTime );
+    }
 
     // should not pause the game logic for multiplayer or online games!
     if( 
@@ -1264,8 +1267,9 @@ void RunGame( void )
     // Level is fully loaded and startup trigger has run, notify scripts.
     g_ScriptMgr.NotifyLevelStart();
 
-    f32 DeltaTime   = 0.0f;
-    f32 Accumulator = 0.0f;
+    f32 DeltaTime       = 0.0f;
+    f32 FrameDeltaTime  = 0.0f;
+    f32 Accumulator     = 0.0f;
 
     g_GameTimer.Reset();
     g_GameTimer.Start();
@@ -1293,6 +1297,8 @@ void RunGame( void )
 //          x_DelayThread( DelayTime );
             DeltaTime = g_GameTimer.ReadSec();
             #endif
+
+            FrameDeltaTime = DeltaTime;
 
             if( DeltaTime < 0.0f )
             {
@@ -1333,6 +1339,31 @@ void RunGame( void )
 
             if( g_ActiveConfig.GetExitReason() != GAME_EXIT_CONTINUE )
                 break;
+        }
+
+        if( g_StateMgr.IsPaused() )
+        {
+            f32 PauseDeltaTime = FrameDeltaTime;
+
+            if( PauseDeltaTime < 0.0f )
+            {
+                PauseDeltaTime = FIXED_UPDATE_DELTA_TIME;
+            }
+            else if( PauseDeltaTime > MAX_FRAME_DELTA_TIME )
+            {
+                PauseDeltaTime = FIXED_UPDATE_DELTA_TIME;
+            }
+
+            if( HandleInput( PauseDeltaTime )==FALSE )
+            {
+                g_ActiveConfig.SetExitReason( GAME_EXIT_PLAYER_QUIT );
+            }
+
+            if( g_ActiveConfig.GetExitReason() == GAME_EXIT_CONTINUE )
+            {
+                ASSERT( g_StateMgr.IsBackgroundThreadRunning()==FALSE );
+                g_StateMgr.Update( PauseDeltaTime );
+            }
         }
 
         //
