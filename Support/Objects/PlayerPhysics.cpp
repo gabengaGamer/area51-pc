@@ -1,8 +1,15 @@
 //==============================================================================
 //
+//
 //  PlayerPhysics.cpp
+//
 // 
 //==============================================================================
+
+//==============================================================================
+//  INCLUDES
+//==============================================================================
+
 #if defined(bwatson)
 #define X_SUPPRESS_LOGS
 #endif
@@ -50,6 +57,8 @@ static f32 SlowYawMultiplier = 2.0f;
 static f32 FastYawMultiplier = 5.2f;
 static f32 StickModeChange   = 0.99f;
 static f32 InitialYawMultiplier = 0.05f; // the smaller the faster start with a big stick change
+static f32 MouseYawRadiansPerUnit = DEG_TO_RAD( 2.0f );
+static f32 MousePitchRadiansPerUnit = DEG_TO_RAD( 2.0f );
 static const f32 s_DistanceAtR25 = 700.0f;
 
 f32 HumanSpeedFactor  = 1.000f;
@@ -62,6 +71,72 @@ tweak_handle MP_RunSpeedFactor_NormalTweak      ("MP_RunSpeedFactor_Normal");
 tweak_handle MP_StrafeSpeedFactor_NormalTweak   ("MP_StrafeSpeedFactor_Normal");
 tweak_handle MP_RunSpeedFactor_MutantTweak      ("MP_RunSpeedFactor_Mutant");
 tweak_handle MP_StrafeSpeedFactor_MutantTweak   ("MP_StrafeSpeedFactor_Mutant");
+
+//===========================================================================
+// FUNCTIONS
+//===========================================================================
+
+void player::UpdateLookAccelerationFactors( f32 DeltaTime )
+{
+    switch( m_LookInputMode )
+    {
+    case LOOK_INPUT_GAMEPAD:
+        CalculateRotationAccelerationFactors( DeltaTime );
+        break;
+
+    case LOOK_INPUT_MOUSE:
+    case LOOK_INPUT_NONE:
+    default:
+        m_YawAccelFactor   = 0.0f;
+        m_PitchAccelFactor = 0.0f;
+        break;
+    }
+}
+
+//===========================================================================
+
+void player::ApplyGamepadLookRotation( const f32& rDeltaTime )
+{
+    const f32 AbsYawValue = x_abs( m_fYawValue );
+    const f32 YawChange = x_abs( m_fYawValue - m_fPreviousYawValue );
+
+    static f32 MaxYawChange = 0.0f;
+    if ( YawChange > MaxYawChange ) MaxYawChange = YawChange;
+
+    if ( (AbsYawValue > 0.0f) && (AbsYawValue < StickModeChange) )
+    {
+        f32 P = m_fYawValue * SlowYawMultiplier * rDeltaTime;
+        m_Yaw   += P;
+        m_YawAccelFactor = P / (m_fYawValue * FastYawMultiplier * rDeltaTime * m_fCurrentYawAimModifier);
+        m_YawAccelFactor = MIN( 1.0f, m_YawAccelFactor );
+        m_YawAccelFactor = MAX( 0.0f, m_YawAccelFactor );
+    }
+    else
+    {
+        if ( YawChange >= StickModeChange )
+        {
+            // The stick just moved really far, really fast, give ourselves a nice kick start rather than a soft start
+            m_YawAccelFactor = MAX( m_YawAccelFactor, rDeltaTime / (m_YawAccelTime * InitialYawMultiplier) );
+            m_YawAccelFactor = MIN( 1.0f, m_YawAccelFactor );
+            m_YawAccelFactor = MAX( 0.0f, m_YawAccelFactor );
+        }
+
+        f32 P = m_fYawValue * FastYawMultiplier * rDeltaTime * m_YawAccelFactor * m_fCurrentYawAimModifier;
+        m_Yaw   += P;
+    }
+
+    m_Pitch += m_fPitchValue * rDeltaTime * m_fPitchStickSensitivity * m_PitchAccelFactor * m_fCurrentPitchAimModifier;
+}
+
+//===========================================================================
+
+void player::ApplyMouseLookRotation( void )
+{
+    m_Yaw   += m_fYawValue   * MouseYawRadiansPerUnit   * m_fCurrentYawAimModifier;
+    m_Pitch += m_fPitchValue * MousePitchRadiansPerUnit * m_fCurrentPitchAimModifier;
+}
+
+//===========================================================================
 
 void player::UpdateRotation( const f32& rDeltaTime )
 {
@@ -76,7 +151,7 @@ void player::UpdateRotation( const f32& rDeltaTime )
     LoadAimAssistTweaks();
 
     CalculatePitchLimits( rDeltaTime );
-    CalculateRotationAccelerationFactors( rDeltaTime );
+    UpdateLookAccelerationFactors( rDeltaTime );
     UpdateAimAssistance ( rDeltaTime );
     UpdateAimOffset     ( rDeltaTime );
 
@@ -122,37 +197,22 @@ void player::UpdateRotation( const f32& rDeltaTime )
     LOG_MESSAGE("player::UpdateRotation", "m_fCurrentYawAimModifier = %f", m_fCurrentYawAimModifier);
 #endif
 
-    const f32 AbsYawValue = x_abs( m_fYawValue );
-    const f32 YawChange = x_abs( m_fYawValue - m_fPreviousYawValue );
-
-    static f32 MaxYawChange = 0.0f;
-    if ( YawChange > MaxYawChange ) MaxYawChange = YawChange;
-
-    if ( (AbsYawValue > 0.0f) && (AbsYawValue < StickModeChange) )
+    switch( m_LookInputMode )
     {
-        f32 P = m_fYawValue * SlowYawMultiplier * rDeltaTime;
-        m_Yaw   += P;
-        m_YawAccelFactor = P / (m_fYawValue * FastYawMultiplier * rDeltaTime * m_fCurrentYawAimModifier);
-        m_YawAccelFactor = MIN( 1.0f, m_YawAccelFactor );
-        m_YawAccelFactor = MAX( 0.0f, m_YawAccelFactor );
-    }
-    else
-    {
-        if ( YawChange >= StickModeChange )
-        {
-            // The stick just moved really far, really fast, give ourselves a nice kick start rather than a soft start
-            m_YawAccelFactor = MAX( m_YawAccelFactor, rDeltaTime / (m_YawAccelTime * InitialYawMultiplier) );
-            m_YawAccelFactor = MIN( 1.0f, m_YawAccelFactor );
-            m_YawAccelFactor = MAX( 0.0f, m_YawAccelFactor );
-        }
+    case LOOK_INPUT_GAMEPAD:
+        ApplyGamepadLookRotation( rDeltaTime );
+        break;
 
-        f32 P = m_fYawValue * FastYawMultiplier * rDeltaTime * m_YawAccelFactor * m_fCurrentYawAimModifier;
-        m_Yaw   += P;
+    case LOOK_INPUT_MOUSE:
+        ApplyMouseLookRotation();
+        break;
+
+    case LOOK_INPUT_NONE:
+    default:
+        break;
     }
 
     m_Yaw += fAimYawOffset;
-
-    m_Pitch += m_fPitchValue * rDeltaTime * m_fPitchStickSensitivity * m_PitchAccelFactor * m_fCurrentPitchAimModifier;
     m_Pitch  = MIN( m_PitchMax, MAX( m_PitchMin , m_Pitch ) );
 
     if ( m_bInTurret )
@@ -378,8 +438,8 @@ void player::CalculateMoveRigOffset( f32 DeltaTime )
 }
 
 //===========================================================================
-// YAW
-void player::CalculateLookHorozOffset( f32 DeltaTime )
+
+void player::CalculateLookHorozOffset( f32 DeltaTime ) // YAW
 {
     xbool bLookingLeft = FALSE;
     xbool bLookingRight = FALSE;
@@ -419,8 +479,8 @@ void player::CalculateLookHorozOffset( f32 DeltaTime )
 }
 
 //===========================================================================
-// PITCH
-void player::CalculateLookVertOffset( f32 DeltaTime )
+
+void player::CalculateLookVertOffset( f32 DeltaTime ) // PITCH
 {
     xbool bLookingUp = FALSE;
     xbool bLookingDown = FALSE;
@@ -491,8 +551,6 @@ void player::CalculateRotationAccelerationFactors( f32 DeltaTime )
 }
 
 //===========================================================================
-// The stick position determines the maximum turn rate
-// The stick position also determines the turn acceleration
 
 void player::UpdateRotationRates( f32 DeltaTime )
 {
@@ -500,7 +558,6 @@ void player::UpdateRotationRates( f32 DeltaTime )
 }
 
 //===========================================================================
-
 
 void player::CalculatePitchLimits( const f32& rDeltaTime )
 {
@@ -544,6 +601,7 @@ void player::CalculatePitchLimits( const f32& rDeltaTime )
 // Scales velocity and speed with respect to plane normal:
 // NOTE: Velocity and speed are handled separately because Velocity has DeltaTime
 // baked into it and speed does not - don't ask me why...
+
 static
 void ScaleVelocityComponent( const vector3& PlaneNormal, 
                              f32            PerpScale, 
@@ -772,8 +830,6 @@ f32 player::GetMaxVelocity( void )
 
 //===========================================================================
 
-//===========================================================================
-// Returns guid of ladder if player is intersecting a ladder
 guid player::IsInLadderField( void )
 {
     // Lookup character physics
@@ -935,7 +991,6 @@ xbool player::UpdateLadderMovement( f32 DeltaTime )
 
 //===========================================================================
 
-
 void player::Jump( void )
 {
 #if defined(aharp) && !defined(X_EDITOR)
@@ -1045,6 +1100,3 @@ void player::UpdateFellFromAltitude( void )
         m_FellFromAltitude = Altitude;
     }
 }
-
-//==============================================================================
-

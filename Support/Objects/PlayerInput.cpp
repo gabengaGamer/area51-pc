@@ -1,8 +1,15 @@
 //==============================================================================
 //
+//
 //  PlayerInput.cpp
+//
 // 
 //==============================================================================
+
+//==============================================================================
+//  INCLUDES
+//==============================================================================
+
 #if defined(bwatson)
 #define X_SUPPRESS_LOGS
 #endif
@@ -58,6 +65,59 @@ f32 g_CrouchUpVelocity    = 80.0f;
 
 static f32 MIN_TIME_BETWEEN_MUTATION_CHANGES = 0.5f;
 
+//==============================================================================
+// HELPER FUNCTIONS
+//==============================================================================
+
+struct controller_scale_tweak
+{
+    vector2 Point0;
+    vector2 Point1;
+    vector2 Direction0;
+    vector2 Direction1;
+} ;
+
+//---------------------------------------------------------------------------
+
+controller_scale_tweak g_ControllerScaleTweak
+    = { vector2( 0.0f, 0.0f ),      // Point0
+        vector2( 1.0f, 1.0f ),      // Point1
+        vector2( 1.0f, 0.1f ),      // Direction0
+        vector2( 0.0f, 3.2f ) };    // Direction1
+
+//---------------------------------------------------------------------------
+
+static 
+f32 ScaleGamepadLookAxis( f32 Value )
+{
+    f32 Sign = (Value < 0.0f) ? -1.0f : 1.0f;
+    f32 s = x_abs( Value );
+    f32 s2 = s * s;
+    f32 s3 = s * s * s;
+    f32 h1 = (2.0f * s3) - (3 * s2) + 1;
+    f32 h2 = (-2.0f * s3) + (3 * s2);
+    f32 h3 = s3 - (2.0f * s2) + s;
+    f32 h4 = s3 - s2;
+
+    f32 ScaledValue = (h1 * g_ControllerScaleTweak.Point0.Y)
+                    + (h2 * g_ControllerScaleTweak.Point1.Y)
+                    + (h3 * g_ControllerScaleTweak.Direction0.Y)
+                    + (h4 * g_ControllerScaleTweak.Direction1.Y);
+
+    return ScaledValue * Sign;
+}
+
+//==============================================================================
+
+static 
+f32 GetMouseLookSensitivityScale( u32 Sensitivity )
+{
+    return 0.1f + (Sensitivity / 100.0f);
+}
+
+//==============================================================================
+// FUNCTIONS
+//==============================================================================
 
 void player::UpdateUserInput(  f32 DeltaTime )
 {
@@ -67,35 +127,7 @@ void player::UpdateUserInput(  f32 DeltaTime )
 #ifndef X_EDITOR
     if ( g_StateMgr.IsPaused() )
     {
-#if defined(TARGET_XBOX) && !defined(X_EDITOR)
-        // Still allow voice chat when in menus for xbox only.
-        if( g_NetworkMgr.IsOnline() )
-        {
-            if( g_IngamePad[m_ActivePlayerPad].GetLogical( ingame_pad::ACTION_TALK_MODE_TOGGLE ).WasValue )
-            {
-                g_VoiceMgr.ToggleTalkMode();
-            }
-
-            // Voice chat
-            {
-                g_VoiceMgr.SetTalking( FALSE );
-
-                if( g_VoiceMgr.IsHeadsetPresent() == TRUE )
-                {
-                    // check for voice chat
-                    if( g_IngamePad[m_ActivePlayerPad].GetLogical( ingame_pad::ACTION_CHAT ).IsValue )
-                    {
-                        // Test to make sure the player is allowed to chat
-                        if( (g_VoiceMgr.IsVoiceBanned()  == FALSE) &&
-                            (g_VoiceMgr.IsVoiceEnabled() ==  TRUE) )
-                            g_VoiceMgr.SetTalking( TRUE );
-                        return;
-                    }
-                }
-            }
-        }
-#endif
-        ClearStickInput(); 
+        ClearMoveLookInput();
         g_IngamePad[m_ActivePlayerPad].ClearAllLogical();
         return;
     }
@@ -106,19 +138,18 @@ void player::UpdateUserInput(  f32 DeltaTime )
         //Play the view cinematic
         UpdateViewCinematic( DeltaTime );
     }
-    else if ( !m_Cinema.m_bCinemaOn 
-        && (!m_bDead || !m_bCanDie) )
+    else if ( !m_Cinema.m_bCinemaOn && (!m_bDead || !m_bCanDie) )
     {
         if( m_ActivePlayerPad != -1 )
         {
             //handles button press events
             OnButtonInput();
-            UpdateStickInput();            
+            UpdateMoveLookInput();
         }
     }
     else if ( m_Cinema.m_bCinemaOn )
     {
-        ClearStickInput();    
+        ClearMoveLookInput();
         m_fMoveValue            = 0;
         m_fStrafeValue          = 0;
         m_fRawControllerYaw     = 0;
@@ -130,7 +161,7 @@ void player::UpdateUserInput(  f32 DeltaTime )
 }
 //==============================================================================
 
-void player::ClearStickInput( void )
+void player::ClearMoveLookInput( void )
 {
     m_fMoveValue            = 0.0f;
     m_fStrafeValue          = 0.0f;
@@ -138,65 +169,17 @@ void player::ClearStickInput( void )
     m_fRawControllerYaw     = 0.0f;
     m_fPitchValue           = 0.0f;
     m_fYawValue             = 0.0f;
+    m_LookInputMode         = LOOK_INPUT_NONE;
     m_fPreviousPitchValue   = 0.0f;
     m_fPreviousYawValue     = 0.0f;
 }
 
 //===========================================================================
 
-struct controller_scale_tweak
+void player::ScaleGamepadLookInput( void )
 {
-    vector2 Point0;
-    vector2 Point1;
-    vector2 Direction0;
-    vector2 Direction1;
-} ;
-
-controller_scale_tweak g_ControllerScaleTweak 
-    = { vector2( 0.0f, 0.0f ),      // Point0
-        vector2( 1.0f, 1.0f ),      // Point1
-        vector2( 1.0f, 0.1f ),      // Direction0
-        vector2( 0.0f, 3.2f ) };    // Direction1
-
-void player::ScaleYawAndPitchValues( void )
-{
-    //
-    // We need to scale the raw controller values on a spline curve
-    // The following code computes the multiplication factors for the
-    // raw controller values (pitch and yaw), so we can multiply and get the new values.
-    // The shape of the curve is tuned with Direction0.Y and Direction1.Y 
-    // in g_ControllerScaleTweak
-    //
-    f32 Sign = (m_fRawControllerYaw < 0.0f) ? -1.0f : 1.0f;
-    f32 s = x_abs( m_fRawControllerYaw );
-    f32 s2 = s * s;
-    f32 s3 = s * s * s;
-    f32 h1 = (2.0f * s3) - (3 * s2) + 1;
-    f32 h2 = (-2.0f * s3) + (3 * s2);
-    f32 h3 = s3 - (2.0f * s2) + s;
-    f32 h4 = s3 - s2;
-
-    m_fYawValue = (h1 * g_ControllerScaleTweak.Point0.Y)
-                + (h2 * g_ControllerScaleTweak.Point1.Y)
-                + (h3 * g_ControllerScaleTweak.Direction0.Y)
-                + (h4 * g_ControllerScaleTweak.Direction1.Y);
-    m_fYawValue *= Sign;
-
-    Sign = (m_fRawControllerPitch < 0.0f) ? -1.0f : 1.0f;
-    s = x_abs( m_fRawControllerPitch );
-    s2 = s * s;
-    s3 = s * s * s;
-    h1 = (2.0f * s3) - (3 * s2) + 1;
-    h2 = (-2.0f * s3) + (3 * s2);
-    h3 = s3 - (2.0f * s2) + s;
-    h4 = s3 - s2;
-
-    m_fPitchValue 
-        = (h1 * g_ControllerScaleTweak.Point0.Y)
-        + (h2 * g_ControllerScaleTweak.Point1.Y)
-        + (h3 * g_ControllerScaleTweak.Direction0.Y)
-        + (h4 * g_ControllerScaleTweak.Direction1.Y);
-    m_fPitchValue *= Sign;
+    m_fYawValue   = ScaleGamepadLookAxis( m_fRawControllerYaw );
+    m_fPitchValue = ScaleGamepadLookAxis( m_fRawControllerPitch );
 
 #ifndef X_EDITOR
     // do input sensitivity
@@ -222,25 +205,43 @@ void player::ScaleYawAndPitchValues( void )
         m_fPitchValue   = m_fPitchValue + (m_fPitchValue * Scalar_V);
     }
 #endif
-    //DrawLabelInFront( xfs( "YawValue: %f\nRawYaw%f\nPitchValue: %f\nRawPitch: %f\nSlopeYaw: %f\nSlopePitch: %f\n", m_fYawValue, m_fRawControllerYaw, m_fPitchValue, m_fRawControllerPitch, fCurrentSlopeYaw, fCurrentSlopePitch ) );
 }
 
 //==============================================================================
 
-void player::UpdateStickInput(void)
+void player::ScaleMouseLookInput( void )
+{
+#if !defined(X_EDITOR)
+    player_profile& p = g_StateMgr.GetActiveProfile( g_StateMgr.GetProfileListIndex( m_LocalSlot ) );
+
+    u32 sensitivity_H = p.GetSensitivity( SM_X_SENSITIVITY );
+    u32 sensitivity_V = p.GetSensitivity( SM_Y_SENSITIVITY );
+#else
+    u32 sensitivity_H = 32; //HACK HACK HACK!!!
+    u32 sensitivity_V = 32; //HACK HACK HACK!!!
+#endif
+
+    f32 scaleH = GetMouseLookSensitivityScale( sensitivity_H );
+    f32 scaleV = GetMouseLookSensitivityScale( sensitivity_V );
+
+    m_fYawValue   = m_fRawControllerYaw   * scaleH;
+    m_fPitchValue = m_fRawControllerPitch * scaleV;
+}
+
+//==============================================================================
+
+void player::UpdateMoveLookInput(void)
 {
     ASSERT( m_ActivePlayerPad != -1 );
 
-    m_fPreviousYawValue = m_fYawValue;
+    m_fPreviousYawValue   = m_fYawValue;
     m_fPreviousPitchValue = m_fPitchValue;
-
-#if defined(TARGET_PC) //GS: Experimental PC mouse controls.
-    const f32 MouseSmoothing = 0.90f; // A bit :)
+    m_LookInputMode       = LOOK_INPUT_NONE;
 
     m_fRawControllerYaw   = -g_IngamePad[m_ActivePlayerPad].GetLogical( ingame_pad::LOOK_HORIZONTAL ).IsValue;
     m_fRawControllerPitch =  g_IngamePad[m_ActivePlayerPad].GetLogical( ingame_pad::LOOK_VERTICAL ).IsValue;
 
-    #if !defined(X_EDITOR)
+#if !defined(X_EDITOR)
     player_profile& p = g_StateMgr.GetActiveProfile( g_StateMgr.GetProfileListIndex( m_LocalSlot ) );
 
     //MAB: removed invert Y global var - only check profile now
@@ -248,7 +249,7 @@ void player::UpdateStickInput(void)
     {
         m_fRawControllerPitch = -m_fRawControllerPitch;
     }
-    #else
+#else
     // invert Y
     extern xbool g_EditorInvertY;
     if( g_EditorInvertY )
@@ -278,35 +279,6 @@ void player::UpdateStickInput(void)
         if( pWeapon )
             pWeapon->GetCurrentAnimPlayer().SetMirrorBone( -1 );
     }
-    #endif
-
-    #if !defined(X_EDITOR)
-    u32 sensitivity_H = p.GetSensitivity( SM_X_SENSITIVITY );
-    u32 sensitivity_V = p.GetSensitivity( SM_Y_SENSITIVITY );
-    #else
-    u32 sensitivity_H = 32; //HACK HACK HACK!!!
-    u32 sensitivity_V = 32; //HACK HACK HACK!!!
-    #endif
-
-    f32 scaleH = 0.1f + (sensitivity_H / 100.0f); // 0.1f is minimal sensivity for H
-    f32 scaleV = 0.1f + (sensitivity_V / 100.0f); // 0.1f is minimal sensivity for V
-
-    f32 targetYaw   = m_fRawControllerYaw * scaleH;
-    f32 targetPitch = m_fRawControllerPitch * scaleV;
-
-    m_fYawValue   = (m_fPreviousYawValue   * (1.0f - MouseSmoothing)) + (targetYaw   * MouseSmoothing);
-    m_fPitchValue = (m_fPreviousPitchValue * (1.0f - MouseSmoothing)) + (targetPitch * MouseSmoothing);
-#else
-    m_fRawControllerYaw = -g_IngamePad[m_ActivePlayerPad].GetLogical(ingame_pad::LOOK_HORIZONTAL).IsValue;
-    m_fRawControllerPitch = g_IngamePad[m_ActivePlayerPad].GetLogical(ingame_pad::LOOK_VERTICAL).IsValue;
-
-    player_profile& p = g_StateMgr.GetActiveProfile(g_StateMgr.GetProfileListIndex(m_LocalSlot));
-    
-    //MAB: removed invert Y global var - only check profile now
-    if( p.m_bInvertY )
-    {
-        m_fRawControllerPitch = -m_fRawControllerPitch;
-    }
 #endif
 
     if ( !m_bInTurret )
@@ -324,10 +296,26 @@ void player::UpdateStickInput(void)
         m_fMoveValue   = 0.0f;
         m_fStrafeValue = 0.0f;
     }
-    //DrawLabelInFront( xfs( "RawYaw: %f\nRawPitch: %f\nRawMove: %f\nRawStrafe: %f\n", m_fRawControllerYaw, m_fRawControllerPitch, m_fMoveValue, m_fStrafeValue ) );
-#ifndef TARGET_PC
-    ScaleYawAndPitchValues();    
-#endif 
+
+    switch( g_InputMgr.GetActiveDevice() )
+    {
+    case INPUT_DEVICE_GAMEPAD:
+        m_LookInputMode = LOOK_INPUT_GAMEPAD;
+        ScaleGamepadLookInput();
+        break;
+
+    case INPUT_DEVICE_MOUSE:
+        m_LookInputMode = LOOK_INPUT_MOUSE;
+        ScaleMouseLookInput();
+        break;
+
+    case INPUT_DEVICE_KEYBOARD:
+    case INPUT_DEVICE_NONE:
+    default:
+        m_fYawValue   = 0.0f;
+        m_fPitchValue = 0.0f;
+        break;
+    }
 }
 
 //===========================================================================
@@ -595,14 +583,10 @@ void player::OnButtonInput( void )
 
         if ( IsLeaning )
         {
-#if    defined( TARGET_PS2  )
-            MutationValue = input_GetValue( INPUT_PS2_BTN_L_UP, m_ActivePlayerPad );
-#elif  defined( TARGET_XBOX )
-            MutationValue = input_GetValue( INPUT_XBOX_BTN_UP,  m_ActivePlayerPad );
-#endif
+            MutationValue = Multiplayer ? Logical.IsValue : MPLogical.IsValue;
         }
 
-        ASSERTS( g_MonkeyOptions.Enabled || (MutationValue > 0.0f), "Dpad Up is zero, when toggling mutation, the mapping has changed, find Mike Reed" );
+        ASSERTS( g_MonkeyOptions.Enabled || (MutationValue > 0.0f), "Mutation input is zero when toggling mutation; check the input mapping" );
 
         static f32 MinValueToToggleMutationWhileLeaning = 0.3f;
         HaveButtonPressureToToggleMutation = MutationValue > MinValueToToggleMutationWhileLeaning;
@@ -807,5 +791,3 @@ void player::OnButtonInput( void )
         UpdateLean( 0.0f );
     }
 }
-
-//==============================================================================

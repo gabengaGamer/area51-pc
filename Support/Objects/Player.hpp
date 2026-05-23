@@ -620,8 +620,8 @@ protected:
             xbool       UseFocusObject              ( void );
     virtual void        OnButtonInput               ( void );
             void        OnGameSpeak                 ( void );
-            void        UpdateStickInput            ( void );
-            void        ClearStickInput             ( void );
+            void        UpdateMoveLookInput         ( void );
+            void        ClearMoveLookInput          ( void );
     virtual void        ProcessSfxEvents            ( void );
             xbool       NearMutagenReservoir        ( void );
 
@@ -657,6 +657,9 @@ protected:
             // Used for determing various movement properties.
             void        CalculatePitchLimits        ( const f32& rDeltaTime );
             void        CalculateRotationAccelerationFactors( f32 DeltaTime );
+            void        UpdateLookAccelerationFactors( f32 DeltaTime );
+            void        ApplyGamepadLookRotation    ( const f32& rDeltaTime );
+            void        ApplyMouseLookRotation      ( void );
             void        UpdateRotationRates         ( f32 DeltaTime );
     virtual void        CalculateStrafeVelocity     ( const vector3& rViewX , const f32& rDeltaTime );
     virtual void        CalculateForwardVelocity    ( const vector3& rViewZ , const f32& rDeltaTime );
@@ -682,7 +685,8 @@ protected:
             radian      CalculateActualPitchToTarget    ( object* pObject );
 
             // Used for scaling raw controller input to allow 'fine tuning'
-            void        ScaleYawAndPitchValues      ( void );
+            void        ScaleGamepadLookInput       ( void );
+            void        ScaleMouseLookInput         ( void );
 
 
             void        UpdateViewCinematic         ( const f32& rDeltaTime ); 
@@ -1247,15 +1251,23 @@ protected:
     
 protected:
 
+    enum look_input_mode
+    {
+        LOOK_INPUT_NONE,
+        LOOK_INPUT_MOUSE,
+        LOOK_INPUT_GAMEPAD
+    };
+
     static guid             s_ActivePlayerGuid;             // The guid of the active player
 
-    //controller stick input for this frame.
+    // Move/look input for this frame.
     f32                     m_fMoveValue;
     f32                     m_fStrafeValue;
     f32                     m_fYawValue;
     f32                     m_fPitchValue;
     f32                     m_fRawControllerYaw;
     f32                     m_fRawControllerPitch;
+    look_input_mode         m_LookInputMode;
 
     xbool                   m_bVoteButtonPressed;
     xbool                   m_bRespawnButtonPressed;

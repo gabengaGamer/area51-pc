@@ -548,6 +548,7 @@ player::player( void ) :
     m_fPitchValue( 0.0f ),
     m_fRawControllerYaw(0),
     m_fRawControllerPitch(0),
+    m_LookInputMode( LOOK_INPUT_NONE ),
     m_bVoteButtonPressed(FALSE),
     m_bRespawnButtonPressed(FALSE),
     m_fPreviousYawValue(0),
@@ -3437,7 +3438,7 @@ void player::OnDeath( void )
         SetFlashlightActive(FALSE);        
 
         // no moving
-        ClearStickInput();    
+        ClearMoveLookInput();
     
         // clear weapon
         SetAnimState(ANIM_STATE_IDLE);
