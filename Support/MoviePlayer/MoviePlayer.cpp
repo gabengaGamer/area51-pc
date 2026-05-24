@@ -123,18 +123,18 @@ s32 PlaySimpleMovie(const char* movieName)
             for( s32 i = 0; i < MAX_LOCAL_PLAYERS; i++ )
             {
                 const auto& pad = g_IngamePad[i];
-                if( pad.GetLogical( ingame_pad::UI_SELECT   ).IsValue > 0.0f ||
-                    pad.GetLogical( ingame_pad::UI_BACK     ).IsValue > 0.0f ||
-                    pad.GetLogical( ingame_pad::UI_ACTIVATE ).IsValue > 0.0f )
+                if( pad.GetLogical( ingame_pad::UI_SELECT   ).IsValue ||
+                    pad.GetLogical( ingame_pad::UI_BACK     ).IsValue ||
+                    pad.GetLogical( ingame_pad::UI_ACTIVATE ).IsValue )
                 {
                     anyHeld = TRUE;
                 }
         
                 if( allowSkip )
                 {
-                    if( pad.GetLogical( ingame_pad::UI_SELECT   ).WasValue > 0.0f ||
-                        pad.GetLogical( ingame_pad::UI_BACK     ).WasValue > 0.0f ||
-                        pad.GetLogical( ingame_pad::UI_ACTIVATE ).WasValue > 0.0f )
+                    if( pad.GetLogical( ingame_pad::UI_SELECT   ).WasValue ||
+                        pad.GetLogical( ingame_pad::UI_BACK     ).WasValue ||
+                        pad.GetLogical( ingame_pad::UI_ACTIVATE ).WasValue )
                     {
                         done = TRUE;
                     }

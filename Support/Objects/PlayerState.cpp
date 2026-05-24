@@ -358,9 +358,6 @@ void player::UpdateDeath( const f32& DeltaTime )
 
         if (m_AnimStage == 3)
         {
-#if defined(TARGET_PC) && !defined(X_EDITOR)
-            PrimaryPressed |= input_WasPressed( INPUT_MOUSE_BTN_L );
-#endif
             if( PrimaryPressed )
             {
                 m_bWantToSpawn = TRUE;
@@ -3459,9 +3456,6 @@ void player::UpdateMissionFailed( f32 DeltaTime )
         pGameLogic->PlayerDied( m_NetSlot, m_NetSlot, 0 );
 #endif
         xbool PrimaryPressed = (xbool)g_IngamePad[m_ActivePlayerPad].GetLogical( ingame_pad::ACTION_PRIMARY ).WasValue;
-#if defined(TARGET_PC) && !defined(X_EDITOR)
-        PrimaryPressed |= input_WasPressed( INPUT_MOUSE_BTN_L );
-#endif
         if( PrimaryPressed )
         {
             m_bWantToSpawn = TRUE;

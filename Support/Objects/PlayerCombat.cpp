@@ -202,16 +202,13 @@ xbool player::IsAltFiring( void )
 }
 
 //==============================================================================
+
 xbool player::IsFiring( void )
 {
     xbool PrimaryDown 
         = m_bIsMutated 
         ? (xbool)g_IngamePad[m_ActivePlayerPad].GetLogical( ingame_pad::ACTION_FIRE_PARASITES ).IsValue
         : (xbool)g_IngamePad[m_ActivePlayerPad].GetLogical( ingame_pad::ACTION_PRIMARY ).IsValue;
-#if defined(TARGET_PC) && !defined(X_EDITOR)
-    PrimaryDown |= input_IsPressed( INPUT_MOUSE_BTN_L );
-#endif
-
     return( PrimaryDown && !m_bRespawnButtonPressed );
 }
 //==============================================================================
