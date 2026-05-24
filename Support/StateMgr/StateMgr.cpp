@@ -19,14 +19,10 @@
 #include "Objects/Player.hpp"
 #include "InputMgr/GamePad.hpp"
 
-
 #include "ui/ui_button.hpp"
 #include "ui/ui_dialog.hpp"
 #include "ui/ui_manager.hpp"
 
-#ifndef TARGET_XBOX
-#include "dialogs/dlg_COPA.hpp"
-#endif
 #include "dialogs/dlg_ESRB.hpp"
 #include "dialogs/dlg_MainMenu.hpp"
 #include "dialogs/dlg_AVSettings.hpp"
@@ -40,9 +36,6 @@
 #include "dialogs/dlg_ProfileControls.hpp"
 #include "dialogs/dlg_ProfileAV.hpp"
 #include "dialogs/dlg_ProfileHeadset.hpp"
-#ifdef TARGET_PS2
-#include "dialogs/dlg_OnlineEULA.hpp"
-#endif
 #include "dialogs/dlg_OnlineConnect.hpp"
 #include "dialogs/dlg_OnlineHost.hpp"
 #include "dialogs/dlg_OnlineHostOptions.hpp"
@@ -67,14 +60,9 @@
 #include "dialogs/dlg_DemoMainMenu.hpp"
 #include "dialogs/dlg_AvatarSelect.hpp"
 #include "dialogs/dlg_ReportError.hpp"
-#if defined(TARGET_PS2)
-#include "dialogs/dlg_Download.hpp"
-#endif
+//#include "dialogs/dlg_Download.hpp"
 #include "dialogs/dlg_MCMessage.hpp"
 #include "dialogs/dlg_CampaignMenu.hpp"
-#if defined(TARGET_PS2)
-#include "dialogs/dlg_MemcardSelect.hpp"
-#endif
 #include "dialogs/dlg_VoteMap.hpp"
 #include "dialogs/dlg_VoteKick.hpp"
 #include "dialogs/dlg_ServerConfig.hpp"
@@ -90,17 +78,8 @@
 #include "dialogs/dlg_Autosave.hpp"
 #include "dialogs/dlg_Credits.hpp"
 #include "dialogs/dlg_Extras.hpp"
-
-#ifdef TARGET_XBOX
-#include "dialogs/XBOX/dlg_MultiPlayerXBOX.hpp"
-#include "dialogs/XBOX/dlg_OnlineMainXBOX.hpp"
-#include "dialogs/XBOX/dlg_QuickMatch.hpp"
-//#include "dialogs/XBOX/dlg_OptiMatch.hpp"
-#include "entropy\xbox\xbox_private.hpp"
-#else
 #include "dialogs/dlg_MultiPlayer.hpp"
 #include "dialogs/dlg_OnlineMain.hpp"
-#endif
 
 #include "../MemCardMgr/MemCardMgr.hpp"
 
@@ -114,7 +93,6 @@
 #include "NetworkMgr\GameMgr.hpp"
 #include "NetworkMgr/MatchMgr.hpp"
 
-
 #include "Parsing/textin.hpp"
 #include "AudioMgr/AudioMgr.hpp"
 #include "NetworkMgr/Voice/VoiceMgr.hpp"
@@ -123,15 +101,7 @@
 #include "e_Memcard.hpp"
 #include "IOManager/io_mgr.hpp"
 
-#ifdef TARGET_PS2
-#include "PS2/ps2_dlist.hpp"
-#endif
-
-#ifdef CONFIG_VIEWER
-#include "../../Apps/ArtistViewer/Config.hpp"
-#else
 #include "../../Apps/GameApp/Config.hpp"    
-#endif
 
 #if defined(CONFIG_IS_DEMO)
 extern xtimer g_DemoIdleTimer;
@@ -142,14 +112,12 @@ extern xtimer g_DemoIdleTimer;
 //  Defines
 //=========================================================================
 
-#ifdef TARGET_XBOX
-extern u32 g_TEdge,g_PhysW,g_PhysH,g_PhysFPS;
-#define DIALOG_TOP (g_TEdge - 10)
-#define DIALOG_BOTTOM (DIALOG_TOP+(448-72))
-#else
+//extern u32 g_TEdge,g_PhysW,g_PhysH,g_PhysFPS;
+//#define DIALOG_TOP (g_TEdge - 10)
+//#define DIALOG_BOTTOM (DIALOG_TOP+(448-72))
+
 #define DIALOG_TOP 24
 #define DIALOG_BOTTOM 448-72
-#endif
 
 //=========================================================================
 //  Structs                                                                
@@ -201,6 +169,7 @@ void GetMissionName( s32 MapIndex, xwchar* pBuffer )
 //=========================================================================
 //  State Manager Functions
 //=========================================================================
+
 state_mgr::state_mgr( void )
 {   
     m_bInited = FALSE;
@@ -229,9 +198,6 @@ void state_mgr::Init( void )
     ASSERT( !m_bInited );
 
     // Register dialogs
-#if defined(TARGET_PS2)
-    dlg_copa_register               ( g_UiMgr );
-#endif
     dlg_esrb_register               ( g_UiMgr );
     dlg_main_menu_register          ( g_UiMgr );
     dlg_av_settings_register        ( g_UiMgr );
@@ -247,9 +213,6 @@ void state_mgr::Init( void )
     dlg_multi_options_register      ( g_UiMgr );
 #ifndef CONFIG_RETAIL
     dlg_level_select_register       ( g_UiMgr );
-#endif
-#if defined(TARGET_PS2)
-    dlg_online_eula_register        ( g_UiMgr );
 #endif
     dlg_online_connect_register     ( g_UiMgr );
     dlg_online_main_register        ( g_UiMgr );
@@ -277,15 +240,10 @@ void state_mgr::Init( void )
     dlg_avatar_select_register      ( g_UiMgr );
 
     dlg_report_error_register       ( g_UiMgr );
-#if defined(TARGET_PS2)
-    dlg_download_register           ( g_UiMgr );
-#endif
+    //dlg_download_register           ( g_UiMgr );
     dlg_mcmessage_register          ( g_UiMgr );
     dlg_campaign_menu_register      ( g_UiMgr );
     dlg_lore_menu_register          ( g_UiMgr );
-#if defined(TARGET_PS2)
-    dlg_memcard_select_register     ( g_UiMgr );
-#endif
     dlg_vote_map_register           ( g_UiMgr );
     dlg_vote_kick_register          ( g_UiMgr );
     dlg_server_config_register      ( g_UiMgr );
@@ -301,9 +259,6 @@ void state_mgr::Init( void )
     dlg_credits_register            ( g_UiMgr );
     dlg_extras_register             ( g_UiMgr );
 
-#if defined(TARGET_XBOX)
-    dlg_quick_match_register        ( g_UiMgr );
-#endif
     // Setup state mgr view
     m_View.SetZLimits( 10, 100.0f*500.0f );
     m_View.SetPosition( vector3(1356,-1922,-285) );
@@ -338,13 +293,9 @@ void state_mgr::Init( void )
     m_bSilentSigninStarted      = FALSE;
 
     // calculate save sizes
-#ifdef TARGET_XBOX
-    m_ProfileSaveSize  = ( ( sizeof( player_profile  ) + 16383 ) &~ 16383 ); // round up to nearest block
-    m_SettingsSaveSize = ( ( sizeof( global_settings ) + 16383 ) &~ 16383 ); // round up to nearest block
-#else
     m_ProfileSaveSize  = ( ( sizeof( player_profile  ) + 1023 ) &~ 1023 ); // round up to nearest KB
     m_SettingsSaveSize = ( ( sizeof( global_settings ) + 1023 ) &~ 1023 ); // round up to nearest KB
-#endif
+
     // add extra space required by platform directory structure
     m_ProfileSaveSize  += PROFILE_DIR_SIZE;
     m_SettingsSaveSize += SETTINGS_DIR_SIZE;
@@ -407,39 +358,6 @@ void state_mgr::Init( void )
     g_RscMgr.Load( PRELOAD_FILE("MUSIC_FrontEnd.audiopkg" ) );
 
     // Let's get started!
-#if defined(TARGET_XBOX)
-#if 0
-    // JP: To be TCR compliant we must not initiate the pending accepted invite here.
-    // The session must be joinable only AFTER the player *manually* signs in to XBox Live.
-    // For this reason the code below is commented out - see UpdateOnlineMain instead.
-    {
-        // Deal with cross title invite.
-        XONLINE_LATEST_ACCEPTED_GAMEINVITE Invitation;
-        HRESULT Result;
-
-        Result = XOnlineGameInviteGetLatestAccepted( &Invitation );
-        if( Result==S_OK )
-        {
-            server_info& Config = g_PendingConfig.GetConfig();
-            x_memset( &Config, 0, sizeof(server_info) );
-            x_memcpy( &Config.SessionID, &Invitation.SessionID, sizeof(Config.SessionID) );
-            ASSERT( sizeof(m_FeedbackName) >= XONLINE_GAMERTAG_SIZE );
-            x_strncpy( m_FeedbackName, Invitation.szInvitingUserGamertag, XONLINE_GAMERTAG_SIZE );
-            // These values are actually unknown but we fill in these just to stop asserts.
-            // The MaxPlayers and Players is irrelevent but usually we have this information.
-            Config.GameTypeID = GAME_MP;
-            Config.MaxPlayers = 32;
-            Config.Players    = 1;
-            game_config::Commit();
-            m_bFollowBuddy = TRUE;
-        }
-        else
-        {
-            m_bFollowBuddy = FALSE;
-        }
-    }
-#endif
-#endif
 #if CONFIG_IS_DEMO
     SetState( SM_STARTUP_INTRO );
 #else
@@ -450,13 +368,8 @@ void state_mgr::Init( void )
     }
     else
     {
-    #ifdef TARGET_XBOX
-        // The ESRB notice is done elsewhere
-        SetState( SM_STARTUP_INTRO );
-    #else
-        // Normal build.
-        SetState( SM_ESRB_NOTICE );
-    #endif
+        // Skip ESRB.
+        SetState( SM_STARTUP_INTRO ); //SetState( SM_ESRB_NOTICE );
     }
 #endif
 
@@ -534,10 +447,6 @@ const char* state_mgr::GetStateName( sm_states State )
 
         LABEL_STRING( SM_ESRB_NOTICE );
         LABEL_STRING( SM_STARTUP_INTRO );
-#if defined(TARGET_PS2)
-        LABEL_STRING( SM_CONTROLLER_CHECK );
-        LABEL_STRING( SM_AUTOSAVE_DIALOG );
-#endif
         LABEL_STRING( SM_MEMCARD_BOOT_CHECK );
 
         LABEL_STRING( SM_PRESS_START_SCREEN );
@@ -551,23 +460,14 @@ const char* state_mgr::GetStateName( sm_states State )
         LABEL_STRING( SM_MANAGE_PROFILE_OPTIONS );
         LABEL_STRING( SM_MANAGE_PROFILE_CONTROLS );
         LABEL_STRING( SM_MANAGE_PROFILE_AVATAR );
-#if defined(TARGET_PS2)
-        LABEL_STRING( SM_MANAGE_MEMCARD_SELECT );
-#endif
         LABEL_STRING( SM_MANAGE_PROFILE_SAVE_SELECT );
         LABEL_STRING( SM_MANAGE_PROFILE_MEMCARD_RESELECT );
 
         LABEL_STRING( SM_DEMO_EXIT );
-#if defined(TARGET_PS2)
-        LABEL_STRING( SM_MEMCARD_SELECT );
-#endif
         LABEL_STRING( SM_CAMPAIGN_MENU );
         LABEL_STRING( SM_CAMPAIGN_PROFILE_OPTIONS );
         LABEL_STRING( SM_CAMPAIGN_PROFILE_CONTROLS );
         LABEL_STRING( SM_CAMPAIGN_PROFILE_AVATAR );
-#if defined(TARGET_PS2)
-        LABEL_STRING( SM_CAMPAIGN_MEMCARD_SELECT );
-#endif
         LABEL_STRING( SM_CAMPAIGN_PROFILE_SAVE_SELECT );
         LABEL_STRING( SM_CAMPAIGN_MEMCARD_RESELECT );
         LABEL_STRING( SM_LOAD_CAMPAIGN );
@@ -585,9 +485,6 @@ const char* state_mgr::GetStateName( sm_states State )
         LABEL_STRING( SM_MP_SAVE_SETTINGS );
         LABEL_STRING( SM_PROFILE_CONTROLS_MP );
         LABEL_STRING( SM_PROFILE_AVATAR_MP );
-#if defined(TARGET_PS2)
-        LABEL_STRING( SM_MEMCARD_SELECT_MP );
-#endif
         LABEL_STRING( SM_PROFILE_SAVE_SELECT_MP );
         LABEL_STRING( SM_MEMCARD_RESELECT_MP );
 
@@ -596,23 +493,12 @@ const char* state_mgr::GetStateName( sm_states State )
         LABEL_STRING( SM_PROFILE_CONTROLS );
         LABEL_STRING( SM_PROFILE_AVATAR );
 
-#if defined(TARGET_PS2)
-        LABEL_STRING( SM_ONLINE_EULA );
-#endif
         LABEL_STRING( SM_ONLINE_CONNECT );
         LABEL_STRING( SM_ONLINE_AUTHENTICATE );
-#ifndef TARGET_XBOX
-        LABEL_STRING( SM_ONLINE_COPA );
-        LABEL_STRING( SM_ONLINE_COPA_SAVE_SELECT );
-        LABEL_STRING( SM_ONLINE_COPA_MEMCARD_RESELECT );
-#endif
         LABEL_STRING( SM_ONLINE_PROFILE_SELECT );
         LABEL_STRING( SM_ONLINE_PROFILE_OPTIONS );
         LABEL_STRING( SM_ONLINE_PROFILE_CONTROLS );
         LABEL_STRING( SM_ONLINE_PROFILE_AVATAR );
-#if defined(TARGET_PS2)
-        LABEL_STRING( SM_ONLINE_MEMCARD_SELECT );
-#endif
         LABEL_STRING( SM_ONLINE_PROFILE_SAVE_SELECT );
         LABEL_STRING( SM_ONLINE_MEMCARD_RESELECT );
 
@@ -665,12 +551,6 @@ const char* state_mgr::GetStateName( sm_states State )
         LABEL_STRING( SM_PAUSE_HEADSET );
         LABEL_STRING( SM_PAUSE_GRAPHICS );		
         LABEL_STRING( SM_PAUSE_SETTINGS_SELECT );
-#ifdef TARGET_XBOX
-        LABEL_STRING( SM_PAUSE_FRIENDS );
-#endif
-#if defined(TARGET_PS2)
-        LABEL_STRING( SM_PAUSE_MEMCARD_SELECT );
-#endif
         LABEL_STRING( SM_PAUSE_PROFILE_SAVE_SELECT );
         LABEL_STRING( SM_PAUSE_MEMCARD_RESELECT );
 
@@ -682,12 +562,6 @@ const char* state_mgr::GetStateName( sm_states State )
         LABEL_STRING( SM_PAUSE_MP_HEADSET );
         LABEL_STRING( SM_PAUSE_MP_GRAPHICS );		
         LABEL_STRING( SM_PAUSE_MP_SETTINGS_SELECT );
-#ifdef TARGET_XBOX
-        LABEL_STRING( SM_PAUSE_MP_FRIENDS );
-#endif
-#if defined(TARGET_PS2)
-        LABEL_STRING( SM_PAUSE_MP_MEMCARD_SELECT );
-#endif
         LABEL_STRING( SM_PAUSE_MP_PROFILE_SAVE_SELECT );
         LABEL_STRING( SM_PAUSE_MP_MEMCARD_RESELECT );
 
@@ -703,9 +577,6 @@ const char* state_mgr::GetStateName( sm_states State )
         LABEL_STRING( SM_PAUSE_ONLINE_CONTROLS );
         LABEL_STRING( SM_PAUSE_ONLINE_SETTINGS );
         LABEL_STRING( SM_PAUSE_ONLINE_HEADSET );
-#if defined(TARGET_PS2)
-        LABEL_STRING( SM_PAUSE_ONLINE_MEMCARD_SELECT );
-#endif
         LABEL_STRING( SM_PAUSE_ONLINE_SAVE_SELECT );
         LABEL_STRING( SM_PAUSE_ONLINE_MEMCARD_RESELECT );
         LABEL_STRING( SM_PAUSE_ONLINE_CHANGE_MAP );
@@ -723,9 +594,6 @@ const char* state_mgr::GetStateName( sm_states State )
 
         LABEL_STRING( SM_AUTOSAVE_MENU );
         LABEL_STRING( SM_AUTOSAVE_PROFILE_RESELECT );
-#if defined(TARGET_PS2)
-        LABEL_STRING( SM_AUTOSAVE_MEMCARD_SELECT );
-#endif
         LABEL_STRING( SM_END_AUTOSAVE );
 
         LABEL_STRING( SM_FINAL_SCORE );
@@ -864,23 +732,6 @@ void state_mgr::SystemError( sm_system_error MessageID, void* pUserData )
                     MessageText = Final;
                 }
             }
-#if defined(TARGET_PS2) 
-            NavText = g_StringTableMgr( "ui", "IDS_NAV_CONTROLLER_PS2" );
-#elif defined(TARGET_XBOX)
-            NavText = g_StringTableMgr( "ui", "IDS_NAV_CONTROLLER_XBOX" );
-#endif
-#if defined(TARGET_XBOX)
-            g_StateMgr.m_PopUp->Configure(
-                r,
-                g_StringTableMgr( "ui", "IDS_SYSTEM_MESSAGE" ), 
-                FALSE,
-                FALSE,  
-                FALSE,
-                TRUE,   // START Button.
-                MessageText,
-                NavText,
-                &g_StateMgr.m_PopUpResult );
-#else
             g_StateMgr.m_PopUp->Configure(
                 r,
                 g_StringTableMgr( "ui", "IDS_SYSTEM_MESSAGE" ), 
@@ -890,8 +741,6 @@ void state_mgr::SystemError( sm_system_error MessageID, void* pUserData )
                 MessageText,
                 NavText,
                 &g_StateMgr.m_PopUpResult );
-#endif
-
             break;
         }
 
@@ -953,14 +802,6 @@ void state_mgr::CheckControllers( void )
     if( !InSystemError() )
     {
         s32 ControllerID;
-#if defined(TARGET_PS2)
-        input_gadget ControllerQuery = INPUT_PS2_QRY_PAD_PRESENT;
-        input_gadget AnalogQuery     = INPUT_PS2_QRY_ANALOG_MODE;
-#elif defined(TARGET_XBOX)
-        input_gadget ControllerQuery = INPUT_XBOX_QRY_PAD_PRESENT;
-        input_gadget AnalogQuery     = INPUT_XBOX_QRY_ANALOG_MODE;
-#endif
-
         switch (m_State)
         {
         case SM_START_GAME:
@@ -992,17 +833,6 @@ void state_mgr::CheckControllers( void )
                 }
             }
             break;
-#ifdef TARGET_PS2
-        case SM_CONTROLLER_CHECK:
-            // check for all controllers removed
-            ControllerID = -1;
-            if( !(input_IsPresent( ControllerQuery, ControllerID ) && 
-                  input_IsPresent( AnalogQuery, ControllerID ) ) )
-            {
-                SystemError( SM_SYS_ERR_CONTROLLER, &ControllerID );
-            }
-            break;
-#endif
         default:
             // only check for "locked" controllers
             if( (ControllerID = GetActiveControllerID()) != -1 )
@@ -1155,80 +985,6 @@ void state_mgr::Update( f32 DeltaTime )
         // kill background music
         KillFrontEndMusic();
     }
-
-    #ifdef TARGET_XBOX
-    //
-    // Detect duplicate logins
-    //
-    {
-        s32   State     = GetState();
-        xbool IsLoading = (State == SM_SINGLE_PLAYER_LOAD_MISSION)  ||
-                          (State == SM_MULTI_PLAYER_LOAD_MISSION)   ||
-                          (State == SM_SERVER_SYNC)                 ||
-                          (State == SM_CLIENT_SYNC);
-
-        // We must wait until loading has finished before showing the duplicate logon error
-        if( !IsLoading )
-        {
-            if( g_MatchMgr.IsDuplicateLogin() == TRUE )
-            {
-                g_MatchMgr.ClearDuplicateLogin();
-
-                // There are 2 possible ways of informing the player of a duplicate login.
-                // The first method is used if the player is in an online game.  The game
-                // exits immediately and the error dialog is displayed.  The second method
-                // uses the System Error dialog and it is used for ALL other cases.
-                xbool ShowErrorDialog = FALSE;
-
-                if( GameMgr.GameInProgress() == TRUE )
-                {
-                    // If we are playing in an online game then we must exit that game and
-                    // use the error report dialog to inform the player why the game exited.
-                    if( GameMgr.IsGameOnline() == TRUE )
-                    {
-                        g_ActiveConfig.SetExitReason( GAME_EXIT_DUPLICATE_LOGIN );
-                        ShowErrorDialog = TRUE;
-                    }
-                }
-
-                if( ShowErrorDialog == FALSE )
-                {
-                    // If we are in the frontend then we must quit out to the main menu after showing
-                    // the system error dialog.  If the player is in campaign or split screen however,
-                    // we must return back to the game in progress.
-                    if( GameMgr.GameInProgress() == FALSE )
-                    {
-                        g_StateMgr.SetActiveControllerID( -1 );
-                        g_UiMgr->SetUserController      ( g_UiUserID, -1 );
-                        g_UiMgr->EndUsersDialogs        ( g_UiUserID );
-
-                        m_bIsDuplicateLogin = TRUE;
-                    }
-
-                    s32 Var = 0;
-                    SystemError( SM_SYS_ERR_DUPLICATE_LOGIN, &Var );
-                }
-            }
-        }
-    }
-
-    //
-    // Detect headset being inserted
-    //
-
-    headset& Headset = g_VoiceMgr.GetHeadset();
-    
-    if( Headset.HeadsetJustInserted() == TRUE )
-    {
-        Headset.ClearHeadsetJustInserted();
-
-        // The headset was just inserted so toggle the UI option to NORMAL
-        global_settings& Settings = GetActiveSettings();
-        Settings.SetHeadsetMode( HEADSET_HEADSET_ONLY );
-        Settings.Commit();
-    }
-
-    #endif
 }
 
 
@@ -1236,14 +992,6 @@ void state_mgr::Update( f32 DeltaTime )
 
 void state_mgr::Render( void )
 {
-#ifdef TARGET_XBOX
-    // SB:
-    // For xbox, make sure the sat compensation is disabled before rendering
-    // the dialogs otherwise if a server closes down and the client was in
-    // mutant mode, the sat compensation dims down all the dialogs.
-    draw_DisableSatCompensation();
-#endif    
-
    if ( ( m_State != SM_PLAYING_GAME ) || ( m_bDoSystemError ) )
    {
         // Setup camera view
@@ -1300,35 +1048,26 @@ void state_mgr::DummyScreen( const char* message, xbool canSkip, s32 waitTime )
         H = W/1.3f;
 
         s32     Line = 12;
-#ifdef TARGET_PS2
-        x_printfxy( 19-x_strlen(message)/2, Line++, message );
-#else
         x_printfxy( 30-x_strlen(message)/2, Line++, message );
-#endif
 
         eng_End();
         eng_PageFlip();
+
         if( canSkip )
         {
             g_InputMgr.Update( 0.0167f );
             { 
-#ifdef TARGET_PC
-                if( input_IsPressed( INPUT_MSG_EXIT ) )
-                    bSkip = TRUE;
-                if( input_WasPressed( INPUT_KBD_RETURN, 0 ) || input_WasPressed( INPUT_KBD_ESCAPE, 0 ) || input_WasPressed( INPUT_KBD_SPACE, 0 ) ) 
-                    bSkip = TRUE;
-#endif
-
-#ifdef TARGET_XBOX
-                if (input_WasPressed( INPUT_XBOX_BTN_START ))
-                    bSkip = TRUE;
-#endif
-
-#ifdef TARGET_PS2
-                if (input_WasPressed( INPUT_PS2_BTN_CROSS ))
-                    bSkip = TRUE;
-#endif
-            }    
+			    for( s32 i = 0; i < MAX_LOCAL_PLAYERS; i++ )
+                {
+                    const auto& pad = g_IngamePad[i];
+                    if( pad.GetLogical( ingame_pad::UI_SELECT   ).IsValue ||
+                        pad.GetLogical( ingame_pad::UI_BACK     ).IsValue ||
+                        pad.GetLogical( ingame_pad::UI_ACTIVATE ).IsValue )
+			    	{
+			    		bSkip = TRUE;
+			    	}
+                }   
+            }				
         }
     }
 }
@@ -1341,10 +1080,6 @@ void state_mgr::EnterState( sm_states State )
     {
         case SM_ESRB_NOTICE:                    EnterESRBNotice();                  break;
         case SM_STARTUP_INTRO:                  EnterStartupIntro();                break;
-#if defined(TARGET_PS2)
-        case SM_AUTOSAVE_DIALOG:                EnterAutoSaveDialog();              break;
-        case SM_CONTROLLER_CHECK:               EnterControllerCheck();             break;
-#endif
         case SM_MEMCARD_BOOT_CHECK:             EnterMemcardBootCheck();            break;
         case SM_PRESS_START_SCREEN:             EnterPressStart();                  break;
         case SM_MAIN_MENU:                      EnterMainMenu();                    break;
@@ -1356,23 +1091,14 @@ void state_mgr::EnterState( sm_states State )
         case SM_MANAGE_PROFILE_OPTIONS:         EnterManageProfileOptions();        break;
         case SM_MANAGE_PROFILE_CONTROLS:        EnterManageProfileControls();       break;
         case SM_MANAGE_PROFILE_AVATAR:          EnterManageProfileAvatar();         break;
-#if defined(TARGET_PS2)
-        case SM_MANAGE_MEMCARD_SELECT:          EnterManageMemcardSelect();         break;
-#endif
         case SM_MANAGE_PROFILE_SAVE_SELECT:     EnterManageProfileSaveSelect();     break;
         case SM_MANAGE_PROFILE_MEMCARD_RESELECT:EnterManageMemcardReselect();       break;
         case SM_CAMPAIGN_MENU:                  EnterCampaignMenu();                break;
         case SM_CAMPAIGN_PROFILE_OPTIONS:       EnterCampaignProfileOptions();      break;
         case SM_CAMPAIGN_PROFILE_CONTROLS:      EnterCampaignProfileControls();     break;
         case SM_CAMPAIGN_PROFILE_AVATAR:        EnterCampaignProfileAvatar();       break;
-#if defined(TARGET_PS2)
-        case SM_CAMPAIGN_MEMCARD_SELECT:        EnterCampaignMemcardSelect();       break;
-#endif
         case SM_CAMPAIGN_PROFILE_SAVE_SELECT:   EnterCampaignProfileSaveSelect();   break;
         case SM_CAMPAIGN_MEMCARD_RESELECT:      EnterCampaignMemcardReselect();     break;
-#if defined(TARGET_PS2)
-        case SM_MEMCARD_SELECT:                 EnterMemcardSelect();               break;
-#endif
         case SM_LOAD_CAMPAIGN:                  EnterLoadCampaign();                break;
         case SM_SAVE_CAMPAIGN:                  EnterSaveCampaign();                break;
         case SM_LORE_MAIN_MENU:                 EnterLoreMainMenu();                break;
@@ -1384,9 +1110,6 @@ void state_mgr::EnterState( sm_states State )
         case SM_PROFILE_CONTROLS:               EnterProfileControls();             break;
         case SM_PROFILE_AVATAR:                 EnterProfileAvatar();               break;
         case SM_PROFILE_AVATAR_MP:              EnterProfileAvatarMP();             break;
-#if defined(TARGET_PS2)
-        case SM_MEMCARD_SELECT_MP:              EnterMemcardSelectMP();             break;
-#endif
         case SM_PROFILE_SAVE_SELECT_MP:         EnterProfileSaveSelectMP();         break;
         case SM_MEMCARD_RESELECT_MP:            EnterMemcardReselectMP();           break;
         case SM_MULTI_PLAYER_MENU:              EnterMultiPlayer();                 break;
@@ -1396,23 +1119,12 @@ void state_mgr::EnterState( sm_states State )
         case SM_MP_SAVE_SETTINGS:               EnterMPSaveSettings();              break;
         case SM_PROFILE_CONTROLS_MP:            EnterProfileControlsMP();           break;
         case SM_ONLINE_SILENT_LOGON:            EnterOnlineSilentLogin();           break;
-#ifdef TARGET_PS2
-        case SM_ONLINE_EULA:                    EnterOnlineEULA();                  break;
-#endif
         case SM_ONLINE_CONNECT:                 EnterOnlineConnect();               break;
         case SM_ONLINE_AUTHENTICATE:            EnterOnlineAuthenticate();          break;
-#ifndef TARGET_XBOX
-        case SM_ONLINE_COPA:                    EnterOnlineCOPA();                  break;
-        case SM_ONLINE_COPA_SAVE_SELECT:        EnterOnlineCOPASaveSelect();        break;
-        case SM_ONLINE_COPA_MEMCARD_RESELECT:   EnterOnlineCOPAMemcardReselect();   break;
-#endif
         case SM_ONLINE_PROFILE_SELECT:          EnterOnlineProfileSelect();         break;
         case SM_ONLINE_PROFILE_OPTIONS:         EnterOnlineProfileOptions();        break;
         case SM_ONLINE_PROFILE_CONTROLS:        EnterOnlineProfileControls();       break;
         case SM_ONLINE_PROFILE_AVATAR:          EnterOnlineProfileAvatar();         break;
-#if defined(TARGET_PS2)
-        case SM_ONLINE_MEMCARD_SELECT:          EnterOnlineMemcardSelect();         break;
-#endif
         case SM_ONLINE_PROFILE_SAVE_SELECT:     EnterOnlineProfileSaveSelect();     break;
         case SM_ONLINE_MEMCARD_RESELECT:        EnterOnlineMemcardReselect();       break;
         case SM_ONLINE_MAIN_MENU:               EnterOnlineMain();                  break;
@@ -1455,12 +1167,6 @@ void state_mgr::EnterState( sm_states State )
         case SM_PAUSE_HEADSET:                  EnterPauseHeadset();                break;
         case SM_PAUSE_GRAPHICS:                 EnterPauseGraphics();               break;		
         case SM_PAUSE_SETTINGS_SELECT:          EnterPauseSettingsSelect();         break;
-#ifdef TARGET_XBOX
-        case SM_PAUSE_FRIENDS:                  EnterPauseFriends();                break;
-#endif
-#if defined(TARGET_PS2)
-        case SM_PAUSE_MEMCARD_SELECT:           EnterPauseMemcardSelect();          break;
-#endif
         case SM_PAUSE_PROFILE_SAVE_SELECT:      EnterPauseMemcardSaveSelect();      break;
         case SM_PAUSE_MEMCARD_RESELECT:         EnterPauseMemcardReselect();        break;
         case SM_PAUSE_MP:                       EnterPauseMP();                     break;
@@ -1470,12 +1176,6 @@ void state_mgr::EnterState( sm_states State )
         case SM_PAUSE_MP_HEADSET:               EnterPauseMPHeadset();              break;
         case SM_PAUSE_MP_GRAPHICS:              EnterPauseMPGraphics();             break;		
         case SM_PAUSE_MP_SETTINGS_SELECT:       EnterPauseMPSettingsSelect();       break;
-#ifdef TARGET_XBOX
-        case SM_PAUSE_MP_FRIENDS:               EnterPauseMPFriends();              break;
-#endif
-#if defined(TARGET_PS2)
-        case SM_PAUSE_MP_MEMCARD_SELECT:        EnterPauseMPMemcardSelect();        break;
-#endif
         case SM_PAUSE_MP_PROFILE_SAVE_SELECT:   EnterPauseMPMemcardSaveSelect();    break;
         case SM_PAUSE_MP_MEMCARD_RESELECT:      EnterPauseMPMemcardReselect();      break;
         case SM_PAUSE_ONLINE:                   EnterPauseOnline();                 break;
@@ -1490,9 +1190,6 @@ void state_mgr::EnterState( sm_states State )
         case SM_PAUSE_ONLINE_CONTROLS:          EnterPauseOnlineControls();         break;
         case SM_PAUSE_ONLINE_SETTINGS:          EnterPauseOnlineSettings();         break;
         case SM_PAUSE_ONLINE_HEADSET:           EnterPauseOnlineHeadset();          break;
-#if defined(TARGET_PS2)
-        case SM_PAUSE_ONLINE_MEMCARD_SELECT:    EnterPauseOnlineMemcardSelect();    break;
-#endif
         case SM_PAUSE_ONLINE_SAVE_SELECT:       EnterPauseOnlineSaveSelect();       break;
         case SM_PAUSE_ONLINE_MEMCARD_RESELECT:  EnterPauseOnlineMemcardReselect();  break;
         case SM_PAUSE_ONLINE_CHANGE_MAP:        EnterPauseOnlineChangeMap();        break;
@@ -1506,9 +1203,6 @@ void state_mgr::EnterState( sm_states State )
         case SM_END_PAUSE:                      EnterEndPause();                    break;
         case SM_AUTOSAVE_MENU:                  EnterAutosaveMenu();                break;
         case SM_AUTOSAVE_PROFILE_RESELECT:      EnterAutosaveProfileReselect();     break;
-#if defined(TARGET_PS2)
-        case SM_AUTOSAVE_MEMCARD_SELECT:        EnterAutosaveMemcardSelect();       break;
-#endif
         case SM_END_AUTOSAVE:                   EnterEndAutosave();                 break;
         case SM_POST_GAME:                      EnterPostGame();                    break;
         case SM_EXIT_GAME:                      EnterExitGame();                    break;
@@ -1528,9 +1222,7 @@ void state_mgr::EnterState( sm_states State )
         case SM_GAME_EXIT_REDIRECT:             EnterGameExitRedirect();            break;
         case SM_GAME_OVER:                      EnterGameOver();                    break;
 
-#if defined(TARGET_PS2)
-        case SM_ONLINE_DOWNLOAD:                EnterOnlineDownload();              break;
-#endif
+        //case SM_ONLINE_DOWNLOAD:                EnterOnlineDownload();              break;
         case SM_ONLINE_LOGIN:                   EnterOnlineLogin();                 break;
         case SM_FOLLOW_BUDDY:                   EnterFollowBuddy();                 break;
         case SM_PLAYING_GAME:                   EnterPlayingGame();                 break;
@@ -1583,10 +1275,6 @@ void state_mgr::UpdateState( sm_states State, f32 DeltaTime )
     {
         case SM_ESRB_NOTICE:                    UpdateESRBNotice();                 break;
         case SM_STARTUP_INTRO:                  UpdateStartupIntro();               break;
-#if defined(TARGET_PS2)
-        case SM_CONTROLLER_CHECK:               UpdateControllerCheck();            break;
-        case SM_AUTOSAVE_DIALOG:                UpdateAutoSaveDialog();             break;
-#endif
         case SM_MEMCARD_BOOT_CHECK:             UpdateMemcardBootCheck();           break;
         case SM_PRESS_START_SCREEN:             UpdatePressStart();                 break;
         case SM_MAIN_MENU:                      UpdateMainMenu();                   break;
@@ -1599,9 +1287,6 @@ void state_mgr::UpdateState( sm_states State, f32 DeltaTime )
         case SM_MANAGE_PROFILE_OPTIONS:         UpdateManageProfileOptions();       break;
         case SM_MANAGE_PROFILE_CONTROLS:        UpdateManageProfileControls();      break;
         case SM_MANAGE_PROFILE_AVATAR:          UpdateManageProfileAvatar();        break;
-#if defined(TARGET_PS2)
-        case SM_MANAGE_MEMCARD_SELECT:          UpdateManageMemcardSelect();        break;
-#endif
         case SM_MANAGE_PROFILE_SAVE_SELECT:     UpdateManageProfileSaveSelect();    break;
         case SM_MANAGE_PROFILE_MEMCARD_RESELECT:UpdateManageMemcardReselect();      break;
 
@@ -1609,9 +1294,6 @@ void state_mgr::UpdateState( sm_states State, f32 DeltaTime )
         case SM_CAMPAIGN_PROFILE_OPTIONS:       UpdateCampaignProfileOptions();     break;
         case SM_CAMPAIGN_PROFILE_CONTROLS:      UpdateCampaignProfileControls();    break;
         case SM_CAMPAIGN_PROFILE_AVATAR:        UpdateCampaignProfileAvatar();      break;
-#if defined(TARGET_PS2)
-        case SM_CAMPAIGN_MEMCARD_SELECT:        UpdateCampaignMemcardSelect();      break;
-#endif
         case SM_CAMPAIGN_PROFILE_SAVE_SELECT:   UpdateCampaignProfileSaveSelect();  break;
         case SM_CAMPAIGN_MEMCARD_RESELECT:      UpdateCampaignMemcardReselect();    break;
         case SM_LOAD_CAMPAIGN:                  UpdateLoadCampaign();               break;
@@ -1620,9 +1302,6 @@ void state_mgr::UpdateState( sm_states State, f32 DeltaTime )
         case SM_SECRETS_MENU:                   UpdateSecretsMenu();                break;
         case SM_EXTRAS_MENU:                    UpdateExtrasMenu();                 break;
         case SM_CREDITS_SCREEN:                 UpdateCreditsScreen();              break;
-#if defined(TARGET_PS2)
-        case SM_MEMCARD_SELECT:                 UpdateMemcardSelect();              break;
-#endif
         case SM_PROFILE_SELECT:                 UpdateProfileSelect();              break;
         case SM_PROFILE_OPTIONS:                UpdateProfileOptions();             break;
         case SM_PROFILE_CONTROLS:               UpdateProfileControls();            break;
@@ -1634,28 +1313,14 @@ void state_mgr::UpdateState( sm_states State, f32 DeltaTime )
         case SM_MP_SAVE_SETTINGS:               UpdateMPSaveSettings();             break;
         case SM_PROFILE_CONTROLS_MP:            UpdateProfileControlsMP();          break;
         case SM_PROFILE_AVATAR_MP:              UpdateProfileAvatarMP();            break;
-#if defined(TARGET_PS2)
-        case SM_MEMCARD_SELECT_MP:              UpdateMemcardSelectMP();            break;
-#endif
         case SM_PROFILE_SAVE_SELECT_MP:         UpdateProfileSaveSelectMP();        break;
         case SM_MEMCARD_RESELECT_MP:            UpdateMemcardReselectMP();          break;
-#ifdef TARGET_PS2
-        case SM_ONLINE_EULA:                    UpdateOnlineEULA();                 break;
-#endif
         case SM_ONLINE_CONNECT:                 UpdateOnlineConnect();              break;
         case SM_ONLINE_AUTHENTICATE:            UpdateOnlineAuthenticate();         break;
-#ifndef TARGET_XBOX
-        case SM_ONLINE_COPA:                    UpdateOnlineCOPA();                 break;
-        case SM_ONLINE_COPA_SAVE_SELECT:        UpdateOnlineCOPASaveSelect();       break;
-        case SM_ONLINE_COPA_MEMCARD_RESELECT:   UpdateOnlineCOPAMemcardReselect();  break;
-#endif
         case SM_ONLINE_PROFILE_SELECT:          UpdateOnlineProfileSelect();        break;
         case SM_ONLINE_PROFILE_OPTIONS:         UpdateOnlineProfileOptions();       break;
         case SM_ONLINE_PROFILE_CONTROLS:        UpdateOnlineProfileControls();      break;
         case SM_ONLINE_PROFILE_AVATAR:          UpdateOnlineProfileAvatar();        break;
-#if defined(TARGET_PS2)
-        case SM_ONLINE_MEMCARD_SELECT:          UpdateOnlineMemcardSelect();        break;
-#endif
         case SM_ONLINE_PROFILE_SAVE_SELECT:     UpdateOnlineProfileSaveSelect();    break;
         case SM_ONLINE_MEMCARD_RESELECT:        UpdateOnlineMemcardReselect();      break;
         case SM_ONLINE_MAIN_MENU:               UpdateOnlineMain();                 break;
@@ -1706,12 +1371,6 @@ void state_mgr::UpdateState( sm_states State, f32 DeltaTime )
         case SM_PAUSE_HEADSET:                  UpdatePauseHeadset();               break;
         case SM_PAUSE_GRAPHICS:                 UpdatePauseGraphics();              break;		
         case SM_PAUSE_SETTINGS_SELECT:          UpdatePauseSettingsSelect();        break;
-#ifdef TARGET_XBOX
-        case SM_PAUSE_FRIENDS:                  UpdatePauseFriends();               break;
-#endif
-#if defined(TARGET_PS2)
-        case SM_PAUSE_MEMCARD_SELECT:           UpdatePauseMemcardSelect();         break;
-#endif
         case SM_PAUSE_PROFILE_SAVE_SELECT:      UpdatePauseMemcardSaveSelect();     break;
         case SM_PAUSE_MEMCARD_RESELECT:         UpdatePauseMemcardReselect();       break;
         case SM_PAUSE_MP:                       UpdatePauseMP();                    break;
@@ -1721,12 +1380,6 @@ void state_mgr::UpdateState( sm_states State, f32 DeltaTime )
         case SM_PAUSE_MP_HEADSET:               UpdatePauseMPHeadset();             break;
         case SM_PAUSE_MP_GRAPHICS:              UpdatePauseMPGraphics();            break;		
         case SM_PAUSE_MP_SETTINGS_SELECT:       UpdatePauseMPSettingsSelect();      break;
-#ifdef TARGET_XBOX
-        case SM_PAUSE_MP_FRIENDS:               UpdatePauseMPFriends();             break;
-#endif
-#if defined(TARGET_PS2)
-        case SM_PAUSE_MP_MEMCARD_SELECT:        UpdatePauseMPMemcardSelect();       break;
-#endif
         case SM_PAUSE_MP_PROFILE_SAVE_SELECT:   UpdatePauseMPMemcardSaveSelect();   break;
         case SM_PAUSE_MP_MEMCARD_RESELECT:      UpdatePauseMPMemcardReselect();     break;
 
@@ -1742,9 +1395,6 @@ void state_mgr::UpdateState( sm_states State, f32 DeltaTime )
         case SM_PAUSE_ONLINE_CONTROLS:          UpdatePauseOnlineControls();        break;
         case SM_PAUSE_ONLINE_SETTINGS:          UpdatePauseOnlineSettings();        break;
         case SM_PAUSE_ONLINE_HEADSET:           UpdatePauseOnlineHeadset();         break;
-#if defined(TARGET_PS2)
-        case SM_PAUSE_ONLINE_MEMCARD_SELECT:    UpdatePauseOnlineMemcardSelect();   break;
-#endif
         case SM_PAUSE_ONLINE_SAVE_SELECT:       UpdatePauseOnlineSaveSelect();      break;
         case SM_PAUSE_ONLINE_MEMCARD_RESELECT:  UpdatePauseOnlineMemcardReselect(); break;
         case SM_PAUSE_ONLINE_CHANGE_MAP:        UpdatePauseOnlineChangeMap();       break;
@@ -1758,9 +1408,6 @@ void state_mgr::UpdateState( sm_states State, f32 DeltaTime )
         case SM_END_PAUSE:                      UpdateEndPause();                   break;
         case SM_AUTOSAVE_MENU:                  UpdateAutosaveMenu();               break;
         case SM_AUTOSAVE_PROFILE_RESELECT:      UpdateAutosaveProfileReselect();    break;
-#if defined(TARGET_PS2)
-        case SM_AUTOSAVE_MEMCARD_SELECT:        UpdateAutosaveMemcardSelect();      break;
-#endif
         case SM_END_AUTOSAVE:                   UpdateEndAutosave();                break;
         case SM_EXIT_GAME:                      UpdateExitGame();                   break;
         case SM_POST_GAME:                      UpdatePostGame();                   break;
@@ -1779,9 +1426,7 @@ void state_mgr::UpdateState( sm_states State, f32 DeltaTime )
         case SM_GAME_EXIT_SETTINGS_OVERWRITE:   UpdateGameExitSettingsOverwrite();  break;
         case SM_GAME_EXIT_SETTINGS_SELECT:      UpdateGameExitSettingsSelect();     break;
         case SM_GAME_EXIT_REDIRECT:             UpdateGameExitRedirect();           break;
-#if defined(TARGET_PS2)
-        case SM_ONLINE_DOWNLOAD:                UpdateOnlineDownload();             break;
-#endif
+        //case SM_ONLINE_DOWNLOAD:                UpdateOnlineDownload();             break;
         case SM_ONLINE_LOGIN:                   UpdateOnlineLogin();                break;
         case SM_FOLLOW_BUDDY:                   UpdateFollowBuddy();                break;
         // no update required
@@ -1793,18 +1438,12 @@ void state_mgr::UpdateState( sm_states State, f32 DeltaTime )
     // If no input is received for 1 minute, then we will
     // bail out. **NOTE** this timer will only be started
     // when the load level is complete.
+
     s32         IdleTime;
-    xbool       ForceQuit = FALSE;
     extern s32  g_DemoInactiveTimeout;
 
-#if defined( TARGET_PS2 )
-    if( input_IsPressed( INPUT_PS2_BTN_START ) && input_IsPressed( INPUT_PS2_BTN_SELECT ) )
-    {
-        ForceQuit = TRUE;
-    }
-#endif
     IdleTime = (s32)g_DemoIdleTimer.ReadSec();
-    if( (IdleTime > g_DemoInactiveTimeout) || ForceQuit )
+    if( IdleTime > g_DemoInactiveTimeout )
     {
         if( GameMgr.GameInProgress() )
         {
@@ -2141,11 +1780,7 @@ void state_mgr::ActivatePendingSettings( xbool MarkDirty )
 void state_mgr::OnGameExitSaveProfileCB( void )
 {
     // if the save was successful (OR user wants to continue without saving)
-#ifdef TARGET_PS2
-    MemCardMgr::condition& Condition = g_UIMemCardMgr.GetCondition( m_iCard );
-#else
-    MemCardMgr::condition& Condition = g_UIMemCardMgr.GetCondition( 0 );
-#endif
+    MemCardMgr::condition& Condition = g_UIMemCardMgr.GetCondition( 0 ); //MemCardMgr::condition& Condition = g_UIMemCardMgr.GetCondition( m_iCard );
 
     if( Condition.SuccessCode )
     {
@@ -2193,11 +1828,8 @@ void state_mgr::OnGameExitSaveProfileCB( void )
 void state_mgr::OnGameExitSaveSettingsCB( void )
 {
     // check if the save was successful (OR user wants to continue without saving)
-#ifdef TARGET_PS2
-    MemCardMgr::condition& Condition1 = g_UIMemCardMgr.GetCondition( g_StateMgr.GetSettingsCardSlot() );
-#else
-    MemCardMgr::condition& Condition1 = g_UIMemCardMgr.GetCondition( 0 );
-#endif
+    MemCardMgr::condition& Condition1 = g_UIMemCardMgr.GetCondition( 0 ); //MemCardMgr::condition& Condition1 = g_UIMemCardMgr.GetCondition( g_StateMgr.GetSettingsCardSlot() );
+
     if( Condition1.SuccessCode )
     {
         // activate the new settings
@@ -2345,46 +1977,9 @@ void state_mgr::EnterStartupIntro( void )
 
 //=========================================================================
 
-const char* pISO639_1 = x_GetLocaleString( XL_LOCALE_CODE_ISO_639_1 );
-
 xstring SelectBestClip( const char* pName )
 {
-    //const char* langCode = x_GetLocaleString(); //For lang-video support. (future)
-
-#ifdef TARGET_PC
     return (const char*)xfs( "%s_640x480_%d", pName, 30 );
-    //return (const char*)xfs( "%s_640x480_%s_%d", pName, langCode, 30 ); //For lang-video support. (future)
-#endif
-
-/* Console Graveyard.
-#ifdef TARGET_XBOX
-    if( x_GetTerritory() == XL_TERRITORY_AMERICA )
-    {
-        return (const char*)xfs( "%s_640x480_%d",pName,g_PhysFPS/2 );
-    }
-    else
-    {
-        if( x_stristr( pName,"PromoUnreal2" ))
-            return "PromoUnreal2_640x480_25";
-
-        return (const char*)xfs( "%s_640x480_%d",pName,g_PhysFPS/2 );
-    }
-#endif
-
-#ifdef TARGET_PS2
-    xbool bIsPal;
-    eng_GetPALMode( bIsPal );
-
-    if( bIsPal )
-    {
-        return (const char*)xfs( "PAL_%s", pName );
-    }
-    else
-    {
-        return (const char*)xfs( "NTSC_%s", pName );
-    }
-#endif
-*/
     return pName;
 }
 
@@ -2416,13 +2011,13 @@ void state_mgr::UpdateStartupIntro( void )
     }
 
     // Play this stuff only on CIS locale systems
-    if (pISO639_1 && (x_stricmp(pISO639_1, "ru") == 0))
-    {
-        if( !PlaySimpleMovie( SelectBestClip("NewDisk" )) )
-        {
-            DummyScreen( "NewDisk Movie Here", TRUE, 5 );
-        }
-    }    
+    //if (pISO639_1 && (x_stricmp(pISO639_1, "ru") == 0))
+    //{
+    //    if( !PlaySimpleMovie( SelectBestClip("NewDisk" )) )
+    //    {
+    //        DummyScreen( "NewDisk Movie Here", TRUE, 5 );
+    //    }
+    //}    
 
     // TODO:
     //if( !PlaySimpleMovie( SelectBestClip("ProjectDreamland" )) )
@@ -2432,14 +2027,8 @@ void state_mgr::UpdateStartupIntro( void )
 
 #endif
     // change the state
-#ifdef TARGET_PS2
-    // PS2 needs to check that controllers are plugged in.
-    SetState( SM_CONTROLLER_CHECK );
-#else
     SetState( SM_MEMCARD_BOOT_CHECK );
 //  SetState( SM_PRESS_START_SCREEN );
-#endif
-
 #endif
 }
 
@@ -2448,99 +2037,6 @@ void state_mgr::UpdateStartupIntro( void )
 void state_mgr::ExitStartupIntro( void )
 {
 }
-
-#if defined(TARGET_PS2)
-//=========================================================================
-void state_mgr::EnterControllerCheck( void )
-{
-    //  Check for pulled controllers.
-    CheckControllers();
-}
-
-//=========================================================================
-void state_mgr::UpdateControllerCheck( void )
-{
-    if( !InSystemError() )
-    {
-        // change the state
-        SetState( SM_AUTOSAVE_DIALOG );
-    }
-}
-//=========================================================================
-void state_mgr::ExitControllerCheck( void )
-{
-    
-}
-
-//=========================================================================
-void state_mgr::EnterAutoSaveDialog( void )
-{
-    m_AutoSave.SetName      ( PRELOAD_PS2_FILE( "UI_PS2_autosave.xbmp"                  ) );
-}
-
-//=========================================================================
-
-void state_mgr::UpdateAutoSaveDialog( void )
-{
-    xbool  Done = FALSE;
-    xcolor IconColor(  63,  63,  63, 255 );
-    xcolor White    ( 255, 255, 255, 255 );
-
-    while( !Done )
-    {
-        eng_Begin( "AutoSaveDialog" );
-
-        g_InputMgr.Update( 1.0f / 60.0f );
-
-        if( input_WasPressed( INPUT_PS2_BTN_CROSS, 0 ) ||
-            input_WasPressed( INPUT_PS2_BTN_CROSS, 1 ) )
-        {
-            Done = TRUE;
-        }
-
-        draw_Begin( DRAW_SPRITES, DRAW_TEXTURED | DRAW_USE_ALPHA | DRAW_2D | DRAW_UI_RTARGET | DRAW_NO_ZBUFFER  );
-
-        irect rect(0+32,0,512-32,340);
-        xwstring noticeString = g_StringTableMgr("ui","IDS_AUTOSAVE_NOTICE");
-        g_UiMgr->RenderText_Wrap( 0, rect, ui_font::h_center|ui_font::v_center, White, noticeString );
-
-        draw_End();
-
-        rect.Set(0,0,512,448-20);
-        xwstring navString = g_StringTableMgr("ui","IDS_NAV_NETWORK_CONTINUE");
-        g_UiMgr->RenderText( g_UiMgr->FindFont("small"), rect, ui_font::h_center|ui_font::v_bottom, White, navString );
-
-        xbitmap* pAutoSaveBitmap = NULL;
-        pAutoSaveBitmap = m_AutoSave.GetPointer();
-
-        if( pAutoSaveBitmap )
-        {       
-            draw_Begin( DRAW_SPRITES, DRAW_TEXTURED | DRAW_USE_ALPHA | DRAW_2D | DRAW_UI_RTARGET | DRAW_NO_ZBUFFER  );
-            draw_SetTexture(*pAutoSaveBitmap);
-            draw_DisableBilinear();                
-            draw_Sprite( vector3( 256-(pAutoSaveBitmap->GetWidth()/2), 300, 0 ), 
-                         vector2( (f32)pAutoSaveBitmap->GetWidth(), 
-                                  (f32)pAutoSaveBitmap->GetHeight() ), 
-                         IconColor );
-            draw_End();
-        }
-
-        eng_End();
-
-        eng_PageFlip();
-    }
-
-    // Done
-    SetState( SM_MEMCARD_BOOT_CHECK );
-}
-
-//=========================================================================
-void state_mgr::ExitAutoSaveDialog( void )
-{
-
-}
-
-#endif // ndef TARGET_XBOX || TARGET_PC
 
 //=========================================================================
 
@@ -2660,18 +2156,11 @@ void state_mgr::UpdatePressStart( void )
 
 void state_mgr::ExitPressStart( void )
 {
-#if defined(TARGET_XBOX)
-    if( m_bSilentSigninStarted==FALSE )
-    {
-        m_bSilentSigninStarted = TRUE;
-        g_MatchMgr.Init();
-    }
-#endif
-
 }
 
-#if CONFIG_IS_DEMO
 //=========================================================================
+
+#if CONFIG_IS_DEMO
 void state_mgr::EnterDemoExit( void )
 {
     g_UiMgr->EnableUser( g_UiUserID, TRUE );
@@ -2682,6 +2171,7 @@ void state_mgr::EnterDemoExit( void )
 }
 
 //=========================================================================
+
 void state_mgr::UpdateDemoExit( void )
 {
     if( m_Timeout <= 0.0f )
@@ -2691,27 +2181,23 @@ void state_mgr::UpdateDemoExit( void )
 
     if( m_Timeout < (DEMO_ENDGAME_TIMEOUT-4.0f) )
     {
-#if defined(TARGET_PS2)
-        if( input_WasPressed( INPUT_PS2_BTN_START ) )
+		for( s32 i = 0; i < MAX_LOCAL_PLAYERS; i++ )
         {
-            Reboot( REBOOT_QUIT );
-        }
-#endif // TARGET_PS2
-
-#if defined(TARGET_XBOX)
-        if( input_WasPressed( INPUT_XBOX_BTN_START ) )
-        {
-            Reboot( REBOOT_QUIT );
-        }
-#endif // TARGET_XBOX
+            const auto& pad = g_IngamePad[i];
+            if( pad.GetLogical( ingame_pad::UI_HELP ).IsValue )
+			{
+				Reboot( REBOOT_QUIT );
+			}
+        } 
     }
-
 }
 //=========================================================================
+
 void state_mgr::ExitDemoExit( void )
 {
 }
 #endif
+
 //=========================================================================
 
 void state_mgr::EnterMainMenu( void )
@@ -2754,12 +2240,6 @@ void state_mgr::EnterMainMenu( void )
 
 void state_mgr::UpdateMainMenu( void )
 {
-#if defined(TARGET_XBOX)
-    if( CheckForDisconnect() )
-    {
-        return;
-    }
-#endif
     // check for menu automation
     if( CONFIG_IS_AUTOSERVER || CONFIG_IS_AUTOCLIENT )
     {
@@ -2847,11 +2327,7 @@ void state_mgr::UpdateMainMenu( void )
 
                     case IDC_MAIN_MENU_ONLINE:
                     {
-#ifdef TARGET_PS2
-                        SetState( SM_ONLINE_EULA );
-#else
                         SetState( SM_ONLINE_CONNECT );
-#endif
                     }
                     break;
 
@@ -3024,9 +2500,6 @@ void state_mgr::EnterSettingsMemcardSelect( void )
     g_UiMgr->EndDialog( g_UiUserID, TRUE );
     irect mainarea( 46, DIALOG_TOP, 466, DIALOG_BOTTOM );
     m_CurrentDialog = g_UiMgr->OpenDialog( g_UiUserID, "memcard select", mainarea, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER );
-#ifdef TARGET_PS2
-    ((dlg_memcard_select*)m_CurrentDialog)->Configure( SM_CARDMODE_SETTINGS );
-#endif
 }
 
 //=========================================================================
@@ -3074,12 +2547,6 @@ void state_mgr::EnterManageProfiles( void )
 
 void state_mgr::UpdateManageProfiles( void )
 {
-#if defined(TARGET_XBOX)
-    if( CheckForDisconnect() )
-    {
-        return;
-    }
-#endif
     // Get the current dialog state
     if( m_CurrentDialog != NULL )
     {
@@ -3171,12 +2638,7 @@ void state_mgr::UpdateManageProfileOptions( void )
 
                     case IDC_PROFILE_OPTIONS_ACCEPT:
                     {
-#if defined(TARGET_PC) || defined(TARGET_XBOX)
                         SetState( SM_MAIN_MENU );
-#else
-                        // need to save new profile
-                        SetState( SM_MANAGE_MEMCARD_SELECT );
-#endif
                     }
                     break;
                 }
@@ -3290,47 +2752,6 @@ void state_mgr::ExitManageProfileAvatar( void )
 {
 }
 
-//=========================================================================
-#if defined(TARGET_PS2)
-
-void state_mgr::EnterManageMemcardSelect( void )
-{
-    //  Create memcard select screen 
-    g_UiMgr->EndDialog( g_UiUserID, TRUE );
-    irect mainarea( 46, DIALOG_TOP, 466, DIALOG_BOTTOM );
-    m_CurrentDialog = g_UiMgr->OpenDialog( g_UiUserID, "memcard select", mainarea, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER );
-}
-
-//=========================================================================
-
-void state_mgr::UpdateManageMemcardSelect( void )
-{
-    if( m_CurrentDialog != NULL )
-    {
-        u32 DialogState = m_CurrentDialog->GetState();
-
-        if( DialogState == DIALOG_STATE_SELECT )
-        {
-            // save profile was successful
-            // goto the main menu
-            SetState( SM_MAIN_MENU );
-        }
-        if( DialogState == DIALOG_STATE_BACK )
-        {
-            // the profile save failed or was aborted
-            // go back to the manage profiles menu
-            SetState( SM_MANAGE_PROFILES );
-        }
-    }
-}
-
-//=========================================================================
-
-void state_mgr::ExitManageMemcardSelect( void )
-{
-}
-
-#endif
 //=========================================================================
 
 void state_mgr::EnterManageProfileSaveSelect( void )
@@ -3451,12 +2872,6 @@ void state_mgr::UpdateCampaignMenu( void )
         SetState( SM_LEVEL_SELECT );        
     }
 #endif
-#if defined(TARGET_XBOX)
-    if( CheckForDisconnect() )
-    {
-        return;
-    }
-#endif
 
     // Get the current dialog state
     if( m_CurrentDialog != NULL )
@@ -3483,10 +2898,7 @@ void state_mgr::UpdateCampaignMenu( void )
                     g_PendingConfig.SetMaxPlayerCount( 1 );
                     g_StateMgr.SetLevelIndex( 0 );
 
-#ifndef TARGET_XBOX
-                    //klkl: disable this check for Xbox because of silent login
                     ASSERT( g_NetworkMgr.IsOnline()==FALSE );
-#endif
                     g_NetworkMgr.BecomeServer();
 
                     // set campaign game type
@@ -3581,12 +2993,6 @@ void state_mgr::EnterLoadCampaign( void )
 
 void state_mgr::UpdateLoadCampaign( void )
 {
-#if defined(TARGET_XBOX)
-    if( CheckForDisconnect() )
-    {
-        return;
-    }
-#endif
     if( m_CurrentDialog != NULL )
     {
         u32 DialogState = m_CurrentDialog->GetState();
@@ -3688,13 +3094,6 @@ void state_mgr::EnterResumeCampaign( void )
 
 void state_mgr::UpdateResumeCampaign( void )
 {
-#if defined(TARGET_XBOX)
-    if( CheckForDisconnect() )
-    {
-        return;
-    }
-#endif
-
     if( m_CurrentDialog != NULL )
     {
         u32 DialogState = m_CurrentDialog->GetState();
@@ -3739,13 +3138,6 @@ void state_mgr::EnterLoreMainMenu ( void )
 
 void state_mgr::UpdateLoreMainMenu( void )
 {
-#if defined(TARGET_XBOX)
-    if( CheckForDisconnect() )
-    {
-        return;
-    }
-#endif
-
     if( m_CurrentDialog != NULL )
     {
         u32 DialogState = m_CurrentDialog->GetState();
@@ -3783,13 +3175,6 @@ void state_mgr::EnterSecretsMenu( void )
 
 void state_mgr::UpdateSecretsMenu( void )
 {
-#if defined(TARGET_XBOX)
-    if( CheckForDisconnect() )
-    {
-        return;
-    }
-#endif
-
     if( m_CurrentDialog != NULL )
     {
         u32 DialogState = m_CurrentDialog->GetState();
@@ -3825,12 +3210,6 @@ void state_mgr::EnterExtrasMenu( void )
 
 void state_mgr::UpdateExtrasMenu( void )
 {
-#if defined(TARGET_XBOX)
-    if( CheckForDisconnect() )
-    {
-        return;
-    }
-#endif
     if( m_CurrentDialog != NULL )
     {
         u32 DialogState = m_CurrentDialog->GetState();
@@ -3863,12 +3242,6 @@ void state_mgr::EnterCreditsScreen( void )
 
 void state_mgr::UpdateCreditsScreen( void )
 {
-#if defined(TARGET_XBOX)
-    if( CheckForDisconnect() )
-    {
-        return;
-    }
-#endif
     // Get the current dialog state
     if( m_CurrentDialog != NULL )
     {
@@ -3930,12 +3303,7 @@ void state_mgr::UpdateCampaignProfileOptions( void )
 
                     case IDC_PROFILE_OPTIONS_ACCEPT:
                     {
-                    #if defined(TARGET_PC) || defined(TARGET_XBOX)
                         SetState( SM_CAMPAIGN_MENU );
-                    #else
-                        // save to memcard and return to menu
-                        SetState( SM_CAMPAIGN_MEMCARD_SELECT );
-                    #endif
                     }
                     break;
                 }
@@ -4244,12 +3612,7 @@ void state_mgr::UpdateProfileOptions( void )
 
                     case IDC_PROFILE_OPTIONS_ACCEPT:
                     {
-                    #if defined(TARGET_PC) || defined(TARGET_XBOX)
                         SetState( SM_CAMPAIGN_MENU );
-                    #else
-                        // need to save new profile
-                        SetState( SM_MEMCARD_SELECT );
-                    #endif
                     }
                     break;
                 }
@@ -4363,11 +3726,7 @@ void state_mgr::EnterMultiPlayer( void )
 {
     // Create multi player menu
     g_UiMgr->EndDialog( g_UiUserID, TRUE );
-#ifdef TARGET_XBOX
-    irect mainarea(-12, DIALOG_TOP, 524, DIALOG_BOTTOM );
-#else
     irect mainarea(8, DIALOG_TOP, 504, DIALOG_BOTTOM );
-#endif
     m_CurrentDialog = g_UiMgr->OpenDialog( g_UiUserID, "multiplayer menu", mainarea, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER );
 #ifndef USE_MOVIES
     g_UiMgr->SetUserBackground( g_UiUserID, "background1" );
@@ -4519,11 +3878,7 @@ void state_mgr::UpdateMultiPlayerEdit( void )
 
                     case IDC_PROFILE_OPTIONS_ACCEPT:
                     {
-                    #if defined(TARGET_PC) || defined(TARGET_XBOX)
                         SetState( SM_MULTI_PLAYER_MENU );
-                    #else
-                        SetState( SM_MEMCARD_SELECT_MP ); 
-                    #endif
                     }
                     break;
                 }
@@ -4630,9 +3985,6 @@ void state_mgr::EnterMPSaveSettings( void )
     g_UiMgr->EndDialog( g_UiUserID, TRUE );
     irect mainarea( 46, DIALOG_TOP, 466, DIALOG_BOTTOM );
     m_CurrentDialog = g_UiMgr->OpenDialog( g_UiUserID, "memcard select", mainarea, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER );
-#ifdef TARGET_PS2
-    ((dlg_memcard_select*)m_CurrentDialog)->Configure( SM_CARDMODE_SETTINGS );
-#endif
 }
 
 //=========================================================================
@@ -4845,47 +4197,6 @@ void state_mgr::EnterOnlineSilentLogin( void )
 {
 }
 
-//=========================================================================
-#ifdef TARGET_PS2
-void state_mgr::EnterOnlineEULA( void )
-{
-    // Create online DNAS End User License Agreement dialog
-    g_UiMgr->EndDialog( g_UiUserID, TRUE );
-    irect mainarea(50, DIALOG_TOP, 486, DIALOG_BOTTOM );
-    m_CurrentDialog = g_UiMgr->OpenDialog( g_UiUserID, "dnas eula", mainarea, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER );
-}
-#endif
-//=========================================================================
-#ifdef TARGET_PS2
-void state_mgr::UpdateOnlineEULA( void )
-{
-    if( m_CurrentDialog != NULL )
-    {
-        u32 DialogState = m_CurrentDialog->GetState();
-
-        switch( DialogState )
-        {
-            case DIALOG_STATE_SELECT:
-            {
-                SetState( SM_ONLINE_CONNECT );
-            }
-            break;
-
-            case DIALOG_STATE_BACK:
-            {
-                SetState( SM_MAIN_MENU );
-            }
-            break;
-        }
-    }
-}
-#endif
-//=========================================================================
-#ifdef TARGET_PS2
-void state_mgr::ExitOnlineEULA( void )
-{
-}
-#endif
 //=========================================================================
 
 void state_mgr::EnterOnlineConnect( void )
@@ -5188,175 +4499,6 @@ void state_mgr::ExitOnlineProfileAvatar( void )
 }
 
 //=========================================================================
-#ifndef TARGET_XBOX
-void state_mgr::EnterOnlineCOPA( void )
-{
-    g_UiMgr->EndDialog( g_UiUserID, TRUE );
-    irect mainarea(116, DIALOG_TOP, 396, DIALOG_BOTTOM );
-    m_CurrentDialog = g_UiMgr->OpenDialog( g_UiUserID, "COPA", mainarea, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER );
-#ifndef USE_MOVIES
-    g_UiMgr->SetUserBackground( g_UiUserID, "background1" );
-#endif
-}
-
-//=========================================================================
-
-void state_mgr::UpdateOnlineCOPA( void )
-{
-    if( ( CONFIG_IS_AUTOSERVER ) || ( CONFIG_IS_AUTOCLIENT ) )
-    {
-        SetState( SM_ONLINE_AUTHENTICATE );
-    }
-
-    // Prevent reentrancy problems if we're disconnecting from
-    // the network.
-    if( m_BackgroundRendererRunning )
-    {
-        return;
-    }
-
-    if( CheckForDisconnect() )
-    {
-        return;
-    }
-
-    if( m_CurrentDialog != NULL )
-    {
-        u32 DialogState = m_CurrentDialog->GetState();
-
-        switch( DialogState )
-        {
-        case DIALOG_STATE_SELECT:
-            // profile age verification was successful
-            // so authenticate this user account
-            SetState( SM_ONLINE_AUTHENTICATE );
-            break;
-
-        case DIALOG_STATE_BACK:
-            // age verification failed - return to offline land
-#ifdef TARGET_PS2
-            // MAB: clear selected profile
-            // we MUST do this because the IOP is rebooted when we exit the online
-            // component and this triggers a "card changed" message the first time
-            // we mount the memory card.  Autosave will fail because of this.
-            // forcing the user to reselect a profile solves the problem.
-            ClearSelectedProfile(0);
-#endif
-            // disconnect
-            DisconnectFromNetwork();
-            // go back to the main menu
-            SetState( SM_MAIN_MENU );
-            break;
-
-        case DIALOG_STATE_MEMCARD_ERROR:
-            // failed when attempting to save the profile
-            // select a profile to be overwritten
-            SetState( SM_ONLINE_COPA_SAVE_SELECT );
-            break;
-        }
-    }
-}
-
-//=========================================================================
-
-void state_mgr::ExitOnlineCOPA( void )
-{
-}
-
-//=========================================================================
-
-void state_mgr::EnterOnlineCOPASaveSelect( void )
-{
-    // Create profile menu
-    g_UiMgr->EndDialog( g_UiUserID, TRUE );
-    irect mainarea(91, DIALOG_TOP, 421, DIALOG_BOTTOM );
-    m_CurrentDialog = g_UiMgr->OpenDialog( g_UiUserID, "profile select", mainarea, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER );
-    ((dlg_profile_select*)m_CurrentDialog)->Configure( PROFILE_SELECT_OVERWRITE );
-#ifndef USE_MOVIES
-    g_UiMgr->SetUserBackground( g_UiUserID, "background1" );
-#endif
-}
-
-//=========================================================================
-
-void state_mgr::UpdateOnlineCOPASaveSelect( void )
-{
-    // Get the current dialog state
-    if( m_CurrentDialog != NULL )
-    {
-        u32 DialogState = m_CurrentDialog->GetState();
-
-        switch( DialogState )
-        {
-            case DIALOG_STATE_SELECT:
-            {
-                // selected profile was overwritten
-                SetState( SM_ONLINE_AUTHENTICATE );
-            }
-            break;
-
-            case DIALOG_STATE_ACTIVATE:
-            {
-                // continue without saving
-                SetState( SM_ONLINE_AUTHENTICATE );
-            }
-            break;
-
-            case DIALOG_STATE_CREATE:
-            {
-                // Select a card to save the profile to
-                SetState( SM_ONLINE_COPA_MEMCARD_RESELECT );
-            }
-            break;
-        }
-    }
-}
-
-//=========================================================================
-
-void state_mgr::ExitOnlineCOPASaveSelect( void )
-{
-}
-
-//=========================================================================
-
-void state_mgr::EnterOnlineCOPAMemcardReselect( void )
-{
-    //  Create memcard select screen 
-    g_UiMgr->EndDialog( g_UiUserID, TRUE );
-    irect mainarea( 46, DIALOG_TOP, 466, DIALOG_BOTTOM );
-    m_CurrentDialog = g_UiMgr->OpenDialog( g_UiUserID, "memcard select", mainarea, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER );
-}
-
-//=========================================================================
-
-void state_mgr::UpdateOnlineCOPAMemcardReselect( void )
-{
-    if( m_CurrentDialog != NULL )
-    {
-        u32 DialogState = m_CurrentDialog->GetState();
-
-        if( DialogState == DIALOG_STATE_SELECT )
-        {
-            // save profile was successful
-            SetState( SM_ONLINE_AUTHENTICATE );
-        }
-        if( DialogState == DIALOG_STATE_BACK )
-        {
-            // the profile save failed or was aborted
-            // go back to the profile select menu
-            SetState( SM_ONLINE_COPA_SAVE_SELECT );
-        }
-    }
-}
-
-//=========================================================================
-
-void state_mgr::ExitOnlineCOPAMemcardReselect( void )
-{
-}
-#endif
-//=========================================================================
 
 void state_mgr::EnterOnlineAuthenticate( void )
 {
@@ -5376,15 +4518,6 @@ void state_mgr::EnterOnlineAuthenticate( void )
 
 void state_mgr::UpdateOnlineAuthenticate( void )
 {
-    #ifdef TARGET_XBOX
-    {
-        // At this point the Xbox will have performed all required authentication.
-        // No further work is necessary, so just go straight to the main menu.
-        SetState( SM_ONLINE_MAIN_MENU );
-        return;
-    }    
-    #endif
-
     // Prevent reentrancy problems if we're disconnecting from
     // the network.
     if( m_BackgroundRendererRunning )
@@ -5600,56 +4733,12 @@ void state_mgr::UpdateOnlineMain( void )
 
             switch( DialogState )
             {
-                #ifdef TARGET_XBOX
-                // We have detected a pending accepted invite inside the online main dialog.
-                {
-                    case DIALOG_STATE_ACTIVATE:
-                    {
-                        XONLINE_LATEST_ACCEPTED_GAMEINVITE& Invitation = g_MatchMgr.GetInviteAccepted();
-
-                        server_info& Config = g_PendingConfig.GetConfig();
-                        x_memset( &Config, 0, sizeof(server_info) );
-                        x_memcpy( &Config.SessionID, &Invitation.SessionID, sizeof(Config.SessionID) );
-                        ASSERT( sizeof(m_FeedbackName) >= XONLINE_GAMERTAG_SIZE );
-                        x_strncpy( m_FeedbackName, Invitation.szInvitingUserGamertag, XONLINE_GAMERTAG_SIZE );
-                        // These values are actually unknown but we fill in these just to stop asserts.
-                        // The MaxPlayers and Players is irrelevent but usually we have this information.
-                        Config.GameTypeID = GAME_MP;
-                        Config.MaxPlayers = 32;
-                        Config.Players    = 1;
-
-                        // We only ever want to see the accepted invite dialog once
-                        g_MatchMgr.SetPendingInviteAccepted( FALSE );
-
-                        SetState( SM_FOLLOW_BUDDY );
-                        return;
-                    }
-                    break;
-                }
-                #endif
-                
                 case DIALOG_STATE_SELECT:
                 {
                     s32 Control = m_CurrentDialog->GetControl();
 
                     switch( Control )
                     {
-    #ifdef TARGET_XBOX
-                        case IDC_ONLINE_QUICKMATCH:
-                            #ifdef LAN_PARTY_BUILD
-                                g_MatchMgr.SetFilter( (game_type)-1, -1, -1 );
-                                SetState( SM_ONLINE_JOIN_MENU );
-                            #else
-                                SetState( SM_ONLINE_QUICKMATCH );
-                            #endif
-
-                            break;
-
-                        case IDC_ONLINE_OPTIMATCH:
-                            InitPendingSettings();
-                            SetState( SM_ONLINE_JOIN_FILTER );
-                            break;
-    #else
                         case IDC_ONLINE_JOIN:
                             #ifdef LAN_PARTY_BUILD
                                 g_MatchMgr.SetFilter( (game_type)-1, -1, -1 );
@@ -5660,7 +4749,6 @@ void state_mgr::UpdateOnlineMain( void )
                             #endif
 
                             break;
-    #endif
                         case IDC_ONLINE_HOST:
                             InitPendingSettings();
                             SetState( SM_ONLINE_HOST_MENU );
@@ -5681,12 +4769,9 @@ void state_mgr::UpdateOnlineMain( void )
                         case IDC_ONLINE_VIEW_STATS:
                             SetState( SM_ONLINE_STATS );
                             break;
-#if defined(TARGET_PS2)
-                        case IDC_ONLINE_DOWNLOAD:
-                            SetState( SM_ONLINE_DOWNLOAD );
-#endif
-                            break;
-
+                        //case IDC_ONLINE_DOWNLOAD:
+                        //    SetState( SM_ONLINE_DOWNLOAD );
+                        //    break;
                         default:
                             ASSERTS( FALSE, "Selection not supported!" );
                             break;
@@ -5696,14 +4781,6 @@ void state_mgr::UpdateOnlineMain( void )
 
                 case DIALOG_STATE_BACK:
                 {
-#ifdef TARGET_PS2
-                    // MAB: clear selected profile
-                    // we MUST do this because the IOP is rebooted when we exit the online
-                    // component and this triggers a "card changed" message the first time
-                    // we mount the memory card.  Autosave will fail because of this.
-                    // forcing the user to reselect a profile solves the problem.
-                    ClearSelectedProfile(0);
-#endif
                     // disconnect
                     DisconnectFromNetwork();
                     SetState( SM_MAIN_MENU );
@@ -5857,9 +4934,6 @@ void state_mgr::EnterHostSaveSettings( void )
     g_UiMgr->EndDialog( g_UiUserID, TRUE );
     irect mainarea( 46, DIALOG_TOP, 466, DIALOG_BOTTOM );
     m_CurrentDialog = g_UiMgr->OpenDialog( g_UiUserID, "memcard select", mainarea, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER );
-#ifdef TARGET_PS2
-    ((dlg_memcard_select*)m_CurrentDialog)->Configure( SM_CARDMODE_SETTINGS );
-#endif
 }
 
 //=========================================================================
@@ -6087,9 +5161,6 @@ void state_mgr::EnterOnlineJoinSaveSettings( void )
     g_UiMgr->EndDialog( g_UiUserID, TRUE );
     irect mainarea( 46, DIALOG_TOP, 466, DIALOG_BOTTOM );
     m_CurrentDialog = g_UiMgr->OpenDialog( g_UiUserID, "memcard select", mainarea, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER );
-#ifdef TARGET_PS2
-    ((dlg_memcard_select*)m_CurrentDialog)->Configure( SM_CARDMODE_SETTINGS );
-#endif
 }
 
 //=========================================================================
@@ -6447,12 +5518,7 @@ void state_mgr::UpdateOnlineEditProfile( void )
 
                     case IDC_PROFILE_OPTIONS_ACCEPT:
                     {
-                    #if defined(TARGET_PC) || defined(TARGET_XBOX)
                         SetState( SM_ONLINE_MAIN_MENU );
-                    #else
-                        // go to memcard select to save the profile
-                        SetState( SM_ONLINE_MEMCARD_SELECT );  
-                    #endif
                     }
                     break;
                 }
@@ -7056,12 +6122,6 @@ void state_mgr::UpdatePauseMain( void )
                 InitPendingSettings();
                 SetState( SM_PAUSE_SETTINGS );
             }
-#ifdef TARGET_XBOX
-            else if( Control == IDC_PAUSE_MENU_FRIENDS )
-            {
-                SetState( SM_PAUSE_FRIENDS );
-            }
-#endif
         }
     }
 }
@@ -7112,12 +6172,7 @@ void state_mgr::UpdatePauseOptions( void )
 
                     case IDC_PROFILE_OPTIONS_ACCEPT:
                     {
-                    #if defined(TARGET_PC) || defined(TARGET_XBOX)
                         SetState( SM_PAUSE_MAIN_MENU );
-                    #else
-                        // need to save new profile
-                        SetState( SM_PAUSE_MEMCARD_SELECT );
-                    #endif
                     }
                     break;
                 }
@@ -7332,9 +6387,6 @@ void state_mgr::EnterPauseSettingsSelect( void )
     g_UiMgr->EndDialog( g_UiUserID, TRUE );
     irect mainarea( 46, DIALOG_TOP, 466, DIALOG_BOTTOM );
     m_CurrentDialog = g_UiMgr->OpenDialog( g_UiUserID, "memcard select", mainarea, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER );
-#ifdef TARGET_PS2
-    ((dlg_memcard_select*)m_CurrentDialog)->Configure( SM_CARDMODE_SETTINGS );
-#endif
 }
 
 //=========================================================================
@@ -7364,52 +6416,6 @@ void state_mgr::ExitPauseSettingsSelect( void )
 {
 }
 
-//=========================================================================
-#ifdef TARGET_XBOX
-void state_mgr::EnterPauseFriends ( void )
-{
-    // Create friends menu
-    g_UiMgr->EndDialog( g_UiUserID, TRUE );
-    irect mainarea(8, DIALOG_TOP, 504, DIALOG_BOTTOM );
-    m_CurrentDialog = g_UiMgr->OpenDialog( g_UiUserID, "friends list", mainarea, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER );
-#ifndef USE_MOVIES
-    g_UiMgr->SetUserBackground( g_UiUserID, "background1" );
-#endif
-    // enable background filter
-    ((dlg_friends*)m_CurrentDialog)->EnableBlackout();
-}
-
-//=========================================================================
-
-void state_mgr::UpdatePauseFriends( void )
-{
-    if( m_CurrentDialog != NULL )
-    {
-        u32 DialogState = m_CurrentDialog->GetState();
-
-        switch( DialogState )
-        {
-            case DIALOG_STATE_BACK:
-            {
-                SetState( SM_PAUSE_MAIN_MENU );
-            }
-            break;
-
-            case DIALOG_STATE_ACTIVATE:
-            {
-                SetState( SM_PAUSE_ONLINE_FEEDBACK_FRIEND );
-            }
-            break;
-        }
-    }
-}
-
-//=========================================================================
-
-void state_mgr::ExitPauseFriends  ( void )
-{
-}
-#endif
 //=========================================================================
 
 void state_mgr::EnterPauseMemcardSaveSelect ( void )
@@ -7474,9 +6480,6 @@ void state_mgr::EnterPauseMemcardReselect ( void )
     g_UiMgr->EndDialog( g_UiUserID, TRUE );
     irect mainarea( 46, DIALOG_TOP, 466, DIALOG_BOTTOM );
     m_CurrentDialog = g_UiMgr->OpenDialog( g_UiUserID, "memcard select", mainarea, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER );
-#ifdef TARGET_PS2
-    ((dlg_memcard_select*)m_CurrentDialog)->EnableBlackout();
-#endif
 }
 
 //=========================================================================
@@ -7553,12 +6556,6 @@ void state_mgr::UpdatePauseMP( void )
                 InitPendingSettings();
                 SetState( SM_PAUSE_MP_SETTINGS );
             }
-#ifdef TARGET_XBOX
-            else if( Control == IDC_PAUSE_MP_FRIENDS )
-            {
-                SetState( SM_PAUSE_MP_FRIENDS );
-            }
-#endif
         }
     }
 }
@@ -7709,9 +6706,6 @@ void state_mgr::EnterPauseMPSettingsSelect( void )
     g_UiMgr->EndDialog( g_UiUserID, TRUE );
     irect mainarea( 46, DIALOG_TOP, 466, DIALOG_BOTTOM );
     m_CurrentDialog = g_UiMgr->OpenDialog( g_UiUserID, "memcard select", mainarea, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER );
-#ifdef TARGET_PS2
-    ((dlg_memcard_select*)m_CurrentDialog)->Configure( SM_CARDMODE_SETTINGS );
-#endif
 }
 
 //=========================================================================
@@ -7741,46 +6735,6 @@ void state_mgr::ExitPauseMPSettingsSelect( void )
 {
 }
 
-//=========================================================================
-#ifdef TARGET_XBOX
-void state_mgr::EnterPauseMPFriends( void )
-{
-    // Create friends menu
-    g_UiMgr->EndDialog( g_UiUserID, TRUE );
-    irect mainarea(8, DIALOG_TOP, 504, DIALOG_BOTTOM );
-    m_CurrentDialog = g_UiMgr->OpenDialog( g_UiUserID, "friends list", mainarea, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER );
-#ifndef USE_MOVIES
-    g_UiMgr->SetUserBackground( g_UiUserID, "background1" );
-#endif
-    // enable background filter
-    ((dlg_friends*)m_CurrentDialog)->EnableBlackout();
-}
-
-//=========================================================================
-
-void state_mgr::UpdatePauseMPFriends( void )
-{
-    if( m_CurrentDialog != NULL )
-    {
-        u32 DialogState = m_CurrentDialog->GetState();
-
-        switch( DialogState )
-        {
-            case DIALOG_STATE_BACK:
-            {
-                SetState( SM_PAUSE_MP );
-            }
-            break;
-        }
-    }
-}
-
-//=========================================================================
-
-void state_mgr::ExitPauseMPFriends( void )
-{
-}
-#endif
 //=========================================================================
 
 void state_mgr::EnterPauseMPOptions( void )
@@ -7821,12 +6775,7 @@ void state_mgr::UpdatePauseMPOptions( void )
 
                     case IDC_PROFILE_OPTIONS_ACCEPT:
                     {
-#if defined(TARGET_PC) || defined(TARGET_XBOX)
                         SetState( SM_PAUSE_MP );
-#else
-                        // need to save new profile
-                        SetState( SM_PAUSE_MP_MEMCARD_SELECT );
-#endif
                     }
                     break;
                 }
@@ -7902,47 +6851,6 @@ void state_mgr::ExitPauseMPControls( void )
 }
 
 //=========================================================================
-#if defined(TARGET_PS2)
-void state_mgr::EnterPauseMPMemcardSelect( void )
-{
-    //  Create memcard select screen 
-    g_UiMgr->EndDialog( g_UiUserID, TRUE );
-    irect mainarea( 46, DIALOG_TOP, 466, DIALOG_BOTTOM );
-    m_CurrentDialog = g_UiMgr->OpenDialog( g_UiUserID, "memcard select", mainarea, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER );
-
-    // enable background filter
-    ((dlg_memcard_select*)m_CurrentDialog)->EnableBlackout();
-}
-
-//=========================================================================
-
-void state_mgr::UpdatePauseMPMemcardSelect( void )
-{
-    if( m_CurrentDialog != NULL )
-    {
-        u32 DialogState = m_CurrentDialog->GetState();
-
-        if( DialogState == DIALOG_STATE_SELECT )
-        {
-            // save profile was successful
-            // goto the pause main menu
-            SetState( SM_PAUSE_MP );
-        }
-        if( DialogState == DIALOG_STATE_BACK )
-        {
-            // the profile save was aborted
-            SetState( SM_PAUSE_MP );
-        }
-    }
-}
-
-//=========================================================================
-
-void state_mgr::ExitPauseMPMemcardSelect( void )
-{
-}
-#endif
-//=========================================================================
 
 void state_mgr::EnterPauseMPMemcardSaveSelect( void )
 {
@@ -8006,9 +6914,6 @@ void state_mgr::EnterPauseMPMemcardReselect( void )
     g_UiMgr->EndDialog( g_UiUserID, TRUE );
     irect mainarea( 46, DIALOG_TOP, 466, DIALOG_BOTTOM );
     m_CurrentDialog = g_UiMgr->OpenDialog( g_UiUserID, "memcard select", mainarea, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER );
-#ifdef TARGET_PS2
-    ((dlg_memcard_select*)m_CurrentDialog)->EnableBlackout();
-#endif
 }
 
 //=========================================================================
@@ -8435,12 +7340,7 @@ void state_mgr::UpdatePauseOnlineOptions( void )
 
                     case IDC_PROFILE_OPTIONS_ACCEPT:
                     {
-                    #if defined(TARGET_PC) || defined(TARGET_XBOX)
                         SetState( SM_PAUSE_MAIN_MENU );
-                    #else
-                        // need to save new profile
-                        SetState( SM_PAUSE_ONLINE_MEMCARD_SELECT );
-                    #endif
                     }
                     break;
                 }
@@ -8664,9 +7564,6 @@ void state_mgr::EnterPauseOnlineMemcardReselect( void )
     g_UiMgr->EndDialog( g_UiUserID, TRUE );
     irect mainarea( 46, DIALOG_TOP, 466, DIALOG_BOTTOM );
     m_CurrentDialog = g_UiMgr->OpenDialog( g_UiUserID, "memcard select", mainarea, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER );
-#ifdef TARGET_PS2
-    ((dlg_memcard_select*)m_CurrentDialog)->EnableBlackout();
-#endif
 }
 
 //=========================================================================
@@ -9058,9 +7955,6 @@ void state_mgr::EnterPauseOnlineSaveSettings( void )
     g_UiMgr->EndDialog( g_UiUserID, TRUE );
     irect mainarea( 46, DIALOG_TOP, 466, DIALOG_BOTTOM );
     m_CurrentDialog = g_UiMgr->OpenDialog( g_UiUserID, "memcard select", mainarea, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER );
-#ifdef TARGET_PS2
-    ((dlg_memcard_select*)m_CurrentDialog)->Configure( SM_CARDMODE_SETTINGS );
-#endif
 }
 
 //=========================================================================
@@ -9114,11 +8008,7 @@ void state_mgr::EnterPauseMPScore( void )
     {
         if( ScoreData.IsTeamBased ) 
         {
-#ifdef TARGET_XBOX
             irect mainarea(8, DIALOG_TOP, 504, 448-36);
-#else
-            irect mainarea(8, 16, 504, 448-36);
-#endif
             m_CurrentDialog = g_UiMgr->OpenDialog( g_UiUserID, "team leaderboard", mainarea, NULL, ui_win::WF_VISIBLE );
             m_LeaderboardID = SM_TEAM_LEADERBOARD;
         }
@@ -9148,11 +8038,7 @@ void state_mgr::UpdatePauseMPScore( void )
                 g_UiMgr->EndDialog( g_UiUserID, TRUE );
                 if( ScoreData.IsTeamBased ) 
                 {
-#ifdef TARGET_XBOX
                     irect mainarea(8, DIALOG_TOP, 504, 448-36);
-#else
-                    irect mainarea(8, 16, 504, 448-36);
-#endif
                     m_CurrentDialog = g_UiMgr->OpenDialog( g_UiUserID, "team leaderboard", mainarea, NULL, ui_win::WF_VISIBLE );
                     m_LeaderboardID = SM_TEAM_LEADERBOARD;
                 }
@@ -9646,12 +8532,7 @@ void state_mgr::UpdateAutosaveProfileReselect( void )
 
             case DIALOG_STATE_CREATE:
             {
-#ifdef TARGET_PS2
-                // Select a card to save the profile to
-                SetState( SM_AUTOSAVE_MEMCARD_SELECT );
-#else
                 // create a new profile
-#endif
             }
             break;
         }
@@ -9663,50 +8544,6 @@ void state_mgr::UpdateAutosaveProfileReselect( void )
 void state_mgr::ExitAutosaveProfileReselect( void )
 {
 }
-
-#if defined(TARGET_PS2)
-//=========================================================================
-
-void state_mgr::EnterAutosaveMemcardSelect( void )
-{
-    //  Create memcard select screen 
-    g_UiMgr->EndDialog( g_UiUserID, TRUE );
-    irect mainarea( 46, DIALOG_TOP, 466, DIALOG_BOTTOM );
-    m_CurrentDialog = g_UiMgr->OpenDialog( g_UiUserID, "memcard select", mainarea, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER );
-    // enable background filter
-    ((dlg_memcard_select*)m_CurrentDialog)->EnableBlackout();
-}
-
-//=========================================================================
-
-void state_mgr::UpdateAutosaveMemcardSelect( void )
-{
-    if( m_CurrentDialog != NULL )
-    {
-        u32 DialogState = m_CurrentDialog->GetState();
-
-        if( DialogState == DIALOG_STATE_SELECT )
-        {
-            // save profile was successful
-            // return to game
-            SetState( SM_END_AUTOSAVE );
-        }
-        if( DialogState == DIALOG_STATE_BACK )
-        {
-            // the profile save failed or was aborted
-            // go back to the profile select menu
-            SetState( SM_AUTOSAVE_PROFILE_RESELECT );
-        }
-    }
-}
-
-//=========================================================================
-
-void state_mgr::ExitAutosaveMemcardSelect( void )
-{
-}
-
-#endif // TARGET_XBOX
 
 //=========================================================================
 
@@ -9788,11 +8625,7 @@ void state_mgr::EnterFinalScore( void )
     {
         if( ScoreData.IsTeamBased ) 
         {
-#ifdef TARGET_XBOX
             irect mainarea(8, DIALOG_TOP, 504, 448-36);
-#else
-            irect mainarea(8, 16, 504, 448-36);
-#endif
             m_CurrentDialog = g_UiMgr->OpenDialog( g_UiUserID, "team leaderboard", mainarea, NULL, ui_win::WF_VISIBLE );
             m_LeaderboardID = SM_TEAM_LEADERBOARD;
             // configure for final score
@@ -10152,20 +8985,9 @@ void state_mgr::EnterMultiPlayerLoadMission( void )
     m_Timeout = 0.25f;
     s32 playerCount = ScoreData.NPlayers;
 
-#if defined(TARGET_XBOX)
-    // The XBOX needs texture allocations to be redirected prior to level loading to tiled memory
-    // otherwise the texture manager will lose the size of the bitmap every level cycling.
-    extern void RedirectTextureAllocator( void );
-    RedirectTextureAllocator();
-#endif
-
     if( playerCount > 16 )
-    {
-#ifdef TARGET_XBOX            
+    {         
         irect mainarea(8, DIALOG_TOP, 504, DIALOG_BOTTOM );
-#else
-        irect mainarea(8, DIALOG_TOP-8, 504, DIALOG_BOTTOM );
-#endif
         m_pLeaderboardDialog = g_UiMgr->OpenDialog( g_UiUserID, "big leaderboard", mainarea, NULL, ui_win::WF_VISIBLE );
         m_LeaderboardID = SM_BIG_LEADERBOARD;
         ((dlg_big_leaderboard*)m_pLeaderboardDialog)->Configure( LEADERBOARD_INTERLEVEL );
@@ -10173,24 +8995,16 @@ void state_mgr::EnterMultiPlayerLoadMission( void )
     else
     {
         if( ScoreData.IsTeamBased ) 
-        {
-#ifdef TARGET_XBOX            
+        {           
             irect mainarea(8, DIALOG_TOP, 504, 448-36);
-#else
-            irect mainarea(8, 16, 504, 448-36);
-#endif
             m_pLeaderboardDialog = g_UiMgr->OpenDialog( g_UiUserID, "team leaderboard", mainarea, NULL, ui_win::WF_VISIBLE );
             m_LeaderboardID = SM_TEAM_LEADERBOARD;
             // configure for final score
             ((dlg_team_leaderboard*)m_pLeaderboardDialog)->Configure( LEADERBOARD_INTERLEVEL );
         }
         else
-        {        
-#ifdef TARGET_XBOX            
+        {                    
             irect mainarea(8, DIALOG_TOP, 504, DIALOG_BOTTOM );
-#else
-            irect mainarea(8, DIALOG_TOP-8, 504, DIALOG_BOTTOM );
-#endif
             m_pLeaderboardDialog = g_UiMgr->OpenDialog( g_UiUserID, "leaderboard", mainarea, NULL, ui_win::WF_VISIBLE );
             m_LeaderboardID = SM_LEADERBOARD;
             // configure for final score
@@ -10205,12 +9019,7 @@ void state_mgr::EnterMultiPlayerLoadMission( void )
     ASSERT( m_CurrentDialog == NULL );
 
     // Create a level description dialog
-#ifdef TARGET_XBOX
     irect mainarea(8, DIALOG_TOP, 504, DIALOG_BOTTOM);
-#else
-    irect mainarea(8, DIALOG_TOP-8, 504, DIALOG_BOTTOM);
-#endif
-
     m_CurrentDialog = g_UiMgr->OpenDialog( g_UiUserID, "level desc", mainarea, NULL, ui_win::WF_VISIBLE );
     ((dlg_level_desc*)m_CurrentDialog)->Configure( s_FirstMap ? LEVEL_DESC_INITIAL : LEVEL_DESC_INTERLEVEL );
     g_UiMgr->EnableBackground( FALSE );
@@ -10245,10 +9054,6 @@ void state_mgr::EnterMultiPlayerLoadMission( void )
         g_UiMgr->EnableBackground( FALSE );
         m_bShowingScores = TRUE;
     }
-#if defined(TARGET_XBOX)
-    extern void RestoreTextureAllocator( void );
-    RestoreTextureAllocator();
-#endif
 
     if( g_MatchMgr.GetState() == MATCH_SERVER_ACTIVE )
     {
@@ -11079,39 +9884,6 @@ void state_mgr::ExitGameExitPromptForSave( void )
 
 void state_mgr::EnterGameExitSaveSelect( void )
 {
-#ifdef TARGET_XBOX
-    // Xbox intercepts this keypress so it can prompt the user
-    // to go to the dashboard to free up space.
-    MemCardMgr::condition& Condition = g_UIMemCardMgr.GetCondition(0);
-    // open confirmation dialog
-    irect r = g_UiMgr->GetUserBounds( g_UiUserID );
-    m_PopUp = (dlg_popup*)g_UiMgr->OpenDialog(  g_UiUserID, "popup", r, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER|ui_win::WF_DLG_CENTER|ui_win::WF_INPUTMODAL|ui_win::WF_USE_ABSOLUTE );
-
-    xwstring navText(g_StringTableMgr( "ui", "IDS_NAV_DONT_FREE_BLOCKS" ));
-    navText += g_StringTableMgr( "ui", "IDS_NAV_FREE_MORE_BLOCKS" );
-
-    // calculate blocks required
-    s32 BlocksRequired = ( (g_StateMgr.GetProfileSaveSize() - Condition.BytesFree) + 16383 ) / 16384;
-
-    if( x_GetLocale() == XL_LANG_ENGLISH )
-    {
-        r.SetWidth(380);
-        r.SetHeight(125);
-    }
-    else
-    {
-        r.SetWidth(400);
-        r.SetHeight(145);
-    }
-
-    m_PopUp->Configure( r, g_StringTableMgr( "ui", "IDS_MEMCARD_HEADER" ), 
-                        TRUE, 
-                        TRUE, 
-                        FALSE, 
-                        xwstring( xfs( (const char*)xstring(g_StringTableMgr( "ui", "MC_NOT_ENOUGH_FREE_SPACE_SLOT1_XBOX" )), BlocksRequired ) ),
-                        navText,
-                        &m_PopUpResult );
-#else
     // Create profile menu
     g_UiMgr->EndDialog( g_UiUserID, TRUE );
     irect mainarea(91, DIALOG_TOP, 421, DIALOG_BOTTOM );
@@ -11120,56 +9892,12 @@ void state_mgr::EnterGameExitSaveSelect( void )
 #ifndef USE_MOVIES
     g_UiMgr->SetUserBackground( g_UiUserID, "background1" );
 #endif
-#endif
 }
 
 //=========================================================================
 
 void state_mgr::UpdateGameExitSaveSelect( void )
 {
-#ifdef TARGET_XBOX
-    // handle popup result
-    if ( m_PopUp )
-    {
-        if ( m_PopUpResult != DLG_POPUP_IDLE )
-        {
-            if( m_PopUpResult == DLG_POPUP_YES )
-            {
-                // continue without saving
-                // update the changes in the profile
-                g_StateMgr.ActivatePendingProfile();
-
-                // continue onward
-                global_settings& ActiveSettings = GetActiveSettings();
-                if( ActiveSettings.HasChanged() )
-                {
-                    SetState( SM_GAME_EXIT_SAVE_SETTINGS );
-                }
-                else
-                {
-                    SetState( SM_GAME_EXIT_REDIRECT );
-                }
-            }
-            else
-            {
-                // If the player chose to go to the Dash, go to memory area
-                LD_LAUNCH_DASHBOARD LaunchDash;
-                LaunchDash.dwReason = XLD_LAUNCH_DASHBOARD_MEMORY;
-                // This value will be returned to the title via XGetLaunchInfo
-                // in the LD_FROM_DASHBOARD struct when the Dashboard reboots
-                // into the title. If not required, set to zero.
-                LaunchDash.dwContext = 0;
-                // Specify the logical drive letter of the region where
-                // data needs to be removed; either T or U.
-                LaunchDash.dwParameter1 = DWORD( 'U' );
-                // Specify the number of 16-KB blocks that need to be freed
-                LaunchDash.dwParameter2 = ( g_StateMgr.GetProfileSaveSize() + 16383 ) / 16384;
-                // Launch the Xbox Dashboard
-                XLaunchNewImage( NULL, (PLAUNCH_DATA)(&LaunchDash) );
-            }
-        }
-    }
-#else
     // Get the current dialog state
     if( m_CurrentDialog != NULL )
     {
@@ -11215,7 +9943,6 @@ void state_mgr::UpdateGameExitSaveSelect( void )
             break;
         }
     }
-#endif
 }
 
 //=========================================================================
@@ -11322,10 +10049,6 @@ void state_mgr::UpdateGameExitSaveSettings( void )
             // check if the settings are saved 
             if( g_StateMgr.GetSettingsCardSlot() == -1 )
             {
-#ifdef TARGET_PS2
-                // not saved - goto memory card select screen
-                SetState( SM_GAME_EXIT_SETTINGS_SELECT );
-#else
                 // check for corrupt settings
                 if( g_UIMemCardMgr.FoundSettings() )
                 {
@@ -11339,7 +10062,6 @@ void state_mgr::UpdateGameExitSaveSettings( void )
                     // goto idle whilst we wait for the callback
                     SetState( SM_IDLE );
                 }
-#endif
             }
             else
             {                            
@@ -11438,9 +10160,6 @@ void state_mgr::EnterGameExitSettingsSelect( void )
     g_UiMgr->EndDialog( g_UiUserID, TRUE );
     irect mainarea( 46, DIALOG_TOP, 466, DIALOG_BOTTOM );
     m_CurrentDialog = g_UiMgr->OpenDialog( g_UiUserID, "memcard select", mainarea, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER );
-#ifdef TARGET_PS2
-    ((dlg_memcard_select*)m_CurrentDialog)->Configure( SM_CARDMODE_SETTINGS );
-#endif
 }
 
 //=========================================================================
@@ -11770,17 +10489,14 @@ xbool state_mgr::CheckForDisconnect( void )
 }
 
 //=========================================================================
+
 static volatile xbool s_BackgroundRendererStop;
 static volatile xbool s_BackgroundRendererDone;
 
 //=========================================================================
+
 static void s_BackgroundRenderer( void )
 {
-    #ifdef TARGET_XBOX
-    extern void xbox_DisableRumble();
-                xbox_DisableRumble();
-    #endif
-
     ASSERT( !s_BackgroundRendererDone );
     ASSERT( !s_BackgroundRendererStop );
     {
@@ -11826,53 +10542,30 @@ static void s_BackgroundRenderer( void )
         }
     }
     s_BackgroundRendererDone = TRUE;
-
-    #ifdef TARGET_XBOX
-    extern void xbox_EnableRumble();
-                xbox_EnableRumble();
-    #endif
 }
 
 //=========================================================================
+
 void state_mgr::StartBackgroundRendering( void )
 {
-#ifdef TARGET_XBOX
-    // The rumble has to be turned off because it CANNOT
-    // be called during another thread.
-    for( s32 i=0;i<4;i++ )
-    {
-        input_EnableFeedback( FALSE,i );
-    }
-#endif
-
     s_BackgroundRendererStop = FALSE;
     s_BackgroundRendererDone = FALSE;
     {
         ASSERT( m_BackgroundRendererRunning == FALSE );
         ASSERT( m_pBackgroundRenderer == NULL );
         m_BackgroundRendererRunning = TRUE;
-#ifdef TARGET_PS2
-        DLIST.SetThreadID( -1 );
-#endif
-
-#if defined(TARGET_XBOX)
-        m_pBackgroundRenderer = new xthread( s_BackgroundRenderer, "State Manager Background Renderer", 65536, 3 ); 
-#else
         m_pBackgroundRenderer = new xthread( s_BackgroundRenderer, "State Manager Background Renderer", 16384, 3 ); 
-#endif
         LOG_MESSAGE( "state_mgr::StartBackgroundRendering", "Background renderer started." );
         ASSERT( m_pBackgroundRenderer );
 
         // let scratchmem know that we are flipping in a thread other than the
         // main thread
-    #ifdef TARGET_PS2
-        DLIST.SetThreadID( m_pBackgroundRenderer->GetId() );
-    #endif
         smem_SetThreadId( m_pBackgroundRenderer->GetId() );
     }
 }
 
 //=========================================================================
+
 void state_mgr::StopBackgroundRendering( void )
 {
     //** NOTE: The destructor will deal with trying to shutdown the thread gracefully.
@@ -11890,24 +10583,10 @@ void state_mgr::StopBackgroundRendering( void )
 
     // let scratchmem know that we are done flipping it on a separate thread
     smem_SetThreadId( -1 );
-
-    //** NOTE: We cannot return until renderer has finished
-#ifdef TARGET_PS2
-    extern s32 x_GetMainThreadID    (void);
-    DLIST.SetThreadID( x_GetMainThreadID() );
-    DLIST.WaitForTasks();
-#endif
-#ifdef TARGET_XBOX
-    // The rumble has to be turned off because it CANNOT
-    // be called during another thread.
-    for( s32 i=0;i<4;i++ )
-    {
-        input_EnableFeedback( TRUE,i );
-    }
-#endif
 }
 
 //=========================================================================
+
 xbool state_mgr::IsBackgroundThreadRunning( void )
 {
     return m_BackgroundRendererRunning;
@@ -11916,11 +10595,8 @@ xbool state_mgr::IsBackgroundThreadRunning( void )
 //=========================================================================
 void state_mgr::SilentSaveProfileReturn( void )
 {
-#ifdef TARGET_PS2
-    MemCardMgr::condition& Condition = g_UIMemCardMgr.GetCondition( m_iCard );
-#else
-    MemCardMgr::condition& Condition = g_UIMemCardMgr.GetCondition( 0 );
-#endif
+    MemCardMgr::condition& Condition = g_UIMemCardMgr.GetCondition( 0 ); //MemCardMgr::condition& Condition = g_UIMemCardMgr.GetCondition( m_iCard );
+
     // If the save was successful OR user continues WITHOUT saving
     if( Condition.SuccessCode )
     {
@@ -12044,19 +10720,9 @@ void state_mgr::SilentSaveProfile( void )
 }
 
 //=========================================================================
+
 void state_mgr::DisconnectFromNetwork( void )
 {
-#if defined(TARGET_XBOX)
-    {
-        g_NetworkMgr.SetOnline( FALSE );
-
-        // If there was a pending accepted game invite before the network went down,
-        // then we must clear this flag to stop the game auto connecting the next
-        // time the player logs in to Live.
-        m_bFollowBuddy = FALSE;
-    }
-#else
-
     if( g_NetworkMgr.IsOnline() )
     {
         dlg_popup* pPopUp;
@@ -12071,23 +10737,17 @@ void state_mgr::DisconnectFromNetwork( void )
             g_StringTableMgr( "ui", "IDS_ONLINE_DISCONNECTING"),
             NULL );
 
-#if defined(TARGET_PS2)
         KillFrontEndMusic();
-#endif
         StartBackgroundRendering();
         g_NetworkMgr.SetOnline( FALSE );
         StopBackgroundRendering();
-#if defined(TARGET_PS2)
         InitFrontEndMusic("MUSIC_MenuBackground");
-#endif
-
         g_UiMgr->EndDialog( g_UiUserID, TRUE );
     }
-#endif
-
 }
 
 //=========================================================================
+
 void state_mgr::Reboot( reboot_reason Reason )
 {
     if( IsBackgroundThreadRunning() )
@@ -12102,263 +10762,12 @@ void state_mgr::Reboot( reboot_reason Reason )
     eng_Reboot( Reason );
 }
 
-///////////////////////////////////////////////////////////////////////////
-//
-//  PC/Xbox exclusions
-//
-///////////////////////////////////////////////////////////////////////////
-
-
-#if defined(TARGET_PS2)
-
-//=========================================================================
-
-void state_mgr::EnterMemcardSelect( void )
-{
-    //  Create memcard select screen 
-    g_UiMgr->EndDialog( g_UiUserID, TRUE );
-    irect mainarea( 46, DIALOG_TOP, 466, DIALOG_BOTTOM );
-    m_CurrentDialog = g_UiMgr->OpenDialog( g_UiUserID, "memcard select", mainarea, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER );
-}
-
-//=========================================================================
-
-void state_mgr::UpdateMemcardSelect( void )
-{
-    if( m_CurrentDialog != NULL )
-    {
-        u32 DialogState = m_CurrentDialog->GetState();
-
-        if( DialogState == DIALOG_STATE_SELECT )
-        {
-            // save profile was successful
-            // goto the campaign menu
-            SetState( SM_CAMPAIGN_MENU );
-        }
-        if( DialogState == DIALOG_STATE_BACK )
-        {
-            // the profile save failed or was aborted
-            // go back to the profile select menu
-            SetState( SM_PROFILE_SELECT );
-        }
-    }
-}
-
-//=========================================================================
-
-void state_mgr::ExitMemcardSelect( void )
-{
-}
-
-//=========================================================================
-
-void state_mgr::EnterCampaignMemcardSelect( void )
-{
-    //  Create memcard select screen 
-    g_UiMgr->EndDialog( g_UiUserID, TRUE );
-    irect mainarea( 46, DIALOG_TOP, 466, DIALOG_BOTTOM );
-    m_CurrentDialog = g_UiMgr->OpenDialog( g_UiUserID, "memcard select", mainarea, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER );
-}
-
-//=========================================================================
-
-void state_mgr::UpdateCampaignMemcardSelect( void )
-{
-    if( m_CurrentDialog != NULL )
-    {
-        u32 DialogState = m_CurrentDialog->GetState();
-
-        if( DialogState == DIALOG_STATE_SELECT )
-        {
-            // save profile was successful
-            // goto the campaign menu
-            SetState( SM_CAMPAIGN_MENU );
-        }
-        if( DialogState == DIALOG_STATE_BACK )
-        {
-            // the profile save failed or was aborted
-            // go back to the profile select menu
-            SetState( SM_PROFILE_SELECT );
-        }
-    }
-}
-
-//=========================================================================
-
-void state_mgr::ExitCampaignMemcardSelect( void )
-{
-}
-
-//=========================================================================
-
-void state_mgr::EnterMemcardSelectMP( void )
-{
-    //  Create memcard select screen 
-    g_UiMgr->EndDialog( g_UiUserID, TRUE );
-    irect mainarea( 46, DIALOG_TOP, 466, DIALOG_BOTTOM );
-    m_CurrentDialog = g_UiMgr->OpenDialog( g_UiUserID, "memcard select", mainarea, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER );
-}
-
-//=========================================================================
-
-void state_mgr::UpdateMemcardSelectMP( void )
-{
-    if( m_CurrentDialog != NULL )
-    {
-        u32 DialogState = m_CurrentDialog->GetState();
-
-        if( DialogState == DIALOG_STATE_SELECT )
-        {
-            // save profile was successful
-            SetState( SM_MULTI_PLAYER_MENU );
-        }
-        if( DialogState == DIALOG_STATE_BACK )
-        {
-            // the profile save failed or was aborted
-            SetState( SM_MULTI_PLAYER_MENU );
-        }
-    }
-}
-
-//=========================================================================
-
-void state_mgr::ExitMemcardSelectMP( void )
-{
-}
-
-//=========================================================================
-
-void state_mgr::EnterOnlineMemcardSelect( void )
-{
-    //  Create memcard select screen 
-    g_UiMgr->EndDialog( g_UiUserID, TRUE );
-    irect mainarea( 46, DIALOG_TOP, 466, DIALOG_BOTTOM );
-    m_CurrentDialog = g_UiMgr->OpenDialog( g_UiUserID, "memcard select", mainarea, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER );
-}
-
-//=========================================================================
-
-void state_mgr::UpdateOnlineMemcardSelect( void )
-{
-    if( CheckForDisconnect() )
-    {
-        return;
-    }
-
-    if( m_CurrentDialog != NULL )
-    {
-        u32 DialogState = m_CurrentDialog->GetState();
-
-        if( DialogState == DIALOG_STATE_SELECT )
-        {
-            SetState( SM_ONLINE_AUTHENTICATE );
-        }
-        if( DialogState == DIALOG_STATE_BACK )
-        {
-            // the profile save failed or was aborted
-            // go back to the profile select menu
-            SetState( SM_ONLINE_PROFILE_SELECT );
-        }
-    }
-}
-
-//=========================================================================
-
-void state_mgr::ExitOnlineMemcardSelect( void )
-{
-}
-
-//=========================================================================
-
-void state_mgr::EnterPauseMemcardSelect( void )
-{
-    //  Create memcard select screen 
-    g_UiMgr->EndDialog( g_UiUserID, TRUE );
-    irect mainarea( 46, DIALOG_TOP, 466, DIALOG_BOTTOM );
-    m_CurrentDialog = g_UiMgr->OpenDialog( g_UiUserID, "memcard select", mainarea, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER );
-
-    // enable background filter
-    ((dlg_memcard_select*)m_CurrentDialog)->EnableBlackout();
-}
-
-//=========================================================================
-
-void state_mgr::UpdatePauseMemcardSelect( void )
-{
-    if( m_CurrentDialog != NULL )
-    {
-        u32 DialogState = m_CurrentDialog->GetState();
-
-        if( DialogState == DIALOG_STATE_SELECT )
-        {
-            // save profile was successful
-            // goto the pause main menu
-            SetState( SM_PAUSE_MAIN_MENU );
-        }
-        if( DialogState == DIALOG_STATE_BACK )
-        {
-            // the profile save failed or was aborted
-            SetState( SM_PAUSE_MAIN_MENU );
-        }
-    }
-}
-
-//=========================================================================
-
-void state_mgr::ExitPauseMemcardSelect( void )
-{
-}
-
-//=========================================================================
-
-void state_mgr::EnterPauseOnlineMemcardSelect( void )
-{
-    //  Create memcard select screen 
-    g_UiMgr->EndDialog( g_UiUserID, TRUE );
-    irect mainarea( 46, DIALOG_TOP, 466, DIALOG_BOTTOM );
-    m_CurrentDialog = g_UiMgr->OpenDialog( g_UiUserID, "memcard select", mainarea, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER );
-
-    // enable background filter
-    ((dlg_memcard_select*)m_CurrentDialog)->EnableBlackout();
-}
-
-//=========================================================================
-void state_mgr::UpdatePauseOnlineMemcardSelect( void )
-{
-    if( m_CurrentDialog != NULL )
-    {
-        u32 DialogState = m_CurrentDialog->GetState();
-
-        if( DialogState == DIALOG_STATE_SELECT )
-        {
-            // save profile was successful
-            // goto the pause main menu
-            SetState( SM_PAUSE_ONLINE );
-        }
-        if( DialogState == DIALOG_STATE_BACK )
-        {
-            // the profile save failed or was aborted
-            SetState( SM_PAUSE_ONLINE );
-        }
-    }
-}
-
-//=========================================================================
-
-void state_mgr::ExitPauseOnlineMemcardSelect( void )
-{
-}
-
-#endif
-
 //=========================================================================
 
 void state_mgr::SetActiveControllerID( s32 ID )
 {
     m_ActiveControllerID = ID;
-#if !defined(TARGET_PC)
     g_VoiceMgr.GetHeadset().SetActiveHeadset( ID );
-#endif
 }
 
 //=========================================================================

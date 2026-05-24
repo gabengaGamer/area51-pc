@@ -50,10 +50,6 @@ enum sm_states
 
     SM_ESRB_NOTICE,
     SM_STARTUP_INTRO,
-#if defined(TARGET_PS2)
-    SM_AUTOSAVE_DIALOG,
-    SM_CONTROLLER_CHECK,
-#endif
     SM_MEMCARD_BOOT_CHECK,
 
     SM_PRESS_START_SCREEN,
@@ -67,22 +63,13 @@ enum sm_states
     SM_MANAGE_PROFILE_OPTIONS,
     SM_MANAGE_PROFILE_CONTROLS,
     SM_MANAGE_PROFILE_AVATAR,
-#if defined(TARGET_PS2)
-    SM_MANAGE_MEMCARD_SELECT,
-#endif
     SM_MANAGE_PROFILE_SAVE_SELECT,
     SM_MANAGE_PROFILE_MEMCARD_RESELECT,
     SM_DEMO_EXIT,
-#if defined(TARGET_PS2)
-    SM_MEMCARD_SELECT,
-#endif
     SM_CAMPAIGN_MENU,
     SM_CAMPAIGN_PROFILE_OPTIONS,
     SM_CAMPAIGN_PROFILE_CONTROLS,
     SM_CAMPAIGN_PROFILE_AVATAR,
-#if defined(TARGET_PS2)
-    SM_CAMPAIGN_MEMCARD_SELECT,
-#endif
     SM_CAMPAIGN_PROFILE_SAVE_SELECT,
     SM_CAMPAIGN_MEMCARD_RESELECT,
     SM_LOAD_CAMPAIGN,
@@ -101,9 +88,6 @@ enum sm_states
     SM_MP_SAVE_SETTINGS,
     SM_PROFILE_CONTROLS_MP,
     SM_PROFILE_AVATAR_MP,
-#if defined(TARGET_PS2)
-    SM_MEMCARD_SELECT_MP,
-#endif
     SM_PROFILE_SAVE_SELECT_MP,
     SM_MEMCARD_RESELECT_MP,
 
@@ -113,23 +97,12 @@ enum sm_states
     SM_PROFILE_AVATAR,
 
     SM_ONLINE_SILENT_LOGON,
-#ifdef TARGET_PS2
-    SM_ONLINE_EULA,
-#endif
     SM_ONLINE_CONNECT,
     SM_ONLINE_AUTHENTICATE,
-#ifndef TARGET_XBOX
-    SM_ONLINE_COPA,
-    SM_ONLINE_COPA_SAVE_SELECT,
-    SM_ONLINE_COPA_MEMCARD_RESELECT,
-#endif
     SM_ONLINE_PROFILE_SELECT,
     SM_ONLINE_PROFILE_OPTIONS,
     SM_ONLINE_PROFILE_CONTROLS,
     SM_ONLINE_PROFILE_AVATAR,
-#if defined(TARGET_PS2)
-    SM_ONLINE_MEMCARD_SELECT,
-#endif
     SM_ONLINE_MAIN_MENU,
     SM_ONLINE_QUICKMATCH,
     SM_ONLINE_OPTIMATCH,
@@ -181,12 +154,6 @@ enum sm_states
     SM_PAUSE_HEADSET,
     SM_PAUSE_GRAPHICS,	
     SM_PAUSE_SETTINGS_SELECT,
-#ifdef TARGET_XBOX
-    SM_PAUSE_FRIENDS,
-#endif
-#if defined(TARGET_PS2)
-    SM_PAUSE_MEMCARD_SELECT,
-#endif
     SM_PAUSE_PROFILE_SAVE_SELECT,
     SM_PAUSE_MEMCARD_RESELECT,
     SM_PAUSE_MP,
@@ -197,12 +164,6 @@ enum sm_states
     SM_PAUSE_MP_HEADSET,
     SM_PAUSE_MP_GRAPHICS,	
     SM_PAUSE_MP_SETTINGS_SELECT,
-#ifdef TARGET_XBOX
-    SM_PAUSE_MP_FRIENDS,
-#endif
-#if defined(TARGET_PS2)
-    SM_PAUSE_MP_MEMCARD_SELECT,
-#endif
     SM_PAUSE_MP_PROFILE_SAVE_SELECT,
     SM_PAUSE_MP_MEMCARD_RESELECT,
 
@@ -218,9 +179,6 @@ enum sm_states
     SM_PAUSE_ONLINE_CONTROLS,
     SM_PAUSE_ONLINE_SETTINGS,
     SM_PAUSE_ONLINE_HEADSET,
-#if defined(TARGET_PS2)
-    SM_PAUSE_ONLINE_MEMCARD_SELECT,
-#endif
     SM_PAUSE_ONLINE_SAVE_SELECT,
     SM_PAUSE_ONLINE_MEMCARD_RESELECT,
 
@@ -239,9 +197,6 @@ enum sm_states
 
     SM_AUTOSAVE_MENU,
     SM_AUTOSAVE_PROFILE_RESELECT,
-#if defined(TARGET_PS2)
-    SM_AUTOSAVE_MEMCARD_SELECT,
-#endif
     SM_END_AUTOSAVE,
 
     SM_FINAL_SCORE,
@@ -347,44 +302,15 @@ enum login_source
     LOGIN_FROM_MAIN,
 };
 
-#ifdef TARGET_PS2
-#define SM_PROFILE_COUNT        2
-#else
 #define SM_PROFILE_COUNT        4
-#endif
-
 #define SM_PROFILE_NAME_LENGTH  16
-
 #define SM_MAX_AVATARS          16
-
-#ifdef TARGET_XBOX
-#define SM_MAX_PLAYERS          4
-#define USE_MOVIES              1
-#else
 #define SM_MAX_PLAYERS          2
-#endif
-
-#ifdef TARGET_PS2
 #define USE_MOVIES              1
-#endif
 
-#ifdef TARGET_PC
-#define USE_MOVIES              1
-#endif
-
-#ifdef TARGET_PS2
-// size of profile on PS2 memory card
-#define PROFILE_DIR_SIZE       131 * 1024 
-#define SETTINGS_DIR_SIZE      131 * 1024 
-#elif defined TARGET_XBOX
-// size of profile on XBOX HD
-#define PROFILE_DIR_SIZE        32 * 1024  
-#define SETTINGS_DIR_SIZE       32 * 1024 
-#elif defined TARGET_PC
-// size of profile on PC HD
+// size of profile on HDD
 #define PROFILE_DIR_SIZE        32 * 1024 
 #define SETTINGS_DIR_SIZE       32 * 1024 
-#endif
 
 
 //==============================================================================
@@ -560,16 +486,7 @@ private:
     void                    EnterStartupIntro               ( void );
     void                    UpdateStartupIntro              ( void );
     void                    ExitStartupIntro                ( void );
-#if defined(TARGET_PS2)
-    void                    EnterControllerCheck            ( void );
-    void                    UpdateControllerCheck           ( void );
-    void                    ExitControllerCheck             ( void );
 
-    void                    EnterAutoSaveDialog             ( void );
-    void                    UpdateAutoSaveDialog            ( void );
-    void                    ExitAutoSaveDialog              ( void );
-    rhandle<xbitmap>        m_AutoSave;
-#endif
     void                    EnterMemcardBootCheck           ( void );
     void                    UpdateMemcardBootCheck          ( void );
     void                    ExitMemcardBootCheck            ( void );
@@ -613,11 +530,7 @@ private:
     void                    EnterManageProfileAvatar        ( void );
     void                    UpdateManageProfileAvatar       ( void );
     void                    ExitManageProfileAvatar         ( void );
-#if defined(TARGET_PS2)
-    void                    EnterManageMemcardSelect        ( void );
-    void                    UpdateManageMemcardSelect       ( void );
-    void                    ExitManageMemcardSelect         ( void );
-#endif
+
     void                    EnterManageProfileSaveSelect    ( void );
     void                    UpdateManageProfileSaveSelect   ( void );
     void                    ExitManageProfileSaveSelect     ( void );
@@ -629,11 +542,7 @@ private:
     void                    EnterDemoExit                   ( void );
     void                    UpdateDemoExit                  ( void );
     void                    ExitDemoExit                    ( void );
-#if defined(TARGET_PS2)
-    void                    EnterMemcardSelect              ( void );
-    void                    UpdateMemcardSelect             ( void );
-    void                    ExitMemcardSelect               ( void );
-#endif
+
     void                    EnterCampaignMenu               ( void );
     void                    UpdateCampaignMenu              ( void );
     void                    ExitCampaignMenu                ( void );
@@ -650,11 +559,6 @@ private:
     void                    UpdateCampaignProfileAvatar     ( void );
     void                    ExitCampaignProfileAvatar       ( void );
 
-#if defined(TARGET_PS2)
-    void                    EnterCampaignMemcardSelect      ( void );
-    void                    UpdateCampaignMemcardSelect     ( void );
-    void                    ExitCampaignMemcardSelect       ( void );
-#endif
     void                    EnterCampaignProfileSaveSelect  ( void );
     void                    UpdateCampaignProfileSaveSelect ( void );
     void                    ExitCampaignProfileSaveSelect   ( void );
@@ -730,11 +634,7 @@ private:
     void                    EnterProfileAvatarMP            ( void );
     void                    UpdateProfileAvatarMP           ( void );
     void                    ExitProfileAvatarMP             ( void );
-#if defined(TARGET_PS2)
-    void                    EnterMemcardSelectMP            ( void );
-    void                    UpdateMemcardSelectMP           ( void );
-    void                    ExitMemcardSelectMP             ( void );
-#endif
+
     void                    EnterProfileSaveSelectMP        ( void );
     void                    UpdateProfileSaveSelectMP       ( void );
     void                    ExitProfileSaveSelectMP         ( void );
@@ -744,12 +644,6 @@ private:
     void                    ExitMemcardReselectMP           ( void );
 
     void            		EnterOnlineSilentLogin          ( void );
-
-#ifdef TARGET_PS2
-    void                    EnterOnlineEULA                 ( void );
-    void                    UpdateOnlineEULA                ( void );
-    void                    ExitOnlineEULA                  ( void );
-#endif
 
     void                    EnterOnlineConnect              ( void );
     void                    UpdateOnlineConnect             ( void );
@@ -770,11 +664,7 @@ private:
     void                    EnterOnlineProfileAvatar        ( void );
     void                    UpdateOnlineProfileAvatar       ( void );
     void                    ExitOnlineProfileAvatar         ( void );
-#if defined(TARGET_PS2)
-    void                    EnterOnlineMemcardSelect        ( void );
-    void                    UpdateOnlineMemcardSelect       ( void );
-    void                    ExitOnlineMemcardSelect         ( void );
-#endif
+
     void                    EnterOnlineProfileSaveSelect    ( void );
     void                    UpdateOnlineProfileSaveSelect   ( void );
     void                    ExitOnlineProfileSaveSelect     ( void );
@@ -786,19 +676,7 @@ private:
     void                    EnterOnlineAuthenticate         ( void );
     void                    UpdateOnlineAuthenticate        ( void );
     void                    ExitOnlineAuthenticate          ( void );
-#ifndef TARGET_XBOX
-    void                    EnterOnlineCOPA                 ( void );
-    void                    UpdateOnlineCOPA                ( void );
-    void                    ExitOnlineCOPA                  ( void );
 
-    void                    EnterOnlineCOPASaveSelect       ( void );
-    void                    UpdateOnlineCOPASaveSelect      ( void );
-    void                    ExitOnlineCOPASaveSelect        ( void );
-
-    void                    EnterOnlineCOPAMemcardReselect  ( void );
-    void                    UpdateOnlineCOPAMemcardReselect ( void );
-    void                    ExitOnlineCOPAMemcardReselect   ( void );
-#endif
     void                    EnterOnlineMain                 ( void );
     void                    UpdateOnlineMain                ( void );
     void                    ExitOnlineMain                  ( void );
@@ -926,16 +804,7 @@ private:
     void                    EnterPauseSettingsSelect        ( void );
     void                    UpdatePauseSettingsSelect       ( void );
     void                    ExitPauseSettingsSelect         ( void );
-#ifdef TARGET_XBOX
-    void                    EnterPauseFriends               ( void );
-    void                    UpdatePauseFriends              ( void );
-    void                    ExitPauseFriends                ( void );
-#endif
-#if defined(TARGET_PS2)
-    void                    EnterPauseMemcardSelect         ( void );
-    void                    UpdatePauseMemcardSelect        ( void );
-    void                    ExitPauseMemcardSelect          ( void );
-#endif
+
     void                    EnterPauseMemcardSaveSelect     ( void );
     void                    UpdatePauseMemcardSaveSelect    ( void );
     void                    ExitPauseMemcardSaveSelect      ( void );
@@ -963,11 +832,7 @@ private:
     void                    EnterPauseMPSettingsSelect      ( void );
     void                    UpdatePauseMPSettingsSelect     ( void );
     void                    ExitPauseMPSettingsSelect       ( void );
-#ifdef TARGET_XBOX
-    void                    EnterPauseMPFriends             ( void );
-    void                    UpdatePauseMPFriends            ( void );
-    void                    ExitPauseMPFriends              ( void );
-#endif
+
     void                    EnterPauseMPOptions             ( void );
     void                    UpdatePauseMPOptions            ( void );
     void                    ExitPauseMPOptions              ( void );
@@ -975,11 +840,7 @@ private:
     void                    EnterPauseMPControls            ( void );
     void                    UpdatePauseMPControls           ( void );
     void                    ExitPauseMPControls             ( void );
-#if defined(TARGET_PS2)
-    void                    EnterPauseMPMemcardSelect       ( void );
-    void                    UpdatePauseMPMemcardSelect      ( void );
-    void                    ExitPauseMPMemcardSelect        ( void );
-#endif
+
     void                    EnterPauseMPMemcardSaveSelect   ( void );
     void                    UpdatePauseMPMemcardSaveSelect  ( void );
     void                    ExitPauseMPMemcardSaveSelect    ( void );
@@ -1031,11 +892,6 @@ private:
     void                    EnterPauseOnlineHeadset         ( void );
     void                    UpdatePauseOnlineHeadset        ( void );
     void                    ExitPauseOnlineHeadset          ( void );
-#if defined(TARGET_PS2)
-    void                    EnterPauseOnlineMemcardSelect   ( void );
-    void                    UpdatePauseOnlineMemcardSelect  ( void );
-    void                    ExitPauseOnlineMemcardSelect    ( void );
-#endif
 
     void                    EnterPauseOnlineSaveSelect      ( void );
     void                    UpdatePauseOnlineSaveSelect     ( void );
@@ -1100,12 +956,6 @@ private:
     void                    EnterAutosaveProfileReselect    ( void );
     void                    UpdateAutosaveProfileReselect   ( void );
     void                    ExitAutosaveProfileReselect     ( void );
-
-#if defined(TARGET_PS2)
-    void                    EnterAutosaveMemcardSelect      ( void );
-    void                    UpdateAutosaveMemcardSelect     ( void );
-    void                    ExitAutosaveMemcardSelect       ( void );
-#endif
 
     void                    EnterEndAutosave                ( void );
     void                    UpdateEndAutosave               ( void );
