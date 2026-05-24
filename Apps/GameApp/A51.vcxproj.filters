@@ -25,7 +25,6 @@
       <Filter>Configuration</Filter>
     </ClCompile>
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="rtf_handler.cpp" />
     <ClCompile Include="Version.cpp" />
   </ItemGroup>
   <ItemGroup>

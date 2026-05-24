@@ -192,7 +192,7 @@
       <ShowIncludes>true</ShowIncludes>
     </ClCompile>
     <Link>
-      <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>	
+      <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
       <AdditionalDependencies>dxguid.lib;dinput8.lib;dsound.lib;DirectXTex.lib;legacy_stdio_definitions.lib;ole32.lib;user32.lib;gdi32.lib</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(X)\3rdParty\DirectX9;$(X)\3rdParty\WebM\lib\x86;$(X)\3rdParty\DirectXTex\DirectXTex\Bin\x32;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <IgnoreSpecificDefaultLibraries>libci.lib;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
@@ -231,7 +231,7 @@
       <CallingConvention>Cdecl</CallingConvention>
     </ClCompile>
     <Link>
-      <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>	
+      <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
       <AdditionalDependencies>dxguid.lib;dinput8.lib;dsound.lib;DirectXTex.lib;legacy_stdio_definitions.lib;ole32.lib;user32.lib;gdi32.lib</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(X)\3rdParty\DirectX9;$(X)\3rdParty\WebM\lib\x86;$(X)\3rdParty\DirectXTex\DirectXTex\Bin\x32;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <IgnoreSpecificDefaultLibraries>libci.lib;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
@@ -243,7 +243,6 @@
     <ClCompile Include="Config.cpp" />
     <ClCompile Include="IniFile.cpp" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="rtf_handler.cpp" />
     <ClCompile Include="Version.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -284,7 +283,7 @@
     <ProjectReference Include="..\..\Support\ScriptMgr\Script_mgr.vcxproj">
       <Project>{4E845295-7F43-482B-B9D5-45AC080358B6}</Project>
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
-    </ProjectReference>	
+    </ProjectReference>
     <ProjectReference Include="..\..\Support\NetworkMgr\NetworkMgr.vcxproj">
       <Project>{8946d9dc-520e-4b19-bd73-1b0ed91c66ba}</Project>
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
