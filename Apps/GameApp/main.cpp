@@ -1025,17 +1025,6 @@ void DoStartup( void )
     eng_Init();
     guid_Init();
 
-    // Enable rtf handler based on a command-line parameter.
-    // By default, the rtf handler will be disabled. We need
-    // to be fixing ASSERTs, not ignoring them.
-    #if !defined(X_RETAIL) && !defined(X_QA)
-    if( g_CmdLineRTFHandler )
-    {
-        extern void InstallRTFHandler( void );
-        InstallRTFHandler();
-    }
-    #endif
-
     x_DebugMsg( "Initialize io system\n" );
 
     g_IoMgr.Init();
