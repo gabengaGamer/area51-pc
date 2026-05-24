@@ -383,6 +383,8 @@ void d3deng_ReleaseSwapChain( void )
     {
         g_pSwapChain->Release();
         g_pSwapChain = NULL;
+        if( g_pd3dContext )
+            g_pd3dContext->Flush();
         x_DebugMsg( "Engine: Swap chain released\n" );
     }
 }
@@ -413,14 +415,14 @@ static
 xbool d3deng_CreateD3DDevice( void )
 {
     HRESULT Error;
-    UINT    dwFlags = 0;
+    UINT    dwFlags = D3D11_CREATE_DEVICE_BGRA_SUPPORT;
 
 #ifdef X_DEBUG
     //dwFlags |= D3D11_CREATE_DEVICE_DEBUG;
 #endif
 
-    // Set DX11
-    D3D_FEATURE_LEVEL requestedLevel = D3D_FEATURE_LEVEL_11_0;
+    // Require DX11.1.
+    D3D_FEATURE_LEVEL requestedLevel = D3D_FEATURE_LEVEL_11_1;
     D3D_FEATURE_LEVEL createdLevel;
 
     // Determine driver type
@@ -441,7 +443,7 @@ xbool d3deng_CreateD3DDevice( void )
         driverType,                 // Hardware or WARP for software
         NULL,                       // No software device
         dwFlags,                    // Device creation flags
-        &requestedLevel,            // Featured level
+        &requestedLevel,            // Feature level
         1,                          // Number of feature levels
         D3D11_SDK_VERSION,          // SDK version
         &g_pd3dDevice,              // Output device
@@ -460,7 +462,7 @@ xbool d3deng_CreateD3DDevice( void )
         return FALSE;
     }
 
-    x_DebugMsg( "Engine: D3D11 device created successfully\n" );
+    x_DebugMsg( "Engine: D3D11.1 device created successfully\n" );
     shader_FlushCache();
     return TRUE;
 }
@@ -471,26 +473,75 @@ static
 xbool d3deng_CreateSwapChain( HWND hWnd )
 {
     HRESULT Error;
-    IDXGIDevice* pDXGIDevice = NULL;
-    IDXGIAdapter* pAdapter = NULL;
-    IDXGIFactory* pFactory = NULL;
+    IDXGIDevice*     pDXGIDevice = NULL;
+    IDXGIAdapter*    pAdapter    = NULL;
+    IDXGIFactory2*   pFactory2   = NULL;
+    IDXGIFactory5*   pFactory5   = NULL;
+    IDXGISwapChain1* pSwapChain1 = NULL;
+    DXGI_SWAP_CHAIN_DESC1 SwapChainDesc1;
 
     if( !g_pd3dDevice )
         return FALSE;
 
     g_SwapChainDesc.OutputWindow = hWnd;
+    g_SwapChainDesc.Windowed     = TRUE;
+    g_SwapChainDesc.Flags       &= ~DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING;
 
     Error = g_pd3dDevice->QueryInterface( __uuidof(IDXGIDevice), (void**)&pDXGIDevice );
     if( Error == S_OK )
         Error = pDXGIDevice->GetAdapter( &pAdapter );
     if( Error == S_OK )
-        Error = pAdapter->GetParent( __uuidof(IDXGIFactory), (void**)&pFactory );
+        Error = pAdapter->GetParent( __uuidof(IDXGIFactory2), (void**)&pFactory2 );
     if( Error == S_OK )
-        Error = pFactory->CreateSwapChain( g_pd3dDevice, &g_SwapChainDesc, &g_pSwapChain );
+    {
+        BOOL TearingSupported = FALSE;
+        if( pFactory2->QueryInterface( __uuidof(IDXGIFactory5), (void**)&pFactory5 ) == S_OK )
+        {
+            if( pFactory5->CheckFeatureSupport( DXGI_FEATURE_PRESENT_ALLOW_TEARING,
+                                                &TearingSupported,
+                                                sizeof(TearingSupported) ) != S_OK )
+            {
+                TearingSupported = FALSE;
+            }
+        }
 
-    if( pFactory )   pFactory->Release();
-    if( pAdapter )   pAdapter->Release();
-    if( pDXGIDevice) pDXGIDevice->Release();
+        if( TearingSupported )
+            g_SwapChainDesc.Flags |= DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING;
+
+        ZeroMemory( &SwapChainDesc1, sizeof(SwapChainDesc1) );
+        SwapChainDesc1.Width       = g_SwapChainDesc.BufferDesc.Width;
+        SwapChainDesc1.Height      = g_SwapChainDesc.BufferDesc.Height;
+        SwapChainDesc1.Format      = g_SwapChainDesc.BufferDesc.Format;
+        SwapChainDesc1.Stereo      = FALSE;
+        SwapChainDesc1.SampleDesc  = g_SwapChainDesc.SampleDesc;
+        SwapChainDesc1.BufferUsage = g_SwapChainDesc.BufferUsage;
+        SwapChainDesc1.BufferCount = g_SwapChainDesc.BufferCount;
+        SwapChainDesc1.Scaling     = DXGI_SCALING_STRETCH;
+        SwapChainDesc1.SwapEffect  = g_SwapChainDesc.SwapEffect;
+        SwapChainDesc1.AlphaMode   = DXGI_ALPHA_MODE_UNSPECIFIED;
+        SwapChainDesc1.Flags       = g_SwapChainDesc.Flags;
+
+        pFactory2->MakeWindowAssociation( hWnd, DXGI_MWA_NO_ALT_ENTER );
+        Error = pFactory2->CreateSwapChainForHwnd(
+            g_pd3dDevice,
+            hWnd,
+            &SwapChainDesc1,
+            NULL,
+            NULL,
+            &pSwapChain1
+        );
+    }
+    if( Error == S_OK )
+    {
+        g_pSwapChain = pSwapChain1;
+        pSwapChain1 = NULL;
+    }
+
+    if( pSwapChain1 ) pSwapChain1->Release();
+    if( pFactory5 )   pFactory5->Release();
+    if( pFactory2 )   pFactory2->Release();
+    if( pAdapter )    pAdapter->Release();
+    if( pDXGIDevice)  pDXGIDevice->Release();
 
     // Handle creation errors
     if( Error != S_OK )
@@ -576,7 +627,7 @@ void d3deng_UpdateSwapChain( HWND hWnd )
         rtarget_ReleaseBackBufferTargets();
         g_SwapChainDesc.BufferDesc.Width  = width;
         g_SwapChainDesc.BufferDesc.Height = height;
-        HRESULT hr = g_pSwapChain->ResizeBuffers( g_SwapChainDesc.BufferCount, width, height, DXGI_FORMAT_UNKNOWN, 0 );
+        HRESULT hr = g_pSwapChain->ResizeBuffers( g_SwapChainDesc.BufferCount, width, height, DXGI_FORMAT_UNKNOWN, g_SwapChainDesc.Flags );
         if( FAILED(hr) )
         {
             x_DebugMsg( "Engine: ResizeBuffers failed 0x%08X\n", hr );
@@ -657,7 +708,7 @@ xbool d3deng_ChangeDisplayMode( s32 Width, s32 Height, DXGI_FORMAT Format, d3den
         g_SwapChainDesc.BufferCount,
         clientW, clientH,
         Format,
-        0
+        g_SwapChainDesc.Flags
     );
 
     if( FAILED(hr) )
@@ -1027,7 +1078,10 @@ xbool d3deng_PresentFrame( void )
     // Ensure rendering to back buffer before present
     rtarget_SetBackBuffer();
 
-    HRESULT Error = g_pSwapChain->Present( 0, 0 );  // 0 = immediate present, VSYNC
+    const UINT PresentFlags = (g_SwapChainDesc.Flags & DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING)
+                            ? DXGI_PRESENT_ALLOW_TEARING
+                            : 0;
+    HRESULT Error = g_pSwapChain->Present( 0, PresentFlags );
     frameCount++;
 
     if( Error != S_OK )

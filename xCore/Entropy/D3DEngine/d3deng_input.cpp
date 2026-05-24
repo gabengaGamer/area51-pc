@@ -32,7 +32,7 @@
 #define MAX_DEVICES      8          // Maximum number of devices per type
 #define REFRESH_RATE    15          // Times per second
 #define MAX_STATES      64          // ( REFRESH_RATE - MAX_STATES ) is how long we can go without losing info
-#define MAX_EVENTS      64          // How long DirectX can go before losing input
+#define MAX_EVENTS      256         // Buffered input events before DirectInput starts dropping data.
 
 // Intensity lost per second during rumble decay.
 #ifdef X_RETAIL
@@ -553,7 +553,7 @@ dxerr ReadMouseBufferedData( device& Device, s32 ID )
             s32 Index = (didod[ i ].dwOfs - DIMOFS_X) >> 2;
             ASSERT( Index >= 0 );
             ASSERT( Index < ANALOG_COUNT_MOUSE );
-            State.Mouse[ ID ].Anolog[ Index ] = (f32)((s32)didod[ i ].dwData);
+            State.Mouse[ ID ].Anolog[ Index ] += (f32)((s32)didod[ i ].dwData);
         }
     }
 
@@ -971,7 +971,6 @@ xbool d3deng_InitInput( HWND Window )
 
 #ifndef X_EDITOR
     s_Input.bExclusive = TRUE;
-    s_Input.bImmediate = TRUE;
 #endif
 
     s_Input.TicksPerRefresh = TIME_GetTicksPerSecond() / REFRESH_RATE;
@@ -1035,14 +1034,16 @@ f32 GetValue( s32 ControllerID, input_gadget GadgetID, digital_type DigitalType 
 
     if( GadgetID < INPUT_MOUSE__END && GadgetID > INPUT_MOUSE__BEGIN )
     {
+        const input_mouse& Mouse = s_Input.State[ s_Input.iState ].Mouse[ ControllerID ];
+
         switch( GadgetID )
         {
-        case INPUT_MOUSE_X_REL:     return s_Input.State[0].Mouse[ ControllerID ].Anolog[0];
-        case INPUT_MOUSE_Y_REL:     return s_Input.State[0].Mouse[ ControllerID ].Anolog[1];
-        case INPUT_MOUSE_WHEEL_REL: return s_Input.State[0].Mouse[ ControllerID ].Anolog[2];
-        case INPUT_MOUSE_BTN_L:     return s_Input.State[0].Mouse[ ControllerID ].Digital[0];
-        case INPUT_MOUSE_BTN_R:     return s_Input.State[0].Mouse[ ControllerID ].Digital[1];
-        case INPUT_MOUSE_BTN_C:     return s_Input.State[0].Mouse[ ControllerID ].Digital[2];
+        case INPUT_MOUSE_X_REL:     return Mouse.Anolog[0];
+        case INPUT_MOUSE_Y_REL:     return Mouse.Anolog[1];
+        case INPUT_MOUSE_WHEEL_REL: return Mouse.Anolog[2];
+        case INPUT_MOUSE_BTN_L:     return Mouse.Digital[0];
+        case INPUT_MOUSE_BTN_R:     return Mouse.Digital[1];
+        case INPUT_MOUSE_BTN_C:     return Mouse.Digital[2];
         }
     }
 
