@@ -3064,10 +3064,6 @@ xbool player::UseFocusObject( void )
     // one of them until we find one that works.  
     //
     xbool UsePressed = (xbool)g_IngamePad[m_ActivePlayerPad].GetLogical( ingame_pad::ACTION_USE ).WasValue;
-#if defined(TARGET_PC) && !defined(X_EDITOR)
-    UsePressed |= input_WasPressed( INPUT_MOUSE_BTN_C );
-#endif
-
     if( UsePressed && (m_CurrentAnimState != ANIM_STATE_THROW ) && !IsChangingMutation() )
     {
         slot_id SlotID = g_ObjMgr.GetFirst( object::TYPE_FOCUS_OBJECT );
