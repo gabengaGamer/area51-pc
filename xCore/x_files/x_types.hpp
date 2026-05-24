@@ -149,8 +149,6 @@
 //==============================================================================
 
 #ifdef TARGET_PC
-  // Types for PC targets under Microsoft's Visual Studio.
-  #ifdef _MSC_VER
     #ifndef __cplusplus
     #include <stdint.h>
     #endif
@@ -165,7 +163,7 @@
     typedef float               f32;
     typedef double              f64;
     typedef u8                  byte;
-    typedef s32                 xbool;    //bool
+    typedef s32                 xbool;
     #ifdef __cplusplus
     typedef char16_t            xwchar;
     #else
@@ -175,8 +173,7 @@
     typedef ptrdiff_t           saddr;
     typedef size_t              usize;
     typedef intptr_t            sptr;
-  #endif
-  #define X_SECTION(x) 
+    #define X_SECTION(x) 
 #endif
 
 //------------------------------------------------------------------------------
