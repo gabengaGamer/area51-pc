@@ -575,7 +575,6 @@ void* x_debug_malloc( s32         NBytes,
     TotalBytes   += NBytes;
     MaxBytes      = MAX( MaxBytes, CurrentBytes );
     x_EndAtomic();
-    LOG_MALLOC( pHeader, NBytes+sizeof(mem_header), pFileName, LineNumber );
     static s32 count=0;
     if (count==0)
     {
@@ -656,7 +655,6 @@ void* x_debug_realloc( void* pMemory, s32 NewNBytes, const char* pFileName, s32 
     Sequence = MAX( Sequence+1, 1 );
 
     x_EndAtomic();
-    LOG_REALLOC( pHeader, ((mem_header*)pMemory) - 1, NewNBytes + sizeof(mem_header), pFileName, Line );
     // Done!
     return( pHeader + 1 );
 }
@@ -709,7 +707,6 @@ void x_debug_free( void* pMemory, const char* pFileName, s32 Line )
     // Done!
     sys_mem_free( pHeader );
     x_EndAtomic();
-    LOG_FREE( pHeader, pFileName, Line );
 }
 
 //==============================================================================
@@ -772,7 +769,6 @@ void* x_malloc( s32 NBytes )
     pHeader->Sequence      = UsingNew ? Sequence : -Sequence;
     Sequence = MAX( Sequence+1, 1 );
     x_EndAtomic();
-    LOG_MALLOC( pHeader, NBytes+sizeof(mem_header), "", 0 );
     static s32 count=0;
     if (count==0)
     {
@@ -866,7 +862,6 @@ void* x_realloc( void* pMemory, s32 NewNBytes )
     Sequence = MAX( Sequence+1, 1 );
 
     x_EndAtomic();
-    LOG_REALLOC( pHeader, pMemory, NewNBytes + sizeof(mem_header), "", 0 );
     // Done!
     return( pHeader + 1 );
 
@@ -921,7 +916,6 @@ void x_free( void* pMemory )
     // Done!
     sys_mem_free( pHeader );
     x_EndAtomic();
-    LOG_FREE( pHeader, "", 0 );
 
 #else // USE_MEM_HEADERS
 

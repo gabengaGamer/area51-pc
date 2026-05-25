@@ -102,9 +102,6 @@
     <ClCompile Include="Implementation\x_flare.cpp">
       <Filter>Under Construction</Filter>
     </ClCompile>
-    <ClCompile Include="Implementation\x_tool.cpp">
-      <Filter>Implementation</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="x_bitmap.hpp" />
@@ -153,10 +150,6 @@
     <ClInclude Include="Implementation\x_semaphore_private.hpp" />
     <ClInclude Include="Implementation\x_stdio_private.hpp" />
     <ClInclude Include="Implementation\x_threads_private.hpp" />
-    <ClInclude Include="Implementation\x_tool_private.hpp" />
-    <ClInclude Include="Implementation\x_tool_private.hpp">
-      <Filter>Implementation\Private</Filter>
-    </ClInclude>
     <ClInclude Include="Implementation\x_time_inline.hpp" />
   </ItemGroup>
 </Project>

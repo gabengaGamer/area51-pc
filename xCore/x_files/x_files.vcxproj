@@ -299,11 +299,9 @@
     <ClCompile Include="Implementation\x_threads.cpp" />
     <ClCompile Include="Implementation\x_threads_pc.cpp" />
     <ClCompile Include="Implementation\x_time.cpp" />
-    <ClCompile Include="Implementation\x_tool.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Implementation\x_time_inline.hpp" />
-    <ClInclude Include="Implementation\x_tool_private.hpp" />
     <ClInclude Include="x_array.hpp" />
     <ClInclude Include="x_bitmap.hpp" />
     <ClInclude Include="x_bitstream.hpp" />
