@@ -368,8 +368,7 @@ void state_mgr::Init( void )
     }
     else
     {
-        // Skip ESRB.
-        SetState( SM_STARTUP_INTRO ); //SetState( SM_ESRB_NOTICE );
+        SetState( SM_ESRB_NOTICE );
     }
 #endif
 
