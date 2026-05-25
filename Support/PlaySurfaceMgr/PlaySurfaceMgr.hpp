@@ -263,7 +263,6 @@ protected:
                                   zone_mgr::zone_id Zone2 );
     void    ClearDBaseQueries   ( void );
     void    RenderZoneCollision ( zone_info& ZoneInfo, xbool bRenderHigh );
-    void    MarkLitPlaySurfaces ( void );
 
     friend s32  SurfaceCompareFn( const void* p1, const void* p2 );
 

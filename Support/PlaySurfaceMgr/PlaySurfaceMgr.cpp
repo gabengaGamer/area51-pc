@@ -1334,32 +1334,6 @@ void playsurface_mgr::RenderZoneCollision( zone_info& ZoneInfo, xbool bRenderHig
 
 //=========================================================================
 
-void playsurface_mgr::MarkLitPlaySurfaces( void )
-{
-    s32 i;
-    s32 nLights = g_LightMgr.GetNNonCharLights();
-
-    // Loop through all of the dynamic lights, and mark playsurfaces that
-    // may be hit by them.
-    for( i = 0; i < nLights; i++ )
-    {
-        vector3 Pos;
-        f32     Radius;
-        xcolor  Color;
-        g_LightMgr.GetLight( i, Pos, Radius, Color );
-        CollectSurfaces( bbox(Pos, Radius), object::ATTR_ALL, 0 );
-        
-        surface* pSurface = GetNextSurface();
-        while( pSurface != NULL )
-        {
-            pSurface->RenderFlags;
-            pSurface = GetNextSurface();
-        }
-    }
-}
-
-//=========================================================================
-
 void playsurface_mgr::RenderPlaySurfaces( void )
 {
 #ifndef X_EDITOR
@@ -1367,11 +1341,6 @@ void playsurface_mgr::RenderPlaySurfaces( void )
 
     if ( m_Zones.GetCount() == 0 )
         return;
-
-    // mark playsurfaces that need to have lighting calculations done (going
-    // through the lights using the spatial dbase should be quicker than
-    // doing additional checks for all playsurfaces)
-    MarkLitPlaySurfaces();
 
     // render the zones
     PrepVisCheck();
