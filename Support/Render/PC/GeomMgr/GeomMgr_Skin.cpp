@@ -248,7 +248,7 @@ xbool geom_mgr::CanAppendSkinBatch( const desc_skin_batch& Desc ) const
         return TRUE;
 
     return ( m_hSkinBatchDList.Handle == Desc.hDList.Handle ) &&
-           ( m_SkinBatchFlags == Desc.RenderFlags ) &&
+           ( BuildBatchStateFlags( m_SkinBatchFlags ) == BuildBatchStateFlags( Desc.RenderFlags ) ) &&
            ( m_SkinBatchUOffset == Desc.UOffset ) &&
            ( m_SkinBatchVOffset == Desc.VOffset ) &&
            ( m_SkinBatchOverrideMat == Desc.OverrideMat ) &&
@@ -373,7 +373,7 @@ void geom_mgr::AddSkinBatchInstance( const desc_skin_batch& Desc )
     else
     {
         ASSERT( m_hSkinBatchDList.Handle == Desc.hDList.Handle );
-        ASSERT( m_SkinBatchFlags == Desc.RenderFlags );
+        ASSERT( BuildBatchStateFlags( m_SkinBatchFlags ) == BuildBatchStateFlags( Desc.RenderFlags ) );
         ASSERT( m_SkinBatchUOffset == Desc.UOffset );
         ASSERT( m_SkinBatchVOffset == Desc.VOffset );
         ASSERT( m_SkinBatchOverrideMat == Desc.OverrideMat );

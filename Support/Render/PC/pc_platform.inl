@@ -359,7 +359,7 @@ void platform_RenderRigidInstance( render_instance& Inst )
     Batch.pLighting    = (const cb_geom_lighting*)Inst.pLighting;
     Batch.pColorInfo   = (const u32*)Inst.Data.Rigid.pColInfo;
     Batch.hDList       = Inst.hDList;
-    Batch.iSubMesh     = Inst.SortKey.GeomSubMesh;
+    Batch.iSubMesh     = Inst.iSubMesh;
     Batch.RenderFlags  = Inst.Flags;
     Batch.UOffset      = Inst.UOffset;
     Batch.VOffset      = Inst.VOffset;
@@ -387,7 +387,7 @@ void platform_RenderSkinInstance( render_instance& Inst )
     Batch.pBones       = Inst.Data.Skin.pBones;
     Batch.pLighting    = (const cb_geom_lighting*)Inst.pLighting;
     Batch.hDList       = Inst.hDList;
-    Batch.iSubMesh     = Inst.SortKey.GeomSubMesh;
+    Batch.iSubMesh     = Inst.iSubMesh;
     Batch.RenderFlags  = Inst.Flags;
     Batch.UOffset      = Inst.UOffset;
     Batch.VOffset      = Inst.VOffset;
@@ -412,43 +412,120 @@ void platform_RegisterMaterial( material& Mat )
 //=============================================================================
 
 static
+xbool platform_RigidDListsMatch( const rigid_geom::dlist_pc& A, const rigid_geom::dlist_pc& B )
+{
+    if( (A.nIndices != B.nIndices) || (A.nVerts != B.nVerts) )
+        return FALSE;
+
+    if( A.nIndices && (x_memcmp( A.pIndices, B.pIndices, A.nIndices * sizeof(u16) ) != 0) )
+        return FALSE;
+
+    for( s32 i = 0; i < A.nVerts; i++ )
+    {
+        if( (x_memcmp( &A.pVert[i].Pos,    &B.pVert[i].Pos,    sizeof(A.pVert[i].Pos)    ) != 0) ||
+            (x_memcmp( &A.pVert[i].Normal, &B.pVert[i].Normal, sizeof(A.pVert[i].Normal) ) != 0) ||
+            (x_memcmp( &A.pVert[i].UV,     &B.pVert[i].UV,     sizeof(A.pVert[i].UV)     ) != 0) )
+        {
+            return FALSE;
+        }
+    }
+
+    return TRUE;
+}
+
+//=============================================================================
+
+static
+s32 platform_FindMatchingRigidDList( const rigid_geom::dlist_pc* pDList, s32 iDList )
+{
+    for( s32 i = 0; i < iDList; i++ )
+    {
+        if( platform_RigidDListsMatch( pDList[i], pDList[iDList] ) )
+            return i;
+    }
+
+    return -1;
+}
+
+//=============================================================================
+
+static
+xbool platform_SkinDListsMatch( const skin_geom::dlist_pc& A, const skin_geom::dlist_pc& B )
+{
+    return (A.nIndices  == B.nIndices ) &&
+           (A.nVertices == B.nVertices) &&
+           (A.nCommands == B.nCommands) &&
+           (!A.nIndices  || (x_memcmp( A.pIndex,  B.pIndex,  A.nIndices  * sizeof(s16) ) == 0)) &&
+           (!A.nVertices || (x_memcmp( A.pVertex, B.pVertex, A.nVertices * sizeof(skin_geom::vertex_pc) ) == 0)) &&
+           (!A.nCommands || (x_memcmp( A.pCmd,    B.pCmd,    A.nCommands * sizeof(skin_geom::command_pc) ) == 0));
+}
+
+//=============================================================================
+
+static
+s32 platform_FindMatchingSkinDList( const skin_geom::dlist_pc* pDList, s32 iDList )
+{
+    for( s32 i = 0; i < iDList; i++ )
+    {
+        if( platform_SkinDListsMatch( pDList[i], pDList[iDList] ) )
+            return i;
+    }
+
+    return -1;
+}
+
+//=============================================================================
+
+static
 void platform_RegisterRigidGeom( rigid_geom& Geom )
 {
     private_geom& PrivateGeom = s_lRegisteredGeoms(Geom.m_hGeom);
     PrivateGeom.RigidDList.Clear();
+    PrivateGeom.RigidDListKey.Clear();
+    PrivateGeom.RigidDList.SetCapacity( Geom.m_nDList );
+    PrivateGeom.RigidDListKey.SetCapacity( Geom.m_nDList );
+    ASSERT( Geom.m_nDList <= 256 );
 
     rigid_geom::dlist_pc* pPCDList = Geom.m_System.pPC;
 
-    s32 nVerts = Geom.GetNVerts();
-    rigid_geom::vertex_pc* pBuffer = new rigid_geom::vertex_pc[nVerts];
-    rigid_geom::vertex_pc* pVertex = pBuffer;
-    rigid_geom::vertex_pc* pEnd    = (pVertex + nVerts);
+    s32 nVerts = 0;
+    for( s32 iDList = 0; iDList < Geom.m_nDList; iDList++ )
+        nVerts = MAX( nVerts, pPCDList[iDList].nVerts );
 
-    for ( s32 iSubMesh = 0; iSubMesh < Geom.m_nSubMeshes; iSubMesh++ )
+    rigid_geom::vertex_pc* pBuffer = new rigid_geom::vertex_pc[nVerts];
+
+    for ( s32 iDList = 0; iDList < Geom.m_nDList; iDList++ )
     {
-        geom::submesh&        GeomSubMesh = Geom.m_pSubMesh[iSubMesh];
-        rigid_geom::dlist_pc& DList       = pPCDList[GeomSubMesh.iDList];
+        rigid_geom::dlist_pc& DList = pPCDList[iDList];
+
+        xhandle& hDList  = PrivateGeom.RigidDList.Append();
+        s16&     DListKey = PrivateGeom.RigidDListKey.Append();
+
+        const s32 iMatch = platform_FindMatchingRigidDList( pPCDList, iDList );
+        if( iMatch >= 0 )
+        {
+            hDList   = PrivateGeom.RigidDList[iMatch];
+            DListKey = PrivateGeom.RigidDListKey[iMatch];
+            continue;
+        }
 
         for ( s32 iVert = 0; iVert < DList.nVerts; iVert++ )
         {
-            pVertex[iVert].Pos    = DList.pVert[iVert].Pos;
-            pVertex[iVert].UV     = DList.pVert[iVert].UV;
-            pVertex[iVert].Normal = DList.pVert[iVert].Normal;
-            pVertex[iVert].Color  = xcolor( 128, 128, 128, 255 );
+            pBuffer[iVert].Pos    = DList.pVert[iVert].Pos;
+            pBuffer[iVert].UV     = DList.pVert[iVert].UV;
+            pBuffer[iVert].Normal = DList.pVert[iVert].Normal;
+            pBuffer[iVert].Color  = xcolor( 128, 128, 128, 255 );
         }
 
-        xhandle& hDList = PrivateGeom.RigidDList.Append();
-        hDList = g_RigidVertMgr.AddDList( pVertex,
+        hDList = g_RigidVertMgr.AddDList( pBuffer,
                                           DList.nVerts,
                                           DList.pIndices,
                                           DList.nIndices,
                                           DList.nIndices / 3 );
-
-        pVertex += DList.nVerts;
+        DListKey = (s16)iDList;
     }
 
     delete []pBuffer;
-    ASSERT( pVertex == pEnd );
 }
 
 //=============================================================================
@@ -457,11 +534,16 @@ static
 void platform_UnregisterRigidGeom( rigid_geom& Geom )
 {
     private_geom& PrivateGeom = s_lRegisteredGeoms(Geom.m_hGeom);
+    const xbool bHasDListKeys = (PrivateGeom.RigidDListKey.GetCount() == PrivateGeom.RigidDList.GetCount());
+
     for ( s32 i = 0; i < PrivateGeom.RigidDList.GetCount(); i++ )
     {
-        g_RigidVertMgr.DelDList( PrivateGeom.RigidDList[i] );
+        if( !bHasDListKeys || (PrivateGeom.RigidDListKey[i] == i) )
+            g_RigidVertMgr.DelDList( PrivateGeom.RigidDList[i] );
     }
+
     PrivateGeom.RigidDList.Clear();
+    PrivateGeom.RigidDListKey.Clear();
 }
 
 //=============================================================================
@@ -471,52 +553,58 @@ void platform_RegisterSkinGeom( skin_geom& Geom )
 {
     private_geom& PrivateGeom = s_lRegisteredGeoms(Geom.m_hGeom);
     PrivateGeom.SkinDList.Clear();
+    PrivateGeom.SkinDListKey.Clear();
+    PrivateGeom.SkinDList.SetCapacity( Geom.m_nDList );
+    PrivateGeom.SkinDListKey.SetCapacity( Geom.m_nDList );
+    ASSERT( Geom.m_nDList <= 256 );
 
     // make a private copy of the display lists and register them with the
     // skin vert manager
     skin_geom::dlist_pc* pPCDList = Geom.m_System.pPC;
 
-    // Allocate work memory and setup pointers for the copy loop
-    s32 nVerts = Geom.GetNVerts();
-    skin_geom::vertex_pc* pBuffer = new skin_geom::vertex_pc[nVerts];
-    skin_geom::vertex_pc* pVertex = pBuffer;
-    skin_geom::vertex_pc* pEnd    = (pVertex + nVerts);
+    s32 nVerts = 0;
+    for( s32 iDList = 0; iDList < Geom.m_nDList; iDList++ )
+        nVerts = MAX( nVerts, pPCDList[iDList].nVertices );
 
-    // Loop through all SubMeshs
-    for ( s32 iSubMesh = 0; iSubMesh < Geom.m_nSubMeshes; iSubMesh++ )
+    skin_geom::vertex_pc* pBuffer = new skin_geom::vertex_pc[nVerts];
+
+    for ( s32 iDList = 0; iDList < Geom.m_nDList; iDList++ )
     {
-        // Get the DList for this submesh
-        geom::submesh&       GeomSubMesh = Geom.m_pSubMesh[iSubMesh];
-        skin_geom::dlist_pc& DList       = pPCDList[GeomSubMesh.iDList];
+        skin_geom::dlist_pc& DList = pPCDList[iDList];
+
+        xhandle& hDList   = PrivateGeom.SkinDList.Append();
+        s16&     DListKey = PrivateGeom.SkinDListKey.Append();
+
+        const s32 iMatch = platform_FindMatchingSkinDList( pPCDList, iDList );
+        if( iMatch >= 0 )
+        {
+            hDList   = PrivateGeom.SkinDList[iMatch];
+            DListKey = PrivateGeom.SkinDListKey[iMatch];
+            continue;
+        }
 
         // Copy vertex data
         for ( s32 iVert = 0; iVert < DList.nVertices; iVert++ )
         {
             // Copy vert
-            pVertex[iVert].Position  = DList.pVertex[iVert].Position;
-            pVertex[iVert].Normal    = DList.pVertex[iVert].Normal;
-            pVertex[iVert].UVWeights = DList.pVertex[iVert].UVWeights;
+            pBuffer[iVert].Position  = DList.pVertex[iVert].Position;
+            pBuffer[iVert].Normal    = DList.pVertex[iVert].Normal;
+            pBuffer[iVert].UVWeights = DList.pVertex[iVert].UVWeights;
         }
 
-        // Create a new handle
-        xhandle& hDList = PrivateGeom.SkinDList.Append();
-
         // Create the dlist and store out the handle
-        hDList = g_SkinVertMgr.AddDList( pVertex,
+        hDList = g_SkinVertMgr.AddDList( pBuffer,
                                          DList.nVertices,
                                          (u16*)DList.pIndex,
                                          DList.nIndices,
                                          DList.nIndices / 3,
                                          DList.nCommands,
                                          DList.pCmd );
-
-        // Advance ptrs
-        pVertex += DList.nVertices;
+        DListKey = (s16)iDList;
     }
 
     // Free the work memory
     delete []pBuffer;
-    ASSERT( pVertex == pEnd );
 }
 
 //=============================================================================
@@ -525,11 +613,16 @@ static
 void platform_UnregisterSkinGeom( skin_geom& Geom )
 {
     private_geom& PrivateGeom = s_lRegisteredGeoms(Geom.m_hGeom);
+    const xbool bHasDListKeys = (PrivateGeom.SkinDListKey.GetCount() == PrivateGeom.SkinDList.GetCount());
+
     for ( s32 i = 0; i < PrivateGeom.SkinDList.GetCount(); i++ )
     {
-        g_SkinVertMgr.DelDList( PrivateGeom.SkinDList[i] );
+        if( !bHasDListKeys || (PrivateGeom.SkinDListKey[i] == i) )
+            g_SkinVertMgr.DelDList( PrivateGeom.SkinDList[i] );
     }
+
     PrivateGeom.SkinDList.Clear();
+    PrivateGeom.SkinDListKey.Clear();
 }
 
 //=============================================================================
@@ -1413,9 +1506,141 @@ void platform_BeginShadowShaders( void )
 
 //=============================================================================
 
+static xarray<cb_rigid_instance> s_lShadowRigidBatchInstances;
+static xhandle                   s_hShadowRigidBatchDList;
+static const material*           s_pShadowRigidBatchMaterial = NULL;
+static s32                       s_ShadowRigidBatchSource    = -1;
+static u8                        s_ShadowRigidBatchUOffset   = 0;
+static u8                        s_ShadowRigidBatchVOffset   = 0;
+
+static xarray<cb_skin_instance>  s_lShadowSkinBatchInstances;
+static xarray<matrix4>           s_lShadowSkinBatchBones;
+static xhandle                   s_hShadowSkinBatchDList;
+static const material*           s_pShadowSkinBatchMaterial = NULL;
+static s32                       s_ShadowSkinBatchSource    = -1;
+static u8                        s_ShadowSkinBatchUOffset   = 0;
+static u8                        s_ShadowSkinBatchVOffset   = 0;
+
+//=============================================================================
+
+static
+void platform_ResetShadowCastRigidBatch( void )
+{
+    s_lShadowRigidBatchInstances.Clear();
+    s_hShadowRigidBatchDList.Handle = HNULL;
+    s_pShadowRigidBatchMaterial     = NULL;
+    s_ShadowRigidBatchSource        = -1;
+    s_ShadowRigidBatchUOffset       = 0;
+    s_ShadowRigidBatchVOffset       = 0;
+}
+
+//=============================================================================
+
+static
+void platform_ResetShadowCastSkinBatch( void )
+{
+    s_lShadowSkinBatchInstances.Clear();
+    s_lShadowSkinBatchBones.Clear();
+    s_hShadowSkinBatchDList.Handle = HNULL;
+    s_pShadowSkinBatchMaterial     = NULL;
+    s_ShadowSkinBatchSource        = -1;
+    s_ShadowSkinBatchUOffset       = 0;
+    s_ShadowSkinBatchVOffset       = 0;
+}
+
+//=============================================================================
+
+static
+xbool platform_HasShadowCastRigidBatch( void )
+{
+    return (s_lShadowRigidBatchInstances.GetCount() > 0);
+}
+
+//=============================================================================
+
+static
+xbool platform_HasShadowCastSkinBatch( void )
+{
+    return (s_lShadowSkinBatchInstances.GetCount() > 0);
+}
+
+//=============================================================================
+
+static
+void platform_FlushShadowCastRigidBatch( void )
+{
+    if( platform_HasShadowCastRigidBatch() )
+    {
+        g_ShadowMgr.RenderRigidCasterBatch( s_hShadowRigidBatchDList,
+                                            &s_lShadowRigidBatchInstances[0],
+                                            s_lShadowRigidBatchInstances.GetCount(),
+                                            s_pShadowRigidBatchMaterial,
+                                            s_ShadowRigidBatchUOffset,
+                                            s_ShadowRigidBatchVOffset,
+                                            s_ShadowRigidBatchSource );
+    }
+
+    platform_ResetShadowCastRigidBatch();
+}
+
+//=============================================================================
+
+static
+void platform_FlushShadowCastSkinBatch( void )
+{
+    if( platform_HasShadowCastSkinBatch() )
+    {
+        g_ShadowMgr.RenderSkinCasterBatch( s_hShadowSkinBatchDList,
+                                           &s_lShadowSkinBatchInstances[0],
+                                           s_lShadowSkinBatchInstances.GetCount(),
+                                           s_lShadowSkinBatchBones.GetCount() ? &s_lShadowSkinBatchBones[0] : NULL,
+                                           s_lShadowSkinBatchBones.GetCount(),
+                                           s_pShadowSkinBatchMaterial,
+                                           s_ShadowSkinBatchUOffset,
+                                           s_ShadowSkinBatchVOffset,
+                                           s_ShadowSkinBatchSource );
+    }
+
+    platform_ResetShadowCastSkinBatch();
+}
+
+//=============================================================================
+
+static
+xbool platform_CanAppendShadowCastRigidBatch( const render_instance& Inst, const material* pMaterial )
+{
+    if( !platform_HasShadowCastRigidBatch() )
+        return TRUE;
+
+    return (s_hShadowRigidBatchDList.Handle == Inst.hDList.Handle) &&
+           (s_pShadowRigidBatchMaterial     == pMaterial) &&
+           (s_ShadowRigidBatchUOffset       == Inst.UOffset) &&
+           (s_ShadowRigidBatchVOffset       == Inst.VOffset) &&
+           (s_ShadowRigidBatchSource        == (s32)Inst.ShadSortKey.ShadowSourceIndex);
+}
+
+//=============================================================================
+
+static
+xbool platform_CanAppendShadowCastSkinBatch( const render_instance& Inst, const material* pMaterial )
+{
+    if( !platform_HasShadowCastSkinBatch() )
+        return TRUE;
+
+    return (s_hShadowSkinBatchDList.Handle == Inst.hDList.Handle) &&
+           (s_pShadowSkinBatchMaterial     == pMaterial) &&
+           (s_ShadowSkinBatchUOffset       == Inst.UOffset) &&
+           (s_ShadowSkinBatchVOffset       == Inst.VOffset) &&
+           (s_ShadowSkinBatchSource        == (s32)Inst.ShadSortKey.ShadowSourceIndex);
+}
+
+//=============================================================================
+
 static
 void platform_EndShadowShaders( void )
 {
+    platform_FlushShadowCastRigidBatch();
+    platform_FlushShadowCastSkinBatch();
     g_ShadowMgr.EndShadowShaders();
 }
 
@@ -1424,6 +1649,8 @@ void platform_EndShadowShaders( void )
 static
 void platform_StartShadowCast( void )
 {
+    platform_ResetShadowCastRigidBatch();
+    platform_ResetShadowCastSkinBatch();
     g_ShadowMgr.BeginCastPass();
 }
 
@@ -1432,6 +1659,8 @@ void platform_StartShadowCast( void )
 static
 void platform_EndShadowCast( void )
 {
+    platform_FlushShadowCastRigidBatch();
+    platform_FlushShadowCastSkinBatch();
     g_ShadowMgr.EndCastPass();
 }
 
@@ -1512,6 +1741,7 @@ void platform_BeginShadowCastRigid( geom* pGeom, s32 iSubMesh )
 {
     (void)pGeom;
     (void)iSubMesh;
+    platform_ResetShadowCastRigidBatch();
 }
 
 //=============================================================================
@@ -1525,7 +1755,7 @@ const material* platform_GetShadowCastMaterial( const render_instance& Inst )
     if( !pGeom )
         return NULL;
 
-    const s32 iSubMesh = Inst.ShadSortKey.GeomSubMesh;
+    const s32 iSubMesh = Inst.iSubMesh;
     if( (iSubMesh < 0) || (iSubMesh >= pGeom->m_nSubMeshes) )
         return NULL;
 
@@ -1543,12 +1773,28 @@ const material* platform_GetShadowCastMaterial( const render_instance& Inst )
 static
 void platform_RenderShadowCastRigid( render_instance& Inst )
 {
-    g_ShadowMgr.RenderRigidCaster( Inst.hDList,
-                                   Inst.Data.Rigid.pL2W,
-                                   platform_GetShadowCastMaterial( Inst ),
-                                   Inst.UOffset,
-                                   Inst.VOffset,
-                                   Inst.ShadSortKey.ShadowSourceIndex );
+    if( !Inst.Data.Rigid.pL2W )
+        return;
+
+    const material* pMaterial = platform_GetShadowCastMaterial( Inst );
+    if( !platform_CanAppendShadowCastRigidBatch( Inst, pMaterial ) )
+        platform_FlushShadowCastRigidBatch();
+
+    if( !platform_HasShadowCastRigidBatch() )
+    {
+        s_hShadowRigidBatchDList    = Inst.hDList;
+        s_pShadowRigidBatchMaterial = pMaterial;
+        s_ShadowRigidBatchSource    = Inst.ShadSortKey.ShadowSourceIndex;
+        s_ShadowRigidBatchUOffset   = Inst.UOffset;
+        s_ShadowRigidBatchVOffset   = Inst.VOffset;
+    }
+
+    cb_rigid_instance& GPUInst = s_lShadowRigidBatchInstances.Append();
+    x_memset( &GPUInst, 0, sizeof(GPUInst) );
+    GPUInst.World       = *Inst.Data.Rigid.pL2W;
+    GPUInst.ColorOffset = 0xFFFFFFFFu;
+    GPUInst.BaseVertex  = (u32)g_RigidVertMgr.GetDListVertexOffset( Inst.hDList );
+    GPUInst.FadeAlpha   = 1.0f;
 }
 
 //=============================================================================
@@ -1556,6 +1802,7 @@ void platform_RenderShadowCastRigid( render_instance& Inst )
 static
 void platform_EndShadowCastRigid( void )
 {
+    platform_FlushShadowCastRigidBatch();
 }
 
 //=============================================================================
@@ -1565,6 +1812,7 @@ void platform_BeginShadowCastSkin( geom* pGeom, s32 iSubMesh )
 {
     (void)pGeom;
     (void)iSubMesh;
+    platform_ResetShadowCastSkinBatch();
 }
 
 //=============================================================================
@@ -1572,12 +1820,35 @@ void platform_BeginShadowCastSkin( geom* pGeom, s32 iSubMesh )
 static
 void platform_RenderShadowCastSkin( render_instance& Inst, s32 iShadowSource )
 {
-    g_ShadowMgr.RenderSkinCaster( Inst.hDList, 
-                                  Inst.Data.Skin.pBones, 
-                                  platform_GetShadowCastMaterial( Inst ),
-                                  Inst.UOffset,
-                                  Inst.VOffset,
-                                  iShadowSource );
+    ASSERT( iShadowSource == (s32)Inst.ShadSortKey.ShadowSourceIndex );
+
+    skin_geom* pGeom = Inst.Data.Skin.pGeom;
+    ASSERT( pGeom );
+
+    const s32 nBones = pGeom ? pGeom->m_nBones : 0;
+    if( (nBones <= 0) || !Inst.Data.Skin.pBones )
+        return;
+
+    const material* pMaterial = platform_GetShadowCastMaterial( Inst );
+    if( !platform_CanAppendShadowCastSkinBatch( Inst, pMaterial ) )
+        platform_FlushShadowCastSkinBatch();
+
+    if( !platform_HasShadowCastSkinBatch() )
+    {
+        s_hShadowSkinBatchDList    = Inst.hDList;
+        s_pShadowSkinBatchMaterial = pMaterial;
+        s_ShadowSkinBatchSource    = Inst.ShadSortKey.ShadowSourceIndex;
+        s_ShadowSkinBatchUOffset   = Inst.UOffset;
+        s_ShadowSkinBatchVOffset   = Inst.VOffset;
+    }
+
+    cb_skin_instance& GPUInst = s_lShadowSkinBatchInstances.Append();
+    x_memset( &GPUInst, 0, sizeof(GPUInst) );
+    GPUInst.BoneOffset = s_lShadowSkinBatchBones.GetCount();
+    GPUInst.FadeAlpha  = 1.0f;
+
+    for( s32 i = 0; i < nBones; i++ )
+        s_lShadowSkinBatchBones.Append() = Inst.Data.Skin.pBones[i];
 }
 
 //=============================================================================
@@ -1585,6 +1856,7 @@ void platform_RenderShadowCastSkin( render_instance& Inst, s32 iShadowSource )
 static
 void platform_EndShadowCastSkin( void )
 {
+    platform_FlushShadowCastSkinBatch();
 }
 
 //=============================================================================

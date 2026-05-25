@@ -6,10 +6,14 @@
 //
 //==============================================================================
 
+#include "common/material_flags.hlsl"
+#include "common/rigid_instance_buffers.hlsl"
+
+//==============================================================================
+
 cbuffer cbShadowCast : register(b0)
 {
     float4x4 ShadowViewProjection;
-    float4x4 World;
 };
 
 //------------------------------------------------------------------------------
@@ -20,6 +24,7 @@ struct VS_INPUT
     float3 Normal   : NORMAL;
     float4 Color    : COLOR0;
     float2 UV       : TEXCOORD0;
+    uint   InstanceID : SV_InstanceID;
 };
 
 //------------------------------------------------------------------------------
@@ -35,7 +40,7 @@ struct VS_OUTPUT
 VS_OUTPUT VSMain( VS_INPUT input )
 {
     VS_OUTPUT output;
-    float4 worldPos = mul( World, float4( input.Position, 1.0f ) );
+    float4 worldPos = mul( RigidInstances[input.InstanceID].World, float4( input.Position, 1.0f ) );
     output.Position = mul( ShadowViewProjection, worldPos );
     output.UV       = input.UV;
     return output;

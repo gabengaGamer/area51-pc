@@ -422,6 +422,7 @@ protected:
                                               s32                      nInstances );
     void        BindLightCookies            ( cb_skin_instance*        pInstances,
                                               s32                      nInstances );
+    static u32  BuildBatchStateFlags        ( u32 RenderFlags );
     static u32  BuildInstanceFlags          ( u32 RenderFlags );
     static f32  BuildInstanceFadeAlpha      ( u32 RenderFlags,
                                               u8  Alpha );

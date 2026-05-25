@@ -412,6 +412,18 @@ geom_mgr::material_constants geom_mgr::BuildMaterialFlags( const material* pMate
 
 //==============================================================================
 
+u32 geom_mgr::BuildBatchStateFlags( u32 RenderFlags )
+{
+    const u32 BatchStateMask = render::WIREFRAME     |
+                               render::WIREFRAME2    |
+                               render::FADING_ALPHA  |
+                               render::INSTFLAG_FADING_ALPHA;
+
+    return RenderFlags & BatchStateMask;
+}
+
+//==============================================================================
+
 u32 geom_mgr::BuildInstanceFlags( u32 RenderFlags )
 {
     u32 ShaderFlags = 0;

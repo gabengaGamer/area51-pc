@@ -477,17 +477,13 @@ void shadow_mgr::EndCastPass( void )
 
 //==============================================================================
 
-xbool shadow_mgr::SetShadowCastConstants( const matrix4& ShadowViewProjection,
-                                          const matrix4* pWorld )
+xbool shadow_mgr::SetShadowCastConstants( const matrix4& ShadowViewProjection )
 {
     if( !g_pd3dContext || !m_pShadowCastBuffer )
         return FALSE;
 
     cb_shadow_cast CBData;
     CBData.ShadowViewProjection = ShadowViewProjection;
-    CBData.World.Identity();
-    if( pWorld )
-        CBData.World = *pWorld;
 
     D3D11_MAPPED_SUBRESOURCE MappedResource;
     if( FAILED( g_pd3dContext->Map( m_pShadowCastBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &MappedResource ) ) )
@@ -599,24 +595,19 @@ void shadow_mgr::ApplySource( s32 SourceIndex, s32 CasterShader )
 
     shader_ApplyPass( Pass );
 
-    if( CasterShader == SHADOW_CASTER_SKIN )
-    {
-        if( !SetShadowCastConstants( Source.WorldToClip ) )
-            return;
-    }
-
     m_CurrentSource       = SourceIndex;
     m_CurrentCasterShader = CasterShader;
 }
 
 //==============================================================================
 
-void shadow_mgr::RenderRigidCaster( xhandle         hDList,
-                                    const matrix4*  pL2W,
-                                    const material* pMaterial,
-                                    u8              UOffset,
-                                    u8              VOffset,
-                                    s32             SourceIndex )
+void shadow_mgr::RenderRigidCasterBatch( xhandle         hDList,
+                                         const cb_rigid_instance* pInstances,
+                                         s32             nInstances,
+                                         const material* pMaterial,
+                                         u8              UOffset,
+                                         u8              VOffset,
+                                         s32             SourceIndex )
 {
     if( !m_bInitialized ||
         !g_ShadowMapMgr.HasActiveSources() ||
@@ -624,7 +615,8 @@ void shadow_mgr::RenderRigidCaster( xhandle         hDList,
         !m_pRigidVertexShader ||
         !m_pRigidInputLayout ||
         !m_pShadowCastBuffer ||
-        !pL2W )
+        !pInstances ||
+        (nInstances <= 0) )
     {
         return;
     }
@@ -638,30 +630,40 @@ void shadow_mgr::RenderRigidCaster( xhandle         hDList,
         return;
 
     const shadow_map_mgr::shadow_source& Source = g_ShadowMapMgr.GetSource( SourceIndex );
-    if( !SetShadowCastConstants( Source.WorldToClip, pL2W ) )
+    if( !SetShadowCastConstants( Source.WorldToClip ) )
         return;
 
     if( !SetShadowAlphaConstants( pMaterial, UOffset, VOffset ) )
         return;
 
-    g_RigidVertMgr.DrawDList( hDList );
+    if( g_GeomMgr.SetRigidInstanceData( pInstances, nInstances, NULL, 0 ) )
+    {
+        g_RigidVertMgr.DrawDListInstanced( hDList, nInstances );
+    }
+
+    g_GeomMgr.ResetRigidInstanceData();
 }
 
 //==============================================================================
 
-void shadow_mgr::RenderSkinCaster( xhandle         hDList,
-                                   const matrix4*  pBones,
-                                   const material* pMaterial,
-                                   u8              UOffset,
-                                   u8              VOffset,
-                                   s32             SourceIndex )
+void shadow_mgr::RenderSkinCasterBatch( xhandle         hDList,
+                                        const cb_skin_instance* pInstances,
+                                        s32             nInstances,
+                                        const matrix4*  pBones,
+                                        s32             nBones,
+                                        const material* pMaterial,
+                                        u8              UOffset,
+                                        u8              VOffset,
+                                        s32             SourceIndex )
 {
     if( !m_bInitialized ||
         !g_ShadowMapMgr.HasActiveSources() ||
         !g_pd3dContext ||
         !m_pSkinVertexShader ||
         !m_pSkinInputLayout ||
-        !m_pShadowCastBuffer )
+        !m_pShadowCastBuffer ||
+        !pInstances ||
+        (nInstances <= 0) )
     {
         return;
     }
@@ -674,10 +676,19 @@ void shadow_mgr::RenderSkinCaster( xhandle         hDList,
     if( ( SourceIndex != m_CurrentSource ) || ( m_CurrentCasterShader != SHADOW_CASTER_SKIN ) )
         return;
 
+    const shadow_map_mgr::shadow_source& Source = g_ShadowMapMgr.GetSource( SourceIndex );
+    if( !SetShadowCastConstants( Source.WorldToClip ) )
+        return;
+
     if( !SetShadowAlphaConstants( pMaterial, UOffset, VOffset ) )
         return;
 
-    g_SkinVertMgr.DrawDList( hDList, pBones );
+    if( g_GeomMgr.SetSkinInstanceData( pInstances, nInstances, pBones, nBones ) )
+    {
+        g_SkinVertMgr.DrawDListInstanced( hDList, nInstances );
+    }
+
+    g_GeomMgr.ResetSkinInstanceData();
 }
 
 //==============================================================================

@@ -236,7 +236,7 @@ xbool geom_mgr::CanAppendRigidBatch( const desc_rigid_batch& Desc ) const
         return TRUE;
 
     return ( m_hRigidBatchDList.Handle == Desc.hDList.Handle ) &&
-           ( m_RigidBatchFlags == Desc.RenderFlags ) &&
+           ( BuildBatchStateFlags( m_RigidBatchFlags ) == BuildBatchStateFlags( Desc.RenderFlags ) ) &&
            ( m_RigidBatchUOffset == Desc.UOffset ) &&
            ( m_RigidBatchVOffset == Desc.VOffset ) &&
            ( m_RigidBatchOverrideMat == Desc.OverrideMat ) &&
@@ -361,7 +361,7 @@ void geom_mgr::AddRigidBatchInstance( const desc_rigid_batch& Desc )
     else
     {
         ASSERT( m_hRigidBatchDList.Handle == Desc.hDList.Handle );
-        ASSERT( m_RigidBatchFlags == Desc.RenderFlags );
+        ASSERT( BuildBatchStateFlags( m_RigidBatchFlags ) == BuildBatchStateFlags( Desc.RenderFlags ) );
         ASSERT( m_RigidBatchUOffset == Desc.UOffset );
         ASSERT( m_RigidBatchVOffset == Desc.VOffset );
         ASSERT( m_RigidBatchOverrideMat == Desc.OverrideMat );
