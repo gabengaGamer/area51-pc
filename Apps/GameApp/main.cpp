@@ -124,9 +124,9 @@
 #define RELEASE_PATH            "C:\\GameData\\A51\\Release"
 
 static f32 GAME_MAX_DELTA_TIME         = 0.1f;
-static f32 FIXED_UPDATE_DELTA_TIME     = 1.0f / 30.0f;
+static f32 FIXED_UPDATE_DELTA_TIME     = 1.0f / 60.0f; //30.0f;
 static f32 MAX_FRAME_DELTA_TIME        = 0.25f;
-static s32 MAX_UPDATE_STEPS_PER_FRAME  = 8;
+static s32 MAX_UPDATE_STEPS_PER_FRAME  = 12; //8;
 
 #if CONFIG_IS_DEMO
 xtimer g_DemoIdleTimer;
