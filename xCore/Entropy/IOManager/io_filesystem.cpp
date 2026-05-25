@@ -1244,7 +1244,9 @@ io_open_file* io_fs::Open( const char* pPathName, const char* pMode )
                 pOpenFile->Position          = 0;
                 pOpenFile->Mode              = OpenFlags; 
                 pOpenFile->pNext             = NULL;
-                pOpenFile->bEnableChecksum   = (pDeviceFile->pHeader != NULL);
+                pOpenFile->bEnableChecksum   = pDeviceFile &&
+                                                pDeviceFile->pHeader &&
+                                                (dfs_GetChecksums( (dfs_header*)pDeviceFile->pHeader ) != NULL);
 
 #ifdef IO_RETAIN_FILENAME
                 // Save the filename...
@@ -1504,7 +1506,7 @@ s32 io_fs::Read( io_open_file* pOpenFile, byte* pBuffer, s32 Bytes )
                 if( IsFileSystemFile )
                 {
                     dfs_header* pHeader = (dfs_header*)pOpenFile->pDeviceFile->pHeader;
-                    SectorSize = pHeader->SectorSize;
+                    SectorSize = pOpenFile->bEnableChecksum ? 32768 : pHeader->SectorSize;
                 }
 
                 SectorByte   = PhysicalByte - (PhysicalByte % SectorSize);
