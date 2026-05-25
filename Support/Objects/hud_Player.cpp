@@ -428,7 +428,7 @@ void player_hud::UpdateMPIcons( f32 DeltaTime, player* pPlayer )
     // for the enemies
     vector3           V0, V1, ViewDirection;
     const game_score& Score        = GameMgr.GetScore();
-    const view&       View         = pPlayer->GetView();
+    const view&       View         = pPlayer->GetInterpView();
     vector3           ViewPosition = View.GetPosition();
     const matrix4&    V2W          = View.GetV2W();
     V2W.GetColumns( V0, V1, ViewDirection );

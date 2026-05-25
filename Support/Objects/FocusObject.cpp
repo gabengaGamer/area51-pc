@@ -284,7 +284,7 @@ void focus_object::OnRender( void )
 
     // If we have FOs in SS then this will have to be looked at! 
 
-    view& rView = pPlayer->GetView();
+    view& rView = pPlayer->GetInterpView();
     rView.GetViewport( ViewDimensions );
 
     // Draw the FO
@@ -757,7 +757,7 @@ void focus_object::OnAdvanceLogic( f32 DeltaTime )
         // Reticle Pos
         s32 XRes, YRes;
         eng_GetRes( XRes, YRes );
-        view& rView = pPlayer->GetView();        
+        view& rView = pPlayer->GetInterpView();
 
         // Reticle Position
         vector3 RP = vector3( (f32)XRes/2.0f, (f32)YRes/2.0f, 0.01f );

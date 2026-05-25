@@ -164,7 +164,7 @@ xbool check_point_mgr::Restore( xbool bIsDebugAdvance )
                         // the safe zones for hud rendering are correct.
                         s32     XRes, YRes;
                         eng_GetRes( XRes, YRes );
-                        view& rView0 = pPlayer->GetView();
+                        view& rView0 = pPlayer->GetInterpView();
                         rView0.SetViewport( 0, 0, XRes, YRes );
 
                         // Finally init the hud.

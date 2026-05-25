@@ -664,7 +664,7 @@ xbool weapon_mutation::FireSecondaryProtected( const vector3& InitPos , const ve
     if ( pOwnerObject->GetType() == TYPE_PLAYER )
     {
         // we need to override the given rotation and just use the player's view
-        view View( ((player*)pOwnerObject)->GetView() );
+        view View( ((player*)pOwnerObject)->GetInterpView() );
         L2W = View.GetV2W();
     }
     else
@@ -1177,7 +1177,7 @@ void weapon_mutation::GetCorpseDirection( vector3 &StartPos, vector3 &EndPos )
     {
         player *pPlayer = (player*)pOwner;
         StartPos = pPlayer->GetEyesPosition();
-        EndPos   = StartPos + (pPlayer->GetView().GetViewZ() * TendrilReachDistanceTweak.GetF32());
+        EndPos   = StartPos + (pPlayer->GetInterpView().GetViewZ() * TendrilReachDistanceTweak.GetF32());
     }
     else
     {

@@ -391,7 +391,7 @@ void hud_text::OnRender( player* pPlayer )
         static irect BonusRect = irect(0,148,512,448);
 
         rect ViewDimensions;
-        view& rView = pPlayer->GetView();
+        view& rView = pPlayer->GetInterpView();
         rView.GetViewport( ViewDimensions );
         BonusRect.r = (s32)ViewDimensions.GetWidth();
         BonusRect.b = (s32)ViewDimensions.GetHeight();

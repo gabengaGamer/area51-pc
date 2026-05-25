@@ -82,7 +82,7 @@ void hud_damage::OnRender( player* pPlayer )
         // Render pain.
         //
         {
-            view& rView = rPlayer.GetView();
+            view& rView = rPlayer.GetInterpView();
 
             radian Pitch;
             radian Yaw;

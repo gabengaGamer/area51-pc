@@ -219,7 +219,7 @@ void player::GetProjectileHitLocation(vector3& EndPos, xbool bUseBulletAssist)
     radian Yaw;
 
     // the view's rotation
-    view &View = GetView();
+    view &View = GetInterpView();
 
     if( bUseBulletAssist )
     {
@@ -531,7 +531,7 @@ xbool g_bTestFriendly = TRUE;
 void player::UpdateCurrentAimTarget( f32 DeltaTime )
 {
     (void) DeltaTime;
-    const view& View                    = GetView();
+    const view& View                    = GetInterpView();
     vector3 Position                    = GetPosition();
     xbool   Final_bReticleOn            = FALSE;
     f32     TargetCullDot               = x_cos(R_20);
@@ -1145,8 +1145,8 @@ void player::DoTendrilCollision( void )
     f32 MeleeReachDistance = ReachDistanceTweak.GetF32();
     f32 MeleeSphereRadius  = SphereRadiusTweak.GetF32();
 
-    vector3 StartPos = GetView().GetPosition();
-    vector3 EndPos   = StartPos + GetView().GetViewZ() * MeleeReachDistance;
+    vector3 StartPos = GetInterpView().GetPosition();
+    vector3 EndPos   = StartPos + GetInterpView().GetViewZ() * MeleeReachDistance;
 
     g_CollisionMgr.SphereSetup( GetGuid(), StartPos, EndPos, MeleeSphereRadius );
     g_CollisionMgr.CheckCollisions( object::TYPE_ALL_TYPES, object::ATTR_LIVING, object::ATTR_COLLISION_PERMEABLE );
@@ -2069,8 +2069,8 @@ void player::EmitMeleePain( void )
     guid DirectHitGuid=0;
     vector3 HitPosition;
     {
-        vector3 StartPos = GetView().GetPosition();
-        vector3 EndPos   = StartPos + GetView().GetViewZ() * MeleeReachDistance;
+        vector3 StartPos = GetInterpView().GetPosition();
+        vector3 EndPos   = StartPos + GetInterpView().GetViewZ() * MeleeReachDistance;
 
         g_CollisionMgr.SphereSetup( GetGuid(), StartPos, EndPos, MeleeSphereRadius );
         g_CollisionMgr.CheckCollisions( object::TYPE_ALL_TYPES, object::ATTR_BLOCKS_LARGE_PROJECTILES, object::ATTR_COLLISION_PERMEABLE );
@@ -2136,7 +2136,7 @@ void player::EmitMeleePain( void )
     pain Pain;
     {
         Pain.Setup(xfs("%s_MELEE_%d",GetLogicalName(),m_ComboCount),GetGuid(),HitPosition);
-        Pain.SetDirection( GetView().GetViewZ() );
+        Pain.SetDirection(GetInterpView().GetViewZ() );
         Pain.SetDirectHitGuid( DirectHitGuid );
         Pain.SetCollisionInfo( g_CollisionMgr.m_Collisions[0] );
         Pain.ApplyToObject( DirectHitGuid );

@@ -478,7 +478,7 @@ f32 g_CharDetectAngle = 0.72f;
 xbool weapon_scanner::GetObjectPositionalInfo( guid objGuid, radian &AngleBetween, vector3 &StartPos, vector3 &EndPos )
 {
     player& Player = player::GetSafeType( *g_ObjMgr.GetObjectByGuid( m_ParentGuid ) );
-    view &View = Player.GetView();
+    view &View = Player.GetInterpView();
 
     f32 MaxScanDist = Lore_Min_Detect_DistanceTweak.GetF32();
     radian MaxDetectAngle = Lore_Min_Detect_AngleTweak.GetRadian();
@@ -1137,7 +1137,7 @@ void weapon_scanner::GetLaserHitLocation( player* pPlayer, vector3& EndPos, xboo
     radian Yaw;
 
     // the view's rotation
-    view &View = pPlayer->GetView();
+    view &View = pPlayer->GetInterpView();
 
     pPlayer->GetEyesPitchYaw( Pitch, Yaw );
    
@@ -1224,7 +1224,7 @@ void weapon_scanner::GetSamplingLaserHitLocation( player* pPlayer, vector3& EndP
     radian Yaw;
 
     // the view's rotation
-    view &View = pPlayer->GetView();
+    view &View = pPlayer->GetInterpView();
 
     pPlayer->GetEyesPitchYaw( Pitch, Yaw );
 

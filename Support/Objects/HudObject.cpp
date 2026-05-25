@@ -231,7 +231,7 @@ void hud_object::InitHud( void )
 
             // Find out what portion of the screen the player owns.
             //rect m_ViewDimensions;
-            view& rView = pPlayer->GetView();
+            view& rView = pPlayer->GetInterpView();
             rView.GetViewport( m_ViewDimensions );
 
             // Set Hud dimensions!

@@ -220,7 +220,7 @@ void weapon_sniper_rifle::BeginZooming( void )
         
         if (PlayerObj.IsValid())
         {
-            view& rView = PlayerObj.m_pObject->GetView();
+            view& rView = PlayerObj.m_pObject->GetInterpView();
 
             m_CurrentViewX = rView.GetXFOV() - R_20;
             m_CurrentViewY = rView.GetYFOV() - R_20;
@@ -486,7 +486,7 @@ s32 weapon_sniper_rifle::IncrementZoom( void )
 
     case 1:
     {
-        view& rView = Player.GetView();
+        view& rView = Player.GetInterpView();
 
         m_ViewClickDimension = rView.GetXFOV() / s_FirstMagnification;
         Player.ResetStickSensitivity();

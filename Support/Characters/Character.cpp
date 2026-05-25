@@ -12399,7 +12399,7 @@ nav_connection_slot_id character::GetNewRetreatPath( const vector3& vRetreatFrom
         {
             player &targetPlayer = player::GetSafeType( *targetObject );
             radian pitch,yaw;
-            targetPlayer.GetView().GetPitchYaw(pitch,yaw);
+            targetPlayer.GetInterpView().GetPitchYaw(pitch,yaw);
             dotCompareVector = vector3( 0.0f,yaw );
         }
         else

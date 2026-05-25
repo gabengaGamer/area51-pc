@@ -46,7 +46,7 @@ void hud_reticle::OnRender( player* pPlayer )
 {    
     // Get the screen center.
     rect m_ViewDimensions;
-    view& rView = ((player*)pPlayer)->GetView();
+    view& rView = ((player*)pPlayer)->GetInterpView();
     rView.GetViewport( m_ViewDimensions );                                   
 
     f32 CenterX = m_XPos;
@@ -257,7 +257,7 @@ void hud_reticle::OnRender( player* pPlayer )
                     vector3 ReticlePosMax( CenterX+MainWidth, CenterY+MainHeight, 0.0f );
 
                     bbox ReticleRect( ReticlePosMin, ReticlePosMax);
-                    bbox ScreenEnemyBBox( pEnemyObj->GetScreenBBox( pPlayer->GetView() ) );
+                    bbox ScreenEnemyBBox( pEnemyObj->GetScreenBBox( pPlayer->GetInterpView() ) );
 
                     if( ReticleRect.Intersect( ScreenEnemyBBox ) )
                         tempSmallColor = g_ReticleTargetColor;

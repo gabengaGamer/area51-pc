@@ -434,7 +434,7 @@ void CEditorView::RenderFPV()
     case 1:
         {
             // one view, set it to the entire screen
-            view& rView0 = player::GetView( pPlayers[0]->GetLocalSlot() );
+            view& rView0 = player::GetLiveView( pPlayers[0]->GetLocalSlot() );
             rView0.SetViewport( 0, 0, XRes, YRes );
             rView0.SetPixelScale( PixelScale );
             pPlayers[0]->ComputeView( rView0 );
@@ -445,8 +445,8 @@ void CEditorView::RenderFPV()
     case 3:
         {
             // two views, set them to a horizontal split
-            view& rView0 = player::GetView( pPlayers[0]->GetLocalSlot() );
-            view& rView1 = player::GetView( pPlayers[1]->GetLocalSlot() );
+            view& rView0 = player::GetLiveView( pPlayers[0]->GetLocalSlot() );
+            view& rView1 = player::GetLiveView( pPlayers[1]->GetLocalSlot() );
             rView0.SetViewport( 0, 0,      XRes, YRes/2 );      // top
             rView1.SetViewport( 0, YRes/2, XRes, YRes   );      // bottom
             rView0.SetPixelScale( PixelScale );
@@ -459,10 +459,10 @@ void CEditorView::RenderFPV()
     case 4:
         {
                 // four views, set them to a 4-way split
-                view& rView0 = player::GetView( pPlayers[0]->GetLocalSlot() );
-                view& rView1 = player::GetView( pPlayers[1]->GetLocalSlot() );
-                view& rView2 = player::GetView( pPlayers[2]->GetLocalSlot() );
-                view& rView3 = player::GetView( pPlayers[3]->GetLocalSlot() ); 
+                view& rView0 = player::GetLiveView( pPlayers[0]->GetLocalSlot() );
+                view& rView1 = player::GetLiveView( pPlayers[1]->GetLocalSlot() );
+                view& rView2 = player::GetLiveView( pPlayers[2]->GetLocalSlot() );
+                view& rView3 = player::GetLiveView( pPlayers[3]->GetLocalSlot() ); 
                 rView0.SetViewport( 0,      0,      XRes/2, YRes/2 );   // upper-left
                 rView1.SetViewport( XRes/2, 0,      XRes,   YRes/2 );   // upper-right
                 rView2.SetViewport( 0,      YRes/2, XRes/2, YRes   );   // lower-left
@@ -487,7 +487,7 @@ void CEditorView::RenderFPV()
 
         // set up the view
         view PortalView;
-        xbool bDoPortalWalk = SetupView(&pPlayers[iPlayer]->GetView(), PortalView, TRUE);
+        xbool bDoPortalWalk = SetupView(&pPlayers[iPlayer]->GetInterpView(), PortalView, TRUE);
 
         // render all objects
         g_WorldEditor.RenderObjects( bDoPortalWalk,
@@ -515,7 +515,7 @@ void CEditorView::RenderNormal()
     //
     view    PortalView;
     player* pPlayer       = SMP_UTIL_GetActivePlayer();
-    xbool   bDoPortalWalk = SetupView(pPlayer?&pPlayer->GetView() : NULL, PortalView, FALSE);
+    xbool   bDoPortalWalk = SetupView(pPlayer?&pPlayer->GetInterpView() : NULL, PortalView, FALSE);
     if (m_bShowSpacD) g_WorldEditor.RenderSpacialDBase();
     g_WorldEditor.RenderObjects( bDoPortalWalk,
                                  PortalView,
@@ -709,7 +709,7 @@ void CEditorView::Render( )
     player* pPlayer = SMP_UTIL_GetActivePlayer();
     if( pPlayer != NULL )
     {
-        pPlayer->ComputeView( pPlayer->GetView() );
+        pPlayer->ComputeView( pPlayer->GetInterpView() );
     }   
 
     // if we're in first-person mode, we handle the view rendering differently

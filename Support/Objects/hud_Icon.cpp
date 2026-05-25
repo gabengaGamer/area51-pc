@@ -98,7 +98,7 @@ void hud_icon::RenderIcon( player* pPlayer, icon_inf& Icon )
     f32 Hud_Width  = m_ViewDimensions.GetWidth()  / 2.0f;
     f32 Hud_Height = m_ViewDimensions.GetHeight() / 2.0f;
 
-    view& rView = pPlayer->GetView();
+    view& rView = pPlayer->GetInterpView();
     rView.GetViewport( m_ViewDimensions );
 
     vector3 RenderWorldPos = Icon.RenderPosition;

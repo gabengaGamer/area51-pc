@@ -304,7 +304,8 @@ public:
 //=========================================================================
 //
 // GetActivePlayer  -   This is to get the active player.
-// GetView          -   Gets the player view used for rendering.
+// GetLiveView      -   Gets the raw live player view for logic and viewport setup.
+// GetInterpView    -   Gets the interpolated player view for rendering.
 // GetIsActiveView  -   Tells whether or not this player has the active view.
 // ResetView        -   Resets the view to the original FOV
 // GetEyesPosition  -   Gets the position of the eyes of the player. (The view position)
@@ -349,8 +350,8 @@ public:
 
             void            SetLocalPlayer      ( s32 LocalIndex );
 
-    static  view&           GetView             ( s32 Player );
-    view&                   GetView             ( void );
+    static  view&           GetLiveView         ( s32 Player );
+    view&                   GetInterpView       ( void );
     const   view_info&      GetViewInfo         ( void ) { return m_ViewInfo; }
             xbool           IsAvatar            ( void );
             xbool           IsMutated           ( void ) { return m_bIsMutated; }

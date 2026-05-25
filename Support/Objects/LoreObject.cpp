@@ -544,7 +544,7 @@ void lore_object::OnRenderTransparent( void )
     rect ViewDimensions;
 
     // If we have LOs in SS then this will have to be looked at! 
-    view& rView = pPlayer->GetView();
+    view& rView = pPlayer->GetInterpView();
     rView.GetViewport( ViewDimensions );
     
     // Draw the LO

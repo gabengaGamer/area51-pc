@@ -1790,7 +1790,7 @@ void player::OnExitFreeCam( vector3& NewPos )
     g_View.GetPitchYaw( m_Pitch, m_Yaw );
     SetAnimState( ANIM_STATE_IDLE );
     EndDeath();
-    GetView().SetRotation( radian3( m_Pitch, m_Yaw, R_0 ) );
+    GetInterpView().SetRotation( radian3( m_Pitch, m_Yaw, R_0 ) );
 #endif
 }
 
@@ -2309,7 +2309,7 @@ void player::SetupThirdPersonCamera( void )
         ASSERT( GetThirdPersonCamera() );
     }
 
-    view& View = GetView();
+    view& View = GetInterpView();
     radian Pitch;
     radian Yaw;
     vector3 CamTarget = View.GetPosition();
@@ -3804,7 +3804,7 @@ void player::OnRender( void )
                 DirectHitGuid = g_CollisionMgr.m_Collisions[0].ObjectHitGuid;
                 HitPosition = g_CollisionMgr.m_Collisions[0].Point;
 
-                vector3 StartPos = GetView().GetPosition();
+                vector3 StartPos = GetInterpView().GetPosition();
                 // default modifier to full distance in case the collision manager returns no collisions
                 f32 DistModifier = 1.0f;
 
@@ -3816,7 +3816,7 @@ void player::OnRender( void )
 
                 tweak_handle ReachDistanceTweak("PLAYER_TendrilReachDistance");
                 tweak_handle SphereRadiusTweak("PLAYER_TendrilCheckRadius");
-                vector3 EndPos = StartPos + (GetView().GetViewZ() * ReachDistanceTweak.GetF32());
+                vector3 EndPos = StartPos + (GetInterpView().GetViewZ() * ReachDistanceTweak.GetF32());
 
                 // get our new end position
                 EndPos = StartPos + (DistModifier*(EndPos-StartPos));
@@ -3871,7 +3871,7 @@ void player::OnRender( void )
             if( GetAttrBits() & ATTR_EDITOR_SELECTED )
             {
                 draw_BBox( GetBBox(), XCOLOR_RED );
-                draw_Frustum( GetView() );
+                draw_Frustum( GetInterpView() );
             }
         }
 #endif // X_EDITOR
@@ -3884,7 +3884,7 @@ void player::OnRender( void )
 
 #if defined(X_EDITOR)
         const view* ActiveView = eng_GetView();
-        if ( ActiveView && ((ActiveView->GetPosition() - GetView().GetPosition()).LengthSquared() > 0.5f) )
+        if ( ActiveView && ((ActiveView->GetPosition() - GetInterpView().GetPosition()).LengthSquared() > 0.5f) )
         {
            return;
         }
@@ -4200,7 +4200,7 @@ void player::OnAliveLogic( f32 DeltaTime )
 
         // get view pitch and yaw
         radian Pitch, Yaw;
-        GetView().GetPitchYaw(Pitch, Yaw);
+        GetInterpView().GetPitchYaw(Pitch, Yaw);
 
         // get player profile to pass in bool representing invert-y setting
         player_profile& p = g_StateMgr.GetActiveProfile(g_StateMgr.GetProfileListIndex(m_LocalSlot));
@@ -4465,7 +4465,7 @@ void player::UpdateAudio( f32 DeltaTime )
         return;
 
     // Update the ear.
-    view& View = GetView();
+    view& View = GetInterpView();
     ComputeView( View );
     g_AudioMgr.SetEar( m_AudioEarID, View.GetW2V(), GetPosition(), GetZone1(), 1.0f );
 
@@ -5913,7 +5913,7 @@ void player::OnEvent( const event& Event )
 
                 tweak_handle SpeedTweak("PLAYER_GrenadeThrowSpeed");
                 // Compute velocity
-                vector3 Dir = GetView().GetViewZ();
+                vector3 Dir = GetInterpView().GetViewZ();
                 // TODO: Tweak throw speed based on pitch of vector, less power when looking down, etc.
                 vector3 Velocity = Dir * SpeedTweak.GetF32();
                 Velocity += m_ForwardVelocity + m_StrafeVelocity;
@@ -5998,7 +5998,7 @@ void player::OnEvent( const event& Event )
                     }
 
                     // Compute velocity
-                    vector3 Dir = GetView().GetViewZ();
+                    vector3 Dir = GetInterpView().GetViewZ();
                     // TODO: Tweak throw speed based on pitch of vector, less power when looking down, etc.
                     vector3 Velocity = Dir * Speed;
                     Velocity += m_ForwardVelocity + m_StrafeVelocity;
@@ -6207,7 +6207,7 @@ void player::GetThrowPoints( vector3 &Point1, vector3 &Point2, vector3 &Point3 )
     Point1.GetY() = Point3.GetY();
 
     // get our view vector (normalized)
-    vector3 ViewZ = GetView().GetViewZ();
+    vector3 ViewZ = GetInterpView().GetViewZ();
 
     // get the vector closest to the line segment from player position to event position
     vector3 Closest = ViewZ.Cross(Point3 - Point1);
@@ -6216,7 +6216,7 @@ void player::GetThrowPoints( vector3 &Point1, vector3 &Point2, vector3 &Point3 )
     f32 d = Closest.Length();
 
     // get the lean
-    vector3 lean = (GetView().GetViewX());
+    vector3 lean = (GetInterpView().GetViewX());
 
     if( m_CurrentGrenadeType2 == INVEN_GRENADE_FRAG )
     {
@@ -6726,7 +6726,7 @@ void player::OnEditorRender( void )
 {
     const view* ActiveView = eng_GetView();
 
-    if ( ActiveView && ((ActiveView->GetPosition() - GetView().GetPosition()).LengthSquared() > 0.5f) )
+    if ( ActiveView && ((ActiveView->GetPosition() - GetInterpView().GetPosition()).LengthSquared() > 0.5f) )
     {
         //
         // Draw the player orientation axes
@@ -7979,9 +7979,8 @@ void player::InitInventory( void )
 }
 
 //==============================================================================
-//==============================================================================
 
-view& player::GetView( s32 Player ) 
+view& player::GetLiveView( s32 Player ) 
 { 
 #ifndef X_EDITOR
     ASSERT( (Player < MAX_LOCAL_PLAYERS) && (Player >= 0) ); 
@@ -7991,15 +7990,15 @@ view& player::GetView( s32 Player )
 
 //==============================================================================
 
-view& player::GetView( void ) 
+view& player::GetInterpView( void ) 
 { 
 #ifdef X_EDITOR
-    return GetView( 0 ); 
+    return GetLiveView( 0 );
 #else
     if( HasInterpCache( m_RenderCache ) )
         return m_RenderCache.Interp.View;
 
-    return GetView( GetLocalSlot() ); 
+    return GetLiveView( GetLocalSlot() );
 #endif
 }
 
@@ -8027,7 +8026,7 @@ xbool player::IsAvatar( void )
 
 #if defined(X_EDITOR)
     const view* ActiveView = eng_GetView();
-    if ( ActiveView && ((ActiveView->GetPosition() - GetView().GetPosition()).LengthSquared() > 0.5f) )
+    if ( ActiveView && ((ActiveView->GetPosition() - GetInterpView().GetPosition()).LengthSquared() > 0.5f) )
     {
         bRenderAvatar = TRUE;
     }
@@ -8277,9 +8276,9 @@ void player::UpdateArmsOffsetForLean( void )
         //const bbox BBox( pWeapon->GetBBox() );
         const vector3 CenterPos( pWeapon->GetBBox().GetCenter() );
         radian        Pitch, Yaw;
-        GetView().GetPitchYaw( Pitch, Yaw );
+        GetInterpView().GetPitchYaw( Pitch, Yaw );
         const vector3 LookDir( radian3( Pitch, Yaw, 0.0f ) );
-        const vector3 ViewPos( GetView().GetPosition() - (LookDir * 10000.0f) );
+        const vector3 ViewPos(GetInterpView().GetPosition() - (LookDir * 10000.0f) );
         const vector3 ViewEnd( ViewPos + (LookDir * 10000.0f) );
         vector3 Closest( CenterPos.GetClosestPToLSeg( ViewPos, ViewEnd ) );
         const f32 DistanceThisFrame = GetTweakF32( "LeanWeaponOffsetSpeed" ) * m_DeltaTime;
