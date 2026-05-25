@@ -22,7 +22,7 @@
     <VCProjectVersion>17.0</VCProjectVersion>
     <ProjectGuid>{E8B6020E-7351-47c5-BAB8-765DA5E8B9B5}</ProjectGuid>
     <RootNamespace>A51</RootNamespace>
-    <Keyword>XboxProj</Keyword>
+    <Keyword>Win32Proj</Keyword>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -102,7 +102,6 @@
       <Optimization>Disabled</Optimization>
       <AdditionalIncludeDirectories>$(X);.\;$(X)\..\Support;$(X)\Auxiliary;$(X)\x_files;$(X)\Entropy;$(X)\3rdParty;$(X)\3rdParty\ffmpeg-win32\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>TARGET_PC;CONFIG_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <MinimalRebuild>false</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <SmallerTypeCheck>false</SmallerTypeCheck>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
@@ -135,21 +134,20 @@
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <StringPooling>true</StringPooling>
+      <BasicRuntimeChecks>Default</BasicRuntimeChecks>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <OmitFramePointers>true</OmitFramePointers>
       <AdditionalIncludeDirectories>$(X);.\;$(X)\..\Support;$(X)\Auxiliary;$(X)\x_files;$(X)\Entropy;$(X)\3rdParty;$(X)\3rdParty\ffmpeg-win32\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>TARGET_PC;CONFIG_OPTDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <StringPooling>true</StringPooling>
-      <MinimalRebuild>false</MinimalRebuild>
       <ExceptionHandling />
-      <BasicRuntimeChecks>Default</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <BufferSecurityCheck>true</BufferSecurityCheck>
-      <FunctionLevelLinking>true</FunctionLevelLinking>
       <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
       <PrecompiledHeader />
       <WarningLevel>TurnOffAllWarnings</WarningLevel>
       <TreatWarningAsError>false</TreatWarningAsError>
-      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <CompileAs>Default</CompileAs>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <DisableSpecificWarnings>4996;4995;4244;4267;4018;4100;4101;4102;4189;4389;4245;4127</DisableSpecificWarnings>
@@ -170,13 +168,14 @@
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <StringPooling>true</StringPooling>
+      <BasicRuntimeChecks>Default</BasicRuntimeChecks>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <OmitFramePointers>true</OmitFramePointers>
       <EnableFiberSafeOptimizations>false</EnableFiberSafeOptimizations>
       <AdditionalIncludeDirectories>$(X);.\;$(X)\..\Support;$(X)\Auxiliary;$(X)\x_files;$(X)\Entropy;$(X)\3rdParty;$(X)\3rdParty\ffmpeg-win32\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>TARGET_PC;CONFIG_QA;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <StringPooling>true</StringPooling>
-      <MinimalRebuild>false</MinimalRebuild>
-      <BasicRuntimeChecks>Default</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <WholeProgramOptimization>true</WholeProgramOptimization>
@@ -184,7 +183,6 @@
       <PrecompiledHeader />
       <WarningLevel>TurnOffAllWarnings</WarningLevel>
       <TreatWarningAsError>false</TreatWarningAsError>
-      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <CompileAs>Default</CompileAs>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <DisableSpecificWarnings>4996;4995;4244;4267;4018;4100;4101;4102;4189;4389;4245;4127</DisableSpecificWarnings>
@@ -206,23 +204,22 @@
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <StringPooling>true</StringPooling>
+      <BasicRuntimeChecks>Default</BasicRuntimeChecks>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <OmitFramePointers>true</OmitFramePointers>
       <EnableFiberSafeOptimizations>true</EnableFiberSafeOptimizations>
       <AdditionalIncludeDirectories>$(X);.\;$(X)\..\Support;$(X)\Auxiliary;$(X)\x_files;$(X)\Entropy;$(X)\3rdParty;$(X)\3rdParty\ffmpeg-win32\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>TARGET_PC;CONFIG_RETAIL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <StringPooling>true</StringPooling>
-      <MinimalRebuild>false</MinimalRebuild>
       <ExceptionHandling />
-      <BasicRuntimeChecks>Default</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <WholeProgramOptimization>true</WholeProgramOptimization>
-      <FunctionLevelLinking>true</FunctionLevelLinking>
       <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
       <PrecompiledHeader />
       <WarningLevel>TurnOffAllWarnings</WarningLevel>
       <TreatWarningAsError>false</TreatWarningAsError>
-      <DebugInformationFormat />
       <CompileAs>Default</CompileAs>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <DisableSpecificWarnings>4996;4995;4244;4267;4018;4100;4101;4102;4189;4389;4245;4127</DisableSpecificWarnings>
