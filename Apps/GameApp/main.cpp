@@ -685,7 +685,7 @@ void RenderGame( f32 Alpha )
         if ( MAX_LOCAL_PLAYERS >= nPlayers )
         {
             // one view, set it to the entire screen
-            view& rView0 = pPlayers[0]->GetView();
+            view& rView0 = player::GetView( 0 );
             rView0.SetViewport( 0, 0, XRes, YRes );
             pPlayers[0]->ComputeView( rView0 );
         }
@@ -695,8 +695,8 @@ void RenderGame( f32 Alpha )
         if ( MAX_LOCAL_PLAYERS >= nPlayers )
         {
             // two views, set them to a horizontal split
-            view& rView0 = pPlayers[0]->GetView();
-            view& rView1 = pPlayers[1]->GetView();
+            view& rView0 = player::GetView( 0 );
+            view& rView1 = player::GetView( 1 );
             rView0.SetViewport( 0,0       ,XRes,YRes/2-1 ); // top
             rView1.SetViewport( 0,YRes/2+1,XRes,YRes     ); // bottom
             pPlayers[0]->ComputeView( rView0 );
@@ -714,9 +714,9 @@ void RenderGame( f32 Alpha )
         if ( MAX_LOCAL_PLAYERS >= nPlayers )
         {
             // four views, set them to a 4-way split
-            view& rView0 = pPlayers[0]->GetView();
-            view& rView1 = pPlayers[1]->GetView();
-            view& rView2 = pPlayers[2]->GetView();
+            view& rView0 = player::GetView( 0 );
+            view& rView1 = player::GetView( 1 );
+            view& rView2 = player::GetView( 2 );
             rView0.SetViewport( 0       ,0       ,XRes/2-1,YRes/2-1 );   // upper-left
             rView1.SetViewport( XRes/2+1,0       ,XRes    ,YRes/2-1 );   // upper-right
             rView2.SetViewport( 0       ,YRes/2+1,XRes    ,YRes     );   // bottom
@@ -739,10 +739,10 @@ void RenderGame( f32 Alpha )
         if ( MAX_LOCAL_PLAYERS >= nPlayers )
         {
             // four views, set them to a 4-way split
-            view& rView0 = pPlayers[0]->GetView();
-            view& rView1 = pPlayers[1]->GetView();
-            view& rView2 = pPlayers[2]->GetView();
-            view& rView3 = pPlayers[3]->GetView(); 
+            view& rView0 = player::GetView( 0 );
+            view& rView1 = player::GetView( 1 );
+            view& rView2 = player::GetView( 2 );
+            view& rView3 = player::GetView( 3 ); 
 
             rView0.SetViewport( 0       ,0,       XRes/2-1,YRes/2-1 );   // upper-left
             rView1.SetViewport( XRes/2+1,0,       XRes    ,YRes/2-1 );   // upper-right
