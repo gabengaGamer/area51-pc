@@ -2115,16 +2115,17 @@ void player::CaptureRenderInterpState( void )
     TransformSkinnedInterpState( Snapshot.Arms, WorldToView );
     TransformWeaponInterpState( Snapshot.Weapon, WorldToView );
 
-    FinishCaptureInterpCache( m_RenderCache,
-                              []( const player_interp_state& Prev, const player_interp_state& Curr )
-                                   {
-                                       return ShouldSnapInterpL2W( Prev.View.GetV2W(), Curr.View.GetV2W() ) ||
-                                              (Prev.Weapon.Active != Curr.Weapon.Active) ||
-                                              (Prev.Arms.NBones != Curr.Arms.NBones) ||
-                                              (Prev.Weapon.NBones != Curr.Weapon.NBones);
-                                   } );
-
-    RegisterRenderInterpUpdate();
+    if( FinishCaptureInterpCache( m_RenderCache,
+                                  []( const player_interp_state& Prev, const player_interp_state& Curr )
+                                       {
+                                           return ShouldSnapInterpL2W( Prev.View.GetV2W(), Curr.View.GetV2W() ) ||
+                                                  (Prev.Weapon.Active != Curr.Weapon.Active) ||
+                                                  (Prev.Arms.NBones != Curr.Arms.NBones) ||
+                                                  (Prev.Weapon.NBones != Curr.Weapon.NBones);
+                                       } ) == INTERP_CAPTURE_CHANGED )
+    {
+        RegisterRenderInterpUpdate();
+    }
 }
 
 //===========================================================================
@@ -2177,6 +2178,61 @@ void player::ClearRenderInterpState( void )
 {
     ClearInterpCache( m_RenderCache );
     actor::ClearRenderInterpState();
+}
+
+//===========================================================================
+
+void player::InvalidateRenderInterpState( void )
+{
+    InvalidateInterpCache( m_RenderCache );
+    actor::InvalidateRenderInterpState();
+}
+
+//===========================================================================
+
+void player::SnapRenderInterpState( void )
+{
+    actor::SnapRenderInterpState();
+
+    if( GetLocalSlot() == -1 )
+    {
+        InvalidateInterpCache( m_RenderCache );
+        return;
+    }
+
+    player_interp_state Snapshot;
+    Snapshot.Valid = TRUE;
+    Snapshot.View = m_Views[ GetLocalSlot() ];
+    ComputeView( Snapshot.View, player::VIEW_NULL );
+
+    const matrix4 WorldToView = Snapshot.View.GetW2V();
+
+    Snapshot.WeaponCollisionOffset = TransformInterpDirection( WorldToView, m_WeaponCollisionOffset );
+    CaptureSkinnedInterpState( Snapshot.Arms, BuildInterpL2W( m_AnimPlayer.GetPosition(), m_AnimPlayer.GetRotation() ) );
+    InitWeaponInterpState( Snapshot.Weapon );
+
+    if( m_AnimGroup.GetPointer() && m_Skin.GetSkinGeom() )
+    {
+        Snapshot.Arms.NBones = MIN( m_AnimPlayer.GetNBones(), MAX_ANIM_BONES );
+        m_AnimPlayer.GetBoneL2Ws( Snapshot.Arms.Bones, FALSE );
+    }
+
+    new_weapon* pWeapon = GetCurrentWeaponPtr();
+    if( pWeapon )
+    {
+        CaptureWeaponInterpState( Snapshot.Weapon, pWeapon->GetL2W() );
+
+        if( pWeapon->HasAnimGroup() )
+        {
+            char_anim_player& WeaponAnimPlayer = pWeapon->GetCurrentAnimPlayer();
+            Snapshot.Weapon.NBones = MIN( WeaponAnimPlayer.GetNBones(), MAX_ANIM_BONES );
+            WeaponAnimPlayer.GetBoneL2Ws( Snapshot.Weapon.Bones, FALSE );
+        }
+    }
+
+    TransformSkinnedInterpState( Snapshot.Arms, WorldToView );
+    TransformWeaponInterpState( Snapshot.Weapon, WorldToView );
+    SnapInterpCache( m_RenderCache, Snapshot );
 }
 
 //===========================================================================
@@ -5311,6 +5367,8 @@ void player::OnAnimationInit( void )
         }
         
     }
+
+    SnapRenderInterpState();
 }
 
 //==============================================================================
@@ -5664,6 +5722,8 @@ void player::SetAnimation( const animation_state& AnimState , const s32& nAnimIn
 
     if( State.nPlayerAnims > nAnimIndex &&  WeaponState.nWeaponAnims > nAnimIndex )
     {
+        xbool bSnappedByWeapon = FALSE;
+
         //set the animation in the player.
         m_AnimPlayer.SetAnim( State.PlayerAnim[nAnimIndex], TRUE, TRUE , fBlendTime , bResetFrame );
         
@@ -5681,9 +5741,13 @@ void player::SetAnimation( const animation_state& AnimState , const s32& nAnimIn
                 if ( pWeapon )
                 {
                     pWeapon->SetAnimation( WeaponState.WeaponAnim[nAnimIndex] , fBlendTime , bResetFrame );
+                    bSnappedByWeapon = (fBlendTime <= 0.0f);
                 }
             }
         }
+
+        if( (fBlendTime <= 0.0f) && !bSnappedByWeapon )
+            SnapRenderInterpState();
     }
 }
 
@@ -5751,6 +5815,7 @@ void player::OnEvent( const event& Event )
             m_AnimPlayer.SetFrame(nFrame);
 
             SetAnimState( ANIM_STATE_CHANGE_MUTATION );
+            SnapRenderInterpState();
 //          g_PostEffectMgr.AddToHowlBlur( 0.4f, 0.5f, 1.0f, .3f );
         }
         else if( x_strcmp( GenericEvent.GenericType, "Player_Death" ) == 0 )
@@ -8485,6 +8550,7 @@ void player::Teleport( const vector3& Position, xbool DoBlend, xbool DoEffect )
     
     // Make sure 1st person weapon is in sync
     OnMoveWeapon();
+    SnapRenderInterpState();
 }
 
 //=========================================================================
@@ -8528,6 +8594,7 @@ void player::Teleport( const vector3& Position, radian Pitch, radian Yaw, xbool 
     
     // Make sure 1st person weapon is in sync
     AttachWeapon();
+    SnapRenderInterpState();
 }
 
 //=========================================================================
@@ -8562,6 +8629,8 @@ void player::ForceNextWeapon( void )
     {
         SetAnimState( ANIM_STATE_UNDEFINED );
     }
+
+    SnapRenderInterpState();
 }
 
 //=========================================================================

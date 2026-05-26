@@ -61,13 +61,14 @@ public:
         m_FramesToBlend = Frames;
     }
 
-    void SetTarget( f32 Target )
+    xbool SetTarget( f32 Target )
     {
         #if defined(X_LOGGING) && !defined(X_SUPPRESS_LOGS)
         f32 Old      = m_Target;
         #endif
         f32 Delta    = Target - m_Target;
         f32 AbsDelta = (Delta >= 0.0f) ? Delta : -Delta;
+        xbool Popped = FALSE;
 
         // Check for wrapping on angles
         if( m_IsAngular )
@@ -110,6 +111,7 @@ public:
         else
         {
             Teleport( Target );
+            Popped = TRUE;
         }
 
 #if defined(X_LOGGING) && !defined(X_SUPPRESS_LOGS)
@@ -118,6 +120,8 @@ public:
                       (u32)this, (s32)m_Current, (s32)m_Target, (s32)m_Delta, 
                       m_Frames, (s32)Old ); 
 #endif
+
+        return Popped;
     }
 
     void Teleport( f32 Target )

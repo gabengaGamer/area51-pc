@@ -913,6 +913,8 @@ void actor::net_Activate( void )
                  this, m_NetSlot,
                  (m_NetModeBits & CONTROL_LOCAL) ? "LOCAL"  : "REMOTE",
                  (m_NetModeBits & ON_SERVER    ) ? "SERVER" : "CLIENT" );
+
+    InvalidateRenderInterpState();
 }
 
 //==============================================================================
@@ -1030,6 +1032,8 @@ void actor::net_AcceptUpdate( const update& Update )
         {
             net_SetVoiceActor( Update.VoiceActor );
         }
+
+        InvalidateRenderInterpState();
     }
 
     // Don't need to worry about DEACTIVATE_BIT here.  That is handled by the
@@ -2281,6 +2285,7 @@ xbool actor::net_EquipWeapon2( inven_item WeaponItem )
 
         // Position ready for rendering.
         MoveWeapon( TRUE );
+        SnapRenderInterpState();
 
         // I thought that this would have happened somewhere else, 
         // but it seems not.  So...

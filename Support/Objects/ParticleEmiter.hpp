@@ -246,6 +246,8 @@ protected:
     virtual         void        OnAdvanceLogic          ( f32 DeltaTime );    
     virtual         void        UpdateRenderInterpState       ( f32 Alpha );
     virtual         void        ClearRenderInterpState        ( void );
+    virtual         void        InvalidateRenderInterpState   ( void );
+    virtual         void        SnapRenderInterpState         ( void );
 
 #ifndef X_RETAIL
     virtual         void        OnDebugRender           ( void );    

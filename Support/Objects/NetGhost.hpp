@@ -147,6 +147,7 @@ protected:
         vector3         WayPoint[2];
         xbool           DoTeleport;
         xbool           DoWayPoint;
+        xbool           SnapRenderInterp;
     };
 
     //------------------------------------------------------------------

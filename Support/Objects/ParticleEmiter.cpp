@@ -336,6 +336,22 @@ void particle_emitter::ClearRenderInterpState( void )
 
 //=========================================================================
 
+void particle_emitter::InvalidateRenderInterpState( void )
+{
+    object::InvalidateRenderInterpState();
+    SyncFXTransform();
+}
+
+//=========================================================================
+
+void particle_emitter::SnapRenderInterpState( void )
+{
+    object::SnapRenderInterpState();
+    SyncFXTransform();
+}
+
+//=========================================================================
+
 void particle_emitter::OnInit( void )
 {
     object::OnInit();

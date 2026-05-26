@@ -105,8 +105,7 @@ void volumetric_light_obj::CaptureRenderInterpState( void )
 {
     transform_interp_state Snapshot;
     CaptureTransformInterpState( Snapshot, GetL2W() );
-    CaptureTransformInterpCache( m_RenderCache, Snapshot );
-    if( HasTransformInterpCacheChange( m_RenderCache ) )
+    if( CaptureTransformInterpCache( m_RenderCache, Snapshot ) == INTERP_CAPTURE_CHANGED )
         RegisterRenderInterpUpdate();
 }
 
@@ -122,6 +121,22 @@ void volumetric_light_obj::UpdateRenderInterpState( f32 Alpha )
 void volumetric_light_obj::ClearRenderInterpState( void )
 {
     ClearTransformInterpCache( m_RenderCache );
+}
+
+//==============================================================================
+
+void volumetric_light_obj::InvalidateRenderInterpState( void )
+{
+    object::InvalidateRenderInterpState();
+    InvalidateTransformInterpCache( m_RenderCache );
+}
+
+//==============================================================================
+
+void volumetric_light_obj::SnapRenderInterpState( void )
+{
+    object::SnapRenderInterpState();
+    SnapTransformInterpCache( m_RenderCache, GetL2W() );
 }
 
 //==============================================================================

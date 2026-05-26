@@ -274,6 +274,32 @@ void actor::InvalidateActorRenderInterpState( void )
 
 //=========================================================================
 
+void actor::InvalidateRenderInterpState( void )
+{
+    object::InvalidateRenderInterpState();
+    InvalidateActorRenderInterpState();
+}
+
+//=========================================================================
+
+void actor::SnapActorRenderInterpState( void )
+{
+    CaptureActorRenderInterpState();
+    m_ActorRenderCache.Prev   = m_ActorRenderCache.Curr;
+    m_ActorRenderCache.Interp = m_ActorRenderCache.Curr;
+    ClearActorRenderInterpState();
+}
+
+//=========================================================================
+
+void actor::SnapRenderInterpState( void )
+{
+    object::SnapRenderInterpState();
+    SnapActorRenderInterpState();
+}
+
+//=========================================================================
+
 void actor::CaptureRenderInterpState( void )
 {
     if( !m_bIsActive )
@@ -282,8 +308,8 @@ void actor::CaptureRenderInterpState( void )
         return;
     }
 
-    CaptureActorRenderInterpState();
-    RegisterRenderInterpUpdate();
+    if( CaptureActorRenderInterpState() == INTERP_CAPTURE_CHANGED )
+        RegisterRenderInterpUpdate();
 }
 
 //=========================================================================
@@ -304,7 +330,7 @@ void actor::ClearRenderInterpState( void )
 
 //=========================================================================
 
-void actor::CaptureActorRenderInterpState( void )
+interp_capture_status actor::CaptureActorRenderInterpState( void )
 {
     actor_interp_state& Snapshot = BeginCaptureInterpCache( m_ActorRenderCache );
     Snapshot.Valid = TRUE;
@@ -358,13 +384,13 @@ void actor::CaptureActorRenderInterpState( void )
         pWeapon->SetRenderState( OldState );
     }
 
-    FinishCaptureInterpCache( m_ActorRenderCache,
-                              []( const actor_interp_state& Prev, const actor_interp_state& Curr )
-                                   {
-                                       return ShouldSnapSkinnedInterpState( Prev.Body, Curr.Body ) ||
-                                              (Prev.Weapon.Active != Curr.Weapon.Active) ||
-                                              (Prev.Weapon.NBones != Curr.Weapon.NBones);
-                                   } );
+    return FinishCaptureInterpCache( m_ActorRenderCache,
+                                     []( const actor_interp_state& Prev, const actor_interp_state& Curr )
+                                          {
+                                              return ShouldSnapSkinnedInterpState( Prev.Body, Curr.Body ) ||
+                                                     (Prev.Weapon.Active != Curr.Weapon.Active) ||
+                                                     (Prev.Weapon.NBones != Curr.Weapon.NBones);
+                                          } );
 }
 
 //=========================================================================
@@ -2691,6 +2717,9 @@ void actor::Teleport( const vector3& Position, xbool DoBlend, xbool DoEffect )
                                     GetPosition().GetY(), 
                                     GetPosition().GetZ() );
     */
+
+    if( !DoBlend || DoEffect )
+        actor::SnapRenderInterpState();
 }
 
 //==============================================================================
@@ -2704,6 +2733,9 @@ void actor::Teleport( const vector3& Position,
     Teleport( Position, DoBlend, DoEffect );
     SetPitch( Pitch );
     SetYaw  ( Yaw   );
+
+    if( !DoBlend || DoEffect )
+        actor::SnapRenderInterpState();
 }
 
 //==============================================================================
@@ -3109,6 +3141,7 @@ xbool actor::EquipWeapon2( inven_item WeaponItem )
     {
         pNewWeapon->InitWeapon( GetPosition(), new_weapon::RENDER_STATE_NPC, GetGuid() ); 
         m_CurrentWeaponItem = WeaponItem;
+        SnapRenderInterpState();
         return TRUE;
     }
 
@@ -3129,6 +3162,7 @@ void actor::UnequipCurrentWeapon()
         pWeapon->SetVisible(FALSE);
     }
     m_CurrentWeaponItem = INVEN_NULL;
+    SnapRenderInterpState();
 }
 
 //=============================================================================
@@ -4291,7 +4325,7 @@ void  actor::SetIsActive( xbool bIsActive )
     if( m_bIsActive == bIsActive )
         return;
 
-    InvalidateActorRenderInterpState();
+    InvalidateRenderInterpState();
 
     if( bIsActive )
     {

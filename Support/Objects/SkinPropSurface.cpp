@@ -120,8 +120,8 @@ void skin_prop_surface::InvalidateRenderState( void )
 
 void skin_prop_surface::CaptureRenderInterpState( void )
 {
-    CaptureSimpleAnimInterpCache( m_RenderCache, GetL2W(), m_AnimPlayer );
-    RegisterRenderInterpUpdate();
+    if( CaptureSimpleAnimInterpCache( m_RenderCache, GetL2W(), m_AnimPlayer ) == INTERP_CAPTURE_CHANGED )
+        RegisterRenderInterpUpdate();
 }
 
 //=============================================================================
@@ -136,6 +136,22 @@ void skin_prop_surface::UpdateRenderInterpState( f32 Alpha )
 void skin_prop_surface::ClearRenderInterpState( void )
 {
     ClearSimpleAnimInterpCache( m_RenderCache );
+}
+
+//=============================================================================
+
+void skin_prop_surface::InvalidateRenderInterpState( void )
+{
+    object::InvalidateRenderInterpState();
+    InvalidateSimpleAnimInterpCache( m_RenderCache );
+}
+
+//=============================================================================
+
+void skin_prop_surface::SnapRenderInterpState( void )
+{
+    object::SnapRenderInterpState();
+    SnapSimpleAnimInterpCache( m_RenderCache, GetL2W(), m_AnimPlayer );
 }
 
 //=============================================================================

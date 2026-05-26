@@ -20,6 +20,15 @@ struct interp_cache
     xbool        Active;
 };
 
+//------------------------------------------------------------------------------
+
+enum interp_capture_status
+{
+    INTERP_CAPTURE_UNCHANGED,
+    INTERP_CAPTURE_CHANGED,
+    INTERP_CAPTURE_SNAPPED
+};
+
 //==============================================================================
 //  IMPLEMENTATION
 //==============================================================================
@@ -55,33 +64,41 @@ interp_state& BeginCaptureInterpCache( interp_cache<interp_state>& Cache )
 
 template< class interp_state, class should_snap_fn >
 inline
-void FinishCaptureInterpCache( interp_cache<interp_state>& Cache,
-                                      should_snap_fn             ShouldSnap )
+interp_capture_status FinishCaptureInterpCache( interp_cache<interp_state>& Cache,
+                                                       should_snap_fn             ShouldSnap )
 {
     if( !Cache.Curr.Valid )
-        return;
+        return INTERP_CAPTURE_UNCHANGED;
 
     if( !Cache.Prev.Valid )
     {
         Cache.Prev = Cache.Curr;
-        return;
+        return INTERP_CAPTURE_UNCHANGED;
     }
 
     if( ShouldSnap( Cache.Prev, Cache.Curr ) )
+    {
         Cache.Prev = Cache.Curr;
+        return INTERP_CAPTURE_SNAPPED;
+    }
+
+    if( x_memcmp( &Cache.Prev, &Cache.Curr, sizeof( interp_state ) ) == 0 )
+        return INTERP_CAPTURE_UNCHANGED;
+
+    return INTERP_CAPTURE_CHANGED;
 }
 
 //==============================================================================
 
 template< class interp_state, class should_snap_fn >
 inline
-void CaptureInterpCache( interp_cache<interp_state>& Cache,
-                                const interp_state&        Snapshot,
-                                should_snap_fn             ShouldSnap )
+interp_capture_status CaptureInterpCache( interp_cache<interp_state>& Cache,
+                                                 const interp_state&        Snapshot,
+                                                 should_snap_fn             ShouldSnap )
 {
     interp_state& Curr = BeginCaptureInterpCache( Cache );
     Curr = Snapshot;
-    FinishCaptureInterpCache( Cache, ShouldSnap );
+    return FinishCaptureInterpCache( Cache, ShouldSnap );
 }
 
 //==============================================================================
@@ -110,6 +127,31 @@ template< class interp_state >
 inline 
 void ClearInterpCache( interp_cache<interp_state>& Cache )
 {
+    Cache.Active = FALSE;
+}
+
+//==============================================================================
+
+template< class interp_state >
+inline
+void InvalidateInterpCache( interp_cache<interp_state>& Cache )
+{
+    Cache.Prev.Valid   = FALSE;
+    Cache.Curr.Valid   = FALSE;
+    Cache.Interp.Valid = FALSE;
+    Cache.Active       = FALSE;
+}
+
+//==============================================================================
+
+template< class interp_state >
+inline
+void SnapInterpCache( interp_cache<interp_state>& Cache,
+                             const interp_state&        Snapshot )
+{
+    Cache.Prev   = Snapshot;
+    Cache.Curr   = Snapshot;
+    Cache.Interp = Snapshot;
     Cache.Active = FALSE;
 }
 

@@ -92,10 +92,10 @@ void InitTransformInterpCache( transform_interp_cache& Cache )
 //==============================================================================
 
 inline 
-void CaptureTransformInterpCache( transform_interp_cache&       Cache,
-                                         const transform_interp_state& Snapshot )
+interp_capture_status CaptureTransformInterpCache( transform_interp_cache&       Cache,
+                                                          const transform_interp_state& Snapshot )
 {
-    CaptureInterpCache( Cache, Snapshot, ShouldSnapTransformInterpState );
+    return CaptureInterpCache( Cache, Snapshot, ShouldSnapTransformInterpState );
 }
 
 //==============================================================================
@@ -113,6 +113,25 @@ inline
 void ClearTransformInterpCache( transform_interp_cache& Cache )
 {
     ClearInterpCache( Cache );
+}
+
+//==============================================================================
+
+inline
+void InvalidateTransformInterpCache( transform_interp_cache& Cache )
+{
+    InvalidateInterpCache( Cache );
+}
+
+//==============================================================================
+
+inline
+void SnapTransformInterpCache( transform_interp_cache& Cache,
+                                      const matrix4&          L2W )
+{
+    transform_interp_state Snapshot;
+    CaptureTransformInterpState( Snapshot, L2W );
+    SnapInterpCache( Cache, Snapshot );
 }
 
 //==============================================================================

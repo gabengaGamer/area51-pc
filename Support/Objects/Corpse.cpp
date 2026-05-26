@@ -434,8 +434,8 @@ void corpse::CaptureRenderInterpState( void )
         return;
     }
 
-    FinishCaptureInterpCache( m_RenderCache, ShouldSnapSimpleAnimInterpState );
-    RegisterRenderInterpUpdate();
+    if( FinishCaptureInterpCache( m_RenderCache, ShouldSnapSimpleAnimInterpState ) == INTERP_CAPTURE_CHANGED )
+        RegisterRenderInterpUpdate();
 }
 
 //===========================================================================
@@ -450,6 +450,30 @@ void corpse::UpdateRenderInterpState( f32 Alpha )
 void corpse::ClearRenderInterpState( void )
 {
     ClearSimpleAnimInterpCache( m_RenderCache );
+}
+
+//===========================================================================
+
+void corpse::InvalidateRenderInterpState( void )
+{
+    object::InvalidateRenderInterpState();
+    InvalidateSimpleAnimInterpCache( m_RenderCache );
+}
+
+//===========================================================================
+
+void corpse::SnapRenderInterpState( void )
+{
+    object::SnapRenderInterpState();
+
+    simple_anim_interp_state Snapshot;
+    InitSimpleAnimInterpState( Snapshot );
+    m_PhysicsInst.CaptureRenderInterpState( Snapshot );
+
+    if( Snapshot.Valid )
+        SnapInterpCache( m_RenderCache, Snapshot );
+    else
+        InvalidateSimpleAnimInterpCache( m_RenderCache );
 }
 
 //===========================================================================

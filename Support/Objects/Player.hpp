@@ -397,6 +397,8 @@ public:
     virtual void            CaptureRenderInterpState  ( void );
     virtual void            UpdateRenderInterpState   ( f32 Alpha );
     virtual void            ClearRenderInterpState    ( void );
+    virtual void            InvalidateRenderInterpState( void );
+    virtual void            SnapRenderInterpState     ( void );
     virtual void            ClearRenderInterpStatePerView( void );
     virtual xbool           GetRenderWeaponL2W  ( matrix4& L2W,
                                                    new_weapon::render_state RenderState = new_weapon::RENDER_STATE_PLAYER ) const;

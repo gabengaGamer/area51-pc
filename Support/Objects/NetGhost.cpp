@@ -122,7 +122,10 @@ net_ghost::locale::locale() :
 //==============================================================================
 
 net_ghost::net::net() :
-    LocoType      ( -1    )
+    LocoType          ( -1    ),
+    DoTeleport        ( FALSE ),
+    DoWayPoint        ( FALSE ),
+    SnapRenderInterp  ( FALSE )
 {
 }
 
@@ -709,6 +712,7 @@ void net_ghost::net_Activate( void )
 
     m_Net.DoTeleport = FALSE;
     m_Net.DoWayPoint = FALSE;
+    m_Net.SnapRenderInterp = FALSE;
 
     LOG_MESSAGE( "net_ghost::net_Activate",
                  "Addr:%08X - NetSlot:%d - Status:%s on %s",
@@ -825,6 +829,7 @@ void net_ghost::net_AcceptUpdate( const update& Update )
             {
                 actor::Teleport( Target, Update.Pitch, Update.Yaw );
             }
+            actor::SnapRenderInterpState();
 
             /*
             CLOG_MESSAGE( m_NetSlot == 1, "net_ghost::net_AcceptUpdate",
@@ -846,9 +851,9 @@ void net_ghost::net_AcceptUpdate( const update& Update )
                 CLOG_MESSAGE( m_NetSlot == 1, "net_ghost::net_AcceptUpdate",
                               "SetBlendTargetZ:%d", (s32)Target.GetZ() );
                 */
-                m_Net.BlendPosX.SetTarget( Target.GetX() );
-                m_Net.BlendPosY.SetTarget( Target.GetY() );
-                m_Net.BlendPosZ.SetTarget( Target.GetZ() );
+                m_Net.SnapRenderInterp |= m_Net.BlendPosX.SetTarget( Target.GetX() );
+                m_Net.SnapRenderInterp |= m_Net.BlendPosY.SetTarget( Target.GetY() );
+                m_Net.SnapRenderInterp |= m_Net.BlendPosZ.SetTarget( Target.GetZ() );
             }
         }
 
@@ -884,15 +889,15 @@ void net_ghost::net_AcceptUpdate( const update& Update )
         }
         else
         {
-            m_Net.BlendPitch.SetTarget( m_Net.Actual.Pitch );
-            m_Net.BlendYaw  .SetTarget( m_Net.Actual.Yaw   );
+            m_Net.SnapRenderInterp |= m_Net.BlendPitch.SetTarget( m_Net.Actual.Pitch );
+            m_Net.SnapRenderInterp |= m_Net.BlendYaw  .SetTarget( m_Net.Actual.Yaw   );
         }
     }
     
     if( Update.DirtyBits & LEAN_BIT )
     {
         m_Net.Actual.Lean = Update.Lean;
-        m_Net.BlendLean.SetTarget( m_Net.Actual.Lean );
+        m_Net.SnapRenderInterp |= m_Net.BlendLean.SetTarget( m_Net.Actual.Lean );
     }
 }
 
@@ -1011,14 +1016,14 @@ void net_ghost::net_Logic( f32 DeltaTime )
             CLOG_MESSAGE( m_NetSlot == 1, "net_ghost::net_Logic",
                           "SetBlendTargetZ:%d", (s32)m_Net.Actual.Position.GetZ() );
             */
-            m_Net.BlendPosX.SetTarget( m_Net.Actual.Position.GetX() );
-            m_Net.BlendPosY.SetTarget( m_Net.Actual.Position.GetY() );
-            m_Net.BlendPosZ.SetTarget( m_Net.Actual.Position.GetZ() );
+            m_Net.SnapRenderInterp |= m_Net.BlendPosX.SetTarget( m_Net.Actual.Position.GetX() );
+            m_Net.SnapRenderInterp |= m_Net.BlendPosY.SetTarget( m_Net.Actual.Position.GetY() );
+            m_Net.SnapRenderInterp |= m_Net.BlendPosZ.SetTarget( m_Net.Actual.Position.GetZ() );
 
             if( m_TargetNetSlot != -1 )
             {
-                m_Net.BlendPitch.SetTarget( m_Net.Actual.Pitch );
-                m_Net.BlendYaw  .SetTarget( m_Net.Actual.Yaw   );
+                m_Net.SnapRenderInterp |= m_Net.BlendPitch.SetTarget( m_Net.Actual.Pitch );
+                m_Net.SnapRenderInterp |= m_Net.BlendYaw  .SetTarget( m_Net.Actual.Yaw   );
             }
 
             m_Net.DoTeleport = FALSE;
@@ -1042,6 +1047,12 @@ void net_ghost::net_Logic( f32 DeltaTime )
         SetPitch      ( m_Net.Render.Pitch    );
         SetYaw        ( m_Net.Render.Yaw      );
         SetLeanAmount ( m_Net.Render.Lean     );
+
+        if( m_Net.SnapRenderInterp )
+        {
+            actor::SnapRenderInterpState();
+            m_Net.SnapRenderInterp = FALSE;
+        }
         /*
         CLOG_MESSAGE( (m_NetSlot == 1), "net_ghost::net_Logic", 
                       "RenderZ:%d - ActualZ:%d - ActorZ:%d - BlendZ:%d", 

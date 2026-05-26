@@ -371,6 +371,30 @@ void play_surface::ClearRenderInterpState( void )
 
 //==============================================================================
 
+void play_surface::InvalidateRenderInterpState( void )
+{
+    object::InvalidateRenderInterpState();
+
+    m_RenderStateValid   = FALSE;
+    m_RenderInterpActive = FALSE;
+}
+
+//==============================================================================
+
+void play_surface::SnapRenderInterpState( void )
+{
+    object::SnapRenderInterpState();
+
+    const matrix4& L2W = GetL2W();
+    m_RenderPrevL2W      = L2W;
+    m_RenderCurrL2W      = L2W;
+    m_RenderInterpL2W    = L2W;
+    m_RenderStateValid   = TRUE;
+    m_RenderInterpActive = FALSE;
+}
+
+//==============================================================================
+
 void play_surface::OnTransform( const matrix4& L2W )
 {
 #ifdef X_EDITOR

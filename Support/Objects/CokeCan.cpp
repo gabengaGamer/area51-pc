@@ -405,8 +405,8 @@ void coke_can::CaptureRenderInterpState( void )
     Snapshot.NBones   = 1;
     Snapshot.L2W      = GetL2W();
     Snapshot.Bones[0] = Snapshot.L2W;
-    FinishCaptureInterpCache( m_RenderCache, ShouldSnapSimpleAnimInterpState );
-    RegisterRenderInterpUpdate();
+    if( FinishCaptureInterpCache( m_RenderCache, ShouldSnapSimpleAnimInterpState ) == INTERP_CAPTURE_CHANGED )
+        RegisterRenderInterpUpdate();
 }
 
 //=========================================================================
@@ -421,6 +421,29 @@ void coke_can::UpdateRenderInterpState( f32 Alpha )
 void coke_can::ClearRenderInterpState( void )
 {
     ClearSimpleAnimInterpCache( m_RenderCache );
+}
+
+//=========================================================================
+
+void coke_can::InvalidateRenderInterpState( void )
+{
+    object::InvalidateRenderInterpState();
+    InvalidateSimpleAnimInterpCache( m_RenderCache );
+}
+
+//=========================================================================
+
+void coke_can::SnapRenderInterpState( void )
+{
+    object::SnapRenderInterpState();
+
+    simple_anim_interp_state Snapshot;
+    InitSimpleAnimInterpState( Snapshot );
+    Snapshot.Valid    = TRUE;
+    Snapshot.NBones   = 1;
+    Snapshot.L2W      = GetL2W();
+    Snapshot.Bones[0] = Snapshot.L2W;
+    SnapInterpCache( m_RenderCache, Snapshot );
 }
 
 //=========================================================================

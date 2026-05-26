@@ -132,32 +132,22 @@ static matrix4 InterpObjectL2W( const matrix4& PrevL2W, const matrix4& CurrL2W, 
 {
     vector3 PrevScale;
     vector3 CurrScale;
-    radian3 PrevRot;
-    radian3 CurrRot;
+    quaternion PrevRot;
+    quaternion CurrRot;
     vector3 PrevPos;
     vector3 CurrPos;
 
-    PrevScale = PrevL2W.GetScale();
-    CurrScale = CurrL2W.GetScale();
-    PrevRot   = PrevL2W.GetRotation();
-    CurrRot   = CurrL2W.GetRotation();
-    PrevPos   = PrevL2W.GetTranslation();
-    CurrPos   = CurrL2W.GetTranslation();
+    matrix4 PrevMatrix = PrevL2W;
+    matrix4 CurrMatrix = CurrL2W;
+
+    PrevMatrix.DecomposeSRT( PrevScale, PrevRot, PrevPos );
+    CurrMatrix.DecomposeSRT( CurrScale, CurrRot, CurrPos );
 
     matrix4 L2W;
     L2W.Setup( InterpVector  ( PrevScale, CurrScale, T ),
-               InterpRotation( PrevRot,   CurrRot,   T ),
+               Blend         ( PrevRot,   CurrRot,   T ),
                InterpVector  ( PrevPos,   CurrPos,   T ) );
     return L2W;
-}
-
-//==============================================================================
-
-static xbool ShouldSnapObjectRenderInterpState( const matrix4& PrevL2W, const matrix4& CurrL2W )
-{
-    const vector3 Delta = CurrL2W.GetTranslation() - PrevL2W.GetTranslation();
-
-    return Delta.LengthSquared() > x_sqr( 5000.0f );
 }
 
 //==============================================================================
@@ -296,7 +286,7 @@ void object::CaptureRenderInterpState( void )
     State.CurrL2W = L2W;
     State.Changed = (x_memcmp( &State.PrevL2W, &State.CurrL2W, sizeof( matrix4 ) ) != 0);
 
-    if( ShouldSnapObjectRenderInterpState( State.PrevL2W, State.CurrL2W ) )
+    if( ShouldSnapInterpL2W( State.PrevL2W, State.CurrL2W ) )
     {
         State.PrevL2W = State.CurrL2W;
         State.Changed = FALSE;
@@ -347,6 +337,37 @@ void object::ClearRenderInterpState( void )
 
     m_FlagBits |= FLAG_DIRTY_TRANSFORM;
     UpdateTransform();
+}
+
+//==============================================================================
+
+void object::InvalidateRenderInterpState( void )
+{
+    object::ClearRenderInterpState();
+
+    object_render_interp_state& State = GetObjectRenderInterpState( *this );
+    State.Guid    = GetGuid();
+    State.Valid   = FALSE;
+    State.Active  = FALSE;
+    State.Changed = FALSE;
+}
+
+//==============================================================================
+
+void object::SnapRenderInterpState( void )
+{
+    object::ClearRenderInterpState();
+
+    object_render_interp_state& State = GetObjectRenderInterpState( *this );
+    const matrix4& L2W = GetL2W();
+
+    State.Guid      = GetGuid();
+    State.PrevL2W   = L2W;
+    State.CurrL2W   = L2W;
+    State.BackupL2W = L2W;
+    State.Valid     = TRUE;
+    State.Active    = FALSE;
+    State.Changed   = FALSE;
 }
 
 //==============================================================================
@@ -442,6 +463,8 @@ void  object::OnActivate( xbool Flag )
     {
         m_AttrBits &= ~ATTR_NEEDS_LOGIC_TIME;
     }
+
+    InvalidateRenderInterpState();
 }
    
 //==============================================================================

@@ -46,6 +46,8 @@ protected:
     virtual void            CaptureRenderInterpState  ( void );
     virtual void            UpdateRenderInterpState   ( f32 Alpha );
     virtual void            ClearRenderInterpState    ( void );
+    virtual void            InvalidateRenderInterpState( void );
+    virtual void            SnapRenderInterpState     ( void );
             void            InvalidateRenderState( void );
     const   matrix4&        GetRenderL2W        ( void ) const;
     

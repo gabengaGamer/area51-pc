@@ -122,13 +122,13 @@ void InitSimpleAnimInterpCache( simple_anim_interp_cache& Cache )
 //==============================================================================
 
 inline
-void CaptureSimpleAnimInterpCache( simple_anim_interp_cache& Cache,
-                                          const matrix4&            L2W,
-                                          simple_anim_player&       AnimPlayer )
+interp_capture_status CaptureSimpleAnimInterpCache( simple_anim_interp_cache& Cache,
+                                                           const matrix4&            L2W,
+                                                           simple_anim_player&       AnimPlayer )
 {
     simple_anim_interp_state& Snapshot = BeginCaptureInterpCache( Cache );
     CaptureSimpleAnimInterpState( Snapshot, L2W, AnimPlayer );
-    FinishCaptureInterpCache( Cache, ShouldSnapSimpleAnimInterpState );
+    return FinishCaptureInterpCache( Cache, ShouldSnapSimpleAnimInterpState );
 }
 
 //==============================================================================
@@ -146,6 +146,26 @@ inline
 void ClearSimpleAnimInterpCache( simple_anim_interp_cache& Cache )
 {
     ClearInterpCache( Cache );
+}
+
+//==============================================================================
+
+inline
+void InvalidateSimpleAnimInterpCache( simple_anim_interp_cache& Cache )
+{
+    InvalidateInterpCache( Cache );
+}
+
+//==============================================================================
+
+inline
+void SnapSimpleAnimInterpCache( simple_anim_interp_cache& Cache,
+                                       const matrix4&            L2W,
+                                       simple_anim_player&       AnimPlayer )
+{
+    simple_anim_interp_state Snapshot;
+    CaptureSimpleAnimInterpState( Snapshot, L2W, AnimPlayer );
+    SnapInterpCache( Cache, Snapshot );
 }
 
 //==============================================================================

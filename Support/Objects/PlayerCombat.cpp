@@ -1767,6 +1767,7 @@ void player::AttachWeapon( void )
         //( (new_weapon*)pObject )->OnMove
         OnTransformWeapon( L2W );
         pWeapon->SetZone1( GetZone1() );
+        SnapRenderInterpState();
     }
 }
 

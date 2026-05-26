@@ -82,8 +82,24 @@ matrix4 InterpMatrix( const matrix4& A, const matrix4& B, f32 T )
     if( x_memcmp( &A, &B, sizeof( matrix4 ) ) == 0 )
         return B;
 
-    return BuildInterpL2W( InterpVector( A.GetTranslation(), B.GetTranslation(), T ),
-                           InterpRotation( A.GetRotation(), B.GetRotation(), T ) );
+    vector3    AScale;
+    vector3    BScale;
+    quaternion ARot;
+    quaternion BRot;
+    vector3    APos;
+    vector3    BPos;
+
+    matrix4 AMatrix = A;
+    matrix4 BMatrix = B;
+
+    AMatrix.DecomposeSRT( AScale, ARot, APos );
+    BMatrix.DecomposeSRT( BScale, BRot, BPos );
+
+    matrix4 M;
+    M.Setup( InterpVector( AScale, BScale, T ),
+             Blend( ARot, BRot, T ),
+             InterpVector( APos, BPos, T ) );
+    return M;
 }
 
 //==============================================================================

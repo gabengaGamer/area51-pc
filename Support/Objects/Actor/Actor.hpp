@@ -459,7 +459,9 @@ virtual void            OnRenderWeapon          ( void );
 virtual void            CaptureRenderInterpState      ( void );
 virtual void            UpdateRenderInterpState       ( f32 Alpha );
 virtual void            ClearRenderInterpState        ( void );
-        void            CaptureActorRenderInterpState ( void );
+virtual void            InvalidateRenderInterpState   ( void );
+virtual void            SnapRenderInterpState         ( void );
+        interp_capture_status CaptureActorRenderInterpState ( void );
         void            UpdateActorRenderInterpState  ( f32 Alpha );
         void            ClearActorRenderInterpState   ( void );
 virtual xbool           GetRenderWeaponL2W      ( matrix4& L2W,
@@ -705,6 +707,7 @@ const   matrix4*        GetBonesForRender       ( u64 LODMask, s32& nActiveBones
 const   matrix4&        GetActorRenderL2W      ( void ) const;
         xbool           GetActorRenderBoneL2W  ( s32 iBone, matrix4& L2W ) const;
         void            InvalidateActorRenderInterpState( void );
+        void            SnapActorRenderInterpState( void );
         void            RenderHitLocations      ( void );
         f32             TimeSinceLastRender     ( void );
 virtual skin_inst&      GetSkinInst             ( void ) { return m_SkinInst; }

@@ -184,6 +184,8 @@ static  s32                     m_ActiveCount;          // # of active (moving) 
     virtual void                CaptureRenderInterpState      ( void );
     virtual void                UpdateRenderInterpState       ( f32 Alpha );
     virtual void                ClearRenderInterpState        ( void );
+    virtual void                InvalidateRenderInterpState   ( void );
+    virtual void                SnapRenderInterpState         ( void );
 
 };
 
