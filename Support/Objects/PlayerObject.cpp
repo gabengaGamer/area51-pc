@@ -2237,6 +2237,38 @@ void player::SnapRenderInterpState( void )
 
 //===========================================================================
 
+void player::SnapRenderWeaponInterpState( void )
+{
+    if( GetLocalSlot() == -1 )
+        return;
+
+    weapon_interp_state Weapon;
+    InitWeaponInterpState( Weapon );
+
+    new_weapon* pWeapon = GetCurrentWeaponPtr();
+    if( pWeapon )
+    {
+        CaptureWeaponInterpState( Weapon, pWeapon->GetL2W() );
+
+        if( pWeapon->HasAnimGroup() )
+        {
+            char_anim_player& WeaponAnimPlayer = pWeapon->GetCurrentAnimPlayer();
+            Weapon.NBones = MIN( WeaponAnimPlayer.GetNBones(), MAX_ANIM_BONES );
+            WeaponAnimPlayer.GetBoneL2Ws( Weapon.Bones, FALSE );
+        }
+    }
+
+    view View = m_Views[ GetLocalSlot() ];
+    ComputeView( View, player::VIEW_NULL );
+    TransformWeaponInterpState( Weapon, View.GetW2V() );
+
+    m_RenderCache.Prev.Weapon   = Weapon;
+    m_RenderCache.Curr.Weapon   = Weapon;
+    m_RenderCache.Interp.Weapon = Weapon;
+}
+
+//===========================================================================
+
 void player::ClearRenderInterpStatePerView( void )
 {
     if( (GetLocalSlot() != -1) && IsActivePlayer() )
@@ -8630,7 +8662,7 @@ void player::ForceNextWeapon( void )
         SetAnimState( ANIM_STATE_UNDEFINED );
     }
 
-    SnapRenderInterpState();
+    SnapRenderWeaponInterpState();
 }
 
 //=========================================================================
