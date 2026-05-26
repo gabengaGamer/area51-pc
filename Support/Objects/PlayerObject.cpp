@@ -5722,7 +5722,7 @@ void player::SetAnimation( const animation_state& AnimState , const s32& nAnimIn
 
     if( State.nPlayerAnims > nAnimIndex &&  WeaponState.nWeaponAnims > nAnimIndex )
     {
-        xbool bSnappedByWeapon = FALSE;
+        xbool bWeaponAnimationSet = FALSE;
 
         //set the animation in the player.
         m_AnimPlayer.SetAnim( State.PlayerAnim[nAnimIndex], TRUE, TRUE , fBlendTime , bResetFrame );
@@ -5741,12 +5741,12 @@ void player::SetAnimation( const animation_state& AnimState , const s32& nAnimIn
                 if ( pWeapon )
                 {
                     pWeapon->SetAnimation( WeaponState.WeaponAnim[nAnimIndex] , fBlendTime , bResetFrame );
-                    bSnappedByWeapon = (fBlendTime <= 0.0f);
+                    bWeaponAnimationSet = TRUE;
                 }
             }
         }
 
-        if( (fBlendTime <= 0.0f) && !bSnappedByWeapon )
+        if( (fBlendTime <= 0.0f) && !bWeaponAnimationSet )
             SnapRenderInterpState();
     }
 }

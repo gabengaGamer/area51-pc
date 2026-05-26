@@ -1850,13 +1850,6 @@ void new_weapon::SetAnimation( const s32& nAnimIndex , const f32& fBlendTime , c
 
     //set the animation.
     m_AnimPlayer[m_CurrentRenderState].SetAnim( nAnimIndex , FALSE , FALSE , fBlendTime , bResetFrames );
-
-    if( fBlendTime <= 0.0f )
-    {
-        object* pOwner = g_ObjMgr.GetObjectByGuid( m_ParentGuid );
-        if( pOwner && pOwner->IsKindOf( actor::GetRTTI() ) )
-            actor::GetSafeType( *pOwner ).SnapRenderInterpState();
-    }
 }
 
 //==============================================================================
