@@ -133,7 +133,6 @@ struct render_instance
     s16             Next;
 
 #ifdef TARGET_PC
-    s16             iSubMesh;
     xhandle         hDList;
 #endif // TARGET_PC
 };
@@ -165,8 +164,6 @@ struct private_geom
 #ifdef TARGET_PC
     xarray<xhandle> RigidDList;
     xarray<xhandle> SkinDList;
-    xarray<s16>     RigidDListKey;
-    xarray<s16>     SkinDListKey;
 #endif // TARGET_PC
 };
 
@@ -283,10 +280,6 @@ static render::hgeom_inst   AddPrivateInstance      ( geom& Geom,
 static void                 RemovePrivateInstance   ( render::hgeom_inst hInst )    X_SECTION( init );  
 static s32                  InstanceCompareFn       ( const void* p1,
                                                       const void* p2 )              X_SECTION( render_infrequent );
-static s32                  GetBatchSubMesh         ( const geom& Geom,
-                                                      geom_type Type,
-                                                      const geom::submesh& SubMesh,
-                                                      s32 iSubMesh )                X_SECTION( render_add );
 static void                 GetUVOffset             ( u8& UOffset,
                                                       u8& VOffset,
                                                       geom* pGeom,
@@ -739,34 +732,6 @@ s32 InstanceCompareFn( const void* p1, const void* p2 )
     if ( Inst1->SortKey < Inst2->SortKey )  return -1;
     
     return 0;
-}
-
-//=============================================================================
-
-static
-s32 GetBatchSubMesh( const geom& Geom, geom_type Type, const geom::submesh& SubMesh, s32 iSubMesh )
-{
-#ifdef TARGET_PC
-    private_geom& PrivateGeom = s_lRegisteredGeoms( Geom.m_hGeom );
-    const xarray<s16>& DListKey = (Type == TYPE_RIGID) ? PrivateGeom.RigidDListKey
-                                                       : PrivateGeom.SkinDListKey;
-
-    if( (SubMesh.iDList >= 0) && (SubMesh.iDList < DListKey.GetCount()) )
-    {
-        const s32 iBatchSubMesh = DListKey[(s32)SubMesh.iDList];
-        ASSERT( (iBatchSubMesh >= 0) && (iBatchSubMesh < 256) );
-        return iBatchSubMesh;
-    }
-
-    (void)Type;
-#else
-    (void)Geom;
-    (void)Type;
-    (void)SubMesh;
-#endif
-
-    ASSERT( (iSubMesh >= 0) && (iSubMesh < 256) );
-    return iSubMesh;
 }
 
 //=============================================================================
@@ -1574,12 +1539,8 @@ void render::AddRigidInstanceSimple( hgeom_inst     hInst,
 
             // figure out the sort key
             sortkey SortKey;
-            SortKey.Bits        = 0;
-            SortKey.GeomSubMesh = GetBatchSubMesh( *pGeom, TYPE_RIGID, SubMesh, iSubMesh );
-            SortKey.GeomHandle  = pGeom->m_hGeom;
-            SortKey.GeomType    = 0;
-            SortKey.MatIndex    = s_lRegisteredMaterials.GetIndexByHandle(hMat);
-            SortKey.RenderOrder = GetRenderOrder( (material_type)Material.Type );
+            SortKey.Bits     = SubMesh.BaseSortKey;
+            SortKey.MatIndex = s_lRegisteredMaterials.GetIndexByHandle(hMat);
 
             // fill in the basic render instance info
             render_instance& Inst = AddToHashHybrid( SortKey.Bits );
@@ -1604,7 +1565,6 @@ void render::AddRigidInstanceSimple( hgeom_inst     hInst,
 
             #ifdef TARGET_PC
             private_geom& PrivateGeom = s_lRegisteredGeoms(pGeom->m_hGeom);
-            Inst.iSubMesh             = iSubMesh;
             Inst.hDList               = PrivateGeom.RigidDList[(s32)SubMesh.iDList];
             #endif
         }
@@ -1709,7 +1669,7 @@ void render::AddRigidInstance( hgeom_inst     hInst,
             // build the sort key
             sortkey SortKey;
             SortKey.Bits        = 0;
-            SortKey.GeomSubMesh = GetBatchSubMesh( *pGeom, TYPE_RIGID, SubMesh, iSubMesh );
+            SortKey.GeomSubMesh = iSubMesh;
             SortKey.GeomHandle  = pGeom->m_hGeom;
             SortKey.GeomType    = 0;
             SortKey.MatIndex    = s_lRegisteredMaterials.GetIndexByHandle(hMat);
@@ -1748,7 +1708,6 @@ void render::AddRigidInstance( hgeom_inst     hInst,
 
             #ifdef TARGET_PC
             private_geom& PrivateGeom = s_lRegisteredGeoms(pGeom->m_hGeom);
-            Inst.iSubMesh             = iSubMesh;
             Inst.hDList               = PrivateGeom.RigidDList[(s32)SubMesh.iDList];
             #endif
 
@@ -1756,7 +1715,7 @@ void render::AddRigidInstance( hgeom_inst     hInst,
             if ( bFadingAlpha )
             {
                 // we need to render twice to prime the z-buffer for alpha geometry
-                SortKey.GeomSubMesh         = Inst.SortKey.GeomSubMesh;
+                SortKey.GeomSubMesh         = iSubMesh;
                 SortKey.GeomHandle          = pGeom->m_hGeom;
                 SortKey.GeomType            = 0;
                 SortKey.MatIndex            = 0x3ff;
@@ -1770,7 +1729,6 @@ void render::AddRigidInstance( hgeom_inst     hInst,
                 ZPrimeInst.Alpha            = 0x80;
                 ZPrimeInst.OverrideMat      = 1;
                 #ifdef TARGET_PC
-                ZPrimeInst.iSubMesh         = Inst.iSubMesh;
                 ZPrimeInst.hDList           = Inst.hDList;
                 #endif
             }
@@ -1885,7 +1843,7 @@ void render::AddRigidInstance( hgeom_inst        hInst,
             // build the sort key
             sortkey SortKey;
             SortKey.Bits        = 0;
-            SortKey.GeomSubMesh = GetBatchSubMesh( *pGeom, TYPE_RIGID, SubMesh, iSubMesh );
+            SortKey.GeomSubMesh = iSubMesh;
             SortKey.GeomHandle  = pGeom->m_hGeom;
             SortKey.GeomType    = 0;
             SortKey.MatIndex    = s_lRegisteredMaterials.GetIndexByHandle(hMat);
@@ -1924,7 +1882,6 @@ void render::AddRigidInstance( hgeom_inst        hInst,
 
             #ifdef TARGET_PC
             private_geom& PrivateGeom = s_lRegisteredGeoms(pGeom->m_hGeom);
-            Inst.iSubMesh             = iSubMesh;
             Inst.hDList               = PrivateGeom.RigidDList[(s32)SubMesh.iDList];
             #endif
 
@@ -1932,7 +1889,7 @@ void render::AddRigidInstance( hgeom_inst        hInst,
             if ( bFadingAlpha )
             {
                 // we need to render twice to prime the z-buffer for alpha geometry
-                SortKey.GeomSubMesh         = Inst.SortKey.GeomSubMesh;
+                SortKey.GeomSubMesh         = iSubMesh;
                 SortKey.GeomHandle          = pGeom->m_hGeom;
                 SortKey.GeomType            = 0;
                 SortKey.MatIndex            = 0x3ff;
@@ -1946,7 +1903,6 @@ void render::AddRigidInstance( hgeom_inst        hInst,
                 ZPrimeInst.Alpha            = 0x80;
                 ZPrimeInst.OverrideMat      = 1;
                 #ifdef TARGET_PC
-                ZPrimeInst.iSubMesh         = Inst.iSubMesh;
                 ZPrimeInst.hDList           = Inst.hDList;
                 #endif
             }
@@ -2025,7 +1981,7 @@ void render::AddSkinInstance( hgeom_inst     hInst,
             // build the sort key
             sortkey SortKey;
             SortKey.Bits        = 0;
-            SortKey.GeomSubMesh = GetBatchSubMesh( *pGeom, TYPE_SKIN, SubMesh, iSubMesh );
+            SortKey.GeomSubMesh = iSubMesh;
             SortKey.GeomHandle  = pGeom->m_hGeom;
             SortKey.GeomType    = 1;
             SortKey.MatIndex    = s_lRegisteredMaterials.GetIndexByHandle(hMat);
@@ -2063,7 +2019,6 @@ void render::AddSkinInstance( hgeom_inst     hInst,
 
             #ifdef TARGET_PC
             private_geom& PrivateGeom = s_lRegisteredGeoms(pGeom->m_hGeom);
-            Inst.iSubMesh             = iSubMesh;
             Inst.hDList               = PrivateGeom.SkinDList[(s32)SubMesh.iDList];
             #endif
 
@@ -2071,7 +2026,7 @@ void render::AddSkinInstance( hgeom_inst     hInst,
             if ( bFadingAlpha )
             {
                 // we need to render twice to prime the z-buffer for alpha geometry
-                SortKey.GeomSubMesh         = Inst.SortKey.GeomSubMesh;
+                SortKey.GeomSubMesh         = iSubMesh;
                 SortKey.GeomHandle          = pGeom->m_hGeom;
                 SortKey.GeomType            = 1;
                 SortKey.MatIndex            = 0x3ff;
@@ -2085,7 +2040,6 @@ void render::AddSkinInstance( hgeom_inst     hInst,
                 ZPrimeInst.Alpha            = 0x80;
                 ZPrimeInst.OverrideMat      = 1;
                 #ifdef TARGET_PC
-                ZPrimeInst.iSubMesh         = Inst.iSubMesh;
                 ZPrimeInst.hDList           = Inst.hDList;
                 #endif
             }
@@ -2167,7 +2121,7 @@ void render::AddSkinInstanceDistorted( hgeom_inst        hInst,
             // build the sort key
             sortkey SortKey;
             SortKey.Bits        = 0;
-            SortKey.GeomSubMesh = GetBatchSubMesh( *pGeom, TYPE_SKIN, SubMesh, iSubMesh );
+            SortKey.GeomSubMesh = iSubMesh;
             SortKey.GeomHandle  = pGeom->m_hGeom;
             SortKey.GeomType    = 1;
             SortKey.MatIndex    = DefaultInfoIndex;
@@ -2195,7 +2149,6 @@ void render::AddSkinInstanceDistorted( hgeom_inst        hInst,
 
             #ifdef TARGET_PC
             private_geom& PrivateGeom = s_lRegisteredGeoms(pGeom->m_hGeom);
-            Inst.iSubMesh             = iSubMesh;
             Inst.hDList               = PrivateGeom.SkinDList[(s32)SubMesh.iDList];
             #endif
         }
@@ -2700,7 +2653,7 @@ void render::AddRigidCasterSimple( render::hgeom_inst hInst,
             shad_sortkey SortKey;
             SortKey.Bits              = 0;
             SortKey.ShadowSourceIndex = iShadowSource;
-            SortKey.GeomSubMesh       = GetBatchSubMesh( *pGeom, TYPE_RIGID, SubMesh, iSubMesh );
+            SortKey.GeomSubMesh       = iSubMesh;
             SortKey.GeomHandle        = pGeom->m_hGeom;
             SortKey.GeomType          = 0;
             SortKey.ShadType          = 0;
@@ -2717,7 +2670,6 @@ void render::AddRigidCasterSimple( render::hgeom_inst hInst,
 
             #ifdef TARGET_PC
             private_geom& PrivateGeom = s_lRegisteredGeoms(pGeom->m_hGeom);
-            Inst.iSubMesh             = iSubMesh;
             Inst.hDList               = PrivateGeom.RigidDList[(s32)SubMesh.iDList];
             #endif
         }
@@ -2790,7 +2742,7 @@ void render::AddRigidCaster( render::hgeom_inst hInst,
                 shad_sortkey SortKey;
                 SortKey.Bits              = 0;
                 SortKey.ShadowSourceIndex = iShadowSource;
-                SortKey.GeomSubMesh       = GetBatchSubMesh( *pGeom, TYPE_RIGID, SubMesh, iSubMesh );
+                SortKey.GeomSubMesh       = iSubMesh;
                 SortKey.GeomHandle        = pGeom->m_hGeom;
                 SortKey.GeomType          = 0;
                 SortKey.ShadType          = 0;
@@ -2807,7 +2759,6 @@ void render::AddRigidCaster( render::hgeom_inst hInst,
 
                 #ifdef TARGET_PC
                 private_geom& PrivateGeom = s_lRegisteredGeoms(pGeom->m_hGeom);
-                Inst.iSubMesh             = iSubMesh;
                 Inst.hDList               = PrivateGeom.RigidDList[(s32)SubMesh.iDList];
                 #endif
             }
@@ -2875,7 +2826,7 @@ void render::AddSkinCaster( render::hgeom_inst hInst,
                 shad_sortkey SortKey;
                 SortKey.Bits           = 0;
                 SortKey.ShadowSourceIndex = iShadowSource;
-                SortKey.GeomSubMesh    = GetBatchSubMesh( *pGeom, TYPE_SKIN, SubMesh, iSubMesh );
+                SortKey.GeomSubMesh    = iSubMesh;
                 SortKey.GeomHandle     = pGeom->m_hGeom;
                 SortKey.GeomType       = 1;
                 SortKey.ShadType       = 0;
@@ -2894,7 +2845,6 @@ void render::AddSkinCaster( render::hgeom_inst hInst,
 
                 #ifdef TARGET_PC
                 private_geom&  PrivateGeom = s_lRegisteredGeoms(pGeom->m_hGeom);
-                Inst.iSubMesh              = iSubMesh;
                 Inst.hDList                = PrivateGeom.SkinDList[(s32)SubMesh.iDList];	
                 #endif
             }
@@ -2969,7 +2919,6 @@ void render::AddRigidReceiverSimple( render::hgeom_inst hInst,
 
             #ifdef TARGET_PC
             private_geom& PrivateGeom = s_lRegisteredGeoms(pGeom->m_hGeom);
-            Inst.iSubMesh             = iSubMesh;
             Inst.hDList               = PrivateGeom.RigidDList[(s32)SubMesh.iDList];
             #endif
         }

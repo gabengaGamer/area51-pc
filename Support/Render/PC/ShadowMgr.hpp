@@ -32,8 +32,6 @@
 #include "Entropy/D3DEngine/d3deng_shader.hpp"
 
 class material;
-struct cb_rigid_instance;
-struct cb_skin_instance;
 
 //==============================================================================
 //  CONSTANTS
@@ -55,6 +53,7 @@ enum
 struct cb_shadow_cast
 {
     matrix4 ShadowViewProjection;
+    matrix4 World;
 };
 
 //------------------------------------------------------------------------------
@@ -109,18 +108,14 @@ public:
     void        EndShadowShaders         ( void );
     void        BeginCastPass            ( void );
     void        EndCastPass              ( void );
-    void        RenderRigidCasterBatch   ( xhandle         hDList,
-                                           const cb_rigid_instance* pInstances,
-                                           s32             nInstances,
+    void        RenderRigidCaster        ( xhandle         hDList,
+                                           const matrix4*  pL2W,
                                            const material* pMaterial,
                                            u8              UOffset,
                                            u8              VOffset,
                                            s32             SourceIndex );
-    void        RenderSkinCasterBatch    ( xhandle         hDList,
-                                           const cb_skin_instance* pInstances,
-                                           s32             nInstances,
+    void        RenderSkinCaster         ( xhandle         hDList,
                                            const matrix4*  pBones,
-                                           s32             nBones,
                                            const material* pMaterial,
                                            u8              UOffset,
                                            u8              VOffset,
@@ -143,7 +138,8 @@ private:
     //--------------------------------------------------------------------------
 
     void        EnsureAtlas              ( void );
-    xbool       SetShadowCastConstants   ( const matrix4&  ShadowViewProjection );
+    xbool       SetShadowCastConstants   ( const matrix4&  ShadowViewProjection,
+                                           const matrix4*  pWorld = NULL );
     xbool       SetShadowAlphaConstants  ( const material* pMaterial,
                                            u8              UOffset,
                                            u8              VOffset );
