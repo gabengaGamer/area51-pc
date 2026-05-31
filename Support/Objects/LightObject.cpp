@@ -372,7 +372,7 @@ const object_desc& dynamic_light_obj::GetObjectType( void )
 dynamic_light_obj::dynamic_light_obj( void ) :
     light_obj(),
     m_EmitterType        (EMITTER_TYPE_OMNI),
-    m_Falloff            (1.0f),
+    m_Falloff            (0.32f),
     m_hCookie            (     ),
     m_bCastShadows       (TRUE),
     m_ShadowMapResolution(SHADOW_MAP_RESOLUTION_512),
