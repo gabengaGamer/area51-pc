@@ -72,7 +72,6 @@
 level_loader  g_LevelLoader;
 xbool         g_level_loading  = FALSE;
 extern char   g_FullPath [ 256 ];
-extern xtimer g_GameTimer;
 #ifndef CONFIG_VIEWER
 extern u32    g_nLogicFramesAfterLoad;
 #endif
@@ -609,10 +608,6 @@ void level_loader::LoadLevel( xbool bFullLoad )
 
     // Reset DecalMgr
     g_DecalMgr.ResetDynamicDecals();
-
-    // Setup the global game timer
-    g_GameTimer.Reset();
-    g_GameTimer.Start();
 
     // inflate the world bounds a bit
     g_ObjMgr.InflateSafeBBox( 1000.0f );

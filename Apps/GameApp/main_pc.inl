@@ -47,8 +47,8 @@ void FreeCam( f32 DeltaTime )
     radian Pitch, Yaw;
     View.GetPitchYaw( Pitch, Yaw );
     
-    Pitch += input_GetValue( INPUT_MOUSE_Y_REL ) * Rot;
-    Yaw   -= input_GetValue( INPUT_MOUSE_X_REL ) * Rot;
+    Pitch += (f32)g_InputMgr.GetMouseDeltaY() * Rot;
+    Yaw   -= (f32)g_InputMgr.GetMouseDeltaX() * Rot;
     View.SetRotation( radian3( Pitch, Yaw, R_0 ) );
 	
     // Move the player.

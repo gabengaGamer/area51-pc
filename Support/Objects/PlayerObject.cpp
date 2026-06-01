@@ -2864,7 +2864,7 @@ void player::OnAdvanceLogic( f32 DeltaTime )
             
             // Test for re-spawn being pressed 
             // (just in case for some reason we can't get into death state)
-            xbool bPrimaryPressed = (xbool)g_IngamePad[m_ActivePlayerPad].GetLogical( ingame_pad::ACTION_PRIMARY ).WasValue;
+            xbool bPrimaryPressed = g_IngamePad[m_ActivePlayerPad].GetLogical( ingame_pad::ACTION_PRIMARY ).WasValue > 0.25f;
             if( bPrimaryPressed )
             {
                 m_bWantToSpawn = TRUE;
@@ -3151,7 +3151,7 @@ xbool player::UseFocusObject( void )
     // Look for all focus objects in the world, and try to press every single
     // one of them until we find one that works.  
     //
-    xbool UsePressed = (xbool)g_IngamePad[m_ActivePlayerPad].GetLogical( ingame_pad::ACTION_USE ).WasValue;
+    xbool UsePressed = g_IngamePad[m_ActivePlayerPad].GetLogical( ingame_pad::ACTION_USE ).WasValue > 0.25f;
     if( UsePressed && (m_CurrentAnimState != ANIM_STATE_THROW ) && !IsChangingMutation() )
     {
         slot_id SlotID = g_ObjMgr.GetFirst( object::TYPE_FOCUS_OBJECT );

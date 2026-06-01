@@ -8,6 +8,7 @@
 #include "movieplayer.hpp"
 #include "StateMgr\StateMgr.hpp"
 #include "inputmgr\gamepad.hpp"
+#include "DeltaMgr\DeltaMgr.hpp"
 
 //=========================================================================
 // FUNCTIONS
@@ -111,8 +112,11 @@ s32 PlaySimpleMovie(const char* movieName)
                 break;
             }
         
-            g_InputMgr.Update  ( 1.0f / 60.0f );
-            g_NetworkMgr.Update( 1.0f / 60.0f );
+            f32 DeltaTime = g_DeltaMgr.GetFixedUpdateDeltaTime();
+            g_InputMgr.BeginFrame( DeltaTime, FRONTEND_CONTEXT );
+            g_InputMgr.UpdateLocal( DeltaTime );
+            g_InputMgr.ClearFixedInput();
+            g_NetworkMgr.Update( DeltaTime );
         
             Movie.Render();
             eng_PageFlip();
@@ -123,18 +127,18 @@ s32 PlaySimpleMovie(const char* movieName)
             for( s32 i = 0; i < MAX_LOCAL_PLAYERS; i++ )
             {
                 const auto& pad = g_IngamePad[i];
-                if( pad.GetLogical( ingame_pad::UI_SELECT   ).IsValue ||
-                    pad.GetLogical( ingame_pad::UI_BACK     ).IsValue ||
-                    pad.GetLogical( ingame_pad::UI_ACTIVATE ).IsValue )
+                if( (pad.GetLogical( ingame_pad::UI_SELECT   ).IsValue > 0.25f) ||
+                    (pad.GetLogical( ingame_pad::UI_BACK     ).IsValue > 0.25f) ||
+                    (pad.GetLogical( ingame_pad::UI_ACTIVATE ).IsValue > 0.25f) )
                 {
                     anyHeld = TRUE;
                 }
         
                 if( allowSkip )
                 {
-                    if( pad.GetLogical( ingame_pad::UI_SELECT   ).WasValue ||
-                        pad.GetLogical( ingame_pad::UI_BACK     ).WasValue ||
-                        pad.GetLogical( ingame_pad::UI_ACTIVATE ).WasValue )
+                    if( (pad.GetLogical( ingame_pad::UI_SELECT   ).WasValue > 0.25f) ||
+                        (pad.GetLogical( ingame_pad::UI_BACK     ).WasValue > 0.25f) ||
+                        (pad.GetLogical( ingame_pad::UI_ACTIVATE ).WasValue > 0.25f) )
                     {
                         done = TRUE;
                     }

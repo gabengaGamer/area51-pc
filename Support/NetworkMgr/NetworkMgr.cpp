@@ -13,7 +13,6 @@
 //  INCLUDES
 //==============================================================================
 
-#include "../Apps/GameApp/Main.hpp"
 #include "x_files.hpp"
 #include "Entropy.hpp"
 #include "NetworkMgr.hpp"

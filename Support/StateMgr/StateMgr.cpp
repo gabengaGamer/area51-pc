@@ -97,6 +97,7 @@
 #include "AudioMgr/AudioMgr.hpp"
 #include "NetworkMgr/Voice/VoiceMgr.hpp"
 #include "inputmgr\inputmgr.hpp"
+#include "DeltaMgr\DeltaMgr.hpp"
 #include "GameLib/LevelLoader.hpp"
 #include "e_Memcard.hpp"
 #include "IOManager/io_mgr.hpp"
@@ -1054,14 +1055,17 @@ void state_mgr::DummyScreen( const char* message, xbool canSkip, s32 waitTime )
 
         if( canSkip )
         {
-            g_InputMgr.Update( 0.0167f );
+            f32 DeltaTime = g_DeltaMgr.GetFixedUpdateDeltaTime();
+            g_InputMgr.BeginFrame( DeltaTime, FRONTEND_CONTEXT );
+            g_InputMgr.UpdateLocal( DeltaTime );
+            g_InputMgr.ClearFixedInput();
             { 
 			    for( s32 i = 0; i < MAX_LOCAL_PLAYERS; i++ )
                 {
                     const auto& pad = g_IngamePad[i];
-                    if( pad.GetLogical( ingame_pad::UI_SELECT   ).IsValue ||
-                        pad.GetLogical( ingame_pad::UI_BACK     ).IsValue ||
-                        pad.GetLogical( ingame_pad::UI_ACTIVATE ).IsValue )
+                    if( (pad.GetLogical( ingame_pad::UI_SELECT   ).IsValue > 0.25f) ||
+                        (pad.GetLogical( ingame_pad::UI_BACK     ).IsValue > 0.25f) ||
+                        (pad.GetLogical( ingame_pad::UI_ACTIVATE ).IsValue > 0.25f) )
 			    	{
 			    		bSkip = TRUE;
 			    	}
@@ -2183,7 +2187,7 @@ void state_mgr::UpdateDemoExit( void )
 		for( s32 i = 0; i < MAX_LOCAL_PLAYERS; i++ )
         {
             const auto& pad = g_IngamePad[i];
-            if( pad.GetLogical( ingame_pad::UI_HELP ).IsValue )
+            if( pad.GetLogical( ingame_pad::UI_HELP ).IsValue > 0.25f )
 			{
 				Reboot( REBOOT_QUIT );
 			}
@@ -10508,13 +10512,7 @@ static void s_BackgroundRenderer( void )
 
         while( pThread->IsActive() && (!s_BackgroundRendererStop) )
         {
-            Delta = DeltaTime.TripSec();
-            // If we take longer than 200ms to do this loop, this is most likely
-            // because we were single stepping so lets compensate for that.
-            if( Delta > 0.2f )
-            {
-                Delta = 1.0f/30.0f;
-            }
+            Delta = g_DeltaMgr.ReadTimerDeltaToFallback( DeltaTime );
             // The order in which this is performed is quite important. Since this thread will typically be started
             // within the state_mgr Update() call, then, to preserve the order outlined at higher levels of the logic,
             // we need to do the Render, then the pageflip (maybe in different order for xbox) then we do the updates
@@ -10527,7 +10525,9 @@ static void s_BackgroundRenderer( void )
             g_NetworkMgr.Update( Delta );
 
             // Update input mgr
-            g_InputMgr.Update( Delta ); //0.0167f );
+            g_InputMgr.BeginFrame( Delta, FRONTEND_CONTEXT );
+            g_InputMgr.UpdateLocal( Delta );
+            g_InputMgr.ClearFixedInput();
 
             // Update UI
             g_StateMgr.Update( Delta );

@@ -36,8 +36,8 @@ xbool condition_player_button_state::Execute( guid TriggerGuid )
 
     f32 WasVal = g_IngamePad[ pPlayer->GetActivePlayerPad() ].GetLogical( m_ButtonID ).WasValue;
     f32 IsVal  = g_IngamePad[ pPlayer->GetActivePlayerPad() ].GetLogical( m_ButtonID ).IsValue;
-    xbool WasPressed = WasVal > 0.0f;
-    xbool IsPressed  = IsVal  > 0.0f;
+    xbool WasPressed = WasVal > 0.25f;
+    xbool IsPressed  = IsVal  > 0.25f;
 
     switch ( m_Code )
     {

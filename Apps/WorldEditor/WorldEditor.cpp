@@ -1835,7 +1835,9 @@ s32 world_editor::GetTotalObjectCount( void )
 
 void world_editor::AdvanceLogic( f32 DeltaTime )
 {
-    g_InputMgr.Update( DeltaTime );
+    g_InputMgr.BeginFrame( DeltaTime, FRONTEND_CONTEXT );
+    g_InputMgr.UpdateLocal( DeltaTime );
+    g_InputMgr.ClearFixedInput();
 
     // DX9 reference for the DX11 port:
     // d3deng_SetMouseMode( MOUSE_MODE_NEVER );

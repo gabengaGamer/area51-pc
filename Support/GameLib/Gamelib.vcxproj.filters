@@ -997,6 +997,9 @@
     <ClCompile Include="..\InputMgr\Monkey.cpp">
       <Filter>Obj_mgr\InputMgr</Filter>
     </ClCompile>
+    <ClCompile Include="..\DeltaMgr\DeltaMgr.cpp">
+      <Filter>Obj_mgr\DeltaMgr</Filter>
+    </ClCompile>
     <ClCompile Include="..\DeltaMgr\InterpolationMgr.cpp">
       <Filter>Obj_mgr\DeltaMgr</Filter>
     </ClCompile>
@@ -2315,6 +2318,9 @@
     </ClInclude>
     <ClInclude Include="..\InputMgr\Monkey.hpp">
       <Filter>Obj_mgr\InputMgr</Filter>
+    </ClInclude>
+    <ClInclude Include="..\DeltaMgr\DeltaMgr.hpp">
+      <Filter>Obj_mgr\DeltaMgr</Filter>
     </ClInclude>
     <ClInclude Include="..\DeltaMgr\InterpolationMgr.hpp">
       <Filter>Obj_mgr\DeltaMgr</Filter>

@@ -41,9 +41,7 @@
 //  Determine if the debug menu should be enabled
 //==============================================================================
 
-#if defined( X_DEBUG ) || ((defined( CONFIG_QA ) || defined( CONFIG_VIEWER ) || defined( CONFIG_PROFILE )) && (!CONFIG_IS_DEMO) && !defined( LAN_PARTY_BUILD ) && !defined( OPM_REVIEW_BUILD ) )
-#define ENABLE_DEBUG_MENU
-#endif
+#include "DebugMenuDefine.hpp"
 
 #if defined( ENABLE_DEBUG_MENU )
 
@@ -79,6 +77,7 @@ public:
             void                Enable              ( void );
             void                Disable             ( void );
             xbool               IsActive            ( void );
+            xbool               WasTogglePressed    ( void ) const;
 
             xbool               Update              ( f32 DeltaTime );
             void                Render              ( void );

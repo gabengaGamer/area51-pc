@@ -1133,7 +1133,7 @@ xbool trigger_spatial_object::CheckForUseEvent( void )
 
         player& Player = player::GetSafeType( *pObj );
       
-        if( g_IngamePad[ Player.GetActivePlayerPad() ].GetLogical( ingame_pad::ACTION_USE ).WasValue )
+        if( g_IngamePad[ Player.GetActivePlayerPad() ].GetLogical( ingame_pad::ACTION_USE ).WasValue > 0.25f )
         {
             return TRUE;
         }

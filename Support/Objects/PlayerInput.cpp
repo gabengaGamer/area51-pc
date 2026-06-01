@@ -112,7 +112,14 @@ f32 ScaleGamepadLookAxis( f32 Value )
 static 
 f32 GetMouseLookSensitivityScale( u32 Sensitivity )
 {
-    return 0.1f + (Sensitivity / 100.0f);
+    static const f32 SensitivityMin = 0.10f;
+    static const f32 SensitivityMax = 6.00f;
+    static const f32 SettingMax     = 32.0f;
+
+    if( Sensitivity > (u32)SettingMax )
+        Sensitivity = (u32)SettingMax;
+
+    return SensitivityMin + ((SensitivityMax - SensitivityMin) * ((f32)Sensitivity / SettingMax));
 }
 
 //==============================================================================
@@ -217,8 +224,8 @@ void player::ScaleMouseLookInput( void )
     u32 sensitivity_H = p.GetSensitivity( SM_X_SENSITIVITY );
     u32 sensitivity_V = p.GetSensitivity( SM_Y_SENSITIVITY );
 #else
-    u32 sensitivity_H = 32; //HACK HACK HACK!!!
-    u32 sensitivity_V = 32; //HACK HACK HACK!!!
+    u32 sensitivity_H = 16; //HACK HACK HACK!!!
+    u32 sensitivity_V = 16; //HACK HACK HACK!!!
 #endif
 
     f32 scaleH = GetMouseLookSensitivityScale( sensitivity_H );
@@ -330,14 +337,14 @@ void player::OnButtonInput( void )
     // This is to make sure you don't lean or fire on the same button press as 
     // voting or respawning, respectively.
     {   
-        xbool PrimaryDown = (xbool)g_IngamePad[m_ActivePlayerPad].GetLogical( ingame_pad::ACTION_PRIMARY ).IsValue;
+        xbool PrimaryDown = g_IngamePad[m_ActivePlayerPad].GetLogical( ingame_pad::ACTION_PRIMARY ).IsValue > 0.25f;
         if( !PrimaryDown )
         {
             m_bRespawnButtonPressed = FALSE;
         }
 
-        if( !g_IngamePad[m_ActivePlayerPad].GetLogical( ingame_pad::ACTION_VOTE_YES ).IsValue && 
-            !g_IngamePad[m_ActivePlayerPad].GetLogical( ingame_pad::ACTION_VOTE_NO  ).IsValue )
+        if( !(g_IngamePad[m_ActivePlayerPad].GetLogical( ingame_pad::ACTION_VOTE_YES ).IsValue > 0.25f) &&
+            !(g_IngamePad[m_ActivePlayerPad].GetLogical( ingame_pad::ACTION_VOTE_NO  ).IsValue > 0.25f) )
         {
             m_bVoteButtonPressed = FALSE;
         }
@@ -351,7 +358,7 @@ void player::OnButtonInput( void )
         if( !m_VoteMode )
         {
             // Activate vote mode / menu.
-            if( g_IngamePad[m_ActivePlayerPad].GetLogical( ingame_pad::ACTION_VOTE_MENU_ON ).WasValue )
+            if( g_IngamePad[m_ActivePlayerPad].GetLogical( ingame_pad::ACTION_VOTE_MENU_ON ).WasValue > 0.25f )
             {
                 m_VoteMode = TRUE;
                 // Activate the vote menu.
@@ -362,7 +369,7 @@ void player::OnButtonInput( void )
         else
         {
             // Deactivate vote mode / menu.
-            if( g_IngamePad[m_ActivePlayerPad].GetLogical( ingame_pad::ACTION_VOTE_MENU_OFF ).WasValue )
+            if( g_IngamePad[m_ActivePlayerPad].GetLogical( ingame_pad::ACTION_VOTE_MENU_OFF ).WasValue > 0.25f )
             {
                 m_VoteMode      = FALSE;
                 // Deactivate the vote menu.
@@ -371,7 +378,7 @@ void player::OnButtonInput( void )
             }
 
             // Vote YES.
-            if( g_IngamePad[m_ActivePlayerPad].GetLogical( ingame_pad::ACTION_VOTE_YES ).WasValue )
+            if( g_IngamePad[m_ActivePlayerPad].GetLogical( ingame_pad::ACTION_VOTE_YES ).WasValue > 0.25f )
             {
                 m_VoteMode      = FALSE;
                 m_VoteCanCast   = FALSE;
@@ -383,7 +390,7 @@ void player::OnButtonInput( void )
             }
 
             // Vote NO.
-            if( g_IngamePad[m_ActivePlayerPad].GetLogical( ingame_pad::ACTION_VOTE_NO ).WasValue )
+            if( g_IngamePad[m_ActivePlayerPad].GetLogical( ingame_pad::ACTION_VOTE_NO ).WasValue > 0.25f )
             {
                 m_VoteMode      = FALSE;
                 m_VoteCanCast   = FALSE;
@@ -395,7 +402,7 @@ void player::OnButtonInput( void )
             }
 
             // Vote ABSTAIN.
-            if( g_IngamePad[m_ActivePlayerPad].GetLogical( ingame_pad::ACTION_VOTE_ABSTAIN ).WasValue )
+            if( g_IngamePad[m_ActivePlayerPad].GetLogical( ingame_pad::ACTION_VOTE_ABSTAIN ).WasValue > 0.25f )
             {
                 m_VoteMode      = FALSE;
                 m_VoteCanCast   = FALSE;
@@ -411,7 +418,7 @@ void player::OnButtonInput( void )
         // So that the vote key doesn't show up if the vote expires while it's showing.
         m_VoteMode = FALSE;
 
-        if( g_IngamePad[m_ActivePlayerPad].GetLogical( ingame_pad::ACTION_DROP_FLAG ).IsValue )
+        if( g_IngamePad[m_ActivePlayerPad].GetLogical( ingame_pad::ACTION_DROP_FLAG ).IsValue > 0.25f )
         {
             #ifndef X_EDITOR
             m_NetDirtyBits |= DROP_ITEM_BIT;
@@ -438,7 +445,7 @@ void player::OnButtonInput( void )
 #ifndef X_EDITOR
     if( g_NetworkMgr.IsOnline() )
     {
-        if( g_IngamePad[m_ActivePlayerPad].GetLogical( ingame_pad::ACTION_TALK_MODE_TOGGLE ).WasValue )
+        if( g_IngamePad[m_ActivePlayerPad].GetLogical( ingame_pad::ACTION_TALK_MODE_TOGGLE ).WasValue > 0.25f )
         {
             g_VoiceMgr.ToggleTalkMode();
         }
@@ -450,7 +457,7 @@ void player::OnButtonInput( void )
             if( g_VoiceMgr.IsHeadsetPresent() == TRUE )
             {
                 // check for voice chat
-                if( g_IngamePad[m_ActivePlayerPad].GetLogical( ingame_pad::ACTION_CHAT ).IsValue )
+                if( g_IngamePad[m_ActivePlayerPad].GetLogical( ingame_pad::ACTION_CHAT ).IsValue > 0.25f )
                 {
                     // Test to make sure the player is allowed to chat
                     if( (g_VoiceMgr.IsVoiceBanned()  == FALSE) &&
@@ -464,7 +471,7 @@ void player::OnButtonInput( void )
     player_profile& p = g_StateMgr.GetActiveProfile(g_StateMgr.GetProfileListIndex(m_LocalSlot));
     if( p.m_bCrouchOn )
     {
-        xbool CrouchKeyPressed = (xbool)g_IngamePad[m_ActivePlayerPad].GetLogical( ingame_pad::ACTION_CROUCH ).WasValue;
+        xbool CrouchKeyPressed = g_IngamePad[m_ActivePlayerPad].GetLogical( ingame_pad::ACTION_CROUCH ).WasValue > 0.25f;
         if( CrouchKeyPressed )
         {
             // crouch is a toggle and we're crouching so turn it off
@@ -485,7 +492,7 @@ void player::OnButtonInput( void )
     else
 #endif
     {
-        xbool CrouchKeyIsPressed = (xbool)g_IngamePad[m_ActivePlayerPad].GetLogical( ingame_pad::ACTION_CROUCH ).IsValue;
+        xbool CrouchKeyIsPressed = g_IngamePad[m_ActivePlayerPad].GetLogical( ingame_pad::ACTION_CROUCH ).IsValue > 0.25f;
         if( CrouchKeyIsPressed )
         {
             // only do this if we weren't crouching previously
@@ -519,7 +526,7 @@ void player::OnButtonInput( void )
     }
 
     // Jump button
-    xbool JumpPressed = (xbool)g_IngamePad[m_ActivePlayerPad].GetLogical( ingame_pad::ACTION_JUMP ).WasValue;
+    xbool JumpPressed = g_IngamePad[m_ActivePlayerPad].GetLogical( ingame_pad::ACTION_JUMP ).WasValue > 0.25f;
     if( !m_bInTurret && JumpPressed && m_bCanJump )
     {
         Jump();
@@ -560,8 +567,8 @@ void player::OnButtonInput( void )
     const f32 ActionMPMutation = IsLeaning ? MPLogical.IsValue : MPLogical.WasValue;
 
     xbool MutationPressed = Multiplayer
-                          ? (ActionMutation > 0.0f)
-                          : (ActionMPMutation > 0.0f);
+                          ? (ActionMutation > 0.25f)
+                          : (ActionMPMutation > 0.25f);
 
     static f32 MinTimeSinceUseToThrowGrenade = 1.0f;
     static f32 MinTimeSinceUseToMutate = 1.0f;
@@ -605,11 +612,11 @@ void player::OnButtonInput( void )
         }
     }
 
-    if ( !m_bInTurret && g_IngamePad[m_ActivePlayerPad].GetLogical( ingame_pad::ACTION_CYCLE_RIGHT ).WasValue )
+    if ( !m_bInTurret && g_IngamePad[m_ActivePlayerPad].GetLogical( ingame_pad::ACTION_CYCLE_RIGHT ).WasValue > 0.25f )
     {
         OnWeaponSwitch2( CYCLE_RIGHT );
     }
-    if ( !m_bInTurret && g_IngamePad[m_ActivePlayerPad].GetLogical( ingame_pad::ACTION_CYCLE_LEFT ).WasValue )
+    if ( !m_bInTurret && g_IngamePad[m_ActivePlayerPad].GetLogical( ingame_pad::ACTION_CYCLE_LEFT ).WasValue > 0.25f )
     {
         OnWeaponSwitch2( CYCLE_LEFT );
     }
@@ -618,8 +625,8 @@ void player::OnButtonInput( void )
     // NOTE: TWEEK THIS, WE MIGHT WANT TO MAKE THE RAMP DOWN FIRST BEFORE DOING MELEE.
     //
     xbool MeleePressed = m_bIsMutated
-                        ? g_IngamePad[m_ActivePlayerPad].GetLogical( ingame_pad::ACTION_MUTANT_MELEE ).IsValue > 0.0f
-                        : g_IngamePad[m_ActivePlayerPad].GetLogical( ingame_pad::ACTION_MELEE_ATTACK ).IsValue > 0.0f;
+                        ? g_IngamePad[m_ActivePlayerPad].GetLogical( ingame_pad::ACTION_MUTANT_MELEE ).IsValue > 0.25f
+                        : g_IngamePad[m_ActivePlayerPad].GetLogical( ingame_pad::ACTION_MELEE_ATTACK ).IsValue > 0.25f;
     if( !m_bInTurret && MeleePressed )
     {
         animation_state MeleeState = ANIM_STATE_MELEE;
@@ -695,10 +702,10 @@ void player::OnButtonInput( void )
 
     // don't throw a grenade if we're just exiting fly mode
 #if defined( ENABLE_DEBUG_MENU )
-    xbool GrenadePressed = g_IngamePad[m_ActivePlayerPad].GetLogical( ingame_pad::ACTION_THROW_GRENADE ).IsValue && 
-                          !(g_IngamePad[m_ActivePlayerPad].GetLogical( ingame_pad::ACTION_TALK_MODE_TOGGLE ).IsValue);
+    xbool GrenadePressed = (g_IngamePad[m_ActivePlayerPad].GetLogical( ingame_pad::ACTION_THROW_GRENADE ).IsValue > 0.25f) &&
+                          !(g_IngamePad[m_ActivePlayerPad].GetLogical( ingame_pad::ACTION_TALK_MODE_TOGGLE ).IsValue > 0.25f);
 #else
-    xbool GrenadePressed = g_IngamePad[m_ActivePlayerPad].GetLogical( ingame_pad::ACTION_THROW_GRENADE ).IsValue;
+    xbool GrenadePressed = g_IngamePad[m_ActivePlayerPad].GetLogical( ingame_pad::ACTION_THROW_GRENADE ).IsValue > 0.25f;
 #endif
 
 
@@ -733,8 +740,8 @@ void player::OnButtonInput( void )
 
     // flashlight button
     xbool FlashlightPressed = Multiplayer
-                             ? (g_IngamePad[m_ActivePlayerPad].GetLogical( ingame_pad::ACTION_MP_FLASHLIGHT ).IsValue > 0.0f)
-                             : (g_IngamePad[m_ActivePlayerPad].GetLogical( ingame_pad::ACTION_FLASHLIGHT ).WasValue > 0.0f);
+                             ? (g_IngamePad[m_ActivePlayerPad].GetLogical( ingame_pad::ACTION_MP_FLASHLIGHT ).IsValue > 0.25f)
+                             : (g_IngamePad[m_ActivePlayerPad].GetLogical( ingame_pad::ACTION_FLASHLIGHT ).WasValue > 0.25f);
 
     if ( FlashlightPressed && !IsMutated() )
     {
@@ -752,7 +759,7 @@ void player::OnButtonInput( void )
     }
 
     // Use on a mutagen reservoir
-    xbool UseKeyPressed = g_IngamePad[m_ActivePlayerPad].GetLogical( ingame_pad::ACTION_USE ).IsValue;
+    xbool UseKeyPressed = g_IngamePad[m_ActivePlayerPad].GetLogical( ingame_pad::ACTION_USE ).IsValue > 0.25f;
     
     if ( UseKeyPressed && NearMutagenReservoir() )
     {
@@ -775,8 +782,8 @@ void player::OnButtonInput( void )
         }
     }
 
-    xbool LeanLeftPressed = g_IngamePad[m_ActivePlayerPad].GetLogical( ingame_pad::LEAN_LEFT ).IsValue && !m_bVoteButtonPressed;
-    xbool LeanRightPressed = g_IngamePad[m_ActivePlayerPad].GetLogical( ingame_pad::LEAN_RIGHT ).IsValue && !m_bVoteButtonPressed;
+    xbool LeanLeftPressed = (g_IngamePad[m_ActivePlayerPad].GetLogical( ingame_pad::LEAN_LEFT ).IsValue > 0.25f) && !m_bVoteButtonPressed;
+    xbool LeanRightPressed = (g_IngamePad[m_ActivePlayerPad].GetLogical( ingame_pad::LEAN_RIGHT ).IsValue > 0.25f) && !m_bVoteButtonPressed;
 
     if ( !m_bInTurret && LeanLeftPressed )
     {

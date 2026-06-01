@@ -1017,7 +1017,7 @@ xbool d3deng_InitInput( HWND Window )
 //=========================================================================
 
 static
-f32 GetValue( s32 ControllerID, input_gadget GadgetID, digital_type DigitalType )
+f32 GetValue( s32 ControllerID, input_gadget GadgetID, digital_type DigitalType, xbool ReadAnalogTrigger )
 {
     ASSERT( ControllerID >= 0 );
     ASSERT( ControllerID < MAX_DEVICES );
@@ -1065,11 +1065,10 @@ f32 GetValue( s32 ControllerID, input_gadget GadgetID, digital_type DigitalType 
             s32 Index = GadgetID - INPUT_XBOX__ANALOG_BUTTONS_BEGIN - 1;
             if( GadgetID == INPUT_XBOX_L_TRIGGER || GadgetID == INPUT_XBOX_R_TRIGGER )
             {
-                // Debounce queries (input_WasPressed) use the digital AnalogBtn state,
-                // everything else returns the normalized analog float (0..1).
-                if( DigitalType == DIGITAL_DEBAUNCE )
-                    return (f32)( XPad.AnalogBtn[ Index ] & DIGITAL_DEBAUNCE );
-                return (GadgetID == INPUT_XBOX_L_TRIGGER) ? XPad.Trigger[0] : XPad.Trigger[1];
+                if( ReadAnalogTrigger )
+                    return (GadgetID == INPUT_XBOX_L_TRIGGER) ? XPad.Trigger[0] : XPad.Trigger[1];
+
+                return (f32)( XPad.AnalogBtn[ Index ] & DigitalType );
             }
             return (f32)( XPad.AnalogBtn[ Index ] & DigitalType );
         }
@@ -1091,21 +1090,21 @@ f32 GetValue( s32 ControllerID, input_gadget GadgetID, digital_type DigitalType 
 
 xbool input_WasPressed( input_gadget GadgetID, s32 ControllerID )
 {
-    return GetValue( ControllerID, GadgetID, DIGITAL_DEBAUNCE ) != 0;
+    return GetValue( ControllerID, GadgetID, DIGITAL_DEBAUNCE, FALSE ) != 0;
 }
 
 //=========================================================================
 
 xbool input_IsPressed( input_gadget GadgetID, s32 ControllerID )
 {
-    return GetValue( ControllerID, GadgetID, DIGITAL_ON ) != 0;
+    return GetValue( ControllerID, GadgetID, DIGITAL_ON, FALSE ) != 0;
 }
 
 //=========================================================================
 
 f32 input_GetValue( input_gadget GadgetID, s32 ControllerID )
 {
-    return GetValue( ControllerID, GadgetID, DIGITAL_ON );
+    return GetValue( ControllerID, GadgetID, DIGITAL_ON, TRUE );
 }
 
 //==============================================================================

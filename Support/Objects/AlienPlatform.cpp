@@ -383,8 +383,8 @@ xbool alien_platform::IsUsePressed( void )
 
     f32 WasVal = g_IngamePad[ pPlayer->GetActivePlayerPad() ].GetLogical( ingame_pad::ACTION_USE ).WasValue;
     f32 IsVal  = g_IngamePad[ pPlayer->GetActivePlayerPad() ].GetLogical( ingame_pad::ACTION_USE ).IsValue;
-    xbool WasPressed = WasVal > 0.0f;
-    xbool IsPressed  = IsVal  > 0.0f;
+    xbool WasPressed = WasVal > 0.25f;
+    xbool IsPressed  = IsVal  > 0.25f;
 
     if (!WasPressed && IsPressed)
         return TRUE;

@@ -15,7 +15,6 @@
 //==============================================================================
 
 #include "Entropy.hpp"  
-#include "Main.hpp"  
 
 //==============================================================================
 //  SYSTEM MANAGER INCLUDES
@@ -32,6 +31,7 @@
 #include "NetworkMgr\MsgMgr.hpp"
 #include "StateMgr\StateMgr.hpp"
 #include "MemCardMgr/MemCardMgr.hpp"
+#include "DeltaMgr\DeltaMgr.hpp"
 #include "DeltaMgr\InterpolationMgr.hpp"
 
 //==============================================================================
@@ -117,16 +117,7 @@
 #include "Config.hpp"
 #include "Configuration/GameConfig.hpp"
 
-//==============================================================================
-//  CONSTANTS
-//==============================================================================
-
 #define RELEASE_PATH            "C:\\GameData\\A51\\Release"
-
-static f32 GAME_MAX_DELTA_TIME         = 0.1f;
-static f32 FIXED_UPDATE_DELTA_TIME     = 1.0f / 60.0f; //30.0f;
-static f32 MAX_FRAME_DELTA_TIME        = 0.25f;
-static s32 MAX_UPDATE_STEPS_PER_FRAME  = 12; //8;
 
 #if CONFIG_IS_DEMO
 xtimer g_DemoIdleTimer;
@@ -158,7 +149,6 @@ xbool       g_first_person          = TRUE;
 s32         g_MemoryLowWater        = 0x7fffffff;
 view        g_View;
 u32         g_nLogicFramesAfterLoad = 0;
-xtimer      g_GameTimer;
 char        g_FullPath[256];
 
 //==============================================================================
@@ -251,17 +241,10 @@ s32         g_y                     = 100;
 s32         g_limit                 = 30;
 #endif // X_RETAIL
 
-//==============================================================================
-//  STATIC VARIABLES
-//==============================================================================
-
-static xtimer s_FrontEndDelta;
-
 #if !defined(X_RETAIL)
 static xbool s_ForceGameComplete    = FALSE;
 #endif
 
-//==============================================================================
 //  FUNCTION PROTOTYPES
 //==============================================================================
 
@@ -285,21 +268,29 @@ void        Render                  ( void );
 //  INPUT HANDLING FUNCTIONS
 //==============================================================================
 
-#if defined TARGET_PS2
-#define SELECT_BTN      INPUT_PS2_BTN_SELECT
-#define START_BTN       INPUT_PS2_BTN_START
-#elif defined TARGET_XBOX
-#define SELECT_BTN      INPUT_XBOX_BTN_BACK
-#define START_BTN       INPUT_XBOX_BTN_START
-#elif defined TARGET_PC
-#define SELECT_BTN      INPUT_KBD_TAB
-#define START_BTN       INPUT_KBD_RETURN
-#endif 
+//==============================================================================
+
+static u32 GetGameInputContext( void )
+{
+#if defined( ENABLE_DEBUG_MENU )
+    if( g_DebugMenu.IsActive() )
+        return DEBUG_MENU_CONTEXT;
+#endif
+
+    if( g_StateMgr.IsPaused() || g_StateMgr.InSystemError() )
+        return FRONTEND_CONTEXT;
+
+    if( g_StateMgr.GetState() == SM_PLAYING_GAME )
+        return INGAME_CONTEXT;
+
+    return FRONTEND_CONTEXT;
+}
+
+//==============================================================================
 
 xbool HandleInput( f32 DeltaTime )
 {
     CONTEXT( "HandleInput" );
-    g_InputMgr.Update( DeltaTime );
 
     // Check for exit message
     if( input_IsPressed( INPUT_MSG_EXIT ) )
@@ -340,13 +331,10 @@ xbool HandleInput( f32 DeltaTime )
             FreeCamDebounce = 0;
         }
         
-    #if defined( ENABLE_DEBUG_MENU )
-        if( input_IsPressed( SELECT_BTN ) && 
-            input_WasPressed( START_BTN ) &&
-            g_StateMgr.IsPaused() != TRUE ) 
+#if defined( ENABLE_DEBUG_MENU )
+        if( g_DebugMenu.WasTogglePressed() &&
+            g_StateMgr.IsPaused() != TRUE )
         {
-            g_DebugMenu.Enable();
-            g_InputMgr.Update( DeltaTime ); // do the update again, otherwise, the update will drop out.
             return( TRUE );
         }
     #endif // defined( ENABLE_DEBUG_MENU )
@@ -356,12 +344,13 @@ xbool HandleInput( f32 DeltaTime )
             // check for pause 
             s32 PausingController;
 
-            PausingController = g_InputMgr.WasPausePressed();
+            PausingController = g_InputMgr.WasPausePressed( g_StateMgr.IsPaused() );
 
             if( PausingController != -1 )
             {
                 // Toggle the pause state.
                 g_StateMgr.SetPaused( !g_StateMgr.IsPaused(), PausingController );
+                g_InputMgr.ClearFixedInput();
             #if CONFIG_IS_DEMO
                 g_DemoIdleTimer.Reset();
                 g_DemoIdleTimer.Start();
@@ -420,16 +409,15 @@ void AudioStats( f32 DeltaTime )
 void Update( f32 DeltaTime )
 {
     CONTEXT( "Update" );
-    DeltaTime = fMin( GAME_MAX_DELTA_TIME, DeltaTime );
+
+    if( !g_StateMgr.IsPaused() )
+    {
+        g_InputMgr.UpdateFixed( DeltaTime );
+    }
 
     #ifndef X_RETAIL
     g_PolyCache.Update();
     #endif
-
-    if( !g_StateMgr.IsPaused() && (HandleInput( DeltaTime )==FALSE) )
-    {
-        g_ActiveConfig.SetExitReason( GAME_EXIT_PLAYER_QUIT );
-    }
 
     #if !defined(X_RETAIL)
     if( s_ForceGameComplete )
@@ -516,24 +504,15 @@ void Update( f32 DeltaTime )
 
 //==============================================================================
 
-void UpdateFrontEnd( void )
+void UpdateFrontEnd( xtimer& FrontEndTimer )
 {
-    f32 DeltaTime;
-
-    DeltaTime = s_FrontEndDelta.TripSec();
-    if( DeltaTime < 0.0f )
-    {
-        DeltaTime = FIXED_UPDATE_DELTA_TIME;
-    }
-    else if( DeltaTime > MAX_FRAME_DELTA_TIME )
-    {
-        DeltaTime = FIXED_UPDATE_DELTA_TIME;
-    }
+    f32 DeltaTime = g_DeltaMgr.ReadTimerDeltaToFallback( FrontEndTimer );
 
     ASSERT( g_StateMgr.IsBackgroundThreadRunning() == FALSE );
 
-    input_UpdateState();
-    g_InputMgr.Update( DeltaTime );
+    g_InputMgr.BeginFrame( DeltaTime, FRONTEND_CONTEXT );
+    g_InputMgr.UpdateLocal( DeltaTime );
+    g_InputMgr.ClearFixedInput();
 
     g_StateMgr.CheckControllers();
 
@@ -1189,16 +1168,15 @@ void RunFrontEnd( void )
     //g_StringTableMgr.LoadTable( "lore", xfs("%s\\%s", g_RscMgr.GetRootDirectory(), "ENG_lore_strings.stringbin") );
     g_StringTableMgr.LoadTable( "lore", "ENG_lore_strings.stringbin" );
 
-    // Run the FrontEnd
-    s_FrontEndDelta.Reset();
-    s_FrontEndDelta.Start();
+    xtimer FrontEndTimer;
+    FrontEndTimer.Start();
 
     while( (g_StateMgr.GetState() != SM_MULTI_PLAYER_LOAD_MISSION) &&
            (g_StateMgr.GetState() != SM_SINGLE_PLAYER_LOAD_MISSION) &&
            (g_StateMgr.GetState() != SM_RELOAD_CHECKPOINT) &&
            (g_StateMgr.GetState() != SM_DEMO_EXIT) )
     {
-        UpdateFrontEnd( );
+        UpdateFrontEnd( FrontEndTimer );
 
 #ifdef TARGET_PC
         if( input_IsPressed( INPUT_MSG_EXIT ) )
@@ -1256,12 +1234,11 @@ void RunGame( void )
     // Level is fully loaded and startup trigger has run, notify scripts.
     g_ScriptMgr.NotifyLevelStart();
 
-    f32 DeltaTime       = 0.0f;
-    f32 FrameDeltaTime  = 0.0f;
-    f32 Accumulator     = 0.0f;
+    f32 DeltaTime = 0.0f;
 
-    g_GameTimer.Reset();
-    g_GameTimer.Start();
+    xtimer GameTimer;
+    GameTimer.Start();
+    g_DeltaMgr.Reset();
 
     // Run!  At least until we stop, that is.
     while( TRUE )
@@ -1274,57 +1251,53 @@ void RunGame( void )
             g_MemoryLowWater = LowWater;
         #endif // !defined( CONFIG_RETAIL )
 
-        //
-        // Delta time and game timer management.
-        //
+        f32 RawDeltaTime = GameTimer.TripSec();
+        f32 UnscaledDeltaTime = g_DeltaMgr.ClampDeltaTimeToMax( RawDeltaTime );
+        f32 LocalDeltaTime    = g_DeltaMgr.ClampDeltaTimeToFallback( RawDeltaTime );
+
+        g_PerceptionMgr.Update( UnscaledDeltaTime );
+
+        f32 TimeScale = g_PerceptionMgr.GetGlobalTimeDialation();
+
+        #if !defined( CONFIG_RETAIL )
+        TimeScale *= g_WorldTimeDilation;
+        #endif
+
+        g_DeltaMgr.SetTimeScale( TimeScale );
+        g_DeltaMgr.Tick( RawDeltaTime );
+
+        DeltaTime = g_DeltaMgr.GetDeltaTime();
+
+        if( g_InputMgr.BeginFrame( LocalDeltaTime, GetGameInputContext() ) )
         {
-            // Compute the duration of the last frame.
-            DeltaTime = g_GameTimer.ReadSec();
-
-            #ifdef TARGET_PC
-            s32 DelayTime = 32 - (s32)(DeltaTime * 1000.0f);
-//          x_DelayThread( DelayTime );
-            DeltaTime = g_GameTimer.ReadSec();
-            #endif
-
-            FrameDeltaTime = DeltaTime;
-
-            if( DeltaTime < 0.0f )
-            {
-                LOG_ERROR( "RunGame", "NEGATIVE DELTA TIME" );
-                DeltaTime = FIXED_UPDATE_DELTA_TIME;
-            }
-            else if( DeltaTime > MAX_FRAME_DELTA_TIME )
-            {
-                DeltaTime = MAX_FRAME_DELTA_TIME;
-            }
-
-            g_GameTimer.Reset();
-            g_GameTimer.Start();
-
-            g_PerceptionMgr.Update( DeltaTime );
-
-            DeltaTime *= g_PerceptionMgr.GetGlobalTimeDialation();
-
-            #if !defined( CONFIG_RETAIL )
-            // add in world time dialation
-            DeltaTime *= g_WorldTimeDilation;
-            #endif
-
-            Accumulator += DeltaTime;
+            g_ActiveConfig.SetExitReason( GAME_EXIT_PLAYER_QUIT );
         }
+
+        g_InputMgr.UpdateLocal( LocalDeltaTime );
+
+        if( HandleInput( LocalDeltaTime ) == FALSE )
+        {
+            g_ActiveConfig.SetExitReason( GAME_EXIT_PLAYER_QUIT );
+        }
+
+        if( g_StateMgr.IsPaused() )
+        {
+            g_InputMgr.ClearFixedInput();
+        }
+
+        if( g_ActiveConfig.GetExitReason() != GAME_EXIT_CONTINUE )
+            break;
+
+        g_InputMgr.PrepareFixedInput( g_DeltaMgr.GetPendingFixedStepCount() );
 
         //
         // We are "behind the times".  Catch up to the present.
         //
-        s32 UpdateCount = 0;
-        while( (Accumulator >= FIXED_UPDATE_DELTA_TIME) &&
-               (UpdateCount < MAX_UPDATE_STEPS_PER_FRAME) )
+        while( g_DeltaMgr.HasFixedUpdate() )
         {
-            Update( FIXED_UPDATE_DELTA_TIME );
+            Update( g_DeltaMgr.GetFixedUpdateDeltaTime() );
             g_InterpolationMgr.Capture();
-            Accumulator -= FIXED_UPDATE_DELTA_TIME;
-            UpdateCount++;
+            g_DeltaMgr.AdvanceFixedUpdate();
 
             if( g_ActiveConfig.GetExitReason() != GAME_EXIT_CONTINUE )
                 break;
@@ -1332,26 +1305,10 @@ void RunGame( void )
 
         if( g_StateMgr.IsPaused() )
         {
-            f32 PauseDeltaTime = FrameDeltaTime;
-
-            if( PauseDeltaTime < 0.0f )
-            {
-                PauseDeltaTime = FIXED_UPDATE_DELTA_TIME;
-            }
-            else if( PauseDeltaTime > MAX_FRAME_DELTA_TIME )
-            {
-                PauseDeltaTime = FIXED_UPDATE_DELTA_TIME;
-            }
-
-            if( HandleInput( PauseDeltaTime )==FALSE )
-            {
-                g_ActiveConfig.SetExitReason( GAME_EXIT_PLAYER_QUIT );
-            }
-
             if( g_ActiveConfig.GetExitReason() == GAME_EXIT_CONTINUE )
             {
                 ASSERT( g_StateMgr.IsBackgroundThreadRunning()==FALSE );
-                g_StateMgr.Update( PauseDeltaTime );
+                g_StateMgr.Update( LocalDeltaTime );
             }
         }
 
@@ -1378,7 +1335,7 @@ void RunGame( void )
         {
             if( g_nLogicFramesAfterLoad > 10 )
             {
-                RenderGame( Accumulator / FIXED_UPDATE_DELTA_TIME );
+                RenderGame( g_DeltaMgr.GetInterpolationAlpha() );
             }
 
             // render the pause
@@ -1590,15 +1547,15 @@ void AppMain( s32 argc, char* argv[] )
         g_NetworkMgr.LoadMissionComplete();
 
 
-        s_FrontEndDelta.Reset();
-        s_FrontEndDelta.Start();
+        xtimer SyncFrontEndTimer;
+        SyncFrontEndTimer.Start();
         //
         // We have to wait until the statemgr has said that everything is ready to go. This is what detects whether or
         // not the sync phase has completed.
         //
         while( (g_StateMgr.GetState() != SM_PLAYING_GAME) && (g_ActiveConfig.GetExitReason() == GAME_EXIT_CONTINUE) )
         {
-            UpdateFrontEnd();
+            UpdateFrontEnd( SyncFrontEndTimer );
         }
 
         // Finish off the last-minute loading stuff that cannot occur
@@ -1681,8 +1638,8 @@ void AppMain( s32 argc, char* argv[] )
             }
         }
 
-        s_FrontEndDelta.Reset();
-        s_FrontEndDelta.Start();
+        xtimer CooldownFrontEndTimer;
+        CooldownFrontEndTimer.Start();
 
         //
         // We have to wait until the statemgr has said all the subsystems have cooled down. This makes sure
@@ -1705,7 +1662,7 @@ void AppMain( s32 argc, char* argv[] )
         LOG_FLUSH();
         while( g_StateMgr.GetState() == CooldownState )
         {
-            UpdateFrontEnd();
+            UpdateFrontEnd( CooldownFrontEndTimer );
         }
     }
 

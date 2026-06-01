@@ -57,8 +57,8 @@ static f32 SlowYawMultiplier = 2.0f;
 static f32 FastYawMultiplier = 5.2f;
 static f32 StickModeChange   = 0.99f;
 static f32 InitialYawMultiplier = 0.05f; // the smaller the faster start with a big stick change
-static f32 MouseYawRadiansPerUnit = DEG_TO_RAD( 2.0f );
-static f32 MousePitchRadiansPerUnit = DEG_TO_RAD( 2.0f );
+static f32 MouseYawRadiansPerUnit = DEG_TO_RAD( 0.022f );
+static f32 MousePitchRadiansPerUnit = DEG_TO_RAD( 0.022f );
 static const f32 s_DistanceAtR25 = 700.0f;
 
 f32 HumanSpeedFactor  = 1.000f;
@@ -290,7 +290,7 @@ void player::UpdateRotation( const f32& rDeltaTime )
     }
 
 #ifndef X_EDITOR
-    if( g_IngamePad[m_ActivePlayerPad].GetLogical( ingame_pad::LOOK_VERTICAL   ).IsValue )
+    if( x_abs( g_IngamePad[m_ActivePlayerPad].GetLogical( ingame_pad::LOOK_VERTICAL   ).IsValue ) > 0.25f )
     {
         // do stuff?
     }
@@ -307,6 +307,17 @@ void player::UpdateRotation( const f32& rDeltaTime )
         }
     }
 #endif
+
+    if( rDeltaTime > F32_MIN )
+    {
+        m_PitchRate = x_MinAngleDiff( m_Pitch, OldPitch ) / rDeltaTime;
+        m_YawRate   = x_MinAngleDiff( m_Yaw,   OldYaw   ) / rDeltaTime;
+    }
+    else
+    {
+        m_PitchRate = 0.0f;
+        m_YawRate   = 0.0f;
+    }
 
     UpdateCameraShake( rDeltaTime );
 
@@ -445,8 +456,9 @@ void player::CalculateLookHorozOffset( f32 DeltaTime ) // YAW
     xbool bLookingRight = FALSE;
     f32 PreviousLookOffset = m_CurrentHorozRigOffset;
 
-    // The desired offsets for where the controller is currently placed.
-    f32 DesiredHorozOffset = m_RigLookMaxHorozOffset * m_fYawValue;
+    // The desired offsets for where the camera is currently placed.
+    f32 DesiredHorozOffset = m_RigLookMaxHorozOffset * (m_YawRate / FastYawMultiplier);
+    DesiredHorozOffset = MAX( -m_RigLookMaxHorozOffset, MIN( m_RigLookMaxHorozOffset, DesiredHorozOffset ) );
 
     // Update the offsets.
     if ( DesiredHorozOffset < m_CurrentHorozRigOffset )
@@ -486,8 +498,10 @@ void player::CalculateLookVertOffset( f32 DeltaTime ) // PITCH
     xbool bLookingDown = FALSE;
     f32 PreviousLookOffset = m_CurrentVertRigOffset;
 
-    // The desired offsets for where the controller is currently placed.
-    f32 DesiredVertOffset = m_RigLookMaxVertOffset * m_fPitchValue;
+    // The desired offsets for where the camera is currently placed.
+    f32 MaxPitchRate = MAX( F32_MIN, m_fPitchStickSensitivity );
+    f32 DesiredVertOffset = m_RigLookMaxVertOffset * (m_PitchRate / MaxPitchRate);
+    DesiredVertOffset = MAX( -m_RigLookMaxVertOffset, MIN( m_RigLookMaxVertOffset, DesiredVertOffset ) );
 
     // Update the offsets.
     if ( DesiredVertOffset < m_CurrentVertRigOffset )

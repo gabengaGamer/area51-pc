@@ -490,7 +490,6 @@ void dlg_load_game::OnUpdate( ui_win* pWin, f32 DeltaTime )
         g_StateMgr.IsBackgroundThreadRunning() )
     {
         g_AudioMgr.Update( DeltaTime );
-        input_UpdateState();
         g_UiMgr->ProcessInput( DeltaTime );
     }
 
@@ -513,6 +512,9 @@ void dlg_load_game::OnUpdate( ui_win* pWin, f32 DeltaTime )
 
         if( m_ElapsedTime > EndTime )
         {
+            if( g_AudioMgr.IsValidVoiceId( m_VoiceID ) )
+                g_AudioMgr.Release( m_VoiceID, 0.0f );
+
             m_SlideshowState = STATE_LOADING;
             m_ElapsedTime    = 0.0f;
         }

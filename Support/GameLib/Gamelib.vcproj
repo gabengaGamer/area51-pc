@@ -4600,6 +4600,12 @@
 				Name="DeltaMgr"
 				Filter="">
 				<File
+					RelativePath="..\DeltaMgr\DeltaMgr.cpp">
+				</File>
+				<File
+					RelativePath="..\DeltaMgr\DeltaMgr.hpp">
+				</File>
+				<File
 					RelativePath="..\DeltaMgr\InterpolationMgr.cpp">
 				</File>
 				<File

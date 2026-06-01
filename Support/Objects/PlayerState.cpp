@@ -307,7 +307,7 @@ void player::UpdateDeath( const f32& DeltaTime )
 {
     m_DeathTime += DeltaTime; 
 
-    xbool PrimaryPressed = (xbool)g_IngamePad[m_ActivePlayerPad].GetLogical( ingame_pad::ACTION_PRIMARY ).WasValue;
+    xbool PrimaryPressed = g_IngamePad[m_ActivePlayerPad].GetLogical( ingame_pad::ACTION_PRIMARY ).WasValue > 0.25f;
 
     if ( GetThirdPersonCamera() )
     {
@@ -796,7 +796,7 @@ void player::UpdateIdle( const f32& DeltaTime )
         }
 
         xbool bUsedFocusObject = UseFocusObject();
-        xbool bPressedReload   = !bUsedFocusObject && (g_IngamePad[m_ActivePlayerPad].GetLogical( ingame_pad::ACTION_RELOAD ).WasValue > 0.0f); 
+        xbool bPressedReload   = !bUsedFocusObject && (g_IngamePad[m_ActivePlayerPad].GetLogical( ingame_pad::ACTION_RELOAD ).WasValue > 0.25f);
 
         // Reloading?
         if( bPressedReload && !NearMutagenReservoir() )
@@ -920,7 +920,7 @@ void player::UpdateRun( const f32& DeltaTime )
         }
 
         xbool bUsedFocusObject = UseFocusObject();
-        xbool bPressedReload   = !bUsedFocusObject && (g_IngamePad[m_ActivePlayerPad].GetLogical( ingame_pad::ACTION_RELOAD ).WasValue > 0.0f); 
+        xbool bPressedReload   = !bUsedFocusObject && (g_IngamePad[m_ActivePlayerPad].GetLogical( ingame_pad::ACTION_RELOAD ).WasValue > 0.25f);
 
         // Reloading?
         if( bPressedReload && !NearMutagenReservoir() )
@@ -2150,7 +2150,7 @@ void player::UpdateRampDown( const f32& DeltaTime )
     if( m_AnimPlayer.IsAtEnd() )
     {
         xbool bUsedFocusObject = UseFocusObject();
-        xbool bPressedReload   = !bUsedFocusObject && (g_IngamePad[m_ActivePlayerPad].GetLogical( ingame_pad::ACTION_RELOAD ).WasValue > 0.0f); 
+        xbool bPressedReload   = !bUsedFocusObject && (g_IngamePad[m_ActivePlayerPad].GetLogical( ingame_pad::ACTION_RELOAD ).WasValue > 0.25f);
 
         if( bPressedReload && !NearMutagenReservoir() )
         {
@@ -2322,7 +2322,7 @@ void player::UpdateAltRampDown( const f32& DeltaTime )
     if( m_AnimPlayer.IsAtEnd() )
     {
         xbool bUsedFocusObject = UseFocusObject();
-        xbool bPressedReload   = !bUsedFocusObject && (g_IngamePad[m_ActivePlayerPad].GetLogical( ingame_pad::ACTION_RELOAD ).WasValue > 0.0f); 
+        xbool bPressedReload   = !bUsedFocusObject && (g_IngamePad[m_ActivePlayerPad].GetLogical( ingame_pad::ACTION_RELOAD ).WasValue > 0.25f);
 
         if( bPressedReload && !NearMutagenReservoir() )
         {
@@ -2726,7 +2726,7 @@ void player::UpdateZoomIdle( const f32& DeltaTime )
     }
 
     xbool bUsedFocusObject = UseFocusObject();
-    xbool bPressedReload   = !bUsedFocusObject && (g_IngamePad[m_ActivePlayerPad].GetLogical( ingame_pad::ACTION_RELOAD ).WasValue > 0.0f); 
+    xbool bPressedReload   = !bUsedFocusObject && (g_IngamePad[m_ActivePlayerPad].GetLogical( ingame_pad::ACTION_RELOAD ).WasValue > 0.25f);
 
     // Reloading?
     if( bPressedReload && !NearMutagenReservoir() )
@@ -2839,7 +2839,7 @@ void player::UpdateZoomRun( const f32& DeltaTime )
     }
 
     xbool bUsedFocusObject = UseFocusObject();
-    xbool bPressedReload   = !bUsedFocusObject && (g_IngamePad[m_ActivePlayerPad].GetLogical( ingame_pad::ACTION_RELOAD ).WasValue > 0.0f); 
+    xbool bPressedReload   = !bUsedFocusObject && (g_IngamePad[m_ActivePlayerPad].GetLogical( ingame_pad::ACTION_RELOAD ).WasValue > 0.25f);
 
     // Reloading?
     if( bPressedReload && !NearMutagenReservoir() )
@@ -3455,7 +3455,7 @@ void player::UpdateMissionFailed( f32 DeltaTime )
 #if !defined( X_EDITOR )
         pGameLogic->PlayerDied( m_NetSlot, m_NetSlot, 0 );
 #endif
-        xbool PrimaryPressed = (xbool)g_IngamePad[m_ActivePlayerPad].GetLogical( ingame_pad::ACTION_PRIMARY ).WasValue;
+        xbool PrimaryPressed = g_IngamePad[m_ActivePlayerPad].GetLogical( ingame_pad::ACTION_PRIMARY ).WasValue > 0.25f;
         if( PrimaryPressed )
         {
             m_bWantToSpawn = TRUE;

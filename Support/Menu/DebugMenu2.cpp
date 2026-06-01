@@ -13,48 +13,15 @@
 #include "StateMgr\StateMgr.hpp"
 #include "fx_RunTime\fx_Mgr.hpp"
 #include "CollisionMgr\PolyCache.hpp"
+#if defined( ENABLE_DEBUG_MENU )
+#include "InputMgr\GamePad.hpp"
+#endif
 
 
 //==============================================================================
 
 #if defined( ENABLE_DEBUG_MENU )
 
-//==============================================================================
-
-// define our target buttons
-#if defined TARGET_PS2
-#define NEXT_PAGE_BTN   INPUT_PS2_BTN_R1
-#define PREV_PAGE_BTN   INPUT_PS2_BTN_L1
-#define NEXT_ITEM_BTN   INPUT_PS2_BTN_L_DOWN
-#define PREV_ITEM_BTN   INPUT_PS2_BTN_L_UP
-#define NEXT_STATE_BTN  INPUT_PS2_BTN_L_RIGHT
-#define PREV_STATE_BTN  INPUT_PS2_BTN_L_LEFT
-#define SELECT_BTN      INPUT_PS2_BTN_SELECT
-#define START_BTN       INPUT_PS2_BTN_START
-#define ACTION_BTN      INPUT_PS2_BTN_CROSS
-#elif defined TARGET_XBOX
-#define NEXT_PAGE_BTN   INPUT_XBOX_R_TRIGGER
-#define PREV_PAGE_BTN   INPUT_XBOX_L_TRIGGER
-#define NEXT_ITEM_BTN   INPUT_XBOX_BTN_DOWN
-#define PREV_ITEM_BTN   INPUT_XBOX_BTN_UP
-#define NEXT_STATE_BTN  INPUT_XBOX_BTN_RIGHT
-#define PREV_STATE_BTN  INPUT_XBOX_BTN_LEFT
-#define SELECT_BTN      INPUT_XBOX_BTN_BACK
-#define START_BTN       INPUT_XBOX_BTN_START
-#define ACTION_BTN      INPUT_XBOX_BTN_X
-#elif defined TARGET_PC
-#define NEXT_PAGE_BTN   INPUT_KBD_PRIOR
-#define PREV_PAGE_BTN   INPUT_KBD_NEXT
-#define NEXT_ITEM_BTN   INPUT_KBD_DOWN
-#define PREV_ITEM_BTN   INPUT_KBD_UP
-#define NEXT_STATE_BTN  INPUT_KBD_RIGHT
-#define PREV_STATE_BTN  INPUT_KBD_LEFT
-#define SELECT_BTN      INPUT_KBD_TAB
-#define START_BTN       INPUT_KBD_RETURN
-#define ACTION_BTN      INPUT_KBD_SPACE
-#endif 
-
-//==============================================================================
 // implementation for debug menu class.
 //==============================================================================
 
@@ -185,9 +152,41 @@ xbool debug_menu2::IsActive( void )
 
 //==============================================================================
 
+xbool debug_menu2::WasTogglePressed( void ) const
+{
+    xbool ExitModifierDown = FALSE;
+    xbool ExitPressed      = FALSE;
+
+    for( s32 i = 0; i < MAX_LOCAL_PLAYERS; i++ )
+    {
+        const ingame_pad& Pad = g_IngamePad[i];
+
+        ExitModifierDown |= (Pad.GetLogical( ingame_pad::DEBUG_MENU_EXIT_MODIFIER ).IsValue  > 0.25f);
+        ExitPressed      |= (Pad.GetLogical( ingame_pad::DEBUG_MENU_EXIT          ).WasValue > 0.25f);
+    }
+
+    return( ExitModifierDown && ExitPressed );
+}
+
+//==============================================================================
+
 xbool debug_menu2::Update( f32 DeltaTime )
 {
-    static xbool CanExit = FALSE;
+    if( WasTogglePressed() )
+    {
+        if( IsActive() )
+        {
+            Disable();
+            return FALSE;
+        }
+
+        if( g_StateMgr.IsPaused() != TRUE )
+        {
+            Enable();
+        }
+
+        return TRUE;
+    }
 
     if( IsActive() )
     {
@@ -214,21 +213,32 @@ xbool debug_menu2::Update( f32 DeltaTime )
                 return TRUE;
         }
 
-        // if we wish to exit this menu, deactivate the current page.
-        if( input_IsPressed( SELECT_BTN ) && 
-            input_WasPressed( START_BTN ) &&
-            CanExit )
+        xbool NextPagePressed  = FALSE;
+        xbool PrevPagePressed  = FALSE;
+        xbool NextItemPressed  = FALSE;
+        xbool PrevItemPressed  = FALSE;
+        xbool IncrementPressed = FALSE;
+        xbool DecrementPressed = FALSE;
+        xbool ActionPressed    = FALSE;
+        xbool IncrementHeld    = FALSE;
+        xbool DecrementHeld    = FALSE;
+
+        for( s32 i = 0; i < MAX_LOCAL_PLAYERS; i++ )
         {
-            CanExit = FALSE;
-            Disable();
-            return FALSE;
-        }
-        else
-        {
-            CanExit = TRUE;
+            const ingame_pad& Pad = g_IngamePad[i];
+
+            NextPagePressed  |= (Pad.GetLogical( ingame_pad::DEBUG_MENU_NEXT_PAGE     ).WasValue > 0.25f);
+            PrevPagePressed  |= (Pad.GetLogical( ingame_pad::DEBUG_MENU_PREV_PAGE     ).WasValue > 0.25f);
+            NextItemPressed  |= (Pad.GetLogical( ingame_pad::DEBUG_MENU_NEXT_ITEM     ).WasValue > 0.25f);
+            PrevItemPressed  |= (Pad.GetLogical( ingame_pad::DEBUG_MENU_PREV_ITEM     ).WasValue > 0.25f);
+            IncrementPressed |= (Pad.GetLogical( ingame_pad::DEBUG_MENU_INCREMENT     ).WasValue > 0.25f);
+            DecrementPressed |= (Pad.GetLogical( ingame_pad::DEBUG_MENU_DECREMENT     ).WasValue > 0.25f);
+            ActionPressed    |= (Pad.GetLogical( ingame_pad::DEBUG_MENU_ACTION        ).WasValue > 0.25f);
+            IncrementHeld    |= (Pad.GetLogical( ingame_pad::DEBUG_MENU_INCREMENT     ).IsValue  > 0.25f);
+            DecrementHeld    |= (Pad.GetLogical( ingame_pad::DEBUG_MENU_DECREMENT     ).IsValue  > 0.25f);
         }
 
-        if( input_WasPressed( NEXT_PAGE_BTN ) )
+        if( NextPagePressed )
         {
             // Deactivate the current page
             m_Pages[m_iActivePage]->OnLoseFocus();
@@ -241,7 +251,7 @@ xbool debug_menu2::Update( f32 DeltaTime )
             // Activate the new page
             m_Pages[m_iActivePage]->OnFocus();
         }
-        else if( input_WasPressed( PREV_PAGE_BTN ) )
+        else if( PrevPagePressed )
         {
             // Deactivate the current page
             m_Pages[m_iActivePage]->OnLoseFocus();
@@ -254,17 +264,17 @@ xbool debug_menu2::Update( f32 DeltaTime )
             // Activate the new page
             m_Pages[m_iActivePage]->OnFocus();
         }
-        else if( input_WasPressed( NEXT_ITEM_BTN ) )
+        else if( NextItemPressed )
         {
             debug_menu_page* pPage = m_Pages[m_iActivePage];
             pPage->NextItem();
         }
-        else if( input_WasPressed( PREV_ITEM_BTN ) )
+        else if( PrevItemPressed )
         {
             debug_menu_page* pPage = m_Pages[m_iActivePage];
             pPage->PrevItem();
         }
-        else if( input_WasPressed(( NEXT_STATE_BTN ) ) )
+        else if( IncrementPressed )
         {
             debug_menu_page* pPage = m_Pages[m_iActivePage];
             if( pPage )
@@ -276,7 +286,7 @@ xbool debug_menu2::Update( f32 DeltaTime )
             fDelay = fInitialDelay;
             fElapsedTime = 0.0f;
         }
-        else if( input_WasPressed(( PREV_STATE_BTN ) ) )
+        else if( DecrementPressed )
         {
             debug_menu_page* pPage = m_Pages[m_iActivePage];
             if( pPage )
@@ -288,7 +298,7 @@ xbool debug_menu2::Update( f32 DeltaTime )
             fDelay = fInitialDelay;
             fElapsedTime = 0.0f;
         }
-        else if( input_WasPressed(( ACTION_BTN ) ) )
+        else if( ActionPressed )
         {
             debug_menu_page* pPage = m_Pages[m_iActivePage];
             if( pPage )
@@ -301,7 +311,7 @@ xbool debug_menu2::Update( f32 DeltaTime )
                 }
             }
         }
-        else if( input_IsPressed(( NEXT_STATE_BTN ) ) )
+        else if( IncrementHeld )
         {
             debug_menu_page* pPage = m_Pages[m_iActivePage];
             if( pPage )
@@ -327,7 +337,7 @@ xbool debug_menu2::Update( f32 DeltaTime )
                 }
             }
         }
-        else if( input_IsPressed(( PREV_STATE_BTN ) ) )
+        else if( DecrementHeld )
         {
             debug_menu_page* pPage = m_Pages[m_iActivePage];
             if( pPage )
