@@ -2291,8 +2291,8 @@ xbool on_this_button::Execute         ( trigger_object* pParent )
         return FALSE;
     }
 
-    xbool WasPressed = g_IngamePad[ pPlayer->GetActivePlayerPad() ].GetLogical( m_ButtonID ).WasValue > 0.25f;
-    xbool IsPressed = g_IngamePad[ pPlayer->GetActivePlayerPad() ].GetLogical( m_ButtonID ).IsValue > 0.25f;
+    xbool WasPressed = g_IngamePad[ pPlayer->GetActivePlayerPad() ].GetLogical( m_ButtonID ).GetWasValue() > 0.25f;
+    xbool IsPressed = g_IngamePad[ pPlayer->GetActivePlayerPad() ].GetLogical( m_ButtonID ).GetIsValue() > 0.25f;
     if ( WasPressed || IsPressed )
     {
         return TRUE;

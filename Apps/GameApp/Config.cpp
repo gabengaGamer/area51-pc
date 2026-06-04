@@ -61,7 +61,6 @@ void config_options::Load( const char* pFileName )
     IniFile.GetS32      ( "AutoServerType",     AutoServerType  );
     IniFile.GetS32      ( "AutoMutateMode",     AutoMutateMode  );
     IniFile.GetString   ( "AutoServerName",     AutoServerName  );
-    IniFile.GetS32      ( "AutoMonkeyMode",     AutoMonkeyMode  );
 }
 
 //==============================================================================

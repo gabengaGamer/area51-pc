@@ -197,8 +197,8 @@ mtwt s_MapToWeaponTable[] =
 xbool player::IsAltFiring( void )
 {
     return m_bIsMutated
-        ? (g_IngamePad[m_ActivePlayerPad].GetLogical( ingame_pad::ACTION_FIRE_CONTAGION ).IsValue > 0.25f)
-        : (g_IngamePad[m_ActivePlayerPad].GetLogical( ingame_pad::ACTION_SECONDARY ).IsValue > 0.25f);
+        ? (g_IngamePad[m_ActivePlayerPad].GetLogical( ingame_pad::ACTION_FIRE_CONTAGION ).GetIsValue() > 0.25f)
+        : (g_IngamePad[m_ActivePlayerPad].GetLogical( ingame_pad::ACTION_SECONDARY ).GetIsValue() > 0.25f);
 }
 
 //==============================================================================
@@ -207,8 +207,8 @@ xbool player::IsFiring( void )
 {
     xbool PrimaryDown 
         = m_bIsMutated 
-        ? (g_IngamePad[m_ActivePlayerPad].GetLogical( ingame_pad::ACTION_FIRE_PARASITES ).IsValue > 0.25f)
-        : (g_IngamePad[m_ActivePlayerPad].GetLogical( ingame_pad::ACTION_PRIMARY ).IsValue > 0.25f);
+        ? (g_IngamePad[m_ActivePlayerPad].GetLogical( ingame_pad::ACTION_FIRE_PARASITES ).GetIsValue() > 0.25f)
+        : (g_IngamePad[m_ActivePlayerPad].GetLogical( ingame_pad::ACTION_PRIMARY ).GetIsValue() > 0.25f);
     return( PrimaryDown && !m_bRespawnButtonPressed );
 }
 //==============================================================================

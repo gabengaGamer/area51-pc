@@ -293,7 +293,7 @@ public:
         ATTR_COLLIDABLE                 = BIT( 2),      // This object can collide with other objects
         ATTR_RENDERABLE                 = BIT( 3),      // This object is actually renderable in the normal game
         ATTR_TRANSPARENT                = BIT( 4),      // This is use with the render flag to indicate whether this objects uses a specialice pipe line.
-        ATTR_PLAYER                     = BIT( 5),      // This is a player, either local human player, remote human player, or monkey
+        ATTR_PLAYER                     = BIT( 5),      // This is a player, either local human player or remote human player
         ATTR_DAMAGEABLE                 = BIT( 6),      // This object can be destroyed
         ATTR_SOUND_SOURCE               = BIT( 7),      // This object can create emit sounds    
         ATTR_SPACIAL_ENTRY              = BIT( 8),      // Obj mgr knows when to add/remove from the spacial

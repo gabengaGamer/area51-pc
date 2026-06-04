@@ -78,62 +78,63 @@ tweak_handle MP_StrafeSpeedFactor_MutantTweak   ("MP_StrafeSpeedFactor_Mutant");
 
 void player::UpdateLookAccelerationFactors( f32 DeltaTime )
 {
-    switch( m_LookInputMode )
-    {
-    case LOOK_INPUT_GAMEPAD:
-        CalculateRotationAccelerationFactors( DeltaTime );
-        break;
-
-    case LOOK_INPUT_MOUSE:
-    case LOOK_INPUT_NONE:
-    default:
-        m_YawAccelFactor   = 0.0f;
-        m_PitchAccelFactor = 0.0f;
-        break;
-    }
+    CalculateRotationAccelerationFactors( DeltaTime );
 }
 
 //===========================================================================
 
 void player::ApplyGamepadLookRotation( const f32& rDeltaTime )
 {
-    const f32 AbsYawValue = x_abs( m_fYawValue );
-    const f32 YawChange = x_abs( m_fYawValue - m_fPreviousYawValue );
-
-    static f32 MaxYawChange = 0.0f;
-    if ( YawChange > MaxYawChange ) MaxYawChange = YawChange;
-
-    if ( (AbsYawValue > 0.0f) && (AbsYawValue < StickModeChange) )
+    if( m_YawLookInputMode == LOOK_INPUT_GAMEPAD )
     {
-        f32 P = m_fYawValue * SlowYawMultiplier * rDeltaTime;
-        m_Yaw   += P;
-        m_YawAccelFactor = P / (m_fYawValue * FastYawMultiplier * rDeltaTime * m_fCurrentYawAimModifier);
-        m_YawAccelFactor = MIN( 1.0f, m_YawAccelFactor );
-        m_YawAccelFactor = MAX( 0.0f, m_YawAccelFactor );
-    }
-    else
-    {
-        if ( YawChange >= StickModeChange )
+        const f32 AbsYawValue = x_abs( m_fYawValue );
+        const f32 YawChange = x_abs( m_fYawValue - m_fPreviousYawValue );
+
+        static f32 MaxYawChange = 0.0f;
+        if ( YawChange > MaxYawChange ) MaxYawChange = YawChange;
+
+        if ( (AbsYawValue > 0.0f) && (AbsYawValue < StickModeChange) )
         {
-            // The stick just moved really far, really fast, give ourselves a nice kick start rather than a soft start
-            m_YawAccelFactor = MAX( m_YawAccelFactor, rDeltaTime / (m_YawAccelTime * InitialYawMultiplier) );
+            f32 P = m_fYawValue * SlowYawMultiplier * rDeltaTime;
+            m_Yaw   += P;
+            m_YawAccelFactor = P / (m_fYawValue * FastYawMultiplier * rDeltaTime * m_fCurrentYawAimModifier);
             m_YawAccelFactor = MIN( 1.0f, m_YawAccelFactor );
             m_YawAccelFactor = MAX( 0.0f, m_YawAccelFactor );
         }
+        else
+        {
+            if ( YawChange >= StickModeChange )
+            {
+                // The stick just moved really far, really fast, give ourselves a nice kick start rather than a soft start
+                m_YawAccelFactor = MAX( m_YawAccelFactor, rDeltaTime / (m_YawAccelTime * InitialYawMultiplier) );
+                m_YawAccelFactor = MIN( 1.0f, m_YawAccelFactor );
+                m_YawAccelFactor = MAX( 0.0f, m_YawAccelFactor );
+            }
 
-        f32 P = m_fYawValue * FastYawMultiplier * rDeltaTime * m_YawAccelFactor * m_fCurrentYawAimModifier;
-        m_Yaw   += P;
+            f32 P = m_fYawValue * FastYawMultiplier * rDeltaTime * m_YawAccelFactor * m_fCurrentYawAimModifier;
+            m_Yaw   += P;
+        }
     }
 
-    m_Pitch += m_fPitchValue * rDeltaTime * m_fPitchStickSensitivity * m_PitchAccelFactor * m_fCurrentPitchAimModifier;
+    if( m_PitchLookInputMode == LOOK_INPUT_GAMEPAD )
+    {
+        m_Pitch += m_fPitchValue * rDeltaTime * m_fPitchStickSensitivity * m_PitchAccelFactor * m_fCurrentPitchAimModifier;
+    }
 }
 
 //===========================================================================
 
 void player::ApplyMouseLookRotation( void )
 {
-    m_Yaw   += m_fYawValue   * MouseYawRadiansPerUnit   * m_fCurrentYawAimModifier;
-    m_Pitch += m_fPitchValue * MousePitchRadiansPerUnit * m_fCurrentPitchAimModifier;
+    if( m_YawLookInputMode == LOOK_INPUT_MOUSE )
+    {
+        m_Yaw += m_fYawValue * MouseYawRadiansPerUnit * m_fCurrentYawAimModifier;
+    }
+
+    if( m_PitchLookInputMode == LOOK_INPUT_MOUSE )
+    {
+        m_Pitch += m_fPitchValue * MousePitchRadiansPerUnit * m_fCurrentPitchAimModifier;
+    }
 }
 
 //===========================================================================
@@ -197,20 +198,8 @@ void player::UpdateRotation( const f32& rDeltaTime )
     LOG_MESSAGE("player::UpdateRotation", "m_fCurrentYawAimModifier = %f", m_fCurrentYawAimModifier);
 #endif
 
-    switch( m_LookInputMode )
-    {
-    case LOOK_INPUT_GAMEPAD:
-        ApplyGamepadLookRotation( rDeltaTime );
-        break;
-
-    case LOOK_INPUT_MOUSE:
-        ApplyMouseLookRotation();
-        break;
-
-    case LOOK_INPUT_NONE:
-    default:
-        break;
-    }
+    ApplyGamepadLookRotation( rDeltaTime );
+    ApplyMouseLookRotation();
 
     m_Yaw += fAimYawOffset;
     m_Pitch  = MIN( m_PitchMax, MAX( m_PitchMin , m_Pitch ) );
@@ -290,7 +279,7 @@ void player::UpdateRotation( const f32& rDeltaTime )
     }
 
 #ifndef X_EDITOR
-    if( x_abs( g_IngamePad[m_ActivePlayerPad].GetLogical( ingame_pad::LOOK_VERTICAL   ).IsValue ) > 0.25f )
+    if( x_abs( g_IngamePad[m_ActivePlayerPad].GetLogical( ingame_pad::LOOK_VERTICAL   ).GetIsValue() ) > 0.25f )
     {
         // do stuff?
     }
@@ -318,6 +307,37 @@ void player::UpdateRotation( const f32& rDeltaTime )
         m_PitchRate = 0.0f;
         m_YawRate   = 0.0f;
     }
+
+#if !defined( CONFIG_RETAIL )
+//    {
+//        const radian PitchDelta = x_MinAngleDiff( m_Pitch, OldPitch );
+//        const radian YawDelta   = x_MinAngleDiff( m_Yaw,   OldYaw   );
+//
+//        if( (x_abs( PitchDelta ) > DEG_TO_RAD( 10.0f )) ||
+//            (x_abs( YawDelta   ) > DEG_TO_RAD( 10.0f )) )
+//        {
+//            x_DebugMsg( "player::UpdateRotation: Large view delta. dt:%f look:%d active:%d rawYaw:%f rawPitch:%f yaw:%f pitch:%f prevYaw:%f prevPitch:%f mouseDX:%d mouseDY:%d move:%f strafe:%f aimYaw:%f yawDeltaDeg:%f pitchDeltaDeg:%f yawMod:%f pitchMod:%f\n",
+//                        rDeltaTime,
+//                        m_LookInputMode,
+//                        g_Input.GetCurrentInputDevice(),
+//                        m_fRawControllerYaw,
+//                        m_fRawControllerPitch,
+//                        m_fYawValue,
+//                        m_fPitchValue,
+//                        m_fPreviousYawValue,
+//                        m_fPreviousPitchValue,
+//                        g_Input.GetMouseDeltaX(),
+//                        g_Input.GetMouseDeltaY(),
+//                        m_fMoveValue,
+//                        m_fStrafeValue,
+//                        RAD_TO_DEG( fAimYawOffset ),
+//                        RAD_TO_DEG( YawDelta ),
+//                        RAD_TO_DEG( PitchDelta ),
+//                        RAD_TO_DEG( m_YawMod ),
+//                        RAD_TO_DEG( m_PitchMod ) );
+//        }
+//    }
+#endif
 
     UpdateCameraShake( rDeltaTime );
 
@@ -542,7 +562,7 @@ void player::CalculateRotationAccelerationFactors( f32 DeltaTime )
     f32 AccelerationTime = m_YawAccelTime;
 
     // Update the yaw acceleration factor
-    if ( x_abs( m_fYawValue ) >= F32_MIN )
+    if ( (m_YawLookInputMode == LOOK_INPUT_GAMEPAD) && (x_abs( m_fYawValue ) >= F32_MIN) )
     {
         m_YawAccelFactor += ( DeltaTime / AccelerationTime );
         m_YawAccelFactor = MIN( 1.0f, m_YawAccelFactor );
@@ -552,7 +572,7 @@ void player::CalculateRotationAccelerationFactors( f32 DeltaTime )
         m_YawAccelFactor = 0.0f;
     }
     // Update the pitch acceleration factor
-    if ( x_abs( m_fPitchValue ) >= F32_MIN )
+    if ( (m_PitchLookInputMode == LOOK_INPUT_GAMEPAD) && (x_abs( m_fPitchValue ) >= F32_MIN) )
     {
         m_PitchAccelFactor += ( DeltaTime / m_PitchAccelTime );
         m_PitchAccelFactor = MIN( 1.0f, m_PitchAccelFactor );

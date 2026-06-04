@@ -21,7 +21,6 @@
 #include "DebugMenuPageGameplay.hpp"
 #include "DebugMenuPageAimAssist.hpp"
 #include "DebugMenuPageAIScript.hpp"
-#include "DebugMenuPageMonkey.hpp"
 #include "DebugMenuPageLogging.hpp"
 #include "DebugMenuAudio.hpp"
 #include "DebugMenuPerception.hpp"

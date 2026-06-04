@@ -744,7 +744,7 @@ void wheel::ApplyInput( f32 DeltaTime, f32 Accel, f32 Brake )
 
     if( !m_bPassive )
     {
-        if( input_IsPressed( INPUT_PS2_BTN_L2 ) )
+        if( g_Input.IsPressed( INPUT_PS2_BTN_L2 ) )
         {
             Acceleration *= 1.4f;
             TopForwardRotPerSecond *= 1.4f;
@@ -1226,7 +1226,7 @@ Timer.Stop();
     UpdateAudio(DeltaTime);
 
 
-    if( input_WasPressed( INPUT_PS2_BTN_L_UP ) )
+    if( g_Input.WasPressed( INPUT_PS2_BTN_L_UP ) )
         m_bDisplayShockInfo = !m_bDisplayShockInfo;
 }
 

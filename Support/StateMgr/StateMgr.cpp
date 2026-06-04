@@ -96,7 +96,6 @@
 #include "Parsing/textin.hpp"
 #include "AudioMgr/AudioMgr.hpp"
 #include "NetworkMgr/Voice/VoiceMgr.hpp"
-#include "inputmgr\inputmgr.hpp"
 #include "DeltaMgr\DeltaMgr.hpp"
 #include "GameLib/LevelLoader.hpp"
 #include "e_Memcard.hpp"
@@ -108,6 +107,8 @@
 extern xtimer g_DemoIdleTimer;
 #define DEMO_ENDGAME_TIMEOUT (15.0f)
 #endif
+
+//=========================================================================
 
 //=========================================================================
 //  Defines
@@ -790,6 +791,8 @@ void state_mgr::CheckControllers( void )
 {
 #if !defined(X_EDITOR)
 
+// TODO: GS: Handle PC normaly
+
 #ifdef TARGET_PC
     input_gadget ControllerQuery;
     input_gadget AnalogQuery;
@@ -802,6 +805,14 @@ void state_mgr::CheckControllers( void )
     if( !InSystemError() )
     {
         s32 ControllerID;
+#if defined(TARGET_PS2)
+        input_gadget ControllerQuery = INPUT_PS2_QRY_PAD_PRESENT;
+        input_gadget AnalogQuery     = INPUT_PS2_QRY_ANALOG_MODE;
+#elif defined(TARGET_XBOX)
+        input_gadget ControllerQuery = INPUT_XBOX_QRY_PAD_PRESENT;
+        input_gadget AnalogQuery     = INPUT_XBOX_QRY_ANALOG_MODE;
+#endif
+
         switch (m_State)
         {
         case SM_START_GAME:
@@ -822,11 +833,11 @@ void state_mgr::CheckControllers( void )
             // check all ingame pads with valid IDs
             for( s32 i = 0; i < MAX_LOCAL_PLAYERS; i++ )
             {
-                ControllerID = g_IngamePad[i].GetControllerID();
+                ControllerID = g_IngamePad[i].GetDeviceID();
                 if( ControllerID == -1 ) 
                     continue;
-                if( !(input_IsPresent( ControllerQuery, ControllerID ) &&
-                     input_IsPresent( AnalogQuery, ControllerID ) ) )
+                if( !(g_Input.IsPresent( ControllerQuery, ControllerID ) &&
+                     g_Input.IsPresent( AnalogQuery, ControllerID ) ) )
                 {
                     SystemError( SM_SYS_ERR_CONTROLLER, &ControllerID );
                     break;
@@ -837,8 +848,8 @@ void state_mgr::CheckControllers( void )
             // only check for "locked" controllers
             if( (ControllerID = GetActiveControllerID()) != -1 )
             {
-                if( !(input_IsPresent( ControllerQuery, ControllerID ) &&
-                      input_IsPresent( AnalogQuery, ControllerID ) ) )
+                if( !(g_Input.IsPresent( ControllerQuery, ControllerID ) &&
+                      g_Input.IsPresent( AnalogQuery, ControllerID ) ) )
                 {
                     SystemError( SM_SYS_ERR_CONTROLLER, &ControllerID );
                 }
@@ -1056,16 +1067,16 @@ void state_mgr::DummyScreen( const char* message, xbool canSkip, s32 waitTime )
         if( canSkip )
         {
             f32 DeltaTime = g_DeltaMgr.GetFixedUpdateDeltaTime();
-            g_InputMgr.BeginFrame( DeltaTime, FRONTEND_CONTEXT );
-            g_InputMgr.UpdateLocal( DeltaTime );
-            g_InputMgr.ClearFixedInput();
+            g_Input.SampleActionMaps( g_IngamePad, DeltaTime, FRONTEND_CONTEXT );
+            g_Input.CommitActionMapsFrame( g_IngamePad );
+            g_Input.ClearActionMapsFixed( g_IngamePad );
             { 
 			    for( s32 i = 0; i < MAX_LOCAL_PLAYERS; i++ )
                 {
                     const auto& pad = g_IngamePad[i];
-                    if( (pad.GetLogical( ingame_pad::UI_SELECT   ).IsValue > 0.25f) ||
-                        (pad.GetLogical( ingame_pad::UI_BACK     ).IsValue > 0.25f) ||
-                        (pad.GetLogical( ingame_pad::UI_ACTIVATE ).IsValue > 0.25f) )
+                    if( (pad.GetLogical( ingame_pad::UI_SELECT   ).GetIsValue() > 0.25f) ||
+                        (pad.GetLogical( ingame_pad::UI_BACK     ).GetIsValue() > 0.25f) ||
+                        (pad.GetLogical( ingame_pad::UI_ACTIVATE ).GetIsValue() > 0.25f) )
 			    	{
 			    		bSkip = TRUE;
 			    	}
@@ -1500,7 +1511,7 @@ void state_mgr::SetPaused( xbool bPause, s32 PausingController )
 
     if( !GameMgr.IsGameOnline() )
     {
-        input_SuppressFeedback(bPause);
+        g_Input.SuppressFeedback(bPause);
     }
 
     // check we are not exiting to the main menu
@@ -2187,7 +2198,7 @@ void state_mgr::UpdateDemoExit( void )
 		for( s32 i = 0; i < MAX_LOCAL_PLAYERS; i++ )
         {
             const auto& pad = g_IngamePad[i];
-            if( pad.GetLogical( ingame_pad::UI_HELP ).IsValue > 0.25f )
+            if( pad.GetLogical( ingame_pad::UI_HELP ).GetIsValue() > 0.25f )
 			{
 				Reboot( REBOOT_QUIT );
 			}
@@ -2211,7 +2222,7 @@ void state_mgr::EnterMainMenu( void )
     // the game is actually started.
     for( i=0; i<MAX_LOCAL_PLAYERS; i++ )
     {
-        g_IngamePad[i].SetControllerID(-1);
+        g_IngamePad[i].SetDeviceID(-1);
     }
 
 #ifdef USE_MOVIES
@@ -8157,7 +8168,7 @@ void state_mgr::ExitEndPause( void )
     g_AudioMgr.ResumeAll();
 
     // Set unpaused
-    input_SuppressFeedback( FALSE ); // SetPaused(xbool) is not always called!
+    g_Input.SuppressFeedback( FALSE ); // SetPaused(xbool) is not always called!
     m_bIsPaused = FALSE;
     m_bDoSystemError = FALSE;
     m_PopUp = NULL;
@@ -8221,7 +8232,7 @@ void state_mgr::ExitExitGame( void )
 
     for( s32 i=0; i< SM_MAX_PLAYERS; i++ )
     {
-        input_Feedback( 0.0f, 0.0f, i );
+        g_Input.Feedback( 0.0f, 0.0f, i );
     }
 }
 
@@ -8231,7 +8242,7 @@ void state_mgr::EnterPostGame( void )
 {
     for( s32 i=0; i< SM_MAX_PLAYERS; i++ )
     {
-        input_Feedback( 0.0f, 0.0f, i );
+        g_Input.Feedback( 0.0f, 0.0f, i );
     }
 
     g_UIMemCardMgr.Clear();
@@ -8361,7 +8372,7 @@ void state_mgr::UpdatePostGame( void )
                     g_StateMgr.SetControllerRequested(p, FALSE);
                 }
                 // these all need to be reset - they will be reassigned.
-                g_IngamePad[p].SetControllerID(-1);
+                g_IngamePad[p].SetDeviceID(-1);
             }
             game_config::Commit();
             SetState( SM_ONLINE_CONNECT );
@@ -8388,7 +8399,7 @@ void state_mgr::UpdatePostGame( void )
         for(s32 p=0; p < SM_MAX_PLAYERS; p++)
         {
             g_StateMgr.SetControllerRequested(p, FALSE);
-            g_IngamePad[p].SetControllerID(-1);
+            g_IngamePad[p].SetDeviceID(-1);
         }
     }
 }
@@ -8403,7 +8414,7 @@ void state_mgr::ExitPostGame( void )
 
 void state_mgr::EnterAutosaveMenu( void )
 {
-    input_SuppressFeedback( TRUE );
+    g_Input.SuppressFeedback( TRUE );
 
     // pause the ingame audio
     g_AudioMgr.PauseAll();
@@ -8564,7 +8575,7 @@ void state_mgr::EnterEndAutosave( void )
     m_CurrentDialog = g_UiMgr->OpenDialog( g_UiUserID, "end pause", mainarea, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER );
     g_UiMgr->SetUserBackground( g_UiUserID, "" );
 
-    input_SuppressFeedback( FALSE );
+    g_Input.SuppressFeedback( FALSE );
 }
 
 //=========================================================================
@@ -10525,9 +10536,9 @@ static void s_BackgroundRenderer( void )
             g_NetworkMgr.Update( Delta );
 
             // Update input mgr
-            g_InputMgr.BeginFrame( Delta, FRONTEND_CONTEXT );
-            g_InputMgr.UpdateLocal( Delta );
-            g_InputMgr.ClearFixedInput();
+            g_Input.SampleActionMaps( g_IngamePad, Delta, FRONTEND_CONTEXT );
+            g_Input.CommitActionMapsFrame( g_IngamePad );
+            g_Input.ClearActionMapsFixed( g_IngamePad );
 
             // Update UI
             g_StateMgr.Update( Delta );
@@ -10757,7 +10768,7 @@ void state_mgr::Reboot( reboot_reason Reason )
     g_LevelLoader.UnmountDefaultFilesystems();
     g_MemcardHardware.Kill();
     g_IoMgr.Kill();
-    input_Kill();
+    g_Input.Kill();
     eng_Reboot( Reason );
 }
 

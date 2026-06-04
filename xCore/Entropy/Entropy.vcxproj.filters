@@ -45,6 +45,9 @@
     <ClCompile Include="Common\e_Input.cpp">
       <Filter>Common</Filter>
     </ClCompile>
+    <ClCompile Include="Common\e_InputActions.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
     <ClCompile Include="Common\e_ScratchMem.cpp">
       <Filter>Common</Filter>
     </ClCompile>
@@ -150,7 +153,6 @@
     <ClCompile Include="MemCard\memcard_pc.cpp">
       <Filter>MemCard</Filter>
     </ClCompile>
-    <ClCompile Include="e_Profile.cpp" />
     <ClCompile Include="D3DEngine\d3deng_font.cpp">
       <Filter>PC</Filter>
     </ClCompile>
@@ -235,12 +237,10 @@
     <ClInclude Include="e_Audio.hpp" />
     <ClInclude Include="e_Engine.hpp" />
     <ClInclude Include="e_Input.hpp" />
-    <ClInclude Include="e_Input_Gadgets.hpp" />
+    <ClInclude Include="e_InputActions.hpp" />
     <ClInclude Include="e_Input_Gadget_Defines.hpp" />
     <ClInclude Include="e_Network.hpp" />
-    <ClInclude Include="e_Profile.hpp" />
     <ClInclude Include="e_VRAM.hpp" />
-    <ClInclude Include="Common\e_View_inline.hpp" />
     <ClInclude Include="D3DEngine\d3deng_font.hpp">
       <Filter>PC</Filter>
     </ClInclude>

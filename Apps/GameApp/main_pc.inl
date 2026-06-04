@@ -31,15 +31,15 @@ void FreeCam( f32 DeltaTime )
     f32 Y    = 0.0f;
     f32 Z    = 0.0f;
 
-    if( input_IsPressed( INPUT_MOUSE_BTN_L ) ) Move *= 4.0f;
-    if( input_IsPressed( INPUT_MOUSE_BTN_R ) ) Move *= 0.2f;
+    if( g_Input.IsPressed( INPUT_MOUSE_BTN_L ) ) Move *= 4.0f;
+    if( g_Input.IsPressed( INPUT_MOUSE_BTN_R ) ) Move *= 0.2f;
     
-    if( input_IsPressed( INPUT_KBD_A ) ) X =  Move;
-    if( input_IsPressed( INPUT_KBD_D ) ) X = -Move;
-    if( input_IsPressed( INPUT_KBD_Q ) ) Y =  Move;
-    if( input_IsPressed( INPUT_KBD_Z ) ) Y = -Move;
-    if( input_IsPressed( INPUT_KBD_W ) ) Z =  Move;
-    if( input_IsPressed( INPUT_KBD_S ) ) Z = -Move;
+    if( g_Input.IsPressed( INPUT_KBD_A ) ) X =  Move;
+    if( g_Input.IsPressed( INPUT_KBD_D ) ) X = -Move;
+    if( g_Input.IsPressed( INPUT_KBD_Q ) ) Y =  Move;
+    if( g_Input.IsPressed( INPUT_KBD_Z ) ) Y = -Move;
+    if( g_Input.IsPressed( INPUT_KBD_W ) ) Z =  Move;
+    if( g_Input.IsPressed( INPUT_KBD_S ) ) Z = -Move;
     
     View.Translate( vector3(    X, 0.0f,    Z ), view::VIEW  );
     View.Translate( vector3( 0.0f,    Y, 0.0f ), view::WORLD );
@@ -47,8 +47,8 @@ void FreeCam( f32 DeltaTime )
     radian Pitch, Yaw;
     View.GetPitchYaw( Pitch, Yaw );
     
-    Pitch += (f32)g_InputMgr.GetMouseDeltaY() * Rot;
-    Yaw   -= (f32)g_InputMgr.GetMouseDeltaX() * Rot;
+    Pitch += (f32)g_Input.GetMouseDeltaY() * Rot;
+    Yaw   -= (f32)g_Input.GetMouseDeltaX() * Rot;
     View.SetRotation( radian3( Pitch, Yaw, R_0 ) );
 	
     // Move the player.
@@ -66,7 +66,7 @@ xbool HandleInputPlatform( f32 DeltaTime )
     static s32 s_DisplayStats = 0;
     static s32 s_DisplayMode  = 0;
 
-    if( input_WasPressed( INPUT_KBD_F10 ) )
+    if( g_Input.WasPressed( INPUT_KBD_F10 ) )
     {
         //d3deng_ToggleWindowMode();
     }
@@ -76,7 +76,7 @@ xbool HandleInputPlatform( f32 DeltaTime )
 //    //=========================================================================
 //    
 //    // Smart controls with - and = keys
-//    if( input_WasPressed( INPUT_KBD_MINUS ) )
+//    if( g_Input.WasPressed( INPUT_KBD_MINUS ) )
 //    {
 //        s32 currentLevel = d3deng_GetMsaa();
 //        s32 newLevel = 1;
@@ -94,7 +94,7 @@ xbool HandleInputPlatform( f32 DeltaTime )
 //        x_DebugMsg( "MSAA: Decreased to %dx\n", d3deng_GetMsaa() );
 //    }
 //    
-//    if( input_WasPressed( INPUT_KBD_EQUALS ) )
+//    if( g_Input.WasPressed( INPUT_KBD_EQUALS ) )
 //    {
 //        s32 currentLevel = d3deng_GetMsaa();
 //        s32 newLevel = 8;
@@ -121,13 +121,13 @@ xbool HandleInputPlatform( f32 DeltaTime )
 
     FreeCam( DeltaTime );
 
-    if( input_IsPressed ( INPUT_KBD_LSHIFT ) &&
-        input_WasPressed( INPUT_KBD_C ) )
+    if( g_Input.IsPressed ( INPUT_KBD_LSHIFT ) &&
+        g_Input.WasPressed( INPUT_KBD_C ) )
         SaveCamera();
 
 #if ENABLE_RENDER_STATS
-    if( input_IsPressed ( INPUT_KBD_LSHIFT ) &&
-        input_WasPressed( INPUT_KBD_P ) )
+    if( g_Input.IsPressed ( INPUT_KBD_LSHIFT ) &&
+        g_Input.WasPressed( INPUT_KBD_P ) )
     {
         switch( s_DisplayStats )
         {

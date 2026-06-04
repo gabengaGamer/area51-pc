@@ -16,11 +16,6 @@
 #include "StateMgr\StateMgr.hpp"
 #include "stringmgr\stringmgr.hpp"
 
-
-#ifndef CONFIG_RETAIL
-#include "InputMgr\monkey.hpp"
-#endif
-
 //=========================================================================
 //  Main Menu Dialog
 //=========================================================================
@@ -292,10 +287,6 @@ void dlg_pause_mp::OnPadSelect( ui_win* pWin )
         if( pWin == (ui_win*)m_pButtonQuit )
         {
 
-#ifndef CONFIG_RETAIL
-            if ( g_MonkeyOptions.Enabled && g_MonkeyOptions.ModeEnabled[MONKEY_MENUMONKEY] )
-                return;
-#endif
 
             if( m_PopUp == NULL )
             {

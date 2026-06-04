@@ -29,10 +29,8 @@ struct config_options
     s32         AutoLevel;              // If AutoCampaign or AutoServer.
     s32         AutoServerType;         // Only used if AutoServer.  GameMgr.hpp.
     s32         AutoMutateMode;         // Only used if AutoServer.  GameMgr.hpp.
-    s32         AutoMonkeyMode;         // Used for specifying monkey settings on startup
     char        AutoServerName[ 32 ];   // Only used if AutoServer/Client.
 
-    // Monkey options.
     // InfiniteAmmo.
     // Controller configuration.
     // Force fake players in scoreboard.

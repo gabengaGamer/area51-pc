@@ -24,7 +24,6 @@
 #include "Obj_Mgr\Obj_Mgr.hpp"
 #include "Render\Render.hpp"
 #include "AudioMgr\AudioMgr.hpp"
-#include "inputmgr\inputmgr.hpp"
 #include "IOManager\io_mgr.hpp"
 #include "NetworkMgr\NetworkMgr.hpp"
 #include "NetworkMgr\GameMgr.hpp"
@@ -256,9 +255,7 @@ void        Render                  ( void );
 //  PLATFORM SPECIFIC INCLUDES
 //==============================================================================
 
-#if !defined(X_RETAIL) && !defined(TARGET_PC)
 #include "InputMgr\GamePad.hpp"
-#endif
 
 #ifdef TARGET_PC
 #include "main_pc.inl"
@@ -288,12 +285,30 @@ static u32 GetGameInputContext( void )
 
 //==============================================================================
 
+static s32 WasPausePressed( void )
+{
+    for( s32 i = 0; i < MAX_LOCAL_PLAYERS; i++ )
+    {
+        s32 DeviceID = g_IngamePad[i].GetDeviceID();
+
+        if( DeviceID == -1 )
+            continue;
+
+        if( g_IngamePad[i].GetLogical( ingame_pad::ACTION_PAUSE_CONTEXT ).GetWasValue() > 0.25f )
+            return DeviceID;
+    }
+
+    return -1;
+}
+
+//==============================================================================
+
 xbool HandleInput( f32 DeltaTime )
 {
     CONTEXT( "HandleInput" );
 
     // Check for exit message
-    if( input_IsPressed( INPUT_MSG_EXIT ) )
+    if( g_Input.IsPressed( INPUT_MSG_EXIT ) )
         return( FALSE );
 
     #if defined( ENABLE_DEBUG_MENU )
@@ -307,7 +322,7 @@ xbool HandleInput( f32 DeltaTime )
 
     {
     #if defined( TARGET_PC )
-        if( input_WasPressed( INPUT_KBD_GRAVE ) )
+        if( g_Input.WasPressed( INPUT_KBD_GRAVE ) )
         {
             FreeCamDebounce++;
             if( FreeCamDebounce == 1 )
@@ -344,13 +359,13 @@ xbool HandleInput( f32 DeltaTime )
             // check for pause 
             s32 PausingController;
 
-            PausingController = g_InputMgr.WasPausePressed( g_StateMgr.IsPaused() );
+            PausingController = WasPausePressed();
 
             if( PausingController != -1 )
             {
                 // Toggle the pause state.
                 g_StateMgr.SetPaused( !g_StateMgr.IsPaused(), PausingController );
-                g_InputMgr.ClearFixedInput();
+                g_Input.ClearActionMapsFixed( g_IngamePad );
             #if CONFIG_IS_DEMO
                 g_DemoIdleTimer.Reset();
                 g_DemoIdleTimer.Start();
@@ -412,7 +427,7 @@ void Update( f32 DeltaTime )
 
     if( !g_StateMgr.IsPaused() )
     {
-        g_InputMgr.UpdateFixed( DeltaTime );
+        g_Input.CommitActionMapsFixed( g_IngamePad );
     }
 
     #ifndef X_RETAIL
@@ -510,15 +525,15 @@ void UpdateFrontEnd( xtimer& FrontEndTimer )
 
     ASSERT( g_StateMgr.IsBackgroundThreadRunning() == FALSE );
 
-    g_InputMgr.BeginFrame( DeltaTime, FRONTEND_CONTEXT );
-    g_InputMgr.UpdateLocal( DeltaTime );
-    g_InputMgr.ClearFixedInput();
+    g_Input.SampleActionMaps( g_IngamePad, DeltaTime, FRONTEND_CONTEXT );
+    g_Input.CommitActionMapsFrame( g_IngamePad );
+    g_Input.ClearActionMapsFixed( g_IngamePad );
 
     g_StateMgr.CheckControllers();
 
     #ifdef TARGET_PC
     // Bail if the app is closed
-    if( input_IsPressed( INPUT_MSG_EXIT ) )
+    if( g_Input.IsPressed( INPUT_MSG_EXIT ) )
         return;
     #endif
     g_NetworkMgr.Update( DeltaTime );
@@ -1179,13 +1194,17 @@ void RunFrontEnd( void )
         UpdateFrontEnd( FrontEndTimer );
 
 #ifdef TARGET_PC
-        if( input_IsPressed( INPUT_MSG_EXIT ) )
+        if( g_Input.IsPressed( INPUT_MSG_EXIT ) )
             break;
 #endif
     }
 
     // update input - flush last keypress
-    input_UpdateState();
+    g_Input.ClearFrameInput();
+    while( g_Input.PollHardwareState() )
+    {
+        g_Input.SampleFrameInput();
+    }
 
     // unload string tables
     g_StringTableMgr.UnloadTable( "lore" );
@@ -1268,12 +1287,12 @@ void RunGame( void )
 
         DeltaTime = g_DeltaMgr.GetDeltaTime();
 
-        if( g_InputMgr.BeginFrame( LocalDeltaTime, GetGameInputContext() ) )
+        if( g_Input.SampleActionMaps( g_IngamePad, LocalDeltaTime, GetGameInputContext() ) )
         {
             g_ActiveConfig.SetExitReason( GAME_EXIT_PLAYER_QUIT );
         }
 
-        g_InputMgr.UpdateLocal( LocalDeltaTime );
+        g_Input.CommitActionMapsFrame( g_IngamePad );
 
         if( HandleInput( LocalDeltaTime ) == FALSE )
         {
@@ -1282,13 +1301,13 @@ void RunGame( void )
 
         if( g_StateMgr.IsPaused() )
         {
-            g_InputMgr.ClearFixedInput();
+            g_Input.ClearActionMapsFixed( g_IngamePad );
         }
 
         if( g_ActiveConfig.GetExitReason() != GAME_EXIT_CONTINUE )
             break;
 
-        g_InputMgr.PrepareFixedInput( g_DeltaMgr.GetPendingFixedStepCount() );
+        g_Input.PrepareActionMapsFixed( g_IngamePad, g_DeltaMgr.GetPendingFixedStepCount() );
 
         //
         // We are "behind the times".  Catch up to the present.
@@ -1318,7 +1337,7 @@ void RunGame( void )
         //
 
         #ifdef TARGET_PC
-        if( input_IsPressed( INPUT_MSG_EXIT ) )
+        if( g_Input.IsPressed( INPUT_MSG_EXIT ) )
             break; // GAME OVER, DUDE!
         #endif
 
@@ -1514,7 +1533,7 @@ void AppMain( s32 argc, char* argv[] )
         LOG_MEMMARK( "LoadLevel" );
         // Bail if the app is closed
 #ifdef TARGET_PC
-        if( input_IsPressed( INPUT_MSG_EXIT ) )
+        if( g_Input.IsPressed( INPUT_MSG_EXIT ) )
             break;
 #endif
 
@@ -1602,11 +1621,11 @@ void AppMain( s32 argc, char* argv[] )
 
         // Clean out any existing feedback info.
         // This prevents us from rumbling when input updates next time.
-        input_ClearFeedback();
+        g_Input.ClearFeedback();
 
         // Bail if the app is closed
 #ifdef TARGET_PC
-        if( input_IsPressed( INPUT_MSG_EXIT ) )
+        if( g_Input.IsPressed( INPUT_MSG_EXIT ) )
         {
             g_LevelLoader.UnloadLevel( TRUE );
             break;

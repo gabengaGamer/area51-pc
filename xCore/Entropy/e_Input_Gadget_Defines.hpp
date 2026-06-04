@@ -9,8 +9,8 @@
   This file allows you to define multiple gadget lists without the need to keep
   retyping the types or keeping multiple lists in sync.
   .
-  It is currently used to define the gadget enums (see e_input_gadgets.hpp) and
-  a string name lookup table (see e_input.hpp).
+  It is currently used to define the gadget enum, string name lookup table, and
+  metadata table.
 
   NOTE:
 
@@ -20,10 +20,13 @@
    BEGIN_GADGETS                                 - Begins gadget list
    DEFINE_GADGET ( __gadget__ )                  - Defines a gadget with the next consecutive value
    DEFINE_GADGET_VALUE ( __gadget__, __value__ ) - Defines a gadget with a given value
+   DEFINE_GADGET_RANGE ( __first__, __last__,
+                         __platform__, __device__,
+                         __value_kind__, __control_kind__,
+                         __flags__ )             - Metadata range hook
    END_GADGETS                                   - Ends the gadget list    
 
 */
-
 
 //==============================================================================
 // DEFINE THE GADGETS LIST
@@ -34,20 +37,30 @@ BEGIN_GADGETS
     //=====================================================================
     // Misc input values
     //=====================================================================
+
     DEFINE_GADGET ( INPUT_UNDEFINED )
 
     //=====================================================================
     // General Messages for the input system
     //=====================================================================
+
     DEFINE_GADGET ( INPUT_MSG__BEGIN )
 
     DEFINE_GADGET ( INPUT_MSG_EXIT )
 
     DEFINE_GADGET ( INPUT_MSG__END )
+    DEFINE_GADGET_RANGE( INPUT_MSG_EXIT,
+                         INPUT_MSG_EXIT,
+                         INPUT_PLATFORM_NONE,
+                         INPUT_DEVICE_MESSAGE,
+                         INPUT_VALUE_DIGITAL,
+                         INPUT_CONTROL_MESSAGE,
+                         INPUT_GADGET_FLAG_MESSAGE )
 
     //=====================================================================
     // General question for the input system
     //=====================================================================
+
     DEFINE_GADGET ( INPUT_QRY__BEGIN )
 
 
@@ -60,6 +73,13 @@ BEGIN_GADGETS
     DEFINE_GADGET ( INPUT_PS2_QRY_ANALOG_MODE )
     DEFINE_GADGET ( INPUT_PS2_QRY_MOUSE_PRESENT)
     DEFINE_GADGET ( INPUT_PS2_QRY_KBD_PRESENT)
+    DEFINE_GADGET_RANGE( INPUT_PS2_QRY_PAD_PRESENT,
+                         INPUT_PS2_QRY_KBD_PRESENT,
+                         INPUT_PLATFORM_PS2,
+                         INPUT_DEVICE_GAMEPAD,
+                         INPUT_VALUE_QUERY,
+                         INPUT_CONTROL_NONE,
+                         INPUT_GADGET_FLAG_QUERY )
             
     DEFINE_GADGET ( INPUT_PS2_BTN_L2 )         //0 ANALOG            
     DEFINE_GADGET ( INPUT_PS2_BTN_R2 )         //1 ANALOG            
@@ -80,11 +100,25 @@ BEGIN_GADGETS
     DEFINE_GADGET ( INPUT_PS2_BTN_L_RIGHT )    //13 ANALOG            
     DEFINE_GADGET ( INPUT_PS2_BTN_L_DOWN )     //14 ANALOG            
     DEFINE_GADGET ( INPUT_PS2_BTN_L_LEFT )     //15 ANALOG            
-    
+    DEFINE_GADGET_RANGE( INPUT_PS2_BTN_L2,
+                         INPUT_PS2_BTN_L_LEFT,
+                         INPUT_PLATFORM_PS2,
+                         INPUT_DEVICE_GAMEPAD,
+                         INPUT_VALUE_DIGITAL,
+                         INPUT_CONTROL_BUTTON,
+                         INPUT_GADGET_FLAG_NONE )
+
     DEFINE_GADGET ( INPUT_PS2_STICK_LEFT_X )   // ANALOG            
     DEFINE_GADGET ( INPUT_PS2_STICK_LEFT_Y )   // ANALOG            
     DEFINE_GADGET ( INPUT_PS2_STICK_RIGHT_X )  // ANALOG            
     DEFINE_GADGET ( INPUT_PS2_STICK_RIGHT_Y )  // ANALOG            
+    DEFINE_GADGET_RANGE( INPUT_PS2_STICK_LEFT_X,
+                         INPUT_PS2_STICK_RIGHT_Y,
+                         INPUT_PLATFORM_PS2,
+                         INPUT_DEVICE_GAMEPAD,
+                         INPUT_VALUE_ABSOLUTE_AXIS,
+                         INPUT_CONTROL_STICK_AXIS,
+                         INPUT_GADGET_FLAG_NONE )
 
     DEFINE_GADGET ( INPUT_PS2__END )
 
@@ -100,6 +134,13 @@ BEGIN_GADGETS
     DEFINE_GADGET ( INPUT_XBOX_QRY_ANALOG_MODE )
     DEFINE_GADGET ( INPUT_XBOX_QRY_MOUSE_PRESENT)
     DEFINE_GADGET ( INPUT_XBOX_QRY_KBD_PRESENT)
+    DEFINE_GADGET_RANGE( INPUT_XBOX_QRY_PAD_PRESENT,
+                         INPUT_XBOX_QRY_KBD_PRESENT,
+                         INPUT_PLATFORM_XBOX,
+                         INPUT_DEVICE_GAMEPAD,
+                         INPUT_VALUE_QUERY,
+                         INPUT_CONTROL_NONE,
+                         INPUT_GADGET_FLAG_QUERY )
 
     DEFINE_GADGET ( INPUT_XBOX__DIGITAL_BUTTONS_BEGIN )
     DEFINE_GADGET ( INPUT_XBOX_BTN_START   )
@@ -111,6 +152,13 @@ BEGIN_GADGETS
     DEFINE_GADGET ( INPUT_XBOX_BTN_L_STICK )
     DEFINE_GADGET ( INPUT_XBOX_BTN_R_STICK )
     DEFINE_GADGET ( INPUT_XBOX__DIGITAL_BUTTONS_END )
+    DEFINE_GADGET_RANGE( INPUT_XBOX_BTN_START,
+                         INPUT_XBOX_BTN_R_STICK,
+                         INPUT_PLATFORM_XBOX,
+                         INPUT_DEVICE_GAMEPAD,
+                         INPUT_VALUE_DIGITAL,
+                         INPUT_CONTROL_BUTTON,
+                         INPUT_GADGET_FLAG_NONE )
 
     DEFINE_GADGET ( INPUT_XBOX__ANALOG_BUTTONS_BEGIN )
     DEFINE_GADGET ( INPUT_XBOX_BTN_WHITE )
@@ -119,9 +167,23 @@ BEGIN_GADGETS
     DEFINE_GADGET ( INPUT_XBOX_BTN_B )
     DEFINE_GADGET ( INPUT_XBOX_BTN_X )
     DEFINE_GADGET ( INPUT_XBOX_BTN_Y )
+    DEFINE_GADGET_RANGE( INPUT_XBOX_BTN_WHITE,
+                         INPUT_XBOX_BTN_Y,
+                         INPUT_PLATFORM_XBOX,
+                         INPUT_DEVICE_GAMEPAD,
+                         INPUT_VALUE_DIGITAL,
+                         INPUT_CONTROL_BUTTON,
+                         INPUT_GADGET_FLAG_NONE )
     DEFINE_GADGET ( INPUT_XBOX_L_TRIGGER )
     DEFINE_GADGET ( INPUT_XBOX_R_TRIGGER )
     DEFINE_GADGET ( INPUT_XBOX__ANALOG_BUTTONS_END )
+    DEFINE_GADGET_RANGE( INPUT_XBOX_L_TRIGGER,
+                         INPUT_XBOX_R_TRIGGER,
+                         INPUT_PLATFORM_XBOX,
+                         INPUT_DEVICE_GAMEPAD,
+                         INPUT_VALUE_DIGITAL,
+                         INPUT_CONTROL_TRIGGER,
+                         INPUT_GADGET_FLAG_NONE )
 
     DEFINE_GADGET ( INPUT_XBOX__STICKS_BEGIN )
     DEFINE_GADGET ( INPUT_XBOX_STICK_LEFT_X  )
@@ -129,6 +191,13 @@ BEGIN_GADGETS
     DEFINE_GADGET ( INPUT_XBOX_STICK_RIGHT_X )
     DEFINE_GADGET ( INPUT_XBOX_STICK_RIGHT_Y )
     DEFINE_GADGET ( INPUT_XBOX__STICKS_END   )
+    DEFINE_GADGET_RANGE( INPUT_XBOX_STICK_LEFT_X,
+                         INPUT_XBOX_STICK_RIGHT_Y,
+                         INPUT_PLATFORM_XBOX,
+                         INPUT_DEVICE_GAMEPAD,
+                         INPUT_VALUE_ABSOLUTE_AXIS,
+                         INPUT_CONTROL_STICK_AXIS,
+                         INPUT_GADGET_FLAG_NONE )
 
     DEFINE_GADGET ( INPUT_XBOX__END )
 
@@ -136,11 +205,13 @@ BEGIN_GADGETS
     //=====================================================================
     // PC Pad gadgets begin
     //=====================================================================
+
     DEFINE_GADGET ( INPUT_PC__BEGIN )
 
     //---------------------------------------------------------------------
     // PC DIGITAL GADGETS
     //---------------------------------------------------------------------
+
     DEFINE_GADGET ( INPUT_PC__DIGITAL )
 
     DEFINE_GADGET ( INPUT_PC_BTN_0 )     
@@ -175,10 +246,18 @@ BEGIN_GADGETS
     DEFINE_GADGET ( INPUT_PC_BTN_29 )    
     DEFINE_GADGET ( INPUT_PC_BTN_30 )    
     DEFINE_GADGET ( INPUT_PC_BTN_31 )    
+    DEFINE_GADGET_RANGE( INPUT_PC_BTN_0,
+                         INPUT_PC_BTN_31,
+                         INPUT_PLATFORM_PC,
+                         INPUT_DEVICE_GAMEPAD,
+                         INPUT_VALUE_DIGITAL,
+                         INPUT_CONTROL_BUTTON,
+                         INPUT_GADGET_FLAG_NONE )
 
     //---------------------------------------------------------------------
     // PC ANALOG GADGETS
     //---------------------------------------------------------------------
+
     DEFINE_GADGET ( INPUT_PC__ANALOG )
 
     DEFINE_GADGET ( INPUT_PC_STICK_X ) 
@@ -187,6 +266,13 @@ BEGIN_GADGETS
     DEFINE_GADGET ( INPUT_PC_STICK_RX )
     DEFINE_GADGET ( INPUT_PC_STICK_RY )
     DEFINE_GADGET ( INPUT_PC_STICK_RZ )
+    DEFINE_GADGET_RANGE( INPUT_PC_STICK_X,
+                         INPUT_PC_STICK_RZ,
+                         INPUT_PLATFORM_PC,
+                         INPUT_DEVICE_GAMEPAD,
+                         INPUT_VALUE_ABSOLUTE_AXIS,
+                         INPUT_CONTROL_STICK_AXIS,
+                         INPUT_GADGET_FLAG_NONE )
 
     DEFINE_GADGET ( INPUT_PC__END )
 
@@ -194,11 +280,13 @@ BEGIN_GADGETS
     //=====================================================================
     // Mouse gadgets begins
     //=====================================================================
+
     DEFINE_GADGET ( INPUT_MOUSE__BEGIN )          
 
     //---------------------------------------------------------------------
     // MOUSE DIGITAL GADGETS
     //---------------------------------------------------------------------
+
     DEFINE_GADGET ( INPUT_MOUSE__DIGITAL )
 
     DEFINE_GADGET ( INPUT_MOUSE_BTN_L )                
@@ -210,19 +298,55 @@ BEGIN_GADGETS
     DEFINE_GADGET ( INPUT_MOUSE_BTN_2 )
     DEFINE_GADGET ( INPUT_MOUSE_BTN_3 )
     DEFINE_GADGET ( INPUT_MOUSE_BTN_4 )
+    DEFINE_GADGET_RANGE( INPUT_MOUSE_BTN_L,
+                         INPUT_MOUSE_BTN_4,
+                         INPUT_PLATFORM_PC,
+                         INPUT_DEVICE_MOUSE,
+                         INPUT_VALUE_DIGITAL,
+                         INPUT_CONTROL_BUTTON,
+                         INPUT_GADGET_FLAG_NONE )
             
     //---------------------------------------------------------------------
     // ANALOG ANALOG GADGETS
-    //---------------------------------------------------------------------    
+    //---------------------------------------------------------------------
+
     DEFINE_GADGET ( INPUT_MOUSE__ANALOG )
 
     DEFINE_GADGET ( INPUT_MOUSE_X_REL )                
     DEFINE_GADGET ( INPUT_MOUSE_Y_REL )                
+    DEFINE_GADGET_RANGE( INPUT_MOUSE_X_REL,
+                         INPUT_MOUSE_Y_REL,
+                         INPUT_PLATFORM_PC,
+                         INPUT_DEVICE_MOUSE,
+                         INPUT_VALUE_RELATIVE_AXIS,
+                         INPUT_CONTROL_AXIS,
+                         INPUT_GADGET_FLAG_NONE )
     DEFINE_GADGET ( INPUT_MOUSE_WHEEL_REL )             
+    DEFINE_GADGET_RANGE( INPUT_MOUSE_WHEEL_REL,
+                         INPUT_MOUSE_WHEEL_REL,
+                         INPUT_PLATFORM_PC,
+                         INPUT_DEVICE_MOUSE,
+                         INPUT_VALUE_PULSE,
+                         INPUT_CONTROL_WHEEL,
+                         INPUT_GADGET_FLAG_NONE )
                                 
     DEFINE_GADGET ( INPUT_MOUSE_X_ABS )                
     DEFINE_GADGET ( INPUT_MOUSE_Y_ABS )                
+    DEFINE_GADGET_RANGE( INPUT_MOUSE_X_ABS,
+                         INPUT_MOUSE_Y_ABS,
+                         INPUT_PLATFORM_PC,
+                         INPUT_DEVICE_MOUSE,
+                         INPUT_VALUE_ABSOLUTE_AXIS,
+                         INPUT_CONTROL_AXIS,
+                         INPUT_GADGET_FLAG_NONE )
     DEFINE_GADGET ( INPUT_MOUSE_WHEEL_ABS )             
+    DEFINE_GADGET_RANGE( INPUT_MOUSE_WHEEL_ABS,
+                         INPUT_MOUSE_WHEEL_ABS,
+                         INPUT_PLATFORM_PC,
+                         INPUT_DEVICE_MOUSE,
+                         INPUT_VALUE_ABSOLUTE_AXIS,
+                         INPUT_CONTROL_WHEEL,
+                         INPUT_GADGET_FLAG_NONE )
                                 
 
     DEFINE_GADGET ( INPUT_MOUSE__END )           // Mouse gadgets begins
@@ -230,11 +354,13 @@ BEGIN_GADGETS
     //=====================================================================
     // Keyboard gadgets begins
     //=====================================================================
+
     DEFINE_GADGET ( INPUT_KBD__BEGIN )
 
     //---------------------------------------------------------------------
     // KEYBOARD DIGITAL GADGETS
     //---------------------------------------------------------------------
+
     DEFINE_GADGET ( INPUT_KBD__DIGITAL )
 
     DEFINE_GADGET_VALUE ( INPUT_KBD_ESCAPE           , INPUT_KBD__BEGIN + 0x01 ) 
@@ -381,8 +507,16 @@ BEGIN_GADGETS
     DEFINE_GADGET_VALUE ( INPUT_KBD_MYCOMPUTER       , INPUT_KBD__BEGIN + 0xEB )    // My Computer 
     DEFINE_GADGET_VALUE ( INPUT_KBD_MAIL             , INPUT_KBD__BEGIN + 0xEC )    // Mail 
     DEFINE_GADGET_VALUE ( INPUT_KBD_MEDIASELECT      , INPUT_KBD__BEGIN + 0xED )    // Media Select 
+    DEFINE_GADGET_RANGE( INPUT_KBD_ESCAPE,
+                         INPUT_KBD_MEDIASELECT,
+                         INPUT_PLATFORM_PC,
+                         INPUT_DEVICE_KEYBOARD,
+                         INPUT_VALUE_DIGITAL,
+                         INPUT_CONTROL_KEY,
+                         INPUT_GADGET_FLAG_NONE )
 
     DEFINE_GADGET ( INPUT_KBD__END )
+    DEFINE_GADGET ( INPUT_GADGET_COUNT )
     
 END_GADGETS
 
@@ -393,6 +527,5 @@ END_GADGETS
 #undef BEGIN_GADGETS
 #undef DEFINE_GADGET
 #undef DEFINE_GADGET_VALUE
+#undef DEFINE_GADGET_RANGE
 #undef END_GADGETS
-
-//==============================================================================

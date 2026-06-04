@@ -32,10 +32,6 @@
 #include "StateMgr/StateMgr.hpp"
 #include "InputMgr/GamePad.hpp"
 
-#ifndef X_RELEASE
-#include "InputMgr/Monkey.hpp"
-#endif
-
 #include "bitmap\aux_bitmap.hpp"
 
 #include "stringmgr\stringmgr.hpp"
@@ -372,7 +368,7 @@ xbool IsUILogicalDown( s32 ControllerID, ingame_pad::logical_id LogicalID )
     ASSERT( ControllerID >= 0 );
     ASSERT( ControllerID < MAX_LOCAL_PLAYERS );
 
-    return( g_IngamePad[ControllerID].GetLogical( LogicalID ).IsValue > 0.25f );
+    return( g_IngamePad[ControllerID].GetLogical( LogicalID ).GetIsValue() > 0.25f );
 }
 
 //=========================================================================
@@ -1716,7 +1712,7 @@ xbool ui_manager::GetMouseVisible( s32 UserID ) const
 
 xbool ui_manager::IsGamepadActiveInput( void ) const
 {
-    return g_InputMgr.IsGamepadActive();
+    return( g_Input.GetCurrentInputDevice() == INPUT_DEVICE_GAMEPAD );
 }
 
 //=========================================================================
@@ -1934,10 +1930,10 @@ xbool ui_manager::ProcessInput( f32 DeltaTime, s32 UserID )
 
         // Update mouse position and switch to mouse mode if it moved
         {
-            s32 dx = g_InputMgr.GetMouseDeltaX();
-            s32 dy = g_InputMgr.GetMouseDeltaY();
+            s32 dx = g_Input.GetMouseDeltaX();
+            s32 dy = g_Input.GetMouseDeltaY();
 
-            if( g_InputMgr.GetActiveDevice() == INPUT_DEVICE_MOUSE )
+            if( g_Input.GetCurrentInputDevice() == INPUT_DEVICE_MOUSE )
             {
                 pUser->bMouseMode   = TRUE;
                 pUser->MouseVisible = TRUE;
@@ -1985,25 +1981,6 @@ xbool ui_manager::ProcessInput( f32 DeltaTime, s32 UserID )
 
         for( s32 i=StartController ; i<=EndController ; i++ )
         {
-#ifndef X_RELEASE
-            if ( g_MonkeyOptions.Enabled && g_MonkeyOptions.ModeEnabled[MONKEY_MENUMONKEY] )
-            {
-                UpdateButton( pUser->DPadUp[i],         g_Monkey.GetUIButtonValue( MONKEY_UI_UP ),          DeltaTime);                    
-                UpdateButton( pUser->DPadDown[i],       g_Monkey.GetUIButtonValue( MONKEY_UI_DOWN ),        DeltaTime);
-                UpdateButton( pUser->DPadLeft[i],       g_Monkey.GetUIButtonValue( MONKEY_UI_LEFT ),        DeltaTime);
-                UpdateButton( pUser->DPadRight[i],      g_Monkey.GetUIButtonValue( MONKEY_UI_RIGHT ),       DeltaTime);
-                UpdateButton( pUser->PadSelect[i],      g_Monkey.GetUIButtonValue( MONKEY_UI_SELECT ),      DeltaTime);
-                UpdateButton( pUser->PadBack[i],        g_Monkey.GetUIButtonValue( MONKEY_UI_BACK ),        DeltaTime);
-                UpdateButton( pUser->PadDelete[i],      g_Monkey.GetUIButtonValue( MONKEY_UI_DELETE ),      DeltaTime);
-                UpdateButton( pUser->PadActivate[i],    g_Monkey.GetUIButtonValue( MONKEY_UI_ACTIVATE ),    DeltaTime);
-                UpdateButton( pUser->PadShoulderL[i],   g_Monkey.GetUIButtonValue( MONKEY_UI_SHOULDERL ),   DeltaTime);
-                UpdateButton( pUser->PadShoulderR[i],   g_Monkey.GetUIButtonValue( MONKEY_UI_SHOULDERR ),   DeltaTime);
-                UpdateButton( pUser->PadShoulderL2[i],  g_Monkey.GetUIButtonValue( MONKEY_UI_SHOULDERL2 ),  DeltaTime);
-                UpdateButton( pUser->PadShoulderR2[i],  g_Monkey.GetUIButtonValue( MONKEY_UI_SHOULDERR2 ),  DeltaTime);
-                UpdateButton( pUser->PadHelp[i],        g_Monkey.GetUIButtonValue( MONKEY_UI_HELP ),        DeltaTime);
-            }
-            else
-#endif
             {
                 UpdateButton( pUser->DPadUp[i],        IsUILogicalDown( i, ingame_pad::UI_UP ),          DeltaTime );
                 UpdateButton( pUser->DPadDown[i],      IsUILogicalDown( i, ingame_pad::UI_DOWN ),        DeltaTime );
@@ -2028,9 +2005,9 @@ xbool ui_manager::ProcessInput( f32 DeltaTime, s32 UserID )
         }
 
         // Update mouse buttons
-        UpdateButton( pUser->ButtonLB, g_InputMgr.IsMouseButtonDown( INPUT_MOUSE_BUTTON_LEFT ),   DeltaTime );
-        UpdateButton( pUser->ButtonMB, g_InputMgr.IsMouseButtonDown( INPUT_MOUSE_BUTTON_MIDDLE ), DeltaTime );
-        UpdateButton( pUser->ButtonRB, g_InputMgr.IsMouseButtonDown( INPUT_MOUSE_BUTTON_RIGHT ),  DeltaTime );
+        UpdateButton( pUser->ButtonLB, g_Input.IsPressed( INPUT_MOUSE_BTN_L ), DeltaTime );
+        UpdateButton( pUser->ButtonMB, g_Input.IsPressed( INPUT_MOUSE_BTN_C ), DeltaTime );
+        UpdateButton( pUser->ButtonRB, g_Input.IsPressed( INPUT_MOUSE_BTN_R ), DeltaTime );
 
         // Only do this if there is a target window
         if( pWin )
@@ -2118,7 +2095,7 @@ xbool ui_manager::ProcessInput( f32 DeltaTime, s32 UserID )
                     tDPadRight      += pUser->LStickRight[i].nPresses + pUser->LStickRight[i].nRepeats;
 
                     // Gamepad input hides the mouse cursor. Keyboard navigation remains a PC input mode.
-                    if(   g_InputMgr.IsGamepadActive()
+                    if(   (g_Input.GetCurrentInputDevice() == INPUT_DEVICE_GAMEPAD)
                        && (   tDPadUp || tDPadDown || tDPadLeft || tDPadRight
                            || PadSelect || PadBack || PadDelete || PadActivate || PadHelp
                            || PadShoulderL || PadShoulderR || PadShoulderL2 || PadShoulderR2 ) )
@@ -2212,7 +2189,7 @@ xbool ui_manager::ProcessInput( f32 DeltaTime, s32 UserID )
 
     // Do Global inputs
 #ifdef TARGET_PC
-    if( input_IsPressed( INPUT_MSG_EXIT ) )
+    if( g_Input.IsPressed( INPUT_MSG_EXIT ) )
         return FALSE;
 #endif
 
@@ -2902,7 +2879,7 @@ s32 ui_manager::LookUpButtonCode( const xwchar* pString, s32 iStart ) const
     if( !ReadButtonCodeString( pString, iStart, codeString ) )
         return -1;
  
-    const button_code* pButtonCodeTable = GetButtonCodeTable( g_InputMgr.GetActivePlatform() );
+    const button_code* pButtonCodeTable = GetButtonCodeTable( g_Input.GetCurrentInputPlatform() );
  
     for( s32 i = 0; i < NUM_BUTTON_CODES; i++ )
     {

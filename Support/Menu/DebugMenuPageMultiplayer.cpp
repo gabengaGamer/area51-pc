@@ -164,7 +164,7 @@ void debug_menu_page_multiplayer::OnChangeItem( debug_menu_item* pItem )
             pPlayer->InitZoneTracking();
 
             // Force player to update internal view members so view updates
-            g_IngamePad[ pPlayer->GetActivePlayerPad() ].ClearAllLogical();
+            g_IngamePad[ pPlayer->GetActivePlayerPad() ].ClearAllActions();
             g_ObjMgr.AdvanceAllLogic( 1.0f / 30.0f );
         }
         else

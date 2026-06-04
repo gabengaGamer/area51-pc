@@ -11,7 +11,6 @@
 #include "Gamelib\binLevel.hpp"
 #include "Gamelib\Link.hpp"
 #include "AudioMgr\AudioMgr.hpp"
-#include "inputmgr\inputmgr.hpp"
 #include "IOManager\io_mgr.hpp"
 #include "Audio\audio_stream_mgr.hpp"
 #include "Audio\audio_hardware.hpp"
@@ -58,10 +57,6 @@
 #include "OccluderMgr/OccluderMgr.hpp"
 #include "Dialogs/dlg_download.hpp"
 #include "Dialogs/dlg_LoadGame.hpp"
-
-#ifndef X_RETAIL
-#include "InputMgr/Monkey.hpp"
-#endif
 
 #include "e_Memcard.hpp"
 #include "StateMgr/maplist.hpp"
@@ -584,11 +579,6 @@ void level_loader::LoadLevel( xbool bFullLoad )
 
     g_level_loading = FALSE;
 
-#ifndef X_RETAIL
-    // setup automonkey in non-retail builds
-    g_Monkey.SetAutoMonkeyMode(g_Config.AutoMonkeyMode);
-#endif
-
     // reset the rigid color pointers
     x_makepath( pPath, NULL, "", "level_data", ".rigidcolor" ); //x_makepath( pPath, NULL, g_FullPath, "level_data", ".rigidcolor" );
     g_BinLevelMgr.SetRigidColor( pPath );
@@ -709,7 +699,7 @@ void level_loader::UnloadLevel( xbool bFullUnload )
         g_pd3dDevice->SetStreamSource( 1,NULL,0 );
 
         for( s32 i=0;i<4;i++ )
-            input_EnableFeedback( false,i );
+            g_Input.EnableFeedback( false,i );
     }
     #endif
 

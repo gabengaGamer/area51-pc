@@ -23,10 +23,6 @@
 #include "../../Apps/GameApp/Config.hpp"	
 #endif
 
-#ifndef CONFIG_RETAIL
-#include "InputMgr\monkey.hpp"
-#endif
-
 // always display build info (for now!)
 #ifndef CONFIG_RETAIL
 #define DISPLAY_BUILD_INFO
@@ -418,10 +414,6 @@ void dlg_pause_main::OnPadSelect( ui_win* pWin )
         else if( pWin == (ui_win*)m_pButtonQuit )
         {
           
-#ifndef CONFIG_RETAIL
-            if ( g_MonkeyOptions.Enabled && g_MonkeyOptions.ModeEnabled[MONKEY_MENUMONKEY] )
-                return;
-#endif
 
             if( m_PopUp == NULL )
             {
@@ -452,7 +444,7 @@ void dlg_pause_main::OnPadSelect( ui_win* pWin )
             // toggle invert Y
             player_profile& Profile = g_StateMgr.GetActiveProfile(0);
             Profile.m_bVibration = !Profile.m_bVibration;
-            input_EnableFeedback( Profile.m_bVibration );
+            g_Input.EnableFeedback( Profile.m_bVibration );
         }
 #else
         else if( pWin == (ui_win*)m_pButtonOptions )

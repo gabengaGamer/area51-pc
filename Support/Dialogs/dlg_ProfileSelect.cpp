@@ -472,7 +472,7 @@ void dlg_profile_select::OnPadSelect( ui_win* pWin )
                 ui_dlg_vkeyboard* pVKeyboard = (ui_dlg_vkeyboard*)m_pManager->OpenDialog( m_UserID, "ui_vkeyboard", r, NULL, ui_win::WF_VISIBLE|ui_win::WF_INPUTMODAL|ui_win::WF_USE_ABSOLUTE );
                 pVKeyboard->Configure( TRUE );
 #ifdef TARGET_PC
-                pVKeyboard->SetGamepadMode( input_GetPadCount() > 0 );
+                pVKeyboard->SetGamepadMode( g_Input.GetPadCount() > 0 );
 #endif                
                 pVKeyboard->SetLabel( g_StringTableMgr( "ui", "IDS_PROFILE_CREATE" ) );
                 pVKeyboard->ConnectString( &m_ProfileName, SM_PROFILE_NAME_LENGTH );
@@ -1038,7 +1038,7 @@ void dlg_profile_select::RefreshProfileList( void )
 
 void dlg_profile_select::OnLoadProfileCB( void )
 {
-#ifdef TARGET_PС
+#ifdef TARGET_PC
     MemCardMgr::condition& Condition = g_UIMemCardMgr.GetCondition( 0 );    
 #else
     MemCardMgr::condition& Condition = g_UIMemCardMgr.GetCondition( m_iCard );
@@ -1080,7 +1080,7 @@ void dlg_profile_select::OnLoadProfileCB( void )
 
 void dlg_profile_select::OnDeleteProfileCB( void )
 {
-#ifdef TARGET_PС
+#ifdef TARGET_PC
     MemCardMgr::condition& Condition = g_UIMemCardMgr.GetCondition( 0 );    
 #else
     MemCardMgr::condition& Condition = g_UIMemCardMgr.GetCondition( m_iCard );
@@ -1110,7 +1110,7 @@ void dlg_profile_select::OnDeleteProfileCB( void )
 
 void dlg_profile_select::OnSaveProfileCB( void )
 {
-#ifdef TARGET_PС
+#ifdef TARGET_PC
     MemCardMgr::condition& Condition = g_UIMemCardMgr.GetCondition( 0 );    
 #else
     MemCardMgr::condition& Condition = g_UIMemCardMgr.GetCondition( m_iCard );

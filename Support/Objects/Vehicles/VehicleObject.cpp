@@ -153,52 +153,52 @@ void vehicle_object::UpdateInput( void )
     m_Input.Clear();
 
     // Steering
-    m_Input.m_Steer = 0;//-input_GetValue(INPUT_PS2_STICK_LEFT_X) ;
-    //m_Input.m_Steer = -input_GetValue(INPUT_PS2_STICK_LEFT_X) ;
+    m_Input.m_Steer = 0;//-g_Input.GetValue(INPUT_PS2_STICK_LEFT_X) ;
+    //m_Input.m_Steer = -g_Input.GetValue(INPUT_PS2_STICK_LEFT_X) ;
 
     // Accel
-    m_Input.m_Accel = input_GetValue(INPUT_PS2_STICK_LEFT_Y) ;
-    //m_Input.m_Accel = -input_GetValue(INPUT_PS2_STICK_RIGHT_X) ;
+    m_Input.m_Accel = g_Input.GetValue(INPUT_PS2_STICK_LEFT_Y) ;
+    //m_Input.m_Accel = -g_Input.GetValue(INPUT_PS2_STICK_RIGHT_X) ;
 
     // Braking
     {
-        m_Input.m_Brake = input_GetValue( INPUT_PS2_BTN_CROSS );
+        m_Input.m_Brake = g_Input.GetValue( INPUT_PS2_BTN_CROSS );
     }
 
     // Camera inputs
     {
 /*
-        if( input_IsPressed( INPUT_PS2_BTN_L_RIGHT ) )
+        if( g_Input.IsPressed( INPUT_PS2_BTN_L_RIGHT ) )
             m_Input.m_CameraYaw =  1.0f;
         else
-        if( input_IsPressed( INPUT_PS2_BTN_L_LEFT ) )
+        if( g_Input.IsPressed( INPUT_PS2_BTN_L_LEFT ) )
             m_Input.m_CameraYaw = -1.0f;
 
-        if( input_IsPressed( INPUT_PS2_BTN_L_UP ) )
+        if( g_Input.IsPressed( INPUT_PS2_BTN_L_UP ) )
             m_Input.m_CameraPitch = -1.0f;
         else
-        if( input_IsPressed( INPUT_PS2_BTN_L_DOWN ) )
+        if( g_Input.IsPressed( INPUT_PS2_BTN_L_DOWN ) )
             m_Input.m_CameraPitch =  1.0f;
 */
-        m_Input.m_CameraYaw = -input_GetValue(INPUT_PS2_STICK_RIGHT_X);
+        m_Input.m_CameraYaw = -g_Input.GetValue(INPUT_PS2_STICK_RIGHT_X);
         if( m_Input.m_CameraYaw > 0 )
             m_Input.m_CameraYaw = +m_Input.m_CameraYaw*m_Input.m_CameraYaw;
         else
             m_Input.m_CameraYaw = -m_Input.m_CameraYaw*m_Input.m_CameraYaw;
 
-        m_Input.m_CameraPitch = -input_GetValue(INPUT_PS2_STICK_RIGHT_Y);
+        m_Input.m_CameraPitch = -g_Input.GetValue(INPUT_PS2_STICK_RIGHT_Y);
 
         m_Input.m_CameraZoom = 0;
-        if( input_IsPressed(INPUT_PS2_BTN_TRIANGLE ))
+        if( g_Input.IsPressed(INPUT_PS2_BTN_TRIANGLE ))
             m_Input.m_CameraZoom = -1.0f;
         else
-        if( input_IsPressed(INPUT_PS2_BTN_CIRCLE ))
+        if( g_Input.IsPressed(INPUT_PS2_BTN_CIRCLE ))
             m_Input.m_CameraZoom = +1.0f;
     }
 
-    m_Input.m_bToggleCamera = input_WasPressed( INPUT_PS2_BTN_SQUARE );
+    m_Input.m_bToggleCamera = g_Input.WasPressed( INPUT_PS2_BTN_SQUARE );
 
-    m_Input.m_bReset = input_WasPressed( INPUT_PS2_BTN_SELECT );
+    m_Input.m_bReset = g_Input.WasPressed( INPUT_PS2_BTN_SELECT );
 }
 
 //=============================================================================

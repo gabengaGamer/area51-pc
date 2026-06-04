@@ -21,10 +21,6 @@
 #include "libscf.h"
 #endif
 
-#ifndef CONFIG_RETAIL
-#include "InputMgr\monkey.hpp"
-#endif
-
 //=========================================================================
 //  Main Menu Dialog
 //=========================================================================
@@ -332,10 +328,6 @@ void dlg_online_main::OnPadBack( ui_win* pWin )
         if( m_pPopUp == NULL )
         {
 
-#ifndef CONFIG_RETAIL
-            if ( g_MonkeyOptions.Enabled && g_MonkeyOptions.ModeEnabled[MONKEY_MENUMONKEY] )
-                return;
-#endif
 
             // Open a dialog to confirm quitting the online game component
             irect r = g_UiMgr->GetUserBounds( g_UiUserID );

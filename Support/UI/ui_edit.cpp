@@ -192,7 +192,7 @@ void ui_edit::OnPadSelect( ui_win* pWin )
     pVKeyboard->SetLabel( m_VirtualKeyboardTitle );
 #ifdef TARGET_PC
     // If is keyboard mode, we just turn off virtual keyboard and other things.
-    pVKeyboard->SetGamepadMode( input_GetPadCount() > 0 );
+    pVKeyboard->SetGamepadMode( g_Input.GetPadCount() > 0 );
 #endif
 }
 

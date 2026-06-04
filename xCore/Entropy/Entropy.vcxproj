@@ -209,9 +209,9 @@
     <ClCompile Include="D3DEngine\d3deng_rtarget.cpp" />
     <ClCompile Include="D3DEngine\d3deng_shader.cpp" />
     <ClCompile Include="D3DEngine\d3deng_state.cpp" />
-    <ClCompile Include="e_Profile.cpp" />
     <ClCompile Include="Common\e_Draw.cpp" />
     <ClCompile Include="Common\e_Input.cpp" />
+    <ClCompile Include="Common\e_InputActions.cpp" />
     <ClCompile Include="Common\e_ScratchMem.cpp" />
     <ClCompile Include="Common\e_SimpleAllocator.cpp" />
     <ClCompile Include="Common\e_Text.cpp" />
@@ -249,15 +249,13 @@
     <ClInclude Include="D3DEngine\d3deng_private.hpp" />
     <ClInclude Include="D3DEngine\d3deng_state.hpp" />
     <ClInclude Include="Entropy.hpp" />
-    <ClInclude Include="Common\e_View_inline.hpp" />
     <ClInclude Include="e_Audio.hpp" />
     <ClInclude Include="e_Draw.hpp" />
     <ClInclude Include="e_Engine.hpp" />
     <ClInclude Include="e_Input.hpp" />
-    <ClInclude Include="e_Input_Gadgets.hpp" />
+    <ClInclude Include="e_InputActions.hpp" />
     <ClInclude Include="e_Input_Gadget_Defines.hpp" />
     <ClInclude Include="e_Network.hpp" />
-    <ClInclude Include="e_Profile.hpp" />
     <ClInclude Include="e_ScratchMem.hpp" />
     <ClInclude Include="e_SimpleAllocator.hpp" />
     <ClInclude Include="e_Text.hpp" />

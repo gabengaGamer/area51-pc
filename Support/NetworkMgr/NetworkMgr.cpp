@@ -153,9 +153,9 @@ void network_mgr::SetOnline( xbool IsOnline )
 
         g_MemcardHardware.Kill();
         g_IoMgr.Kill();
-        input_Kill();
+        g_Input.Kill();
         g_IopManager.Reboot( TRUE, FALSE, "DNAS300.IMG" );
-        input_Init();
+        g_Input.Init();
         g_MemcardHardware.Init();
 
         // Immediately remount to clear spurious "card changed" errors.

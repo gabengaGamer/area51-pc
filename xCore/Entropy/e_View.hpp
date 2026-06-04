@@ -332,8 +332,6 @@ protected:
     void    UpdateProjection( void ) const;
 };
 
-#include "Common\e_View_inline.hpp"
-
 extern s32 g_ClipSize;
 
 //==============================================================================

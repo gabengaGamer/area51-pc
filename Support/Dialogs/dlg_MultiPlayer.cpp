@@ -697,7 +697,7 @@ void dlg_multi_player::OnUpdate ( ui_win* pWin, f32 DeltaTime )
             for (s32 p = 0; p < SM_MAX_PLAYERS; p++)
             {
                 // Has a requested controller been pulled?
-                if(g_StateMgr.GetSelectedProfile(p) && !input_IsPresent(INPUT_PS2_QRY_PAD_PRESENT, p ))
+                if(g_StateMgr.GetSelectedProfile(p) && !g_Input.IsPresent(INPUT_PS2_QRY_PAD_PRESENT, p ))
                 {
                     // deselect player profile
                     switch(p)

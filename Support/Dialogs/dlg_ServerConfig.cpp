@@ -17,10 +17,6 @@
 #include "stringmgr\stringmgr.hpp"
 #include "NetworkMgr\GameMgr.hpp"
 
-#ifndef CONFIG_RETAIL
-#include "InputMgr\monkey.hpp"
-#endif
-
 //=========================================================================
 //  Main Menu Dialog
 //=========================================================================
@@ -295,10 +291,6 @@ void dlg_server_config::OnPadSelect( ui_win* pWin )
         else if( pWin == (ui_win*)m_pButtonRestartMap )
         {
 
-#ifndef CONFIG_RETAIL
-            if ( g_MonkeyOptions.Enabled && g_MonkeyOptions.ModeEnabled[MONKEY_MENUMONKEY] )
-                return;
-#endif
 
             // restart map
             m_CurrentControl = IDC_SERVER_CONFIG_RESTART_MAP;
@@ -332,10 +324,6 @@ void dlg_server_config::OnPadSelect( ui_win* pWin )
         else if( pWin == (ui_win*)m_pButtonShutdown )
 	    {
 
-#ifndef CONFIG_RETAIL
-            if ( g_MonkeyOptions.Enabled && g_MonkeyOptions.ModeEnabled[MONKEY_MENUMONKEY] )
-                return;
-#endif
 
             // Shutdown the server
             m_CurrentControl = IDC_SERVER_CONFIG_SHUTDOWN;

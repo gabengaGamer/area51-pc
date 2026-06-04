@@ -187,7 +187,7 @@ void player::OnGameSpeak( void )
     conversation_packet Request;
     char SoundDescriptorName[64] ;
 
-    if( g_IngamePad[m_ActivePlayerPad].GetLogical( ingame_pad::ACTION_SPEAK_FOLLOW_STAY ).WasValue > 0.25f )
+    if( g_IngamePad[m_ActivePlayerPad].GetLogical( ingame_pad::ACTION_SPEAK_FOLLOW_STAY ).GetWasValue() > 0.25f )
     {
         switch ( g_ObjMgr.GetObjectByGuid( m_SpeakToGuid )->GetType() )
         {
@@ -201,7 +201,7 @@ void player::OnGameSpeak( void )
         Request.m_ConvType = CONV_REQUEST_FOLLOW ;
     }
     else
-        if( g_IngamePad[m_ActivePlayerPad].GetLogical( ingame_pad::ACTION_SPEAK_USE_ACTIVATE ).WasValue > 0.25f )
+        if( g_IngamePad[m_ActivePlayerPad].GetLogical( ingame_pad::ACTION_SPEAK_USE_ACTIVATE ).GetWasValue() > 0.25f )
         {
             // Just make sure we didn't get here without having someone to talk to.
             ASSERT( pCharacter ) ;
@@ -219,7 +219,7 @@ void player::OnGameSpeak( void )
             Request.m_ConvType =  CONV_REQUEST_ACTIVATE_ITEM ;
         }
         else
-            if( g_IngamePad[m_ActivePlayerPad].GetLogical( ingame_pad::ACTION_SPEAK_COVER_ME ).WasValue > 0.25f )
+            if( g_IngamePad[m_ActivePlayerPad].GetLogical( ingame_pad::ACTION_SPEAK_COVER_ME ).GetWasValue() > 0.25f )
             {
                 // Just make sure we didn't get here without having someone to talk to.
                 ASSERT( pCharacter ) ;
@@ -235,7 +235,7 @@ void player::OnGameSpeak( void )
                 Request.m_ConvType = CONV_REQUEST_STAY ;        
             }
             else
-                if( g_IngamePad[m_ActivePlayerPad].GetLogical( ingame_pad::ACTION_SPEAK_ATTACK_COVER ).WasValue > 0.25f )
+                if( g_IngamePad[m_ActivePlayerPad].GetLogical( ingame_pad::ACTION_SPEAK_ATTACK_COVER ).GetWasValue() > 0.25f )
                 {
                     return ;
                 }

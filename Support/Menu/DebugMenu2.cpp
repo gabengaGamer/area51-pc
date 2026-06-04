@@ -65,8 +65,6 @@ xbool debug_menu2::Init( void )
     m_Pages.Append() = new debug_menu_page_aiscript();
 #endif
 
-    m_Pages.Append() = new debug_menu_page_monkey();
-
 #if !defined(X_RETAIL)
     m_Pages.Append() = new debug_menu_page_logging();
 #endif 
@@ -161,8 +159,8 @@ xbool debug_menu2::WasTogglePressed( void ) const
     {
         const ingame_pad& Pad = g_IngamePad[i];
 
-        ExitModifierDown |= (Pad.GetLogical( ingame_pad::DEBUG_MENU_EXIT_MODIFIER ).IsValue  > 0.25f);
-        ExitPressed      |= (Pad.GetLogical( ingame_pad::DEBUG_MENU_EXIT          ).WasValue > 0.25f);
+        ExitModifierDown |= (Pad.GetLogical( ingame_pad::DEBUG_MENU_EXIT_MODIFIER ).GetIsValue()  > 0.25f);
+        ExitPressed      |= (Pad.GetLogical( ingame_pad::DEBUG_MENU_EXIT          ).GetWasValue() > 0.25f);
     }
 
     return( ExitModifierDown && ExitPressed );
@@ -227,15 +225,15 @@ xbool debug_menu2::Update( f32 DeltaTime )
         {
             const ingame_pad& Pad = g_IngamePad[i];
 
-            NextPagePressed  |= (Pad.GetLogical( ingame_pad::DEBUG_MENU_NEXT_PAGE     ).WasValue > 0.25f);
-            PrevPagePressed  |= (Pad.GetLogical( ingame_pad::DEBUG_MENU_PREV_PAGE     ).WasValue > 0.25f);
-            NextItemPressed  |= (Pad.GetLogical( ingame_pad::DEBUG_MENU_NEXT_ITEM     ).WasValue > 0.25f);
-            PrevItemPressed  |= (Pad.GetLogical( ingame_pad::DEBUG_MENU_PREV_ITEM     ).WasValue > 0.25f);
-            IncrementPressed |= (Pad.GetLogical( ingame_pad::DEBUG_MENU_INCREMENT     ).WasValue > 0.25f);
-            DecrementPressed |= (Pad.GetLogical( ingame_pad::DEBUG_MENU_DECREMENT     ).WasValue > 0.25f);
-            ActionPressed    |= (Pad.GetLogical( ingame_pad::DEBUG_MENU_ACTION        ).WasValue > 0.25f);
-            IncrementHeld    |= (Pad.GetLogical( ingame_pad::DEBUG_MENU_INCREMENT     ).IsValue  > 0.25f);
-            DecrementHeld    |= (Pad.GetLogical( ingame_pad::DEBUG_MENU_DECREMENT     ).IsValue  > 0.25f);
+            NextPagePressed  |= (Pad.GetLogical( ingame_pad::DEBUG_MENU_NEXT_PAGE     ).GetWasValue() > 0.25f);
+            PrevPagePressed  |= (Pad.GetLogical( ingame_pad::DEBUG_MENU_PREV_PAGE     ).GetWasValue() > 0.25f);
+            NextItemPressed  |= (Pad.GetLogical( ingame_pad::DEBUG_MENU_NEXT_ITEM     ).GetWasValue() > 0.25f);
+            PrevItemPressed  |= (Pad.GetLogical( ingame_pad::DEBUG_MENU_PREV_ITEM     ).GetWasValue() > 0.25f);
+            IncrementPressed |= (Pad.GetLogical( ingame_pad::DEBUG_MENU_INCREMENT     ).GetWasValue() > 0.25f);
+            DecrementPressed |= (Pad.GetLogical( ingame_pad::DEBUG_MENU_DECREMENT     ).GetWasValue() > 0.25f);
+            ActionPressed    |= (Pad.GetLogical( ingame_pad::DEBUG_MENU_ACTION        ).GetWasValue() > 0.25f);
+            IncrementHeld    |= (Pad.GetLogical( ingame_pad::DEBUG_MENU_INCREMENT     ).GetIsValue()  > 0.25f);
+            DecrementHeld    |= (Pad.GetLogical( ingame_pad::DEBUG_MENU_DECREMENT     ).GetIsValue()  > 0.25f);
         }
 
         if( NextPagePressed )

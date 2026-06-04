@@ -457,9 +457,6 @@
     <ClCompile Include="..\Menu\DebugMenuPageMemory.cpp">
       <Filter>DebugMenu</Filter>
     </ClCompile>
-    <ClCompile Include="..\Menu\DebugMenuPageMonkey.cpp">
-      <Filter>DebugMenu</Filter>
-    </ClCompile>
     <ClCompile Include="..\Menu\DebugMenuPageMultiplayer.cpp">
       <Filter>DebugMenu</Filter>
     </ClCompile>
@@ -989,12 +986,6 @@
       <Filter>Obj_mgr\CollisionMgr</Filter>
     </ClCompile>
     <ClCompile Include="..\InputMgr\GamePad.cpp">
-      <Filter>Obj_mgr\InputMgr</Filter>
-    </ClCompile>
-    <ClCompile Include="..\InputMgr\InputMgr.cpp">
-      <Filter>Obj_mgr\InputMgr</Filter>
-    </ClCompile>
-    <ClCompile Include="..\InputMgr\Monkey.cpp">
       <Filter>Obj_mgr\InputMgr</Filter>
     </ClCompile>
     <ClCompile Include="..\DeltaMgr\DeltaMgr.cpp">
@@ -1785,9 +1776,6 @@
     <ClInclude Include="..\Menu\DebugMenuPageMemory.hpp">
       <Filter>DebugMenu</Filter>
     </ClInclude>
-    <ClInclude Include="..\Menu\DebugMenuPageMonkey.hpp">
-      <Filter>DebugMenu</Filter>
-    </ClInclude>
     <ClInclude Include="..\Menu\DebugMenuPageMultiplayer.hpp">
       <Filter>DebugMenu</Filter>
     </ClInclude>
@@ -2311,12 +2299,6 @@
       <Filter>Obj_mgr\CollisionMgr</Filter>
     </ClInclude>
     <ClInclude Include="..\InputMgr\GamePad.hpp">
-      <Filter>Obj_mgr\InputMgr</Filter>
-    </ClInclude>
-    <ClInclude Include="..\InputMgr\InputMgr.hpp">
-      <Filter>Obj_mgr\InputMgr</Filter>
-    </ClInclude>
-    <ClInclude Include="..\InputMgr\Monkey.hpp">
       <Filter>Obj_mgr\InputMgr</Filter>
     </ClInclude>
     <ClInclude Include="..\DeltaMgr\DeltaMgr.hpp">

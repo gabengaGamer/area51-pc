@@ -16,9 +16,9 @@
 #include "e_Text.hpp"
 #include "e_VRAM.hpp"
 #include "e_Input.hpp"
+#include "e_InputActions.hpp"
 #include "e_ScratchMem.hpp"
 #include "e_Audio.hpp"
-#include "e_Profile.hpp"
 
 #include "x_files.hpp"
 

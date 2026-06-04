@@ -26,7 +26,7 @@
 #pragma comment( lib, "xinput.lib" )
 
 //==============================================================================
-// DEFINES
+//  CONSTANTS AND DEFINES
 //==============================================================================
 
 #define MAX_DEVICES      8          // Maximum number of devices per type
@@ -75,7 +75,7 @@ struct rumble_controller
 enum
 {
     DIGITAL_COUNT_MOUSE    = INPUT_MOUSE__ANALOG           - INPUT_MOUSE__DIGITAL,
-    DIGITAL_COUNT_KBD      = INPUT_KBD__END                - INPUT_KBD__DIGITAL,
+    DIGITAL_COUNT_KBD      = 256,
 
     ANALOG_COUNT_MOUSE     = INPUT_MOUSE__END              - INPUT_MOUSE__ANALOG,
 
@@ -127,7 +127,7 @@ struct state
 };
 
 //==============================================================================
-// VARIABLES
+//  STORAGE
 //==============================================================================
 
 static struct
@@ -175,7 +175,7 @@ static struct
 } s_Rumble;
 
 //==============================================================================
-// FUNCTIONS
+//  FORWARD DECLARATIONS
 //==============================================================================
 
 static dxerr CreateMouse   ( device& Device, const DIDEVICEINSTANCE* pInstance, s32 SampleBufferSize );
@@ -184,6 +184,8 @@ void   d3deng_KillInput    ( void );
 
 static xbool s_DoNotProcessWindowsMessages = FALSE;
 
+//=========================================================================
+//  STATE QUEUE
 //=========================================================================
 
 static
@@ -280,10 +282,15 @@ state& GetState( s64 TimeStamp )
 }
 
 //=========================================================================
+//  DEVICE ENUMERATION
+//=========================================================================
 
 static
 BOOL CALLBACK EnumKeyboardCallback( const DIDEVICEINSTANCE* pdidInstance, VOID* pContext )
 {
+    if( s_Input.nKeyboards >= MAX_DEVICES )
+        return DIENUM_STOP;
+
     // Is the main keyboard? If so then do some quick nothing.
     //if( GUID_SysKeyboard == pdidInstance ) {}	
     dxerr Error = CreateKeyboard( s_Input.Keyboard[ s_Input.nKeyboards ], pdidInstance, MAX_EVENTS );
@@ -303,6 +310,9 @@ BOOL CALLBACK EnumKeyboardCallback( const DIDEVICEINSTANCE* pdidInstance, VOID* 
 static
 BOOL CALLBACK EnumMouseCallback( const DIDEVICEINSTANCE* pdidInstance, VOID* pContext )
 {
+    if( s_Input.nMouses >= MAX_DEVICES )
+        return DIENUM_STOP;
+
     // Is the main mouse If so then do some quick nothing.
     //if( GUID_SysMouse == pdidInstance ) {}	
     dxerr Error = CreateMouse( s_Input.Mouse[ s_Input.nMouses ], pdidInstance, MAX_EVENTS );
@@ -317,6 +327,8 @@ BOOL CALLBACK EnumMouseCallback( const DIDEVICEINSTANCE* pdidInstance, VOID* pCo
     return DIENUM_CONTINUE;
 }
 
+//=========================================================================
+//  DEVICE CREATION
 //=========================================================================
 
 static
@@ -386,7 +398,7 @@ dxerr CreateMouse( device& Device, const DIDEVICEINSTANCE* pInstance, s32 Sample
     // Acquire the newly created device
     Device.pDevice->Acquire();
 
-    // Set the device for this specific mouse
+    // Set the source slot for this mouse.
     s_Input.MouseDevice[ s_Input.nMouses ] = s_Input.nMouses;
 
     return Error;
@@ -466,16 +478,18 @@ dxerr CreateKeyboard( device& Device, const DIDEVICEINSTANCE* pInstance, s32 Sam
     // Acquire the newly created device
     Device.pDevice->Acquire();
 
-    // Set the device for this specific keyboard
+    // Set the source slot for this keyboard.
     s_Input.KeybdDevice[ s_Input.nKeyboards ] = s_Input.nKeyboards;
 
     return Error;
 }
 
 //=========================================================================
+//  BUFFERED DEVICE READS
+//=========================================================================
 
 static
-dxerr ReadKeyboadBufferedData( device& Device, s32 ID )
+dxerr ReadKeyboadBufferedData( device& Device, s32 DeviceID )
 {
     DIDEVICEOBJECTDATA  didod[ MAX_EVENTS ];
     DWORD               dwElements = MAX_EVENTS;
@@ -497,15 +511,18 @@ dxerr ReadKeyboadBufferedData( device& Device, s32 ID )
     for( u32 i = 0; i < dwElements; i++ )
     {
         state&       State  = GetState( didod[ i ].dwTimeStamp );
-        input_gadget Gadget = (input_gadget)( didod[ i ].dwOfs );
+        s32          ScanCode = (s32)didod[ i ].dwOfs;
 
-        ASSERT( Gadget >= 0 );
-        ASSERT( Gadget < DIGITAL_COUNT_KBD );
+        ASSERT( ScanCode >= 0 );
+        ASSERT( ScanCode < DIGITAL_COUNT_KBD );
+
+        if( (ScanCode < 0) || (ScanCode >= DIGITAL_COUNT_KBD) )
+            continue;
 
         if( didod[ i ].dwData & 0x80 )
-            State.Keyboard[ ID ].Digital[ Gadget ] |=  DIGITAL_ON | DIGITAL_DEBAUNCE;
+            State.Keyboard[ DeviceID ].Digital[ ScanCode ] |=  DIGITAL_ON | DIGITAL_DEBAUNCE;
         else
-            State.Keyboard[ ID ].Digital[ Gadget ] &= ~DIGITAL_ON;
+            State.Keyboard[ DeviceID ].Digital[ ScanCode ] &= ~DIGITAL_ON;
     }
 
     return Error;
@@ -514,7 +531,7 @@ dxerr ReadKeyboadBufferedData( device& Device, s32 ID )
 //=========================================================================
 
 static
-dxerr ReadMouseBufferedData( device& Device, s32 ID )
+dxerr ReadMouseBufferedData( device& Device, s32 DeviceID )
 {
     DIDEVICEOBJECTDATA  didod[ MAX_EVENTS ];
     DWORD               dwElements = MAX_EVENTS;
@@ -544,16 +561,16 @@ dxerr ReadMouseBufferedData( device& Device, s32 ID )
             ASSERT( Index < DIGITAL_COUNT_MOUSE );
 
             if( didod[ i ].dwData & 0x80 )
-                State.Mouse[ ID ].Digital[ Index ] |=  DIGITAL_ON | DIGITAL_DEBAUNCE;
+                State.Mouse[ DeviceID ].Digital[ Index ] |=  DIGITAL_ON | DIGITAL_DEBAUNCE;
             else
-                State.Mouse[ ID ].Digital[ Index ] &= ~DIGITAL_ON;
+                State.Mouse[ DeviceID ].Digital[ Index ] &= ~DIGITAL_ON;
         }
         else if( didod[ i ].dwOfs >= DIMOFS_X && didod[ i ].dwOfs <= DIMOFS_Z )
         {
             s32 Index = (didod[ i ].dwOfs - DIMOFS_X) >> 2;
             ASSERT( Index >= 0 );
             ASSERT( Index < ANALOG_COUNT_MOUSE );
-            State.Mouse[ ID ].Anolog[ Index ] += (f32)((s32)didod[ i ].dwData);
+            State.Mouse[ DeviceID ].Anolog[ Index ] += (f32)((s32)didod[ i ].dwData);
         }
     }
 
@@ -561,9 +578,11 @@ dxerr ReadMouseBufferedData( device& Device, s32 ID )
 }
 
 //=========================================================================
+//  IMMEDIATE DEVICE READS
+//=========================================================================
 
 static
-dxerr ReadMouseImmediateData( device& Device, s32 ID )
+dxerr ReadMouseImmediateData( device& Device, s32 DeviceID )
 {
     dxerr         Error;
     DIMOUSESTATE2 dims2;
@@ -580,11 +599,11 @@ dxerr ReadMouseImmediateData( device& Device, s32 ID )
     }
 
     for( s32 i = 0; i < 8; i++ )
-        s_Input.State[0].Mouse[ ID ].Digital[ i ] = (dims2.rgbButtons[ i ] & 0x80) != 0;
+        s_Input.State[0].Mouse[ DeviceID ].Digital[ i ] = (dims2.rgbButtons[ i ] & 0x80) != 0;
 
-    s_Input.State[0].Mouse[ ID ].Anolog[0] = (f32)dims2.lX;
-    s_Input.State[0].Mouse[ ID ].Anolog[1] = (f32)dims2.lY;
-    s_Input.State[0].Mouse[ ID ].Anolog[2] = (f32)dims2.lZ;
+    s_Input.State[0].Mouse[ DeviceID ].Anolog[0] = (f32)dims2.lX;
+    s_Input.State[0].Mouse[ DeviceID ].Anolog[1] = (f32)dims2.lY;
+    s_Input.State[0].Mouse[ DeviceID ].Anolog[2] = (f32)dims2.lZ;
 
     return Error;
 }
@@ -592,7 +611,7 @@ dxerr ReadMouseImmediateData( device& Device, s32 ID )
 //=========================================================================
 
 static
-dxerr ReadKeyboardImmediateData( device& Device, s32 ID )
+dxerr ReadKeyboardImmediateData( device& Device, s32 DeviceID )
 {
     dxerr Error;
     byte  diks[256];
@@ -614,14 +633,14 @@ dxerr ReadKeyboardImmediateData( device& Device, s32 ID )
 
         if( Pressed )
         {
-            if( s_Input.State[0].Keyboard[ ID ].Digital[ i ] & DIGITAL_ON )
-                s_Input.State[0].Keyboard[ ID ].Digital[ i ] &= ~DIGITAL_DEBAUNCE;
+            if( s_Input.State[0].Keyboard[ DeviceID ].Digital[ i ] & DIGITAL_ON )
+                s_Input.State[0].Keyboard[ DeviceID ].Digital[ i ] &= ~DIGITAL_DEBAUNCE;
             else
-                s_Input.State[0].Keyboard[ ID ].Digital[ i ] |= DIGITAL_ON | DIGITAL_DEBAUNCE;
+                s_Input.State[0].Keyboard[ DeviceID ].Digital[ i ] |= DIGITAL_ON | DIGITAL_DEBAUNCE;
         }
         else
         {
-            s_Input.State[0].Keyboard[ ID ].Digital[ i ] &= ~(DIGITAL_ON | DIGITAL_DEBAUNCE);
+            s_Input.State[0].Keyboard[ DeviceID ].Digital[ i ] &= ~(DIGITAL_ON | DIGITAL_DEBAUNCE);
         }
     }
 
@@ -629,17 +648,19 @@ dxerr ReadKeyboardImmediateData( device& Device, s32 ID )
 }
 
 //=========================================================================
+//  XINPUT READS
+//=========================================================================
 
 static
-void ReadXboxPad( s32 ID )
+void ReadXboxPad( s32 DeviceID )
 {
     XINPUT_STATE xState;
-    s_Input.bXboxConnected[ ID ] = ( XInputGetState( ID, &xState ) == ERROR_SUCCESS );
-    if( !s_Input.bXboxConnected[ ID ] )
+    s_Input.bXboxConnected[ DeviceID ] = ( XInputGetState( DeviceID, &xState ) == ERROR_SUCCESS );
+    if( !s_Input.bXboxConnected[ DeviceID ] )
         return;
 
     const XINPUT_GAMEPAD& Pad  = xState.Gamepad;
-    input_xbox_pad&       XPad = s_Input.State[0].XboxPad[ ID ];
+    input_xbox_pad&       XPad = s_Input.State[0].XboxPad[ DeviceID ];
 
     // Digital buttons (START, BACK, DPAD, thumb clicks)
     static const struct { WORD Mask; s32 Idx; } s_DigMap[] =
@@ -695,7 +716,7 @@ void ReadXboxPad( s32 ID )
         }
     }
 
-    // Triggers — digital state + float analog value
+    // Triggers вЂ” digital state + float analog value
     const s32 LTIdx = INPUT_XBOX_L_TRIGGER - INPUT_XBOX__ANALOG_BUTTONS_BEGIN - 1;
     const s32 RTIdx = INPUT_XBOX_R_TRIGGER - INPUT_XBOX__ANALOG_BUTTONS_BEGIN - 1;
 
@@ -717,7 +738,7 @@ void ReadXboxPad( s32 ID )
     UpdateTrigger( XPad.AnalogBtn[ LTIdx ], XPad.Trigger[0], Pad.bLeftTrigger  );
     UpdateTrigger( XPad.AnalogBtn[ RTIdx ], XPad.Trigger[1], Pad.bRightTrigger );
 
-    // Sticks — normalize to [-1..1] then apply radial deadzone.
+    // Sticks вЂ” normalize to [-1..1] then apply radial deadzone.
     // Use 32768 as divisor so -32768 maps exactly to -1.0.
     {
         const f32 StickInv = 1.0f / 32768.0f;
@@ -766,6 +787,8 @@ void ReadXboxPad( s32 ID )
 }
 
 //=========================================================================
+//  HARDWARE STATE PUMP
+//=========================================================================
 
 static
 xbool ProcessEvents( void )
@@ -802,7 +825,8 @@ s64 TIME_GetTicksPerSecond( void )
 
 //=========================================================================
 
-xbool input_UpdateState2( s32 Depth = 0 )
+static
+xbool UpdateHardwareState( s32 Depth )
 {
     // check whether we are getting events from the queue or we are collecting more events	
     if( s_Input.bProcessEvents )
@@ -908,16 +932,20 @@ xbool input_UpdateState2( s32 Depth = 0 )
     // Set the next stage of the input system
     s_Input.bProcessEvents = TRUE;
 
-    return input_UpdateState2( Depth + 1 );
+    return UpdateHardwareState( Depth + 1 );
 }
 
 //=========================================================================
+//  INPUT SYSTEM HARDWARE PUMP
+//=========================================================================
 
-xbool input_UpdateState( void )
+xbool input_system::PollHardwareState( void )
 {
-    return input_UpdateState2( 0 );
+    return UpdateHardwareState( 0 );
 }
 
+//=========================================================================
+//  BACKEND LIFETIME
 //=========================================================================
 
 void d3deng_KillInput( void )
@@ -1015,26 +1043,43 @@ xbool d3deng_InitInput( HWND Window )
 }
 
 //=========================================================================
+//  RAW GADGET BACKEND
+//=========================================================================
 
 static
-f32 GetValue( s32 ControllerID, input_gadget GadgetID, digital_type DigitalType, xbool ReadAnalogTrigger )
+f32 GetRawBackendValue( s32 DeviceID, input_gadget GadgetID, digital_type DigitalType, xbool ReadAnalogTrigger )
 {
-    ASSERT( ControllerID >= 0 );
-    ASSERT( ControllerID < MAX_DEVICES );
+    ASSERT( DeviceID >= 0 );
+    ASSERT( DeviceID < MAX_DEVICES );
+
+    if( (DeviceID < 0) || (DeviceID >= MAX_DEVICES) )
+        return 0.0f;
 
     if( GadgetID < INPUT_KBD__END && GadgetID > INPUT_KBD__BEGIN )
     {
-        s32 DeviceID = s_Input.KeybdDevice[ ControllerID ];
-        if( DeviceID >= 0 )
+        s32 KeybdDevice = s_Input.KeybdDevice[ DeviceID ];
+        ASSERT( KeybdDevice < MAX_DEVICES );
+
+        if( (KeybdDevice >= 0) && (KeybdDevice < MAX_DEVICES) )
         {
             s32 Index = GadgetID - INPUT_KBD__DIGITAL + 1;
-            return (f32)( s_Input.State[ s_Input.iState ].Keyboard[ ControllerID ].Digital[ Index ] & DigitalType );
+            ASSERT( Index >= 0 );
+            ASSERT( Index < DIGITAL_COUNT_KBD );
+
+            if( (Index >= 0) && (Index < DIGITAL_COUNT_KBD) )
+                return (f32)( s_Input.State[ s_Input.iState ].Keyboard[ KeybdDevice ].Digital[ Index ] & DigitalType );
         }
     }
 
     if( GadgetID < INPUT_MOUSE__END && GadgetID > INPUT_MOUSE__BEGIN )
     {
-        const input_mouse& Mouse = s_Input.State[ s_Input.iState ].Mouse[ ControllerID ];
+        s32 MouseDevice = s_Input.MouseDevice[ DeviceID ];
+        ASSERT( MouseDevice < MAX_DEVICES );
+
+        if( (MouseDevice < 0) || (MouseDevice >= MAX_DEVICES) )
+            return 0.0f;
+
+        const input_mouse& Mouse = s_Input.State[ s_Input.iState ].Mouse[ MouseDevice ];
 
         switch( GadgetID )
         {
@@ -1049,10 +1094,10 @@ f32 GetValue( s32 ControllerID, input_gadget GadgetID, digital_type DigitalType,
 
     if( GadgetID < INPUT_XBOX__END && GadgetID > INPUT_XBOX__BEGIN )
     {
-        if( ControllerID >= XUSER_MAX_COUNT || !s_Input.bXboxConnected[ ControllerID ] )
+        if( DeviceID >= XUSER_MAX_COUNT || !s_Input.bXboxConnected[ DeviceID ] )
             return 0;
 
-        const input_xbox_pad& XPad = s_Input.State[ s_Input.iState ].XboxPad[ ControllerID ];
+        const input_xbox_pad& XPad = s_Input.State[ s_Input.iState ].XboxPad[ DeviceID ];
 
         if( GadgetID > INPUT_XBOX__DIGITAL_BUTTONS_BEGIN && GadgetID < INPUT_XBOX__DIGITAL_BUTTONS_END )
         {
@@ -1088,35 +1133,83 @@ f32 GetValue( s32 ControllerID, input_gadget GadgetID, digital_type DigitalType,
 
 //=========================================================================
 
-xbool input_WasPressed( input_gadget GadgetID, s32 ControllerID )
+xbool input_system::WasRawGadgetPressed( input_gadget GadgetID, s32 DeviceID ) const
 {
-    return GetValue( ControllerID, GadgetID, DIGITAL_DEBAUNCE, FALSE ) != 0;
+    return GetRawBackendValue( DeviceID, GadgetID, DIGITAL_DEBAUNCE, FALSE ) != 0;
 }
 
 //=========================================================================
 
-xbool input_IsPressed( input_gadget GadgetID, s32 ControllerID )
+xbool input_system::IsRawGadgetDown( input_gadget GadgetID, s32 DeviceID ) const
 {
-    return GetValue( ControllerID, GadgetID, DIGITAL_ON, FALSE ) != 0;
+    return GetRawBackendValue( DeviceID, GadgetID, DIGITAL_ON, FALSE ) != 0;
 }
 
 //=========================================================================
 
-f32 input_GetValue( input_gadget GadgetID, s32 ControllerID )
+f32 input_system::GetRawGadgetValue( input_gadget GadgetID, s32 DeviceID ) const
 {
-    return GetValue( ControllerID, GadgetID, DIGITAL_ON, TRUE );
+    return GetRawBackendValue( DeviceID, GadgetID, DIGITAL_ON, TRUE );
 }
 
 //==============================================================================
 
-void input_Feedback( f32 Duration, f32 Intensity, s32 ControllerID )
+xbool input_system::IsRawGadgetPresent( input_gadget GadgetID, s32 DeviceID ) const
 {
-    if( ControllerID < 0 || ControllerID >= XUSER_MAX_COUNT )
+    ASSERT( DeviceID >= 0 );
+    ASSERT( DeviceID < MAX_DEVICES );
+
+    if( (DeviceID < 0) || (DeviceID >= MAX_DEVICES) )
+        return FALSE;
+
+    if( GadgetID == INPUT_MSG_EXIT )
+        return TRUE;
+
+    if( GadgetID > INPUT_KBD__BEGIN && GadgetID < INPUT_KBD__END )
+    {
+        s32 KeybdDevice = s_Input.KeybdDevice[ DeviceID ];
+        return( (KeybdDevice >= 0) && (KeybdDevice < MAX_DEVICES) );
+    }
+
+    if( GadgetID > INPUT_MOUSE__BEGIN && GadgetID < INPUT_MOUSE__END )
+    {
+        s32 MouseDevice = s_Input.MouseDevice[ DeviceID ];
+        return( (MouseDevice >= 0) && (MouseDevice < MAX_DEVICES) );
+    }
+
+    if( GadgetID > INPUT_XBOX__BEGIN && GadgetID < INPUT_XBOX__END )
+    {
+        if( DeviceID < 0 || DeviceID >= XUSER_MAX_COUNT )
+            return FALSE;
+        return s_Input.bXboxConnected[ DeviceID ];
+    }
+
+    return FALSE;
+}
+
+//==============================================================================
+
+s32 input_system::GetPadCount( void ) const
+{
+    s32 nXbox = 0;
+    for( s32 x = 0; x < XUSER_MAX_COUNT; x++ )
+        if( s_Input.bXboxConnected[x] )
+            nXbox++;
+    return nXbox;
+}
+
+//==============================================================================
+//  FEEDBACK
+//==============================================================================
+
+void input_system::Feedback( f32 Duration, f32 Intensity, s32 DeviceID )
+{
+    if( DeviceID < 0 || DeviceID >= XUSER_MAX_COUNT )
         return;
-    if( !s_Input.bXboxConnected[ ControllerID ] )
+    if( !s_Input.bXboxConnected[ DeviceID ] )
         return;
 
-    rumble_controller& C = s_Rumble.Controller[ ControllerID ];
+    rumble_controller& C = s_Rumble.Controller[ DeviceID ];
     C.Type        = RT_INTENSITY;
     C.Intensity  += Intensity * 2.0f;
     C.DurationSec = Duration;
@@ -1124,17 +1217,17 @@ void input_Feedback( f32 Duration, f32 Intensity, s32 ControllerID )
 
 //==============================================================================
 
-void input_Feedback( s32 Count, feedback_envelope* pEnvelope, s32 ControllerID )
+void input_system::Feedback( s32 Count, feedback_envelope* pEnvelope, s32 DeviceID )
 {
     if( Count <= 0 || !pEnvelope )
         return;
-    if( ControllerID < 0 || ControllerID >= XUSER_MAX_COUNT )
+    if( DeviceID < 0 || DeviceID >= XUSER_MAX_COUNT )
         return;
-    if( !s_Input.bXboxConnected[ ControllerID ] )
+    if( !s_Input.bXboxConnected[ DeviceID ] )
         return;
 
     // Use the first envelope entry for intensity and duration.
-    rumble_controller& C = s_Rumble.Controller[ ControllerID ];
+    rumble_controller& C = s_Rumble.Controller[ DeviceID ];
     C.Type        = RT_INTENSITY;
     C.Intensity   = pEnvelope[0].Intensity;
     C.DurationSec = pEnvelope[0].Duration;
@@ -1142,26 +1235,26 @@ void input_Feedback( s32 Count, feedback_envelope* pEnvelope, s32 ControllerID )
 
 //=============================================================================
 
-void input_EnableFeedback( xbool state, s32 ControllerID )
+void input_system::EnableFeedback( xbool state, s32 DeviceID )
 {
-    if( ControllerID < 0 || ControllerID >= XUSER_MAX_COUNT )
+    if( DeviceID < 0 || DeviceID >= XUSER_MAX_COUNT )
         return;
 
-    s_Rumble.Controller[ ControllerID ].Enabled = state;
+    s_Rumble.Controller[ DeviceID ].Enabled = state;
 
     if( !state )
     {
-        s_Rumble.Controller[ ControllerID ].Type      = RT_NO_RUMBLE;
-        s_Rumble.Controller[ ControllerID ].Intensity = 0.0f;
+        s_Rumble.Controller[ DeviceID ].Type      = RT_NO_RUMBLE;
+        s_Rumble.Controller[ DeviceID ].Intensity = 0.0f;
         XINPUT_VIBRATION silence = { 0, 0 };
-        if( s_Input.bXboxConnected[ ControllerID ] )
-            XInputSetState( ControllerID, &silence );
+        if( s_Input.bXboxConnected[ DeviceID ] )
+            XInputSetState( DeviceID, &silence );
     }
 }
 
 //==============================================================================
 
-void input_SuppressFeedback( xbool Suppress )
+void input_system::SuppressFeedback( xbool Suppress )
 {
     s_Rumble.Suppress = Suppress;
 
@@ -1176,49 +1269,37 @@ void input_SuppressFeedback( xbool Suppress )
 
 //==============================================================================
 
-void input_Kill( void )
-{
-    input_ClearFeedback();
-    d3deng_KillInput();
-}
-
-//==============================================================================
-
-xbool input_IsPresent( input_gadget GadgetID, s32 ControllerID )
-{
-    if( GadgetID > INPUT_XBOX__BEGIN && GadgetID < INPUT_XBOX__END )
-    {
-        if( ControllerID < 0 || ControllerID >= XUSER_MAX_COUNT )
-            return FALSE;
-        return s_Input.bXboxConnected[ ControllerID ];
-    }
-    return TRUE;
-}
-
-//==============================================================================
-
-s32 input_GetPadCount( void )
-{
-    s32 nXbox = 0;
-    for( s32 x = 0; x < XUSER_MAX_COUNT; x++ )
-        if( s_Input.bXboxConnected[x] )
-            nXbox++;
-    return nXbox;
-}
-
-//==============================================================================
-
-void input_ClearFeedback( void )
+void input_system::ClearFeedback( void )
 {
     XINPUT_VIBRATION silence = { 0, 0 };
     for( s32 x = 0; x < XUSER_MAX_COUNT; x++ )
     {
-        s_Rumble.Controller[x].Type      = RT_NO_RUMBLE;
-        s_Rumble.Controller[x].Intensity = 0.0f;
+        s_Rumble.Controller[x].Type        = RT_NO_RUMBLE;
+        s_Rumble.Controller[x].Intensity   = 0.0f;
         s_Rumble.Controller[x].DurationSec = 0.0f;
         if( s_Input.bXboxConnected[x] )
             XInputSetState( x, &silence );
     }
+}
+
+//==============================================================================
+//  INPUT SYSTEM LIFETIME
+//==============================================================================
+
+void input_system::Init( void )
+{
+    if( s_Input.pDInput || !s_Input.Window )
+        return;
+
+    d3deng_InitInput( s_Input.Window );
+}
+
+//==============================================================================
+
+void input_system::Kill( void )
+{
+    ClearFeedback();
+    d3deng_KillInput();
 }
 
 //==============================================================================

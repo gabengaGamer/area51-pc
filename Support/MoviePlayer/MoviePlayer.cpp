@@ -113,9 +113,9 @@ s32 PlaySimpleMovie(const char* movieName)
             }
         
             f32 DeltaTime = g_DeltaMgr.GetFixedUpdateDeltaTime();
-            g_InputMgr.BeginFrame( DeltaTime, FRONTEND_CONTEXT );
-            g_InputMgr.UpdateLocal( DeltaTime );
-            g_InputMgr.ClearFixedInput();
+            g_Input.SampleActionMaps( g_IngamePad, DeltaTime, FRONTEND_CONTEXT );
+            g_Input.CommitActionMapsFrame( g_IngamePad );
+            g_Input.ClearActionMapsFixed( g_IngamePad );
             g_NetworkMgr.Update( DeltaTime );
         
             Movie.Render();
@@ -127,18 +127,18 @@ s32 PlaySimpleMovie(const char* movieName)
             for( s32 i = 0; i < MAX_LOCAL_PLAYERS; i++ )
             {
                 const auto& pad = g_IngamePad[i];
-                if( (pad.GetLogical( ingame_pad::UI_SELECT   ).IsValue > 0.25f) ||
-                    (pad.GetLogical( ingame_pad::UI_BACK     ).IsValue > 0.25f) ||
-                    (pad.GetLogical( ingame_pad::UI_ACTIVATE ).IsValue > 0.25f) )
+                if( (pad.GetLogical( ingame_pad::UI_SELECT   ).GetIsValue() > 0.25f) ||
+                    (pad.GetLogical( ingame_pad::UI_BACK     ).GetIsValue() > 0.25f) ||
+                    (pad.GetLogical( ingame_pad::UI_ACTIVATE ).GetIsValue() > 0.25f) )
                 {
                     anyHeld = TRUE;
                 }
         
                 if( allowSkip )
                 {
-                    if( (pad.GetLogical( ingame_pad::UI_SELECT   ).WasValue > 0.25f) ||
-                        (pad.GetLogical( ingame_pad::UI_BACK     ).WasValue > 0.25f) ||
-                        (pad.GetLogical( ingame_pad::UI_ACTIVATE ).WasValue > 0.25f) )
+                    if( (pad.GetLogical( ingame_pad::UI_SELECT   ).GetWasValue() > 0.25f) ||
+                        (pad.GetLogical( ingame_pad::UI_BACK     ).GetWasValue() > 0.25f) ||
+                        (pad.GetLogical( ingame_pad::UI_ACTIVATE ).GetWasValue() > 0.25f) )
                     {
                         done = TRUE;
                     }

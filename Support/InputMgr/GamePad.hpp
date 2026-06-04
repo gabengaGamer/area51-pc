@@ -11,18 +11,45 @@
 // INCLUDES
 //=========================================================================
 
-#include "InputMgr.hpp"
+#include "Entropy.hpp"
+#ifdef CONFIG_VIEWER
+#include "../../Apps/ArtistViewer/Config.hpp"
+#else
+#include "../../Apps/GameApp/Config.hpp"
+#endif
+
+#include "../Menu/DebugMenuDefine.hpp"
+
 #ifndef MAX_LOCAL_PLAYERS
 #define MAX_LOCAL_PLAYERS 4
 #endif
 
 //=========================================================================
+// DEFINES
+//=========================================================================
+
+enum input_context
+{
+    INGAME_CONTEXT     = (1 << 0),
+    FRONTEND_CONTEXT   = (1 << 1),
+#if defined( ENABLE_DEBUG_MENU )
+    DEBUG_MENU_CONTEXT = (1 << 2),
+#endif
+    ALL_CONTEXTS       = INGAME_CONTEXT | FRONTEND_CONTEXT
+#if defined( ENABLE_DEBUG_MENU )
+                       | DEBUG_MENU_CONTEXT
+#endif
+};
+
+//=========================================================================
 // CLASSES
 //=========================================================================
 
-class ingame_pad : public input_pad
+class ingame_pad : public input_action_map
 {
 public:
+
+    typedef input_action_state logical;
 
     enum logical_id
     {
@@ -115,7 +142,11 @@ public:
     };
 
                         ingame_pad      ( void );
-    virtual void        OnInitialize    ( void );
+
+    logical&            GetLogical      ( s32 I );
+    const logical&      GetLogical      ( s32 I ) const;
+
+    virtual void        SampleFrame     ( f32 DeltaTime );
 
     static  const char* GetLogicalIDName    ( s32 Index );
     static  const char* GetLogicalIDEnum    ( void );
@@ -124,80 +155,13 @@ public:
 
 protected:
 
-    virtual xbool       IsPausePressed  ( void ) const;
+    void                OnInitialize    ( void );
+    xbool               ShouldPollInput ( void ) const;
+    virtual void        OnActionValue   ( s32 ActionID, f32 Value );
 };
 
 //=========================================================================
-//  INLINE FUNCTIONS
-//=========================================================================
-
-inline
-xbool IsLookLogical( ingame_pad::logical_id LogicalID )
-{
-    return( (LogicalID == ingame_pad::LOOK_HORIZONTAL) ||
-            (LogicalID == ingame_pad::LOOK_VERTICAL  ) );
-}
-
-//=========================================================================
-
-inline
-xbool IsMoveLogical( ingame_pad::logical_id LogicalID )
-{
-    return( (LogicalID == ingame_pad::MOVE_FORWARD ) ||
-            (LogicalID == ingame_pad::MOVE_BACKWARD) ||
-            (LogicalID == ingame_pad::STRAFE_LEFT  ) ||
-            (LogicalID == ingame_pad::STRAFE_RIGHT ) );
-}
-
-//=========================================================================
-
-inline
-xbool IsUIDirectionLogical( ingame_pad::logical_id LogicalID )
-{
-    return( (LogicalID == ingame_pad::UI_UP   ) ||
-            (LogicalID == ingame_pad::UI_DOWN ) ||
-            (LogicalID == ingame_pad::UI_LEFT ) ||
-            (LogicalID == ingame_pad::UI_RIGHT) );
-}
-
-//=========================================================================
-
-inline
-xbool IsPositiveAxisLogical( ingame_pad::logical_id LogicalID )
-{
-    return( IsMoveLogical( LogicalID ) ||
-            IsUIDirectionLogical( LogicalID )
-#if defined( ENABLE_DEBUG_MENU )
-            ||
-            (LogicalID == ingame_pad::DEBUG_MENU_NEXT_ITEM) ||
-            (LogicalID == ingame_pad::DEBUG_MENU_PREV_ITEM) ||
-            (LogicalID == ingame_pad::DEBUG_MENU_INCREMENT) ||
-            (LogicalID == ingame_pad::DEBUG_MENU_DECREMENT)
-#endif
-            );
-}
-
-//=========================================================================
-
-inline
-xbool IsCycleLogical( ingame_pad::logical_id LogicalID )
-{
-    return( (LogicalID == ingame_pad::ACTION_CYCLE_RIGHT) ||
-            (LogicalID == ingame_pad::ACTION_CYCLE_LEFT ) );
-}
-
-//=========================================================================
-
-inline
-xbool IsButtonLogical( ingame_pad::logical_id LogicalID )
-{
-    return( (LogicalID != ingame_pad::ACTION_NULL) &&
-            !IsLookLogical( LogicalID ) &&
-            !IsPositiveAxisLogical( LogicalID ) );
-}
-
-//=========================================================================
-// GLOBAL VARS
+// GLOBAL STATE
 //=========================================================================
 
 extern ingame_pad g_IngamePad[ MAX_LOCAL_PLAYERS ];

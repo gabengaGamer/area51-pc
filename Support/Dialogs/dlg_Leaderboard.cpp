@@ -25,10 +25,6 @@
 #include "../../Apps/GameApp/Config.hpp"	
 #endif
 
-#ifndef CONFIG_RETAIL
-#include "InputMgr\monkey.hpp"
-#endif
-
 //=========================================================================
 //  Team Leaderboard Dialog
 //=========================================================================
@@ -279,10 +275,6 @@ void dlg_leaderboard::OnPadDelete( ui_win* pWin )
         if( m_pPopUp == NULL )
         {
 
-#ifndef CONFIG_RETAIL
-            if ( g_MonkeyOptions.Enabled && g_MonkeyOptions.ModeEnabled[MONKEY_MENUMONKEY] )
-                return;
-#endif
 
             // Open a dialog to confirm quitting the online game component
             irect r = g_UiMgr->GetUserBounds( g_UiUserID );

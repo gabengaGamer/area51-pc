@@ -559,7 +559,7 @@ void game_mgr::Logic( f32 DeltaTime )
     }
 
     /*
-    // Game over because the monkeys have killed themselves enough?
+    // Game over because players have killed themselves enough?
     if( m_Score.IsTeamBased )
     {
         if( (m_Score.Team[0].Score <= -50) || 

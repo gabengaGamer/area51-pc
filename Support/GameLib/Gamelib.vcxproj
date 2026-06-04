@@ -659,8 +659,6 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='VIEWER-Debug|Win32'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="..\InputMgr\GamePad.cpp" />
-    <ClCompile Include="..\InputMgr\InputMgr.cpp" />
-    <ClCompile Include="..\InputMgr\Monkey.cpp" />
     <ClCompile Include="..\DeltaMgr\DeltaMgr.cpp" />
     <ClCompile Include="..\DeltaMgr\InterpolationMgr.cpp" />
     <ClCompile Include="..\Inventory\CollectableAntiMutagen.cpp">
@@ -794,7 +792,6 @@
     <ClCompile Include="..\Menu\DebugMenuPageLocalization.cpp" />
     <ClCompile Include="..\Menu\DebugMenuPageLogging.cpp" />
     <ClCompile Include="..\Menu\DebugMenuPageMemory.cpp" />
-    <ClCompile Include="..\Menu\DebugMenuPageMonkey.cpp" />
     <ClCompile Include="..\Menu\DebugMenuPageMultiplayer.cpp" />
     <ClCompile Include="..\Menu\DebugMenuPagePolyCache.cpp" />
     <ClCompile Include="..\Menu\DebugMenuPageRender.cpp" />
@@ -1440,8 +1437,6 @@
     <ClInclude Include="..\Hud\RiftHUD.hpp" />
     <ClInclude Include="..\Hud\SmartSprite.hpp" />
     <ClInclude Include="..\InputMgr\GamePad.hpp" />
-    <ClInclude Include="..\InputMgr\InputMgr.hpp" />
-    <ClInclude Include="..\InputMgr\Monkey.hpp" />
     <ClInclude Include="..\DeltaMgr\DeltaMgr.hpp" />
     <ClInclude Include="..\DeltaMgr\InterpolationMgr.hpp" />
     <ClInclude Include="..\Inventory\CollectableAntiMutagen.hpp" />
@@ -1484,7 +1479,6 @@
     <ClInclude Include="..\Menu\DebugMenuPageLocalization.hpp" />
     <ClInclude Include="..\Menu\DebugMenuPageLogging.hpp" />
     <ClInclude Include="..\Menu\DebugMenuPageMemory.hpp" />
-    <ClInclude Include="..\Menu\DebugMenuPageMonkey.hpp" />
     <ClInclude Include="..\Menu\DebugMenuPageMultiplayer.hpp" />
     <ClInclude Include="..\Menu\DebugMenuPagePolyCache.hpp" />
     <ClInclude Include="..\Menu\DebugMenuPageRender.hpp" />

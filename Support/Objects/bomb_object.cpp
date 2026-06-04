@@ -491,7 +491,7 @@ void bomb_object::UpdateBombStates( s32 BombEventState, f32 DeltaTime )
                     pPlayerObj->ShakeView(m_ScreenShakeTime, m_ScreenShakeAmount, m_ScreenShakeSpeed );
 
                     //force feedback
-                    input_Feedback(m_FeedBackDuration, m_FeedBackIntensity, pPlayerObj->GetActivePlayerPad() );
+                    g_Input.Feedback(m_FeedBackDuration, m_FeedBackIntensity, pPlayerObj->GetActivePlayerPad() );
                 }
             }
 

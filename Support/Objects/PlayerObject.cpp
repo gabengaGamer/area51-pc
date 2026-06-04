@@ -50,10 +50,6 @@
 #include "StringMgr\StringMgr.hpp"
 #include "e_Audio.hpp"
 
-#ifndef X_RETAIL
-#include "InputMgr\Monkey.hpp"
-#endif
-
 #ifdef X_EDITOR
 #include "../Apps/Editor/Project.hpp"
 #else
@@ -549,6 +545,8 @@ player::player( void ) :
     m_fRawControllerYaw(0),
     m_fRawControllerPitch(0),
     m_LookInputMode( LOOK_INPUT_NONE ),
+    m_YawLookInputMode( LOOK_INPUT_NONE ),
+    m_PitchLookInputMode( LOOK_INPUT_NONE ),
     m_bVoteButtonPressed(FALSE),
     m_bRespawnButtonPressed(FALSE),
     m_fPreviousYawValue(0),
@@ -1800,7 +1798,7 @@ void player::DoFeedback( f32 Duration, f32 Intensity )
     // don't do feedback if we're dead
     if( m_ActivePlayerPad != -1 && !IsDead() )
     {
-        input_Feedback(Duration, Intensity, g_IngamePad[m_ActivePlayerPad].GetControllerID());
+        g_Input.Feedback(Duration, Intensity, g_IngamePad[m_ActivePlayerPad].GetDeviceID());
     }
 }
 
@@ -2488,55 +2486,36 @@ void player::SetLocalPlayer( s32 LocalIndex )
 #if !defined(X_EDITOR)
     s32 iPad = LocalIndex;
 
-    #if defined(TARGET_PC)
-        // Prefer the controller chosen in the front-end so players can switch
-        // between keyboard and gamepad without restarting the session.
-        
-        // NOTE: GS: Also, I don't plan to support split-screen on PC, at least not yet. 
-        // Therefore, I'm not working on specific controllers.
-        
-        iPad = g_StateMgr.GetActiveControllerID();
-    
-        if( (iPad < 0) || (iPad >= MAX_LOCAL_PLAYERS) )
+    s32 nIndex = LocalIndex;
+    for( iPad = 0; iPad < MAX_LOCAL_PLAYERS; iPad++ )
+    {
+        if( g_StateMgr.GetControllerRequested(iPad) )
         {
-            iPad = LocalIndex;
+            if( nIndex == 0 )
+                break;
+
+            nIndex--;
         }
-    
+    }
+
+    if( iPad >= MAX_LOCAL_PLAYERS )
+    {
+        iPad = LocalIndex;
         g_StateMgr.SetControllerRequested( iPad, TRUE );
-        g_IngamePad[LocalIndex].SetControllerID( iPad );
-    #else
-        // find a controller to assign
-        s32 nIndex = LocalIndex;
-        for( iPad = 0; iPad < MAX_LOCAL_PLAYERS; iPad++ )
-        {
-            if( g_StateMgr.GetControllerRequested(iPad) )
-            {
-                if( nIndex == 0 )
-                    break;
-    
-                nIndex--;
-            }
-        }
-    
-        if( iPad >= MAX_LOCAL_PLAYERS )
-        {
-            iPad = LocalIndex;
-            g_StateMgr.SetControllerRequested( iPad, TRUE );
-        }
-    
-        g_IngamePad[LocalIndex].SetControllerID( iPad );
-    #endif
+    }
+
+    g_IngamePad[LocalIndex].SetDeviceID( iPad );
 
     // enable vibration based on profile settings.
     player_profile& Profile = g_StateMgr.GetActiveProfile( g_StateMgr.GetProfileListIndex(LocalIndex));
-    input_EnableFeedback( Profile.m_bVibration, iPad );
+    g_Input.EnableFeedback( Profile.m_bVibration, iPad );
 
 #else
     // always controller 0.
-    g_IngamePad[LocalIndex].SetControllerID( 0 );
+    g_IngamePad[LocalIndex].SetDeviceID( 0 );
 #endif
 
-    ASSERT( g_IngamePad[LocalIndex].GetControllerID() != -1 );
+    ASSERT( g_IngamePad[LocalIndex].GetDeviceID() != -1 );
 
     //#ifndef X_EDITOR
     //s32 nPlayers = g_StateMgr.GetPlayerCount();
@@ -2760,9 +2739,9 @@ void player::OnAdvanceLogic( f32 DeltaTime )
 
     // set vibration
 #ifndef X_EDITOR
-    s32             iPad    = g_IngamePad[ m_LocalSlot ].GetControllerID();
+    s32             iPad    = g_IngamePad[ m_LocalSlot ].GetDeviceID();
     player_profile& Profile = g_StateMgr.GetActiveProfile( g_StateMgr.GetProfileListIndex(m_LocalSlot));
-    input_EnableFeedback( Profile.m_bVibration, iPad );
+    g_Input.EnableFeedback( Profile.m_bVibration, iPad );
 #endif
 
     g_ZoneMgr.UpdateEar( m_AudioEarID );
@@ -2864,7 +2843,7 @@ void player::OnAdvanceLogic( f32 DeltaTime )
             
             // Test for re-spawn being pressed 
             // (just in case for some reason we can't get into death state)
-            xbool bPrimaryPressed = g_IngamePad[m_ActivePlayerPad].GetLogical( ingame_pad::ACTION_PRIMARY ).WasValue > 0.25f;
+            xbool bPrimaryPressed = g_IngamePad[m_ActivePlayerPad].GetLogical( ingame_pad::ACTION_PRIMARY ).GetWasValue() > 0.25f;
             if( bPrimaryPressed )
             {
                 m_bWantToSpawn = TRUE;
@@ -3151,7 +3130,7 @@ xbool player::UseFocusObject( void )
     // Look for all focus objects in the world, and try to press every single
     // one of them until we find one that works.  
     //
-    xbool UsePressed = g_IngamePad[m_ActivePlayerPad].GetLogical( ingame_pad::ACTION_USE ).WasValue > 0.25f;
+    xbool UsePressed = g_IngamePad[m_ActivePlayerPad].GetLogical( ingame_pad::ACTION_USE ).GetWasValue() > 0.25f;
     if( UsePressed && (m_CurrentAnimState != ANIM_STATE_THROW ) && !IsChangingMutation() )
     {
         slot_id SlotID = g_ObjMgr.GetFirst( object::TYPE_FOCUS_OBJECT );
@@ -4065,73 +4044,6 @@ void player::OnRender( void )
             pWeapon->SetRenderState( new_weapon::RENDER_STATE_PLAYER );
     }
 
-#ifdef MONKEY_DEBUG
-    radian Pitch, Yaw;
-    GetView().GetPitchYaw(Pitch, Yaw);
-    // FIND NEAREST HOSTILE CHARACTEr
-
-    // Collect living targets
-    f32 ClosestDistSq   = 1500.f * 1500.f;
-    const f32 MaxDistSq = ClosestDistSq;
-    actor* pClosestHostile = NULL;
-
-    actor* pNextActor = actor::m_pFirstActive;
-    while( pNextActor )
-    {
-        // Get ptr to actor and advance to next
-        actor* pActor = pNextActor;
-        pNextActor = pNextActor->m_pNextActive;
-
-        if( (pActor->GetGuid() != GetGuid()) && 
-            pActor->IsKindOf( actor::GetRTTI() ) &&
-            !pActor->IsDead() )
-        {
-            if( IsEnemyFaction( pActor->GetFaction() ) )
-            {
-                f32 DistSq = (pActor->GetPosition() - GetPosition()).LengthSquared();
-                if ( DistSq < ClosestDistSq && DistSq < MaxDistSq )
-                {
-                    ClosestDistSq = DistSq;
-                    pClosestHostile = pActor;
-                }
-            }
-        }
-    }
-
-    // pass the monkey all the data it wants
-    vector3 closest_hostile_position(0,0,0);
-    if ( pClosestHostile )
-    {
-        closest_hostile_position = pClosestHostile->GetPosition();
-
-        // TEMP:  log crap about angle to target            
-        vector3 DirToHostile = closest_hostile_position - GetPosition();
-        DirToHostile.Normalize();
-
-        vector3 ForwardDir(Pitch, Yaw);
-        ForwardDir.Normalize();
-
-        vector3 ForwardDirNoY(ForwardDir);
-        ForwardDirNoY.GetY() = 0.f;
-        ForwardDirNoY.Normalize();
-
-        f32 yaw_dot_to_hostile = ForwardDirNoY.Dot(DirToHostile);
-        vector3 cross1         = ForwardDirNoY.Cross(DirToHostile);
-        radian RotAngleYaw     = x_acos(yaw_dot_to_hostile) * (cross1.GetY() < 0.f ? 1.f : -1.f);
-
-        vector3 DirToHostileNoY(DirToHostile);
-        DirToHostileNoY.GetY() = ForwardDir.GetY();
-        DirToHostileNoY.Normalize();
-
-        f32 pitch_dot_to_hostile = DirToHostileNoY.Dot(DirToHostile);
-        radian RotAnglePitch     = x_acos(pitch_dot_to_hostile) * (DirToHostileNoY.GetY() > DirToHostile.GetY() ? 1.0f : -1.f);
-
-        x_printfxy( 0, 3, "yaw-RotAngle:  %2.2f", RAD_TO_DEG(RotAngleYaw));
-        x_printfxy( 0, 4, "pit-RotAngle:  %2.2f", RAD_TO_DEG(RotAnglePitch));
-
-        draw_Line( GetPosition(), closest_hostile_position, XCOLOR_RED );
-    }
-#endif
 }
 
 //===========================================================================
@@ -4143,57 +4055,6 @@ void player::OnRenderShadowCast( u64 ProjMask )
         actor::OnRenderShadowCast( ProjMask );
     }
 }
-
-//===========================================================================
-
-#if !defined(X_RETAIL) && !defined(X_EDITOR)
-
-// used by monkey (and potentially other diagnostic tools) to give the player all weaponry
-
-void player::AddAllWeaponsToInventory( void )
-{
-    AddItemToInventory2(INVEN_WEAPON_DESERT_EAGLE);    
-    AddItemToInventory2(INVEN_WEAPON_SMP);    
-    AddItemToInventory2(INVEN_WEAPON_SHOTGUN);    
-    AddItemToInventory2(INVEN_WEAPON_SNIPER_RIFLE);
-    AddItemToInventory2(INVEN_WEAPON_BBG);
-    AddItemToInventory2(INVEN_WEAPON_MESON_CANNON);
-
-    AddAmmoToInventory2(INVEN_AMMO_SMP, 150);
-    AddAmmoToInventory2(INVEN_AMMO_SHOTGUN, 40);
-    AddAmmoToInventory2(INVEN_AMMO_SNIPER_RIFLE, 10);
-    AddAmmoToInventory2(INVEN_AMMO_MESON, 1);
-    AddAmmoToInventory2(INVEN_AMMO_DESERT_EAGLE, 1);
-    AddAmmoToInventory2(INVEN_GRENADE_FRAG, 3);
-    AddAmmoToInventory2(INVEN_GRENADE_GRAV, 3);
-    AddAmmoToInventory2(INVEN_GRENADE_JBEAN, 3);
-    
-    ReloadAllWeapons();
-}
-
-//===========================================================================
-
-// monkey should add all weapons if in Gunman or Grenadier mode and not already in possession of all weapons
-
-xbool player::ShouldMonkeyAddAllWeapons( void )
-{
-    if ( g_Monkey.GetCurrentMode() == MONKEY_GUNMAN || g_Monkey.GetCurrentMode() == MONKEY_GRENADIER )
-    {
-        if ( HasItemInInventory2(INVEN_WEAPON_DESERT_EAGLE) &&             
-             HasItemInInventory2(INVEN_WEAPON_SMP) &&             
-             HasItemInInventory2(INVEN_WEAPON_SHOTGUN) &&
-             HasItemInInventory2(INVEN_WEAPON_SNIPER_RIFLE) &&
-             HasItemInInventory2(INVEN_WEAPON_BBG) &&
-             HasItemInInventory2(INVEN_WEAPON_MESON_CANNON) )
-             return FALSE;
-
-        return TRUE;
-    }
-
-    return FALSE;
-}
-
-#endif // monkey only defined in non-retail / non-editor builds
 
 //===========================================================================
 
@@ -4265,72 +4126,6 @@ void player::OnAliveLogic( f32 DeltaTime )
     UpdateCharacterRotation ( AlteredDeltaTime );
     UpdateCrouchHeight      ( AlteredDeltaTime );
 
-    //==========================================================================================
-    // feed the monkey -- non-retail builds only
-    //==========================================================================================
-#if !defined(X_RETAIL) && !defined(X_EDITOR)
-    if ( g_MonkeyOptions.Enabled )
-    {           
-        // add all weapons when entering certain monkey modes
-        if ( ShouldMonkeyAddAllWeapons() )
-        {
-            AddAllWeaponsToInventory();
-        }
-
-        // check for out-of-world monkey
-        if ( g_MonkeyOptions.bTestOutOfWorld ) 
-        {
-            if ( g_ZoneMgr.FindZone( GetPosition() ) == 0 )
-            {
-                ASSERTS( 0, "Monkey has fallen out of the world!" );
-            }
-        }
-
-        // get view pitch and yaw
-        radian Pitch, Yaw;
-        GetInterpView().GetPitchYaw(Pitch, Yaw);
-
-        // get player profile to pass in bool representing invert-y setting
-        player_profile& p = g_StateMgr.GetActiveProfile(g_StateMgr.GetProfileListIndex(m_LocalSlot));
-
-        // FIND NEAREST HOSTILE CHARACTEr
-        vector3 closest_hostile_position(0,0,0);
-        
-        // Collect living targets
-        f32 ClosestDistSq   = 1500.f * 1500.f;
-        const f32 MaxDistSq = ClosestDistSq;
-        actor* pClosestHostile = NULL;
-
-        actor* pNextActor = actor::m_pFirstActive;
-        while( pNextActor )
-        {
-            // Get ptr to actor and advance to next
-            actor* pActor = pNextActor;
-            pNextActor = pNextActor->m_pNextActive;
-
-            if( (pActor->GetGuid() != GetGuid()) && 
-                pActor->IsKindOf( actor::GetRTTI() ) &&
-                !pActor->IsDead() )
-            {
-                if( IsEnemyFaction( pActor->GetFaction() ) )
-                {
-                    f32 DistSq = (pActor->GetPosition() - GetPosition()).LengthSquared();
-                    if ( DistSq < ClosestDistSq && DistSq < MaxDistSq )
-                    {
-                        ClosestDistSq = DistSq;
-                        pClosestHostile = pActor;
-                    }
-                }
-            }
-        }
-
-        // pass the monkey all the data it wants        
-        if ( pClosestHostile )
-            closest_hostile_position = pClosestHostile->GetPosition();
-
-        g_Monkey.SetPlayerInfo( GetPosition(), Pitch, Yaw, p.m_bInvertY, closest_hostile_position, IsMutated() );
-    }  
-#endif 
 }
 
 //===========================================================================

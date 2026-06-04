@@ -460,8 +460,8 @@ void dlg_main_menu::OnUpdate ( ui_win* pWin, f32 DeltaTime )
     if( !m_bCheckKeySequence )
     {
     #if defined(TARGET_PC)
-        if( input_IsPressed( INPUT_PS2_BTN_START,   0 ) &&
-            input_IsPressed( INPUT_PS2_BTN_SELECT,  0 ) )
+        if( g_Input.IsPressed( INPUT_PS2_BTN_START,   0 ) &&
+            g_Input.IsPressed( INPUT_PS2_BTN_SELECT,  0 ) )
     #else
         ASSERT(0);
     #endif
@@ -473,7 +473,7 @@ void dlg_main_menu::OnUpdate ( ui_win* pWin, f32 DeltaTime )
     else
     {
     #if defined(TARGET_PC)
-        if( input_WasPressed( INPUT_PS2_BTN_L_UP,  0 ) )
+        if( g_Input.WasPressed( INPUT_PS2_BTN_L_UP,  0 ) )
     #else
         ASSERT(0);
     #endif
@@ -481,7 +481,7 @@ void dlg_main_menu::OnUpdate ( ui_win* pWin, f32 DeltaTime )
             g_Config.AutoServer = TRUE;
         }
     #if defined(TARGET_PC)
-        else if( input_WasPressed( INPUT_PS2_BTN_L_DOWN, 0 ) )
+        else if( g_Input.WasPressed( INPUT_PS2_BTN_L_DOWN, 0 ) )
     #else
         ASSERT(0);
     #endif

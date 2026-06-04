@@ -1057,11 +1057,6 @@ protected:
 
     virtual         s32             GetMaterial             ( void ) const { return MAT_TYPE_FLESH; }
 
-#if !defined(X_RETAIL) && !defined(X_EDITOR)
-                    void            AddAllWeaponsToInventory( void );
-                    xbool           ShouldMonkeyAddAllWeapons( void );
-#endif
-
 public:
             void                    CreateAllWeaponObjects  ( void );            
 
@@ -1259,7 +1254,8 @@ protected:
     {
         LOOK_INPUT_NONE,
         LOOK_INPUT_MOUSE,
-        LOOK_INPUT_GAMEPAD
+        LOOK_INPUT_GAMEPAD,
+        LOOK_INPUT_MIXED
     };
 
     static guid             s_ActivePlayerGuid;             // The guid of the active player
@@ -1272,6 +1268,8 @@ protected:
     f32                     m_fRawControllerYaw;
     f32                     m_fRawControllerPitch;
     look_input_mode         m_LookInputMode;
+    look_input_mode         m_YawLookInputMode;
+    look_input_mode         m_PitchLookInputMode;
 
     xbool                   m_bVoteButtonPressed;
     xbool                   m_bRespawnButtonPressed;

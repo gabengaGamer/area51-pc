@@ -31,11 +31,6 @@
 #include "MemCardMgr/MemCardMgr.hpp"
 #include "dlg_download.hpp"
 
-#ifndef CONFIG_RETAIL
-#include "InputMgr\monkey.hpp"
-#endif
-
-
 //=========================================================================
 //  Main Menu Dialog
 //=========================================================================
@@ -539,10 +534,6 @@ void dlg_online_level_select::OnPadSelect( ui_win* pWin )
 {
     if( m_State == DIALOG_STATE_ACTIVE )
     {
-#ifndef CONFIG_RETAIL
-        if ( g_MonkeyOptions.Enabled && g_MonkeyOptions.ModeEnabled[MONKEY_MENUMONKEY] )
-            return;
-#endif
 
         if( pWin == (ui_win*)m_pLaunchButton )
         {
@@ -591,10 +582,6 @@ void dlg_online_level_select::OnPadDelete( ui_win* pWin )
 
     if( m_State == DIALOG_STATE_ACTIVE )
     {
-#ifndef CONFIG_RETAIL
-        if ( g_MonkeyOptions.Enabled && g_MonkeyOptions.ModeEnabled[MONKEY_MENUMONKEY] )
-            return;
-#endif
 
         LaunchServer();
     }

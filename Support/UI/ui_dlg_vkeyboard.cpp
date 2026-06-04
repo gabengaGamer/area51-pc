@@ -897,7 +897,7 @@ void ui_dlg_vkeyboard::OnUpdate( ui_win* pWin, f32 DeltaTime )
         s32 heldKey = -1;
         for( s32 k = 0; k < s_PCKeyMapCount; k++ )
         {
-            if( input_IsPressed( s_PCKeyMap[k].Key ) )
+            if( g_Input.IsPressed( s_PCKeyMap[k].Key ) )
             {
                 heldKey = k;
                 break;
@@ -931,7 +931,7 @@ void ui_dlg_vkeyboard::OnUpdate( ui_win* pWin, f32 DeltaTime )
 
         if( bFire )
         {
-            xbool bShift = input_IsPressed( INPUT_KBD_LSHIFT ) || input_IsPressed( INPUT_KBD_RSHIFT );			
+            xbool bShift = g_Input.IsPressed( INPUT_KBD_LSHIFT ) || g_Input.IsPressed( INPUT_KBD_RSHIFT );
             char c = bShift ? s_PCKeyMap[heldKey].Shifted : s_PCKeyMap[heldKey].Normal;
             if( c && ( (m_MaxCharacters == -1) ||
                         (m_pStringCtrl->GetLabel().GetLength() < m_MaxCharacters) ) )

@@ -18,10 +18,6 @@
 #include "NetworkMgr\GameMgr.hpp"
 #include "Objects\Player.hpp"
 
-#ifndef CONFIG_RETAIL
-#include "InputMgr\monkey.hpp"
-#endif
-
 //=========================================================================
 //  Main Menu Dialog
 //=========================================================================
@@ -431,10 +427,6 @@ void dlg_pause_online::OnPadDelete( ui_win* pWin )
         if( m_PopUp == NULL )
         {
 
-#ifndef CONFIG_RETAIL
-            if ( g_MonkeyOptions.Enabled && g_MonkeyOptions.ModeEnabled[MONKEY_MENUMONKEY] )
-                return;
-#endif
 
             // Open a dialog to confirm quitting the online game component
             irect r = g_UiMgr->GetUserBounds( g_UiUserID );

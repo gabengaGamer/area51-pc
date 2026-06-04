@@ -16,7 +16,7 @@
 static 
 input_gadget ArgGadget( script_context& ctx, s32 Index )
 {
-    input_gadget G = input_LookupGadget( ctx.ArgString(Index) );
+    input_gadget G = input_system::LookupGadget( ctx.ArgString(Index) );
     if( G == INPUT_UNDEFINED )
 	{
         x_DebugMsg( "***\n*** SCRIPT WARNING [input] unknown gadget '%s'\n***\n", // Spam simulator
@@ -34,7 +34,7 @@ static
 s32 bind_input_waspressed( script_context& ctx )
 {
     input_gadget G = ArgGadget( ctx, 0 );
-    ctx.PushBool( G != INPUT_UNDEFINED ? input_WasPressed(G) : FALSE );
+    ctx.PushBool( G != INPUT_UNDEFINED ? g_Input.WasPressed(G) : FALSE );
     return 1;
 }
 
@@ -44,7 +44,7 @@ static
 s32 bind_input_ispressed( script_context& ctx )
 {
     input_gadget G = ArgGadget( ctx, 0 );
-    ctx.PushBool( G != INPUT_UNDEFINED ? input_IsPressed(G) : FALSE );
+    ctx.PushBool( G != INPUT_UNDEFINED ? g_Input.IsPressed(G) : FALSE );
     return 1;
 }
 
@@ -54,7 +54,7 @@ static
 s32 bind_input_getvalue( script_context& ctx )
 {
     input_gadget G = ArgGadget( ctx, 0 );
-    ctx.PushFloat( G != INPUT_UNDEFINED ? input_GetValue(G) : 0.0f );
+    ctx.PushFloat( G != INPUT_UNDEFINED ? g_Input.GetValue(G) : 0.0f );
     return 1;
 }
 
@@ -64,7 +64,7 @@ static
 s32 bind_input_ispresent( script_context& ctx )
 {
     input_gadget G = ArgGadget( ctx, 0 );
-    ctx.PushBool( G != INPUT_UNDEFINED ? input_IsPresent(G) : FALSE );
+    ctx.PushBool( G != INPUT_UNDEFINED ? g_Input.IsPresent(G) : FALSE );
     return 1;
 }
 

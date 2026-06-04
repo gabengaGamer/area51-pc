@@ -34,8 +34,8 @@ class ui_dialog;
 class ui_control;
 
 #if !defined(X_RETAIL)
-// debug variable - GetControllerID() calls are only valid from within a
-// limited context. this will allow asserts to work in that case.
+// debug variable - UI input access is only valid from within a limited
+// context. this will allow asserts to work in that case.
 extern xbool bInProcessInput;
 #endif
 

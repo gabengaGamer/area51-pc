@@ -19,10 +19,6 @@
 #include "ResourceMgr\ResourceMgr.hpp"
 #include "StateMgr\MapList.hpp"
 
-#ifndef CONFIG_RETAIL
-#include "InputMgr\monkey.hpp"
-#endif
-
 //=========================================================================
 //  Vote Map Dialog
 //=========================================================================
@@ -276,10 +272,6 @@ void dlg_change_map::Render( s32 ox, s32 oy )
 
 void dlg_change_map::OnPadSelect( ui_win* pWin )
 {
-#ifndef CONFIG_RETAIL
-    if ( g_MonkeyOptions.Enabled && g_MonkeyOptions.ModeEnabled[MONKEY_MENUMONKEY] )
-        return;
-#endif
 
     (void)pWin;
 

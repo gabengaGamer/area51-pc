@@ -25,7 +25,7 @@
 #include "transaction_selection_data.hpp"
 #include "transaction_zone_data.hpp"
 #include "AudioMgr\AudioMgr.hpp"
-#include "InputMgr\InputMgr.hpp"
+#include "InputMgr\GamePad.hpp"
 #include "Objects\PlaySurface.hpp"
 #include "Objects\PropSurface.hpp"
 #include "Objects\AnimSurface.hpp"
@@ -1835,9 +1835,9 @@ s32 world_editor::GetTotalObjectCount( void )
 
 void world_editor::AdvanceLogic( f32 DeltaTime )
 {
-    g_InputMgr.BeginFrame( DeltaTime, FRONTEND_CONTEXT );
-    g_InputMgr.UpdateLocal( DeltaTime );
-    g_InputMgr.ClearFixedInput();
+    g_Input.SampleActionMaps( g_IngamePad, DeltaTime, FRONTEND_CONTEXT );
+    g_Input.CommitActionMapsFrame( g_IngamePad );
+    g_Input.ClearActionMapsFixed( g_IngamePad );
 
     // DX9 reference for the DX11 port:
     // d3deng_SetMouseMode( MOUSE_MODE_NEVER );
