@@ -34,8 +34,16 @@ xbool condition_player_button_state::Execute( guid TriggerGuid )
     if ( !pPlayer )
         return FALSE;
 
-    f32 WasVal = g_IngamePad[ pPlayer->GetActivePlayerPad() ].GetLogical( m_ButtonID ).GetWasValue();
-    f32 IsVal  = g_IngamePad[ pPlayer->GetActivePlayerPad() ].GetLogical( m_ButtonID ).GetIsValue();
+    const s32 PlayerPad = pPlayer->GetActivePlayerPad();
+
+    if( (PlayerPad < 0) || (PlayerPad >= MAX_LOCAL_PLAYERS) )
+        return FALSE;
+
+    if( (m_ButtonID < ingame_pad::GAMEPLAY_ACTION_FIRST) || (m_ButtonID >= ingame_pad::GAMEPLAY_ACTION_END) )
+        return FALSE;
+
+    f32 WasVal = g_IngamePad[ PlayerPad ].GetLogical( m_ButtonID ).GetWasValue();
+    f32 IsVal  = g_IngamePad[ PlayerPad ].GetLogical( m_ButtonID ).GetIsValue();
     xbool WasPressed = WasVal > 0.25f;
     xbool IsPressed  = IsVal  > 0.25f;
 
@@ -73,11 +81,19 @@ xbool condition_player_button_state::OnProperty ( prop_query& rPropQuery )
     {
         if ( rPropQuery.IsRead() )
         {
-            rPropQuery.SetVarEnum( ingame_pad::GetLogicalIDName( m_ButtonID ) );
+            ingame_pad::logical_id ButtonID = m_ButtonID;
+
+            if( (ButtonID < ingame_pad::GAMEPLAY_ACTION_FIRST) || (ButtonID >= ingame_pad::GAMEPLAY_ACTION_END) )
+                ButtonID = ingame_pad::ACTION_USE;
+
+            rPropQuery.SetVarEnum( ingame_pad::GetLogicalIDName( ButtonID ) );
         }
         else
         {
-            m_ButtonID = ingame_pad::GetLogicalIDByName( rPropQuery.GetVarEnum() );
+            ingame_pad::logical_id ButtonID = ingame_pad::GetLogicalIDByName( rPropQuery.GetVarEnum() );
+
+            if( ButtonID != ingame_pad::ACTION_NULL )
+                m_ButtonID = ButtonID;
         }
         return TRUE;
     }
@@ -122,13 +138,18 @@ xbool condition_player_button_state::OnProperty ( prop_query& rPropQuery )
 const char* condition_player_button_state::GetDescription( void )
 {
     static big_string   Info;
+    ingame_pad::logical_id ButtonID = m_ButtonID;
+
+    if( (ButtonID < ingame_pad::GAMEPLAY_ACTION_FIRST) || (ButtonID >= ingame_pad::GAMEPLAY_ACTION_END) )
+        ButtonID = ingame_pad::ACTION_USE;
+
     switch ( m_Code )
     {
     case BUTTON_CODE_PRESSED:   
-        Info.Set(xfs("%s Pressed.", ingame_pad::GetLogicalIDName(m_ButtonID) ) );
+        Info.Set(xfs("%s Pressed.", ingame_pad::GetLogicalIDName(ButtonID) ) );
         break;
     case BUTTON_CODE_NOT_PRESSED: 
-        Info.Set(xfs("%s NOT Pressed.", ingame_pad::GetLogicalIDName(m_ButtonID) ) );
+        Info.Set(xfs("%s NOT Pressed.", ingame_pad::GetLogicalIDName(ButtonID) ) );
         break;
     default:
         ASSERT(0);
