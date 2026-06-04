@@ -2587,6 +2587,13 @@ void player::UpdateZoomIn( const f32& DeltaTime )
 {
     (void)DeltaTime;
 
+    new_weapon* pWeapon = GetCurrentWeaponPtr();
+    if( !pWeapon || !pWeapon->IsZoomEnabled() )
+    {
+        SetAnimState( GetMotionTransitionAnimState() );
+        return;
+    }
+
     // Wait until the current animtion ends, then switch the animation
     if( m_AnimPlayer.IsAtEnd() )
     {
@@ -2607,7 +2614,8 @@ void player::EndZoomIn( void )
 
     if( pWeapon )
     {
-        pWeapon->ZoomInComplete(TRUE);
+        if( pWeapon->IsZoomEnabled() )
+            pWeapon->ZoomInComplete(TRUE);
     }
 }
 
@@ -2647,6 +2655,13 @@ void player::UpdateZoomOut( const f32& DeltaTime )
     (void)DeltaTime;
     ASSERT( m_NextAnimState != ANIM_STATE_UNDEFINED );
 
+    new_weapon* pWeapon = GetCurrentWeaponPtr();
+    if( !pWeapon || !pWeapon->IsZoomEnabled() )
+    {
+        SetAnimState( m_NextAnimState );
+        return;
+    }
+
     // Wait until the current animtion ends, then switch the animation
     if( m_AnimPlayer.IsAtEnd() )
     {
@@ -2683,6 +2698,11 @@ void player::BeginZoomIdle( void )
 void player::UpdateZoomIdle( const f32& DeltaTime )
 {
     new_weapon* pWeapon = GetCurrentWeaponPtr();
+    if( !pWeapon || !pWeapon->IsZoomEnabled() )
+    {
+        SetAnimState( GetMotionTransitionAnimState() );
+        return;
+    }
 
     // Check if we need to go back to a firing state
     if( IsFiring() )
@@ -2796,6 +2816,11 @@ void player::BeginZoomRun( void )
 void player::UpdateZoomRun( const f32& DeltaTime )
 {
     new_weapon* pWeapon = GetCurrentWeaponPtr();
+    if( !pWeapon || !pWeapon->IsZoomEnabled() )
+    {
+        SetAnimState( GetMotionTransitionAnimState() );
+        return;
+    }
 
     // Check if we need to go back to a firing state
     if( IsFiring() )
@@ -2941,6 +2966,12 @@ void player::UpdateZoomFire( const f32& DeltaTime )
 
     // If the current weapon needs to be reloaded, set the next state to reload
     new_weapon* pWeapon = GetCurrentWeaponPtr();
+    if( !pWeapon || !pWeapon->IsZoomEnabled() )
+    {
+        SetAnimState( GetMotionTransitionAnimState() );
+        return;
+    }
+
     if( pWeapon && (pWeapon->GetAmmoCount( pWeapon->GetPrimaryAmmoPriority() ) <= 0) )
     {
         if( IsAnimStateAvailable2( m_CurrentWeaponItem, ANIM_STATE_DISCARD ) )
