@@ -9,7 +9,7 @@ static const f32     s_FlashlightIntensity      = 2.0f;
 static const f32     s_FlashlightFalloff        = 0.5f;
 static const f32     s_FlashlightInnerConeScale = 0.70f;
 static const xcolor  s_FlashlightColor          ( 255, 255, 255, 255 );
-static const vector3 s_FlashlightOffset         ( 0.0f, 0.0f, -75.0f );
+static const vector3 s_FlashlightOffset         ( 0.0f, 0.0f, -25.0f );
 static texture::handle s_FlashlightCookie;
 
 xbool flashlight_CalcTransform( player& Player, matrix4& L2W )
