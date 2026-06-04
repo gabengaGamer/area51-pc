@@ -203,6 +203,15 @@ xbool player::IsAltFiring( void )
 
 //==============================================================================
 
+xbool player::IsAltFirePressed( void )
+{
+    return m_bIsMutated
+        ? (g_IngamePad[m_ActivePlayerPad].GetLogical( ingame_pad::ACTION_FIRE_CONTAGION ).GetWasValue() > 0.25f)
+        : (g_IngamePad[m_ActivePlayerPad].GetLogical( ingame_pad::ACTION_SECONDARY ).GetWasValue() > 0.25f);
+}
+
+//==============================================================================
+
 xbool player::IsFiring( void )
 {
     xbool PrimaryDown 

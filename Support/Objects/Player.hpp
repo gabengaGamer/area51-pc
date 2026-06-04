@@ -450,6 +450,7 @@ public:
     
     virtual void            GetProjectileHitLocation (vector3& EndPos, xbool bUseBulletAssist = TRUE);
             xbool           IsAltFiring         ( void );
+            xbool           IsAltFirePressed    ( void );
             xbool           IsFiring            ( void );
     virtual void            SpottedByEnemy      ( void ) { m_LastTimeSeenByEnemy = (f32)x_GetTimeSec(); }
     virtual xbool           GetIsSafeSpot       ( void );
@@ -1448,7 +1449,6 @@ protected:
     xbool                       m_NeedRelaodIn;
     s32                         m_LastFireAnimStateIndex;
     s32                         m_nLoreDiscoveries;                 // 1st pass at unlocking secret galleries
-    f32                         m_DebounceTime;
     xbool                       m_bWasMutated;
     xbool                       m_bIsMutantVisionOn;                // toggles based on super-event in weapon animation
     inven_item                  m_PreMutationWeapon2;               // what was our weapon before we mutated

@@ -48,7 +48,6 @@
 
 static const f32 s_idle_timeout_min             = 5.f;
 static const f32 s_ilde_timout_max              = 8.f;
-static const f32 s_DebounceDuration             = 0.5f;
 
 #ifdef ksaffel
 static xbool g_ShowViewPosition = FALSE;
@@ -788,7 +787,7 @@ void player::UpdateIdle( const f32& DeltaTime )
             }
             else
             {
-                if( IsAnimStateAvailable2( m_CurrentWeaponItem, ANIM_STATE_ZOOM_IN ) )            
+                if( IsAltFirePressed() && IsAnimStateAvailable2( m_CurrentWeaponItem, ANIM_STATE_ZOOM_IN ) )
                 {
                     SetAnimState( ANIM_STATE_ZOOM_IN );
                 }
@@ -912,7 +911,7 @@ void player::UpdateRun( const f32& DeltaTime )
             }
             else
             {
-                if( IsAnimStateAvailable2( m_CurrentWeaponItem, ANIM_STATE_ZOOM_IN ) )
+                if( IsAltFirePressed() && IsAnimStateAvailable2( m_CurrentWeaponItem, ANIM_STATE_ZOOM_IN ) )
                 {
                     SetAnimState( ANIM_STATE_ZOOM_IN );
                 }
@@ -1944,7 +1943,7 @@ void player::UpdateReload( const f32& DeltaTime )
         {
             SetAnimState( ANIM_STATE_ALT_FIRE );
         }
-        else if( IsAnimStateAvailable2( m_CurrentWeaponItem, ANIM_STATE_ZOOM_IN ) )
+        else if( IsAltFirePressed() && IsAnimStateAvailable2( m_CurrentWeaponItem, ANIM_STATE_ZOOM_IN ) )
         {
             SetAnimState( ANIM_STATE_ZOOM_IN );
         }
@@ -2724,7 +2723,7 @@ void player::UpdateZoomIdle( const f32& DeltaTime )
             }
         }
     }
-    else if ( IsAltFiring() && (m_DebounceTime > s_DebounceDuration) )
+    else if ( IsAltFirePressed() )
     {
         // If we're at our max zoom, then zoom out, otherwise zoom some more
         if ( pWeapon->GetZoomStep() == pWeapon->GetnZoomSteps() )
@@ -2737,7 +2736,6 @@ void player::UpdateZoomIdle( const f32& DeltaTime )
             if ( pWeapon )
             {
                 pWeapon->IncrementZoom();
-                m_DebounceTime = 0.0f;
 
                 // zoomed, update tweaks
                 LoadAimAssistTweakHandles();
@@ -2842,7 +2840,7 @@ void player::UpdateZoomRun( const f32& DeltaTime )
             }
         }
     }
-    else if ( IsAltFiring() && (m_DebounceTime > s_DebounceDuration) )
+    else if ( IsAltFirePressed() )
     {
         // If we're at our max zoom, then zoom out, otherwise zoom some more
         if ( pWeapon->GetZoomStep() == pWeapon->GetnZoomSteps() )
@@ -2855,7 +2853,6 @@ void player::UpdateZoomRun( const f32& DeltaTime )
             if ( pWeapon )
             {
                 pWeapon->IncrementZoom();
-                m_DebounceTime = 0.0f;
 
                 // zoomed, update tweaks
                 LoadAimAssistTweakHandles();

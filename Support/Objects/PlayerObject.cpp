@@ -611,7 +611,6 @@ player::player( void ) :
     m_LadderOutDir                      ( 0, 0, 0 ),
     m_MaxAnimWeaponHoldTime             ( 20.0f ),
     m_nLoreDiscoveries                  ( 0 ),
-    m_DebounceTime                      ( 0.0f ),
     m_bWasMutated                       ( FALSE ),
     m_bIsMutantVisionOn                 ( FALSE ),
     m_PreMutationWeapon2                ( INVEN_NULL ),
@@ -3039,8 +3038,6 @@ void player::OnAdvanceLogic( f32 DeltaTime )
     m_bWasMutated = m_bIsMutated;
 
     UpdateState( DeltaTime );
-
-    m_DebounceTime += DeltaTime; 
 
     if( s_WeaponInventoryStrip )
     {

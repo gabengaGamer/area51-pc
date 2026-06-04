@@ -27,7 +27,7 @@ static const vector3   s_FlashlightOffset         ( 0.0f, 0.0f, -4.0f );
 static texture::handle s_FlashlightCookie;
 
 //=========================================================================
-// FLASHLIGHT "OBJECT"
+//  FLASHLIGHT "OBJECT"
 //=========================================================================
 
 xbool flashlight_CalcTransform( player& Player, matrix4& L2W )
