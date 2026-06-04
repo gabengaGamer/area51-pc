@@ -4366,8 +4366,11 @@ void player::UpdateCharacterRotation( const f32& DeltaTime )
 
 
     //set the pitch and yaw of the rig.
+    radian AnimPitch = -m_Pitch - m_CurrentVertRigOffset - m_ShakePitch;
+    AnimPitch = MIN( R_89, MAX( -R_89, AnimPitch ) );
+
     m_AnimPlayer.SetYaw( m_Yaw + m_CurrentHorozRigOffset - m_ShakeYaw );
-    m_AnimPlayer.SetPitch( -m_Pitch - m_CurrentVertRigOffset - m_ShakePitch );
+    m_AnimPlayer.SetPitch( AnimPitch );
     m_AnimPlayer.SetRoll( m_SoftLeanAmount * DEG_TO_RAD( GetTweakF32( "LeanMaxDegrees" ) ) );
 }
 
@@ -8415,8 +8418,11 @@ void player::Teleport( const vector3& Position, radian Pitch, radian Yaw, xbool 
         g_AudioMgr.SetEar( m_AudioEarID, W2V, Position, GetZone1(), 1.0f );
         
         // Make sure 1st person hands are in sync
+        radian AnimPitch = -m_Pitch - m_CurrentVertRigOffset - m_ShakePitch;
+        AnimPitch = MIN( R_89, MAX( -R_89, AnimPitch ) );
+
         m_AnimPlayer.SetYaw( m_Yaw + m_CurrentHorozRigOffset - m_ShakeYaw );
-        m_AnimPlayer.SetPitch( -m_Pitch - m_CurrentVertRigOffset - m_ShakePitch );
+        m_AnimPlayer.SetPitch( AnimPitch );
     }
     
     // Make sure 1st person weapon is in sync
