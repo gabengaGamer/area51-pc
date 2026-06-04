@@ -1,16 +1,34 @@
+//==============================================================================
+//
+//  Flashlight.cpp
+//
+//==============================================================================
+
+//==============================================================================
+//  INCLUDES
+//==============================================================================
+
 #include "Flashlight.hpp"
 
 #include "Player.hpp"
 #include "Render\\LightMgr.hpp"
 
-static const f32     s_FlashlightRange          = 2048.0f;
-static const radian  s_FlashlightFOV            = R_75;
-static const f32     s_FlashlightIntensity      = 2.0f;
-static const f32     s_FlashlightFalloff        = 0.5f;
-static const f32     s_FlashlightInnerConeScale = 0.70f;
-static const xcolor  s_FlashlightColor          ( 255, 255, 255, 255 );
-static const vector3 s_FlashlightOffset         ( 0.0f, 0.0f, -25.0f );
+//==============================================================================
+//  CONSTANTS
+//==============================================================================
+
+static const f32       s_FlashlightRange          = 2048.0f;
+static const radian    s_FlashlightFOV            = R_75;
+static const f32       s_FlashlightIntensity      = 2.0f;
+static const f32       s_FlashlightFalloff        = 0.5f;
+static const f32       s_FlashlightInnerConeScale = 0.70f;
+static const xcolor    s_FlashlightColor          ( 255, 255, 255, 255 );
+static const vector3   s_FlashlightOffset         ( 0.0f, 0.0f, -4.0f );
 static texture::handle s_FlashlightCookie;
+
+//=========================================================================
+// FLASHLIGHT "OBJECT"
+//=========================================================================
 
 xbool flashlight_CalcTransform( player& Player, matrix4& L2W )
 {
@@ -27,6 +45,8 @@ xbool flashlight_CalcTransform( player& Player, matrix4& L2W )
     L2W.PreTranslate( s_FlashlightOffset );
     return TRUE;
 }
+
+//=========================================================================
 
 void flashlight_Register( player& Player )
 {
