@@ -156,17 +156,19 @@ void player::UpdateRotation( const f32& rDeltaTime )
     UpdateAimAssistance ( rDeltaTime );
     UpdateAimOffset     ( rDeltaTime );
 
-    //
-    // If the current weapon had zoom enable, adjust the Yaw according to the X FOV.
-    //
     new_weapon* pWeaponObj = GetCurrentWeaponPtr();
-
     if( pWeaponObj )
     {       
         if( pWeaponObj->IsZoomEnabled() )
         {
-            m_fYawValue /= (m_OriginalViewInfo.XFOV / pWeaponObj->GetXFOV());
-            m_fYawValue *= pWeaponObj->GetZoomMovementMod();
+            const f32 ZoomRatio = (m_OriginalViewInfo.XFOV / pWeaponObj->GetXFOV());
+
+            m_fYawValue /= ZoomRatio;
+
+            if( m_PitchLookInputMode == LOOK_INPUT_MOUSE )
+                m_fPitchValue /= ZoomRatio;
+
+            m_fYawValue   *= pWeaponObj->GetZoomMovementMod();
             m_fPitchValue *= pWeaponObj->GetZoomMovementMod();
         }
     }
