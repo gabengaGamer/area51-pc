@@ -1139,6 +1139,7 @@ void ui_font::RenderText( const irect&  Rect,
         ScaleX = (f32)XRes / 512.0f;
         ScaleY = (f32)YRes / 448.0f;
     }
+    const xbool ClipText = (Flags & clip_character) != 0;
 
     ASSERT( pString );
 
@@ -1148,9 +1149,6 @@ void ui_font::RenderText( const irect&  Rect,
         return;
     }
 
-    vector2 uv0;
-    vector2 uv1;   
-    vector2 Size( 0, (f32)m_Height );
     //f32     BmWidth  = 1.0f / (f32)m_BmWidth;
     //f32     BmHeight = 1.0f / (f32)m_BmHeight;
 
@@ -1233,7 +1231,7 @@ void ui_font::RenderText( const irect&  Rect,
         }
 
         // Skip lines above the visible area and stop once we're past the bottom.
-        if( ty + m_Height <= Rect.t )
+        if( ClipText && (ty + m_Height <= Rect.t) )
         {
             iStart = iEnd;
             if( pString[iStart] == '\n' )
@@ -1244,7 +1242,7 @@ void ui_font::RenderText( const irect&  Rect,
             continue;
         }
 
-        if( ty >= Rect.b )
+        if( ClipText && (ty >= Rect.b) )
             break;
 
         //
@@ -1364,26 +1362,19 @@ void ui_font::RenderText( const irect&  Rect,
             {
                 w = (u32)((f32)w * ScaleX);
             }
-            Size.X = (f32)w;
-            Size.Y = (f32)m_Height;
-            uv0.Set( u0, v0 );
-            uv1.Set( u1, v1 );
-		    
-            draw_Color( Color2 );
-            draw_UV( uv0.X, uv0.Y );
-            draw_Vertex( tx, ty, 0.0f );
-            draw_UV( uv1.X, uv0.Y );
-            draw_Vertex( tx+w, ty, 0.0f );
-            draw_Color( Color1 );
-            draw_UV( uv0.X, uv1.Y );
-            draw_Vertex( tx, ty+m_Height, 0.0f );
-		    
-            draw_Vertex( tx, ty+m_Height, 0.0f );
-            draw_UV( uv1.X, uv1.Y );
-            draw_Vertex( tx+w, ty+m_Height, 0.0f );
-            draw_Color( Color2 );
-            draw_UV( uv1.X, uv0.Y );
-            draw_Vertex( tx+w, ty, 0.0f ); 
+
+            RenderGlyphQuad( MakeGlyphQuad( (f32)tx,
+                                             (f32)ty,
+                                             (f32)(tx + w),
+                                             (f32)(ty + m_Height),
+                                             u0,
+                                             v0,
+                                             u1,
+                                             v1 ),
+                             Color2,
+                             Color1,
+                             ClipText,
+                             Rect );
             tx += w + 1;
         }
 
@@ -1408,8 +1399,28 @@ void ui_font::RenderText( const irect&  Rect,
                         
             xbitmap* button = g_UiMgr->GetButtonTexture( ButtonCodes[ i ] );
             draw_SetTexture( *button );
-            draw_Sprite( vector3(Button_X[ i ]+1, Button_Y[ i ]+1, 0), vector2(BUTTON_SPRITE_WIDTH, BUTTON_SPRITE_WIDTH), xcolor(0,0,0,255) );
-	        draw_Sprite( vector3(Button_X[ i ]  , Button_Y[ i ]  , 0), vector2(BUTTON_SPRITE_WIDTH, BUTTON_SPRITE_WIDTH), xcolor(255,255,255) );           
+            RenderGlyphSprite( MakeGlyphQuad( Button_X[ i ] + 1.0f,
+                                               Button_Y[ i ] + 1.0f,
+                                               Button_X[ i ] + 1.0f + BUTTON_SPRITE_WIDTH,
+                                               Button_Y[ i ] + 1.0f + BUTTON_SPRITE_WIDTH,
+                                               0.0f,
+                                               0.0f,
+                                               1.0f,
+                                               1.0f ),
+                               xcolor(0,0,0,255),
+                               ClipText,
+                               Rect );
+            RenderGlyphSprite( MakeGlyphQuad( Button_X[ i ],
+                                               Button_Y[ i ],
+                                               Button_X[ i ] + BUTTON_SPRITE_WIDTH,
+                                               Button_Y[ i ] + BUTTON_SPRITE_WIDTH,
+                                               0.0f,
+                                               0.0f,
+                                               1.0f,
+                                               1.0f ),
+                               xcolor(255,255,255),
+                               ClipText,
+                               Rect );
         }
         draw_End();
     }
@@ -1481,11 +1492,9 @@ void ui_font::RenderStateControlledText( const irect& Rect, u32 Flags, const xco
 
     ASSERT( pString );
 
-    vector2 uv0;
-    vector2 uv1;   
-    vector2 Size( 0, (f32)m_Height );
     f32 ScaleX=1;
     f32 ScaleY=1;
+    const xbool ClipText = (Flags & clip_character) != 0;
 
     // Prepare to draw characters.
     s32 DrawFlags = DRAW_USE_ALPHA | DRAW_TEXTURED | DRAW_2D | DRAW_UI_RTARGET | DRAW_NO_ZBUFFER | DRAW_NO_ZWRITE | DRAW_UV_CLAMP ;
@@ -1561,7 +1570,7 @@ void ui_font::RenderStateControlledText( const irect& Rect, u32 Flags, const xco
         }
 
         // Skip lines above the visible area and stop once we're past the bottom.
-        if( ty + m_Height <= Rect.t )
+        if( ClipText && (ty + m_Height <= Rect.t) )
         {
             iStart = iEnd;
             if( pString[iStart] == '\n' )
@@ -1572,7 +1581,7 @@ void ui_font::RenderStateControlledText( const irect& Rect, u32 Flags, const xco
             continue;
         }
 
-        if( ty >= Rect.b )
+        if( ClipText && (ty >= Rect.b) )
             break;
 
         //
@@ -1629,6 +1638,12 @@ void ui_font::RenderStateControlledText( const irect& Rect, u32 Flags, const xco
             s32 x  = m_Characters[ ci ].X;
             s32 y  = m_Characters[ ci ].Y;
             s32 w  = m_Characters[ ci ].W;
+            s32 dw = w;
+
+            if( ScaleText )
+            {
+                dw = (u32)((f32)dw * ScaleX);
+            }
 
             if( (((CustomRenderStruct*)StateData)[iStart]).m_State == s_render )
             {                
@@ -1637,22 +1652,23 @@ void ui_font::RenderStateControlledText( const irect& Rect, u32 Flags, const xco
                 f32 v0 = (y            + 0.5f) / m_BmHeight;
                 f32 v1 = (y + m_Height + 0.5f) / m_BmHeight;
 
-                if( ScaleText )
-                {
-                    w = (u32)((f32)w * ScaleX);
-                }
-                Size.X = (f32)w;
-                Size.Y = (f32)m_Height;
-                uv0.Set( u0, v0 );
-                uv1.Set( u1, v1 );
-
                 xcolor RenderColor = Color1;
                 RenderColor.A = (u8)(((CustomRenderStruct*)StateData)[iStart]).m_Value;
 
                 // aharp TODO need to add gradient font
-                draw_SpriteUV( vector3((f32)tx,(f32)ty,10.0f), Size, uv0, uv1, RenderColor );
+                RenderGlyphSprite( MakeGlyphQuad( (f32)tx,
+                                                   (f32)ty,
+                                                   (f32)(tx + dw),
+                                                   (f32)(ty + m_Height),
+                                                   u0,
+                                                   v0,
+                                                   u1,
+                                                   v1 ),
+                                   RenderColor,
+                                   ClipText,
+                                   Rect );
             }
-            tx += w + 1;
+            tx += dw + 1;
         }
 
         // Process newline.
@@ -1663,4 +1679,130 @@ void ui_font::RenderStateControlledText( const irect& Rect, u32 Flags, const xco
         }
     }
     draw_End();
+}
+
+//=========================================================================
+
+xcolor ui_font::LerpColor( const xcolor& C0, const xcolor& C1, f32 T )
+{
+    if( T < 0.0f ) T = 0.0f;
+    if( T > 1.0f ) T = 1.0f;
+
+    return xcolor( (u8)((f32)C0.R + ((f32)C1.R - (f32)C0.R) * T + 0.5f),
+                   (u8)((f32)C0.G + ((f32)C1.G - (f32)C0.G) * T + 0.5f),
+                   (u8)((f32)C0.B + ((f32)C1.B - (f32)C0.B) * T + 0.5f),
+                   (u8)((f32)C0.A + ((f32)C1.A - (f32)C0.A) * T + 0.5f) );
+}
+
+//=========================================================================
+
+ui_font::glyph_quad ui_font::MakeGlyphQuad( f32 X0, f32 Y0, f32 X1, f32 Y1,
+                                            f32 U0, f32 V0, f32 U1, f32 V1 )
+{
+    glyph_quad Quad;
+
+    Quad.X0 = X0;
+    Quad.Y0 = Y0;
+    Quad.X1 = X1;
+    Quad.Y1 = Y1;
+    Quad.U0 = U0;
+    Quad.V0 = V0;
+    Quad.U1 = U1;
+    Quad.V1 = V1;
+    Quad.T0 = 0.0f;
+    Quad.T1 = 1.0f;
+
+    return Quad;
+}
+
+//=========================================================================
+
+xbool ui_font::ClipGlyphQuad( glyph_quad& Quad, const irect& Clip )
+{
+    if( (Clip.r <= Clip.l) || (Clip.b <= Clip.t) )
+        return FALSE;
+
+    const f32 OrigX0 = Quad.X0;
+    const f32 OrigY0 = Quad.Y0;
+    const f32 OrigX1 = Quad.X1;
+    const f32 OrigY1 = Quad.Y1;
+    const f32 OrigU0 = Quad.U0;
+    const f32 OrigV0 = Quad.V0;
+    const f32 OrigU1 = Quad.U1;
+    const f32 OrigV1 = Quad.V1;
+    const f32 OrigW  = OrigX1 - OrigX0;
+    const f32 OrigH  = OrigY1 - OrigY0;
+
+    if( (OrigW <= 0.0f) || (OrigH <= 0.0f) )
+        return FALSE;
+
+    Quad.X0 = MAX( OrigX0, (f32)Clip.l );
+    Quad.Y0 = MAX( OrigY0, (f32)Clip.t );
+    Quad.X1 = MIN( OrigX1, (f32)Clip.r );
+    Quad.Y1 = MIN( OrigY1, (f32)Clip.b );
+
+    if( (Quad.X1 <= Quad.X0) || (Quad.Y1 <= Quad.Y0) )
+        return FALSE;
+
+    const f32 XClip0 = (Quad.X0 - OrigX0) / OrigW;
+    const f32 XClip1 = (Quad.X1 - OrigX0) / OrigW;
+    const f32 YClip0 = (Quad.Y0 - OrigY0) / OrigH;
+    const f32 YClip1 = (Quad.Y1 - OrigY0) / OrigH;
+
+    Quad.U0 = OrigU0 + (OrigU1 - OrigU0) * XClip0;
+    Quad.U1 = OrigU0 + (OrigU1 - OrigU0) * XClip1;
+    Quad.V0 = OrigV0 + (OrigV1 - OrigV0) * YClip0;
+    Quad.V1 = OrigV0 + (OrigV1 - OrigV0) * YClip1;
+    Quad.T0 = YClip0;
+    Quad.T1 = YClip1;
+
+    return TRUE;
+}
+
+//=========================================================================
+
+void ui_font::RenderGlyphQuad( glyph_quad Quad,
+                               const xcolor& TopColor,
+                               const xcolor& BottomColor,
+                               xbool DoClip,
+                               const irect& Clip )
+{
+    if( DoClip && !ClipGlyphQuad( Quad, Clip ) )
+        return;
+
+    const xcolor ClippedTop    = LerpColor( TopColor, BottomColor, Quad.T0 );
+    const xcolor ClippedBottom = LerpColor( TopColor, BottomColor, Quad.T1 );
+
+    draw_Color( ClippedTop );
+    draw_UV( Quad.U0, Quad.V0 );
+    draw_Vertex( Quad.X0, Quad.Y0, 0.0f );
+    draw_UV( Quad.U1, Quad.V0 );
+    draw_Vertex( Quad.X1, Quad.Y0, 0.0f );
+    draw_Color( ClippedBottom );
+    draw_UV( Quad.U0, Quad.V1 );
+    draw_Vertex( Quad.X0, Quad.Y1, 0.0f );
+
+    draw_Vertex( Quad.X0, Quad.Y1, 0.0f );
+    draw_UV( Quad.U1, Quad.V1 );
+    draw_Vertex( Quad.X1, Quad.Y1, 0.0f );
+    draw_Color( ClippedTop );
+    draw_UV( Quad.U1, Quad.V0 );
+    draw_Vertex( Quad.X1, Quad.Y0, 0.0f );
+}
+
+//=========================================================================
+
+void ui_font::RenderGlyphSprite( glyph_quad Quad,
+                                 const xcolor& Color,
+                                 xbool DoClip,
+                                 const irect& Clip )
+{
+    if( DoClip && !ClipGlyphQuad( Quad, Clip ) )
+        return;
+
+    draw_SpriteUV( vector3( Quad.X0, Quad.Y0, 10.0f ),
+                   vector2( Quad.X1 - Quad.X0, Quad.Y1 - Quad.Y0 ),
+                   vector2( Quad.U0, Quad.V0 ),
+                   vector2( Quad.U1, Quad.V1 ),
+                   Color );
 }

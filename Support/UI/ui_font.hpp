@@ -78,6 +78,26 @@ public:
 
 
 protected:
+    struct glyph_quad
+    {
+        f32 X0;
+        f32 Y0;
+        f32 X1;
+        f32 Y1;
+        f32 U0;
+        f32 V0;
+        f32 U1;
+        f32 V1;
+        f32 T0;
+        f32 T1;
+    };
+
+    static xcolor       LerpColor           ( const xcolor& C0, const xcolor& C1, f32 T );
+    static glyph_quad   MakeGlyphQuad       ( f32 X0, f32 Y0, f32 X1, f32 Y1, f32 U0, f32 V0, f32 U1, f32 V1 );
+    static xbool        ClipGlyphQuad       ( glyph_quad& Quad, const irect& Clip );
+    static void         RenderGlyphQuad     ( glyph_quad Quad, const xcolor& TopColor, const xcolor& BottomColor, xbool DoClip, const irect& Clip );
+    static void         RenderGlyphSprite   ( glyph_quad Quad, const xcolor& Color, xbool DoClip, const irect& Clip );
+
     rhandle<xbitmap>    m_Bitmap;
     s32                 m_BmWidth;
     s32                 m_BmHeight;

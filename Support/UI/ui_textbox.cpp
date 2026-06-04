@@ -198,8 +198,10 @@ void ui_textbox::Render( s32 ox, s32 oy )
             pVisibleText++;
         }
 
-        // Force v_top so the first visible line starts exactly at rt.t.
-        u32 renderFlags = (m_LabelFlags & ~(ui_font::v_center | ui_font::v_bottom)) | ui_font::v_top;
+        // Force v_top and clipping so the textbox viewport owns its visible area.
+        u32 renderFlags = (m_LabelFlags & ~(ui_font::v_center | ui_font::v_bottom)) |
+                          ui_font::v_top |
+                          ui_font::clip_character;
         m_pManager->RenderText( m_Font, rt, renderFlags, xcolor(255,252,204,255), pVisibleText );
 
         if (m_ShowBorders)
