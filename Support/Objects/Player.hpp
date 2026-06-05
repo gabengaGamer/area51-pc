@@ -684,6 +684,7 @@ protected:
             // Used for determing and applying aim assistance.
             void        UpdateAimAssistance             ( f32 DeltaTime );
             void        UpdateAimOffset                 ( f32 DeltaTime );
+            void        UpdateReticleTarget             ( f32 DeltaTime );
             void        UpdateCurrentAimTarget          ( f32 DeltaTime );
             xbool       IsAimAssistInputActive          ( void ) const;
             void        ApplyAimAssistTurnDampening     ( void );

@@ -332,27 +332,13 @@ radian3 player::ApplyAimDegredation( radian Pitch, radian Yaw )
 
 guid player::GetEnemyOnReticle( void )
 {
-    if( ReticleOnTarget() )
-    {
-        return m_AimAssistData.ReticleEnemyGuid;
-    }
-    else
-    {
-        return 0;
-    }
+    return m_AimAssistData.ReticleEnemyGuid;
 }
 
 //===========================================================================
 guid player::GetFriendlyOnReticle( void )
 {
-    if( ReticleOnTarget() )
-    {
-        return m_AimAssistData.OnlineFriendlyTargetGuid;
-    }
-    else
-    {
-        return 0;
-    }
+    return m_AimAssistData.OnlineFriendlyTargetGuid;
 }
 
 //===========================================================================
@@ -507,6 +493,15 @@ void player::UpdateAimAssistance( f32 DeltaTime )
 {
     // find and set the targeted guid.
     UpdateCurrentAimTarget( DeltaTime );
+
+    if( IsAimAssistInputActive() )
+    {
+        ApplyAimAssistTurnDampening();
+    }
+    else
+    {
+        m_AimAssistData.TurnDampeningT = 0.0f;
+    }
 
     s32     LastNetSlot   = m_TargetNetSlot;
     vector3 LastAimOffset = m_AimOffset;
@@ -883,20 +878,15 @@ f32 AIMASSIST_MULTIPLAYER_SCALE   = 1.5f;
 
 
 xbool g_bTestFriendly = TRUE;
-void player::UpdateCurrentAimTarget( f32 DeltaTime )
+void player::UpdateReticleTarget( f32 DeltaTime )
 {
     const view& View              = GetInterpView();
     const vector3 Position        = GetPosition();
     const vector3 PlayerVelocity  = m_Physics.GetVelocity();
     const f32 TargetCullDot       = x_cos( R_20 );
-    const xbool bAimAssistActive  = IsAimAssistInputActive();
     xbool bReticleOn              = FALSE;
     f32 ReticleBestDist           = F32_MAX;
 
-    m_AimAssistData.BulletAssistDir          = View.GetViewZ();
-    m_AimAssistData.BulletAssistBestDist     = F32_MAX;
-    m_AimAssistData.TurnDampeningT           = 0.0f;
-    m_AimAssistData.TargetGuid               = 0;
     m_AimAssistData.ReticleEnemyGuid         = 0;
     m_AimAssistData.OnlineFriendlyTargetGuid = 0;
     m_AimAssistData.bReticleOn               = FALSE;
@@ -911,6 +901,112 @@ void player::UpdateCurrentAimTarget( f32 DeltaTime )
     if( AimAssist_LOF_Dist == 0.0f )
     {
         UpdateReticleRadius( DeltaTime );
+        return;
+    }
+
+    vector3 LOFDir   = View.GetViewZ();
+    vector3 LOFStart = View.GetPosition();
+    vector3 LOFEnd   = LOFStart + LOFDir * AimAssist_LOF_Dist;
+
+    m_AimAssistData.LOFCollisionDist = AimAssist_LOF_Dist;
+
+    g_CollisionMgr.LineOfSightSetup( GetGuid(), LOFStart, LOFEnd );
+    g_CollisionMgr.CheckCollisions( object::TYPE_ALL_TYPES,
+                                    object::ATTR_BLOCKS_PLAYER_LOS,
+                                    object::ATTR_COLLISION_PERMEABLE | object::ATTR_LIVING );
+
+    if( g_CollisionMgr.m_nCollisions > 0 )
+    {
+        m_AimAssistData.LOFCollisionDist = AimAssist_LOF_Dist * g_CollisionMgr.m_Collisions[0].T;
+    }
+
+    actor* pNextActor = actor::m_pFirstActive;
+    while( pNextActor )
+    {
+        actor* pActor = pNextActor;
+        pNextActor = pNextActor->m_pNextActive;
+
+        if( (pActor->GetGuid() == GetGuid()) ||
+            !pActor->IsKindOf( actor::GetRTTI() ) ||
+            pActor->IsDead() )
+        {
+            continue;
+        }
+
+        if( IsEnemyFaction( pActor->GetFaction() ) )
+        {
+            aim_target_info Info;
+            if( !BuildAimTargetInfo( *pActor,
+                                     Position,
+                                     PlayerVelocity,
+                                     LOFStart,
+                                     LOFEnd,
+                                     LOFDir,
+                                     m_AimAssistData.LOFCollisionDist,
+                                     TargetCullDot,
+                                     TRUE,
+                                     Info ) )
+            {
+                continue;
+            }
+
+            UpdateEnemyReticleTarget( m_AimAssistData, *pActor, Info, ReticleBestDist, bReticleOn );
+        }
+        else if( g_bTestFriendly )
+        {
+            aim_target_info Info;
+            if( !BuildAimTargetInfo( *pActor,
+                                     Position,
+                                     PlayerVelocity,
+                                     LOFStart,
+                                     LOFEnd,
+                                     LOFDir,
+                                     m_AimAssistData.LOFCollisionDist,
+                                     TargetCullDot,
+                                     FALSE,
+                                     Info ) )
+            {
+                continue;
+            }
+
+            UpdateFriendlyReticleTarget( m_AimAssistData, *pActor, Info, bReticleOn );
+        }
+    }
+
+    m_AimAssistData.bReticleOn = bReticleOn;
+
+    UpdateReticleRadius( DeltaTime );
+}
+
+//=============================================================================
+
+void player::UpdateCurrentAimTarget( f32 DeltaTime )
+{
+    const view& View              = GetInterpView();
+    const vector3 Position        = GetPosition();
+    const vector3 PlayerVelocity  = m_Physics.GetVelocity();
+    const f32 TargetCullDot       = x_cos( R_20 );
+    const xbool bAimAssistActive  = IsAimAssistInputActive();
+    (void)DeltaTime;
+
+    m_AimAssistData.BulletAssistDir          = View.GetViewZ();
+    m_AimAssistData.BulletAssistBestDist     = F32_MAX;
+    m_AimAssistData.TurnDampeningT           = 0.0f;
+    m_AimAssistData.TargetGuid               = 0;
+
+    if( !bAimAssistActive )
+    {
+        return;
+    }
+
+    new_weapon* pWeapon = GetCurrentWeaponPtr();
+    if( pWeapon == NULL )
+    {
+        return;
+    }
+
+    if( AimAssist_LOF_Dist == 0.0f )
+    {
         return;
     }
 
@@ -975,60 +1071,19 @@ void player::UpdateCurrentAimTarget( f32 DeltaTime )
                 continue;
             }
 
-            UpdateEnemyReticleTarget( m_AimAssistData, *pActor, Info, ReticleBestDist, bReticleOn );
+            UpdateBulletAssistTarget( m_AimAssistData,
+                                      *this,
+                                      *pActor,
+                                      View,
+                                      LOFStart,
+                                      LOFDir,
+                                      MultiplayerRadiiScale,
+                                      BulletAssistLeadSpeed,
+                                      Info );
 
-            if( bAimAssistActive )
-            {
-                UpdateBulletAssistTarget( m_AimAssistData,
-                                          *this,
-                                          *pActor,
-                                          View,
-                                          LOFStart,
-                                          LOFDir,
-                                          MultiplayerRadiiScale,
-                                          BulletAssistLeadSpeed,
-                                          Info );
-
-                UpdateTurnAssistTarget( m_AimAssistData, Info );
-            }
-        }
-        else if( g_bTestFriendly )
-        {
-            aim_target_info Info;
-            if( !BuildAimTargetInfo( *pActor,
-                                     Position,
-                                     PlayerVelocity,
-                                     LOFStart,
-                                     LOFEnd,
-                                     LOFDir,
-                                     m_AimAssistData.LOFCollisionDist,
-                                     TargetCullDot,
-                                     FALSE,
-                                     Info ) )
-            {
-                continue;
-            }
-
-            if( UpdateFriendlyReticleTarget( m_AimAssistData, *pActor, Info, bReticleOn ) )
-            {
-                break;
-            }
+            UpdateTurnAssistTarget( m_AimAssistData, Info );
         }
     }
-
-    if( bAimAssistActive )
-    {
-        ApplyAimAssistTurnDampening();
-    }
-    else
-    {
-        m_AimAssistData.TurnDampeningT = 0.0f;
-    }
-
-    m_AimAssistData.bReticleOn = bReticleOn;
-
-    UpdateReticleRadius( DeltaTime );
-
 }
 
 //=============================================================================

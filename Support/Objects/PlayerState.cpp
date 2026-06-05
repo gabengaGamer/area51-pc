@@ -961,9 +961,11 @@ void player::BeginPickup( void )
     m_NextWeaponItem     = INVEN_NULL;
 
     // zero out the reticle radius
-    m_ReticleRadius             = 0.0f;
-    m_ReticleGrowSpeed          = 0.0f;
-    m_AimAssistData.bReticleOn  = FALSE;
+    m_ReticleRadius                          = 0.0f;
+    m_ReticleGrowSpeed                       = 0.0f;
+    m_AimAssistData.bReticleOn               = FALSE;
+    m_AimAssistData.ReticleEnemyGuid         = 0;
+    m_AimAssistData.OnlineFriendlyTargetGuid = 0;
 
     new_weapon* pWeapon = GetCurrentWeaponPtr();
     if( pWeapon )
@@ -1048,9 +1050,11 @@ void player::UpdateDiscard( const f32& DeltaTime )
         }
 
         // zero out the reticle radius
-        m_ReticleRadius             = 0.0f;
-        m_ReticleGrowSpeed          = 0.0f;
-        m_AimAssistData.bReticleOn  = FALSE;
+        m_ReticleRadius                          = 0.0f;
+        m_ReticleGrowSpeed                       = 0.0f;
+        m_AimAssistData.bReticleOn               = FALSE;
+        m_AimAssistData.ReticleEnemyGuid         = 0;
+        m_AimAssistData.OnlineFriendlyTargetGuid = 0;
 
         new_weapon* pWeapon = GetCurrentWeaponPtr();
         if( pWeapon )
