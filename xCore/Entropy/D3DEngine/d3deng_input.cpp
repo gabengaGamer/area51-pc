@@ -174,6 +174,14 @@ static struct
     xbool             Suppress;
 } s_Rumble;
 
+//-------------------------------------------------------------------------
+
+static
+xbool IsGamepadFeedbackAllowed( void )
+{
+    return( g_Input.GetCurrentInputDevice() == INPUT_DEVICE_GAMEPAD );
+}
+
 //==============================================================================
 //  FORWARD DECLARATIONS
 //==============================================================================
@@ -899,6 +907,8 @@ xbool UpdateHardwareState( s32 Depth )
         f32 DeltaSec = (f32)( s_Input.CurrentTimeFrame - s_Input.LastTimeFrame )
                      / (f32)TIME_GetTicksPerSecond();
 
+        const xbool bAllowFeedback = IsGamepadFeedbackAllowed();
+
         for( s32 x = 0; x < XUSER_MAX_COUNT; x++ )
         {
             if( !s_Input.bXboxConnected[x] )
@@ -907,7 +917,13 @@ xbool UpdateHardwareState( s32 Depth )
             rumble_controller& C   = s_Rumble.Controller[x];
             XINPUT_VIBRATION   vib = { 0, 0 };
 
-            if( C.Enabled && !s_Rumble.Suppress && C.Type != RT_NO_RUMBLE )
+            if( !bAllowFeedback )
+            {
+                C.Type        = RT_NO_RUMBLE;
+                C.Intensity   = 0.0f;
+                C.DurationSec = 0.0f;
+            }
+            else if( C.Enabled && !s_Rumble.Suppress && C.Type != RT_NO_RUMBLE )
             {
                 C.Intensity   -= RUMBLE_DECAY_RATE * DeltaSec;
                 C.DurationSec -= DeltaSec;
@@ -1208,6 +1224,8 @@ void input_system::Feedback( f32 Duration, f32 Intensity, s32 DeviceID )
         return;
     if( !s_Input.bXboxConnected[ DeviceID ] )
         return;
+    if( !IsGamepadFeedbackAllowed() )
+        return;
 
     rumble_controller& C = s_Rumble.Controller[ DeviceID ];
     C.Type        = RT_INTENSITY;
@@ -1224,6 +1242,8 @@ void input_system::Feedback( s32 Count, feedback_envelope* pEnvelope, s32 Device
     if( DeviceID < 0 || DeviceID >= XUSER_MAX_COUNT )
         return;
     if( !s_Input.bXboxConnected[ DeviceID ] )
+        return;
+    if( !IsGamepadFeedbackAllowed() )
         return;
 
     // Use the first envelope entry for intensity and duration.
