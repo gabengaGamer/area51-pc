@@ -43,44 +43,34 @@ void ScaleLightColor( xcolor& Dst, const xcolor& Src, f32 Intensity )
 static
 f32 ComputeSpotConeAttenuation( const vector3& LightPos,
                                 const vector3& LightDirection,
-                                f32            InnerAngle,
-                                f32            OuterAngle,
+                                f32            OuterConeCos,
+                                f32            ConeCosRangeInv,
                                 const vector3& TargetPos )
 {
-    vector3 SpotDir = LightDirection;
-    if( !SpotDir.SafeNormalize() )
-        SpotDir.Set( 0.0f, 0.0f, 1.0f );
-
     vector3 ToTarget = TargetPos - LightPos;
     if( !ToTarget.SafeNormalize() )
         return 1.0f;
 
-    const f32 CosInner = x_cos( DEG_TO_RAD( InnerAngle ) * 0.5f );
-    const f32 CosOuter = x_cos( DEG_TO_RAD( OuterAngle ) * 0.5f );
-    const f32 CosRange = MAX( CosInner - CosOuter, 0.0001f );
-    const f32 SpotCos  = SpotDir.Dot( ToTarget );
+    const f32 SpotCos = LightDirection.Dot( ToTarget );
 
-    return MINMAX( 0.0f, ( SpotCos - CosOuter ) / CosRange, 1.0f );
+    return MINMAX( 0.0f, ( SpotCos - OuterConeCos ) * ConeCosRangeInv, 1.0f );
 }
 
 static
 xbool SphereIntersectsFiniteCone( const vector3& SphereCenter,
                                   f32            SphereRadius,
                                   const vector3& ConeApex,
-                                  const vector3& ConeDirection,
+                                  const vector3& ConeAxis,
                                   f32            ConeOuterCos,
+                                  f32            ConeOuterSin,
+                                  f32            ConeOuterTan,
                                   f32            ConeLength )
 {
-    vector3 Axis = ConeDirection;
-    if( !Axis.SafeNormalize() )
-        Axis.Set( 0.0f, 0.0f, 1.0f );
+    ASSERT( ConeOuterCos > 0.0f );
 
     const vector3 ToCenter       = SphereCenter - ConeApex;
     const f32     CenterDistSq   = ToCenter.Dot( ToCenter );
-    const f32     AxialDistance  = Axis.Dot( ToCenter );
-    const f32     SafeCosOuter   = MAX( ConeOuterCos, 0.0001f );
-    const f32     SinOuter       = x_sqrt( MAX( 1.0f - ( SafeCosOuter * SafeCosOuter ), 0.0f ) );
-    const f32     TanOuter       = SinOuter / SafeCosOuter;
+    const f32     AxialDistance  = ConeAxis.Dot( ToCenter );
     const f32     SphereRadiusSq = SphereRadius * SphereRadius;
 
     if( AxialDistance < -SphereRadius )
@@ -97,34 +87,79 @@ xbool SphereIntersectsFiniteCone( const vector3& SphereCenter,
 
     if( AxialDistance < ConeLength )
     {
-        const f32 SideDistance = ( RadialDistance * SafeCosOuter ) - ( AxialDistance * SinOuter );
+        const f32 SideDistance = ( RadialDistance * ConeOuterCos ) - ( AxialDistance * ConeOuterSin );
         if( SideDistance <= SphereRadius )
             return TRUE;
     }
 
-    const f32 ConeCapRadius  = ConeLength * TanOuter;
+    const f32 ConeCapRadius  = ConeLength * ConeOuterTan;
     const f32 CapAxialDelta  = MAX( AxialDistance - ConeLength, 0.0f );
     const f32 CapRadialDelta = MAX( RadialDistance - ConeCapRadius, 0.0f );
     return ( ( CapAxialDelta * CapAxialDelta ) + ( CapRadialDelta * CapRadialDelta ) ) <= SphereRadiusSq;
 }
 
 static
-xbool SpotLightAffectsBBox( const vector3& LightPos,
-                            const vector3& LightDirection,
-                            f32            OuterAngle,
-                            f32            LightRadius,
-                            const bbox&    WorldBBox )
+xbool SpotLightAffectsSphere( const vector3& LightPos,
+                              const vector3& LightDirection,
+                              f32            OuterConeCos,
+                              f32            OuterConeSin,
+                              f32            OuterConeTan,
+                              f32            LightRadius,
+                              const vector3& SphereCenter,
+                              f32            SphereRadius )
 {
-    const f32 CosOuter = x_cos( DEG_TO_RAD( OuterAngle ) * 0.5f );
-    if( CosOuter <= 0.0f )
+    if( OuterConeCos <= 0.0f )
         return TRUE;
 
-    return SphereIntersectsFiniteCone( WorldBBox.GetCenter(),
-                                       WorldBBox.GetRadius(),
+    return SphereIntersectsFiniteCone( SphereCenter,
+                                       SphereRadius,
                                        LightPos,
                                        LightDirection,
-                                       CosOuter,
+                                       OuterConeCos,
+                                       OuterConeSin,
+                                       OuterConeTan,
                                        LightRadius );
+}
+
+static
+void SetupLightCone( f32  InnerAngle,
+                     f32  OuterAngle,
+                     f32& InnerConeCos,
+                     f32& OuterConeCos,
+                     f32& OuterConeSin,
+                     f32& OuterConeTan,
+                     f32& ConeCosRangeInv )
+{
+    InnerConeCos = x_cos( DEG_TO_RAD( InnerAngle ) * 0.5f );
+    OuterConeCos = x_cos( DEG_TO_RAD( OuterAngle ) * 0.5f );
+
+    const f32 ConeCosRange = MAX( InnerConeCos - OuterConeCos, 0.0001f );
+    ConeCosRangeInv = 1.0f / ConeCosRange;
+
+    if( OuterConeCos > 0.0f )
+    {
+        OuterConeSin = x_sqrt( MAX( 1.0f - ( OuterConeCos * OuterConeCos ), 0.0f ) );
+        OuterConeTan = OuterConeSin / OuterConeCos;
+    }
+    else
+    {
+        OuterConeSin = 0.0f;
+        OuterConeTan = 0.0f;
+    }
+}
+
+static
+void SetupOmniLightCone( f32& InnerConeCos,
+                         f32& OuterConeCos,
+                         f32& OuterConeSin,
+                         f32& OuterConeTan,
+                         f32& ConeCosRangeInv )
+{
+    InnerConeCos    = 1.0f;
+    OuterConeCos    = 1.0f;
+    OuterConeSin    = 0.0f;
+    OuterConeTan    = 0.0f;
+    ConeCosRangeInv = 0.0f;
 }
 
 light_mgr::light_mgr( void ) :
@@ -265,6 +300,12 @@ void light_mgr::AddDynamicLight( const vector3& Pos,
         m_CharLights[m_NCharLights].Radius    = Radius;
         m_CharLights[m_NCharLights].Intensity = Intensity;
         m_CharLights[m_NCharLights].Color     = C;
+        m_CharLights[m_NCharLights].Shape     = LIGHT_SHAPE_OMNI;
+        m_CharLights[m_NCharLights].InnerConeCos    = 1.0f;
+        m_CharLights[m_NCharLights].OuterConeCos    = 1.0f;
+        m_CharLights[m_NCharLights].OuterConeSin    = 0.0f;
+        m_CharLights[m_NCharLights].OuterConeTan    = 0.0f;
+        m_CharLights[m_NCharLights].ConeCosRangeInv = 0.0f;
         m_CharLights[m_NCharLights].CookieIndex = -1;
         m_NCharLights++;
     }
@@ -275,6 +316,31 @@ void light_mgr::AddDynamicLight( const vector3& Pos,
             //ASSERT( FALSE );
             return;
         }
+
+        f32 InnerConeCos;
+        f32 OuterConeCos;
+        f32 OuterConeSin;
+        f32 OuterConeTan;
+        f32 ConeCosRangeInv;
+        if( Shape == LIGHT_SHAPE_SPOT )
+        {
+            SetupLightCone( InnerAngle,
+                            OuterAngle,
+                            InnerConeCos,
+                            OuterConeCos,
+                            OuterConeSin,
+                            OuterConeTan,
+                            ConeCosRangeInv );
+        }
+        else
+        {
+            SetupOmniLightCone( InnerConeCos,
+                                OuterConeCos,
+                                OuterConeSin,
+                                OuterConeTan,
+                                ConeCosRangeInv );
+        }
+
         vector3 CookieU( 1.0f, 0.0f, 0.0f );
         vector3 CookieV( 0.0f, 1.0f, 0.0f );
         const s32 CookieIndex = (Shape == LIGHT_SHAPE_SPOT) ? RegisterSpotLightCookie( Cookie ) : -1;
@@ -291,6 +357,11 @@ void light_mgr::AddDynamicLight( const vector3& Pos,
         m_DynamicLights[m_NDynamicLights].Falloff    = Falloff;
         m_DynamicLights[m_NDynamicLights].InnerAngle = InnerAngle;
         m_DynamicLights[m_NDynamicLights].OuterAngle = OuterAngle;
+        m_DynamicLights[m_NDynamicLights].InnerConeCos    = InnerConeCos;
+        m_DynamicLights[m_NDynamicLights].OuterConeCos    = OuterConeCos;
+        m_DynamicLights[m_NDynamicLights].OuterConeSin    = OuterConeSin;
+        m_DynamicLights[m_NDynamicLights].OuterConeTan    = OuterConeTan;
+        m_DynamicLights[m_NDynamicLights].ConeCosRangeInv = ConeCosRangeInv;
         m_DynamicLights[m_NDynamicLights].Shape      = Shape;
         m_DynamicLights[m_NDynamicLights].ShadowMapResolution = ShadowMapResolution;
         m_DynamicLights[m_NDynamicLights].ShadowPriority      = ShadowPriority;
@@ -416,71 +487,40 @@ void light_mgr::RemoveLight( s32 LightIndex )
 
 //=========================================================================
 
-void light_mgr::ReduceCollectedSpadLights( s32 MaxLightCount )
+void light_mgr::InsertCollectedCharLight( const dir_light& Light, s32 MaxLightCount )
 {
-    MaxLightCount = MAX( 0, MaxLightCount );
+    ASSERT( MaxLightCount <= MAX_COLLECTED_LIGHTS );
 
-    while ( m_NCollectedLights > MaxLightCount )
+    if( MaxLightCount <= 0 )
+        return;
+
+    const f32 NewScore = ComputeLightScore( Light.Col, 1.0f );
+    s32 InsertAt = m_NCollectedLights;
+
+    if( m_NCollectedLights == MaxLightCount )
     {
-        f32 LowestI    = F32_MAX;
-        s32 LightToCut = -1;
+        const f32 LowestScore = ComputeLightScore( m_CollectedCharLights[m_NCollectedLights-1].Col, 1.0f );
+        if( NewScore <= LowestScore )
+            return;
 
-        for ( s32 i = 0; i < m_NCollectedLights; i++ )
-        {
-            const s32 LightIndex = m_CollectedLights[i];
-            ASSERT( (LightIndex >= 0) && (LightIndex < m_NSpadLights) );
-
-            const f32 I = m_pSpadLights[LightIndex].Score;
-
-            if ( I < LowestI )
-            {
-                LowestI    = I;
-                LightToCut = i;
-            }
-        }
-
-        if ( LightToCut==-1 )
-        {
-            ASSERT( FALSE );
-            LightToCut = 0;
-        }
-
-        m_NCollectedLights--;
-        x_memmove( &m_CollectedLights[LightToCut], &m_CollectedLights[LightToCut+1], sizeof(s32)*(m_NCollectedLights-LightToCut) );
+        InsertAt = m_NCollectedLights - 1;
     }
-}
-
-//=========================================================================
-
-void light_mgr::ReduceCollectedCharLights( s32 MaxLightCount )
-{
-    MaxLightCount = MAX( 0, MaxLightCount );
-
-    while ( m_NCollectedLights > MaxLightCount )
+    else
     {
-        f32 LowestI       = F32_MAX;
-        s32 iLightToDrop = -1;
-
-        for ( s32 iLight = 0; iLight < m_NCollectedLights; iLight++ )
-        {
-            const f32 I = ComputeLightScore( m_CollectedCharLights[iLight].Col, 1.0f );
-
-            if ( I < LowestI )
-            {
-                iLightToDrop = iLight;
-                LowestI      = I;
-            }
-        }
-
-        ASSERT( iLightToDrop >= 0 );
-        if( iLightToDrop < 0 )
-            iLightToDrop = 0;
-
-        m_NCollectedLights--;
-        x_memmove( &m_CollectedCharLights[iLightToDrop],
-                   &m_CollectedCharLights[iLightToDrop+1],
-                   sizeof(dir_light)*(m_NCollectedLights-iLightToDrop) );
+        m_NCollectedLights++;
     }
+
+    while( InsertAt > 0 )
+    {
+        const f32 PrevScore = ComputeLightScore( m_CollectedCharLights[InsertAt-1].Col, 1.0f );
+        if( NewScore <= PrevScore )
+            break;
+
+        m_CollectedCharLights[InsertAt] = m_CollectedCharLights[InsertAt-1];
+        InsertAt--;
+    }
+
+    m_CollectedCharLights[InsertAt] = Light;
 }
 
 //=========================================================================
@@ -506,15 +546,13 @@ s32 SpadLightSortFn( const void* pA, const void* pB )
 
 void light_mgr::BeginLightCollection( void )
 {
-    static const s32 kMaxLightsInSpad = 8192 / sizeof(spad_light);
-
     ASSERT( !m_bInCollection );
   
     // Allocate space for the spad lights.
     s32 nLights = m_NFadingLights+m_NDynamicLights+m_NCharLights;
     smem_StackPushMarker();
     if( nLights > 0 )
-        m_pSpadLights = (spad_light*)smem_StackAlloc( sizeof(spad_light)*MIN(nLights,kMaxLightsInSpad) );
+        m_pSpadLights = (spad_light*)smem_StackAlloc( sizeof(spad_light)*nLights );
     else
         m_pSpadLights = NULL;
     ASSERT( (nLights == 0) || m_pSpadLights );
@@ -524,7 +562,7 @@ void light_mgr::BeginLightCollection( void )
 
     // add the dynamic lights
     s32 i;
-    for ( i = 0; (i<m_NDynamicLights)&&(nLights<kMaxLightsInSpad); i++ )
+    for ( i = 0; i < m_NDynamicLights; i++ )
     {
         dynamic_light& Light = m_DynamicLights[i];
         m_pSpadLights[nLights].Pos       = Light.Pos;
@@ -536,8 +574,11 @@ void light_mgr::BeginLightCollection( void )
         m_pSpadLights[nLights].CharOnly  = FALSE;
         m_pSpadLights[nLights].Shape     = Light.Shape;
         m_pSpadLights[nLights].Direction = Light.Direction;
-        m_pSpadLights[nLights].InnerAngle= Light.InnerAngle;
-        m_pSpadLights[nLights].OuterAngle= Light.OuterAngle;
+        m_pSpadLights[nLights].InnerConeCos    = Light.InnerConeCos;
+        m_pSpadLights[nLights].OuterConeCos    = Light.OuterConeCos;
+        m_pSpadLights[nLights].OuterConeSin    = Light.OuterConeSin;
+        m_pSpadLights[nLights].OuterConeTan    = Light.OuterConeTan;
+        m_pSpadLights[nLights].ConeCosRangeInv = Light.ConeCosRangeInv;
         m_pSpadLights[nLights].CookieIndex = Light.CookieIndex;
         m_pSpadLights[nLights].CookieU     = Light.CookieU;
         m_pSpadLights[nLights].CookieV     = Light.CookieV;
@@ -546,7 +587,7 @@ void light_mgr::BeginLightCollection( void )
 
     // add the fading lights
     s32 CurrLink = m_FirstLink;
-    while ( (CurrLink!=-1) && (nLights<kMaxLightsInSpad) )
+    while ( CurrLink != -1 )
     {
         fading_light& Light = m_FadingLights[CurrLink];
         m_pSpadLights[nLights].Pos       = Light.Pos;
@@ -558,8 +599,11 @@ void light_mgr::BeginLightCollection( void )
         m_pSpadLights[nLights].CharOnly  = FALSE;
         m_pSpadLights[nLights].Shape     = LIGHT_SHAPE_OMNI;
         m_pSpadLights[nLights].Direction.Set( 0.0f, 0.0f, 1.0f );
-        m_pSpadLights[nLights].InnerAngle= 0.0f;
-        m_pSpadLights[nLights].OuterAngle= 0.0f;
+        m_pSpadLights[nLights].InnerConeCos    = 1.0f;
+        m_pSpadLights[nLights].OuterConeCos    = 1.0f;
+        m_pSpadLights[nLights].OuterConeSin    = 0.0f;
+        m_pSpadLights[nLights].OuterConeTan    = 0.0f;
+        m_pSpadLights[nLights].ConeCosRangeInv = 0.0f;
         m_pSpadLights[nLights].CookieIndex = -1;
         m_pSpadLights[nLights].CookieU.Set( 1.0f, 0.0f, 0.0f );
         m_pSpadLights[nLights].CookieV.Set( 0.0f, 1.0f, 0.0f );
@@ -573,7 +617,7 @@ void light_mgr::BeginLightCollection( void )
     m_nNonCharLightsInSpad = nLights;
 
     // add the character lights
-    for ( i = 0; (i<m_NCharLights) && (nLights<kMaxLightsInSpad); i++ )
+    for ( i = 0; i < m_NCharLights; i++ )
     {
         dynamic_light& Light = m_CharLights[i];
         m_pSpadLights[nLights].Pos       = Light.Pos;
@@ -585,8 +629,11 @@ void light_mgr::BeginLightCollection( void )
         m_pSpadLights[nLights].CharOnly  = TRUE;
         m_pSpadLights[nLights].Shape     = LIGHT_SHAPE_OMNI;
         m_pSpadLights[nLights].Direction.Set( 0.0f, 0.0f, 1.0f );
-        m_pSpadLights[nLights].InnerAngle= 0.0f;
-        m_pSpadLights[nLights].OuterAngle= 0.0f;
+        m_pSpadLights[nLights].InnerConeCos    = 1.0f;
+        m_pSpadLights[nLights].OuterConeCos    = 1.0f;
+        m_pSpadLights[nLights].OuterConeSin    = 0.0f;
+        m_pSpadLights[nLights].OuterConeTan    = 0.0f;
+        m_pSpadLights[nLights].ConeCosRangeInv = 0.0f;
         m_pSpadLights[nLights].CookieIndex = -1;
         m_pSpadLights[nLights].CookieU.Set( 1.0f, 0.0f, 0.0f );
         m_pSpadLights[nLights].CookieV.Set( 0.0f, 1.0f, 0.0f );
@@ -634,10 +681,14 @@ s32 light_mgr::CollectLights( const bbox& WorldBBox, s32 MaxLightCount )
 
     s32 i;
     m_NCollectedLights = 0;
+    MaxLightCount = MIN( MAX( 0, MaxLightCount ), MAX_COLLECTED_LIGHTS );
     if( (MaxLightCount <= 0) || (m_nNonCharLightsInSpad <= 0) )
         return m_NCollectedLights;
 
-    for ( i = 0; (i < m_nNonCharLightsInSpad) && (m_NCollectedLights<MAX_COLLECTED_LIGHTS); i++ )
+    const vector3 WorldBBoxCenter = WorldBBox.GetCenter();
+    const f32     WorldBBoxRadius = WorldBBox.GetRadius();
+
+    for ( i = 0; (i < m_nNonCharLightsInSpad) && (m_NCollectedLights < MaxLightCount); i++ )
     {
         ASSERT( !m_pSpadLights[i].CharOnly );
 
@@ -646,18 +697,19 @@ s32 light_mgr::CollectLights( const bbox& WorldBBox, s32 MaxLightCount )
         bIntersects = WorldBBox.Intersect(m_pSpadLights[i].Pos, m_pSpadLights[i].Radius);
         if( bIntersects && (m_pSpadLights[i].Shape == LIGHT_SHAPE_SPOT) )
         {
-            bIntersects = SpotLightAffectsBBox( m_pSpadLights[i].Pos,
-                                                m_pSpadLights[i].Direction,
-                                                m_pSpadLights[i].OuterAngle,
-                                                m_pSpadLights[i].Radius,
-                                                WorldBBox );
+            bIntersects = SpotLightAffectsSphere( m_pSpadLights[i].Pos,
+                                                  m_pSpadLights[i].Direction,
+                                                  m_pSpadLights[i].OuterConeCos,
+                                                  m_pSpadLights[i].OuterConeSin,
+                                                  m_pSpadLights[i].OuterConeTan,
+                                                  m_pSpadLights[i].Radius,
+                                                  WorldBBoxCenter,
+                                                  WorldBBoxRadius );
         }
         
         if ( bIntersects )
             m_CollectedLights[m_NCollectedLights++] = i;
     }
-
-    ReduceCollectedSpadLights( MaxLightCount );
 
     return m_NCollectedLights;
 }
@@ -704,8 +756,8 @@ void light_mgr::GetCollectedLightInfo( s32 Index,
                                        f32& Falloff,
                                        s32& Shape,
                                        vector3& Direction,
-                                       f32& InnerAngle,
-                                       f32& OuterAngle )
+                                       f32& InnerConeCos,
+                                       f32& OuterConeCos )
 {
     ASSERT( (Index >= 0) && (Index < m_NCollectedLights) );
     ASSERT( m_bInCollection );
@@ -717,8 +769,8 @@ void light_mgr::GetCollectedLightInfo( s32 Index,
     Falloff    = Light.Falloff;
     Shape      = Light.Shape;
     Direction  = Light.Direction;
-    InnerAngle = Light.InnerAngle;
-    OuterAngle = Light.OuterAngle;
+    InnerConeCos = Light.InnerConeCos;
+    OuterConeCos = Light.OuterConeCos;
     ScaleLightColor( C, Light.Color, Light.Intensity );
 }
 
@@ -744,18 +796,18 @@ void light_mgr::GetCollectedLightCookie( s32 Index,
 xbool light_mgr::CalcDirLight( dir_light* pDst,
                                const matrix4& L2W,
                                const bbox& B,
+                               const bbox& WorldBox,
+                               const vector3& WorldBoxCenter,
                                const vector3& Pos,
                                f32 Radius,
                                f32 Intensity,
                                xcolor& C,
                                s32 Shape,
                                const vector3& Direction,
-                               f32 InnerAngle,
-                               f32 OuterAngle )
+                               f32 OuterConeCos,
+                               f32 ConeCosRangeInv )
 {
-    bbox Box = B;
-    Box.Transform(L2W);
-    if ( Box.Intersect(Pos, Radius) )
+    if ( WorldBox.Intersect(Pos, Radius) )
     {
         //
         // convert the point light into a directional light
@@ -822,21 +874,19 @@ xbool light_mgr::CalcDirLight( dir_light* pDst,
         {
             // and the direction of the light should just be based on the
             // bounding box's center point
-            vector3 BoxPos = L2W * B.GetCenter();
-
             if( Shape == LIGHT_SHAPE_SPOT )
             {
                 I *= ComputeSpotConeAttenuation( Pos,
                                                  Direction,
-                                                 InnerAngle,
-                                                 OuterAngle,
-                                                 BoxPos );
+                                                 OuterConeCos,
+                                                 ConeCosRangeInv,
+                                                 WorldBoxCenter );
             }
 
             if( I <= 0.0f )
                 return FALSE;
 
-            vector3 LDir   = BoxPos - Pos;
+            vector3 LDir   = WorldBoxCenter - Pos;
             if ( !LDir.SafeNormalize() )
             {
                 // this can happen if the light happens to be placed at the center of
@@ -863,65 +913,71 @@ xbool light_mgr::CalcDirLight( dir_light* pDst,
 s32 light_mgr::CollectCharLights( const matrix4& L2W, const bbox& B, s32 MaxLightCount )
 {
     m_NCollectedLights = 0;
+    MaxLightCount = MIN( MAX( 0, MaxLightCount ), MAX_COLLECTED_LIGHTS );
     if( MaxLightCount <= 0 )
         return m_NCollectedLights;
 
+    bbox WorldBox = B;
+    WorldBox.Transform( L2W );
+    const vector3 WorldBoxCenter = L2W * B.GetCenter();
+    dir_light Light;
+
     // walk the list collecting fading lights that may intersect
     s32 CurrLink = m_FirstLink;
-    while ( (CurrLink != -1) && (m_NCollectedLights < MAX_COLLECTED_LIGHTS) )
+    while ( CurrLink != -1 )
     {
-        if ( CalcDirLight( &m_CollectedCharLights[m_NCollectedLights],
+        if ( CalcDirLight( &Light,
                            L2W,
                            B,
+                           WorldBox,
+                           WorldBoxCenter,
                            m_FadingLights[CurrLink].Pos,
                            m_FadingLights[CurrLink].Radius,
                            m_FadingLights[CurrLink].Intensity,
                            m_FadingLights[CurrLink].CurrentColor ) )
         {
-            m_NCollectedLights++;
+            InsertCollectedCharLight( Light, MaxLightCount );
         }
         CurrLink = m_FadingLights[CurrLink].NextLink;
     }
 
     // now go through all of the normal character lights
-    for ( s32 iCharLight = 0;
-          (iCharLight < m_NCharLights) && (m_NCollectedLights < MAX_COLLECTED_LIGHTS);
-          iCharLight++ )
+    for ( s32 iCharLight = 0; iCharLight < m_NCharLights; iCharLight++ )
     {
-        if ( CalcDirLight( &m_CollectedCharLights[m_NCollectedLights],
+        if ( CalcDirLight( &Light,
                            L2W,
                            B,
+                           WorldBox,
+                           WorldBoxCenter,
                            m_CharLights[iCharLight].Pos,
                            m_CharLights[iCharLight].Radius,
                            m_CharLights[iCharLight].Intensity,
                            m_CharLights[iCharLight].Color ) )
         {
-            m_NCollectedLights++;
+            InsertCollectedCharLight( Light, MaxLightCount );
         }
     }
 
     // now go through all of the dynamic lights
-    for ( s32 iDynamicLight = 0;
-          (iDynamicLight < m_NDynamicLights) && (m_NCollectedLights < MAX_COLLECTED_LIGHTS);
-          iDynamicLight++ )
+    for ( s32 iDynamicLight = 0; iDynamicLight < m_NDynamicLights; iDynamicLight++ )
     {
-        if ( CalcDirLight( &m_CollectedCharLights[m_NCollectedLights],
+        if ( CalcDirLight( &Light,
                            L2W,
                            B,
+                           WorldBox,
+                           WorldBoxCenter,
                            m_DynamicLights[iDynamicLight].Pos,
                            m_DynamicLights[iDynamicLight].Radius,
                            m_DynamicLights[iDynamicLight].Intensity,
                            m_DynamicLights[iDynamicLight].Color,
                            m_DynamicLights[iDynamicLight].Shape,
                            m_DynamicLights[iDynamicLight].Direction,
-                           m_DynamicLights[iDynamicLight].InnerAngle,
-                           m_DynamicLights[iDynamicLight].OuterAngle ) )
+                           m_DynamicLights[iDynamicLight].OuterConeCos,
+                           m_DynamicLights[iDynamicLight].ConeCosRangeInv ) )
         {
-            m_NCollectedLights++;
+            InsertCollectedCharLight( Light, MaxLightCount );
         }
     }
-
-    ReduceCollectedCharLights( MaxLightCount );
 
     return m_NCollectedLights;
 }
@@ -931,44 +987,50 @@ s32 light_mgr::CollectCharLights( const matrix4& L2W, const bbox& B, s32 MaxLigh
 s32 light_mgr::CollectCharLightsOnly( const matrix4& L2W, const bbox& B, s32 MaxLightCount )
 {
     m_NCollectedLights = 0;
+    MaxLightCount = MIN( MAX( 0, MaxLightCount ), MAX_COLLECTED_LIGHTS );
     if( MaxLightCount <= 0 )
         return m_NCollectedLights;
 
+    bbox WorldBox = B;
+    WorldBox.Transform( L2W );
+    const vector3 WorldBoxCenter = L2W * B.GetCenter();
+    dir_light Light;
+
     // walk the list collecting fading lights that may intersect
     s32 CurrLink = m_FirstLink;
-    while ( (CurrLink != -1) && (m_NCollectedLights < MAX_COLLECTED_LIGHTS) )
+    while ( CurrLink != -1 )
     {
-        if ( CalcDirLight( &m_CollectedCharLights[m_NCollectedLights],
+        if ( CalcDirLight( &Light,
                            L2W,
                            B,
+                           WorldBox,
+                           WorldBoxCenter,
                            m_FadingLights[CurrLink].Pos,
                            m_FadingLights[CurrLink].Radius,
                            m_FadingLights[CurrLink].Intensity,
                            m_FadingLights[CurrLink].CurrentColor ) )
         {
-            m_NCollectedLights++;
+            InsertCollectedCharLight( Light, MaxLightCount );
         }
         CurrLink = m_FadingLights[CurrLink].NextLink;
     }
 
     // now go through only the normal character lights
-    for ( s32 iCharLight = 0;
-          (iCharLight < m_NCharLights) && (m_NCollectedLights < MAX_COLLECTED_LIGHTS);
-          iCharLight++ )
+    for ( s32 iCharLight = 0; iCharLight < m_NCharLights; iCharLight++ )
     {
-        if ( CalcDirLight( &m_CollectedCharLights[m_NCollectedLights],
+        if ( CalcDirLight( &Light,
                            L2W,
                            B,
+                           WorldBox,
+                           WorldBoxCenter,
                            m_CharLights[iCharLight].Pos,
                            m_CharLights[iCharLight].Radius,
                            m_CharLights[iCharLight].Intensity,
                            m_CharLights[iCharLight].Color ) )
         {
-            m_NCollectedLights++;
+            InsertCollectedCharLight( Light, MaxLightCount );
         }
     }
-
-    ReduceCollectedCharLights( MaxLightCount );
 
     return m_NCollectedLights;
 }

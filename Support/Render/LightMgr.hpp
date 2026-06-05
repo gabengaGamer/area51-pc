@@ -98,8 +98,8 @@ public:
                                       f32&           Falloff,
                                       s32&           Shape,
                                       vector3&       Direction,
-                                      f32&           InnerAngle,
-                                      f32&           OuterAngle );
+                                      f32&           InnerConeCos,
+                                      f32&           OuterConeCos );
     void    GetCollectedLightCookie( s32            Index,
                                       s32&           CookieIndex,
                                       vector3&       CookieU,
@@ -162,6 +162,11 @@ protected:
         f32     Falloff;
         f32     InnerAngle;
         f32     OuterAngle;
+        f32     InnerConeCos;
+        f32     OuterConeCos;
+        f32     OuterConeSin;
+        f32     OuterConeTan;
+        f32     ConeCosRangeInv;
         s32     Shape;
         s32     ShadowMapResolution;
         s32     ShadowPriority;
@@ -192,8 +197,11 @@ protected:
         xbool   CharOnly;
         s32     Shape;
         vector3 Direction;
-        f32     InnerAngle;
-        f32     OuterAngle;
+        f32     InnerConeCos;
+        f32     OuterConeCos;
+        f32     OuterConeSin;
+        f32     OuterConeTan;
+        f32     ConeCosRangeInv;
         s32     CookieIndex;
         vector3 CookieU;
         vector3 CookieV;
@@ -202,20 +210,22 @@ protected:
     // internal helper routines
     s32     AddLight                ( void );
     void    RemoveLight             ( s32            LightIndex );
-    void    ReduceCollectedSpadLights( s32           MaxLightCount );
-    void    ReduceCollectedCharLights( s32           MaxLightCount );
+    void    InsertCollectedCharLight( const dir_light& Light,
+                                      s32              MaxLightCount );
     s32     RegisterSpotLightCookie ( const texture::handle& Cookie );
     xbool   CalcDirLight            ( dir_light*     pDst,
                                       const matrix4& L2W,
-                                      const bbox&    Box,
+                                      const bbox&    LocalBox,
+                                      const bbox&    WorldBox,
+                                      const vector3& WorldBoxCenter,
                                       const vector3& Pos,
                                       f32            Radius,
                                       f32            Intensity,
                                       xcolor&        C,
                                       s32            Shape = LIGHT_SHAPE_OMNI,
                                       const vector3& Direction = vector3( 0.0f, 0.0f, 1.0f ),
-                                      f32            InnerAngle = 30.0f,
-                                      f32            OuterAngle = 45.0f );
+                                      f32            OuterConeCos = 1.0f,
+                                      f32            ConeCosRangeInv = 0.0f );
     friend s32 SpadLightSortFn      ( const void* pA,
                                       const void* pB );
 

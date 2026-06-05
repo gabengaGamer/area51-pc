@@ -953,8 +953,8 @@ void* platform_CalculateRigidLighting( const matrix4&   L2W,
             f32     Falloff;
             s32     Shape;
             vector3 Direction;
-            f32     InnerAngle;
-            f32     OuterAngle;
+            f32     InnerConeCos;
+            f32     OuterConeCos;
             s32     CookieIndex;
             vector3 CookieU;
             vector3 CookieV;
@@ -966,8 +966,8 @@ void* platform_CalculateRigidLighting( const matrix4&   L2W,
                                              Falloff,
                                              Shape,
                                              Direction,
-                                             InnerAngle,
-                                             OuterAngle );
+                                             InnerConeCos,
+                                             OuterConeCos );
             g_LightMgr.GetCollectedLightCookie( i,
                                                 CookieIndex,
                                                 CookieU,
@@ -989,8 +989,8 @@ void* platform_CalculateRigidLighting( const matrix4&   L2W,
                                         Direction.GetZ(),
                                         (Shape == light_mgr::LIGHT_SHAPE_SPOT) ? 1.0f : 0.0f );
 
-            pLighting->LightCone[i].Set( x_cos( DEG_TO_RAD( InnerAngle ) * 0.5f ),
-                                         x_cos( DEG_TO_RAD( OuterAngle ) * 0.5f ),
+            pLighting->LightCone[i].Set( InnerConeCos,
+                                         OuterConeCos,
                                          0.0f,
                                          0.0f );
 
@@ -1047,8 +1047,8 @@ void* platform_CalculateSkinLighting( u32            Flags,
         f32     Falloff;
         s32     Shape;
         vector3 Direction;
-        f32     InnerAngle;
-        f32     OuterAngle;
+        f32     InnerConeCos;
+        f32     OuterConeCos;
         s32     CookieIndex;
         vector3 CookieU;
         vector3 CookieV;
@@ -1060,8 +1060,8 @@ void* platform_CalculateSkinLighting( u32            Flags,
                                           Falloff,
                                           Shape,
                                           Direction,
-                                          InnerAngle,
-                                          OuterAngle );
+                                          InnerConeCos,
+                                          OuterConeCos );
         g_LightMgr.GetCollectedLightCookie( i,
                                             CookieIndex,
                                             CookieU,
@@ -1082,8 +1082,8 @@ void* platform_CalculateSkinLighting( u32            Flags,
                                              Direction.GetZ(),
                                              (Shape == light_mgr::LIGHT_SHAPE_SPOT) ? 1.0f : 0.0f );
 
-        pLighting->LightCone[LightIndex].Set( x_cos( DEG_TO_RAD( InnerAngle ) * 0.5f ),
-                                              x_cos( DEG_TO_RAD( OuterAngle ) * 0.5f ),
+        pLighting->LightCone[LightIndex].Set( InnerConeCos,
+                                              OuterConeCos,
                                               0.0f,
                                               0.0f );
 

@@ -52,6 +52,7 @@ namespace
         f32     Falloff;
         radian  FOV;
         s32     ShadowMapResolution;
+        f32     PointFaceCoverageCos;
         s32     ShadowPriority;
         s32     SourceCount;
         s32     RelevantCasterStart;
@@ -87,6 +88,18 @@ namespace
 
     //---------------------------------------------------------------------
 
+    struct shadow_cone_test
+    {
+        vector3 Apex;
+        vector3 Axis;
+        f32     CosOuter;
+        f32     SinOuter;
+        f32     TanOuter;
+        f32     Length;
+    };
+
+    //---------------------------------------------------------------------
+
     struct dynamic_shadow_light
     {
         vector3 Pos;
@@ -112,27 +125,54 @@ namespace
         caster_type              Type;
         object*                  pObject;
         playsurface_mgr::surface* pPlaySurface;
+        vector3                  WorldBBoxCenter;
+        f32                      WorldBBoxRadius;
     };
 
     //---------------------------------------------------------------------
 
-    shadow_caster_record MakeObjectShadowCaster( object* pCaster )
+    struct shadow_caster_mask_record
+    {
+        shadow_caster_record Caster;
+        u64                  SourceMask;
+    };
+
+    //---------------------------------------------------------------------
+
+    f32 ComputeBBoxBoundingSphereRadius( const bbox& WorldBBox );
+
+    //---------------------------------------------------------------------
+
+    void SetShadowCasterBounds( shadow_caster_record& Caster,
+                                const bbox&           WorldBBox )
+    {
+        Caster.WorldBBoxCenter = WorldBBox.GetCenter();
+        Caster.WorldBBoxRadius = ComputeBBoxBoundingSphereRadius( WorldBBox );
+    }
+
+    //---------------------------------------------------------------------
+
+    shadow_caster_record MakeObjectShadowCaster( object*      pCaster,
+                                                 const bbox&  WorldBBox )
     {
         shadow_caster_record Caster;
         Caster.Type         = shadow_caster_record::CASTER_OBJECT;
         Caster.pObject      = pCaster;
         Caster.pPlaySurface = NULL;
+        SetShadowCasterBounds( Caster, WorldBBox );
         return Caster;
     }
 
     //---------------------------------------------------------------------
 
-    shadow_caster_record MakePlaySurfaceShadowCaster( playsurface_mgr::surface* pSurface )
+    shadow_caster_record MakePlaySurfaceShadowCaster( playsurface_mgr::surface* pSurface,
+                                                      const bbox&               WorldBBox )
     {
         shadow_caster_record Caster;
         Caster.Type         = shadow_caster_record::CASTER_PLAY_SURFACE;
         Caster.pObject      = NULL;
         Caster.pPlaySurface = pSurface;
+        SetShadowCasterBounds( Caster, WorldBBox );
         return Caster;
     }
 
@@ -148,6 +188,37 @@ namespace
             return ( A.pObject == B.pObject );
 
         return ( A.pPlaySurface == B.pPlaySurface );
+    }
+
+    //---------------------------------------------------------------------
+
+    uaddr GetShadowCasterSortKey( const shadow_caster_record& Caster )
+    {
+        if( Caster.Type == shadow_caster_record::CASTER_OBJECT )
+            return (uaddr)Caster.pObject;
+
+        return (uaddr)Caster.pPlaySurface;
+    }
+
+    //---------------------------------------------------------------------
+
+    s32 ShadowCasterMaskCompareFn( const void* pA, const void* pB )
+    {
+        const shadow_caster_mask_record& A = *((const shadow_caster_mask_record*)pA);
+        const shadow_caster_mask_record& B = *((const shadow_caster_mask_record*)pB);
+
+        if( A.Caster.Type != B.Caster.Type )
+            return ( A.Caster.Type < B.Caster.Type ) ? -1 : 1;
+
+        const uaddr AKey = GetShadowCasterSortKey( A.Caster );
+        const uaddr BKey = GetShadowCasterSortKey( B.Caster );
+
+        if( AKey < BKey )
+            return -1;
+        if( AKey > BKey )
+            return 1;
+
+        return 0;
     }
 
     //---------------------------------------------------------------------
@@ -498,32 +569,38 @@ namespace
 
     //---------------------------------------------------------------------
 
+    void SetupShadowConeTest( shadow_cone_test& Cone,
+                              const vector3&   Apex,
+                              const vector3&   Direction,
+                              f32              CosOuter,
+                              f32              Length )
+    {
+        Cone.Apex = Apex;
+        Cone.Axis = Direction;
+        if( !Cone.Axis.SafeNormalize() )
+            Cone.Axis.Set( 0.0f, 0.0f, 1.0f );
+
+        Cone.CosOuter = MAX( CosOuter, 0.0001f );
+        Cone.SinOuter = x_sqrt( MAX( 1.0f - ( Cone.CosOuter * Cone.CosOuter ), 0.0f ) );
+        Cone.TanOuter = Cone.SinOuter / Cone.CosOuter;
+        Cone.Length   = Length;
+    }
+
+    //---------------------------------------------------------------------
+
     xbool SphereIntersectsFiniteCone( const vector3& SphereCenter,
                                       f32            SphereRadius,
-                                      const vector3& ConeApex,
-                                      const vector3& ConeDirection,
-                                      f32            ConeOuterCos,
-                                      f32            ConeLength )
+                                      const shadow_cone_test& Cone )
     {
-        if( ConeOuterCos <= -1.0f )
-            return TRUE;
-
-        vector3 Axis = ConeDirection;
-        if( !Axis.SafeNormalize() )
-            Axis.Set( 0.0f, 0.0f, 1.0f );
-
-        const vector3 ToCenter      = SphereCenter - ConeApex;
+        const vector3 ToCenter      = SphereCenter - Cone.Apex;
         const f32     CenterDistSq  = ToCenter.Dot( ToCenter );
-        const f32     AxialDistance = Axis.Dot( ToCenter );
-        const f32     SafeCosOuter  = MAX( ConeOuterCos, 0.0001f );
-        const f32     SinOuter      = x_sqrt( MAX( 1.0f - ( SafeCosOuter * SafeCosOuter ), 0.0f ) );
-        const f32     TanOuter      = SinOuter / SafeCosOuter;
+        const f32     AxialDistance = Cone.Axis.Dot( ToCenter );
         const f32     SphereRadiusSq= SphereRadius * SphereRadius;
 
         if( AxialDistance < -SphereRadius )
             return FALSE;
 
-        if( AxialDistance > ( ConeLength + SphereRadius ) )
+        if( AxialDistance > ( Cone.Length + SphereRadius ) )
             return FALSE;
 
         if( AxialDistance <= 0.0f )
@@ -532,38 +609,27 @@ namespace
         const f32 RadialDistanceSq = MAX( CenterDistSq - ( AxialDistance * AxialDistance ), 0.0f );
         const f32 RadialDistance   = x_sqrt( RadialDistanceSq );
 
-        if( AxialDistance < ConeLength )
+        if( AxialDistance < Cone.Length )
         {
-            const f32 SideDistance = ( RadialDistance * SafeCosOuter ) - ( AxialDistance * SinOuter );
+            const f32 SideDistance = ( RadialDistance * Cone.CosOuter ) - ( AxialDistance * Cone.SinOuter );
             if( SideDistance <= SphereRadius )
                 return TRUE;
         }
 
-        const f32 ConeCapRadius  = ConeLength * TanOuter;
-        const f32 CapAxialDelta  = MAX( AxialDistance - ConeLength, 0.0f );
+        const f32 ConeCapRadius  = Cone.Length * Cone.TanOuter;
+        const f32 CapAxialDelta  = MAX( AxialDistance - Cone.Length, 0.0f );
         const f32 CapRadialDelta = MAX( RadialDistance - ConeCapRadius, 0.0f );
         return ( ( CapAxialDelta * CapAxialDelta ) + ( CapRadialDelta * CapRadialDelta ) ) <= SphereRadiusSq;
     }
 
     //---------------------------------------------------------------------
 
-    xbool SourceConeAffectsBBox( const vector3& LightPos,
-                                 const vector3& LightDirection,
-                                 f32            CosOuter,
-                                 f32            LightRadius,
-                                 const bbox&    WorldBBox )
+    xbool SourceConeAffectsBBox( const shadow_cone_test& Cone,
+                                 const bbox&             WorldBBox )
     {
-        if( CosOuter <= 0.0f )
-            return TRUE;
-
-        // Conservative box-vs-spot test: keep casters whose bounding sphere intersects
-        // the finite cone instead of rejecting them on center/corner sampling.
         return SphereIntersectsFiniteCone( WorldBBox.GetCenter(),
                                            ComputeBBoxBoundingSphereRadius( WorldBBox ),
-                                           LightPos,
-                                           LightDirection,
-                                           CosOuter,
-                                           LightRadius );
+                                           Cone );
     }
 
     //---------------------------------------------------------------------
@@ -573,8 +639,7 @@ namespace
                                          u8             Zone2,
                                          const vector3& LightPos,
                                          f32            LightRadius,
-                                         const vector3* pLightDirection = NULL,
-                                         f32            LightConeOuterCos = -1.0f )
+                                         const shadow_cone_test* pConeTest = NULL )
     {
         // Deep and raw
         //if( !g_ZoneMgr.IsBBoxVisible( CasterBBox,
@@ -593,41 +658,12 @@ namespace
         if( !CasterBBox.Intersect( LightPos, LightRadius ) )
             return FALSE;
 
-        if( pLightDirection )
+        if( pConeTest )
         {
-            return SourceConeAffectsBBox( LightPos,
-                                          *pLightDirection,
-                                          LightConeOuterCos,
-                                          LightRadius,
-                                          CasterBBox );
+            return SourceConeAffectsBBox( *pConeTest, CasterBBox );
         }
 
         return TRUE;
-    }
-
-    //---------------------------------------------------------------------
-
-    xbool ShadowCasterIsRelevant( object*        pCaster,
-                                  const vector3& LightPos,
-                                  f32            LightRadius,
-                                  const vector3* pLightDirection = NULL,
-                                  f32            LightConeOuterCos = -1.0f )
-    {
-        if( !pCaster )
-            return FALSE;
-
-#ifdef X_EDITOR
-        if( pCaster->IsHidden() )
-            return FALSE;
-#endif
-
-        return ShadowCasterBoundsAreRelevant( pCaster->GetBBox(),
-                                              (u8)pCaster->GetZone1(),
-                                              (u8)pCaster->GetZone2(),
-                                              LightPos,
-                                              LightRadius,
-                                              pLightDirection,
-                                              LightConeOuterCos );
     }
 
     //---------------------------------------------------------------------
@@ -682,12 +718,20 @@ namespace
 
         DynamicLight.ShadowMapResolution = ClampShadowMapResolution( ShadowMapResolution );
 
-        f32 LightConeOuterCos = -1.0f;
-        const vector3* pLightDirection = NULL;
+        shadow_cone_test        LightConeTest;
+        const shadow_cone_test* pLightConeTest = NULL;
         if( DynamicLight.Shape == light_mgr::LIGHT_SHAPE_SPOT )
         {
-            LightConeOuterCos = x_cos( DEG_TO_RAD( DynamicLight.OuterAngle ) * 0.5f );
-            pLightDirection   = &DynamicLight.Direction;
+            const f32 LightConeOuterCos = x_cos( DEG_TO_RAD( DynamicLight.OuterAngle ) * 0.5f );
+            if( LightConeOuterCos > 0.0f )
+            {
+                SetupShadowConeTest( LightConeTest,
+                                     DynamicLight.Pos,
+                                     DynamicLight.Direction,
+                                     LightConeOuterCos,
+                                     DynamicLight.Radius );
+                pLightConeTest = &LightConeTest;
+            }
         }
 
         const s32 RelevantCasterStart = RelevantCasters.GetCount();
@@ -708,19 +752,26 @@ namespace
             if( !pCandidate )
                 continue;
 
+#ifdef X_EDITOR
+            if( pCandidate->IsHidden() )
+                continue;
+#endif
+
             if( pCandidate->GetType() == object::TYPE_PLAY_SURFACE )
                 continue;
 
-            if( !ShadowCasterIsRelevant( pCandidate,
-                                         DynamicLight.Pos,
-                                         DynamicLight.Radius,
-                                         pLightDirection,
-                                         LightConeOuterCos ) )
+            const bbox& CandidateBBox = pCandidate->GetBBox();
+            if( !ShadowCasterBoundsAreRelevant( CandidateBBox,
+                                                (u8)pCandidate->GetZone1(),
+                                                (u8)pCandidate->GetZone2(),
+                                                DynamicLight.Pos,
+                                                DynamicLight.Radius,
+                                                pLightConeTest ) )
             {
                 continue;
             }
 
-            RelevantCasters.Append( MakeObjectShadowCaster( pCandidate ) );
+            RelevantCasters.Append( MakeObjectShadowCaster( pCandidate, CandidateBBox ) );
             LocalCasterCount++;
         }
         g_ObjMgr.EndLoop();
@@ -742,10 +793,9 @@ namespace
                                                (u8)( pSurface->ZoneInfo >> 8 ),
                                                DynamicLight.Pos,
                                                DynamicLight.Radius,
-                                               pLightDirection,
-                                               LightConeOuterCos ) )
+                                               pLightConeTest ) )
             {
-                RelevantCasters.Append( MakePlaySurfaceShadowCaster( pSurface ) );
+                RelevantCasters.Append( MakePlaySurfaceShadowCaster( pSurface, pSurface->WorldBBox ) );
                 LocalCasterCount++;
             }
 
@@ -762,6 +812,9 @@ namespace
         ShadowLight.Falloff             = DynamicLight.Falloff;
         ShadowLight.FOV                 = GetShadowLightFOV( DynamicLight );
         ShadowLight.ShadowMapResolution = DynamicLight.ShadowMapResolution;
+        ShadowLight.PointFaceCoverageCos = ( DynamicLight.Shape == light_mgr::LIGHT_SHAPE_OMNI ) ?
+                                           ComputePointFaceCoverageCos( DynamicLight.ShadowMapResolution ) :
+                                           0.0f;
         ShadowLight.ShadowPriority      = ClampShadowPriority( ShadowPriority );
         ShadowLight.SourceCount         = GetShadowLightSourceCount( DynamicLight.Shape );
         ShadowLight.RelevantCasterStart = RelevantCasterStart;
@@ -774,34 +827,167 @@ namespace
 
     //---------------------------------------------------------------------
 
+    const vector3& GetPointShadowFaceDirection( s32 iFace )
+    {
+        ASSERT( iFace >= 0 );
+        ASSERT( iFace < POINT_SHADOW_FACE_COUNT );
+
+        static xbool   s_Initialized = FALSE;
+        static vector3 s_FaceDirections[POINT_SHADOW_FACE_COUNT];
+
+        if( !s_Initialized )
+        {
+            for( s32 i = 0; i < POINT_SHADOW_FACE_COUNT; i++ )
+            {
+                matrix4 FaceL2W;
+                FaceL2W.Setup( vector3( 1.0f, 1.0f, 1.0f ),
+                               radian3( kPointShadowFaces[i].Pitch,
+                                        kPointShadowFaces[i].Yaw,
+                                        R_0 ),
+                               vector3( 0.0f, 0.0f, 0.0f ) );
+
+                s_FaceDirections[i] = FaceL2W.RotateVector( vector3( 0.0f, 0.0f, 1.0f ) );
+                if( !s_FaceDirections[i].SafeNormalize() )
+                    s_FaceDirections[i].Set( 0.0f, 0.0f, 1.0f );
+            }
+
+            s_Initialized = TRUE;
+        }
+
+        return s_FaceDirections[iFace];
+    }
+
+    //---------------------------------------------------------------------
+
+    xbool PointShadowFaceAffectsCaster( const shadow_cone_test&     Cone,
+                                        const shadow_caster_record& Caster )
+    {
+        return SphereIntersectsFiniteCone( Caster.WorldBBoxCenter,
+                                           Caster.WorldBBoxRadius,
+                                           Cone );
+    }
+
+    //---------------------------------------------------------------------
+
+    u64 BuildFullShadowLightSourceMask( const shadow_light& ShadowLight,
+                                        s32                 SourceBase )
+    {
+        u64 SourceMask = 0;
+
+        for( s32 iSource = 0; iSource < ShadowLight.SourceCount; iSource++ )
+            SourceMask |= ( (u64)1 << ( SourceBase + iSource ) );
+
+        return SourceMask;
+    }
+
+    //---------------------------------------------------------------------
+
+    u64 BuildShadowCasterSourceMask( const shadow_light&         ShadowLight,
+                                     s32                         SourceBase,
+                                     const shadow_caster_record& Caster,
+                                     u64                         LightSourceMask,
+                                     const shadow_cone_test*     pPointFaceCones )
+    {
+        if( ShadowLight.SourceCount <= 0 )
+            return 0;
+
+        if( ShadowLight.Shape != light_mgr::LIGHT_SHAPE_OMNI )
+            return LightSourceMask;
+
+        const s32 NFaces = ( ShadowLight.SourceCount < POINT_SHADOW_FACE_COUNT ) ?
+                           ShadowLight.SourceCount :
+                           POINT_SHADOW_FACE_COUNT;
+        u64       SourceMask = 0;
+
+        ASSERT( pPointFaceCones );
+        for( s32 iFace = 0; iFace < NFaces; iFace++ )
+        {
+            if( PointShadowFaceAffectsCaster( pPointFaceCones[iFace], Caster ) )
+            {
+                SourceMask |= ( (u64)1 << ( SourceBase + iFace ) );
+            }
+        }
+
+        return SourceMask;
+    }
+
+    //---------------------------------------------------------------------
+
     void AddShadowCastersInLight( const xarray<shadow_caster_record>& RelevantCasters,
                                   const shadow_light&                 ShadowLight,
-                                  xarray<shadow_caster_record>&       ppCasters,
-                                  xarray<u64>&                        CasterMasks,
-                                  u64                                 SourceMask )
+                                  xarray<shadow_caster_mask_record>&  PendingCasterMasks,
+                                  s32                                 SourceBase )
     {
         const s32 EndRelevantCaster = ShadowLight.RelevantCasterStart + ShadowLight.RelevantCasterCount;
+        const u64 LightSourceMask   = BuildFullShadowLightSourceMask( ShadowLight, SourceBase );
+        shadow_cone_test PointFaceCones[POINT_SHADOW_FACE_COUNT];
+        const shadow_cone_test* pPointFaceCones = NULL;
+
+        if( ShadowLight.Shape == light_mgr::LIGHT_SHAPE_OMNI )
+        {
+            const s32 NFaces = ( ShadowLight.SourceCount < POINT_SHADOW_FACE_COUNT ) ?
+                               ShadowLight.SourceCount :
+                               POINT_SHADOW_FACE_COUNT;
+
+            for( s32 iFace = 0; iFace < NFaces; iFace++ )
+            {
+                SetupShadowConeTest( PointFaceCones[iFace],
+                                     ShadowLight.Pos,
+                                     GetPointShadowFaceDirection( iFace ),
+                                     ShadowLight.PointFaceCoverageCos,
+                                     ShadowLight.Radius );
+            }
+
+            pPointFaceCones = PointFaceCones;
+        }
 
         for( s32 iRelevantCaster = ShadowLight.RelevantCasterStart;
              iRelevantCaster < EndRelevantCaster;
              iRelevantCaster++ )
         {
             const shadow_caster_record& Caster = RelevantCasters[iRelevantCaster];
+            const u64                   SourceMask = BuildShadowCasterSourceMask( ShadowLight,
+                                                                                  SourceBase,
+                                                                                  Caster,
+                                                                                  LightSourceMask,
+                                                                                  pPointFaceCones );
 
-            s32 iExisting = 0;
-            for( ; iExisting < ppCasters.GetCount(); iExisting++ )
+            if( SourceMask == 0 )
+                continue;
+
+            shadow_caster_mask_record& Record = PendingCasterMasks.Append();
+            Record.Caster     = Caster;
+            Record.SourceMask = SourceMask;
+        }
+    }
+
+    //---------------------------------------------------------------------
+
+    void MergeShadowCasterMasks( xarray<shadow_caster_mask_record>& PendingCasterMasks,
+                                 xarray<shadow_caster_record>&      ppCasters,
+                                 xarray<u64>&                       CasterMasks )
+    {
+        if( PendingCasterMasks.GetCount() <= 0 )
+            return;
+
+        x_qsort( PendingCasterMasks.GetPtr(),
+                 PendingCasterMasks.GetCount(),
+                 sizeof(shadow_caster_mask_record),
+                 ShadowCasterMaskCompareFn );
+
+        for( s32 i = 0; i < PendingCasterMasks.GetCount(); i++ )
+        {
+            const shadow_caster_mask_record& Record = PendingCasterMasks[i];
+            const s32                        iLast  = ppCasters.GetCount() - 1;
+
+            if( ( iLast < 0 ) || !SameShadowCaster( ppCasters[iLast], Record.Caster ) )
             {
-                if( SameShadowCaster( ppCasters[iExisting], Caster ) )
-                    break;
+                ppCasters.Append( Record.Caster );
+                CasterMasks.Append( Record.SourceMask );
+                continue;
             }
 
-            if( iExisting == ppCasters.GetCount() )
-            {
-                ppCasters.Append( Caster );
-                CasterMasks.Append( 0 );
-            }
-
-            CasterMasks[iExisting] |= SourceMask;
+            CasterMasks[iLast] |= Record.SourceMask;
         }
     }
 
@@ -814,19 +1000,23 @@ namespace
                                         xarray<u64>&                        CasterMasks )
     {
         s32 SourceBase = 0;
+        xarray<shadow_caster_mask_record> PendingCasterMasks;
+        PendingCasterMasks.SetGrowAmount( MAX( 128, RelevantCasters.GetCount() ) );
 
         for( s32 iLight = 0; iLight < NShadowLights; iLight++ )
         {
             const shadow_light& ShadowLight = pShadowLights[iLight];
-            const u64           LightMask   = ( ( (u64)1 << ShadowLight.SourceCount ) - 1 ) << SourceBase;
 
             AddShadowCastersInLight( RelevantCasters,
                                      ShadowLight,
-                                     ppCasters,
-                                     CasterMasks,
-                                     LightMask );
+                                     PendingCasterMasks,
+                                     SourceBase );
             SourceBase += ShadowLight.SourceCount;
         }
+
+        MergeShadowCasterMasks( PendingCasterMasks,
+                                ppCasters,
+                                CasterMasks );
     }
 
     void AddPointShadowSources( const vector3& LightPos,
