@@ -1566,8 +1566,41 @@ void player::OnWeaponSwitch2( const cycle_direction& CycleDirection )
         return;
     }
 
-    //player is attempting to switch weapons, for now, we'll just cycle through the weapons that are in the inventory
+    //player is attempting to switch weapons, we'll cycle through the weapons that are in the inventory
     SetNextWeapon2( GetNextAvailableWeapon2( CycleDirection ) );
+}
+
+//==============================================================================
+
+void player::OnWeaponSwitch2( inven_item WeaponItem )
+{
+    if( (m_CurrentAnimState == ANIM_STATE_GRENADE) ||
+        (m_CurrentAnimState == ANIM_STATE_ALT_GRENADE) ||
+        (m_CurrentAnimState == ANIM_STATE_DISCARD) )
+        return;
+
+    if( IsMutated() )
+    {
+        return;
+    }
+
+    if( (WeaponItem == INVEN_WEAPON_SMP) && m_Inventory2.HasItem(INVEN_WEAPON_DUAL_SMP) )
+    {
+        WeaponItem = INVEN_WEAPON_DUAL_SMP;
+    }
+    else
+    if( (WeaponItem == INVEN_WEAPON_SHOTGUN) && m_Inventory2.HasItem(INVEN_WEAPON_DUAL_SHT) )
+    {
+        WeaponItem = INVEN_WEAPON_DUAL_SHT;
+    }
+
+    if( !m_Inventory2.HasItem( WeaponItem ) )
+    {
+        return;
+    }
+
+    //player is attempting to switch weapons, we'll switch directly to the requested weapon that is in the inventory
+    SetNextWeapon2( WeaponItem );
 }
 
 //==============================================================================

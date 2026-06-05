@@ -650,13 +650,44 @@ void player::OnButtonInput( void )
         }
     }
 
+    //
+    // So, switch to desired weapon ( i we have it, ofk )
+    //
     if ( !m_bInTurret && g_IngamePad[m_ActivePlayerPad].GetLogical( ingame_pad::ACTION_CYCLE_RIGHT ).GetWasValue() > 0.25f )
     {
         OnWeaponSwitch2( CYCLE_RIGHT );
     }
-    if ( !m_bInTurret && g_IngamePad[m_ActivePlayerPad].GetLogical( ingame_pad::ACTION_CYCLE_LEFT ).GetWasValue() > 0.25f )
+    else if ( !m_bInTurret && g_IngamePad[m_ActivePlayerPad].GetLogical( ingame_pad::ACTION_CYCLE_LEFT ).GetWasValue() > 0.25f )
     {
         OnWeaponSwitch2( CYCLE_LEFT );
+    }
+    else if ( !m_bInTurret && g_IngamePad[m_ActivePlayerPad].GetLogical( ingame_pad::ACTION_SWITCH_TO_SCANNER ).GetWasValue() > 0.25f )
+    {
+        OnWeaponSwitch2( INVEN_WEAPON_SCANNER );
+    }
+    else if ( !m_bInTurret && g_IngamePad[m_ActivePlayerPad].GetLogical( ingame_pad::ACTION_SWITCH_TO_PISTOL ).GetWasValue() > 0.25f )
+    {
+        OnWeaponSwitch2( INVEN_WEAPON_DESERT_EAGLE );
+    }
+    else if ( !m_bInTurret && g_IngamePad[m_ActivePlayerPad].GetLogical( ingame_pad::ACTION_SWITCH_TO_SMP ).GetWasValue() > 0.25f )
+    {
+        OnWeaponSwitch2( INVEN_WEAPON_SMP );
+    }
+    else if ( !m_bInTurret && g_IngamePad[m_ActivePlayerPad].GetLogical( ingame_pad::ACTION_SWITCH_TO_SHOTGUN ).GetWasValue() > 0.25f )
+    {
+        OnWeaponSwitch2( INVEN_WEAPON_SHOTGUN );
+    }
+    else if ( !m_bInTurret && g_IngamePad[m_ActivePlayerPad].GetLogical( ingame_pad::ACTION_SWITCH_TO_SNIPER_RIFLE ).GetWasValue() > 0.25f )
+    {
+        OnWeaponSwitch2( INVEN_WEAPON_SNIPER_RIFLE );
+    }
+    else if ( !m_bInTurret && g_IngamePad[m_ActivePlayerPad].GetLogical( ingame_pad::ACTION_SWITCH_TO_BBG ).GetWasValue() > 0.25f )
+    {
+        OnWeaponSwitch2( INVEN_WEAPON_BBG );
+    }
+    else if ( !m_bInTurret && g_IngamePad[m_ActivePlayerPad].GetLogical( ingame_pad::ACTION_SWITCH_TO_MESON_CANNON ).GetWasValue() > 0.25f )
+    {
+        OnWeaponSwitch2( INVEN_WEAPON_MESON_CANNON );
     }
 
     //

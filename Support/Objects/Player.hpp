@@ -502,6 +502,7 @@ public:
     virtual f32             GetCollisionRadius      ( void );
     virtual void            AddImpulse              ( vector3& rImpulse );
             void            OnWeaponSwitch2         ( const cycle_direction& CycleDirection );
+            void            OnWeaponSwitch2         ( inven_item WeaponItem );
 			void			SetNextWeapon2          ( inven_item WeaponItem, xbool ForceSwitch = FALSE, xbool StateChange = TRUE );
 			xbool			ShouldSwitchToWeapon2   ( inven_item WeaponItem, xbool bFirstPickup );
 
