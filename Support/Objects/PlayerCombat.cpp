@@ -230,7 +230,7 @@ void player::GetProjectileHitLocation(vector3& EndPos, xbool bUseBulletAssist)
     // the view's rotation
     view &View = GetInterpView();
 
-    if( bUseBulletAssist )
+    if( bUseBulletAssist && IsAimAssistInputActive() )
     {
         m_AimAssistData.BulletAssistDir.GetPitchYaw( Pitch, Yaw );
     }
@@ -280,7 +280,14 @@ radian3 player::GetProjectileTrajectory( void )
     // Otherwise, use bullet assist direction
     if( !bUseWeaponPos )
     {
-        m_AimAssistData.BulletAssistDir.GetPitchYaw( Pitch, Yaw );
+        if( IsAimAssistInputActive() )
+        {
+            m_AimAssistData.BulletAssistDir.GetPitchYaw( Pitch, Yaw );
+        }
+        else
+        {
+            GetEyesPitchYaw( Pitch, Yaw );
+        }
 
         // apply aim degredation
         radian3 Rot = ApplyAimDegredation( Pitch, Yaw );
@@ -327,7 +334,7 @@ guid player::GetEnemyOnReticle( void )
 {
     if( ReticleOnTarget() )
     {
-        return m_AimAssistData.TargetGuid;
+        return m_AimAssistData.ReticleEnemyGuid;
     }
     else
     {
@@ -440,10 +447,61 @@ void player::DegradeAim( f32 fAmountToDegradeBy )
 
 //===========================================================================
 
+#ifdef ksaffel
+#define AIM_LOGGING_ENABLED 1
+#else
+#define AIM_LOGGING_ENABLED 0
+#endif
+
+//===========================================================================
+
 
 f32 MinYawModifier        =   0.42f;
 f32 AimAssistDownVelocity = 100.00f;
 f32 AimAssistUpVelocity   =   1.00f;
+
+//===========================================================================
+
+xbool player::IsAimAssistInputActive( void ) const
+{
+    if( (m_LookInputMode      == LOOK_INPUT_GAMEPAD) ||
+        (m_YawLookInputMode   == LOOK_INPUT_GAMEPAD) ||
+        (m_PitchLookInputMode == LOOK_INPUT_GAMEPAD) )
+    {
+        return TRUE;
+    }
+
+    return( g_Input.GetCurrentInputDevice() == INPUT_DEVICE_GAMEPAD );
+}
+
+//===========================================================================
+
+void player::ApplyAimAssistTurnDampening( void )
+{
+    if( m_AimAssistData.TurnDampeningT > 0 )
+    {
+        // kill aim assist stick dampening at AimAssist_Turn_Damp_Near_Dist
+        f32 DampPct = x_parametric( m_AimAssistData.LOFPtDist, AimAssist_Turn_Damp_Near_Dist, AimAssist_Turn_Damp_Far_Dist, TRUE );
+
+        // scale turn dampening
+        m_AimAssistData.TurnDampeningT = m_AimAssistData.TurnDampeningT * DampPct;
+
+        tweak_handle StickDampTweak( "TurnDampeningT" ); // 0=no turning, 1=normal turning
+        f32 DampMax     = StickDampTweak.GetF32();
+        f32 StickyMult  = 1.0f + (DampMax - 1.0f) * m_AimAssistData.TurnDampeningT;
+        m_fYawValue     *= StickyMult;
+        m_fPitchValue   *= StickyMult;
+
+        CLOG_MESSAGE( AIM_LOGGING_ENABLED, "player::ApplyAimAssistTurnDampening", "T:: %f", m_AimAssistData.TurnDampeningT );
+    }
+    else
+    {
+        CLOG_MESSAGE( AIM_LOGGING_ENABLED, "player::ApplyAimAssistTurnDampening *CHECK*", "T: %f", m_AimAssistData.TurnDampeningT );
+        m_AimAssistData.TurnDampeningT = 0.0f;
+    }
+}
+
+//===========================================================================
 
 void player::UpdateAimAssistance( f32 DeltaTime )
 {
@@ -524,12 +582,300 @@ f32 ComputeInterpValue( f32 Dist, f32 NearDist, f32 FarDist, f32 NearValue, f32 
 }
 
 //=============================================================================
-#ifdef ksaffel
-#define AIM_LOGGING_ENABLED 1
-#else
-#define AIM_LOGGING_ENABLED 0
-#endif
 
+extern f32 AIMASSIST_PERP_SPEED_MAX;
+extern f32 AIMASSIST_BULLET_ASSIST_SCALE;
+extern f32 AIMASSIST_TURN_DAMPEN_SCALE;
+
+//=============================================================================
+
+struct aim_target_info
+{
+    vector3 TargetPos;
+    vector3 PerpVelocity;
+    vector3 SpinePt;
+    vector3 LOFPt;
+    f32     TargetDist;
+    f32     PerpSpeed;
+    f32     BulletAssistPerpSpeedScale;
+    f32     TurnDampenPerpSpeedScale;
+    f32     LOFPtT;
+    f32     SpinePtT;
+    f32     LOFPtDist;
+    f32     ClampedLOFPtDist;
+    f32     LOFSpineDist;
+    xbool   bLOFPtBlocked;
+};
+
+//=============================================================================
+
+static
+xbool BuildAimTargetInfo( actor&         Actor,
+                          const vector3& PlayerPosition,
+                          const vector3& PlayerVelocity,
+                          const vector3& LOFStart,
+                          const vector3& LOFEnd,
+                          const vector3& LOFDir,
+                          f32            LOFCollisionDist,
+                          f32            TargetCullDot,
+                          xbool          bUsePreciseSpine,
+                          aim_target_info& Info )
+{
+    Info.TargetPos = Actor.GetPosition();
+
+    vector3 TargetDelta = Info.TargetPos - PlayerPosition;
+    Info.TargetDist     = TargetDelta.Length();
+
+    if( LOFDir.Dot( TargetDelta ) <= 0.0f )
+        return FALSE;
+
+    vector3 TargetDeltaDir = TargetDelta;
+    TargetDeltaDir.Normalize();
+    if( Info.TargetDist > 1000.0f )
+    {
+        if( LOFDir.Dot( TargetDeltaDir ) <= TargetCullDot )
+            return FALSE;
+    }
+
+    vector3 TargetVelocity( 0, 0, 0 );
+    loco* pLoco = Actor.GetLocoPointer();
+    if( pLoco )
+    {
+        TargetVelocity = pLoco->m_Physics.GetVelocity();
+    }
+
+    vector3 RelativeVelocity = TargetVelocity - PlayerVelocity;
+    Info.PerpVelocity        = RelativeVelocity - ( LOFDir.Dot( RelativeVelocity ) * LOFDir );
+    Info.PerpSpeed           = Info.PerpVelocity.Length();
+
+    f32 PerpSpeedT = Info.PerpSpeed / AIMASSIST_PERP_SPEED_MAX;
+    if( PerpSpeedT > 1 ) PerpSpeedT = 1;
+
+    Info.BulletAssistPerpSpeedScale = 1.0f + PerpSpeedT * ( AIMASSIST_BULLET_ASSIST_SCALE - 1.0f );
+    Info.TurnDampenPerpSpeedScale   = 1.0f + PerpSpeedT * ( AIMASSIST_TURN_DAMPEN_SCALE - 1.0f );
+
+    vector3 SpineTop;
+    vector3 SpineBot;
+    if( bUsePreciseSpine )
+    {
+        Actor.GetHeadAndRootPosition( SpineTop, SpineBot );
+        SpineTop += vector3( 0, 20.0f, 0 );
+    }
+    else
+    {
+        SpineBot = Actor.GetPosition();
+        SpineTop = SpineBot + vector3( 0, 150, 0 );
+    }
+
+    vector3 SpineLOFOffset;
+    x_ClosestPtsOnLineSegs( LOFStart,
+                            LOFEnd,
+                            SpineTop,
+                            SpineBot,
+                            Info.LOFPt,
+                            Info.SpinePt,
+                            Info.LOFPtT,
+                            Info.SpinePtT );
+
+    Info.LOFPtDist        = AimAssist_LOF_Dist * Info.LOFPtT;
+    Info.ClampedLOFPtDist = x_clamp( Info.LOFPtDist, 1.0f, F32_MAX );
+    SpineLOFOffset        = Info.SpinePt - Info.LOFPt;
+    Info.LOFSpineDist     = SpineLOFOffset.Length();
+    Info.bLOFPtBlocked    = ( Info.LOFPtDist > LOFCollisionDist );
+
+    return TRUE;
+}
+
+//=============================================================================
+
+static
+void StoreAimTargetInfo( AimAssistData& AimData, const aim_target_info& Info )
+{
+    AimData.LOFSpineDist = Info.LOFSpineDist;
+    AimData.SpinePt      = Info.SpinePt;
+    AimData.SpinePtT     = Info.SpinePtT;
+    AimData.LOFPt        = Info.LOFPt;
+    AimData.LOFPtT       = Info.LOFPtT;
+    AimData.LOFPtDist    = Info.ClampedLOFPtDist;
+}
+
+//=============================================================================
+
+static
+void UpdateEnemyReticleTarget( AimAssistData&        AimData,
+                               actor&                Actor,
+                               const aim_target_info& Info,
+                               f32&                  ReticleBestDist,
+                               xbool&                bReticleOn )
+{
+    if( Info.bLOFPtBlocked )
+        return;
+
+    f32 Radius = ComputeInterpValue( Info.TargetDist,
+                                     AimAssist_Reticle_Near_Dist,
+                                     AimAssist_Reticle_Far_Dist,
+                                     AimAssist_Reticle_Near_Radius * Info.BulletAssistPerpSpeedScale,
+                                     AimAssist_Reticle_Far_Radius  * Info.BulletAssistPerpSpeedScale );
+
+    AimData.ReticleRadius = Radius;
+
+    if( (Info.LOFSpineDist <= Radius) && (Info.LOFSpineDist < ReticleBestDist) )
+    {
+        ReticleBestDist            = Info.LOFSpineDist;
+        bReticleOn                 = TRUE;
+        AimData.ReticleEnemyGuid   = Actor.GetGuid();
+        StoreAimTargetInfo( AimData, Info );
+    }
+}
+
+//=============================================================================
+
+static
+xbool UpdateFriendlyReticleTarget( AimAssistData&        AimData,
+                                   actor&                Actor,
+                                   const aim_target_info& Info,
+                                   xbool&                bReticleOn )
+{
+    if( Info.bLOFPtBlocked )
+        return FALSE;
+
+    f32 Radius = ComputeInterpValue( Info.TargetDist,
+                                     AimAssist_Reticle_Near_Dist,
+                                     AimAssist_Reticle_Far_Dist,
+                                     AimAssist_Reticle_Near_Radius,
+                                     AimAssist_Reticle_Far_Radius );
+
+    if( Info.LOFSpineDist <= Radius )
+    {
+        bReticleOn                         = TRUE;
+        AimData.OnlineFriendlyTargetGuid   = Actor.GetGuid();
+        StoreAimTargetInfo( AimData, Info );
+        return TRUE;
+    }
+
+    return FALSE;
+}
+
+//=============================================================================
+
+static
+void UpdateBulletAssistTarget( AimAssistData&        AimData,
+                               player&               Player,
+                               actor&                Actor,
+                               const view&           View,
+                               const vector3&        LOFStart,
+                               const vector3&        LOFDir,
+                               f32                   MultiplayerRadiiScale,
+                               f32                   BulletAssistLeadSpeed,
+                               const aim_target_info& Info )
+{
+    if( Info.bLOFPtBlocked || (Info.LOFSpineDist >= AimData.BulletAssistBestDist) )
+        return;
+
+    f32 InnerRadius = ComputeInterpValue( Info.TargetDist,
+                                          AimAssist_Bullet_Inner_Near_Dist,
+                                          AimAssist_Bullet_Inner_Far_Dist,
+                                          AimAssist_Bullet_Inner_Near_Radius * Info.BulletAssistPerpSpeedScale * MultiplayerRadiiScale,
+                                          AimAssist_Bullet_Inner_Far_Radius  * Info.BulletAssistPerpSpeedScale * MultiplayerRadiiScale );
+
+    f32 OuterRadius = ComputeInterpValue( Info.TargetDist,
+                                          AimAssist_Bullet_Outer_Near_Dist,
+                                          AimAssist_Bullet_Outer_Far_Dist,
+                                          AimAssist_Bullet_Outer_Near_Radius * Info.BulletAssistPerpSpeedScale * MultiplayerRadiiScale,
+                                          AimAssist_Bullet_Outer_Far_Radius  * Info.BulletAssistPerpSpeedScale * MultiplayerRadiiScale );
+
+    AimData.BulletInnerRadius = InnerRadius;
+    AimData.BulletOuterRadius = OuterRadius;
+
+    f32 T = x_parametric( Info.LOFSpineDist, OuterRadius, InnerRadius, TRUE );
+    if( T <= 0 )
+        return;
+
+    radian AssistAngle = T * AimAssist_Bullet_Angle;
+    vector3 AimAtPoint = Info.SpinePt;
+
+    if( (BulletAssistLeadSpeed > 0) && (Info.PerpSpeed > 0.0f) )
+    {
+        f32 FlightTime = Info.TargetDist / BulletAssistLeadSpeed;
+        f32 LeadDist   = Info.PerpSpeed * FlightTime;
+        if( LeadDist > 100.0f ) LeadDist = 100.0f;
+        AimAtPoint += Info.PerpVelocity * ( LeadDist / Info.PerpSpeed );
+    }
+
+    vector3 ToSpine = AimAtPoint - View.GetPosition();
+    radian Angle = v3_AngleBetween( LOFDir, ToSpine );
+    if( Angle > AssistAngle ) Angle = AssistAngle;
+
+    vector3 Axis = LOFDir.Cross( ToSpine );
+    Axis.Normalize();
+    quaternion Q( Axis, Angle );
+
+    vector3 NewBulletAssistDir = Q * LOFDir;
+
+    s32 nSegs = 4;
+    for( s32 i = 0; i < nSegs; i++ )
+    {
+        f32 SegT = (f32)i / (f32)(nSegs - 1);
+        vector3 Dir = NewBulletAssistDir + SegT * ( LOFDir - NewBulletAssistDir );
+        Dir.Normalize();
+
+        vector3 EndPos = LOFStart + Dir * Info.ClampedLOFPtDist;
+        g_CollisionMgr.LineOfSightSetup( Player.GetGuid(), LOFStart, EndPos );
+        g_CollisionMgr.CheckCollisions( object::TYPE_ALL_TYPES,
+                                        object::ATTR_BLOCKS_PLAYER_LOS,
+                                        object::ATTR_COLLISION_PERMEABLE | object::ATTR_LIVING );
+
+        if( g_CollisionMgr.m_nCollisions == 0 )
+        {
+            AimData.BulletAssistBestDist = Info.LOFSpineDist;
+            AimData.TargetGuid           = Actor.GetGuid();
+            AimData.BulletAssistDir      = Dir;
+
+            vector3 AbsoluteDelta = Info.LOFPt - Actor.GetPosition();
+            AimData.AimDelta      = AbsoluteDelta.Length() *
+                                    vector3( AbsoluteDelta.GetPitch(),
+                                             AbsoluteDelta.GetYaw() - Actor.GetYaw() );
+
+            StoreAimTargetInfo( AimData, Info );
+            break;
+        }
+    }
+}
+
+//=============================================================================
+
+static
+void UpdateTurnAssistTarget( AimAssistData& AimData, const aim_target_info& Info )
+{
+    if( Info.bLOFPtBlocked )
+        return;
+
+    f32 InnerRadius = ComputeInterpValue( Info.TargetDist,
+                                          AimAssist_Turn_Inner_Near_Dist,
+                                          AimAssist_Turn_Inner_Far_Dist,
+                                          AimAssist_Turn_Inner_Near_Radius,
+                                          AimAssist_Turn_Inner_Far_Radius );
+
+    f32 OuterRadius = ComputeInterpValue( Info.TargetDist,
+                                          AimAssist_Turn_Outer_Near_Dist,
+                                          AimAssist_Turn_Outer_Far_Dist,
+                                          AimAssist_Turn_Outer_Near_Radius,
+                                          AimAssist_Turn_Outer_Far_Radius );
+
+    AimData.TurnInnerRadius = InnerRadius;
+    AimData.TurnOuterRadius = OuterRadius;
+
+    f32 T = x_parametric( Info.LOFSpineDist, OuterRadius, InnerRadius, TRUE );
+    T *= Info.TurnDampenPerpSpeedScale;
+
+    if( T > AimData.TurnDampeningT )
+    {
+        AimData.TurnDampeningT = T;
+        StoreAimTargetInfo( AimData, Info );
+    }
+}
+
+//=============================================================================
 f32 AIMASSIST_PERP_SPEED_MAX      = 300;
 f32 AIMASSIST_BULLET_ASSIST_SCALE = 2.5f;
 f32 AIMASSIST_TURN_DAMPEN_SCALE   = 0.1f;
@@ -539,446 +885,149 @@ f32 AIMASSIST_MULTIPLAYER_SCALE   = 1.5f;
 xbool g_bTestFriendly = TRUE;
 void player::UpdateCurrentAimTarget( f32 DeltaTime )
 {
-    (void) DeltaTime;
-    const view& View                    = GetInterpView();
-    vector3 Position                    = GetPosition();
-    xbool   Final_bReticleOn            = FALSE;
-    f32     TargetCullDot               = x_cos(R_20);
+    const view& View              = GetInterpView();
+    const vector3 Position        = GetPosition();
+    const vector3 PlayerVelocity  = m_Physics.GetVelocity();
+    const f32 TargetCullDot       = x_cos( R_20 );
+    const xbool bAimAssistActive  = IsAimAssistInputActive();
+    xbool bReticleOn              = FALSE;
+    f32 ReticleBestDist           = F32_MAX;
 
-    m_AimAssistData.BulletAssistDir       = View.GetViewZ();
-    m_AimAssistData.BulletAssistBestDist  = F32_MAX;
-    m_AimAssistData.TurnDampeningT        = 0.0f;
-    m_AimAssistData.TargetGuid            = 0;
+    m_AimAssistData.BulletAssistDir          = View.GetViewZ();
+    m_AimAssistData.BulletAssistBestDist     = F32_MAX;
+    m_AimAssistData.TurnDampeningT           = 0.0f;
+    m_AimAssistData.TargetGuid               = 0;
+    m_AimAssistData.ReticleEnemyGuid         = 0;
     m_AimAssistData.OnlineFriendlyTargetGuid = 0;
+    m_AimAssistData.bReticleOn               = FALSE;
 
-    if( GetCurrentWeaponPtr() == NULL )
+    new_weapon* pWeapon = GetCurrentWeaponPtr();
+    if( pWeapon == NULL )
+    {
+        UpdateReticleRadius( DeltaTime );
         return;
+    }
 
     if( AimAssist_LOF_Dist == 0.0f )
+    {
+        UpdateReticleRadius( DeltaTime );
         return;
+    }
 
-    // Decide if we should scale up radii based on multiplayer
     f32 MultiplayerRadiiScale = 1.0f;
-
 #ifndef X_EDITOR
-    // take no damage from friendly sources.
     if( GameMgr.IsGameMultiplayer() )
     {
         MultiplayerRadiiScale = AIMASSIST_MULTIPLAYER_SCALE;
     }
 #endif
 
-
-    // Decide if bullet assist should lead
     f32 BulletAssistLeadSpeed = 0.0f;
+    if( bAimAssistActive && pWeapon->IsKindOf( weapon_bbg::GetRTTI() ) )
     {
-        new_weapon* pWeapon = GetCurrentWeaponPtr();
-        if( pWeapon->IsKindOf( weapon_bbg::GetRTTI() ) )
-        {
-            tweak_handle SpeedTweak( xfs("%s_SPEED", pWeapon->GetLogicalName()) );
-            BulletAssistLeadSpeed = SpeedTweak.GetF32();
-        }
+        tweak_handle SpeedTweak( xfs( "%s_SPEED", pWeapon->GetLogicalName() ) );
+        BulletAssistLeadSpeed = SpeedTweak.GetF32();
     }
 
-    // Get our velocity
-    vector3 PlayerVelocity = m_Physics.GetVelocity();
-//    x_printfxy(0,1,"LS: %7.3f",BulletAssistLeadSpeed);
-//    x_printfxy(0,2,"%7.1f %7.1f %7.1f",PlayerVelocity.GetX(),PlayerVelocity.GetY(),PlayerVelocity.GetZ());
+    vector3 LOFDir   = View.GetViewZ();
+    vector3 LOFStart = View.GetPosition();
+    vector3 LOFEnd   = LOFStart + LOFDir * AimAssist_LOF_Dist;
 
-    //
-    // Find LOF Collision distance
-    //
-    vector3 LOFStart;
-    vector3 LOFEnd;
-    vector3 LOFDir;    
+    m_AimAssistData.LOFCollisionDist = AimAssist_LOF_Dist;
+
+    g_CollisionMgr.LineOfSightSetup( GetGuid(), LOFStart, LOFEnd );
+    g_CollisionMgr.CheckCollisions( object::TYPE_ALL_TYPES,
+                                    object::ATTR_BLOCKS_PLAYER_LOS,
+                                    object::ATTR_COLLISION_PERMEABLE | object::ATTR_LIVING );
+
+    if( g_CollisionMgr.m_nCollisions > 0 )
     {
-        LOFDir                              = View.GetViewZ();
-        LOFStart                            = View.GetPosition();
-        LOFEnd                              = LOFStart + LOFDir * AimAssist_LOF_Dist;
-        g_CollisionMgr.LineOfSightSetup( GetGuid(), LOFStart, LOFEnd );
-        g_CollisionMgr.CheckCollisions( object::TYPE_ALL_TYPES, object::ATTR_BLOCKS_PLAYER_LOS, object::ATTR_COLLISION_PERMEABLE|object::ATTR_LIVING);
-
-        // save off collision distance
-        if( g_CollisionMgr.m_nCollisions > 0 )
-        {
-            m_AimAssistData.LOFCollisionDist = AimAssist_LOF_Dist * g_CollisionMgr.m_Collisions[0].T;
-        }
+        m_AimAssistData.LOFCollisionDist = AimAssist_LOF_Dist * g_CollisionMgr.m_Collisions[0].T;
     }
 
-    //
-    // Loop through all active players
-    //
     actor* pNextActor = actor::m_pFirstActive;
     while( pNextActor )
     {
-        // Get ptr to actor and advance to next
         actor* pActor = pNextActor;
         pNextActor = pNextActor->m_pNextActive;
 
-        if( (pActor->GetGuid() != GetGuid()) && 
-            pActor->IsKindOf( actor::GetRTTI() ) &&
-            !pActor->IsDead() )
+        if( (pActor->GetGuid() == GetGuid()) ||
+            !pActor->IsKindOf( actor::GetRTTI() ) ||
+            pActor->IsDead() )
         {
-            if( IsEnemyFaction( pActor->GetFaction() ) )
+            continue;
+        }
+
+        if( IsEnemyFaction( pActor->GetFaction() ) )
+        {
+            aim_target_info Info;
+            if( !BuildAimTargetInfo( *pActor,
+                                     Position,
+                                     PlayerVelocity,
+                                     LOFStart,
+                                     LOFEnd,
+                                     LOFDir,
+                                     m_AimAssistData.LOFCollisionDist,
+                                     TargetCullDot,
+                                     TRUE,
+                                     Info ) )
             {
-                //
-                // Get target position info
-                //
-                vector3 TargetPos   = pActor->GetPosition();
-                vector3 TargetDelta = TargetPos - Position;
-                f32 TargetDist      = TargetDelta.Length();
-
-                // throw out this guy if he's behind us
-                if( LOFDir.Dot(TargetDelta) <= 0.0f )
-                {
-                    continue;
-                }
-
-                // If target is a decent distance away check if the angle
-                // to his position is far away from the LOFDir
-                vector3 TargetDeltaDir = TargetDelta;
-                TargetDeltaDir.Normalize();
-                if( TargetDist > 1000.0f )
-                {
-                    if( LOFDir.Dot(TargetDeltaDir) <= TargetCullDot )
-                    {
-                        continue;
-                    }
-                }
-            
-                //
-                // Get Velocity of target
-                //
-                vector3 TargetVelocity(0,0,0);
-                vector3 RelativeVelocity(0,0,0);
-                f32     PerpSpeed=0;
-                vector3 PerpVelocity;
-                f32     PerpSpeedT=0;
-                {
-                    loco* pLoco = pActor->GetLocoPointer();
-                    if( pLoco )
-                    {
-                        TargetVelocity = pLoco->m_Physics.GetVelocity();
-                    }
-
-                    RelativeVelocity = TargetVelocity - PlayerVelocity;
-                    PerpVelocity = RelativeVelocity - (LOFDir.Dot(RelativeVelocity)*LOFDir);
-                    PerpSpeed = PerpVelocity.Length();
-                    PerpSpeedT = PerpSpeed / AIMASSIST_PERP_SPEED_MAX;
-                    if( PerpSpeedT > 1 ) PerpSpeedT = 1;
-                }
-
-                // Compute scale for bullet assist and turn dampening 
-                f32 BulletAssistPerpSpeedScale = 1.0f + PerpSpeedT * (AIMASSIST_BULLET_ASSIST_SCALE - 1.0f);
-                f32 TurnDampenPerpSpeedScale = 1.0f + PerpSpeedT * (AIMASSIST_TURN_DAMPEN_SCALE - 1.0f);
-
-                //
-                // Get spine information
-                //
-                vector3 SpineTop;
-                vector3 SpineBot;
-                {
-                    pActor->GetHeadAndRootPosition( SpineTop, SpineBot );
-
-                    // Raise top of spine since head bone is at base of head
-                    SpineTop += vector3(0,20.0f,0);
-                }
-
-                //
-                // Get closest pt between LOF and Spine
-                //
-                vector3 SpinePt;
-                vector3 LOFPt;
-                vector3 SpineLOFOffset;
-                f32     LOFPtT;
-                f32     SpinePtT;
-                f32     LOFPtDist;
-                {
-                    x_ClosestPtsOnLineSegs( LOFStart, LOFEnd, SpineTop, SpineBot, LOFPt, SpinePt, LOFPtT, SpinePtT );
-                    LOFPtDist = AimAssist_LOF_Dist * LOFPtT;
-                    SpineLOFOffset = (SpinePt - LOFPt);
-                    m_AimAssistData.LOFSpineDist = SpineLOFOffset.Length();
-
-                    m_AimAssistData.SpinePt   = SpinePt;
-                    m_AimAssistData.SpinePtT  = SpinePtT;
-                    m_AimAssistData.LOFPt     = LOFPt;
-                    m_AimAssistData.LOFPtDist = LOFPtDist;
-
-                    // don't let it go negative (behind us) or 0
-                    m_AimAssistData.LOFPtDist = x_clamp(m_AimAssistData.LOFPtDist, 1.0f, F32_MAX);
-                }
-
-                //
-                // Check distance to LOFPt against collision
-                //
-                xbool bLOFPtBlocked = (LOFPtDist > m_AimAssistData.LOFCollisionDist);
-
-
-                //
-                // Check if Reticle should be on
-                //
-                if( bLOFPtBlocked == FALSE )
-                {
-                    f32 Radius = ComputeInterpValue( TargetDist,
-                        AimAssist_Reticle_Near_Dist,
-                        AimAssist_Reticle_Far_Dist,
-                        AimAssist_Reticle_Near_Radius*BulletAssistPerpSpeedScale,
-                        AimAssist_Reticle_Far_Radius*BulletAssistPerpSpeedScale );
-
-                    m_AimAssistData.ReticleRadius = Radius;
-
-                    if( m_AimAssistData.LOFSpineDist <= Radius )
-                    {
-                        Final_bReticleOn = TRUE;
-                    }
-                }
-
-                //
-                // Compute a new BulletAssistDir if the LOF approaches closer than the previous target
-                //
-                if( (bLOFPtBlocked == FALSE) && (m_AimAssistData.LOFSpineDist < m_AimAssistData.BulletAssistBestDist) )
-                {
-                    // Compute what the new bullet assist direction would be
-                    f32 InnerRadius = ComputeInterpValue( TargetDist,
-                        AimAssist_Bullet_Inner_Near_Dist,
-                        AimAssist_Bullet_Inner_Far_Dist,
-                        AimAssist_Bullet_Inner_Near_Radius*BulletAssistPerpSpeedScale*MultiplayerRadiiScale,
-                        AimAssist_Bullet_Inner_Far_Radius*BulletAssistPerpSpeedScale*MultiplayerRadiiScale );
-
-                    f32 OuterRadius = ComputeInterpValue( TargetDist,
-                        AimAssist_Bullet_Outer_Near_Dist,
-                        AimAssist_Bullet_Outer_Far_Dist,
-                        AimAssist_Bullet_Outer_Near_Radius*BulletAssistPerpSpeedScale*MultiplayerRadiiScale,
-                        AimAssist_Bullet_Outer_Far_Radius*BulletAssistPerpSpeedScale*MultiplayerRadiiScale );
-
-                    m_AimAssistData.BulletInnerRadius = InnerRadius;
-                    m_AimAssistData.BulletOuterRadius = OuterRadius;
-
-                    // interpolate between inner and outer radius (inverse)
-                    f32 T = x_parametric(m_AimAssistData.LOFSpineDist, OuterRadius, InnerRadius, TRUE);
-                    if( T > 0 )
-                    {
-                        radian AssistAngle = T*AimAssist_Bullet_Angle;
-
-                        // Build AimAtPoint
-                        vector3 AimAtPoint = SpinePt;
-
-                        // Apply lead for slow projectiles
-                        if( (BulletAssistLeadSpeed>0) && (PerpSpeed>0.0f) )
-                        {
-                            // Compute approx flight time
-                            f32 FlightTime = TargetDist / BulletAssistLeadSpeed;
-                            f32 LeadDist = PerpSpeed * FlightTime;
-                            if( LeadDist > 100.0f ) LeadDist = 100.0f;
-                            AimAtPoint += PerpVelocity*(LeadDist/PerpSpeed);
-//                            x_printfxy(0,5,"LD: %6.2f",LeadDist);
-                        }
-
-                        // Rotate LOFDir toward AimAtPoint by the angle AssistAngle
-                        vector3 ToSpine = AimAtPoint - View.GetPosition();
-                        radian Angle = v3_AngleBetween( LOFDir, ToSpine );
-                        if( Angle > AssistAngle ) Angle = AssistAngle;
-                        vector3 Axis = LOFDir.Cross( ToSpine );
-                        Axis.Normalize();
-                        quaternion Q( Axis, Angle );
-
-                        //
-                        // Remember aim direction
-                        //
-                        vector3 NewBulletAssistDir = Q * LOFDir;
-
-                        // Only replace best if LOF is clear.  Search for a clear LOF from full bullet
-                        // assist direction back to LOF direction
-                        s32 nSegs=4;
-                        s32 i;
-                        for( i=0; i<nSegs; i++ )
-                        {
-                            f32 T = (f32)i / (f32)(nSegs-1);
-                            vector3 Dir = NewBulletAssistDir + T*(LOFDir-NewBulletAssistDir);
-                            Dir.Normalize();
-
-                            vector3 EndPos = LOFStart + Dir*m_AimAssistData.LOFPtDist;
-                            g_CollisionMgr.LineOfSightSetup( GetGuid(), LOFStart, EndPos);
-                            g_CollisionMgr.CheckCollisions( object::TYPE_ALL_TYPES, object::ATTR_BLOCKS_PLAYER_LOS, object::ATTR_COLLISION_PERMEABLE|object::ATTR_LIVING);
-
-                            if( g_CollisionMgr.m_nCollisions==0 )
-                            {
-                                m_AimAssistData.BulletAssistBestDist = m_AimAssistData.LOFSpineDist;
-                                m_AimAssistData.TargetGuid           = pActor->GetGuid();
-                                m_AimAssistData.BulletAssistDir      = Dir;
-
-                                // Get the aim delta relative to the players orientation.
-                                vector3 AbsoluteDelta = LOFPt - pActor->GetPosition();
-
-                                m_AimAssistData.AimDelta             = AbsoluteDelta.Length() *
-                                    vector3( AbsoluteDelta.GetPitch(), 
-                                    AbsoluteDelta.GetYaw() - pActor->GetYaw() );
-
-                                break;
-                            }
-                        }
-                    }
-                }
-
-                //
-                // Compute turn dampening amount
-                //
-                if( bLOFPtBlocked == FALSE )
-                {
-                    f32 InnerRadius = ComputeInterpValue( TargetDist,
-                        AimAssist_Turn_Inner_Near_Dist,
-                        AimAssist_Turn_Inner_Far_Dist,
-                        AimAssist_Turn_Inner_Near_Radius,
-                        AimAssist_Turn_Inner_Far_Radius );
-
-                    f32 OuterRadius = ComputeInterpValue( TargetDist,
-                        AimAssist_Turn_Outer_Near_Dist,
-                        AimAssist_Turn_Outer_Far_Dist,
-                        AimAssist_Turn_Outer_Near_Radius,
-                        AimAssist_Turn_Outer_Far_Radius );
-
-                    m_AimAssistData.TurnInnerRadius = InnerRadius;
-                    m_AimAssistData.TurnOuterRadius = OuterRadius;
-
-                    // interpolate between inner and outer radius (inverse)
-                    f32 T = x_parametric(m_AimAssistData.LOFSpineDist, OuterRadius, InnerRadius, TRUE);
-
-                    T *= TurnDampenPerpSpeedScale;
-
-                    // Keep the largest amount
-                    if( T > m_AimAssistData.TurnDampeningT )
-                        m_AimAssistData.TurnDampeningT = T;
-                }
+                continue;
             }
-            else  ////////////////////////////////////////// FRIENDLY TARGET //////////////////////////////////////////
-                if(g_bTestFriendly)
-                {
-                    //
-                    // Get target position info
-                    //
-                    vector3 TargetPos   = pActor->GetPosition();
-                    vector3 TargetDelta = TargetPos - Position;
-                    f32 TargetDist      = TargetDelta.Length();
 
-                    // throw out this guy if he's behind us
-                    if( LOFDir.Dot(TargetDelta) <= 0.0f )
-                    {
-                        continue;
-                    }
+            UpdateEnemyReticleTarget( m_AimAssistData, *pActor, Info, ReticleBestDist, bReticleOn );
 
-                    // If target is a decent distance away check if the angle
-                    // to his position is far away from the LOFDir
-                    vector3 TargetDeltaDir = TargetDelta;
-                    TargetDeltaDir.Normalize();
-                    if( TargetDist > 1000.0f )
-                    {
-                        if( LOFDir.Dot(TargetDeltaDir) <= TargetCullDot )
-                        {
-                            continue;
-                        }
-                    }
+            if( bAimAssistActive )
+            {
+                UpdateBulletAssistTarget( m_AimAssistData,
+                                          *this,
+                                          *pActor,
+                                          View,
+                                          LOFStart,
+                                          LOFDir,
+                                          MultiplayerRadiiScale,
+                                          BulletAssistLeadSpeed,
+                                          Info );
 
-                    //
-                    // Get spine information
-                    //
-                    vector3 SpineTop;
-                    vector3 SpineBot;
-                    {
-                        SpineBot = pActor->GetPosition();
-                        SpineTop = SpineBot + vector3(0,150,0);
-                        /* Commented out for performance around friendlies - AndyT
-                        ((character*)pActor)->GetHeadAndRootPosition( SpineTop, SpineBot );
-                        // Raise top of spine since head bone is at base of head
-                        SpineTop += vector3(0,20.0f,0);
-                        */
-                    }
+                UpdateTurnAssistTarget( m_AimAssistData, Info );
+            }
+        }
+        else if( g_bTestFriendly )
+        {
+            aim_target_info Info;
+            if( !BuildAimTargetInfo( *pActor,
+                                     Position,
+                                     PlayerVelocity,
+                                     LOFStart,
+                                     LOFEnd,
+                                     LOFDir,
+                                     m_AimAssistData.LOFCollisionDist,
+                                     TargetCullDot,
+                                     FALSE,
+                                     Info ) )
+            {
+                continue;
+            }
 
-                    //
-                    // Get closest pt between LOF and Spine
-                    //
-                    vector3 SpinePt;
-                    vector3 LOFPt;
-                    vector3 SpineLOFOffset;
-                    f32     LOFPtT;
-                    f32     SpinePtT;
-                    f32     LOFPtDist;
-                    f32     Dist;
-                    {
-                        x_ClosestPtsOnLineSegs( LOFStart, LOFEnd, SpineTop, SpineBot, LOFPt, SpinePt, LOFPtT, SpinePtT );
-                        LOFPtDist = AimAssist_LOF_Dist * LOFPtT;
-                        SpineLOFOffset = (SpinePt - LOFPt);
-                    }
-
-                    //
-                    // Check distance to LOFPt against collision
-                    //
-                    xbool bLOFPtBlocked = (LOFPtDist > m_AimAssistData.LOFCollisionDist);
-
-                    Dist = SpineLOFOffset.Length();
-
-                    //
-                    // Check if Reticle should be on
-                    //
-                    if( bLOFPtBlocked == FALSE )
-                    {
-                        f32 Radius = ComputeInterpValue( TargetDist,
-                            AimAssist_Reticle_Near_Dist,
-                            AimAssist_Reticle_Far_Dist,
-                            AimAssist_Reticle_Near_Radius,
-                            AimAssist_Reticle_Far_Radius );
-
-                        // see if we're inside pill
-                        if( Dist <= Radius )
-                        {
-                            Final_bReticleOn = TRUE;
-                            m_AimAssistData.OnlineFriendlyTargetGuid = pActor->GetGuid();
-                            break; // break out of while loop
-                        }
-                    }
-                }
+            if( UpdateFriendlyReticleTarget( m_AimAssistData, *pActor, Info, bReticleOn ) )
+            {
+                break;
+            }
         }
     }
 
-    //
-    // Deaden the aim stick
-    //
-    if( m_AimAssistData.TurnDampeningT > 0 )
+    if( bAimAssistActive )
     {
-        // kill aim assist stick dampening at AimAssist_Turn_Damp_Near_Dist
-        f32 DampPct = x_parametric(m_AimAssistData.LOFPtDist, AimAssist_Turn_Damp_Near_Dist, AimAssist_Turn_Damp_Far_Dist, TRUE);
-
-        // scale turn dampening
-        m_AimAssistData.TurnDampeningT = m_AimAssistData.TurnDampeningT * DampPct;
-
-        tweak_handle StickDampTweak("TurnDampeningT"); // 0=no turning, 1=normal turning
-        f32 DampMax     = StickDampTweak.GetF32();
-        f32 StickyMult  = 1.0f + (DampMax-1.0f)*m_AimAssistData.TurnDampeningT;
-        m_fYawValue     *= StickyMult;
-        m_fPitchValue   *= StickyMult;
-
-        CLOG_MESSAGE( AIM_LOGGING_ENABLED, "player::UpdateCurrentAimTarget", "T:: %f", m_AimAssistData.TurnDampeningT );
-
+        ApplyAimAssistTurnDampening();
     }
     else
     {
-        CLOG_MESSAGE( AIM_LOGGING_ENABLED, "player::UpdateCurrentAimTarget *CHECK*", "T: %f", m_AimAssistData.TurnDampeningT );
-
-        // Be sure if we aren't doing aim assist for enemies that we kill turn dampening
         m_AimAssistData.TurnDampeningT = 0.0f;
     }
 
-
-    //
-    // Remember reticle is on the target
-    //
-    {
-        m_AimAssistData.bReticleOn = Final_bReticleOn;
-    }
+    m_AimAssistData.bReticleOn = bReticleOn;
 
     UpdateReticleRadius( DeltaTime );
-
-//    x_printfxy(0,3,"%7.1f %7.1f %7.1f",BestVelocity.GetX(),BestVelocity.GetY(),BestVelocity.GetZ());
-//    x_printfxy(0,4,"TD: %4.2f", m_AimAssistData.TurnDampeningT);
 
 }
 

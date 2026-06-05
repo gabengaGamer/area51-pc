@@ -112,6 +112,7 @@ struct AimAssistData
     f32     BulletAssistBestDist;   // the best distance to the target used for bullet assist
     f32     TurnDampeningT;         // what is the interpolation distance for turn dampening
     guid    TargetGuid;             // this is the best target for our aim assist
+    guid    ReticleEnemyGuid;       // enemy under the UI reticle
     f32     LOFCollisionDist;       // used to test if we hit something before we got to target
     f32     LOFSpineDist;           // distance to the closest point on the spine that we are firing at
     vector3 SpinePt;                // point on the spine
@@ -684,6 +685,8 @@ protected:
             void        UpdateAimAssistance             ( f32 DeltaTime );
             void        UpdateAimOffset                 ( f32 DeltaTime );
             void        UpdateCurrentAimTarget          ( f32 DeltaTime );
+            xbool       IsAimAssistInputActive          ( void ) const;
+            void        ApplyAimAssistTurnDampening     ( void );
             radian      CalculateNecessaryAimAssistYaw  ( object* pObject );
             radian      CalculateNecessaryAimAssistPitch( object* pObject );
             radian      CalculateActualYawToTarget      ( object* pObject );

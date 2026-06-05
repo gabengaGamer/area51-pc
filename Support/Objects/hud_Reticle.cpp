@@ -13,7 +13,6 @@
 #include "hud_Reticle.hpp"
 #include "HudObject.hpp"
 #include "x_debug.hpp"
-#include "NetworkMgr\GameMgr.hpp"
 #include "characters\Character.hpp"
 
 #ifndef X_EDITOR 
@@ -72,9 +71,6 @@ void hud_reticle::OnRender( player* pPlayer )
     xcolor  Color = g_ReticleSmlColor;
 
     // Only display if the target exists, is of a valid type, and is alive.
-#ifndef X_EDITOR
-    if( !GameMgr.IsGameMultiplayer() )
-#endif
     {
         if( EnemyGuid )
         {
@@ -241,10 +237,6 @@ void hud_reticle::OnRender( player* pPlayer )
         draw_SetTexture( *pMainReticle );
 
         draw_DisableBilinear();
-
-#ifndef X_EDITOR
-        if( !GameMgr.IsGameMultiplayer() )
-#endif
         {
             guid EnemyGuid = pPlayer->GetEnemyOnReticle();
             if( EnemyGuid != NULL_GUID )
@@ -291,14 +283,7 @@ void hud_reticle::OnRender( player* pPlayer )
     
         guid    EnemyGuid = pPlayer->GetEnemyOnReticle();
 
-        xbool bMultiplayer = FALSE;
-
-#ifndef X_EDITOR
-        bMultiplayer = GameMgr.IsGameMultiplayer();
-#endif
-
-
-        xcolor  Color     =  (EnemyGuid && !bMultiplayer) ? g_ReticleMutantTargetColor : g_ReticleMutantColor;
+        xcolor  Color     = EnemyGuid ? g_ReticleMutantTargetColor : g_ReticleMutantColor;
 
         // BEGIN DRAW
         draw_Begin( DRAW_SPRITES, DRAW_USE_ALPHA|DRAW_TEXTURED|DRAW_2D|DRAW_UI_RTARGET|DRAW_BLEND_ADD|DRAW_NO_ZBUFFER );

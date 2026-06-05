@@ -205,6 +205,7 @@ AimAssistData::AimAssistData( void )
     BulletAssistBestDist    = F32_MAX;
     TurnDampeningT          = 0.0f;
     TargetGuid              = 0;
+    ReticleEnemyGuid        = 0;
     LOFCollisionDist        = 2500.0f;
     LOFSpineDist            = 0.0f;
     SpinePt                 = vector3(0.0f, 0.0f, 0.0f);

@@ -178,7 +178,7 @@ void player::UpdateRotation( const f32& rDeltaTime )
         ASSERT(0);
     }
 
-    if ( m_AimAssistData.TargetGuid != 0 )
+    if( IsAimAssistInputActive() && (m_AimAssistData.TargetGuid != 0) )
     {
         static f32 s_AimAssistTune  = 1.06f;
 
