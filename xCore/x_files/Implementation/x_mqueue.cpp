@@ -22,7 +22,7 @@ xmesgq::xmesgq( s32 nEntries )
 
     if( m_MaxEntries > MAX_DEFAULT_MESSAGES )
     {
-        m_pQueue = (s32 *)x_malloc(m_MaxEntries * sizeof(s32));
+        m_pQueue = (uaddr *)x_malloc(m_MaxEntries * sizeof(uaddr));
     }
     else
     {
@@ -121,11 +121,11 @@ xbool xmesgq::Send(void *message,s32 flags)
         m_Head--;
         if (m_Head < 0)
             m_Head = m_MaxEntries-1;
-        m_pQueue[m_Head] = (s32)message;
+        m_pQueue[m_Head] = (uaddr)message;
     }
     else
     {
-        m_pQueue[m_Tail] = (s32)message;
+        m_pQueue[m_Tail] = (uaddr)message;
         m_Tail++;
         if (m_Tail >= m_MaxEntries)
             m_Tail = 0;
@@ -151,7 +151,7 @@ xbool xmesgq::Send(void *message,s32 flags)
 void *xmesgq::Recv(s32 flags)
 {
     xthread *pThread;
-    s32 message;
+    uaddr message;
 
     ASSERT(m_Initialized);
 
