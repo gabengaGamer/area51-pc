@@ -89,14 +89,14 @@
 //  
 //==============================================================================
 
-#define ALIGN_256(n)    ( (((s32)(n)) + 255) & (-256) )
-#define ALIGN_128(n)    ( (((s32)(n)) + 127) & (-128) )
-#define ALIGN_64(n)     ( (((s32)(n)) +  63) & ( -64) )
-#define ALIGN_32(n)     ( (((s32)(n)) +  31) & ( -32) )
-#define ALIGN_16(n)     ( (((s32)(n)) +  15) & ( -16) )
-#define ALIGN_8(n)      ( (((s32)(n)) +   7) & (  -8) )
-#define ALIGN_4(n)      ( (((s32)(n)) +   3) & (  -4) )
-#define ALIGN_2(n)      ( (((s32)(n)) +   1) & (  -2) )
+#define ALIGN_256(n)    ( (((saddr)(n)) + 255) & (-256) )
+#define ALIGN_128(n)    ( (((saddr)(n)) + 127) & (-128) )
+#define ALIGN_64(n)     ( (((saddr)(n)) +  63) & ( -64) )
+#define ALIGN_32(n)     ( (((saddr)(n)) +  31) & ( -32) )
+#define ALIGN_16(n)     ( (((saddr)(n)) +  15) & ( -16) )
+#define ALIGN_8(n)      ( (((saddr)(n)) +   7) & (  -8) )
+#define ALIGN_4(n)      ( (((saddr)(n)) +   3) & (  -4) )
+#define ALIGN_2(n)      ( (((saddr)(n)) +   1) & (  -2) )
 
 #define ENDIAN_SWAP_16(A)           ( (((u16)(A)) >> 8) |   \
                                       (((u16)(A)) << 8) )    
