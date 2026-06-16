@@ -1,0 +1,41 @@
+<Solution>
+  <Configurations>
+    <BuildType Name="EDITOR-Debug" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Project Path="../../Support/AudioMgr/AudioMgr.vcxproj" />
+  <Project Path="../../Support/ConversationMgr/ConversationMgr.vcxproj" />
+  <Project Path="../../Support/EventMgr/EventMgr.vcxproj" />
+  <Project Path="../../Support/GameLib/Gamelib.vcxproj" />
+  <Project Path="../../Support/Music_mgr/Music_mgr.vcxproj" />
+  <Project Path="../../Support/Render/Render.vcxproj" />
+  <Project Path="../../Support/StringMgr/StringMgr.vcxproj" />
+  <Project Path="../../xCore/Auxiliary/Bitmap/aux_Bitmap.vcxproj" />
+  <Project Path="../../xCore/Auxiliary/fx_RunTime/fx_RunTime.vcxproj" />
+  <Project Path="../../xCore/Entropy/Entropy.vcxproj" />
+  <Project Path="../../xCore/MeshUtil/MeshUtil.vcxproj" />
+  <Project Path="../../xCore/Parsing/Parsing.vcxproj" />
+  <Project Path="../../xCore/x_files/x_files.vcxproj" />
+  <Project Path="../EDRscDesc/EDRscDesc.vcxproj" />
+  <Project Path="../PropertyEditor/PropertyEditor.vcxproj" />
+  <Project Path="../WinControls/WinControls.vcxproj" />
+  <Project Path="../WorldEditor/WorldEditor.vcxproj" />
+  <Project Path="Editor.vcxproj">
+    <BuildDependency Project="../../Support/AudioMgr/AudioMgr.vcxproj" />
+    <BuildDependency Project="../../Support/ConversationMgr/ConversationMgr.vcxproj" />
+    <BuildDependency Project="../../Support/EventMgr/EventMgr.vcxproj" />
+    <BuildDependency Project="../../Support/GameLib/Gamelib.vcxproj" />
+    <BuildDependency Project="../../Support/Music_mgr/Music_mgr.vcxproj" />
+    <BuildDependency Project="../../Support/Render/Render.vcxproj" />
+    <BuildDependency Project="../../Support/StringMgr/StringMgr.vcxproj" />
+    <BuildDependency Project="../../xCore/Auxiliary/Bitmap/aux_Bitmap.vcxproj" />
+    <BuildDependency Project="../../xCore/Auxiliary/fx_RunTime/fx_RunTime.vcxproj" />
+    <BuildDependency Project="../../xCore/Entropy/Entropy.vcxproj" />
+    <BuildDependency Project="../../xCore/MeshUtil/MeshUtil.vcxproj" />
+    <BuildDependency Project="../../xCore/Parsing/Parsing.vcxproj" />
+    <BuildDependency Project="../../xCore/x_files/x_files.vcxproj" />
+    <BuildDependency Project="../PropertyEditor/PropertyEditor.vcxproj" />
+    <BuildDependency Project="../WinControls/WinControls.vcxproj" />
+    <BuildDependency Project="../WorldEditor/WorldEditor.vcxproj" />
+  </Project>
+</Solution>

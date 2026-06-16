@@ -1,0 +1,10 @@
+<Solution>
+  <Configurations>
+    <Platform Name="Win32" />
+  </Configurations>
+  <Project Path="../../xCore/Auxiliary/CommandLine/CommandLine.vcxproj" />
+  <Project Path="../../xCore/Parsing/Parsing.vcxproj" />
+  <Project Path="../../xCore/x_files/x_files.vcxproj" />
+  <Project Path="libmp3lame/libmp3lame_vc6.vcxproj" />
+  <Project Path="SoundPackager.vcxproj" />
+</Solution>

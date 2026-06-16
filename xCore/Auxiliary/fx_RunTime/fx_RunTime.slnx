@@ -1,0 +1,12 @@
+<Solution>
+  <Configurations>
+    <BuildType Name="Debug" />
+    <BuildType Name="EDITOR-Debug" />
+    <BuildType Name="OptDebug" />
+    <BuildType Name="QA" />
+    <BuildType Name="Release" />
+    <Platform Name="Win32" />
+    <Platform Name="x64" />
+  </Configurations>
+  <Project Path="fx_RunTime.vcxproj" />
+</Solution>
