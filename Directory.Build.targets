@@ -1,0 +1,17 @@
+<Project>
+  <Import Condition="'$(_A51UseVcpkg)' == 'true' and '$(VCPKG_ROOT)' != ''"
+          Project="$(VCPKG_ROOT)\scripts\buildsystems\msbuild\vcpkg.targets" />
+
+  <!-- Opt-in (/p:A51PointerAudit=true): surface 64-bit pointer truncation as errors. -->
+  <ItemDefinitionGroup Condition="'$(_A51UseVcpkg)' == 'true' and '$(A51PointerAudit)' == 'true'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <AdditionalOptions>%(AdditionalOptions) /we4311 /we4312 /we4302 /we4826</AdditionalOptions>
+    </ClCompile>
+  </ItemDefinitionGroup>
+
+  <Target Name="_A51CheckVcpkgRoot" BeforeTargets="ClCompile"
+          Condition="'$(_A51UseVcpkg)' == 'true' and '$(VCPKG_ROOT)' == ''">
+    <Error Text="VCPKG_ROOT is not set. $(MSBuildProjectName) consumes its third-party dependencies via vcpkg manifest mode (see vcpkg.json). Set the VCPKG_ROOT environment variable to a vcpkg checkout." />
+  </Target>
+</Project>

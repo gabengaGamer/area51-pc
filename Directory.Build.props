@@ -1,0 +1,17 @@
+<Project>
+  <!-- vcpkg manifest deps, scoped by project name to the game runtime graph. Needs VCPKG_ROOT. -->
+  <PropertyGroup>
+    <_A51VcpkgProjects>;A51;AudioMgr;ConversationMgr;UserInterface;EventMgr;Gamelib;Music_mgr;Script_mgr;NetworkMgr;Render;StringMgr;aux_Bitmap;fx_RunTime;Entropy;Parsing;x_files;</_A51VcpkgProjects>
+    <_A51UseVcpkg Condition="$(_A51VcpkgProjects.Contains(';$(MSBuildProjectName);'))">true</_A51UseVcpkg>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(_A51UseVcpkg)' == 'true'">
+    <VcpkgEnableManifest>true</VcpkgEnableManifest>
+    <VcpkgUseStatic>true</VcpkgUseStatic>
+    <!-- Game links the release static CRT (/MT) in all configs; use vcpkg release libs to match. -->
+    <VcpkgConfiguration>Release</VcpkgConfiguration>
+  </PropertyGroup>
+
+  <Import Condition="'$(_A51UseVcpkg)' == 'true' and '$(VCPKG_ROOT)' != ''"
+          Project="$(VCPKG_ROOT)\scripts\buildsystems\msbuild\vcpkg.props" />
+</Project>

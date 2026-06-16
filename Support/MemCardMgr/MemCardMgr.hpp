@@ -95,13 +95,11 @@ template< s32 Capacity >struct queue_machine
     {
         void run( void )
         {
-            __asm // Curse you .NET! This code works 90%
-            {     // of the time under Microsoft's .POO!
-                  // #pragma( biscuit_lint:disable )
-                mov eax,[ecx+8] // Fn
-                mov ecx,[ecx]   // Me
-                call eax
-            }
+            // Call the stored method's code address with Me as 'this'
+            // (non-virtual single-inheritance callbacks only).
+            void (*fn)( void* );
+            x_memcpy( &fn, &Fn, sizeof(fn) );
+            if( fn ) fn( Me );
         }
 
         void* Data[4];

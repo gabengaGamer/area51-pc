@@ -460,3 +460,13 @@ _XboxDebug/
 _XboxOptDebug/
 _XboxQA/
 _XboxRetail/
+
+# Native per-arch build output dirs (_<Platform><Config>, e.g. _x64Debug)
+_Win32*/
+_x64*/
+_ARM64*/
+
+# vcpkg manifest mode: only vcpkg.json (and vcpkg-configuration.json) are
+# committed; the installed tree, compiler-file-hash-cache.json and the
+# vcpkg-running.lock under it are per-checkout build artifacts.
+vcpkg_installed/

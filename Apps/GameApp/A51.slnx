@@ -7,6 +7,8 @@
     <BuildType Name="Release" />
     <BuildType Name="VIEWER-Debug" />
     <Platform Name="Win32" />
+    <Platform Name="x64" />
+    <Platform Name="ARM64" />
   </Configurations>
   <Project Path="../../Support/AudioMgr/AudioMgr.vcxproj" />
   <Project Path="../../Support/ConversationMgr/ConversationMgr.vcxproj" />
