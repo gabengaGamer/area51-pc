@@ -36,7 +36,7 @@ audio_package::~audio_package( void )
 
 //------------------------------------------------------------------------------
 
-u32 audio_package::LoadHotSample( X_FILE* f, hot_sample* pHotSample, u32 Aram )
+u32 audio_package::LoadHotSample( X_FILE* f, hot_sample* pHotSample, uaddr Aram )
 {
     CONTEXT("audio_package::LoadHotSample");
 
@@ -243,8 +243,17 @@ xbool audio_package::Init( const char* pFilename )
                 if( m_BreakPointTable )
                     x_fread( m_BreakPointTable, m_Header.BreakPointTableFootprint, 1, f );
 
-                // Read in the identifiers.
-                x_fread( m_IdentifierTable, sizeof(descriptor_identifier), m_Header.nIdentifiers, f );
+                // Read in the identifiers. On disk each record is the old
+                // 32-bit layout {u16 StringOffset; u16 Index; u32 pPackage-slot}
+                // = 8 bytes; read it explicitly so the 64-bit pPackage pointer
+                // doesn't widen the record and misalign the rest of the file.
+                for( i=0 ; i<m_Header.nIdentifiers ; i++ )
+                {
+                    struct { u16 StringOffset; u16 Index; u32 Pad; } DiskId;
+                    x_fread( &DiskId, sizeof(DiskId), 1, f );
+                    m_IdentifierTable[ i ].StringOffset = DiskId.StringOffset;
+                    m_IdentifierTable[ i ].Index        = DiskId.Index;
+                }
 
                 // Set the package for each identifier.
                 for( i=0 ; i<m_Header.nIdentifiers ; i++ )
@@ -295,7 +304,7 @@ xbool audio_package::Init( const char* pFilename )
                 if( m_Header.Aram )
                 {
                     m_AudioRam    = (uaddr)g_AudioHardware.AllocAudioRam( m_Header.Aram );
-                    u32 Aram      = m_AudioRam;
+                    uaddr Aram    = m_AudioRam;
                     s32 TotalAram = 0;
                     u32 BlockSize = 0;
                     uaddr Base    = (uaddr)m_HotSamples;

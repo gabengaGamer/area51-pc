@@ -87,8 +87,8 @@ inline      char*           GetPackageIdentifier        ( void )                
 private:
 
             u32             LoadHotSample               ( X_FILE* f, 
-                                                          hot_sample* pHotSample, 
-                                                          u32 Aram );
+                                                          hot_sample* pHotSample,
+                                                          uaddr Aram );
 
 //------------------------------------------------------------------------------
 // Private data.

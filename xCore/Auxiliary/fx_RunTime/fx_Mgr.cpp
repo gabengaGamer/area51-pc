@@ -466,15 +466,29 @@ xbool fx_mgr::LoadEffect( const char* pEffectName, X_FILE* pFile )
         ASSERT( Read == (Size-1) );
         ASSERT( Size == ((fx_file_def*)pFileData)->TotalSize );
 
-        // Allocate the runtime effect definition using native pointer sizes.
-		{
+        // Rebuild the runtime effect definition with native pointer sizes.
+        // On disk the numeric block holds 4-byte placeholder slots for the
+        // pointer/handle arrays followed by the controller/element struct data.
+        // On 64-bit the pointer arrays are wider, so the struct payload is
+        // relocated past native-sized arrays which are then rebuilt below.
+        {
             fx_file_def* pFileDef = (fx_file_def*)pFileData;
-            byte*        pRuntimeData;
-		    
+
+            s32   NCtrl = pFileDef->NControllers;
+            s32   NElem = pFileDef->NElements;
+            s32   NBmp  = pFileDef->NBitmaps;
+
+            s32   FileArrayBytes = ( NCtrl + NElem + NBmp + NBmp ) * (s32)sizeof(s32);
+            s32   StructBytes    = NumericDataSize - FileArrayBytes;
+
+            usize ArrayBytes = NCtrl * sizeof(fx_ctrl_def*)
+                             + NElem * sizeof(fx_element_def*)
+                             + NBmp  * sizeof(xhandle) * 2;
+
             MEMORY_OWNER( "EFFECT DEFINITION" );
-            m_pEffectDef[Index] = (fx_def*)x_malloc( sizeof(fx_def) + NumericDataSize + (x_strlen(pEffectName) + 1) );
+            m_pEffectDef[Index] = (fx_def*)x_malloc( sizeof(fx_def) + ArrayBytes + StructBytes + (x_strlen(pEffectName) + 1) );
             ASSERT( m_pEffectDef[Index] );
-		    
+
             m_pEffectDef[Index]->TotalSize    = pFileDef->TotalSize;
             m_pEffectDef[Index]->Flags        = pFileDef->Flags;
             m_pEffectDef[Index]->NSAValues    = pFileDef->NSAValues;
@@ -483,72 +497,37 @@ xbool fx_mgr::LoadEffect( const char* pEffectName, X_FILE* pFile )
             m_pEffectDef[Index]->NBitmaps     = pFileDef->NBitmaps;
             m_pEffectDef[Index]->MasterCopy   = pFileDef->MasterCopy;
             m_pEffectDef[Index]->NInstances   = pFileDef->NInstances;
-		    
-            pRuntimeData = ((byte*)m_pEffectDef[Index]) + sizeof(fx_def);
-            x_memcpy( pRuntimeData, pFileData + sizeof(fx_file_def), NumericDataSize );
-		}
+
+            // Layout: [fx_def][ptr arrays][struct payload][name]
+            byte* pCursor = ((byte*)m_pEffectDef[Index]) + sizeof(fx_def);
+
+            m_pEffectDef[Index]->pCtrlDef    = (fx_ctrl_def**)pCursor;    pCursor += NCtrl * sizeof(fx_ctrl_def*);
+            m_pEffectDef[Index]->pElementDef = (fx_element_def**)pCursor; pCursor += NElem * sizeof(fx_element_def*);
+            m_pEffectDef[Index]->pDiffuseMap = (xhandle*)pCursor;         pCursor += NBmp * sizeof(xhandle);
+            m_pEffectDef[Index]->pAlphaMap   = (xhandle*)pCursor;         pCursor += NBmp * sizeof(xhandle);
+
+            // Copy the controller/element struct payload (skip the file's
+            // placeholder array region) and append the effect name.
+            x_memcpy( pCursor, pFileData + sizeof(fx_file_def) + FileArrayBytes, StructBytes );
+            m_pEffectDef[Index]->pEffectName = (char*)( pCursor + StructBytes );
+            x_strcpy( m_pEffectDef[Index]->pEffectName, pEffectName );
+
+            // Rebuild the controller/element pointer arrays over the payload.
+            byte* p = pCursor;
+            for( i = 0; i < NCtrl; i++ )
+            {
+                m_pEffectDef[Index]->pCtrlDef[i] = (fx_ctrl_def*)p;
+                p += ((fx_ctrl_def*)p)->TotalSize * sizeof(s32);
+            }
+            for( i = 0; i < NElem; i++ )
+            {
+                m_pEffectDef[Index]->pElementDef[i] = (fx_element_def*)p;
+                p += ((fx_element_def*)p)->TotalSize * sizeof(s32);
+            }
+            ASSERT( (p - pCursor) == StructBytes );
+        }
 
         x_free( pFileData );
-
-        // Append the effect name.
-        m_pEffectDef[Index]->pEffectName = ((char*)m_pEffectDef[Index]) + sizeof(fx_def) + NumericDataSize;
-        x_strcpy( m_pEffectDef[Index]->pEffectName, pEffectName );        
-    }
-
-    //
-    // TO DO: React to magic number here.
-    //
-    {
-    }
-
-    //
-    // TO DO: Endian fixup.
-    //
-    {
-    }
-
-    //
-    // Pointer fixups for controllers, elements, and bitmaps, within effect 
-    // definition.
-    //
-    {
-        s32* pData;
-
-        // Start data pointer immediately after the native runtime header.
-        pData = (s32*)(((byte*)m_pEffectDef[Index]) + sizeof(fx_def));
-
-        // Set the pCtrlDef pointer.
-        m_pEffectDef[Index]->pCtrlDef = (fx_ctrl_def**)(pData);
-        pData += m_pEffectDef[Index]->NControllers;
-
-        // Set the pElementDef pointer.
-        m_pEffectDef[Index]->pElementDef = (fx_element_def**)(pData);
-        pData += m_pEffectDef[Index]->NElements;
-
-        // Set the pBmpDiffuse pointer.
-        m_pEffectDef[Index]->pDiffuseMap = (xhandle*)(pData);
-        pData += m_pEffectDef[Index]->NBitmaps;
-
-        // Set the pBmpAlpha pointer.
-        m_pEffectDef[Index]->pAlphaMap = (xhandle*)(pData);
-        pData += m_pEffectDef[Index]->NBitmaps;
-
-        // Populate the controller definition pointer array.
-        for( i = 0; i < m_pEffectDef[Index]->NControllers; i++ )
-        {
-            m_pEffectDef[Index]->pCtrlDef[i] = (fx_ctrl_def*)pData;
-            pData += ((fx_ctrl_def*)pData)->TotalSize;
-        }
-
-        // Populate the element definition pointer array.
-        for( i = 0; i < m_pEffectDef[Index]->NElements; i++ )
-        {
-            m_pEffectDef[Index]->pElementDef[i] = (fx_element_def*)pData;
-            pData += ((fx_element_def*)pData)->TotalSize;
-        }
-
-        // Sanity check.
-        ASSERT( (((byte*)pData) - (((byte*)m_pEffectDef[Index]) + sizeof(fx_def))) == NumericDataSize );
     }
 
     //
