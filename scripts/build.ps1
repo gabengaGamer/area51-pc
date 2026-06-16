@@ -26,6 +26,8 @@ $msbuildArgs = @(
     "/p:Configuration=$Configuration"
     "/p:Platform=$Platform"
     '/m'
+    '/p:UseMultiToolTask=true'
+    '/p:EnforceProcessCountAcrossBuilds=true'
     '/nologo'
 )
 if ($PointerAudit) { $msbuildArgs += '/p:A51PointerAudit=true' }
