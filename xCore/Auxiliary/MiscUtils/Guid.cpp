@@ -802,7 +802,7 @@ void guid_lookup::Dump( const char* pFileName )
 void guid_lookup::SanityCheck( void )
 {
     ASSERT((m_CanGrow==TRUE) || (m_CanGrow==FALSE));
-    ASSERT((m_pHashEntry==NULL) || ((u32)m_pHashEntry>16384));
+    ASSERT((m_pHashEntry==NULL) || ((uaddr)m_pHashEntry>16384));
 }
 
 //==============================================================================

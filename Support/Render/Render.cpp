@@ -2895,7 +2895,7 @@ void render::AddRigidReceiverSimple( render::hgeom_inst hInst,
             // and punch-through. For now, we can render solid polys.
 
             // make sure we're aligned for dma purposes
-            ASSERT( ALIGN_16(pL2W) == (s32)pL2W );
+            ASSERT( ALIGN_16(pL2W) == (saddr)pL2W );
 
             // build the sort key
             shad_sortkey SortKey;
