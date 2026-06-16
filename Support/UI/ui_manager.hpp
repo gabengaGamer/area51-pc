@@ -194,6 +194,7 @@ public:
     struct user
     {
         xbool                   Enabled;
+        s32                     Id;
         s32                     ControllerID;
         irect                   Bounds;
         s32                     Data;
@@ -398,6 +399,7 @@ public:
     void            DeleteUser              ( s32 UserID );
     void            DeleteAllUsers          ( void );
     user*           GetUser                 ( s32 UserID ) const;
+    user*           GetUserById             ( s32 UserID ) const;
     s32             GetUserData             ( s32 UserID ) const;
     ui_win*         GetFocusedWindow        ( s32 UserID ) const;
     void            SetMouseVisible         ( s32 UserID, xbool State );

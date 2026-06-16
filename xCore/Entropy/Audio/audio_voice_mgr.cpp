@@ -555,7 +555,7 @@ f32 audio_voice_mgr::GetLipSync( voice* pVoice )
                 {
                     audio_package*  pPackage = pElement->pVoice->pPackage;
                     f32             dTime    = GetCurrentPlayTime( pVoice );
-                    u8*             pLipSync = (u8*)((u32)pElement->Sample.pHotSample->LipSyncOffset + (u32)pPackage->m_LipSyncTable);
+                    u8*             pLipSync = (u8*)((uaddr)pElement->Sample.pHotSample->LipSyncOffset + (uaddr)pPackage->m_LipSyncTable);
                     s32             Index;
                     s32             Result;
 
@@ -655,7 +655,7 @@ s32 audio_voice_mgr::GetBreakPoints( voice* pVoice, f32* & BreakPoints )
             if( pElement->Sample.pHotSample->BreakPointOffset != 0xffffffff )
             {
                 audio_package*  pPackage     = pElement->pVoice->pPackage;
-                s32*            pBreakPoints = (s32*)((u32)pElement->Sample.pHotSample->BreakPointOffset + (u32)pPackage->m_BreakPointTable);
+                s32*            pBreakPoints = (s32*)((uaddr)pElement->Sample.pHotSample->BreakPointOffset + (uaddr)pPackage->m_BreakPointTable);
                 
                 Result      = *pBreakPoints++;
                 BreakPoints = (f32*)pBreakPoints;

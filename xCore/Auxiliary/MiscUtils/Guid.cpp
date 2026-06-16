@@ -615,7 +615,7 @@ void guid_lookup::DeallocNode( s32 Node )
 
 //==============================================================================
 
-void guid_lookup::Add( guid GUID, u32   Data )
+void guid_lookup::Add( guid GUID, uaddr Data )
 {
     s32 I = AllocNode();
     ASSERT( I != -1 );
@@ -635,16 +635,9 @@ void guid_lookup::Add( guid GUID, u32   Data )
 
 //==============================================================================
 
-void guid_lookup::Add( guid GUID, s32   Data )
-{
-    Add( GUID, (u32)Data );
-}
-
-//==============================================================================
-
 void guid_lookup::Add( guid GUID, void* Data )
 {
-    Add( GUID, (u32)Data );
+    Add( GUID, (uaddr)Data );
 }
 
 //==============================================================================
@@ -703,7 +696,7 @@ u32& guid_lookup::GetU32( s32 I )
 {
     ASSERT( I >= 0 );
 
-    return m_pNode[I].Data;
+    return (u32&)m_pNode[I].Data;
 }
 
 //==============================================================================

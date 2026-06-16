@@ -844,7 +844,7 @@ xbool focus_object::TestPress( void )
         }
         else
         {
-            MsgMgr.Message( MSG_GOAL_STRING, 0, (s32)pString );
+            MsgMgr.Message( MSG_GOAL_STRING, 0, (saddr)pString );
         }
 #endif
 

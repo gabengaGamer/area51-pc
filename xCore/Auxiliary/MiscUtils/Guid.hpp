@@ -46,8 +46,7 @@ public:
     s32     GetNBytes       ( void );
     s32     GetCapacity     ( void ) { return m_nNodesAllocated; }
 
-    void    Add             ( guid GUID, u32    Data );
-    void    Add             ( guid GUID, s32    Data );
+    void    Add             ( guid GUID, uaddr  Data );
     void    Add             ( guid GUID, void*  Data );
     
     xbool   Find            ( guid GUID );
@@ -74,7 +73,7 @@ protected:
     struct node
     {
         guid    GUID;
-        u32     Data;
+        uaddr   Data;
         s32     Next;
         s32     Prev;
         u32     PAD;

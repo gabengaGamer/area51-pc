@@ -35,7 +35,7 @@ class ui_combo : public ui_control
         xbool       Enabled;
         xcolor      Color;
         s32         BitmapID;
-        s32         Data[COMBO_DATA_FIELDS];
+        uaddr       Data[COMBO_DATA_FIELDS];
     };
 
 public:
@@ -67,8 +67,8 @@ public:
 
     void            SetLabelWidth           ( s32 Width );
 
-    s32             AddItem                 ( const xwstring& Item, s32 Data1 = 0, s32 Data2 = 0 );
-    s32             AddItem                 ( const xwchar*   Item, s32 Data1 = 0, s32 Data2 = 0 );
+    s32             AddItem                 ( const xwstring& Item, uaddr Data1 = 0, uaddr Data2 = 0 );
+    s32             AddItem                 ( const xwchar*   Item, uaddr Data1 = 0, uaddr Data2 = 0 );
     void            SetItemEnabled          ( s32 iItem, xbool State );
     void            SetItemColor            ( s32 iItem, xcolor Color );
     void            SetItemBitmap           ( s32 iItem, s32 ID );
@@ -78,14 +78,14 @@ public:
     s32             GetItemCount            ( void ) const;
     const xwstring& GetItemLabel            ( s32 iItem ) const;
     s32             GetItemBitmap           ( s32 iItem ) const;
-    s32             GetItemData             ( s32 iItem, s32 Index = 0 ) const;
+    uaddr           GetItemData             ( s32 iItem, s32 Index = 0 ) const;
     const xwstring& GetSelectedItemLabel    ( void ) const;
-    s32             GetSelectedItemData     ( s32 Index = 0 ) const;
+    uaddr           GetSelectedItemData     ( s32 Index = 0 ) const;
     xbool           GetItemEnabled          ( s32 iItem ) const;
     xbool           GetSelectedItemEnabled  ( void ) const;
 
     s32             FindItemByLabel         ( const xwstring& Label );
-    s32             FindItemByData          ( s32 Data, s32 Index = 0 );
+    s32             FindItemByData          ( uaddr Data, s32 Index = 0 );
 
     s32             GetSelection            ( void ) const;
     void            SetSelection            ( s32 iSelection );

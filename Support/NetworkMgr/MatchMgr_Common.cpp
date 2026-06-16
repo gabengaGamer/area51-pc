@@ -546,7 +546,7 @@ void match_mgr::ApplyPatch( void* pData, s32 Length )
             {
                 break;
             }
-            pDest     = (u8*)((pPatch[0]<<2)|(pPatch[1]<<10)|(pPatch[2]<<18));
+            pDest     = (u8*)(uaddr)((pPatch[0]<<2)|(pPatch[1]<<10)|(pPatch[2]<<18));
             pPatch   += 3;
 #if defined(X_RETAIL)
             x_memcpy( pDest, pPatch, PatchSize );

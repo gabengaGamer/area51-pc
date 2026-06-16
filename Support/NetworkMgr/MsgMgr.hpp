@@ -35,10 +35,10 @@ public:
 
         void    Message             ( msg_id    MsgID,
                                       s32       Target,
-                                      s32       arg1    = -12345,
-                                      s32       arg2    = -12345,
-                                      s32       arg3    = -12345,
-                                      s32       arg4    = -12345,
+                                      saddr     arg1    = -12345,
+                                      saddr     arg2    = -12345,
+                                      saddr     arg3    = -12345,
+                                      saddr     arg4    = -12345,
                                       f32       Time    = 5.0f,
                                       s32       GoalID  = -1,
                                       xbool     Enabled = TRUE );

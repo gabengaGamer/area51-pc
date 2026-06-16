@@ -299,7 +299,7 @@ void ui_combo::OnPadShoulder( ui_win* pWin, s32 Direction )
 
             if( (m_iSelection != OldSelection) && m_pParent )
             {
-                m_pParent->OnNotify( m_pParent, this, WN_COMBO_SELCHANGE, (void*)m_iSelection );
+                m_pParent->OnNotify( m_pParent, this, WN_COMBO_SELCHANGE, (void*)(uaddr)m_iSelection );
                 g_AudioMgr.Play( "Toggle" ); 
             }
         }
@@ -315,7 +315,7 @@ void ui_combo::SetLabelWidth( s32 Width )
 
 //=========================================================================
 
-s32 ui_combo::AddItem( const xwstring& Label, s32 Data1, s32 Data2 )
+s32 ui_combo::AddItem( const xwstring& Label, uaddr Data1, uaddr Data2 )
 {
     item& Item      = m_Items.Append();
     Item.Label      = Label;
@@ -330,7 +330,7 @@ s32 ui_combo::AddItem( const xwstring& Label, s32 Data1, s32 Data2 )
 
 //=========================================================================
 
-s32 ui_combo::AddItem( const xwchar* Label, s32 Data1, s32 Data2 )
+s32 ui_combo::AddItem( const xwchar* Label, uaddr Data1, uaddr Data2 )
 {
     item& Item      = m_Items.Append();
     Item.Label      = Label;
@@ -375,7 +375,7 @@ void ui_combo::DeleteAllItems( void )
     m_Items.Delete( 0, m_Items.GetCount() );
 
     if( m_pParent )
-        m_pParent->OnNotify( m_pParent, this, WN_COMBO_SELCHANGE, (void*)m_iSelection );
+        m_pParent->OnNotify( m_pParent, this, WN_COMBO_SELCHANGE, (void*)(uaddr)m_iSelection );
 }
 
 //=========================================================================
@@ -391,7 +391,7 @@ void ui_combo::DeleteItem( s32 iItem )
     m_Items.Delete( iItem );
 
     if( (m_iSelection != OldSelection) && m_pParent )
-        m_pParent->OnNotify( m_pParent, this, WN_COMBO_SELCHANGE, (void*)m_iSelection );
+        m_pParent->OnNotify( m_pParent, this, WN_COMBO_SELCHANGE, (void*)(uaddr)m_iSelection );
 }
 
 //=========================================================================
@@ -419,7 +419,7 @@ s32 ui_combo::GetItemBitmap( s32 iItem ) const
 
 //=========================================================================
 
-s32 ui_combo::GetItemData( s32 iItem, s32 Index ) const
+uaddr ui_combo::GetItemData( s32 iItem, s32 Index ) const
 {
     ASSERT( (iItem >= 0) && (iItem < m_Items.GetCount()) );
     ASSERT( (Index >= 0) && (Index < COMBO_DATA_FIELDS) );
@@ -438,7 +438,7 @@ const xwstring& ui_combo::GetSelectedItemLabel( void ) const
 
 //=========================================================================
 
-s32 ui_combo::GetSelectedItemData( s32 Index ) const
+uaddr ui_combo::GetSelectedItemData( s32 Index ) const
 {
     ASSERT( (m_iSelection >= 0) && (m_iSelection < m_Items.GetCount()) );
     ASSERT( (Index >= 0) && (Index < COMBO_DATA_FIELDS) );
@@ -483,7 +483,7 @@ s32 ui_combo::FindItemByLabel( const xwstring& Label )
 
 //=========================================================================
 
-s32 ui_combo::FindItemByData( s32 Data, s32 Index )
+s32 ui_combo::FindItemByData( uaddr Data, s32 Index )
 {
     ASSERT( (Index >= 0) && (Index < COMBO_DATA_FIELDS) );
 
@@ -518,7 +518,7 @@ void ui_combo::SetSelection( s32 iSelection )
     m_iSelection = iSelection;
 
     if( m_pParent )
-        m_pParent->OnNotify( m_pParent, this, WN_COMBO_SELCHANGE, (void*)m_iSelection );
+        m_pParent->OnNotify( m_pParent, this, WN_COMBO_SELCHANGE, (void*)(uaddr)m_iSelection );
 }
 
 //=========================================================================

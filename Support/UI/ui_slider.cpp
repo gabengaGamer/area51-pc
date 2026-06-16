@@ -238,7 +238,7 @@ void ui_slider::OnPadNavigate( ui_win* pWin, s32 Code, s32 Presses, s32 Repeats,
             if( m_Max > m_Min )
                 m_ValueParametric = (f32)(m_Value - m_Min) / (f32)(m_Max-m_Min);
 
-            m_pParent->OnNotify( m_pParent, this, WN_SLIDER_CHANGE, (void*)m_Value );
+            m_pParent->OnNotify( m_pParent, this, WN_SLIDER_CHANGE, (void*)(uaddr)m_Value );
         }
 
         Processed = TRUE;
@@ -318,7 +318,7 @@ void ui_slider::SetValue( s32 Value )
             m_ValueParametric = (f32)(Value - m_Min) / (m_Max-m_Min);
         else
             m_ValueParametric = 0.0f;
-        m_pParent->OnNotify( m_pParent, this, WN_SLIDER_CHANGE, (void*)m_Value );
+        m_pParent->OnNotify( m_pParent, this, WN_SLIDER_CHANGE, (void*)(uaddr)m_Value );
     }
 }
 
@@ -362,7 +362,7 @@ void ui_slider::OnLBDown( ui_win* pWin )
         if( m_Max > m_Min )
             m_ValueParametric = (f32)(m_Value - m_Min) / (f32)(m_Max - m_Min);
 
-        m_pParent->OnNotify( m_pParent, this, WN_SLIDER_CHANGE, (void*)m_Value );
+        m_pParent->OnNotify( m_pParent, this, WN_SLIDER_CHANGE, (void*)(uaddr)m_Value );
     }
 #endif
 }
@@ -402,7 +402,7 @@ void ui_slider::OnMouseMove( ui_win* pWin, s32 x, s32 y )
             if( m_Max > m_Min )
                 m_ValueParametric = (f32)(m_Value - m_Min) / (f32)(m_Max - m_Min);
 
-            m_pParent->OnNotify( m_pParent, this, WN_SLIDER_CHANGE, (void*)m_Value );
+            m_pParent->OnNotify( m_pParent, this, WN_SLIDER_CHANGE, (void*)(uaddr)m_Value );
 //            audio_Play( SFX_FRONTEND_CURSOR_MOVE_02,AUDFLAG_CHANNELSAVER );	//-- Jhowa
         }
     }
