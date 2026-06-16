@@ -414,7 +414,7 @@ void audio_hardware::InitChannel( channel* pChannel )
 {
     hot_sample*      pHotSample = pChannel->Sample.pHotSample;
     xbool            IsLooped   = (pHotSample->LoopEnd > 0);
-    u32              AudioRam   = pHotSample->AudioRam;
+    uaddr            AudioRam   = pHotSample->AudioRam;
     ial_hchannel     hChannel   = pChannel->Hardware.hChannel;
 
     pChannel->Hardware.CurrentPosition = 0;
@@ -444,7 +444,7 @@ void audio_hardware::InitChannelStreamed( channel* pChannel )
 {
     hot_sample*     pHotSample  = pChannel->Sample.pHotSample;
     xbool           IsLooped    = (pChannel->Sample.pHotSample->LoopEnd != 0);
-    u32             AudioRam    = pHotSample->AudioRam;
+    uaddr           AudioRam    = pHotSample->AudioRam;
     ial_hchannel    hChannel    = pChannel->Hardware.hChannel;
 
     s32 nSampleBytes = pChannel->Sample.pHotSample->nSamples * 2;
@@ -641,7 +641,7 @@ void audio_hardware::UpdateMP3( audio_stream* pStream )
         return;
 	}
 	
-	u32 ARAM;
+	uaddr ARAM;
 	u32 Cursor;
 
 	// Decode 512 Samples

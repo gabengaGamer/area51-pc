@@ -76,6 +76,37 @@ u32 audio_package::LoadHotSample( X_FILE* f, hot_sample* pHotSample, uaddr Aram 
 
 //------------------------------------------------------------------------------
 
+// Read sample headers in their 32-bit on-disk layout into native structs.
+// AudioRam is a runtime address (set during load), so it is not read from disk.
+static void ReadSampleHeaders( X_FILE* f, sample_header* pDest, s32 nHeaders, s32 DiskSize )
+{
+    struct disk_sample_header
+    {
+        u32 AudioRam, WaveformOffset, WaveformLength, LipSyncOffset, BreakPointOffset, CompressionType;
+        s32 nSamples, SampleRate, LoopStart, LoopEnd;
+    };
+    ASSERT( DiskSize == (s32)sizeof(disk_sample_header) );
+    (void)DiskSize;
+
+    for( s32 i = 0; i < nHeaders; i++ )
+    {
+        disk_sample_header d;
+        x_fread( &d, sizeof(d), 1, f );
+        pDest[i].AudioRam         = 0;
+        pDest[i].WaveformOffset   = d.WaveformOffset;
+        pDest[i].WaveformLength   = d.WaveformLength;
+        pDest[i].LipSyncOffset    = d.LipSyncOffset;
+        pDest[i].BreakPointOffset = d.BreakPointOffset;
+        pDest[i].CompressionType  = d.CompressionType;
+        pDest[i].nSamples         = d.nSamples;
+        pDest[i].SampleRate       = d.SampleRate;
+        pDest[i].LoopStart        = d.LoopStart;
+        pDest[i].LoopEnd          = d.LoopEnd;
+    }
+}
+
+//------------------------------------------------------------------------------
+
 xbool audio_package::Init( const char* pFilename )
 {
     CONTEXT("audio_package::Init");
@@ -209,7 +240,7 @@ xbool audio_package::Init( const char* pFilename )
                 // Allocate memory for the hot and cold samples
                 if( m_Header.nSampleHeaders[ HOT ] )
                 {
-                    m_HotSamples = (void*)vm_Alloc( m_Header.nSampleHeaders[ HOT ] * m_Header.HeaderSizes[ HOT ] );
+                    m_HotSamples = (void*)vm_Alloc( m_Header.nSampleHeaders[ HOT ] * sizeof(sample_header) );
                 }
                 else
                 {
@@ -218,7 +249,7 @@ xbool audio_package::Init( const char* pFilename )
 
                 if( m_Header.nSampleHeaders[ COLD ] )
                 {
-                    m_ColdSamples = (void*)vm_Alloc( m_Header.nSampleHeaders[ COLD ] * m_Header.HeaderSizes[ COLD ] );
+                    m_ColdSamples = (void*)vm_Alloc( m_Header.nSampleHeaders[ COLD ] * sizeof(sample_header) );
                 }
                 else
                 {
@@ -284,11 +315,11 @@ xbool audio_package::Init( const char* pFilename )
 
                 // Read in the hot sample headers
                 if( m_HotSamples )
-                    x_fread( m_HotSamples, m_Header.HeaderSizes[ HOT ], m_Header.nSampleHeaders[ HOT ], f );
+                    ReadSampleHeaders( f, (sample_header*)m_HotSamples, m_Header.nSampleHeaders[ HOT ], m_Header.HeaderSizes[ HOT ] );
 
                 // Read in the cold sample headers
                 if( m_ColdSamples )
-                    x_fread( m_ColdSamples, m_Header.HeaderSizes[ COLD ], m_Header.nSampleHeaders[ COLD ], f );
+                    ReadSampleHeaders( f, (sample_header*)m_ColdSamples, m_Header.nSampleHeaders[ COLD ], m_Header.HeaderSizes[ COLD ] );
                 
                 // TODO: Load the warm sample headers.
 
@@ -320,7 +351,7 @@ xbool audio_package::Init( const char* pFilename )
                     }
                     #endif
 
-                    for( i=0 ; i<m_Header.nSampleHeaders[ HOT ] ; i++, Base += m_Header.HeaderSizes[HOT] )
+                    for( i=0 ; i<m_Header.nSampleHeaders[ HOT ] ; i++, Base += sizeof(sample_header) )
                     {
                         hot_sample* pHotSample = (hot_sample*)Base;
 
