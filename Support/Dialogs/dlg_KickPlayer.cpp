@@ -446,7 +446,7 @@ void dlg_kick_player::RefreshPlayerList(void)
         for( i=0 ; i<Count ; i++ )
         {
             m_pPlayerList->AddItem( m_PlayerData[i].Name, 
-                (s32)&m_PlayerData[i],
+                (uaddr)&m_PlayerData[i],
                 m_PlayerData[i].ClientIndex );
         }
 

@@ -359,7 +359,7 @@ void dlg_level_select::FillLevelList( void )
             if( Entry.IsAvailable() )
             {
                 // add an entry to the list
-                m_pLevelList->AddItem( Entry.GetDisplayName(), (s32)&Entry );
+                m_pLevelList->AddItem( Entry.GetDisplayName(), (uaddr)&Entry );
             }
         }
     }

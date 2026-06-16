@@ -562,7 +562,7 @@ void dlg_team_change::FillTeamLists( void )
         // finally add the sorted players to the player list
         for( i=0 ; i<AlphaCount ; i++ )
         {
-            m_pAlphaTeamList->AddItem( m_AlphaPlayerData[i].Name, (s32)&m_AlphaPlayerData[i], m_AlphaPlayerData[i].ClientIndex );
+            m_pAlphaTeamList->AddItem( m_AlphaPlayerData[i].Name, (uaddr)&m_AlphaPlayerData[i], m_AlphaPlayerData[i].ClientIndex );
         }
     }
 
@@ -574,7 +574,7 @@ void dlg_team_change::FillTeamLists( void )
         // finally add the sorted players to the player list
         for( i=0 ; i<OmegaCount ; i++ )
         {
-            m_pOmegaTeamList->AddItem( m_OmegaPlayerData[i].Name, (s32)&m_OmegaPlayerData[i], m_OmegaPlayerData[i].ClientIndex );
+            m_pOmegaTeamList->AddItem( m_OmegaPlayerData[i].Name, (uaddr)&m_OmegaPlayerData[i], m_OmegaPlayerData[i].ClientIndex );
         }
     }
 

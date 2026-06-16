@@ -1211,7 +1211,7 @@ void dlg_friends::FillFriendsList( void )
         // Only add this guy if we're not ignoring him.
         if( (Buddy.Flags & USER_REQUEST_IGNORED) == 0 )
         {
-            m_pFriendList->AddItem( Buddy.Name, (s32)&Buddy );
+            m_pFriendList->AddItem( Buddy.Name, (uaddr)&Buddy );
         }
     }
 

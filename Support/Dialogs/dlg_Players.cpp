@@ -702,7 +702,7 @@ void dlg_players::FillPlayersList( void )
                     Player = *pBuddy;
                 }
 
-                m_pPlayerList->AddItem( Player.Name, (s32)&Player, i );
+                m_pPlayerList->AddItem( Player.Name, (uaddr)&Player, i );
 
                 // IMPORTANT NOTE: On XBox Live, the service only provides voice capable
                 // status when a player is also a friend.  To provide the extra voice
@@ -794,7 +794,7 @@ void dlg_players::FillPlayersList( void )
                 if( g_MatchMgr.IsPlayerMuted( Player.Identifier ) == TRUE )
                     Player.Flags |= FRIENDLIST_IS_MUTED;
 
-                m_pPlayerList->AddItem( Player.Name, (s32)&Player, i, TRUE, ui_friendlist::FLAG_ITEM_RECENT_PLAYER );
+                m_pPlayerList->AddItem( Player.Name, (uaddr)&Player, i, TRUE, ui_friendlist::FLAG_ITEM_RECENT_PLAYER );
 
                 NumRecent++;
                 if( NumRecent == 10 )
