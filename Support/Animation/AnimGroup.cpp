@@ -863,17 +863,17 @@ void anim_group::SetupOffsetsAndPtrs ( xbool UseIndices )
             m_pAnimInfo[i].m_pAnimGroup = NULL;
 
         // Convert base ptrs into offsets
-        m_pBone         = (anim_bone*)      ((u32)m_pBone        - (u32)m_pUncompressedData);
-        m_pAnimInfo     = (anim_info*)      ((u32)m_pAnimInfo    - (u32)m_pUncompressedData);
-        m_pProp         = (anim_prop*)      ((u32)m_pProp        - (u32)m_pUncompressedData);
-        m_pKeyBlock     = (anim_key_block*) ((u32)m_pKeyBlock    - (u32)m_pUncompressedData);
+        m_pBone         = (anim_bone*)      ((uaddr)m_pBone        - (uaddr)m_pUncompressedData);
+        m_pAnimInfo     = (anim_info*)      ((uaddr)m_pAnimInfo    - (uaddr)m_pUncompressedData);
+        m_pProp         = (anim_prop*)      ((uaddr)m_pProp        - (uaddr)m_pUncompressedData);
+        m_pKeyBlock     = (anim_key_block*) ((uaddr)m_pKeyBlock    - (uaddr)m_pUncompressedData);
     }
     else
     {
-        m_pBone         = (anim_bone*)      ((u32)m_pBone        + (u32)m_pUncompressedData);
-        m_pAnimInfo     = (anim_info*)      ((u32)m_pAnimInfo    + (u32)m_pUncompressedData);
-        m_pProp         = (anim_prop*)      ((u32)m_pProp        + (u32)m_pUncompressedData);
-        m_pKeyBlock     = (anim_key_block*) ((u32)m_pKeyBlock    + (u32)m_pUncompressedData);
+        m_pBone         = (anim_bone*)      ((uaddr)m_pBone        + (uaddr)m_pUncompressedData);
+        m_pAnimInfo     = (anim_info*)      ((uaddr)m_pAnimInfo    + (uaddr)m_pUncompressedData);
+        m_pProp         = (anim_prop*)      ((uaddr)m_pProp        + (uaddr)m_pUncompressedData);
+        m_pKeyBlock     = (anim_key_block*) ((uaddr)m_pKeyBlock    + (uaddr)m_pUncompressedData);
 
         // Setup all pAnimGroup ptrs
         for( s32 i=0; i<m_nAnims; i++ )
@@ -914,10 +914,10 @@ void anim_group::SetupForSaving ( xbool bSetupIndices, xbool bToggleEndian )
             SwapEndian( m_nKeyBlocks );
         }
 
-        m_pBone         = (anim_bone*)      ((u32)m_pBone        + (u32)m_pUncompressedData);
-        m_pAnimInfo     = (anim_info*)      ((u32)m_pAnimInfo    + (u32)m_pUncompressedData);
-        m_pProp         = (anim_prop*)      ((u32)m_pProp        + (u32)m_pUncompressedData);
-        m_pKeyBlock     = (anim_key_block*) ((u32)m_pKeyBlock    + (u32)m_pUncompressedData);
+        m_pBone         = (anim_bone*)      ((uaddr)m_pBone        + (uaddr)m_pUncompressedData);
+        m_pAnimInfo     = (anim_info*)      ((uaddr)m_pAnimInfo    + (uaddr)m_pUncompressedData);
+        m_pProp         = (anim_prop*)      ((uaddr)m_pProp        + (uaddr)m_pUncompressedData);
+        m_pKeyBlock     = (anim_key_block*) ((uaddr)m_pKeyBlock    + (uaddr)m_pUncompressedData);
     }
 
     //
@@ -1039,10 +1039,10 @@ void anim_group::SetupForSaving ( xbool bSetupIndices, xbool bToggleEndian )
     if( bSetupIndices )
     {
         // Convert base ptrs into offsets
-        m_pBone         = (anim_bone*)      ((u32)m_pBone        - (u32)m_pUncompressedData);
-        m_pAnimInfo     = (anim_info*)      ((u32)m_pAnimInfo    - (u32)m_pUncompressedData);
-        m_pProp         = (anim_prop*)      ((u32)m_pProp        - (u32)m_pUncompressedData);
-        m_pKeyBlock     = (anim_key_block*) ((u32)m_pKeyBlock    - (u32)m_pUncompressedData);
+        m_pBone         = (anim_bone*)      ((uaddr)m_pBone        - (uaddr)m_pUncompressedData);
+        m_pAnimInfo     = (anim_info*)      ((uaddr)m_pAnimInfo    - (uaddr)m_pUncompressedData);
+        m_pProp         = (anim_prop*)      ((uaddr)m_pProp        - (uaddr)m_pUncompressedData);
+        m_pKeyBlock     = (anim_key_block*) ((uaddr)m_pKeyBlock    - (uaddr)m_pUncompressedData);
 
         if( bToggleEndian )
         {

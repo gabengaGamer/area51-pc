@@ -135,14 +135,14 @@ private:
     char*                   m_LipSyncTable;                 // Base address of the lip sync data.
     char*                   m_BreakPointTable;              // Base address of the breakpoint data.
     char*                   m_MusicData;                    // Base address of the music data
-    u32*                    m_DescriptorTable;              // Pointer to the descriptor table
+    uaddr*                  m_DescriptorTable;              // Pointer to the descriptor table
     u16*                    m_DescriptorBuffer;             // Pointer to the descriptor buffer
     void*                   m_HotSamples;                   // Table of hot samples.
     void*                   m_WarmSamples;                  // Table of warm samples.
     void*                   m_ColdSamples;                  // Table of cold samples.
 
     u16*                    m_SampleIndices[NUM_TEMPERATURES];
-    u32                     m_AudioRam;
+    uaddr                   m_AudioRam;
 
 friend class audio_mgr;
 

@@ -187,7 +187,7 @@ xbool audio_package::Init( const char* pFilename )
                 m_IdentifierTable = (descriptor_identifier*)vm_Alloc( m_Header.nIdentifiers * sizeof(descriptor_identifier) );
 
                 // Allocate memory for the descriptor table.
-                m_DescriptorTable = (u32*)vm_Alloc( m_Header.nDescriptors * sizeof(u32*) );
+                m_DescriptorTable = (uaddr*)vm_Alloc( m_Header.nDescriptors * sizeof(uaddr) );
 
                 // Allocate memory for the descriptors.
                 m_DescriptorBuffer = (u16*)vm_Alloc( m_Header.DescriptorFootprint );
@@ -250,12 +250,14 @@ xbool audio_package::Init( const char* pFilename )
                 for( i=0 ; i<m_Header.nIdentifiers ; i++ )
                     m_IdentifierTable[ i ].pPackage = this;
 
-                // Read in the descriptor offsets.
-                x_fread( m_DescriptorTable, sizeof(s32), m_Header.nDescriptors, f );
-
-                // Fix up the descriptor pointers.
+                // Read the 32-bit on-disk descriptor offsets and resolve them
+                // to pointer-sized addresses in memory.
                 for( i=0 ; i<m_Header.nDescriptors ; i++ )
-                    m_DescriptorTable[ i ] += (u32)m_DescriptorBuffer;
+                {
+                    s32 Offset;
+                    x_fread( &Offset, sizeof(s32), 1, f );
+                    m_DescriptorTable[ i ] = (uaddr)m_DescriptorBuffer + (u32)Offset;
+                }
 
                 // Read in the descriptors.
                 x_fread( m_DescriptorBuffer, m_Header.DescriptorFootprint, 1, f );
@@ -292,11 +294,11 @@ xbool audio_package::Init( const char* pFilename )
                 m_AudioRam = 0;
                 if( m_Header.Aram )
                 {
-                    m_AudioRam    = (u32)g_AudioHardware.AllocAudioRam( m_Header.Aram );
+                    m_AudioRam    = (uaddr)g_AudioHardware.AllocAudioRam( m_Header.Aram );
                     u32 Aram      = m_AudioRam;
                     s32 TotalAram = 0;
                     u32 BlockSize = 0;
-                    u32 Base      = (u32)m_HotSamples;
+                    uaddr Base    = (uaddr)m_HotSamples;
 
                     #ifdef X_DEBUG
                     if( m_AudioRam==0 )

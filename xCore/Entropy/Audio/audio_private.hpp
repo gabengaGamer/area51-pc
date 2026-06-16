@@ -294,8 +294,8 @@ volatile xbool                  StreamDone;                             // Strea
          u32                    WaveformLength;                         // Length of the waveforem data.
          u32                    WaveformCursor;                         // Current position within file.
          channel*               pChannel[MAX_STREAM_CHANNELS];          // Channel pointers. 
-         u32                    ARAM[MAX_STREAM_CHANNELS][2];           // ARAM Stereo Buffers (double buffered).
-         u32                    MainRAM[2];                             // Main Ram MP3 Stereo Buffers (double buffered).
+         uaddr                  ARAM[MAX_STREAM_CHANNELS][2];           // ARAM Stereo Buffers (double buffered).
+         uaddr                  MainRAM[2];                             // Main Ram MP3 Stereo Buffers (double buffered).
          u32                    ReadBufferSize;                         // Size of the read buffer.
 volatile u32                    ARAMWriteBuffer;                        // Which aram buffer is the write buffer?
 volatile void*                  HandleMP3;                              // MP3 de-coder handle.

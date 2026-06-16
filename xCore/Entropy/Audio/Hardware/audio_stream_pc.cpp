@@ -84,7 +84,7 @@ void audio_stream_read_callback( io_request* pRequest, audio_stream* pStream, s3
 void audio_stream_mgr::Init( void )
 {
     s32 nBytes;
-    u32 BaseRam;
+    uaddr BaseRam;
     s32 i;
 
     // Nuke 'em.
@@ -98,7 +98,7 @@ void audio_stream_mgr::Init( void )
 
 	// Allocate the main ram buffers for mp3 de-compression
 	nBytes = MAX_AUDIO_STREAMS * MP3_BUFFER_SIZE * 2;
-	m_MainRam = (u32)x_malloc( nBytes );
+	m_MainRam = (uaddr)x_malloc( nBytes );
 
 	// Assign mp3 buffers to the stream
 	BaseRam = m_MainRam;
@@ -112,15 +112,15 @@ void audio_stream_mgr::Init( void )
 
     // Allocate the aram
     nBytes = MAX_AUDIO_STREAMS * MAX_STREAM_CHANNELS * STREAM_BUFFER_SIZE * 2; 
-    m_ARAM = (u32)g_AudioHardware.AllocAudioRam( nBytes );
+    m_ARAM = (uaddr)g_AudioHardware.AllocAudioRam( nBytes );
     
 	// MP3 streaming only!
     nBytes = MP3_BUFFER_SIZE;
 	// nBytes = MAX_STREAM_CHANNELS * STREAM_BUFFER_SIZE; // for pcm streaming
 
     // Allocate the read buffers
-    m_ReadBuffers[0] = (u32)x_malloc( nBytes );
-    m_ReadBuffers[1] = (u32)x_malloc( nBytes );
+    m_ReadBuffers[0] = (uaddr)x_malloc( nBytes );
+    m_ReadBuffers[1] = (uaddr)x_malloc( nBytes );
 
     // Asign aram to the stream buffers
     BaseRam = m_ARAM;

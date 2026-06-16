@@ -692,7 +692,7 @@ f32 audio_mgr::GetLengthSeconds( const char* pIdentifier )
                         ASSERT( nChannels == 1 || nChannels == 2 );
 
                         u32 ColdIndex = (u32)pPackage->m_SampleIndices[ COLD ][ Index ];
-                        u32 Base      = (u32)pPackage->m_ColdSamples + (ColdIndex * pPackage->m_Header.HeaderSizes[ COLD ]);
+                        uaddr Base    = (uaddr)pPackage->m_ColdSamples + (ColdIndex * pPackage->m_Header.HeaderSizes[ COLD ]);
                         cold_sample* pColdSample = (cold_sample*)Base;
                 
                         Result = (f32)pColdSample->nSamples / (f32)pColdSample->SampleRate;
@@ -1059,7 +1059,7 @@ s32 audio_mgr::AppendHot( u32 Index, f32 DeltaTime, u16* pDescriptor, voice* pVo
 
     // For each channel...
     u32 HotIndex = (u32)pPackage->m_SampleIndices[ HOT ][ Index ];
-    u32 Base     = (u32)pPackage->m_HotSamples + (HotIndex * pPackage->m_Header.HeaderSizes[ HOT ]);
+    uaddr Base   = (uaddr)pPackage->m_HotSamples + (HotIndex * pPackage->m_Header.HeaderSizes[ HOT ]);
     for( i=0 ; i<nChannels ; i++, Base+=pPackage->m_Header.HeaderSizes[ HOT ] )
     {
         element* pElement = pElements[ i ];
@@ -1168,7 +1168,7 @@ s32 audio_mgr::AppendCold( u32 Index, f32 DeltaTime, u16* pDescriptor, voice* pV
 
     // For each channel...
     u32 ColdIndex = (u32)pPackage->m_SampleIndices[ COLD ][ Index ];
-    u32 Base      = (u32)pPackage->m_ColdSamples + (ColdIndex * pPackage->m_Header.HeaderSizes[ COLD ]);
+    uaddr Base    = (uaddr)pPackage->m_ColdSamples + (ColdIndex * pPackage->m_Header.HeaderSizes[ COLD ]);
     for( i=0 ; i<nChannels ; i++, Base+=pPackage->m_Header.HeaderSizes[ COLD ] )
     {
         element* pElement = pElements[ i ];

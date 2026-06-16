@@ -494,10 +494,10 @@ void AnimationDecompress( const anim_group& AG,
     for( i=0; i<(s32)TotalStreams; i++ )
     {
         // Be sure we haven't overun the decompressed area
-        ASSERT( (u32)pData <= ((u32)pStream + DecompressedSize) );
+        ASSERT( (uaddr)pData <= ((uaddr)pStream + DecompressedSize) );
 
         // Compute offset for this stream
-        pStream[i].SetOffset( (u32)pData - (u32)pStream );
+        pStream[i].SetOffset( (uaddr)pData - (uaddr)pStream );
 
         //
         // Call the decompressors for S,R,T
@@ -511,7 +511,7 @@ void AnimationDecompress( const anim_group& AG,
     //
     // Verify we decompressed into the size we expected
     //
-    ASSERT( (u32)pData == ((u32)pStream + DecompressedSize) );
+    ASSERT( (uaddr)pData == ((uaddr)pStream + DecompressedSize) );
 
     //
     // Free temporary decompressor indices
