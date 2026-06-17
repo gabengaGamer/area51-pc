@@ -5971,8 +5971,11 @@ void state_mgr::UpdateSinglePlayerLoadMission( void )
         {
             SetState( SM_SERVER_SYNC );
         }
-        // let the dialog know that we have finished loading the game
-        pLoadGame->LoadingComplete();
+        else
+        {
+            // let the dialog know that we have finished loading the game
+            pLoadGame->LoadingComplete();
+        }
     }
 }
 
