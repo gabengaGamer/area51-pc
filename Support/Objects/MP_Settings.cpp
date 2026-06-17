@@ -55,7 +55,7 @@ const   char*   mp_settings::s_GameTypeAbbr[] =
 };
 
 s32     mp_settings::s_Circuit[MAX_CIRCUIT_GAMES];      // [GameType]
-s32     mp_settings::s_NGameTypes = sizeof(s_GameTypeAbbr) / 4;
+s32     mp_settings::s_NGameTypes = sizeof(s_GameTypeAbbr) / sizeof(s_GameTypeAbbr[0]);
 
 //==============================================================================
 //  OBJECT DESCRIPTION

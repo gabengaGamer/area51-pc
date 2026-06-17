@@ -685,7 +685,40 @@ xbool anim_group::Load( X_FILE* fp, const char* pFileName )
 {
     s32 i;
 
+#if defined(_WIN64) || (defined(__SIZEOF_POINTER__) && __SIZEOF_POINTER__ == 8)
+    {
+        byte Hdr[176];
+        x_fread( Hdr, sizeof(Hdr), 1, fp );
+
+        x_memcpy( &m_BBox,    &Hdr[ 0], 32 );
+        x_memcpy( m_FileName, &Hdr[32], 60 );
+        x_memcpy( &m_Version,              &Hdr[ 96], 4 );
+        x_memcpy( &m_TotalNFrames,         &Hdr[100], 4 );
+        x_memcpy( &m_TotalNKeys,           &Hdr[104], 4 );
+        x_memcpy( &m_nBones,               &Hdr[108], 4 );
+        x_memcpy( &m_nAnims,               &Hdr[116], 4 );
+        x_memcpy( &m_nProps,               &Hdr[124], 4 );
+        x_memcpy( &m_nEvents,              &Hdr[132], 4 );
+        x_memcpy( &m_nKeyBlocks,           &Hdr[144], 4 );
+        x_memcpy( &m_UncompressedDataSize, &Hdr[152], 4 );
+        x_memcpy( &m_CompressedDataSize,   &Hdr[160], 4 );
+
+        u32 BoneOff, AnimOff, PropOff, KeyOff;
+        x_memcpy( &BoneOff, &Hdr[112], 4 );
+        x_memcpy( &AnimOff, &Hdr[120], 4 );
+        x_memcpy( &PropOff, &Hdr[128], 4 );
+        x_memcpy( &KeyOff,  &Hdr[148], 4 );
+        m_pBone     = (anim_bone*)      (uaddr)BoneOff;
+        m_pAnimInfo = (anim_info*)      (uaddr)AnimOff;
+        m_pProp     = (anim_prop*)      (uaddr)PropOff;
+        m_pKeyBlock = (anim_key_block*) (uaddr)KeyOff;
+
+        m_pHashTable = NULL; m_pEvent = NULL; m_pEventData = NULL;
+        m_pUncompressedData = NULL; m_pCompressedData = NULL;
+    }
+#else
     x_fread( this, sizeof(anim_group), 1, fp );
+#endif
 
     // Copy filename into anim_group
     if( pFileName )
@@ -713,6 +746,76 @@ xbool anim_group::Load( X_FILE* fp, const char* pFileName )
     }
     ASSERT(m_nBones >= 0);
 
+#if defined(_WIN64) || (defined(__SIZEOF_POINTER__) && __SIZEOF_POINTER__ == 8)
+    {
+        const u32 BoneOff = (u32)(uaddr)m_pBone;
+        const u32 AnimOff = (u32)(uaddr)m_pAnimInfo;
+        const u32 PropOff = (u32)(uaddr)m_pProp;
+        const u32 KeyOff  = (u32)(uaddr)m_pKeyBlock;
+
+        const s32 DiskBone = 144, DiskInfo = 160, DiskProp = 36, DiskKey = 28;
+
+        byte* pSrc = (byte*)x_malloc( m_UncompressedDataSize );
+        ASSERT( pSrc );
+        x_fread( pSrc, m_UncompressedDataSize, 1, fp );
+
+        m_pCompressedData = (byte*)x_malloc( m_CompressedDataSize );
+        ASSERT( m_pCompressedData );
+        x_fread( m_pCompressedData, m_CompressedDataSize, 1, fp );
+
+        m_pEventData = new event_data[m_nEvents];
+        ASSERT( m_pEventData );
+        x_fread( m_pEventData, sizeof(event_data), m_nEvents, fp );
+
+        s32 oBone = 0;
+        s32 oAnim = (s32)ALIGN_16( oBone + m_nBones     * (s32)sizeof(anim_bone)      );
+        s32 oProp = (s32)ALIGN_16( oAnim + m_nAnims     * (s32)sizeof(anim_info)      );
+        s32 oKey  = (s32)ALIGN_16( oProp + m_nProps     * (s32)sizeof(anim_prop)      );
+        s32 Total = (s32)ALIGN_16( oKey  + m_nKeyBlocks * (s32)sizeof(anim_key_block) );
+
+        m_UncompressedDataSize = Total;
+        m_pUncompressedData    = (byte*)x_malloc( Total );
+        ASSERT( m_pUncompressedData );
+
+        // anim_bone / anim_prop have no pointers: identical layout, raw copy.
+        x_memcpy( m_pUncompressedData + oBone, pSrc + BoneOff, m_nBones * DiskBone );
+        x_memcpy( m_pUncompressedData + oProp, pSrc + PropOff, m_nProps * DiskProp );
+
+        // anim_info: same overall size, but fields shift around its 8-byte pointer.
+        for( i=0; i<m_nAnims; i++ )
+        {
+            byte* s = pSrc + AnimOff + i*DiskInfo;
+            byte* d = m_pUncompressedData + oAnim + i*(s32)sizeof(anim_info);
+            x_memcpy( d,      s,      48 );   // m_TotalTranslation + m_BBox
+            x_memcpy( d + 56, s + 52, 94 );   // m_nAnims .. m_AnimKeys
+            ((anim_info*)d)->m_pAnimGroup = NULL;
+        }
+
+        // anim_key_block: grows 28 -> 48; its pointers are all rebuilt below.
+        for( i=0; i<m_nKeyBlocks; i++ )
+        {
+            byte*           s  = pSrc + KeyOff + i*DiskKey;
+            anim_key_block* kb = (anim_key_block*)( m_pUncompressedData + oKey + i*(s32)sizeof(anim_key_block) );
+            u32 BitField;
+            x_memcpy( &kb->Checksum,             s + 12, 4 );
+            x_memcpy( &kb->CompressedDataOffset, s + 20, 4 );
+            x_memcpy( &BitField,                 s + 24, 4 );
+            kb->nFrames              = (s32)(  BitField        & 0xFF     );
+            kb->DecompressedDataSize = (s32)( (BitField >> 8 ) & 0xFFFFFF );
+            kb->pNext   = NULL;
+            kb->pPrev   = NULL;
+            kb->pStream = NULL;
+            kb->pFactoredCompressedData = NULL;
+        }
+
+        m_pBone     = (anim_bone*)     ( m_pUncompressedData + oBone );
+        m_pAnimInfo = (anim_info*)     ( m_pUncompressedData + oAnim );
+        m_pProp     = (anim_prop*)     ( m_pUncompressedData + oProp );
+        m_pKeyBlock = (anim_key_block*)( m_pUncompressedData + oKey  );
+
+        x_free( pSrc );
+    }
+#else
     // Allocate room for uncompressed and compressed data
     {
         m_pUncompressedData = (byte*)x_malloc( m_UncompressedDataSize );
@@ -731,6 +834,7 @@ xbool anim_group::Load( X_FILE* fp, const char* pFileName )
 
     // Convert ptr offsets back into ptrs
     SetupOffsetsAndPtrs( FALSE );
+#endif
 
     //
     // Convert event data into bytestream
