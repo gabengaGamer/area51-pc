@@ -779,6 +779,18 @@ io_open_file* io_fs::AcquireFile( void )
     // Snag that bad boy!
     m_Mutex.Enter();
 
+    // Pool exhausted: dump who is holding every slot so the leak is named.
+    if( m_FreeFiles == NULL )
+    {
+        x_DebugMsg( "io_fs::AcquireFile OUT OF HANDLES (MAX_FILES=%d). Held:\n", MAX_FILES );
+        for( s32 d=0 ; d<MAX_FILES ; d++ )
+        {
+            io_open_file* pF = &m_Files[d];
+            x_DebugMsg( "  [%2d] r=%d w=%d ram=%p dev=%p '%s'\n",
+                        d, pF->bRead, pF->bWrite, pF->pRAM, pF->pDeviceFile, pF->Filename );
+        }
+    }
+
     // Error check.
 #ifndef bhapgood
     ASSERT( m_FreeFiles );
@@ -815,6 +827,17 @@ void io_fs::ReleaseFile( io_open_file* pFile )
     // Put it in the free list.
     if( (pFile >= &m_Files[ 0 ]) && (pFile < &m_Files[ MAX_FILES ]) )
     {
+        for( io_open_file* pScan = m_FreeFiles ; pScan ; pScan = pScan->pNext )
+        {
+            if( pScan == pFile )
+            {
+                x_DebugMsg( "io_fs::ReleaseFile: double release of slot %d '%s' ignored\n",
+                            (s32)(pFile - &m_Files[0]), pFile->Filename );
+                m_Mutex.Exit();
+                return;
+            }
+        }
+
         // Nuke it.
         x_memset( pFile, 0, sizeof( io_open_file ) );
 
@@ -1365,8 +1388,6 @@ void io_fs::Close( io_open_file* pOpenFile )
     }
     else
     {
-        ASSERT( pOpenFile->pDeviceFile );
-
         // Snag it.
         m_Mutex.Enter();
 
@@ -1377,7 +1398,7 @@ void io_fs::Close( io_open_file* pOpenFile )
     #ifdef DEBUG_IO
         x_DebugMsg( "FS Close: %p\n", (void*)pOpenFile );
     #endif
-        
+
         if( pOpenFile )
         {
             // Valid device file?
@@ -1389,9 +1410,10 @@ void io_fs::Close( io_open_file* pOpenFile )
                     g_IoMgr.CloseDeviceFile( pOpenFile->pDeviceFile );
                 }
             }
-            else if( pOpenFile->pRAM == NULL )
+            else if( pOpenFile->PassThrough )
             {
-                ASSERTS( FALSE, "Close: NULL device file handle" );
+                old_Close( pOpenFile->PassThrough );
+                pOpenFile->PassThrough = NULL;
             }
 
             // Give up the file!

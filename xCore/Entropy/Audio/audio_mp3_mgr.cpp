@@ -68,6 +68,8 @@ struct audio_mp3_mgr::mp3_decoder_state
 
 xbool audio_mp3_mgr::s_Initialized = FALSE;
 
+static void* s_LiveHandle[MAX_AUDIO_STREAMS] = { 0 };
+
 //==============================================================================
 //  GLOBAL INSTANCE
 //==============================================================================
@@ -85,6 +87,13 @@ xbool audio_mp3_mgr::IsValidStream( const audio_stream* pStream )
 
     return (pStream >= &g_AudioStreamMgr.m_AudioStreams[0]) &&
            (pStream <= &g_AudioStreamMgr.m_AudioStreams[MAX_AUDIO_STREAMS-1]);
+}
+
+//==============================================================================
+
+static s32 StreamSlot( const audio_stream* pStream )
+{
+    return (s32)(pStream - &g_AudioStreamMgr.m_AudioStreams[0]);
 }
 
 //==============================================================================
@@ -327,13 +336,7 @@ void audio_mp3_mgr::Kill( void )
     ASSERT( s_Initialized );
 
     for( s32 i = 0; i < MAX_AUDIO_STREAMS; i++ )
-    {
-        audio_stream* pStream = &g_AudioStreamMgr.m_AudioStreams[i];
-        if( pStream->HandleMP3 )
-        {
-            Close( pStream );
-        }
-    }
+        Close( &g_AudioStreamMgr.m_AudioStreams[i] );
 
     s_Initialized = FALSE;
 }
@@ -345,16 +348,13 @@ void audio_mp3_mgr::Open( audio_stream* pStream )
     ASSERT( s_Initialized );
     ASSERT( IsValidStream( pStream ) );
 
+    s32 Slot = StreamSlot( pStream );
+
     pStream->CursorMP3      = 0;
     pStream->WaveformCursor = 0;
     pStream->StreamDone     = FALSE;
 
-    if( pStream->HandleMP3 )
-    {
-        mp3_decoder_state* pOldState = (mp3_decoder_state*)pStream->HandleMP3;
-        x_free( pOldState );
-        pStream->HandleMP3 = NULL;
-    }
+    Close( pStream );
 
     if( (pStream->FileHandle == NULL) || (pStream->WaveformLength == 0) )
         return;
@@ -364,7 +364,8 @@ void audio_mp3_mgr::Open( audio_stream* pStream )
 
     mp3_state_reset( *pState, pStream );
 
-    pStream->HandleMP3 = pState;
+    pStream->HandleMP3   = pState;
+    s_LiveHandle[ Slot ] = pState;
 }
 
 //==============================================================================
@@ -374,11 +375,19 @@ void audio_mp3_mgr::Close( audio_stream* pStream )
     ASSERT( s_Initialized );
     ASSERT( IsValidStream( pStream ) );
 
-    if( pStream->HandleMP3 )
+    s32   Slot    = StreamSlot( pStream );
+    void* pHandle = (void*)pStream->HandleMP3;
+
+    pStream->HandleMP3 = NULL;
+
+    if( pHandle && (pHandle != s_LiveHandle[ Slot ]) )
+        x_DebugMsg( "audio_mp3_mgr::Close: stale handle on slot %d (%p != %p)\n",
+                    Slot, pHandle, s_LiveHandle[ Slot ] );
+
+    if( s_LiveHandle[ Slot ] )
     {
-        mp3_decoder_state* pState = (mp3_decoder_state*)pStream->HandleMP3;
-        x_free( pState );
-        pStream->HandleMP3 = NULL;
+        x_free( s_LiveHandle[ Slot ] );
+        s_LiveHandle[ Slot ] = NULL;
     }
 }
 
