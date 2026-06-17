@@ -197,6 +197,11 @@ s32 RTFDialog( const char* pTitle, const char* pMessage )
     if( s_pRTFMailer )
         s_pRTFMailer( pTitle, pMessage );
 
+    {
+        OutputDebugString( xfs( "*** %s ***\n%s\n", pTitle ? pTitle : "", pMessage ? pMessage : "" ) );
+        return RTF_CONTINUE;
+    }
+
     // Create the dialog box template
     /* dlgVer */    b << (u16)1;
     /* signature */ b << (u16)0xFFFF;
