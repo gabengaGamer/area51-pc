@@ -15,6 +15,7 @@
 #include "Bindings/bind_objects.hpp"
 #include "Bindings/bind_input.hpp"
 #include "Bindings/bind_raycast.hpp"
+#include "Bindings/bind_assets.hpp"
 
 #include "x_files.hpp"
 
@@ -63,6 +64,7 @@ void script_mgr::Init( void )
     AddBindings( new bind_objects()  );
     AddBindings( new bind_input()    );
     AddBindings( new bind_raycast()  );
+    AddBindings( new bind_assets()   );
 
     //--------------------------------------------------------------------------
     //  Call Register() on all modules, including any added before Init()

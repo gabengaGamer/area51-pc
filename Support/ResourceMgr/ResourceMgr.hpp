@@ -101,6 +101,7 @@ public:
         const char* FixupFilename   ( const char* Filename );
 
         void        Load            ( const char* pResourceName );
+        xbool       IsLoaded        ( const char* pResourceName );
         void        Unload          ( const char* pResourceName );
         void        Refresh         ( const char* pResourceName );
         void        RefreshAll      ( void );

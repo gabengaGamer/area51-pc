@@ -82,6 +82,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Backends\lua_backend.hpp" />
+    <ClInclude Include="Bindings\bind_assets.hpp" />
     <ClInclude Include="Bindings\bind_input.hpp" />
     <ClInclude Include="Bindings\bind_objects.hpp" />
     <ClInclude Include="Bindings\bind_raycast.hpp" />
@@ -130,6 +131,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Backends\lua_backend.cpp" />
+    <ClCompile Include="Bindings\bind_assets.cpp" />
     <ClCompile Include="Bindings\bind_input.cpp" />
     <ClCompile Include="Bindings\bind_objects.cpp" />
     <ClCompile Include="Bindings\bind_raycast.cpp" />

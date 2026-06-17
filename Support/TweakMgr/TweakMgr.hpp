@@ -53,6 +53,7 @@ public:
 
 xbool LoadTweaks    ( const char* pDirectory );
 void  UnloadTweaks  ( void );
+xbool SetTweakF32   ( const char* pName, f32 Value );
 
 
 //==============================================================================
