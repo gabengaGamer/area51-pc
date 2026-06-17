@@ -1340,6 +1340,7 @@ shadow_map_mgr::shadow_map_mgr( void ) :
     m_PointLightCount  ( 0 ),
     m_AtlasSourceCount ( 0 ),
     m_AtlasSize        ( 0 ),
+    m_AtlasSizeFloor   ( 0 ),
     m_AtlasLayoutDirty ( FALSE )
 {
     x_memset( m_Sources, 0, sizeof(m_Sources) );
@@ -1523,6 +1524,12 @@ void shadow_map_mgr::UpdateAtlasLayout( void )
         Entries[iLargestEntry].TileSize = ReduceShadowMapResolution( Entries[iLargestEntry].TileSize );
         AtlasSize = GetShadowAtlasSizeForEntries( Entries, NEntries );
     }
+
+    const s32 kAtlasFloorCap = 4096;
+    if( AtlasSize < m_AtlasSizeFloor )
+        AtlasSize = m_AtlasSizeFloor;
+    if( AtlasSize <= kAtlasFloorCap && AtlasSize > m_AtlasSizeFloor )
+        m_AtlasSizeFloor = AtlasSize;
 
     m_AtlasSize = AtlasSize;
 

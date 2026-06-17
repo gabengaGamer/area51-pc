@@ -160,6 +160,7 @@ private:
     s32             m_PointLightCount;
     s32             m_AtlasSourceCount;
     s32             m_AtlasSize;
+    s32             m_AtlasSizeFloor;
     xbool           m_AtlasLayoutDirty;
     shadow_source   m_Sources[MAX_SHADOW_SOURCES];
 };
