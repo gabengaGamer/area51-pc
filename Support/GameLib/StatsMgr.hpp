@@ -151,9 +151,11 @@ public:
     void                RegisterStat(   stat_fields thisField,
                                         f32 thisValue );
 
-    f32                 GetStat(    stat_fields thisStat, 
+    f32                 GetStat(    stat_fields thisStat,
                                     stat_measurement thisMeasurement,
                                     f32 lengthOfTimeToAverage = 1.0f );
+
+    static const char*  GetStatName( stat_fields thisStat );
 
     
     void                DrawFPS( void );

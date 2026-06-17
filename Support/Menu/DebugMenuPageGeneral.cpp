@@ -15,9 +15,7 @@
 #include "Configuration/GameConfig.hpp"
 #include "PhysicsMgr\PhysicsMgr.hpp"
 
-#if defined( TARGET_PS2 )
-#include "StatsMgr.hpp"
-#endif
+#include "GameLib\StatsMgr.hpp"
 
 
 //==============================================================================
@@ -362,6 +360,79 @@ void debug_menu_page_general::OnPreRender ( void )
         g_UiMgr->RenderText( font, Rect, ui_font::h_left|ui_font::v_top, xcolor(XCOLOR_WHITE), Mem );
         y += g_UiMgr->GetLineHeight(font);
     }
+
+#if ENABLE_STATS_MGR
+    if( g_ShowQAInfo )
+    {
+        stats_mgr* pStats = stats_mgr::GetStatsMgr();
+        if( pStats )
+        {
+            const s32 lh = g_UiMgr->GetLineHeight( font );
+            s32       px = 10;
+            s32       py = 50;
+
+            struct stat_row { stat_fields Field; f32 Ms; };
+            stat_row Rows[k_stats_NumTimerStats];
+            s32      nRows  = 0;
+            f32      CPUSum = 0.0f;
+            for( s32 si = 0; si < k_stats_NumTimerStats; si++ )
+            {
+                f32 Ms = pStats->GetStat( (stat_fields)si, k_stats_Average, 0.5f );
+                CPUSum += Ms;
+                if( Ms >= 0.05f )
+                {
+                    Rows[nRows].Field = (stat_fields)si;
+                    Rows[nRows].Ms    = Ms;
+                    nRows++;
+                }
+            }
+
+            for( s32 a = 1; a < nRows; a++ )
+            {
+                stat_row Key = Rows[a];
+                s32      b   = a - 1;
+                while( b >= 0 && Rows[b].Ms < Key.Ms )
+                {
+                    Rows[b+1] = Rows[b];
+                    b--;
+                }
+                Rows[b+1] = Key;
+            }
+
+            irect Box;
+            Box.Set( px - 4, py - 2, px + 196, py + lh * (nRows + 2) + 2 );
+            draw_Rect( Box, xcolor(0,0,0,160), FALSE, DRAW_UI_RTARGET );
+
+            irect TRect;
+            f32   FPS     = eng_GetFPS();
+            f32   FrameMs = ( FPS > 0.0f ) ? ( 1000.0f / FPS ) : 0.0f;
+            xcolor FPSCol = ( FPS >= 55.0f ) ? xcolor(  0,255,  0,255 )
+                          : ( FPS >= 30.0f ) ? xcolor(255,255,  0,255 )
+                          :                    xcolor(255, 64, 64,255 );
+
+            xwstring LFps = (const char *)xfs( "FPS %3.0f  (%4.1f ms)", FPS, FrameMs );
+            g_UiMgr->TextSize( font, TRect, LFps, LFps.GetLength() );
+            TRect.Translate( px, py );
+            g_UiMgr->RenderText( font, TRect, ui_font::h_left|ui_font::v_top, FPSCol, LFps );
+            py += lh;
+
+            xwstring LSum = (const char *)xfs( "CPU sum  %5.2f ms", CPUSum );
+            g_UiMgr->TextSize( font, TRect, LSum, LSum.GetLength() );
+            TRect.Translate( px, py );
+            g_UiMgr->RenderText( font, TRect, ui_font::h_left|ui_font::v_top, xcolor(XCOLOR_WHITE), LSum );
+            py += lh;
+
+            for( s32 r = 0; r < nRows; r++ )
+            {
+                xwstring LRow = (const char *)xfs( "%-14s%5.2f", stats_mgr::GetStatName( Rows[r].Field ), Rows[r].Ms );
+                g_UiMgr->TextSize( font, TRect, LRow, LRow.GetLength() );
+                TRect.Translate( px, py );
+                g_UiMgr->RenderText( font, TRect, ui_font::h_left|ui_font::v_top, xcolor(XCOLOR_WHITE), LRow );
+                py += lh;
+            }
+        }
+    }
+#endif
 
 }
 
