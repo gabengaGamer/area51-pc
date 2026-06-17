@@ -305,7 +305,6 @@ void platform_BeginRigidGeom( geom* pGeom, s32 iSubMesh )
     s_iRigidSubMesh = iSubMesh;
     g_GeomMgr.BeginRigidBatch();
     g_RigidVertMgr.BeginRender();
-    g_GeomMgr.InvalidateCache();
 }
 
 //=============================================================================
@@ -329,7 +328,6 @@ void platform_BeginSkinGeom( geom* pGeom, s32 iSubMesh )
     s_iSkinSubMesh = iSubMesh;
     g_GeomMgr.BeginSkinBatch();
     g_SkinVertMgr.BeginRender();
-    g_GeomMgr.InvalidateCache();
 }
 
 //=============================================================================
@@ -1195,7 +1193,7 @@ void platform_UnlockRigidDListIndex( render::hgeom_inst hInst, s32 iSubMesh )
 static
 void platform_BeginShaders( void )
 {
-    // TODO:
+    g_GeomMgr.InvalidateCache();
 }
 
 //=============================================================================
@@ -1203,7 +1201,11 @@ void platform_BeginShaders( void )
 static
 void platform_EndShaders( void )
 {
-    // TODO:
+    g_GeomMgr.ResetRigidInstanceData();
+    g_GeomMgr.ResetSkinInstanceData();
+    g_GeomMgr.ResetLightCookies();
+    g_GeomMgr.ResetProjTextures();
+    g_GeomMgr.ResetShadowMaps();
 }
 
 //=============================================================================

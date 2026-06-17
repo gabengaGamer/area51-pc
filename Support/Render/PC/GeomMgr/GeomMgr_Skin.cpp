@@ -411,7 +411,6 @@ void geom_mgr::FlushSkinBatch( const material* pMaterial, u8 MaterialOverride )
 {
     if( !HasSkinBatch() )
     {
-        ResetSkinInstanceData();
         ResetSkinBatch();
         return;
     }
@@ -435,10 +434,6 @@ void geom_mgr::FlushSkinBatch( const material* pMaterial, u8 MaterialOverride )
         g_SkinVertMgr.DrawDListInstanced( m_hSkinBatchDList, m_lSkinBatchInstances.GetCount() );
     }
 
-    ResetSkinInstanceData();
-    ResetLightCookies();
-    ResetProjTextures();
-    ResetShadowMaps();
     ResetSkinBatch();
 }
 

@@ -486,6 +486,10 @@ protected:
     ID3D11Buffer*           m_pShadowBuffer;
     ID3D11SamplerState*     m_pShadowAtlasSampler;
     u32                     m_LastLightCookieCount;
+    xbool                   m_bProjTexturesDirty;
+    xbool                   m_bProjTexturesBound;
+    xbool                   m_bShadowMapsDirty;
+    xbool                   m_bShadowMapsBound;
 
     //--------------------------------------------------------------------------
     // Skin Geometry Resources

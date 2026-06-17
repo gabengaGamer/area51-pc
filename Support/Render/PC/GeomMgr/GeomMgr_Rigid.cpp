@@ -402,7 +402,6 @@ void geom_mgr::FlushRigidBatch( const material* pMaterial, u8 MaterialOverride )
 {
     if( !HasRigidBatch() )
     {
-        ResetRigidInstanceData();
         ResetRigidBatch();
         return;
     }
@@ -426,10 +425,6 @@ void geom_mgr::FlushRigidBatch( const material* pMaterial, u8 MaterialOverride )
         g_RigidVertMgr.DrawDListInstanced( m_hRigidBatchDList, m_lRigidBatchInstances.GetCount() );
     }
 
-    ResetRigidInstanceData();
-    ResetLightCookies();
-    ResetProjTextures();
-    ResetShadowMaps();
     ResetRigidBatch();
 }
 

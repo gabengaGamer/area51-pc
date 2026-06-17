@@ -881,6 +881,8 @@ void geom_mgr::InvalidateCache( void )
     m_pCurrentEnvCubemap = NULL;
     m_bRigidFrameDirty  = TRUE;
     m_bSkinFrameDirty   = TRUE;
+    m_bProjTexturesDirty = TRUE;
+    m_bShadowMapsDirty  = TRUE;
 }
 
 //==============================================================================

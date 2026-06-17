@@ -46,6 +46,8 @@ xbool geom_mgr::InitShadowMaps( void )
 
     m_pShadowBuffer       = shader_CreateConstantBuffer( sizeof(cb_shadow_maps), CB_TYPE_DYNAMIC );
     m_pShadowAtlasSampler = NULL;
+    m_bShadowMapsDirty    = TRUE;
+    m_bShadowMapsBound    = FALSE;
 
     if( !m_pShadowBuffer )
         return FALSE;
@@ -101,6 +103,9 @@ void geom_mgr::ResetShadowMaps( void )
     if( !g_pd3dContext )
         return;
 
+    if( !m_bShadowMapsBound )
+        return;
+
     if( m_pShadowBuffer )
     {
         cb_shadow_maps cb;
@@ -120,6 +125,9 @@ void geom_mgr::ResetShadowMaps( void )
     ID3D11SamplerState*       pNullSamp = NULL;
     g_pd3dContext->PSSetShaderResources( PC_SHADOW_ATLAS_TEX_SLOT, 1, &pNullSRV );
     g_pd3dContext->PSSetSamplers( PC_SHADOW_ATLAS_SAMP_SLOT, 1, &pNullSamp );
+
+    m_bShadowMapsDirty = TRUE;
+    m_bShadowMapsBound = FALSE;
 }
 
 //==============================================================================
@@ -128,6 +136,9 @@ xbool geom_mgr::UpdateShadowMaps( void )
 {
     if( !g_pd3dContext || !m_pShadowBuffer )
         return FALSE;
+
+    if( !m_bShadowMapsDirty && m_bShadowMapsBound )
+        return TRUE;
 
     cb_shadow_maps cb;
     x_memset( &cb, 0, sizeof(cb) );
@@ -201,6 +212,9 @@ xbool geom_mgr::UpdateShadowMaps( void )
     g_pd3dContext->PSSetShaderResources( PC_SHADOW_ATLAS_TEX_SLOT, 1, &pFaceShadowSRV );
 
     g_pd3dContext->PSSetSamplers( PC_SHADOW_ATLAS_SAMP_SLOT, 1, &pShadowSampler );
+
+    m_bShadowMapsDirty = FALSE;
+    m_bShadowMapsBound = TRUE;
 
     return ( cb.FaceShadowCount > 0 ) || ( cb.PointShadowLightCount > 0 );
 }

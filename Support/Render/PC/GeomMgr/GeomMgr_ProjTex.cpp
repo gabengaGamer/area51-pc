@@ -41,6 +41,8 @@ xbool geom_mgr::InitProjTextures( void )
     m_pProjSampler          = NULL;
     m_LastProjLightCount    = 0;
     m_LastProjShadowCount   = 0;
+    m_bProjTexturesDirty    = TRUE;
+    m_bProjTexturesBound    = FALSE;
 
     m_pProjTextureBuffer = shader_CreateConstantBuffer( sizeof(cb_proj_textures), CB_TYPE_DYNAMIC );
 
@@ -88,6 +90,13 @@ void geom_mgr::ResetProjTextures( void )
     if( !g_pd3dContext )
         return;
 
+    if( !m_bProjTexturesBound &&
+        !m_LastProjLightCount &&
+        !m_LastProjShadowCount )
+    {
+        return;
+    }
+
     if( m_LastProjLightCount )
     {
         ID3D11ShaderResourceView* nullSRV[proj_texture_mgr::MAX_PROJ_LIGHTS] = { NULL };
@@ -105,6 +114,9 @@ void geom_mgr::ResetProjTextures( void )
         g_pd3dContext->PSSetSamplers( PC_PROJ_SHADOW_TEX_SLOT, m_LastProjShadowCount, nullSamp );
         m_LastProjShadowCount = 0;
     }
+
+    m_bProjTexturesDirty = TRUE;
+    m_bProjTexturesBound = FALSE;
 }
 
 //==============================================================================
@@ -113,6 +125,9 @@ xbool geom_mgr::UpdateProjTextures( u32 Slot )
 {
     if( !m_pProjTextureBuffer || !g_pd3dContext )
         return FALSE;
+
+    if( !m_bProjTexturesDirty && m_bProjTexturesBound )
+        return TRUE;
 
     cb_proj_textures cb;
     x_memset( &cb, 0, sizeof(cb) );
@@ -228,5 +243,7 @@ xbool geom_mgr::UpdateProjTextures( u32 Slot )
 
     m_LastProjLightCount  = nAppliedLights;
     m_LastProjShadowCount = nAppliedShadows;
+    m_bProjTexturesDirty  = FALSE;
+    m_bProjTexturesBound  = TRUE;
     return TRUE;
 }
