@@ -37,3 +37,4 @@ end
 dofile("scripts\\hazmat_spawner.lua")
 dofile("scripts\\dynamic_light_spawner.lua")
 dofile("scripts\\del_surf.lua")
+dofile("scripts\\boss_fight.lua")
