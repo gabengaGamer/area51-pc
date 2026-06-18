@@ -46,10 +46,10 @@ protected:
             s16         m_Tail;
             s16         m_ValidEntries;
             s16         m_MaxEntries;
-            s32*        m_pQueue;
+            uaddr*      m_pQueue;
             xthreadlist    m_WaitingForRecv;
             xthreadlist m_WaitingForSend;
-            s32         m_QueueBuffer[MAX_DEFAULT_MESSAGES];
+            uaddr       m_QueueBuffer[MAX_DEFAULT_MESSAGES];
 private:
                         xmesgq      ( void );
 protected:

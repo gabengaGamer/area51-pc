@@ -1605,11 +1605,13 @@ s32 ui_manager::CreateUser( s32 ControllerID, const irect& Bounds, s32 Data )
         static const s32 MAX_DIALOGS_EVER = 20;
         pUser->DialogStack.SetCapacity( MAX_DIALOGS_EVER ); // Plenty of room
 
-        // Add an entry to the users list
+        // Assign a stable id (handle) and add to the users list
+        static s32 s_NextUserId = 0;
+        pUser->Id = ++s_NextUserId;
         m_Users.Append() = pUser;
     }
 
-    return (s32)pUser;
+    return pUser->Id;
 }
 
 //=========================================================================
@@ -1618,7 +1620,7 @@ void ui_manager::DeleteAllUsers( void )
 {
     while( m_Users.GetCount() > 0 )
     {
-        DeleteUser( (s32)m_Users[0] );
+        DeleteUser( m_Users[0]->Id );
     }
 }
 
@@ -1628,10 +1630,10 @@ void ui_manager::DeleteUser( s32 UserID )
 {
     s32     Index;
 
-    ASSERT( (m_Users.Find( (user*)UserID )) != -1 );
+    ASSERT( (m_Users.Find( GetUserById( UserID ) )) != -1 );
 
     // Find the users index
-    Index = m_Users.Find( (user*)UserID );
+    Index = m_Users.Find( GetUserById( UserID ) );
     ASSERT( Index != -1 );
 
     // Close all the dialog that may be open
@@ -1650,11 +1652,21 @@ void ui_manager::DeleteUser( s32 UserID )
 
 //=========================================================================
 
+ui_manager::user* ui_manager::GetUserById( s32 UserID ) const
+{
+    for( s32 i=0; i<m_Users.GetCount(); i++ )
+        if( m_Users[i]->Id == UserID )
+            return m_Users[i];
+    return NULL;
+}
+
+//=========================================================================
+
 ui_manager::user* ui_manager::GetUser( s32 UserID ) const
 {
-    ASSERT( (m_Users.Find( (user*)UserID )) != -1 );
+    ASSERT( (m_Users.Find( GetUserById( UserID ) )) != -1 );
 
-    user*   pUser = (user*)UserID;
+    user*   pUser = GetUserById( UserID );
     return pUser;
 }
 
@@ -1662,9 +1674,9 @@ ui_manager::user* ui_manager::GetUser( s32 UserID ) const
 
 void ui_manager::SetUserController( s32 UserID, s32 ControllerID )
 {
-    ASSERT( (m_Users.Find( (user*)UserID )) != -1 );
+    ASSERT( (m_Users.Find( GetUserById( UserID ) )) != -1 );
 
-    user*   pUser = (user*)UserID;
+    user*   pUser = GetUserById( UserID );
     pUser->ControllerID = ControllerID;
 }
 
@@ -1672,9 +1684,9 @@ void ui_manager::SetUserController( s32 UserID, s32 ControllerID )
 
 s32 ui_manager::GetUserData( s32 UserID ) const
 {
-    ASSERT( (m_Users.Find( (user*)UserID )) != -1 );
+    ASSERT( (m_Users.Find( GetUserById( UserID ) )) != -1 );
 
-    user*   pUser = (user*)UserID;
+    user*   pUser = GetUserById( UserID );
     return pUser->Data;
 }
 
@@ -1682,9 +1694,9 @@ s32 ui_manager::GetUserData( s32 UserID ) const
 
 ui_win* ui_manager::GetFocusedWindow( s32 UserID ) const
 {
-    ASSERT( (m_Users.Find( (user*)UserID )) != -1 );
+    ASSERT( (m_Users.Find( GetUserById( UserID ) )) != -1 );
 
-    user*   pUser = (user*)UserID;
+    user*   pUser = GetUserById( UserID );
     return pUser->pFocusedWindow;
 }
 
@@ -1692,9 +1704,9 @@ ui_win* ui_manager::GetFocusedWindow( s32 UserID ) const
 
 void ui_manager::SetMouseVisible( s32 UserID, xbool State )
 {
-    ASSERT( (m_Users.Find( (user*)UserID )) != -1 );
+    ASSERT( (m_Users.Find( GetUserById( UserID ) )) != -1 );
 
-    user*   pUser = (user*)UserID;
+    user*   pUser = GetUserById( UserID );
     pUser->MouseVisible = State;
 }
 
@@ -1702,9 +1714,9 @@ void ui_manager::SetMouseVisible( s32 UserID, xbool State )
 
 xbool ui_manager::GetMouseVisible( s32 UserID ) const
 {
-    ASSERT( (m_Users.Find( (user*)UserID )) != -1 );
+    ASSERT( (m_Users.Find( GetUserById( UserID ) )) != -1 );
 
-    user*   pUser = (user*)UserID;
+    user*   pUser = GetUserById( UserID );
     return pUser->MouseVisible;
 }
 
@@ -1719,9 +1731,9 @@ xbool ui_manager::IsGamepadActiveInput( void ) const
 
 void ui_manager::SetMousePos( s32 UserID, s32 x, s32 y )
 {
-    ASSERT( (m_Users.Find( (user*)UserID )) != -1 );
+    ASSERT( (m_Users.Find( GetUserById( UserID ) )) != -1 );
 
-    user*   pUser = (user*)UserID;
+    user*   pUser = GetUserById( UserID );
     pUser->MouseX = x;
     pUser->MouseY = y;
 }
@@ -1730,9 +1742,9 @@ void ui_manager::SetMousePos( s32 UserID, s32 x, s32 y )
 
 void ui_manager::GetMousePos( s32 UserID, s32& x, s32& y ) const
 {
-    ASSERT( (m_Users.Find( (user*)UserID )) != -1 );
+    ASSERT( (m_Users.Find( GetUserById( UserID ) )) != -1 );
 
-    user*   pUser = (user*)UserID;
+    user*   pUser = GetUserById( UserID );
     x = pUser->MouseX;
     y = pUser->MouseY;
 }
@@ -1741,9 +1753,9 @@ void ui_manager::GetMousePos( s32 UserID, s32& x, s32& y ) const
 
 void ui_manager::SetFocusWindow( s32 UserID, ui_win* pWin )
 {
-    ASSERT( (m_Users.Find( (user*)UserID )) != -1 );
+    ASSERT( (m_Users.Find( GetUserById( UserID ) )) != -1 );
 
-    user*   pUser = (user*)UserID;
+    user*   pUser = GetUserById( UserID );
 
     // Only fire events when the focused window actually changes
     if( pWin == pUser->pFocusedWindow )
@@ -1762,9 +1774,9 @@ void ui_manager::SetFocusWindow( s32 UserID, ui_win* pWin )
 
 ui_win* ui_manager::SetCapture( s32 UserID, ui_win* pWin )
 {
-    ASSERT( (m_Users.Find( (user*)UserID )) != -1 );
+    ASSERT( (m_Users.Find( GetUserById( UserID ) )) != -1 );
 
-    user*   pUser = (user*)UserID;
+    user*   pUser = GetUserById( UserID );
     ui_win* pOldCaptureWin = pUser->pCaptureWindow;
     pUser->pCaptureWindow = pWin;
 
@@ -1775,9 +1787,9 @@ ui_win* ui_manager::SetCapture( s32 UserID, ui_win* pWin )
 
 void ui_manager::ReleaseCapture( s32 UserID )
 {
-    ASSERT( (m_Users.Find( (user*)UserID )) != -1 );
+    ASSERT( (m_Users.Find( GetUserById( UserID ) )) != -1 );
 
-    user*   pUser = (user*)UserID;
+    user*   pUser = GetUserById( UserID );
     pUser->pCaptureWindow = NULL;
 }
 
@@ -1785,10 +1797,10 @@ void ui_manager::ReleaseCapture( s32 UserID )
 
 void ui_manager::SetUserBackground( s32 UserID, const char* pName )
 {
-    ASSERT( (m_Users.Find( (user*)UserID )) != -1 );
+    ASSERT( (m_Users.Find( GetUserById( UserID ) )) != -1 );
 
     m_EnableBackground = TRUE;
-    user*   pUser = (user*)UserID;
+    user*   pUser = GetUserById( UserID );
     pUser->Background = pName;
 }
 
@@ -1796,9 +1808,9 @@ void ui_manager::SetUserBackground( s32 UserID, const char* pName )
 
 const irect& ui_manager::GetUserBounds( s32 UserID ) const
 {
-    ASSERT( (m_Users.Find( (user*)UserID )) != -1 );
+    ASSERT( (m_Users.Find( GetUserById( UserID ) )) != -1 );
 
-    user*   pUser = (user*)UserID;
+    user*   pUser = GetUserById( UserID );
     return pUser->Bounds;
 }
 
@@ -1806,9 +1818,9 @@ const irect& ui_manager::GetUserBounds( s32 UserID ) const
 
 void ui_manager::EnableUser( s32 UserID, xbool State )
 {
-    ASSERT( (m_Users.Find( (user*)UserID )) != -1 );
+    ASSERT( (m_Users.Find( GetUserById( UserID ) )) != -1 );
 
-    user*   pUser = (user*)UserID;
+    user*   pUser = GetUserById( UserID );
     pUser->Enabled = State;
 }
 
@@ -1816,9 +1828,9 @@ void ui_manager::EnableUser( s32 UserID, xbool State )
 
 xbool ui_manager::IsUserEnabled( s32 UserID ) const
 {
-    ASSERT( (m_Users.Find( (user*)UserID )) != -1 );
+    ASSERT( (m_Users.Find( GetUserById( UserID ) )) != -1 );
 
-    user*   pUser = (user*)UserID;
+    user*   pUser = GetUserById( UserID );
     return pUser->Enabled;
 }
 
@@ -1850,7 +1862,7 @@ xbool ui_manager::ProcessInput( f32 DeltaTime )
             // Only process input for enabled users
             if( pUser->Enabled )
             {
-                Continue &= ProcessInput( DeltaTime, (s32)pUser );
+                Continue &= ProcessInput( DeltaTime, pUser->Id );
             }
         }
     }
@@ -1913,8 +1925,8 @@ xbool ui_manager::ProcessInput( f32 DeltaTime, s32 UserID )
     bInProcessInput = FALSE;
 #endif
 
-    ASSERT( (m_Users.Find( (user*)UserID )) != -1 );
-    user*   pUser = (user*)UserID;
+    ASSERT( (m_Users.Find( GetUserById( UserID ) )) != -1 );
+    user*   pUser = GetUserById( UserID );
 
     do
     {
@@ -1964,7 +1976,7 @@ xbool ui_manager::ProcessInput( f32 DeltaTime, s32 UserID )
                 // Only steal focus when the mouse is actually over a control.
                 // Hovering over empty background leaves the current focus intact
                 if( pWindowUnderMouse )
-                    SetFocusWindow( (s32)pUser, pWindowUnderMouse );
+                    SetFocusWindow( pUser->Id, pWindowUnderMouse );
             }
         }
 
@@ -2416,8 +2428,8 @@ ui_dialog* ui_manager::OpenDialog( s32 UserID, const char* ClassName, irect Posi
     ui_pfn_dlgfact  pFactory    = NULL;
     dialog_tem*     pDialogTem  = NULL;
 
-    ASSERT( (m_Users.Find( (user*)UserID )) != -1 );
-    user* pUser = (user*)UserID;
+    ASSERT( (m_Users.Find( GetUserById( UserID ) )) != -1 );
+    user* pUser = GetUserById( UserID );
 
     // Find the dialogclass entry
     for( i=0 ; i<m_DialogClasses.GetCount() ; i++ )
@@ -2528,8 +2540,8 @@ ui_dialog* ui_manager::OpenDialog( s32 UserID, const char* ClassName, irect Posi
 
 void ui_manager::EndDialog( s32 UserID, xbool ResetCursor )
 {
-    ASSERT( (m_Users.Find( (user*)UserID )) != -1 );
-    user*   pUser = (user*)UserID;
+    ASSERT( (m_Users.Find( GetUserById( UserID ) )) != -1 );
+    user*   pUser = GetUserById( UserID );
     s32     Count = pUser->DialogStack.GetCount();
 
     // Check if there are any dialogs to end
@@ -2589,8 +2601,8 @@ void ui_manager::EndUsersDialogs( s32 UserID )
 
 s32 ui_manager::GetNumUserDialogs( s32 UserID )
 {
-    ASSERT( (m_Users.Find( (user*)UserID )) != -1 );
-    user*   pUser = (user*)UserID;
+    ASSERT( (m_Users.Find( GetUserById( UserID ) )) != -1 );
+    user*   pUser = GetUserById( UserID );
 
     // Return the number of stacked dialogs
     return pUser->DialogStack.GetCount();
@@ -2600,8 +2612,8 @@ s32 ui_manager::GetNumUserDialogs( s32 UserID )
 
 ui_dialog* ui_manager::GetTopmostDialog( s32 UserID )
 {
-    ASSERT( (m_Users.Find( (user*)UserID )) != -1 );
-    user*   pUser = (user*)UserID;
+    ASSERT( (m_Users.Find( GetUserById( UserID ) )) != -1 );
+    user*   pUser = GetUserById( UserID );
 
     if( pUser->DialogStack.GetCount() > 0 )
         return pUser->DialogStack.GetAt( pUser->DialogStack.GetCount()-1 );

@@ -38,9 +38,9 @@ public:
 //------------------------------------------------------------------------------
 
             audio_stream    m_AudioStreams[ MAX_AUDIO_STREAMS ];
-            u32             m_ARAM;
-            u32             m_MainRam;
-            u32             m_ReadBuffers[2];
+            uaddr           m_ARAM;
+            uaddr           m_MainRam;
+            uaddr           m_ReadBuffers[2];
             u32             m_ActiveReadBuffer;
             s32             m_nReservedStreams;
 };

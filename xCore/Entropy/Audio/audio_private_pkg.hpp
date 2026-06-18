@@ -423,7 +423,7 @@ union compression_header
 
 struct sample_header
 {
-    u32             AudioRam;         // Address in audio ram.
+    uaddr           AudioRam;         // Address in audio ram.
     u32             WaveformOffset;   // Offset within the file of the sample.
     u32             WaveformLength;   // Length of the waveform data.
     u32             LipSyncOffset;    // Offset within the LipSync data (-1 = not defined)

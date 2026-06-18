@@ -1207,7 +1207,7 @@ void xbitmap::Setup( format    Format,
 
     if( nMips )
     {
-        u32  iOff = u32(m_Data.pMip+nMips+1)-u32(m_Data.pMip);
+        u32  iOff = (uaddr)(m_Data.pMip+nMips+1)-(uaddr)(m_Data.pMip);
         mip* pMip = m_Data.pMip;
         s32  h    = Height;
         s32  w    = Width;

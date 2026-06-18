@@ -284,14 +284,14 @@ u16 spatial_dbase::AllocCell( s32 X, s32 Y, s32 Z, s32 Level )
         m_nCellsAllocated += (2048*8);
         #endif
 
-        x_DebugMsg("WARNING: AllocCell1: %08X ",(u32)m_pCell);
+        x_DebugMsg("WARNING: AllocCell1: %08X ",(u32)(uaddr)m_pCell);
         m_pCell = (spatial_cell*)x_realloc( m_pCell, sizeof(spatial_cell)*m_nCellsAllocated );
         if( m_pCell == NULL )
         {
             BREAK;
         }
         ASSERT( m_pCell );
-        x_DebugMsg("AllocCell2: %08X\n",(u32)m_pCell);
+        x_DebugMsg("AllocCell2: %08X\n",(u32)(uaddr)m_pCell);
 
         // Add new Cells to free list
         for( s32 i=m_nCellsAllocated-1; i>=m_nCells; i-- )

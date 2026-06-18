@@ -1112,7 +1112,7 @@ void lore_object::OnAcquire( xbool bIsRestoring )
             }
 
             // set up message and sound and send to player
-            MsgMgr.Message( MSG_LORE_ITEM_ACQUIRED, pPlayer->net_GetSlot(), (s32)pString );
+            MsgMgr.Message( MSG_LORE_ITEM_ACQUIRED, pPlayer->net_GetSlot(), (saddr)pString );
 
             // if this has been acquired, don't acquire again.
             if( !Profile.GetLoreAcquired( VaultIndex, GetLoreID() ) )
@@ -1139,7 +1139,7 @@ void lore_object::OnAcquire( xbool bIsRestoring )
             }
 
             // set up message and sound and send to player
-            MsgMgr.Message( MSG_STRING, pPlayer->net_GetSlot(), (s32)(pString) );            
+            MsgMgr.Message( MSG_STRING, pPlayer->net_GetSlot(), (saddr)(pString) );            
         }
     }
 

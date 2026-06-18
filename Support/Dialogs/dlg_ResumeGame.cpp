@@ -409,7 +409,7 @@ void dlg_resume_game::FillCheckpointList( void )
         {
             xwstring CheckpointName;
             CheckpointName += xwstring(pMapEntry->GetDisplayName());
-            m_pCheckpointList->AddItem( CheckpointName, (s32)&Checkpoint, 0 );
+            m_pCheckpointList->AddItem( CheckpointName, (uaddr)&Checkpoint, 0 );
         }
 
         // Now we construct each individual entry for that level's checkpoints.
@@ -439,7 +439,7 @@ void dlg_resume_game::FillCheckpointList( void )
                     CheckpointName += xwstring(xfs( " %d", j ));
                 }
                 
-                m_pCheckpointList->AddItem( CheckpointName, (s32)&Checkpoint, j );
+                m_pCheckpointList->AddItem( CheckpointName, (uaddr)&Checkpoint, j );
             }
         }
     }

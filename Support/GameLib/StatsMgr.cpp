@@ -544,6 +544,15 @@ f32 stats_mgr::GetStat(    stat_fields thisStat, stat_measurement thisMeasuremen
 
 //=============================================================================
 
+const char* stats_mgr::GetStatName( stat_fields thisStat )
+{
+    if( thisStat < 0 || thisStat >= k_stats_Last )
+        return "?";
+    return StatRenderInfo[thisStat].pName;
+}
+
+//=============================================================================
+
 void stats_mgr::DrawFPS(void)
 {
     if (!m_bShowHorizontalBars)

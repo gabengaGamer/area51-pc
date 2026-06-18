@@ -15,6 +15,9 @@
 #include "Objects/object.hpp"
 #include "MiscUtils/Property.hpp"
 #include "PainMgr/Pain.hpp"
+#include "Characters/Character.hpp"
+#include "Navigation/Nav_Map.hpp"
+#include "../../../MiscUtils/SimpleUtils.hpp"
 
 //==============================================================================
 //  CONSTANTS
@@ -229,6 +232,41 @@ s32 bind_obj_activate( script_context& ctx )
     object* pObj = g_ObjMgr.GetObjectByGuid( ArgGuid( ctx, 0 ) );
     if( pObj )
         pObj->OnActivate( ctx.ArgBool( 1 ) );
+    return 0;
+}
+
+//==============================================================================
+
+static
+s32 bind_nav_nearest_point( script_context& ctx )
+{
+    vector3 P( ctx.ArgFloat(0), ctx.ArgFloat(1), ctx.ArgFloat(2) );
+    vector3 N = g_NavMap.GetNearestPointInNavMap( P );
+    ctx.PushFloat( N.GetX() );
+    ctx.PushFloat( N.GetY() );
+    ctx.PushFloat( N.GetZ() );
+    return 3;
+}
+
+//==============================================================================
+
+static
+s32 bind_obj_load_start( script_context& ctx )
+{
+    object* pObj = g_ObjMgr.GetObjectByGuid( ArgGuid( ctx, 0 ) );
+    if( pObj )
+        pObj->LoadStart();
+    return 0;
+}
+
+//==============================================================================
+
+static
+s32 bind_obj_load_end( script_context& ctx )
+{
+    object* pObj = g_ObjMgr.GetObjectByGuid( ArgGuid( ctx, 0 ) );
+    if( pObj )
+        pObj->LoadEnd();
     return 0;
 }
 
@@ -920,6 +958,62 @@ s32 bind_obj_findbyname( script_context& ctx )
 #endif // USE_OBJECT_NAMES
 
 //==============================================================================
+
+static
+s32 bind_obj_get_player( script_context& ctx )
+{
+    PushGuid( ctx, SMP_UTIL_GetActivePlayerGuid() );
+    return 1;
+}
+
+//==============================================================================
+
+static
+s32 bind_obj_getzone( script_context& ctx )
+{
+    object* pObj = g_ObjMgr.GetObjectByGuid( ArgGuid( ctx, 0 ) );
+    if( !pObj )
+    {
+        ctx.PushInt( 0 );
+        ctx.PushInt( 0 );
+        return 2;
+    }
+    ctx.PushInt( (s32)pObj->GetZone1() );
+    ctx.PushInt( (s32)pObj->GetZone2() );
+    return 2;
+}
+
+//==============================================================================
+
+static
+s32 bind_obj_set_target( script_context& ctx )
+{
+    object* pObj = g_ObjMgr.GetObjectByGuid( ArgGuid( ctx, 0 ) );
+    if( pObj && pObj->IsKindOf( character::GetRTTI() ) )
+    {
+        character& Char = character::GetSafeType( *pObj );
+        Char.SetTargetGuid( ArgGuid( ctx, 1 ) );
+        Char.SetAwarenessLevel( character::AWARENESS_TARGET_SPOTTED );
+    }
+    return 0;
+}
+
+//==============================================================================
+
+static
+s32 bind_obj_clear_target( script_context& ctx )
+{
+    object* pObj = g_ObjMgr.GetObjectByGuid( ArgGuid( ctx, 0 ) );
+    if( pObj && pObj->IsKindOf( character::GetRTTI() ) )
+    {
+        character& Char = character::GetSafeType( *pObj );
+        Char.SetOverrideTarget( 0 );
+        Char.SetTargetGuid( 0 );
+    }
+    return 0;
+}
+
+//==============================================================================
 //  REGISTER
 //==============================================================================
 
@@ -941,6 +1035,9 @@ void bind_objects::Register( script_backend* pBackend )
 
     // ──── Lifecycle / state ────
     pBackend->RegisterFunction( "obj_activate",         bind_obj_activate         );
+    pBackend->RegisterFunction( "obj_load_start",       bind_obj_load_start       );
+    pBackend->RegisterFunction( "obj_load_end",         bind_obj_load_end         );
+    pBackend->RegisterFunction( "nav_nearest_point",    bind_nav_nearest_point    );
     pBackend->RegisterFunction( "obj_isalive",          bind_obj_isalive          );
     pBackend->RegisterFunction( "obj_isactive",         bind_obj_isactive         );
     pBackend->RegisterFunction( "obj_gethealth",        bind_obj_gethealth        );
@@ -954,10 +1051,13 @@ void bind_objects::Register( script_backend* pBackend )
     pBackend->RegisterFunction( "obj_disableattr",      bind_obj_disableattr      );
 
     // ──── Zone membership ────
-    //pBackend->RegisterFunction( "obj_getzones",         bind_obj_getzones         );
-    //pBackend->RegisterFunction( "obj_getzone1",         bind_obj_getzone1         );
-    //pBackend->RegisterFunction( "obj_getzone2",         bind_obj_getzone2         );
+    pBackend->RegisterFunction( "obj_getzone",          bind_obj_getzone          );
     pBackend->RegisterFunction( "obj_setzones",         bind_obj_setzones         );
+
+    // ──── Active player / AI targeting ────
+    pBackend->RegisterFunction( "obj_get_player",       bind_obj_get_player       );
+    pBackend->RegisterFunction( "obj_set_target",       bind_obj_set_target       );
+    pBackend->RegisterFunction( "obj_clear_target",     bind_obj_clear_target     );
 
     // ──── Identity / info ────
     pBackend->RegisterFunction( "obj_gettype",          bind_obj_gettype          );

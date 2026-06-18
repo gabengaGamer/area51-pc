@@ -55,7 +55,7 @@ public:
 
     void    SetStringData       ( s32 ArgNum, const xwchar* StringData );   
     void    GetStringData       ( s32 ArgNum, xwchar* StringData )  const;  
-    void    SetArg              ( s32 ArgNum, s32 ArgVal ); 
+    void    SetArg              ( s32 ArgNum, saddr ArgVal ); 
     xbool   IsValidTarget       ( s32 TestTarget ) const  ;
 
     //void    ReadWString         ( const bitstream& BS,       xwchar* String ); 

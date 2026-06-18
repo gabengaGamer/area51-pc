@@ -289,7 +289,7 @@ void fx_effect::Initialize( const fx_def* pEffectDef )
     // Setup the controllers.
 
     m_pCtrl = (fx_ctrl**)(pPointer);                // Set controller array pointer.
-    pPointer += (pEffectDef->NControllers * 4);     // Step over memory for ctrl ptr array.
+    pPointer += (pEffectDef->NControllers * sizeof(fx_ctrl*)); // Step over memory for ctrl ptr array.
     fx_ctrl* pCtrl = (fx_ctrl*)pPointer;            // Pointer to first controller instance.
 
     for( i = 0; i < pEffectDef->NControllers; i++ )
@@ -316,7 +316,7 @@ void fx_effect::Initialize( const fx_def* pEffectDef )
     // Setup the elements.
 
     m_pElement = (fx_element**)pPointer;
-    pPointer  += (pEffectDef->NElements * 4);
+    pPointer  += (pEffectDef->NElements * sizeof(fx_element*));
 
     // Need to align the pointer up to a 16 multiple offset.
     {

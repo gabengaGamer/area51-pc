@@ -1,0 +1,7 @@
+<Solution>
+  <Configurations>
+    <BuildType Name="EDITOR-Debug" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Project Path="WinControls.vcxproj" />
+</Solution>

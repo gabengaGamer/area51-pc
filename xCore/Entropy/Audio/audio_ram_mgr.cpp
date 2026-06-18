@@ -172,8 +172,8 @@ void AudioServiceQueue( void )
     if( pRequest != &s_RequestQueue )
     {
         s32 Length;
-        u32 ARAM;
-        u32 MRAM;
+        uaddr ARAM;
+        uaddr MRAM;
 
         // Error check request.
         ASSERT( (pRequest->m_Status == audio_io_request::PENDING) || (pRequest->m_Status == audio_io_request::IN_PROGRESS) );
@@ -203,8 +203,8 @@ void AudioServiceQueue( void )
             // Copy from main ram to audio ram?
             case audio_io_request::UPLOAD:
             {
-                ARAM = (u32)pRequest->m_Destination;
-                MRAM = (u32)pRequest->m_Source;
+                ARAM = (uaddr)pRequest->m_Destination;
+                MRAM = (uaddr)pRequest->m_Source;
                 ASSERT( (MRAM & 3) == 0 );
                 break;
             }
@@ -212,8 +212,8 @@ void AudioServiceQueue( void )
             // Copy from audio ram to main ram?
             case audio_io_request::DOWNLOAD:
             {
-                ARAM = (u32)pRequest->m_Source;
-                MRAM = (u32)pRequest->m_Destination;
+                ARAM = (uaddr)pRequest->m_Source;
+                MRAM = (uaddr)pRequest->m_Destination;
                 ASSERT( (MRAM & 3) == 0 );
                 break;
             }

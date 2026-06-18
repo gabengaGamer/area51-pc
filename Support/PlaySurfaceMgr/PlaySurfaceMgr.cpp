@@ -579,7 +579,23 @@ void playsurface_mgr::LoadZone( zone_info& Zone )
         MEMORY_OWNER( "PLAYSURFACES" );
         Zone.pSurfaces  = (surface*)x_malloc(sizeof(surface)*Zone.NSurfaces);
         ASSERT( Zone.pSurfaces );
+#if defined(_WIN64) || (defined(__SIZEOF_POINTER__) && __SIZEOF_POINTER__ == 8)
+        const s32 DiskSurface = 128;
+        byte* pDisk = (byte*)x_malloc( DiskSurface * Zone.NSurfaces );
+        ASSERT( pDisk );
+        x_fread( pDisk, DiskSurface, Zone.NSurfaces, m_File );
+        for( s32 i = 0; i < Zone.NSurfaces; i++ )
+        {
+            byte* s = pDisk + i*DiskSurface;
+            byte* d = (byte*)&Zone.pSurfaces[i];
+            x_memset( d, 0, sizeof(surface) );
+            x_memcpy( d,       s,       108 );  // L2W .. RenderInst
+            x_memcpy( d + 120, s + 112, 16  );  // DBaseQuery .. RenderFlags
+        }
+        x_free( pDisk );
+#else
         x_fread( Zone.pSurfaces, sizeof(surface), Zone.NSurfaces, m_File );
+#endif
     }
 
     // load the color data
@@ -805,6 +821,30 @@ void playsurface_mgr::CreateProxyPlaySurfaceObject( void )
 
 //=========================================================================
 
+void playsurface_mgr::ReadZoneInfo( zone_info* pZones, s32 Count )
+{
+#if defined(_WIN64) || (defined(__SIZEOF_POINTER__) && __SIZEOF_POINTER__ == 8)
+    const s32 DiskZone = 28;
+    for( s32 i = 0; i < Count; i++ )
+    {
+        byte Rec[28];
+        x_fread( Rec, DiskZone, 1, m_File );
+        zone_info& Z = pZones[i];
+        x_memcpy( &Z.FileOffset, &Rec[ 4], 4 );
+        x_memcpy( &Z.NSurfaces,  &Rec[ 8], 4 );
+        x_memcpy( &Z.NColors,    &Rec[16], 4 );
+        Z.Resolved   = FALSE;
+        Z.pSurfaces  = NULL;
+        Z.pColorData = NULL;
+        Z.hColorData = NULL;
+    }
+#else
+    x_fread( pZones, sizeof(zone_info), Count, m_File );
+#endif
+}
+
+//=========================================================================
+
 void playsurface_mgr::LoadBasicInfo()
 {
     MEMORY_OWNER("BASIC INFO");
@@ -842,15 +882,15 @@ void playsurface_mgr::LoadBasicInfo()
         MEMORY_OWNER("ZONE INFO");
         m_Zones.SetCapacity( Hdr.NZones );
         m_Zones.SetCount( Hdr.NZones );
-        x_fread( m_Zones.GetPtr(), sizeof(zone_info), Hdr.NZones, m_File );
+        ReadZoneInfo( m_Zones.GetPtr(), Hdr.NZones );
     }
-    
+
     // load the basic portal information
     {
         MEMORY_OWNER("PORTAL INFO");
         m_Portals.SetCapacity( Hdr.NPortals );
         m_Portals.SetCount( Hdr.NPortals );
-        x_fread( m_Portals.GetPtr(), sizeof(zone_info), Hdr.NPortals, m_File );
+        ReadZoneInfo( m_Portals.GetPtr(), Hdr.NPortals );
     }
 
     // load the globals zone

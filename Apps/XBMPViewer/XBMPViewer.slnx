@@ -1,0 +1,12 @@
+<Solution>
+  <Configurations>
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Project Path="../../xCore/Auxiliary/Bitmap/aux_Bitmap.vcxproj" />
+  <Project Path="../../xCore/x_files/x_files.vcxproj" />
+  <Project Path="XBMPViewer.vcxproj">
+    <BuildDependency Project="../../xCore/Auxiliary/Bitmap/aux_Bitmap.vcxproj" />
+    <BuildDependency Project="../../xCore/x_files/x_files.vcxproj" />
+  </Project>
+</Solution>

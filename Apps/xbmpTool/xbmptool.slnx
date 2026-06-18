@@ -1,0 +1,10 @@
+<Solution>
+  <Configurations>
+    <Platform Name="Win32" />
+    <Platform Name="x64" />
+  </Configurations>
+  <Project Path="../../xCore/Auxiliary/Bitmap/aux_Bitmap.vcxproj" />
+  <Project Path="../../xCore/Auxiliary/CommandLine/CommandLine.vcxproj" />
+  <Project Path="../../xCore/x_files/x_files.vcxproj" />
+  <Project Path="xbmptool.vcxproj" />
+</Solution>

@@ -555,7 +555,7 @@ f32 audio_voice_mgr::GetLipSync( voice* pVoice )
                 {
                     audio_package*  pPackage = pElement->pVoice->pPackage;
                     f32             dTime    = GetCurrentPlayTime( pVoice );
-                    u8*             pLipSync = (u8*)((u32)pElement->Sample.pHotSample->LipSyncOffset + (u32)pPackage->m_LipSyncTable);
+                    u8*             pLipSync = (u8*)((uaddr)pElement->Sample.pHotSample->LipSyncOffset + (uaddr)pPackage->m_LipSyncTable);
                     s32             Index;
                     s32             Result;
 
@@ -655,7 +655,7 @@ s32 audio_voice_mgr::GetBreakPoints( voice* pVoice, f32* & BreakPoints )
             if( pElement->Sample.pHotSample->BreakPointOffset != 0xffffffff )
             {
                 audio_package*  pPackage     = pElement->pVoice->pPackage;
-                s32*            pBreakPoints = (s32*)((u32)pElement->Sample.pHotSample->BreakPointOffset + (u32)pPackage->m_BreakPointTable);
+                s32*            pBreakPoints = (s32*)((uaddr)pElement->Sample.pHotSample->BreakPointOffset + (uaddr)pPackage->m_BreakPointTable);
                 
                 Result      = *pBreakPoints++;
                 BreakPoints = (f32*)pBreakPoints;
@@ -3301,21 +3301,14 @@ void audio_voice_mgr::InstantiateStreamSample ( audio_stream* pStream, s32 Which
 {
     CONTEXT( "audio_voice_mgr::InstantiateStreamSample" );
 
-    compression_header* pHeader;
-
     switch( WhichChannel )
     {
         case LEFT_CHANNEL:
                 ASSERT( pStream->pChannel[LEFT_CHANNEL] );
-                // Get pointer to compression header.
-                pHeader = (compression_header*)(pStream->pChannel[LEFT_CHANNEL]->Sample.pHotSample+1);
 
                 // Make a copy of the sample
                 pStream->Samples[LEFT_CHANNEL].Sample = *(pStream->pChannel[LEFT_CHANNEL]->Sample.pHotSample);
 
-                // Make a copy of the compression header
-                pStream->Samples[LEFT_CHANNEL].Header = *pHeader;
-                
                 // Point channel to the copy now
                 pStream->pChannel[LEFT_CHANNEL]->Sample.pHotSample = &pStream->Samples[LEFT_CHANNEL].Sample;
                 break;
@@ -3325,15 +3318,9 @@ void audio_voice_mgr::InstantiateStreamSample ( audio_stream* pStream, s32 Which
 
                 if( pStream->pChannel[RIGHT_CHANNEL] )
                 {
-                    // Get pointer to compression header.
-                    pHeader = (compression_header*)(pStream->pChannel[RIGHT_CHANNEL]->Sample.pHotSample+1);
-
                     // Make a copy of the sample
                     pStream->Samples[RIGHT_CHANNEL].Sample = *(pStream->pChannel[RIGHT_CHANNEL]->Sample.pHotSample);
 
-                    // Make a copy of the compression header
-                    pStream->Samples[RIGHT_CHANNEL].Header = *pHeader;
-                    
                     // Point channel to the copy now
                     pStream->pChannel[RIGHT_CHANNEL]->Sample.pHotSample = &pStream->Samples[RIGHT_CHANNEL].Sample;
                 }

@@ -516,7 +516,7 @@ void ui_listbox::OnPadNavigate( ui_win* pWin, s32 Code, s32 Presses, s32 Repeats
 
             if( (m_iSelection != OldSelection) && m_pParent )
             {
-                m_pParent->OnNotify( m_pParent, this, WN_LIST_SELCHANGE, (void*)m_iSelection );
+                m_pParent->OnNotify( m_pParent, this, WN_LIST_SELCHANGE, (void*)(uaddr)m_iSelection );
                 g_AudioMgr.Play( "Cusor_Norm" );
             }
 
@@ -645,7 +645,7 @@ void ui_listbox::OnPadSelect( ui_win* pWin )
     if( !m_ExitOnSelect && (m_Flags & WF_SELECTED) )
     {
         if( m_pParent )
-            m_pParent->OnNotify( m_pParent, this, WN_LIST_ACCEPTED, (void*)m_iSelection );
+            m_pParent->OnNotify( m_pParent, this, WN_LIST_ACCEPTED, (void*)(uaddr)m_iSelection );
     }
     else
     {
@@ -659,13 +659,13 @@ void ui_listbox::OnPadSelect( ui_win* pWin )
 //                audio_Play( SFX_FRONTEND_SELECT_02,AUDFLAG_CHANNELSAVER );	//-- Jhowa
                 m_iSelectionBackup = m_iSelection;
 //                if( m_pParent )
-//                    m_pParent->OnNotify( m_pParent, this, WN_LIST_CANCELLED, (void*)m_iSelection );
+//                    m_pParent->OnNotify( m_pParent, this, WN_LIST_CANCELLED, (void*)(uaddr)m_iSelection );
             }
             else
             {
 //                audio_Play( SFX_FRONTEND_CANCEL_02,AUDFLAG_CHANNELSAVER );	//-- Jhowa
                 if( m_pParent )
-                    m_pParent->OnNotify( m_pParent, this, WN_LIST_ACCEPTED, (void*)m_iSelection );
+                    m_pParent->OnNotify( m_pParent, this, WN_LIST_ACCEPTED, (void*)(uaddr)m_iSelection );
             }
         }
         else
@@ -700,7 +700,7 @@ void ui_listbox::OnPadBack( ui_win* pWin )
         SetSelection( m_iSelectionBackup );
 
         if( m_pParent )
-            m_pParent->OnNotify( m_pParent, this, WN_LIST_CANCELLED, (void*)m_iSelection );
+            m_pParent->OnNotify( m_pParent, this, WN_LIST_CANCELLED, (void*)(uaddr)m_iSelection );
     }
     else
     {
@@ -733,7 +733,7 @@ void ui_listbox::SetExitOnSelect( xbool State )
 
 //=========================================================================
 
-s32 ui_listbox::AddItem( const xwstring& Label, s32 Data, s32 Data2, xbool State, u32 Flags )
+s32 ui_listbox::AddItem( const xwstring& Label, uaddr Data, uaddr Data2, xbool State, u32 Flags )
 {
     item& Item = m_Items.Append();
     Item.Enabled = State;
@@ -747,7 +747,7 @@ s32 ui_listbox::AddItem( const xwstring& Label, s32 Data, s32 Data2, xbool State
 
 //=========================================================================
 
-s32 ui_listbox::AddItem( const xwchar* Label, s32 Data, s32 Data2, xbool State, u32 Flags )
+s32 ui_listbox::AddItem( const xwchar* Label, uaddr Data, uaddr Data2, xbool State, u32 Flags )
 {
     item& Item = m_Items.Append();
     Item.Enabled = State;
@@ -769,7 +769,7 @@ void ui_listbox::DeleteAllItems( void )
     m_Items.Delete( 0, m_Items.GetCount() );
 
     if( m_pParent )
-        m_pParent->OnNotify( m_pParent, this, WN_LIST_SELCHANGE, (void*)m_iSelection );
+        m_pParent->OnNotify( m_pParent, this, WN_LIST_SELCHANGE, (void*)(uaddr)m_iSelection );
 }
 
 //=========================================================================
@@ -790,7 +790,7 @@ void ui_listbox::DeleteItem( s32 iItem )
     EnsureVisible( m_iSelection );
 
     if( (m_iSelection != OldSelection) && m_pParent )
-        m_pParent->OnNotify( m_pParent, this, WN_LIST_SELCHANGE, (void*)m_iSelection );
+        m_pParent->OnNotify( m_pParent, this, WN_LIST_SELCHANGE, (void*)(uaddr)m_iSelection );
 }
 
 //=========================================================================
@@ -809,7 +809,7 @@ void ui_listbox::DeleteSelectedItem( void )
     EnsureVisible( m_iSelection );
 
     if( m_pParent )
-        m_pParent->OnNotify( m_pParent, this, WN_LIST_SELCHANGE, (void*)m_iSelection );
+        m_pParent->OnNotify( m_pParent, this, WN_LIST_SELCHANGE, (void*)(uaddr)m_iSelection );
 }
 
 
@@ -862,7 +862,7 @@ void ui_listbox::EnableItem( s32 iItem, xbool State )
         EnsureVisible( m_iSelection );
 
         if( (m_iSelection != OldSelection) && m_pParent )
-        m_pParent->OnNotify( m_pParent, this, WN_LIST_SELCHANGE, (void*)m_iSelection );
+        m_pParent->OnNotify( m_pParent, this, WN_LIST_SELCHANGE, (void*)(uaddr)m_iSelection );
     }
 }
 
@@ -909,7 +909,7 @@ void ui_listbox::SetItemLabel( s32 iItem, const xwstring& Label )
 
 //=========================================================================
 
-s32 ui_listbox::GetItemData( s32 iItem, s32 Index ) const
+uaddr ui_listbox::GetItemData( s32 iItem, s32 Index ) const
 {
     ASSERT( (iItem >= 0) && (iItem < m_Items.GetCount()) );
     ASSERT( Index < LISTBOX_DATA_FIELDS );
@@ -928,7 +928,7 @@ const xwstring& ui_listbox::GetSelectedItemLabel( void ) const
 
 //=========================================================================
 
-s32 ui_listbox::GetSelectedItemData( s32 Index ) const
+uaddr ui_listbox::GetSelectedItemData( s32 Index ) const
 {
     ASSERT( (m_iSelection >= 0) && (m_iSelection < m_Items.GetCount()) );
     ASSERT( Index < LISTBOX_DATA_FIELDS );
@@ -975,7 +975,7 @@ s32 ui_listbox::FindItemByLabel( const xwstring& Label )
 
 //=========================================================================
 
-s32 ui_listbox::FindItemByData( s32 Data, s32 Index )
+s32 ui_listbox::FindItemByData( uaddr Data, s32 Index )
 {
     ASSERT( Index < LISTBOX_DATA_FIELDS );
 
@@ -1018,7 +1018,7 @@ void ui_listbox::SetSelection( s32 iSelection )
         EnsureVisible( m_iSelection );
 
         if( m_pParent )
-            m_pParent->OnNotify( m_pParent, this, WN_LIST_SELCHANGE, (void*)m_iSelection );
+            m_pParent->OnNotify( m_pParent, this, WN_LIST_SELCHANGE, (void*)(uaddr)m_iSelection );
     }
 }
 
@@ -1099,7 +1099,7 @@ void ui_listbox::SetSelectionWithOffset( s32 iSelection, s32 Offset )
         }
 
         if( m_pParent )
-            m_pParent->OnNotify( m_pParent, this, WN_LIST_SELCHANGE, (void*)m_iSelection );
+            m_pParent->OnNotify( m_pParent, this, WN_LIST_SELCHANGE, (void*)(uaddr)m_iSelection );
     }
 }
 
@@ -1170,7 +1170,7 @@ void ui_listbox::OnMouseMove( ui_win* pWin, s32 x, s32 y )
 
 //                    audio_Play( SFX_FRONTEND_CURSOR_MOVE_02,AUDFLAG_CHANNELSAVER );	//-- Jhowa
                     m_iFirstVisibleItem = FirstVisible;
-                    m_pParent->OnNotify( m_pParent, this, WN_LIST_SELCHANGE, (void*)m_iSelection );
+                    m_pParent->OnNotify( m_pParent, this, WN_LIST_SELCHANGE, (void*)(uaddr)m_iSelection );
                 }
             }
             else if( diff < 0 )
@@ -1189,7 +1189,7 @@ void ui_listbox::OnMouseMove( ui_win* pWin, s32 x, s32 y )
 
 //                    audio_Play( SFX_FRONTEND_CURSOR_MOVE_02,AUDFLAG_CHANNELSAVER );	//-- Jhowa
                     m_iFirstVisibleItem = FirstVisible;
-                    m_pParent->OnNotify( m_pParent, this, WN_LIST_SELCHANGE, (void*)m_iSelection );
+                    m_pParent->OnNotify( m_pParent, this, WN_LIST_SELCHANGE, (void*)(uaddr)m_iSelection );
                 }
             }
         }
@@ -1261,7 +1261,7 @@ void ui_listbox::OnMouseMove( ui_win* pWin, s32 x, s32 y )
 
             if( (m_iSelection != OldSelection) && m_pParent )
             {
-                m_pParent->OnNotify( m_pParent, this, WN_LIST_SELCHANGE, (void*)m_iSelection );
+                m_pParent->OnNotify( m_pParent, this, WN_LIST_SELCHANGE, (void*)(uaddr)m_iSelection );
 //                audio_Play( SFX_FRONTEND_CURSOR_MOVE_02,AUDFLAG_CHANNELSAVER );	//-- Jhowa
             }
         }
@@ -1297,7 +1297,7 @@ void ui_listbox::OnLBDown( ui_win* pWin )
     if( !m_ExitOnSelect && (m_Flags & WF_SELECTED) )
     {
         if( m_pParent )
-            m_pParent->OnNotify( m_pParent, this, WN_LIST_ACCEPTED, (void*)m_iSelection );
+            m_pParent->OnNotify( m_pParent, this, WN_LIST_ACCEPTED, (void*)(uaddr)m_iSelection );
     }
     else
     {
@@ -1343,7 +1343,7 @@ void ui_listbox::OnLBDown( ui_win* pWin )
                 {
                     if( (m_iSelection != OldSelection) && m_pParent )
                     {
-                        m_pParent->OnNotify( m_pParent, this, WN_LIST_SELCHANGE, (void*)m_iSelection );
+                        m_pParent->OnNotify( m_pParent, this, WN_LIST_SELCHANGE, (void*)(uaddr)m_iSelection );
 //                        audio_Play( SFX_FRONTEND_CURSOR_MOVE_02,AUDFLAG_CHANNELSAVER );	//-- Jhowa
                     }
                 }
@@ -1360,13 +1360,13 @@ void ui_listbox::OnLBDown( ui_win* pWin )
 //                audio_Play( SFX_FRONTEND_SELECT_02,AUDFLAG_CHANNELSAVER );	//-- Jhowa
                 m_iSelectionBackup = m_iSelection;
 //                if( m_pParent )
-//                    m_pParent->OnNotify( m_pParent, this, WN_LIST_CANCELLED, (void*)m_iSelection );
+//                    m_pParent->OnNotify( m_pParent, this, WN_LIST_CANCELLED, (void*)(uaddr)m_iSelection );
             }
             else
             {
 //                audio_Play( SFX_FRONTEND_CANCEL_02,AUDFLAG_CHANNELSAVER );	//-- Jhowa
                 if( m_pParent )
-                    m_pParent->OnNotify( m_pParent, this, WN_LIST_ACCEPTED, (void*)m_iSelection );
+                    m_pParent->OnNotify( m_pParent, this, WN_LIST_ACCEPTED, (void*)(uaddr)m_iSelection );
             }
         }
         else
@@ -1435,7 +1435,7 @@ void ui_listbox::OnUpdate ( ui_win* pWin, f32 DeltaTime )
         {
             if( (m_iSelection != OldSelection) && m_pParent )
             {
-                m_pParent->OnNotify( m_pParent, this, WN_LIST_SELCHANGE, (void*)m_iSelection );
+                m_pParent->OnNotify( m_pParent, this, WN_LIST_SELCHANGE, (void*)(uaddr)m_iSelection );
 //                audio_Play( SFX_FRONTEND_CURSOR_MOVE_02,AUDFLAG_CHANNELSAVER );	//-- Jhowa
             }
         }

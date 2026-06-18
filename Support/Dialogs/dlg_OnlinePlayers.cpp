@@ -480,7 +480,7 @@ void dlg_online_players::FillPlayerList( void )
         {
             if( pInfo->Score.Player[i].IsInGame )
             {
-                m_pPlayerList->AddItem( pInfo->Score.Player[i].Name, (s32)&pInfo->Score.Player[i] );
+                m_pPlayerList->AddItem( pInfo->Score.Player[i].Name, (uaddr)&pInfo->Score.Player[i] );
             }
         }
 

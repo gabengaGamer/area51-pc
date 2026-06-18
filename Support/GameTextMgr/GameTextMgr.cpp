@@ -69,7 +69,7 @@ void game_text_mgr::DisplayMessage( const char* pTableName, const char* pTitleSt
         
         // Functionality moved to MsgClient
 #ifndef X_EDITOR
-        MsgMgr.Message( MSG_GOAL_STRING, 0, (s32)m_Message.pMainString ); 
+        MsgMgr.Message( MSG_GOAL_STRING, 0, (saddr)m_Message.pMainString ); 
 #endif
     }
 

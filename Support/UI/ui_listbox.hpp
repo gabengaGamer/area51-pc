@@ -33,7 +33,7 @@ public:
     {
         xbool       Enabled;
         xwstring    Label;
-        s32         Data[LISTBOX_DATA_FIELDS];
+        uaddr       Data[LISTBOX_DATA_FIELDS];
         xcolor      Color;
         u32         Flags;
     };
@@ -69,8 +69,8 @@ public:
     void            SetExitOnSelect         ( xbool State );
     void            SetExitOnBack           ( xbool State )                             { m_ExitOnBack = State; }
 
-    s32             AddItem                 ( const xwstring& Item, s32 Data = 0, s32 Data2 = 0 , xbool State = TRUE, u32 Flags = 0 );
-    s32             AddItem                 ( const xwchar*   Item, s32 Data = 0, s32 Data2 = 0 , xbool State = TRUE, u32 Flags = 0 );
+    s32             AddItem                 ( const xwstring& Item, uaddr Data = 0, uaddr Data2 = 0 , xbool State = TRUE, u32 Flags = 0 );
+    s32             AddItem                 ( const xwchar*   Item, uaddr Data = 0, uaddr Data2 = 0 , xbool State = TRUE, u32 Flags = 0 );
     void            DeleteAllItems          ( void );
     void            DeleteItem              ( s32 iItem );
     void            DeleteSelectedItem      ( void );
@@ -99,14 +99,14 @@ public:
     s32             GetItemCount            ( void ) const;
     const xwstring& GetItemLabel            ( s32 iItem ) const;
     void            SetItemLabel            ( s32 iItem, const xwstring& Label );
-    s32             GetItemData             ( s32 iItem, s32 Index = 0 ) const;
+    uaddr           GetItemData             ( s32 iItem, s32 Index = 0 ) const;
     const xwstring& GetSelectedItemLabel    ( void ) const;
-    s32             GetSelectedItemData     ( s32 Index = 0 ) const;
+    uaddr           GetSelectedItemData     ( s32 Index = 0 ) const;
     void            SetItemColor            ( s32 iItem, const xcolor& Color );
     xcolor          GetItemColor            ( s32 iItem ) const;
 
     s32             FindItemByLabel         ( const xwstring& Label );
-    s32             FindItemByData          ( s32 Data, s32 Index = 0 );
+    s32             FindItemByData          ( uaddr Data, s32 Index = 0 );
 
     s32             GetSelection            ( void ) const;
     void            SetSelection            ( s32 iSelection );

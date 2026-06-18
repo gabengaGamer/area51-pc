@@ -255,6 +255,7 @@ protected:
     void    UnloadZone          ( zone_info& Zone );
     void    LoadZone            ( zone_info& Zone );
     void    LoadBasicInfo       ( void );
+    void    ReadZoneInfo        ( zone_info* pZones, s32 Count );
     void    ResolveSurfaceData  ( zone_info& Zone );
     void    PrepVisCheck        ( void );
     s32     VisCheck            ( const bbox& BBox, u32 CheckPlaneMask );

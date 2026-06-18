@@ -247,7 +247,7 @@ void hud_scanner::BuildAirSample( player *pPlayer )
     AirScan += '\n';
     AirScan += theText6;
 
-    MsgMgr.Message( MSG_STRING, 0, (s32)((const xwchar*)AirScan));
+    MsgMgr.Message( MSG_STRING, 0, (saddr)((const xwchar*)AirScan));
 #endif
 }
 
@@ -377,13 +377,13 @@ void hud_scanner::BuildDataLines( player* pPlayer, guid TheGuid )
     //TotalScanString += m_DataLine[3];
     //TotalScanString += '\n';
     //TotalScanString += m_DataLine[4];
-    //MsgMgr.Message( MSG_STRING, 0, (s32)((const xwchar*)TotalScanString));
+    //MsgMgr.Message( MSG_STRING, 0, (saddr)((const xwchar*)TotalScanString));
 
-    MsgMgr.Message( MSG_STRING, 0, (s32)((const xwchar*)m_DataLine[4]));
-    MsgMgr.Message( MSG_STRING, 0, (s32)((const xwchar*)m_DataLine[3]));
-    MsgMgr.Message( MSG_STRING, 0, (s32)((const xwchar*)m_DataLine[2]));
-    MsgMgr.Message( MSG_STRING, 0, (s32)((const xwchar*)m_DataLine[1]));
-    MsgMgr.Message( MSG_STRING, 0, (s32)((const xwchar*)m_DataLine[0]));
+    MsgMgr.Message( MSG_STRING, 0, (saddr)((const xwchar*)m_DataLine[4]));
+    MsgMgr.Message( MSG_STRING, 0, (saddr)((const xwchar*)m_DataLine[3]));
+    MsgMgr.Message( MSG_STRING, 0, (saddr)((const xwchar*)m_DataLine[2]));
+    MsgMgr.Message( MSG_STRING, 0, (saddr)((const xwchar*)m_DataLine[1]));
+    MsgMgr.Message( MSG_STRING, 0, (saddr)((const xwchar*)m_DataLine[0]));
 #endif
 }
 

@@ -64,11 +64,11 @@ void simple_allocator::GrowCapacity( void )
     for( i=0; i<m_nMemoryBlocks; i++ )
     {
         if( m_pMemoryBlock[i].m_pNext )
-            m_pMemoryBlock[i].m_pNext = (alloc_node*)((u32)m_pMemoryBlock[i].m_pNext-(u32)m_pMemoryBlock);
-        else 
-            m_pMemoryBlock[i].m_pNext = (alloc_node*)0xFFFFFFFF;
+            m_pMemoryBlock[i].m_pNext = (alloc_node*)((uaddr)m_pMemoryBlock[i].m_pNext-(uaddr)m_pMemoryBlock);
+        else
+            m_pMemoryBlock[i].m_pNext = (alloc_node*)(uaddr)0xFFFFFFFF;
     }
-    m_RootBlock.m_pNext = (m_RootBlock.m_pNext)?((alloc_node*)((u32)m_RootBlock.m_pNext-(u32)m_pMemoryBlock)):((alloc_node*)0xFFFFFFFF);
+    m_RootBlock.m_pNext = (m_RootBlock.m_pNext)?((alloc_node*)((uaddr)m_RootBlock.m_pNext-(uaddr)m_pMemoryBlock)):((alloc_node*)(uaddr)0xFFFFFFFF);
 
     m_nMemoryBlocksAllocated += CAPACITY_GROW_SIZE;
     m_pMemoryBlock = (alloc_node*)x_realloc(m_pMemoryBlock,sizeof(alloc_node)*m_nMemoryBlocksAllocated);
@@ -78,12 +78,12 @@ void simple_allocator::GrowCapacity( void )
     // Convert next ptrs back into ptrs
     for( i=0; i<m_nMemoryBlocks; i++ )
     {
-        if( m_pMemoryBlock[i].m_pNext == (alloc_node*)0xFFFFFFFF)
+        if( m_pMemoryBlock[i].m_pNext == (alloc_node*)(uaddr)0xFFFFFFFF)
             m_pMemoryBlock[i].m_pNext = NULL;
-        else 
-            m_pMemoryBlock[i].m_pNext = (alloc_node*)((u32)m_pMemoryBlock+(u32)m_pMemoryBlock[i].m_pNext);
+        else
+            m_pMemoryBlock[i].m_pNext = (alloc_node*)((uaddr)m_pMemoryBlock+(uaddr)m_pMemoryBlock[i].m_pNext);
     }
-    m_RootBlock.m_pNext = ((u32)m_RootBlock.m_pNext==0xFFFFFFFF) ? (NULL) : ((alloc_node*)((u32)m_pMemoryBlock+(u32)m_RootBlock.m_pNext));
+    m_RootBlock.m_pNext = ((uaddr)m_RootBlock.m_pNext==0xFFFFFFFF) ? (NULL) : ((alloc_node*)((uaddr)m_pMemoryBlock+(uaddr)m_RootBlock.m_pNext));
 
     // Clear new blocks
     for (i=m_nMemoryBlocks;i<m_nMemoryBlocksAllocated;i++)
@@ -104,7 +104,7 @@ void* simple_allocator::Alloc(s32 size)
 {
     // Check if doing a zero-size allocation
     if( size == 0 )
-        return (void*)0xFFFFFFFF;
+        return (void*)(uaddr)0xFFFFFFFF;
 
     // Be sure enough headers have been allocated.  We are doing it here so systems
     // can initialize the simple allocator before malloc is available.
@@ -178,7 +178,7 @@ void* simple_allocator::Alloc(s32 size)
         m_FreeCount++;
 
         pHeader->m_Status       = AF_AVAILABLE;
-        pHeader->m_Address      = (void*)((u32)pBlockToUse->m_Address + size);
+        pHeader->m_Address      = (void*)((uaddr)pBlockToUse->m_Address + size);
         pHeader->m_Length       = pBlockToUse->m_Length - size;
         pHeader->m_pNext        = pBlockToUse->m_pNext;
 
@@ -222,7 +222,7 @@ void simple_allocator::Validate(void)
 s32 simple_allocator::Free(void* base)
 {
     // Check if freeing a zero-size allocation
-    if( (u32)base == 0xFFFFFFFF )
+    if( (uaddr)base == 0xFFFFFFFF )
         return 0;
 
     // Check if freeing a NULL ptr
@@ -258,7 +258,7 @@ s32 simple_allocator::Free(void* base)
     {
         // Verify that we should, indeed, be coalescing properly
         ASSERT(pHeader->m_pNext == pNext);
-        ASSERT(pHeader->m_Length + (s32)pHeader->m_Address == (s32)pNext->m_Address);
+        ASSERT(pHeader->m_Length + (uaddr)pHeader->m_Address == (uaddr)pNext->m_Address);
 
         // Can we coalesce this with the following memory block?
         if (pNext->m_Status == AF_AVAILABLE)
@@ -275,7 +275,7 @@ s32 simple_allocator::Free(void* base)
     {
         // Verify that we should, indeed, be coalescing properly
         ASSERT(pPrev->m_pNext == pHeader);
-        ASSERT(pPrev->m_Length + (s32)pPrev->m_Address == (s32)pHeader->m_Address);
+        ASSERT(pPrev->m_Length + (uaddr)pPrev->m_Address == (uaddr)pHeader->m_Address);
         // Can we coalesce the previous memory block with the
         // current?
         if (pPrev->m_Status == AF_AVAILABLE)
@@ -311,8 +311,8 @@ void simple_allocator::DumpList(void)
     while (pHeader)
     {
         x_DebugMsg("START: 0x%08x  END: 0x%08x  LENGTH: %8d  STATUS: %s\n",
-                    pHeader->m_Address,
-                    (s32)pHeader->m_Address+pHeader->m_Length,
+                    (u32)(uaddr)pHeader->m_Address,
+                    (u32)((uaddr)pHeader->m_Address+pHeader->m_Length),
                     pHeader->m_Length,
                     s_Status[pHeader->m_Status]);
         pHeader = pHeader->m_pNext;
@@ -355,7 +355,7 @@ void simple_allocator::SanityCheck(void)
         if( m_pMemoryBlock[i].m_pNext )
         {
             ASSERT( (m_pMemoryBlock[i].m_pNext->m_Status==AF_AVAILABLE) || (m_pMemoryBlock[i].m_pNext->m_Status==AF_ALLOCATED));
-            ASSERT( ((u32)m_pMemoryBlock[i].m_Address + m_pMemoryBlock[i].m_Length) == (u32)m_pMemoryBlock[i].m_pNext->m_Address );
+            ASSERT( ((uaddr)m_pMemoryBlock[i].m_Address + m_pMemoryBlock[i].m_Length) == (uaddr)m_pMemoryBlock[i].m_pNext->m_Address );
         }
 
         if( m_pMemoryBlock[i].m_Status == AF_AVAILABLE )

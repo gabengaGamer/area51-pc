@@ -146,7 +146,7 @@ static struct cubemap_loader : public rsc_loader
 
     #ifdef TARGET_PC
         s32 vramID = vram_Register( pCubemap->m_Bitmap, 6 );
-        pCubemap->m_hTexture = (void*)vramID;
+        pCubemap->m_hTexture = (void*)(uaddr)vramID;
     #else
         for( s32 i = 0; i < 6; i++ )
             vram_Register( pCubemap->m_Bitmap[i] );
@@ -170,7 +170,7 @@ static struct cubemap_loader : public rsc_loader
     #ifdef TARGET_PC
         if( pCubemap->m_hTexture )
         {
-            s32 vramID = (s32)pCubemap->m_hTexture;
+            s32 vramID = (s32)(uaddr)pCubemap->m_hTexture;
             vram_Unregister( vramID );
             pCubemap->m_hTexture = NULL;
         }

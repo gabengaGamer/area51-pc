@@ -36,7 +36,7 @@ audio_package::~audio_package( void )
 
 //------------------------------------------------------------------------------
 
-u32 audio_package::LoadHotSample( X_FILE* f, hot_sample* pHotSample, u32 Aram )
+u32 audio_package::LoadHotSample( X_FILE* f, hot_sample* pHotSample, uaddr Aram )
 {
     CONTEXT("audio_package::LoadHotSample");
 
@@ -73,6 +73,37 @@ u32 audio_package::LoadHotSample( X_FILE* f, hot_sample* pHotSample, u32 Aram )
 #define vm_Alloc x_malloc
 #define vm_Free  x_free
 #endif
+
+//------------------------------------------------------------------------------
+
+// Read sample headers in their 32-bit on-disk layout into native structs.
+// AudioRam is a runtime address (set during load), so it is not read from disk.
+static void ReadSampleHeaders( X_FILE* f, sample_header* pDest, s32 nHeaders, s32 DiskSize )
+{
+    struct disk_sample_header
+    {
+        u32 AudioRam, WaveformOffset, WaveformLength, LipSyncOffset, BreakPointOffset, CompressionType;
+        s32 nSamples, SampleRate, LoopStart, LoopEnd;
+    };
+    ASSERT( DiskSize == (s32)sizeof(disk_sample_header) );
+    (void)DiskSize;
+
+    for( s32 i = 0; i < nHeaders; i++ )
+    {
+        disk_sample_header d;
+        x_fread( &d, sizeof(d), 1, f );
+        pDest[i].AudioRam         = 0;
+        pDest[i].WaveformOffset   = d.WaveformOffset;
+        pDest[i].WaveformLength   = d.WaveformLength;
+        pDest[i].LipSyncOffset    = d.LipSyncOffset;
+        pDest[i].BreakPointOffset = d.BreakPointOffset;
+        pDest[i].CompressionType  = d.CompressionType;
+        pDest[i].nSamples         = d.nSamples;
+        pDest[i].SampleRate       = d.SampleRate;
+        pDest[i].LoopStart        = d.LoopStart;
+        pDest[i].LoopEnd          = d.LoopEnd;
+    }
+}
 
 //------------------------------------------------------------------------------
 
@@ -187,7 +218,7 @@ xbool audio_package::Init( const char* pFilename )
                 m_IdentifierTable = (descriptor_identifier*)vm_Alloc( m_Header.nIdentifiers * sizeof(descriptor_identifier) );
 
                 // Allocate memory for the descriptor table.
-                m_DescriptorTable = (u32*)vm_Alloc( m_Header.nDescriptors * sizeof(u32*) );
+                m_DescriptorTable = (uaddr*)vm_Alloc( m_Header.nDescriptors * sizeof(uaddr) );
 
                 // Allocate memory for the descriptors.
                 m_DescriptorBuffer = (u16*)vm_Alloc( m_Header.DescriptorFootprint );
@@ -209,7 +240,7 @@ xbool audio_package::Init( const char* pFilename )
                 // Allocate memory for the hot and cold samples
                 if( m_Header.nSampleHeaders[ HOT ] )
                 {
-                    m_HotSamples = (void*)vm_Alloc( m_Header.nSampleHeaders[ HOT ] * m_Header.HeaderSizes[ HOT ] );
+                    m_HotSamples = (void*)vm_Alloc( m_Header.nSampleHeaders[ HOT ] * sizeof(sample_header) );
                 }
                 else
                 {
@@ -218,7 +249,7 @@ xbool audio_package::Init( const char* pFilename )
 
                 if( m_Header.nSampleHeaders[ COLD ] )
                 {
-                    m_ColdSamples = (void*)vm_Alloc( m_Header.nSampleHeaders[ COLD ] * m_Header.HeaderSizes[ COLD ] );
+                    m_ColdSamples = (void*)vm_Alloc( m_Header.nSampleHeaders[ COLD ] * sizeof(sample_header) );
                 }
                 else
                 {
@@ -243,19 +274,30 @@ xbool audio_package::Init( const char* pFilename )
                 if( m_BreakPointTable )
                     x_fread( m_BreakPointTable, m_Header.BreakPointTableFootprint, 1, f );
 
-                // Read in the identifiers.
-                x_fread( m_IdentifierTable, sizeof(descriptor_identifier), m_Header.nIdentifiers, f );
+                // Read in the identifiers. On disk each record is the old
+                // 32-bit layout {u16 StringOffset; u16 Index; u32 pPackage-slot}
+                // = 8 bytes; read it explicitly so the 64-bit pPackage pointer
+                // doesn't widen the record and misalign the rest of the file.
+                for( i=0 ; i<m_Header.nIdentifiers ; i++ )
+                {
+                    struct { u16 StringOffset; u16 Index; u32 Pad; } DiskId;
+                    x_fread( &DiskId, sizeof(DiskId), 1, f );
+                    m_IdentifierTable[ i ].StringOffset = DiskId.StringOffset;
+                    m_IdentifierTable[ i ].Index        = DiskId.Index;
+                }
 
                 // Set the package for each identifier.
                 for( i=0 ; i<m_Header.nIdentifiers ; i++ )
                     m_IdentifierTable[ i ].pPackage = this;
 
-                // Read in the descriptor offsets.
-                x_fread( m_DescriptorTable, sizeof(s32), m_Header.nDescriptors, f );
-
-                // Fix up the descriptor pointers.
+                // Read the 32-bit on-disk descriptor offsets and resolve them
+                // to pointer-sized addresses in memory.
                 for( i=0 ; i<m_Header.nDescriptors ; i++ )
-                    m_DescriptorTable[ i ] += (u32)m_DescriptorBuffer;
+                {
+                    s32 Offset;
+                    x_fread( &Offset, sizeof(s32), 1, f );
+                    m_DescriptorTable[ i ] = (uaddr)m_DescriptorBuffer + (u32)Offset;
+                }
 
                 // Read in the descriptors.
                 x_fread( m_DescriptorBuffer, m_Header.DescriptorFootprint, 1, f );
@@ -273,11 +315,11 @@ xbool audio_package::Init( const char* pFilename )
 
                 // Read in the hot sample headers
                 if( m_HotSamples )
-                    x_fread( m_HotSamples, m_Header.HeaderSizes[ HOT ], m_Header.nSampleHeaders[ HOT ], f );
+                    ReadSampleHeaders( f, (sample_header*)m_HotSamples, m_Header.nSampleHeaders[ HOT ], m_Header.HeaderSizes[ HOT ] );
 
                 // Read in the cold sample headers
                 if( m_ColdSamples )
-                    x_fread( m_ColdSamples, m_Header.HeaderSizes[ COLD ], m_Header.nSampleHeaders[ COLD ], f );
+                    ReadSampleHeaders( f, (sample_header*)m_ColdSamples, m_Header.nSampleHeaders[ COLD ], m_Header.HeaderSizes[ COLD ] );
                 
                 // TODO: Load the warm sample headers.
 
@@ -292,11 +334,11 @@ xbool audio_package::Init( const char* pFilename )
                 m_AudioRam = 0;
                 if( m_Header.Aram )
                 {
-                    m_AudioRam    = (u32)g_AudioHardware.AllocAudioRam( m_Header.Aram );
-                    u32 Aram      = m_AudioRam;
+                    m_AudioRam    = (uaddr)g_AudioHardware.AllocAudioRam( m_Header.Aram );
+                    uaddr Aram    = m_AudioRam;
                     s32 TotalAram = 0;
                     u32 BlockSize = 0;
-                    u32 Base      = (u32)m_HotSamples;
+                    uaddr Base    = (uaddr)m_HotSamples;
 
                     #ifdef X_DEBUG
                     if( m_AudioRam==0 )
@@ -309,7 +351,7 @@ xbool audio_package::Init( const char* pFilename )
                     }
                     #endif
 
-                    for( i=0 ; i<m_Header.nSampleHeaders[ HOT ] ; i++, Base += m_Header.HeaderSizes[HOT] )
+                    for( i=0 ; i<m_Header.nSampleHeaders[ HOT ] ; i++, Base += sizeof(sample_header) )
                     {
                         hot_sample* pHotSample = (hot_sample*)Base;
 

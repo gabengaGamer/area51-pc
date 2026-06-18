@@ -332,6 +332,41 @@ void UnloadTweaks( void )
 }
 
 //==============================================================================
+// RUNTIME TWEAK OVERRIDE
+//==============================================================================
+
+#define MAX_SCRIPT_TWEAKS 128
+
+static tweak_data_block s_ScriptTweaks[ MAX_SCRIPT_TWEAKS ];
+static s32              s_nScriptTweaks = 0;
+
+xbool SetTweakF32( const char* pName, f32 Value )
+{
+    tweak_handle      Handle( pName );
+    tweak_data_block* pTweak = (tweak_data_block*)g_DataVault.GetData( Handle );
+    if( pTweak )
+    {
+        pTweak->SetValue( Value );
+        return TRUE;
+    }
+
+    if( s_nScriptTweaks >= MAX_SCRIPT_TWEAKS )
+        return FALSE;
+
+    tweak_data_block& Blk = s_ScriptTweaks[ s_nScriptTweaks ];
+    Blk.SetName ( pName );
+    Blk.SetType ( DATA_TYPE_TWEAK );
+    Blk.SetValue( Value );
+    s_nScriptTweaks++;
+
+    if( s_nScriptTweaks > 1 )
+        g_DataVault.DelDataBlocks( "SCRIPTTW" );
+    g_DataVault.AddDataBlocks( "SCRIPTTW", s_ScriptTweaks, s_nScriptTweaks, sizeof(tweak_data_block) );
+
+    return TRUE;
+}
+
+//==============================================================================
 // TWEAK UTIL FUNCTIONS
 //==============================================================================
 

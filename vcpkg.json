@@ -1,0 +1,19 @@
+{
+  "$schema": "https://raw.githubusercontent.com/microsoft/vcpkg-tool/main/docs/vcpkg.schema.json",
+  "name": "area51",
+  "version-string": "0.1.0",
+  "description": "Area 51 third-party dependencies.",
+  "builtin-baseline": "58613d018f126ccaa9dac9a02b11142cb0f4f4ea",
+  "dependencies": [
+    "libvpx",
+    "libogg",
+    "libvorbis",
+    "opus",
+    "opusfile",
+    "libwebm",
+    {
+      "name": "directxtex",
+      "platform": "windows"
+    }
+  ]
+}

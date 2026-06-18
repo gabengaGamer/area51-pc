@@ -154,7 +154,7 @@ void game_client::ProcessSecurityRequest( netstream& BitStream )
 
         BitStream.ReadU32( Base, 26 );              // Address 0..32M
         BitStream.ReadU32( Length, 16 );            // Length 0..65535
-        Checksum = x_chksum( (void*)Base, Length );
+        Checksum = x_chksum( (void*)(uaddr)Base, Length );
         Response.WriteU32( Checksum );
 
         LOG_MESSAGE( "game_client::ProcessSecurityRequest", 

@@ -345,8 +345,13 @@ dxerr CreateMouse( device& Device, const DIDEVICEINSTANCE* pInstance, s32 Sample
     dxerr Error;
     DWORD dwCoopFlags;
 
-    // Detrimine where the buffer would like to be allocated 
-    dwCoopFlags  = s_Input.bExclusive  ? DISCL_EXCLUSIVE    : DISCL_NONEXCLUSIVE;
+    xbool bExclusive = s_Input.bExclusive;
+#ifdef X_DEBUG
+    bExclusive = bExclusive && !IsDebuggerPresent();
+#endif
+
+    // Detrimine where the buffer would like to be allocated
+    dwCoopFlags  = bExclusive          ? DISCL_EXCLUSIVE    : DISCL_NONEXCLUSIVE;
     dwCoopFlags |= s_Input.bForeground ? DISCL_FOREGROUND   : DISCL_BACKGROUND;
 
     // Obtain an interface to the system mouse device.
@@ -880,7 +885,29 @@ xbool UpdateHardwareState( s32 Depth )
 
     if( !s_DoNotProcessWindowsMessages )
     {
-        // Read input for all the mouses	
+#ifdef X_DEBUG
+        {
+            static s32 s_MouseExclusiveNow = -1;
+            s32 bWantExclusive = ( s_Input.bExclusive && !IsDebuggerPresent() ) ? 1 : 0;
+            if( bWantExclusive != s_MouseExclusiveNow )
+            {
+                DWORD dwCoop = ( bWantExclusive ? DISCL_EXCLUSIVE : DISCL_NONEXCLUSIVE )
+                             | ( s_Input.bForeground ? DISCL_FOREGROUND : DISCL_BACKGROUND );
+                for( s32 m = 0; m < s_Input.nMouses; m++ )
+                {
+                    if( s_Input.Mouse[ m ].pDevice )
+                    {
+                        s_Input.Mouse[ m ].pDevice->Unacquire();
+                        s_Input.Mouse[ m ].pDevice->SetCooperativeLevel( s_Input.Window, dwCoop );
+                        s_Input.Mouse[ m ].pDevice->Acquire();
+                    }
+                }
+                s_MouseExclusiveNow = bWantExclusive;
+            }
+        }
+#endif
+
+        // Read input for all the mouses
         for( s32 m = 0; m < s_Input.nMouses; m++ )
         {
             if( s_Input.bImmediate )

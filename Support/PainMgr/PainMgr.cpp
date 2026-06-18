@@ -641,20 +641,20 @@ xbool LoadPainHealthProfiles( const char* pDirectory )
 #ifndef X_EDITOR
     if( GameMgr.IsGameMultiplayer() )
     {
-        if( !FillPainHealthProfileData(xfs("%s\\Tweak_MP_DamageTable.txt",pDirectory),((u32)&PHP.m_Damage)-((u32)&PHP),TRUE) )
+        if( !FillPainHealthProfileData(xfs("%s\\Tweak_MP_DamageTable.txt",pDirectory),((uaddr)&PHP.m_Damage)-((uaddr)&PHP),TRUE) )
             return FALSE;
     }
     else
 #endif
     {
-        if( !FillPainHealthProfileData(xfs("%s\\Tweak_DamageTable.txt",pDirectory),((u32)&PHP.m_Damage)-((u32)&PHP),TRUE) )
+        if( !FillPainHealthProfileData(xfs("%s\\Tweak_DamageTable.txt",pDirectory),((uaddr)&PHP.m_Damage)-((uaddr)&PHP),TRUE) )
             return FALSE;
     }
     
-    if( !FillPainHealthProfileData(xfs("%s\\Tweak_ForceTable.txt",pDirectory),((u32)&PHP.m_Force)-((u32)&PHP),TRUE) )
+    if( !FillPainHealthProfileData(xfs("%s\\Tweak_ForceTable.txt",pDirectory),((uaddr)&PHP.m_Force)-((uaddr)&PHP),TRUE) )
         return FALSE;
 
-    if( !FillPainHealthProfileData(xfs("%s\\Tweak_HitTypeTable.txt",pDirectory),((u32)&PHP.m_HitType)-((u32)&PHP),FALSE) )
+    if( !FillPainHealthProfileData(xfs("%s\\Tweak_HitTypeTable.txt",pDirectory),((uaddr)&PHP.m_HitType)-((uaddr)&PHP),FALSE) )
         return FALSE;
 
     return TRUE;

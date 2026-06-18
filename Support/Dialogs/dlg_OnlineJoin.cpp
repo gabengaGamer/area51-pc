@@ -853,7 +853,7 @@ void dlg_online_join::FillMatchList( void )
 
     for( s32 i=0; i<5; i++ )
     {
-        m_pMatchList->AddItem( (const char*)xstring(DummyServer[i].Name),  (s32)&DummyServer[i] );
+        m_pMatchList->AddItem( (const char*)xstring(DummyServer[i].Name),  (uaddr)&DummyServer[i] );
     }
 
 #else

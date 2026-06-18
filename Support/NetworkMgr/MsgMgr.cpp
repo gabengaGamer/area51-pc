@@ -109,10 +109,10 @@ void msg_mgr::Reset( void )
 
 void msg_mgr::Message(  msg_id   MsgID,
                         s32      Target,
-                        s32      arg1,
-                        s32      arg2,
-                        s32      arg3,
-                        s32      arg4,
+                        saddr    arg1,
+                        saddr    arg2,
+                        saddr    arg3,
+                        saddr    arg4,
                         f32      Time,
                         s32      GoalID,
                         xbool    Enabled )

@@ -58,7 +58,7 @@ void audio_debug::Init( void )
         ASSERT( m_DebugSamples[i].pAram );
 
         // Set the aram up.
-        m_DebugSamples[i].pSample->AudioRam = (u32)m_DebugSamples[i].pAram;
+        m_DebugSamples[i].pSample->AudioRam = (uaddr)m_DebugSamples[i].pAram;
 
         // DMA the sample down.
         WriteARAMAsynch( m_DebugSamples[i].pSampleBuffer, m_DebugSamples[i].pSample->AudioRam, m_DebugSamples[i].pSample->WaveformLength );

@@ -1,0 +1,11 @@
+<Solution>
+  <Project Path="WorldEditor.vcproj" Type="VC" />
+  <Properties Name="ExtensibilityAddIns" Scope="PostLoad" />
+  <Properties Name="ProjectConfiguration" Scope="PostLoad">
+    <Property Name="{7176B5C2-38B2-4AD3-A540-826D121FF366}.EDITOR-Debug.ActiveCfg" Value="EDITOR-Debug|Win32" />
+    <Property Name="{7176B5C2-38B2-4AD3-A540-826D121FF366}.EDITOR-Debug.Build.0" Value="EDITOR-Debug|Win32" />
+  </Properties>
+  <Properties Name="SolutionConfiguration">
+    <Property Name="EDITOR-Debug" Value="EDITOR-Debug" />
+  </Properties>
+</Solution>

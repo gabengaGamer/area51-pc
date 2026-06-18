@@ -467,7 +467,7 @@ void poly_cache::DrawCluster( cluster* pCL, f32* Intensity )
 {
 
     random R;
-    R.srand( ((u32)(pCL)) & 0x0000FFFF );
+    R.srand( ((u32)(uaddr)(pCL)) & 0x0000FFFF );
     xcolor CC = xcolor( R.irand( 128, 255 ), R.irand( 128, 255 ), R.irand( 128, 255 ), 255 );
     s32 iC=0;
 
@@ -748,7 +748,7 @@ void poly_cache::Render( void )
     while( pCell )
     {
         random R;
-        R.srand( ((u32)(pCell)) & 0x0000FFFF );
+        R.srand( ((u32)(uaddr)(pCell)) & 0x0000FFFF );
 
         if( pCell->iHash!=-1 )
         {
@@ -1084,8 +1084,8 @@ void poly_cache::DestroyCell( cell* pCell )
         {
             for( s32 i=0; i<pCell->nClusters; i++ )
             {
-                ASSERT( ((u32)pCell->ppCluster[i]) > 1024 );
-                if( ((u32)pCell->ppCluster[i]) < 1024 )
+                ASSERT( ((uaddr)pCell->ppCluster[i]) > 1024 );
+                if( ((uaddr)pCell->ppCluster[i]) < 1024 )
                 {
                     BREAK;
                 }

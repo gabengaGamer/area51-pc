@@ -251,7 +251,7 @@ void msg::GetStringData( s32 ArgNum, xwchar* pStringData )  const
 
 //==============================================================================
 
-void msg::SetArg( s32 ArgNum, s32 ArgVal )
+void msg::SetArg( s32 ArgNum, saddr ArgVal )
 {
     // ArgNum is in the range [1..MAX_MSG_ARGS].  This matches up with the 
     // <1> <2> <3> and so on in the message source strings.  But, the args

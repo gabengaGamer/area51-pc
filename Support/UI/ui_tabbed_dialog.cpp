@@ -378,7 +378,7 @@ void ui_tabbed_dialog::ActivateTab( s32 iTab )
     if( m_iActiveTab != OldActiveTab )
     {
         if( m_pParent )
-            m_pParent->OnNotify( m_pParent, this, WN_TAB_CHANGE, (void*)m_iActiveTab );
+            m_pParent->OnNotify( m_pParent, this, WN_TAB_CHANGE, (void*)(uaddr)m_iActiveTab );
     }
 }
 

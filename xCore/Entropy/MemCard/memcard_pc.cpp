@@ -137,7 +137,7 @@ void MemcardDispatcher( void )
     while( 1 )
     {   
         // So lonely...waiting by the phone for someone to call!!!!
-        memcard_message Message = (memcard_message)((s32)g_MemcardHardware.m_pDispatcherMQ->Recv( MQ_BLOCK ));
+        memcard_message Message = (memcard_message)((s32)(uaddr)g_MemcardHardware.m_pDispatcherMQ->Recv( MQ_BLOCK ));
 
         // Someone called! OMG! What should I do?
         switch( Message )
@@ -289,7 +289,7 @@ void memcard_hardware::SendMessage( s32 Message )
     ASSERT( s_Initialized );
 
     // A message in a bottle...send it to the dispatcher.
-    s32 MessageStatus = m_pDispatcherMQ->Send( (void*)Message, MQ_NOBLOCK );
+    s32 MessageStatus = m_pDispatcherMQ->Send( (void*)(uaddr)Message, MQ_NOBLOCK );
 
     // Make sure it was sent!
     ASSERT( MessageStatus );

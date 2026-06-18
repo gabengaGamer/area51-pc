@@ -268,7 +268,7 @@ template< class T, s32 N > inline
 linked_list_node<T>& linked_list< T, N >::GetNode( T* pItem ) const
 {
     ASSERT( pItem );
-    return *(linked_list_node<T>*) ( (u32)pItem + GetNodeOffset() );
+    return *(linked_list_node<T>*) ( (uaddr)pItem + GetNodeOffset() );
 }
 
 //==============================================================================
@@ -469,8 +469,8 @@ s32 linked_list< T, N >::Remove( T* pItem )
 
 #ifdef LINKED_LIST_DEBUG
     // Setup trash pointers to catch problems
-    SetPrev( pItem, (T*)0xDEADBEEF );
-    SetNext( pItem, (T*)0xDEADBEEF );
+    SetPrev( pItem, (T*)(uaddr)0xDEADBEEF );
+    SetNext( pItem, (T*)(uaddr)0xDEADBEEF );
 #endif
 
     return m_Count;

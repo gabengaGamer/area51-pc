@@ -152,7 +152,7 @@ xbool dlg_vote_map::Create( s32                        UserID,
             // build the full map name (includes the game type)
             xwstring FullMapName( xfs( "%s %s", Entry.GetShortGameTypeName(), Entry.GetDisplayName() ) );                    
             // add an entry to the list
-            m_pMapList->AddItem( FullMapName, (s32)&Entry );
+            m_pMapList->AddItem( FullMapName, (uaddr)&Entry );
         }
     }
     // sort the list

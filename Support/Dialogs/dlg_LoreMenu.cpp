@@ -238,7 +238,7 @@ xbool dlg_lore_menu::Create( s32                        UserID,
 #endif
                 {
                     // add an entry to the list
-                    m_pLoreSelect->AddItem( Entry.GetDisplayName(), (s32)&Entry );
+                    m_pLoreSelect->AddItem( Entry.GetDisplayName(), (uaddr)&Entry );
                     // increment count
                     Count++;
                 }

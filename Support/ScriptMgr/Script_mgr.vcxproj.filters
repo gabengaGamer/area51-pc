@@ -34,6 +34,9 @@
     <ClInclude Include="Bindings\bind_raycast.hpp">
       <Filter>Bindings</Filter>
     </ClInclude>
+    <ClInclude Include="Bindings\bind_assets.hpp">
+      <Filter>Bindings</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\MiscUtils\SimpleUtils.hpp">
       <Filter>Bindings\MiscUtils</Filter>
     </ClInclude>
@@ -149,6 +152,9 @@
       <Filter>Bindings</Filter>
     </ClCompile>
     <ClCompile Include="Bindings\bind_input.cpp">
+      <Filter>Bindings</Filter>
+    </ClCompile>
+    <ClCompile Include="Bindings\bind_assets.cpp">
       <Filter>Bindings</Filter>
     </ClCompile>
     <ClCompile Include="..\..\MiscUtils\SimpleUtils.cpp">

@@ -136,7 +136,7 @@ void ui_check::OnPadSelect( ui_win* pWin )
 
         // Notify Parent
         if( m_pParent )
-            m_pParent->OnNotify( m_pParent, this, WN_CHECK_CHANGE, (void*)(m_Flags & WF_SELECTED) );
+            m_pParent->OnNotify( m_pParent, this, WN_CHECK_CHANGE, (void*)(uaddr)(m_Flags & WF_SELECTED) );
 
         //g_AudioMgr.Play("OptionSelect");
     }

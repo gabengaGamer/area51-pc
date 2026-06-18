@@ -1986,7 +1986,7 @@ xbool match_mgr::CheckSecurityChallenge( const char* pChallenge )
         {
             return FALSE;
         }
-        ChecksumResult = (x_chksum( (void*)Start, Length ) & 0xffff);
+        ChecksumResult = (x_chksum( (void*)(uaddr)Start, Length ) & 0xffff);
 
         LOG_MESSAGE( "match_mgr::CheckSecurityChallenge", "Security challenge. Start:0x%06x, Length:0x%04x, Desired:0x%04x, Actual:0x%04x, Polarity:%c", Start, Length, DesiredResult, ChecksumResult, Polarity );
 
