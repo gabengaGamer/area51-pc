@@ -17,21 +17,12 @@
 #undef new
 #endif
 
-#ifdef array
-#undef array
-#endif
-
 #define USE_SYSTEM_NEW_DELETE
-#define X_DISABLE_LEGACY_ARRAY_MACRO
 
 #include "x_files.hpp"
 
 #ifdef new
 #undef new
-#endif
-
-#ifdef array
-#undef array
 #endif
 
 //==============================================================================

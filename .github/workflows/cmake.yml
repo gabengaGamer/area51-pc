@@ -38,4 +38,4 @@ jobs:
         run: cmake --preset linux-gcc-x64
 
       - name: Build full Debug graph
-        run: cmake --build --preset linux-gcc-x64-debug --parallel 4
+        run: cmake --build --preset linux-gcc-x64-debug --parallel 4 -- -k 0

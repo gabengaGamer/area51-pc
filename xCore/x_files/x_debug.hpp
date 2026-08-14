@@ -220,28 +220,6 @@ extern volatile s32 DDBZ;   // Debug Divide By Zero
 
 //------------------------------------------------------------------------------
 
-template< class T, int Count >
-struct save_array
-{
-    T Item[ Count ];
-    inline T& operator[] ( int Index )
-    {
-        ASSERT( Index >= 0 );
-        ASSERT( Index < Count );
-        return Item[ Index ];
-    }
-};
-
-//------------------------------------------------------------------------------
-
-#ifdef X_DEBUG
-    #define array(  Type, VarName, Count ) save_array < Type, Count > VarName
-    #define parray( Type, VarName        ) db_parray< Type >        VarName
-#else
-    #define array(  Type, VarName, Count ) Type  VarName[ Count ]
-    #define parray( Type, VarName        ) Type* VarName
-#endif
-
 //==============================================================================
 //  Customizable run-time failure (RTF) behavior.
 //==============================================================================

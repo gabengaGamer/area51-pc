@@ -11,23 +11,10 @@
 //  INCLUDES
 //=========================================================================
 
-// x_debug.hpp defines an array(...) macro. Keep Bitsery isolated from it so
-// this header is safe to include before or after x_files.hpp.
-#ifdef array
-#pragma push_macro("array")
-#undef array
-#define BITSERY_IO_RESTORE_ARRAY_MACRO
-#endif
-
 #include "3rdParty/Bitsery/adapter/buffer.h"
 #include "3rdParty/Bitsery/traits/string.h"
 #include "3rdParty/Bitsery/bitsery.h"
 #include "3rdParty/Bitsery/traits/vector.h"
-
-#ifdef BITSERY_IO_RESTORE_ARRAY_MACRO
-#pragma pop_macro("array")
-#undef BITSERY_IO_RESTORE_ARRAY_MACRO
-#endif
 
 #include "x_files.hpp"
 
