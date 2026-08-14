@@ -1,4 +1,4 @@
-set( _a51_xbmp_viewer_source_root "${CMAKE_CURRENT_LIST_DIR}/../XBMPViewer" )
+set( _a51_xbmp_viewer_source_root "${CMAKE_CURRENT_LIST_DIR}" )
 a51_add_project( XBMPViewer EXECUTABLE
     WIN32
     SOURCE_ROOT "${_a51_xbmp_viewer_source_root}"

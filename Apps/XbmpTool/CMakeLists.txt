@@ -1,4 +1,4 @@
-﻿set( _a51_xbmp_tool_source_root "${CMAKE_CURRENT_LIST_DIR}/../xbmpTool" )
+﻿set( _a51_xbmp_tool_source_root "${CMAKE_CURRENT_LIST_DIR}" )
 a51_add_project( xbmptool EXECUTABLE
     SOURCE_ROOT "${_a51_xbmp_tool_source_root}"
     SOURCES

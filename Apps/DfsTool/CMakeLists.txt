@@ -1,4 +1,4 @@
-﻿set( _a51_dfs_tool_source_root "${CMAKE_CURRENT_LIST_DIR}/../dfsTool" )
+﻿set( _a51_dfs_tool_source_root "${CMAKE_CURRENT_LIST_DIR}" )
 a51_add_project( dfsTool EXECUTABLE
     SOURCE_ROOT "${_a51_dfs_tool_source_root}"
     SOURCES
