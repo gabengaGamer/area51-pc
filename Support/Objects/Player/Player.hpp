@@ -6,18 +6,18 @@
 //=========================================================================
 
 #include "e_View.hpp"
-#include "Obj_mgr\obj_mgr.hpp"
-#include "ResourceMgr\ResourceMgr.hpp"
-#include "Animation\AnimPlayer.hpp"
-#include "Locomotion\CharacterPhysics.hpp"
+#include "Obj_mgr/obj_mgr.hpp"
+#include "ResourceMgr/ResourceMgr.hpp"
+#include "Animation/AnimPlayer.hpp"
+#include "Locomotion/CharacterPhysics.hpp"
 
-#include "Objects\Render\SkinInst.hpp"
-#include "Animation\CharAnimPlayer.hpp"
-#include "AudioMgr\AudioMgr.hpp"
-#include "ZoneMgr\ZoneMgr.hpp"
-#include "EventMgr\EventMgr.hpp"
-#include "Objects\Actor\Actor.hpp"
-#include "Objects\SpawnPoint.hpp"
+#include "Objects/Render/SkinInst.hpp"
+#include "Animation/CharAnimPlayer.hpp"
+#include "AudioMgr/AudioMgr.hpp"
+#include "ZoneMgr/ZoneMgr.hpp"
+#include "EventMgr/EventMgr.hpp"
+#include "Objects/Actor/Actor.hpp"
+#include "Objects/SpawnPoint.hpp"
 #include "PlayerLoco.hpp"
 #include "PlayerInput.hpp"
 #include "PlayerLook.hpp"
@@ -29,15 +29,15 @@
 #include "PlayerView.hpp"
 #include "PlayerCinema.hpp"
 #include "PlayerDeathCamera.hpp"
-#include "Objects\NewWeapon.hpp"
-#include "Objects\ProjectileBullett.hpp"
-#include "Objects\Pickup.hpp"
+#include "Objects/NewWeapon.hpp"
+#include "Objects/ProjectileBullett.hpp"
+#include "Objects/Pickup.hpp"
 #include "PlayerDefines.hpp"
 
-#include "Trigger\Actions\lock_player_view.hpp"
+#include "Trigger/Actions/lock_player_view.hpp"
 
-#include "NetworkMgr\NetObj.hpp"
-#include "NetworkMgr\Blender.hpp"
+#include "NetworkMgr/NetObj.hpp"
+#include "NetworkMgr/Blender.hpp"
 
 //=========================================================================
 // Defines
