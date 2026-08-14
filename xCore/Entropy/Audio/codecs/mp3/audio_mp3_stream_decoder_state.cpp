@@ -11,7 +11,7 @@
 //==============================================================================
 
 #define MINIMP3_IMPLEMENTATION
-#include "minimp3/minimp3.h"
+#include "Minimp3/minimp3.h"
 #undef MINIMP3_IMPLEMENTATION
 
 //==============================================================================

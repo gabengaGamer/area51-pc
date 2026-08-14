@@ -17,7 +17,7 @@
 
 #include "x_files.hpp"
 #include "Audio/audio_package_format.hpp"
-#include "minimp3/minimp3.h"
+#include "Minimp3/minimp3.h"
 
 //==============================================================================
 //  STRUCTS
