@@ -12,8 +12,8 @@
 #include "EditorDocGridMngr.h"
 #include "EditorDocInputMngr.h"
 
-#include "..\Editor\BaseDocument.h"
-#include "..\MiscUtils\SimpleUtils.hpp"
+#include "../Editor/BaseDocument.h"
+#include "../MiscUtils/SimpleUtils.hpp"
 
 #include <afxmt.h>
 

@@ -7,11 +7,11 @@
 //
 //=============================================================================
 #include "stdafx.h"
-#include "obj_mgr\obj_mgr.hpp"
+#include "obj_mgr/obj_mgr.hpp"
 #include "nav_connection2_editor.hpp"
 #include "nav_connection2_anchor.hpp"
 #include "worldeditor.hpp"
-#include "AI\AIMgr.hpp"
+#include "AI/AIMgr.hpp"
 
 static const f32 k_ConnectionThickness      = 100.0f;
 

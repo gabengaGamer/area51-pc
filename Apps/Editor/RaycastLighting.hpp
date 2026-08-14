@@ -5,7 +5,7 @@
 // INCLUDE
 //=========================================================================
 #include "x_files.hpp"
-#include "Auxiliary\MiscUtils\Property.hpp"
+#include "Auxiliary/MiscUtils/Property.hpp"
 
 #define RAYCAST_GRID_SIZE       64
 #define GRID_FACET_CACHE_SIZE   8

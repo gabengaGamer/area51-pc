@@ -9,20 +9,20 @@
 #include "EditorDoc.h"
 #include "EditorView.h"
 #include "resource.h"
-#include "..\WinControls\FileSearch.h"
-#include "..\WinControls\ListBoxDlg.h"
-#include "..\Editor\Project.hpp"
+#include "../WinControls/FileSearch.h"
+#include "../WinControls/ListBoxDlg.h"
+#include "../Editor/Project.hpp"
 
 #include "transaction_mgr.hpp"
 #include "transaction_file_data.hpp"
 
-//#include "..\MeshViewer\RigidDesc.hpp"
-//#include "..\MeshViewer\SkinDesc.hpp"
+//#include "../MeshViewer/RigidDesc.hpp"
+//#include "../MeshViewer/SkinDesc.hpp"
 
-#include "Objects\PlaySurface.hpp"
-#include "Objects\PropSurface.hpp"
-#include "Objects\AnimSurface.hpp"
-#include "Objects\SkinPropSurface.hpp"
+#include "Objects/PlaySurface.hpp"
+#include "Objects/PropSurface.hpp"
+#include "Objects/AnimSurface.hpp"
+#include "Objects/SkinPropSurface.hpp"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW

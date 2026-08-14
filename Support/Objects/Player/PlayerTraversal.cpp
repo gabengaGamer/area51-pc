@@ -10,8 +10,8 @@
 
 #include "Player.hpp"
 #include "Configuration/GameConfig.hpp"
-#include "Objects\\JumpPad.hpp"
-#include "Objects\\Ladders\\Ladder_Field.hpp"
+#include "Objects//JumpPad.hpp"
+#include "Objects//Ladders//Ladder_Field.hpp"
 
 //=========================================================================
 //  IMPLEMENTATION

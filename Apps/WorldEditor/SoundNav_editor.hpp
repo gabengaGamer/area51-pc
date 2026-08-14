@@ -8,7 +8,7 @@
 #ifndef SOUNDNAV_EDITOR_HPP
 #define SOUNDNAV_EDITOR_HPP
 
-#include "..\WorldEditor\EditorDoc.h"
+#include "../WorldEditor/EditorDoc.h"
 class soundnav_editor
 {
 public:

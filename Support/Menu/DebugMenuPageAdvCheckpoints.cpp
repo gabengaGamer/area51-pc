@@ -8,13 +8,13 @@
 //==============================================================================
 
 #include "DebugMenu2.hpp"
-//#include "SaveMgr\SaveMgr.hpp"
-//#include "Objects\Player\Player.hpp"
+//#include "SaveMgr/SaveMgr.hpp"
+//#include "Objects/Player/Player.hpp"
 //#include "StateMgr/mapList.hpp"
-//#include "Ui\ui_manager.hpp"
-//#include "Ui\ui_font.hpp"
+//#include "Ui/ui_manager.hpp"
+//#include "Ui/ui_font.hpp"
 //#include "Configuration/GameConfig.hpp"
-//#include "PhysicsMgr\PhysicsMgr.hpp"
+//#include "PhysicsMgr/PhysicsMgr.hpp"
 
 //==============================================================================
 

@@ -6,12 +6,12 @@
 
 #include "PlayerView.hpp"
 #include "Player.hpp"
-#include "Objects\\Corpse.hpp"
-#include "Objects\\Camera.hpp"
-#include "Objects\\LevelSettings.hpp"
-#include "StateMgr\\StateMgr.hpp"
-#include "NetworkMgr\\GameMgr.hpp"
-#include "Gamelib\\DebugCheats.hpp"
+#include "Objects//Corpse.hpp"
+#include "Objects//Camera.hpp"
+#include "Objects//LevelSettings.hpp"
+#include "StateMgr//StateMgr.hpp"
+#include "NetworkMgr//GameMgr.hpp"
+#include "Gamelib//DebugCheats.hpp"
 
 //=========================================================================
 

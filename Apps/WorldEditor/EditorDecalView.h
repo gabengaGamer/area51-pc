@@ -8,7 +8,7 @@
 //
 
 #include "EditorPaletteDoc.h"
-#include "..\Editor\PaletteView.h"
+#include "../Editor/PaletteView.h"
 
 /////////////////////////////////////////////////////////////////////////////
 // CEditorDecalView view

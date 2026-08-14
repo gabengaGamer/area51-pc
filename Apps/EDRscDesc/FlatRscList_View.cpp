@@ -6,8 +6,8 @@
 #include "FlatRscList_View.h"
 #include "EDRscDesc_Doc.h"
 
-#include "..\PropertyEditor\PropertyEditorView.h"
-#include "..\PropertyEditor\PropertyEditorDoc.h"
+#include "../PropertyEditor/PropertyEditorView.h"
+#include "../PropertyEditor/PropertyEditorDoc.h"
 
 
 #ifdef _DEBUG

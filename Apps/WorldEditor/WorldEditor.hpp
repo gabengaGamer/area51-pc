@@ -2,9 +2,9 @@
 #define WORLD_EDITOR_HPP
 
 #include "x_files.hpp"
-#include "Objects\Object.hpp"
-#include "Auxiliary\MiscUtils\Property.hpp"
-#include "Auxiliary\MiscUtils\PropertyEnum.hpp"
+#include "Objects/Object.hpp"
+#include "Auxiliary/MiscUtils/Property.hpp"
+#include "Auxiliary/MiscUtils/PropertyEnum.hpp"
 
 
 

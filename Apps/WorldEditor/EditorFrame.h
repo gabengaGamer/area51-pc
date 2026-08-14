@@ -9,8 +9,8 @@
 #pragma once
 #endif // _MSC_VER > 1000
 
-#include "Objects\Object.hpp"
-#include "..\Editor\BaseFrame.h"
+#include "Objects/Object.hpp"
+#include "../Editor/BaseFrame.h"
 #include "WorkspaceTabCtrl.h"
 
 class CPropertyEditorDoc;

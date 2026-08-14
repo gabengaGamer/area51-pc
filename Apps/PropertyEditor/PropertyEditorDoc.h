@@ -6,8 +6,8 @@
 #endif // _MSC_VER > 1000
 // PropertyEditorDoc.h : header file
 //
-#include "Auxiliary\MiscUtils\property.hpp"
-#include "..\Editor\BaseDocument.h"
+#include "Auxiliary/MiscUtils/property.hpp"
+#include "../Editor/BaseDocument.h"
 
 class CGridTreeItem;
 class CPropertyEditorView;

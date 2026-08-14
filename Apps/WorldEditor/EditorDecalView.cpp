@@ -7,10 +7,10 @@
 #include "EditorDecalView.h"
 #include "EditorFrame.h"
 #include "EditorView.h"
-#include "..\Apps\Editor\Project.hpp"
-#include "..\WinControls\FileSearch.h"
-#include "..\PropertyEditor\PropertyEditorDoc.h"
-#include "..\EDRscDesc\RscDesc.hpp"
+#include "../Apps/Editor/Project.hpp"
+#include "../WinControls/FileSearch.h"
+#include "../PropertyEditor/PropertyEditorDoc.h"
+#include "../EDRscDesc/RscDesc.hpp"
 #include "static_decal.hpp"
 
 #ifdef _DEBUG

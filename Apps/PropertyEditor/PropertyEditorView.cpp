@@ -5,7 +5,7 @@
 #include "editor.h"
 #include "PropertyEditorView.h"
 #include "GridTreeItem.h"
-#include "Auxiliary\MiscUtils\property.hpp"
+#include "Auxiliary/MiscUtils/property.hpp"
 #include "PropertyEditorDoc.h"
 
 #ifdef _DEBUG

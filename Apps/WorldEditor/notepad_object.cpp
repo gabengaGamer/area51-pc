@@ -8,16 +8,16 @@
 //  INCLUDES
 //==============================================================================
 
-#include "Render\PrimitiveDebug.hpp"
+#include "Render/PrimitiveDebug.hpp"
 #include "stdafx.h"
 
 #include "notepad_object.hpp"
 #include "x_color.hpp"
-#include "CollisionMgr\CollisionMgr.hpp"
+#include "CollisionMgr/CollisionMgr.hpp"
 #include "Entropy.hpp"
 #include "Parsing/TextIn.hpp"
-#include "Render\Editor\EditorIcons.hpp"
-#include "UI\ui_renderer.hpp"
+#include "Render/Editor/EditorIcons.hpp"
+#include "UI/ui_renderer.hpp"
 
 const f32 c_Sphere_Radius = 25.0f;
 

@@ -15,7 +15,7 @@
 #include "Entropy.hpp"
 #include "x_color.hpp"
 
-//TOMAS #include "occludermgr\occludermgr.hpp"
+//TOMAS #include "occludermgr/occludermgr.hpp"
 //==============================================================================
 // GLOBAL VARIABLES
 //==============================================================================

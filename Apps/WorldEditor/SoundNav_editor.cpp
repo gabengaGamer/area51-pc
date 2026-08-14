@@ -7,11 +7,11 @@
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 #include "stdafx.h"
 #include "soundnav_editor.hpp"
-#include "obj_mgr\obj_mgr.hpp"
-#include "objects\nav_node_place_holder.hpp"
-#include "objects\nav_connection_place_holder.hpp"
-#include "Sound\sound_connection.hpp"
-#include "navigation\NavNodeMgr.hpp"
+#include "obj_mgr/obj_mgr.hpp"
+#include "objects/nav_node_place_holder.hpp"
+#include "objects/nav_connection_place_holder.hpp"
+#include "Sound/sound_connection.hpp"
+#include "navigation/NavNodeMgr.hpp"
 
 //=========================================================================
 // GLOBALS

@@ -5,7 +5,7 @@
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 #include "stdafx.h"
 #include "transaction_zone_data.hpp"
-#include "Obj_Mgr\Obj_Mgr.hpp"
+#include "Obj_Mgr/Obj_Mgr.hpp"
 #include "WorldEditor.hpp"
 
 //=========================================================================
@@ -64,4 +64,3 @@ xbool transaction_zone_data::Rollback()
 
     return bReturn;
 }
-

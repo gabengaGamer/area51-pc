@@ -7,10 +7,10 @@
 // EditorBlueprintView.h : header file
 //
 
-#include "..\WinControls\FileTreeCtrl.h"
+#include "../WinControls/FileTreeCtrl.h"
 #include "ResourcePreview.h"
 #include "Parsing/TextIn.hpp"
-#include "..\Editor\PaletteView.h"
+#include "../Editor/PaletteView.h"
 
 class CEditorPaletteDoc;
 class CEditorFrame;

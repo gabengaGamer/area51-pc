@@ -5,8 +5,8 @@
 #include "PropertyEditorDoc.h"
 #include "PropertyEditorView.h"
 #include "PropertyEditorView.h"
-#include "Auxiliary\MiscUtils\Guid.hpp"
-#include "..\Apps\WorldEditor\WorldEditor.hpp"
+#include "Auxiliary/MiscUtils/Guid.hpp"
+#include "../Apps/WorldEditor/WorldEditor.hpp"
 
 
 

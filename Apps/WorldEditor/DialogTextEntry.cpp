@@ -4,7 +4,7 @@
 #include "stdafx.h"
 #include "WorldEditor.hpp"
 #include "DialogTextEntry.h"
-#include ".\DialogTextEntry.h"
+#include "./DialogTextEntry.h"
 
 
 // CDialogTextEntry dialog

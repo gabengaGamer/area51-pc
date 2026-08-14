@@ -4,12 +4,12 @@
 #include "stdafx.h"
 #include "Resource.h"
 #include "AudioPkgDialog.h"
-#include "..\EDRscDesc\RscDesc.hpp"
-#include "..\WinControls\FileSearch.h"
-//#include "..\AudioEditor\AudioEditor.hpp"
-#include "..\Editor\Project.hpp"
-#include "..\..\Support\AudioMgr\AudioMgr.hpp"
-#include ".\audiopkgdialog.h"
+#include "../EDRscDesc/RscDesc.hpp"
+#include "../WinControls/FileSearch.h"
+//#include "../AudioEditor/AudioEditor.hpp"
+#include "../Editor/Project.hpp"
+#include "../../Support/AudioMgr/AudioMgr.hpp"
+#include "./audiopkgdialog.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW

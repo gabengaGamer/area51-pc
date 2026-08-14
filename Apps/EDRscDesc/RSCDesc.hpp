@@ -4,8 +4,8 @@
 #include <time.h>
 
 #include "x_files.hpp"
-#include "Auxiliary\MiscUtils\Property.hpp"
-#include "Auxiliary\MiscUtils\rtti.hpp"
+#include "Auxiliary/MiscUtils/Property.hpp"
+#include "Auxiliary/MiscUtils/rtti.hpp"
 #include "Parsing/TextOut.hpp"
 #include "Parsing/TextIn.hpp"
 

@@ -7,7 +7,7 @@
 // EDRscDesc_View.h : header file
 //
 
-#include "..\Editor\WorkspaceTabCtrl.h"
+#include "../Editor/WorkspaceTabCtrl.h"
 
 /////////////////////////////////////////////////////////////////////////////
 // EDRscDesc_View view

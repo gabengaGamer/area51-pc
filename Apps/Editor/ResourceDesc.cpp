@@ -1,6 +1,6 @@
 /*
 #include "BaseStdAfx.h"
-#include "../EDRscDesc\RSCDesc.hpp"
+#include "../EDRscDesc/RSCDesc.hpp"
 
 //=========================================================================
 // TYPE

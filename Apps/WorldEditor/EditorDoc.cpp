@@ -9,14 +9,14 @@
 #include "EditorFrame.h"
 
 #include "../../xCore/Parsing/TextIn.hpp"
-#include "..\WinControls\ListBoxDlg.h"
-#include "..\WinControls\FileSearch.h"
-#include "..\Editor\MainFrm.h"
-#include "..\Editor\Project.hpp"
-#include "..\WorldEditor\EditorView.h"
+#include "../WinControls/ListBoxDlg.h"
+#include "../WinControls/FileSearch.h"
+#include "../Editor/MainFrm.h"
+#include "../Editor/Project.hpp"
+#include "../WorldEditor/EditorView.h"
 
-#include "..\PropertyEditor\PropertyEditorView.h"
-#include "..\PropertyEditor\PropertyEditorDoc.h"
+#include "../PropertyEditor/PropertyEditorView.h"
+#include "../PropertyEditor/PropertyEditorDoc.h"
 
 #include "Parsing/TextIn.hpp"
 #include "Parsing/TextOut.hpp"
@@ -28,12 +28,12 @@
 #include "ResourceBrowserDlg.h"
 #include "AudioPkgDialog.h"
 #include "AnimPkgDialog.h"
-#include "GameLib\binlevel.hpp"
-#include "CollisionMgr\PolyCache.hpp"
+#include "GameLib/binlevel.hpp"
+#include "CollisionMgr/PolyCache.hpp"
 
-#include "..\Support\Globals\Global_Variables_Manager.hpp"
-#include "..\Support\Templatemgr\TemplateMgr.hpp"
-#include "..\EDRscDesc\RscDesc.hpp"
+#include "../Support/Globals/Global_Variables_Manager.hpp"
+#include "../Support/Templatemgr/TemplateMgr.hpp"
+#include "../EDRscDesc/RscDesc.hpp"
 
 #include "aux_Bitmap.hpp"
 
@@ -42,14 +42,14 @@
 //support
 #include "ManagerRegistration.hpp"
 
-#include "..\..\Support\ZoneMgr\ZoneMgr.hpp"
-#include "..\..\Support\Obj_mgr\obj_mgr.hpp"
-#include "..\..\Support\Objects\Portal.hpp"
-#include "..\..\Support\Objects\ParticleEmiter.hpp"
+#include "../../Support/ZoneMgr/ZoneMgr.hpp"
+#include "../../Support/Obj_mgr/obj_mgr.hpp"
+#include "../../Support/Objects/Portal.hpp"
+#include "../../Support/Objects/ParticleEmiter.hpp"
 
-#include "..\..\Support\AudioMgr\AudioMgr.hpp"
+#include "../../Support/AudioMgr/AudioMgr.hpp"
 
-#include "..\..\Support\Decals\DecalMgr.hpp"
+#include "../../Support/Decals/DecalMgr.hpp"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW

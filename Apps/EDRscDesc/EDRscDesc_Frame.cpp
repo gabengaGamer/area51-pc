@@ -5,8 +5,8 @@
 #include "resource.h"
 #include "EDRscDesc_Frame.h"
 
-#include "..\PropertyEditor\PropertyEditorView.h"
-#include "..\PropertyEditor\PropertyEditorDoc.h"
+#include "../PropertyEditor/PropertyEditorView.h"
+#include "../PropertyEditor/PropertyEditorDoc.h"
 #include "../WorldEditor/EditorDoc.h"
 
 extern user_settings    g_SaveTrackUserSettings;

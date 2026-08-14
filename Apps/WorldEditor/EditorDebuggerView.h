@@ -9,7 +9,7 @@
 
 class CEditorPaletteDoc;
 
-#include "..\Editor\PaletteView.h"
+#include "Configuration//GameConfig.hpp"
 
 /////////////////////////////////////////////////////////////////////////////
 // CEditorDebuggerView view

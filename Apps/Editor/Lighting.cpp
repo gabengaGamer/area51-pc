@@ -1,14 +1,14 @@
 #include "Lighting.hpp"
-#include "Obj_Mgr\Obj_Mgr.hpp"
-#include "CollisionMgr\CollisionMgr.hpp"
-#include "Objects\LightObject.hpp"
-#include "Objects\Render\RigidInst.hpp"
-#include "Render\Render.hpp"
-#include "Render\RigidColor.hpp"
-#include "..\WorldEditor\WorldEditor.hpp"
+#include "Obj_Mgr/Obj_Mgr.hpp"
+#include "CollisionMgr/CollisionMgr.hpp"
+#include "Objects/LightObject.hpp"
+#include "Objects/Render/RigidInst.hpp"
+#include "Render/Render.hpp"
+#include "Render/RigidColor.hpp"
+#include "../WorldEditor/WorldEditor.hpp"
 #include "RaycastLighting.hpp"
 #include "ManagerRegistration.hpp"
-#include "..\Apps\Editor\Project.hpp"
+#include "../Apps/Editor/Project.hpp"
 
 // APP_EDITOR defines __PLACEMENT_NEW_INLINE, so keep a TU-local placement new
 // for the rigid-geom preload path instead of touching shared x_files headers.

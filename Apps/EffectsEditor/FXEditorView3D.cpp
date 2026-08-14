@@ -1,7 +1,7 @@
 // FXEditorView3D.cpp : implementation file
 //
 
-#include "Render\PrimitiveDebug.hpp"
+#include "Render/PrimitiveDebug.hpp"
 #include "stdafx.h"
 #include "FXEditorView3D.h"
 

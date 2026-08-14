@@ -7,8 +7,8 @@
 // EditorWatchView.h : header file
 //
 #include "EditorPaletteDoc.h"
-#include "..\Editor\PaletteView.h"
-#include "..\Support\Globals\Global_Variables_Manager.hpp"
+#include "../Editor/PaletteView.h"
+#include "../Support/Globals/Global_Variables_Manager.hpp"
 
 /////////////////////////////////////////////////////////////////////////////
 // CEditorWatchView view

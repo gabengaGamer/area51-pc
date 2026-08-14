@@ -4,10 +4,10 @@
 // 
 //==============================================================================
 #include "Player.hpp"
-#include "objects\ParticleEmiter.hpp"
-#include "Sound\EventSoundEmitter.hpp"
-#include "objects\WeaponMutation.hpp"
-#include "StateMgr\StateMgr.hpp"
+#include "objects/ParticleEmiter.hpp"
+#include "Sound/EventSoundEmitter.hpp"
+#include "objects/WeaponMutation.hpp"
+#include "StateMgr/StateMgr.hpp"
 
 //=========================================================================
 // EXTERNALS

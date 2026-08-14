@@ -15,9 +15,9 @@
 // Includes
 //==============================================================================
 
-#include "Obj_mgr\obj_mgr.hpp"
-#include "..\Support\Decals\DecalPackage.hpp"
-#include "..\Support\Decals\DecalMgr.hpp"
+#include "Obj_mgr/obj_mgr.hpp"
+#include "../Support/Decals/DecalPackage.hpp"
+#include "../Support/Decals/DecalMgr.hpp"
 
 //==============================================================================
 // Class

@@ -3,9 +3,9 @@
 #include "StdAfx.h"
 #endif
 #include "RigidDesc.hpp"
-#include "..\Support\Render\GeomFile.hpp"
-#include "..\Support\Render\RigidGeom.hpp"
-#include "..\Editor\Project.hpp"
+#include "../Support/Render/GeomFile.hpp"
+#include "../Support/Render/RigidGeom.hpp"
+#include "../Editor/Project.hpp"
 
 //=========================================================================
 // RESOURCE DEFINITION

@@ -9,8 +9,8 @@
 #include "Resource.h"
 #include "ai_editor.hpp"
 #include "transaction_mgr.hpp"
-#include "Objects\Player\Player.hpp"
-#include "..\PropertyEditor\PropertyEditorDoc.h"
+#include "Objects/Player/Player.hpp"
+#include "../PropertyEditor/PropertyEditorDoc.h"
 #include "EditorLayerView.h"
 #include "ConnectionAttributeDialog.h"
 

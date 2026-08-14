@@ -5,7 +5,7 @@
 #include "editor.h"
 #include "View3D.h"
 #include "RealTimeMessage.h"
-#include "..\Apps\WorldEditor\EditorDoc.h"
+#include "../Apps/WorldEditor/EditorDoc.h"
 
 
 

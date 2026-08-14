@@ -7,13 +7,13 @@
 //
 //=============================================================================
 #include "stdafx.h"
-#include "obj_mgr\obj_mgr.hpp"
+#include "obj_mgr/obj_mgr.hpp"
 #include "nav_connection2_anchor.hpp"
 #include "worldeditor.hpp"
 #include "transaction_layer_data.hpp"
 #include "transaction_object_data.hpp"
 #include "transaction_entry.hpp"
-#include "Render\Editor\EditorIcons.hpp"
+#include "Render/Editor/EditorIcons.hpp"
 
 #include "EditorAIView.h"
 #include "EditorFrame.h"

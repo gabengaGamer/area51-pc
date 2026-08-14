@@ -4,15 +4,15 @@
 // 
 //==============================================================================
 #include "player.hpp"
-#include "InputMgr\GamePad.hpp"
-#include "GameLib\StatsMgr.hpp"
-#include "StateMgr\StateMgr.hpp"
-#include "NetworkMgr\GameMgr.hpp"
-#include "objects\HudObject.hpp"
-#include "Characters\ActorEffects.hpp"
+#include "InputMgr/GamePad.hpp"
+#include "GameLib/StatsMgr.hpp"
+#include "StateMgr/StateMgr.hpp"
+#include "NetworkMgr/GameMgr.hpp"
+#include "objects/HudObject.hpp"
+#include "Characters/ActorEffects.hpp"
 #include "Configuration/GameConfig.hpp"
 #include "Gamelib/DebugCheats.hpp"
-#include "PerceptionMgr\PerceptionMgr.hpp"
+#include "PerceptionMgr/PerceptionMgr.hpp"
 #include "e_Audio.hpp"
 
 mp_tweaks g_MPTweaks =

@@ -8,10 +8,10 @@
 #include "x_files.hpp"
 #include "Parsing/TextIn.hpp"
 #include "Parsing/TextOut.hpp"
-#include "..\PropertyEditor\PropertyEditorDoc.h"
-#include "..\WorldEditor\WorldEditor.hpp"
-#include "..\WinControls\FileSearch.h"
-#include "..\WinControls\ListBoxDlg.h"
+#include "../PropertyEditor/PropertyEditorDoc.h"
+#include "../WorldEditor/WorldEditor.hpp"
+#include "../WinControls/FileSearch.h"
+#include "../WinControls/ListBoxDlg.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW

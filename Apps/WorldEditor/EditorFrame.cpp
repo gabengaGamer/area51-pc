@@ -4,13 +4,13 @@
 #include "StdAfx.h"
 
 #include "EditorFrame.h"
-#include "..\PropertyEditor\PropertyEditorView.h"
-#include "..\PropertyEditor\PropertyEditorDoc.h"
-#include "..\WinControls\StringEntryDlg.h"
-#include "..\WinControls\ListBoxDlg.h"
-#include "..\WinControls\FileSearch.h"
-#include "..\Editor\Resource.h"
-#include "..\Editor\Project.hpp"
+#include "../PropertyEditor/PropertyEditorView.h"
+#include "../PropertyEditor/PropertyEditorDoc.h"
+#include "../WinControls/StringEntryDlg.h"
+#include "../WinControls/ListBoxDlg.h"
+#include "../WinControls/FileSearch.h"
+#include "../Editor/Resource.h"
+#include "../Editor/Project.hpp"
 #include "EditorPaletteDoc.h"
 #include "EditorView.h"
 #include "EditorDoc.h"
@@ -35,21 +35,21 @@
 #include <IO.H>
 #include <Shlwapi.h>
 
-#include "Obj_mgr\obj_mgr.hpp"
+#include "Obj_mgr/obj_mgr.hpp"
 
-#include "Objects\PlaySurface.hpp"
-#include "Objects\PropSurface.hpp"
-#include "Objects\AnimSurface.hpp"
-#include "Objects\Portal.hpp"
+#include "Objects/PlaySurface.hpp"
+#include "Objects/PropSurface.hpp"
+#include "Objects/AnimSurface.hpp"
+#include "Objects/Portal.hpp"
 
-#include "AudioMgr\AudioMgr.hpp"
+#include "AudioMgr/AudioMgr.hpp"
 
 #include "DialogTextEntry.h"
 
-#include "..\Editor\MainFrm.h"
-#include "Gamelib\DebugCheats.hpp"
+#include "../Editor/MainFrm.h"
+#include "Gamelib/DebugCheats.hpp"
 
-#include "Objects\Player\Player.hpp"   // Added to access the g_MPTweaks hack.
+#include "Objects/Player/Player.hpp"   // Added to access the g_MPTweaks hack.
 
 #ifdef _DEBUG
 #define new DEBUG_NEW

@@ -10,12 +10,12 @@
 //=========================================================================
 
 #include "Player.hpp"
-#include "Objects\\Event.hpp"
-#include "Objects\\GrenadeProjectile.hpp"
-#include "Objects\\GravChargeProjectile.hpp"
-#include "Objects\\JumpingBeanProjectile.hpp"
-#include "objects\\WeaponMutation.hpp"
-#include "Gamelib\\DebugCheats.hpp"
+#include "Objects//Event.hpp"
+#include "Objects//GrenadeProjectile.hpp"
+#include "Objects//GravChargeProjectile.hpp"
+#include "Objects//JumpingBeanProjectile.hpp"
+#include "objects//WeaponMutation.hpp"
+#include "Gamelib//DebugCheats.hpp"
 
 //=========================================================================
 //  IMPLEMENTATION

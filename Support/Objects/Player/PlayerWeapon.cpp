@@ -10,18 +10,18 @@
 //=========================================================================
 
 #include "Player.hpp"
-#include "FX\\fx_Mgr.hpp"
-#include "objects\\WeaponBBG.hpp"
-#include "objects\\WeaponMutation.hpp"
-#include "objects\\WeaponShotgun.hpp"
-#include "objects\\WeaponSniper.hpp"
-#include "objects\\WeaponSMP.hpp"
-#include "objects\\Corpse.hpp"
-#include "NetworkMgr\\GameMgr.hpp"
-#include "NetworkMgr\\NetObjMgr.hpp"
-#include "StateMgr\\StateMgr.hpp"
+#include "FX//fx_Mgr.hpp"
+#include "objects//WeaponBBG.hpp"
+#include "objects//WeaponMutation.hpp"
+#include "objects//WeaponShotgun.hpp"
+#include "objects//WeaponSniper.hpp"
+#include "objects//WeaponSMP.hpp"
+#include "objects//Corpse.hpp"
+#include "NetworkMgr//GameMgr.hpp"
+#include "NetworkMgr//NetObjMgr.hpp"
+#include "StateMgr//StateMgr.hpp"
 #include "Configuration/GameConfig.hpp"
-#include "TemplateMgr\\TemplateMgr.hpp"
+#include "TemplateMgr//TemplateMgr.hpp"
 
 //=========================================================================
 //  IMPLEMENTATION

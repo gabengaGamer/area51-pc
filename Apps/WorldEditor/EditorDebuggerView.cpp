@@ -7,12 +7,12 @@
 #include "EditorDoc.h"
 #include "EditorView.h"
 #include "Resource.h"
-#include "Auxiliary\MiscUtils\Guid.hpp"
+#include "Auxiliary/MiscUtils/Guid.hpp"
 #include "worldeditor.hpp"
-#include "..\Editor\Project.hpp"
-#include "..\Support\Globals\Global_Variables_Manager.hpp"
-#include "..\WinControls\ListBoxDlg.h"
-#include "Obj_Mgr\Obj_Mgr.hpp"
+#include "../Editor/Project.hpp"
+#include "../Support/Globals/Global_Variables_Manager.hpp"
+#include "../WinControls/ListBoxDlg.h"
+#include "Obj_Mgr/Obj_Mgr.hpp"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW

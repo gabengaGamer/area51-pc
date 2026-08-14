@@ -3,10 +3,10 @@
 
 #include "stdafx.h"
 #include "ResourcePreview.h"
-#include "..\WinControls\FileSearch.h"
-#include "..\EDRscDesc\RSCDesc.hpp"
-//#include "..\MeshViewer\RigidDesc.hpp"
-//#include "..\MeshViewer\SkinDesc.hpp"
+#include "../WinControls/FileSearch.h"
+#include "../EDRscDesc/RSCDesc.hpp"
+//#include "../MeshViewer/RigidDesc.hpp"
+//#include "../MeshViewer/SkinDesc.hpp"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW

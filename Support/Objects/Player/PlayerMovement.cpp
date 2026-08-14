@@ -6,10 +6,10 @@
 
 #include "PlayerMovement.hpp"
 #include "Player.hpp"
-#include "Objects\\Ladders\\Ladder_Field.hpp"
-#include "objects\\Turret.hpp"
-#include "NetworkMgr\\GameMgr.hpp"
-#include "PerceptionMgr\\PerceptionMgr.hpp"
+#include "Objects//Ladders//Ladder_Field.hpp"
+#include "objects//Turret.hpp"
+#include "NetworkMgr//GameMgr.hpp"
+#include "PerceptionMgr//PerceptionMgr.hpp"
 
 //=========================================================================
 

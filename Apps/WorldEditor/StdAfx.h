@@ -14,7 +14,7 @@
 
 
 // TODO: reference additional headers your program requires here
-#include "..\Editor\BaseStdAfx.h"
+#include "../Editor/BaseStdAfx.h"
 #include <afxwin.h>
 
 #include "resource.h" 

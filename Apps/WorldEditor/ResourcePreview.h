@@ -6,10 +6,10 @@
 #endif // _MSC_VER > 1000
 // ResourcePreview.h : header file
 //
-#include "..\Editor\View3d.h"
-#include "..\Editor\Grid3d.hpp"
-#include "..\Editor\Axis3d.hpp"
-//#include "..\MeshViewer\MeshViewer.hpp"
+#include "../Editor/View3d.h"
+#include "../Editor/Grid3d.hpp"
+#include "../Editor/Axis3d.hpp"
+//#include "../MeshViewer/MeshViewer.hpp"
 
 /////////////////////////////////////////////////////////////////////////////
 // CResourcePreview window

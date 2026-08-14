@@ -6,7 +6,7 @@
 #endif // _MSC_VER > 1000
 // EditorSoundView.h : header file
 //
-#include "..\Editor\PaletteView.h"
+#include "../Editor/PaletteView.h"
 
 class CEditorPaletteDoc;
 

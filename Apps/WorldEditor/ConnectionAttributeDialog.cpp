@@ -6,7 +6,7 @@
 #include "worldeditor.hpp"
 #include "ConnectionAttributeDialog.h"
 #include "Ai_editor.hpp"
-#include "navigation\ng_connection2.hpp"
+#include "navigation/ng_connection2.hpp"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW

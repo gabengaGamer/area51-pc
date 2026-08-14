@@ -5,8 +5,8 @@
 // INCLUDES
 //=========================================================================
 
-#include "Auxiliary\MiscUtils\Property.hpp"
-#include "Auxiliary\MiscUtils\PropertyEnum.hpp"
+#include "Auxiliary/MiscUtils/Property.hpp"
+#include "Auxiliary/MiscUtils/PropertyEnum.hpp"
 
 //=========================================================================
 // REFS

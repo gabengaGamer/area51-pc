@@ -3,7 +3,7 @@
 
 #include "stdafx.h"
 #include "WorkspaceTabCtrl.h"
-#include "..\Editor\PaletteView.h"
+#include "../Editor/PaletteView.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW

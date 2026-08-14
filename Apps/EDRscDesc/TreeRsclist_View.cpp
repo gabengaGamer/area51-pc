@@ -4,7 +4,7 @@
 #include "stdafx.h"
 #include "resource.h"
 #include "TreeRsclist_View.h"
-#include "..\Editor\Project.hpp"
+#include "../Editor/Project.hpp"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW

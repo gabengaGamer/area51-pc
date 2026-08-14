@@ -4,12 +4,12 @@
 #include "stdafx.h"
 #include "Resource.h"
 #include "AnimPkgDialog.h"
-#include "..\EDRscDesc\RscDesc.hpp"
-//#include "..\LocoEditor\LocoEditor.hpp"
-#include "..\WinControls\FileSearch.h"
-//#include "..\AudioEditor\AudioEditor.hpp"
-#include "..\Editor\Project.hpp"
-#include ".\animpkgdialog.h"
+#include "../EDRscDesc/RscDesc.hpp"
+//#include "../LocoEditor/LocoEditor.hpp"
+#include "../WinControls/FileSearch.h"
+//#include "../AudioEditor/AudioEditor.hpp"
+#include "../Editor/Project.hpp"
+#include "./animpkgdialog.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW

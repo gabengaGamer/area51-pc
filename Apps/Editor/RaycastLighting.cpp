@@ -14,8 +14,8 @@
 #include "Entropy.hpp"
 #include <crtdbg.h>
 #include "ManagerRegistration.hpp"
-#include "..\WorldEditor\WorldEditor.hpp"
-#include "CollisionMgr\GridWalker.hpp"
+#include "../WorldEditor/WorldEditor.hpp"
+#include "CollisionMgr/GridWalker.hpp"
 
 //=========================================================================
 // DEFINES
@@ -1708,7 +1708,6 @@ xbool raycast_lighting::OnProperty( prop_query& I )
 }
 
 //=========================================================================
-
 
 
 

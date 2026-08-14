@@ -9,9 +9,9 @@
 
 class CEditorPaletteDoc;
 
-#include "..\Support\Globals\Global_Variables_Manager.hpp"
+#include "../Support/Globals/Global_Variables_Manager.hpp"
 #include "ValueGrid.h"
-#include "..\Editor\PaletteView.h"
+#include "../Editor/PaletteView.h"
 
 /////////////////////////////////////////////////////////////////////////////
 // CEditorGlobalView view

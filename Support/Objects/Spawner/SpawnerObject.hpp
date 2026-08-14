@@ -3,7 +3,7 @@
 
 #include "../object.hpp"
 #include "../MiscUtils/SimpleUtils.hpp"
-//#include "..\Support\Globals\Global_Variables_Manager.hpp"
+//#include "../Support/Globals/Global_Variables_Manager.hpp"
 
 class spawner_object : public object
 {

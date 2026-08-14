@@ -7,7 +7,7 @@
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 #include "stdafx.h"
 #include "transaction_file_data.hpp"
-#include "..\WinControls\FileSearch.h" //including for DoesFileExist
+#include "../WinControls/FileSearch.h" //including for DoesFileExist
 
 //=========================================================================
 

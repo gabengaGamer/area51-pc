@@ -8,8 +8,8 @@
 #include "ProjectDoc.h"
 #include "project.hpp"
 
-#include "..\PropertyEditor\PropertyEditorView.h"
-#include "..\PropertyEditor\PropertyEditorDoc.h"
+#include "../PropertyEditor/PropertyEditorView.h"
+#include "../PropertyEditor/PropertyEditorDoc.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW

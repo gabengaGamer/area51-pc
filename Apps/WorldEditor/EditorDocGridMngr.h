@@ -10,9 +10,9 @@
 #endif // _MSC_VER > 1000
 
 #include "WorldEditor.hpp"
-#include "..\Editor\BaseDocument.h"
-#include "..\MiscUtils\SimpleUtils.hpp"
-#include "Render\Texture.hpp"
+#include "../Editor/BaseDocument.h"
+#include "../MiscUtils/SimpleUtils.hpp"
+#include "Render/Texture.hpp"
 
 //=========================================================================
 //=========================================================================

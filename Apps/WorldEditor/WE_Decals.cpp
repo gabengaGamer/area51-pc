@@ -11,8 +11,8 @@
 #include "stdafx.h"
 #include "WorldEditor.hpp"
 #include "static_decal.hpp"
-#include "..\Support\Decals\DecalMgr.hpp"
-#include "..\Support\Decals\DecalDefinition.hpp"
+#include "../Support/Decals/DecalMgr.hpp"
+#include "../Support/Decals/DecalDefinition.hpp"
 
 //==============================================================================
 

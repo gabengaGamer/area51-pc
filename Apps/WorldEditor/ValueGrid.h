@@ -6,7 +6,7 @@
 #endif // _MSC_VER > 1000
 // ValueGrid.h : header file
 //
-#include "..\PropertyEditor\GridListCtrl.h"
+#include "../PropertyEditor/GridListCtrl.h"
 
 /////////////////////////////////////////////////////////////////////////////
 // CValueGrid window

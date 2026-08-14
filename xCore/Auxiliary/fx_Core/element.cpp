@@ -2,7 +2,7 @@
 // INCLUDES
 //============================================================================
 
-#include "Render\PrimitiveDebug.hpp"
+#include "Render/PrimitiveDebug.hpp"
 #include "controller.hpp"
 #include "element.hpp"
 #include "element_sprite.hpp"

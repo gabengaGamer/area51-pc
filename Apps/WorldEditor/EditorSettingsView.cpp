@@ -7,7 +7,7 @@
 #include "EditorFrame.h"
 #include "resource.h"
 #include "ManagerRegistration.hpp"
-#include "..\PropertyEditor\PropertyEditorDoc.h"
+#include "../PropertyEditor/PropertyEditorDoc.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW

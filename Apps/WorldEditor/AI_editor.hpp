@@ -9,7 +9,7 @@
 #ifndef AI_EDITOR_HPP
 #define AI_EDITOR_HPP
 
-#include "..\WorldEditor\EditorDoc.h"
+#include "../WorldEditor/EditorDoc.h"
 #include "nav_connection2_editor.hpp"
 
 class ai_editor

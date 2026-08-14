@@ -10,7 +10,7 @@
 
 #include "EDRscDesc_Doc.h"
 #include "BaseFrame.h"
-#include "..\Editor\WorkspaceTabCtrl.h"
+#include "../Editor/WorkspaceTabCtrl.h"
 
 class EDRscDesc_View;
 class EDRscDesc_Doc;

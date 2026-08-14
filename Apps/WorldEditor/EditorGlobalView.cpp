@@ -6,11 +6,11 @@
 #include "EditorFrame.h"
 #include "EditorView.h"
 #include "Resource.h"
-#include "Auxiliary\MiscUtils\Guid.hpp"
+#include "Auxiliary/MiscUtils/Guid.hpp"
 #include "NewGlobalDlg.h"
-#include "..\WinControls\StringEntryDlg.h"
+#include "../WinControls/StringEntryDlg.h"
 #include "worldeditor.hpp"
-#include "..\Editor\Project.hpp"
+#include "../Editor/Project.hpp"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW

@@ -9,8 +9,8 @@
 //=========================================================================
 
 #include "Player.hpp"
-#include "Objects\\NewWeapon.hpp"
-#include "StateMgr\\StateMgr.hpp"
+#include "Objects//NewWeapon.hpp"
+#include "StateMgr//StateMgr.hpp"
 
 //=========================================================================
 //  DEFINES

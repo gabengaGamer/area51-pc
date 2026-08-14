@@ -9,7 +9,7 @@
 #include "BugBase.h"
 #include "TextEditorView.h"
 #include "ProjectView.h"
-#include ".\projectviewframe.h"
+#include "./projectviewframe.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW

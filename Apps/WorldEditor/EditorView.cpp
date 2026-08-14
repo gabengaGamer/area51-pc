@@ -1,30 +1,30 @@
 // EditorView.cpp : implementation of the CEditorView class
 //
 
-#include "Render\PrimitiveDebug.hpp"
+#include "Render/PrimitiveDebug.hpp"
 #include "StdAfx.h"
 
-#include "..\Editor\MainFrm.h"
+#include "../Editor/MainFrm.h"
 #include "EditorDoc.h"
 #include "EditorView.h"
 #include "EditorFrame.h"
 #include "EditorLayerView.h"
 #include "ai_editor.hpp"
-#include "Obj_Mgr\Obj_Mgr.hpp"
-#include "Objects\Player\Player.hpp"
-#include "Objects\LevelSettings.hpp"
+#include "Obj_Mgr/Obj_Mgr.hpp"
+#include "Objects/Player/Player.hpp"
+#include "Objects/LevelSettings.hpp"
 #include "WorldEditor.hpp"
 #include "transaction_mgr.hpp"
 #include "EditorPaletteDoc.h"
 #include "nav_connection2_editor.hpp"
 #include "Parsing/TextOut.hpp"
-#include "..\EDRscDesc\RscDesc.hpp"
-#include "..\PropertyEditor\PropertyEditorDoc.h"
-#include "..\editor\resource.h"
-#include "..\Editor\Project.hpp"
-#include "..\Support\GameTextMgr\GameTextMgr.hpp"
-#include "..\WinControls\StringEntryDlg.h"
-#include "..\Support\Render\LightMgr.hpp"
+#include "../EDRscDesc/RscDesc.hpp"
+#include "../PropertyEditor/PropertyEditorDoc.h"
+#include "../editor/resource.h"
+#include "../Editor/Project.hpp"
+#include "../Support/GameTextMgr/GameTextMgr.hpp"
+#include "../WinControls/StringEntryDlg.h"
+#include "../Support/Render/LightMgr.hpp"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW

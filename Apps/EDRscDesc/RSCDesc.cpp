@@ -9,10 +9,10 @@
 #include <errno.h>
 
 #if defined(X_EDITOR)
-#include "..\..\Support\ResourceMgr\ResourceMgr.hpp"
-#include "..\WorldEditor\worldeditor.hpp"
-#include "GenericDialog\GenericDialog.hpp"
-#include "..\Editor\project.hpp"
+#include "../../Support/ResourceMgr/ResourceMgr.hpp"
+#include "../WorldEditor/worldeditor.hpp"
+#include "GenericDialog/GenericDialog.hpp"
+#include "../Editor/project.hpp"
 #endif
 
 // APP_EDITOR defines __PLACEMENT_NEW_INLINE, so keep a TU-local placement new
@@ -1653,7 +1653,7 @@ void BuildBlueprintList( xarray<xstring>& FileList )
 
 //=========================================================================
 
-#include "MeshUtil\RawMesh2.hpp"
+#include "MeshUtil/RawMesh2.hpp"
 
 void GatherMATXDependencies( xarray<xstring>& FileList, const char* pMATX, xbool bCheckForMaxFile )
 {

@@ -11,11 +11,11 @@
 #include "stdafx.h"
 
 #include "blueprint_anchor.hpp"
-#include "CollisionMgr\CollisionMgr.hpp"
+#include "CollisionMgr/CollisionMgr.hpp"
 #include "Parsing/TextIn.hpp"
 #include "x_color.hpp"
 #include "Entropy.hpp"
-#include "Render\Editor\EditorIcons.hpp"
+#include "Render/Editor/EditorIcons.hpp"
 
 const f32 c_Sphere_Radius = 50.0f;
 

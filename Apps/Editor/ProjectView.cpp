@@ -8,7 +8,7 @@
 #include "HelpView.h"
 #include "BugBase.h"
 #include "TextEditorView.h"
-#include ".\projectview.h"
+#include "./projectview.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW

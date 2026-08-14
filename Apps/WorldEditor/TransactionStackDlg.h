@@ -6,7 +6,7 @@
 #endif // _MSC_VER > 1000
 // TransactionStackDlg.h : header file
 //
-#include "..\WinControls\StackListBox.h"
+#include "../WinControls/StackListBox.h"
 #include "resource.h"
 
 /////////////////////////////////////////////////////////////////////////////

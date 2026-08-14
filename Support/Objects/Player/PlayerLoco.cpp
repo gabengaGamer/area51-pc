@@ -8,9 +8,9 @@
 // INCLUDES
 //==============================================================================
 
-#include "Render\PrimitiveDebug.hpp"
+#include "Render/PrimitiveDebug.hpp"
 #include "PlayerLoco.hpp"
-#include "Objects\Actor\Actor.hpp"
+#include "Objects/Actor/Actor.hpp"
 
 
 //==============================================================================

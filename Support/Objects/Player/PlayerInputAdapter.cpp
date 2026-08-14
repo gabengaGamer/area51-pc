@@ -5,7 +5,7 @@
 //=========================================================================
 
 #include "PlayerInput.hpp"
-#include "InputMgr\GamePad.hpp"
+#include "InputMgr/GamePad.hpp"
 
 //=========================================================================
 //  ACTION MAPPING

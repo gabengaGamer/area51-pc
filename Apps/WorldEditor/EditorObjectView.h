@@ -7,7 +7,7 @@
 // EditorObjectView.h : header file
 //
 #include "ResourcePreview.h"
-#include "..\Editor\PaletteView.h"
+#include "../Editor/PaletteView.h"
 
 class CEditorPaletteDoc;
 

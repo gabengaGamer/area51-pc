@@ -10,8 +10,8 @@
 
 #include "Player.hpp"
 #include "e_Audio.hpp"
-#include "Sound\\EventSoundEmitter.hpp"
-#include "PerceptionMgr\\PerceptionMgr.hpp"
+#include "Sound//EventSoundEmitter.hpp"
+#include "PerceptionMgr//PerceptionMgr.hpp"
 
 //=========================================================================
 //  IMPLEMENTATION

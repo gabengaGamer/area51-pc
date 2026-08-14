@@ -8,17 +8,17 @@
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 #include "stdafx.h"
 #include "ai_editor.hpp"
-//#include "obj_mgr\obj_mgr.hpp"
+//#include "obj_mgr/obj_mgr.hpp"
 
-#include "Objects\Player\Player.hpp"
-#include "navigation\nav_map.hpp"
-#include "Navigation\ng_connection2.hpp"
-//#include "Navigation\CoverNode.hpp"
+#include "Objects/Player/Player.hpp"
+#include "navigation/nav_map.hpp"
+#include "Navigation/ng_connection2.hpp"
+//#include "Navigation/CoverNode.hpp"
 #include "nav_connection2_editor.hpp"
 #include "nav_connection2_anchor.hpp"
-//#include "Characters\God.hpp"
-#include "AI\AIMgr.hpp"
-#include "Characters\God.hpp"
+//#include "Characters/God.hpp"
+#include "AI/AIMgr.hpp"
+#include "Characters/God.hpp"
 
 
 ai_editor*  ai_editor::s_This = NULL;

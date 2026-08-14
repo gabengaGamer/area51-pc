@@ -3,9 +3,9 @@
 
 #include "stdafx.h"
 #include "ResourceBrowserDlg.h"
-#include "..\EDRscDesc\RscDesc.hpp"
-#include "..\WinControls\FileSearch.h"
-#include "..\Editor\Project.hpp"
+#include "../EDRscDesc/RscDesc.hpp"
+#include "../WinControls/FileSearch.h"
+#include "../Editor/Project.hpp"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW

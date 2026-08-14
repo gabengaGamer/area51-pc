@@ -9,8 +9,8 @@
 
 #include "stdafx.h"
 #include "transaction_data.hpp"
-#include "Objects\Object.hpp"
-#include "Auxiliary\MiscUtils\Property.hpp"
+#include "Objects/Object.hpp"
+#include "Auxiliary/MiscUtils/Property.hpp"
 #include "worldeditor.hpp"
 
 class transaction_object_data : public transaction_data

@@ -7,12 +7,12 @@
 #include "EditorFrame.h"
 #include "EditorView.h"
 #include "Resource.h"
-#include "..\PropertyEditor\PropertyEditorDoc.h"
+#include "../PropertyEditor/PropertyEditorDoc.h"
 #include "WorldEditor.hpp"
-#include "..\Editor\Project.hpp"
-#include "Auxiliary\MiscUtils\guid.hpp"
-#include "..\WinControls\ListBoxDlg.h"
-#include "Obj_Mgr\Obj_Mgr.hpp"
+#include "../Editor/Project.hpp"
+#include "Auxiliary/MiscUtils/guid.hpp"
+#include "../WinControls/ListBoxDlg.h"
+#include "Obj_Mgr/Obj_Mgr.hpp"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW

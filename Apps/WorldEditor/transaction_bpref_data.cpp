@@ -5,7 +5,7 @@
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 #include "stdafx.h"
 #include "transaction_bpref_data.hpp"
-#include "Obj_Mgr\Obj_Mgr.hpp"
+#include "Obj_Mgr/Obj_Mgr.hpp"
 #include "WorldEditor.hpp"
 
 //=========================================================================

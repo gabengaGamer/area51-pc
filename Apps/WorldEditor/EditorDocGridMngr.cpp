@@ -5,7 +5,7 @@
 
 #include "EditorDocGridMngr.h"
 
-#include "..\WinControls\FileSearch.h"
+#include "../WinControls/FileSearch.h"
 
 #include "aux_Bitmap.hpp"
 
@@ -340,4 +340,3 @@ xbool CGridSettings::OnProperty ( prop_query&   I    )
     }
     return TRUE;
 }
-

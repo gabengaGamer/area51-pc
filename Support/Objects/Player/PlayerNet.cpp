@@ -10,7 +10,7 @@
 //  INCLUDES
 //==============================================================================
 
-#include "NetworkMgr\NetworkMgr.hpp"
+#include "NetworkMgr/NetworkMgr.hpp"
 #include "Player.hpp"
 #include "x_bitstream.hpp"
 

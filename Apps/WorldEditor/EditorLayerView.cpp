@@ -10,12 +10,12 @@
 #include "EditorView.h"
 #include "resource.h"
 #include "transaction_mgr.hpp"
-#include "Auxiliary\MiscUtils\guid.hpp"
-#include "..\Editor\Project.hpp"
-#include "..\Apps\WorldEditor\WorldEditor.hpp"
+#include "Auxiliary/MiscUtils/guid.hpp"
+#include "../Editor/Project.hpp"
+#include "../Apps/WorldEditor/WorldEditor.hpp"
 #include "ZoneMgr/ZoneMgr.hpp"
 
-#include "Objects\Portal.hpp"
+#include "Objects/Portal.hpp"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW

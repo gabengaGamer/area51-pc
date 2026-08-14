@@ -5,8 +5,8 @@
 //  INCLUDES
 //=========================================================================
 
-#include "Obj_mgr\obj_mgr.hpp"
-#include "navigation\ng_connection2.hpp"
+#include "Obj_mgr/obj_mgr.hpp"
+#include "navigation/ng_connection2.hpp"
 
 class nav_connection2_anchor;
 

@@ -7,7 +7,7 @@
 // EditorAIView.h : header file
 //
 #include "EditorPaletteDoc.h"
-#include "..\Editor\PaletteView.h"
+#include "../Editor/PaletteView.h"
 
 /////////////////////////////////////////////////////////////////////////////
 // CEditorAIView view

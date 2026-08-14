@@ -7,8 +7,8 @@
 #include "Objects/PropSurface.hpp"
 #include "Objects/Door.hpp"
 #include "Objects/Pickup.hpp"
-#include "..\Apps\EDRscDesc\RSCDesc.hpp"
-#include "..\editor\Project.hpp"
+#include "../Apps/EDRscDesc/RSCDesc.hpp"
+#include "../editor/Project.hpp"
 
 extern char *g_CommandLine;
 

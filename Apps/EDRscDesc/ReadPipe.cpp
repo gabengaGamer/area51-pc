@@ -4,7 +4,7 @@
 #include "stdafx.h"
 #include "editor.h"
 #include "ReadPipe.h"
-#include "..\EDRscDesc\RSCDesc.hpp"
+#include "../EDRscDesc/RSCDesc.hpp"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -623,4 +623,3 @@ void CReadPipe::ParseErrorsToLog( void )
         }  
     }
 }
-

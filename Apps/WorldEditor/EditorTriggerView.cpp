@@ -9,11 +9,11 @@
 #include "EditorView.h"
 #include "Resource.h"
 #include "WorldEditor.hpp"
-#include "Auxiliary\MiscUtils\guid.hpp"
-#include "Obj_Mgr\Obj_Mgr.hpp"
-#include "TriggerEx\TriggerEx_Object.hpp"
-#include "objects\object.hpp"
-#include "..\Editor\Project.hpp"
+#include "Auxiliary/MiscUtils/guid.hpp"
+#include "Obj_Mgr/Obj_Mgr.hpp"
+#include "TriggerEx/TriggerEx_Object.hpp"
+#include "objects/object.hpp"
+#include "../Editor/Project.hpp"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW

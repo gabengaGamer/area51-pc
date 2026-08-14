@@ -3,9 +3,9 @@
 #include "StdAfx.h"
 #endif
 #include "SkinDesc.hpp"
-#include "..\Support\Render\GeomFile.hpp"
-#include "..\Support\Render\SkinGeom.hpp"
-#include "..\Editor\Project.hpp"
+#include "../Support/Render/GeomFile.hpp"
+#include "../Support/Render/SkinGeom.hpp"
+#include "../Editor/Project.hpp"
 
 //=========================================================================
 // RESOURCE DEFINITION

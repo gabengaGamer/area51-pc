@@ -4,12 +4,12 @@
 #include "BaseStdAfx.h"
 #include "resource.h"
 #include "LogView.h"
-#include "MiscUtils\Guid.hpp"
-#include "..\WorldEditor\WorldEditor.hpp"
-#include "..\WorldEditor\EditorPaletteDoc.h"
-#include "..\WorldEditor\EditorFrame.h"
-#include "..\WorldEditor\EditorView.h"
-#include "..\WorldEditor\EditorDoc.h"
+#include "MiscUtils/Guid.hpp"
+#include "../WorldEditor/WorldEditor.hpp"
+#include "../WorldEditor/EditorPaletteDoc.h"
+#include "../WorldEditor/EditorFrame.h"
+#include "../WorldEditor/EditorView.h"
+#include "../WorldEditor/EditorDoc.h"
 #include "MainFrm.h"
 
 #ifdef _DEBUG

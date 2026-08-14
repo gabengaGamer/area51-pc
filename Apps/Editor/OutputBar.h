@@ -9,8 +9,8 @@
 #pragma once
 #endif // _MSC_VER >= 1000
 
-#include "..\EDRscDesc\CompErrorDisplayCtrl.h"
-#include "..\Editor\OutputCtrl.h"
+#include "../EDRscDesc/CompErrorDisplayCtrl.h"
+#include "../Editor/OutputCtrl.h"
 #include "LogView.h"
 #include "WorkspaceTabCtrl.h"
 

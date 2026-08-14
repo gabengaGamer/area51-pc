@@ -7,7 +7,7 @@
 // NewGlobalDlg.h : header file
 //
 #include "resource.h"
-#include "..\Support\Globals\Global_Variables_Manager.hpp"
+#include "../Support/Globals/Global_Variables_Manager.hpp"
 
 /////////////////////////////////////////////////////////////////////////////
 // CNewGlobalDlg dialog

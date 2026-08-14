@@ -8,8 +8,8 @@
 #include "CompErrorDisplayCtrl.h"
 #include "EDRscDesc_Frame.h"
 #include "EDRscDesc_View.h"
-#include "..\PropertyEditor\PropertyEditorView.h"
-#include "..\PropertyEditor\PropertyEditorDoc.h"
+#include "../PropertyEditor/PropertyEditorView.h"
+#include "../PropertyEditor/PropertyEditorDoc.h"
 #include "MainFrm.h"
 
 #include "../Editor/Project.hpp"

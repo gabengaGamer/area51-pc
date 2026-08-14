@@ -9,15 +9,15 @@
 #include "EditorDoc.h"
 #include "ResourceBrowserDlg.h"
 #include "resource.h"
-#include "..\PropertyEditor\PropertyEditorDoc.h"
-#include "..\EDRscDesc\RscDesc.hpp"
-#include "..\WinControls\FileSearch.h"
-#include "..\Editor\Project.hpp"
-#include "..\Editor\resource.h"
+#include "../PropertyEditor/PropertyEditorDoc.h"
+#include "../EDRscDesc/RscDesc.hpp"
+#include "../WinControls/FileSearch.h"
+#include "../Editor/Project.hpp"
+#include "../Editor/resource.h"
 #include "WorldEditor.hpp"
-#include "objects\PlaySurface.hpp"
-#include "objects\PropSurface.hpp"
-#include "objects\AnimSurface.hpp"
+#include "objects/PlaySurface.hpp"
+#include "objects/PropSurface.hpp"
+#include "objects/AnimSurface.hpp"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW

@@ -24,7 +24,7 @@
 #include "Configuration/GameConfig.hpp"
 #include "GameServer.hpp"
 #include "GameClient.hpp"
-#include "InputMgr\GamePad.hpp"
+#include "InputMgr/GamePad.hpp"
 #include "Voice/VoiceMgr.hpp"
 #include "GameLib/LevelLoader.hpp"
 #include "StateMgr/StateMgr.hpp"

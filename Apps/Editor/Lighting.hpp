@@ -1,7 +1,7 @@
 #ifndef LIGHTING_HPP
 #define LIGHTING_HPP
 
-#include "Obj_Mgr\Obj_Mgr.hpp"
+#include "Obj_Mgr/Obj_Mgr.hpp"
 
 enum
 {

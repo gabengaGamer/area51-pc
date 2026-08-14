@@ -6,7 +6,7 @@
 #include <x_stdio.hpp>
 
 #include "Auxiliary/MiscUtils/Guid.hpp"
-#include "Objects/Object.hpp"
+#include "Objects/object.hpp"
 #include "Obj_mgr/obj_mgr.hpp"
 #include "../auxiliary/miscutils/property.hpp"
 #include "../auxiliary/miscutils/PropertyEnum.hpp"

@@ -2,7 +2,7 @@
 /////////////////////////////////////////////////////////////////////////////
 
 #include "FriendlyScientist.hpp"
-//#include "TaskSystem\character_sub_task.hpp"
+//#include "TaskSystem/character_sub_task.hpp"
 
 //===========================================================================
 // friendly_scientist
@@ -118,4 +118,3 @@ xbool friendly_scientist::OnProperty( prop_query& rPropQuery )
 
     return FALSE ;
 }
-

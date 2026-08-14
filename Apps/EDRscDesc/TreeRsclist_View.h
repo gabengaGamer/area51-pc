@@ -6,7 +6,7 @@
 #endif // _MSC_VER > 1000
 // TreeRsclist_View.h : header file
 //
-#include "..\WinControls\FileTreeCtrl.h"
+#include "../WinControls/FileTreeCtrl.h"
 
 /////////////////////////////////////////////////////////////////////////////
 // CTreeRsclist_View view
