@@ -2,10 +2,6 @@
 #
 #  A51Platform.cmake
 #
-#  Normalize the target platform and architecture so the project graph does
-#  not need to know whether it was selected by Visual Studio, Ninja, or a
-#  cross compiler toolchain.
-#
 #==========================================================================
 
 include_guard( GLOBAL )

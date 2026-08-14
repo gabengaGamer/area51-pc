@@ -33,12 +33,12 @@ struct save_data_file_info
 class save_data_backend
 {
 public:
-    save_data_status Init        ( void );
+    SaveDataStatus Init        ( void );
     void             Kill        ( void );
-    save_data_status List        ( xarray<save_data_file_info>& Files );
-    save_data_status Read        ( const char* pName, xarray<u8>& Bytes );
-    save_data_status WriteAtomic ( const char* pName, const xarray<u8>& Bytes );
-    save_data_status Delete      ( const char* pName );
+    SaveDataStatus List        ( xarray<save_data_file_info>& Files );
+    SaveDataStatus Read        ( const char* pName, xarray<u8>& Bytes );
+    SaveDataStatus WriteAtomic ( const char* pName, const xarray<u8>& Bytes );
+    SaveDataStatus Delete      ( const char* pName );
 };
 
 //==============================================================================

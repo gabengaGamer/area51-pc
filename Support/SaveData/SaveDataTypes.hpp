@@ -17,7 +17,7 @@
 //  DATA
 //==============================================================================
 
-enum class save_data_operation
+enum class SaveDataOperation
 {
     None,
     RefreshProfiles,
@@ -30,7 +30,7 @@ enum class save_data_operation
 
 //------------------------------------------------------------------------------
 
-enum class save_data_status
+enum class SaveDataStatus
 {
     Success,
     NotFound,
@@ -46,20 +46,20 @@ enum class save_data_status
 struct save_data_result
 {
     save_data_result( void ) :
-        Operation ( save_data_operation::None ),
-        Status    ( save_data_status::Success ),
+        Operation ( SaveDataOperation::None ),
+        Status    ( SaveDataStatus::Success ),
         ProfileID( -1 )
     {
     }
 
     xbool Succeeded( void ) const
     {
-        return( Status == save_data_status::Success );
+        return( Status == SaveDataStatus::Success );
     }
 
-    save_data_operation Operation;
-    save_data_status    Status;
-    s32                 ProfileID;
+    SaveDataOperation Operation;
+    SaveDataStatus    Status;
+    s32               ProfileID;
 };
 
 //==============================================================================

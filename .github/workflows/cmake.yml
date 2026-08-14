@@ -21,6 +21,13 @@ jobs:
           cmake --build --preset windows-vs2022-x64-debug
           --target Entropy AudioMgr Render xbmptool dfsTool Art2Code --parallel 4
 
+      - name: Smoke test custom configurations
+        shell: pwsh
+        run: |
+          cmake --build --preset windows-vs2022-x64-optdebug --target dfsTool --parallel 4
+          cmake --build --preset windows-vs2022-x64-qa --target dfsTool --parallel 4
+          cmake --build --preset windows-vs2022-x64-editor-debug --target dfsTool --parallel 4
+
   linux-x64:
     name: Linux x64 / GCC
     runs-on: ubuntu-24.04

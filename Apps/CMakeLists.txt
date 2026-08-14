@@ -1,6 +1,3 @@
-# Application targets. EDRscDesc is also used as a build-time dependency by
-# the compiler tools, so it is kept in the graph independently of the app
-# selection switch.
 
 add_subdirectory( EDRscDesc )
 

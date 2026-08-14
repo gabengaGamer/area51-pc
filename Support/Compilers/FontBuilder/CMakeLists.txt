@@ -1,5 +1,4 @@
-﻿# Native CMake target for FontBuilder.
-a51_add_project( FontBuilder EXECUTABLE
+﻿a51_add_project( FontBuilder EXECUTABLE
     SOURCE_ROOT "${CMAKE_CURRENT_LIST_DIR}"
     SOURCES
         "${CMAKE_CURRENT_LIST_DIR}/FontBuilder.cpp"

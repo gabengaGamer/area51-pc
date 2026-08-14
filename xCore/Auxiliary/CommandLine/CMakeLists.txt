@@ -1,5 +1,4 @@
-﻿# Native CMake target for CommandLine.
-a51_add_project( CommandLine STATIC
+﻿a51_add_project( CommandLine STATIC
     SOURCE_ROOT "${CMAKE_CURRENT_LIST_DIR}"
     SOURCES
         "${CMAKE_CURRENT_LIST_DIR}/CommandLine.cpp"

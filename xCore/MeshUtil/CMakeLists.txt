@@ -1,5 +1,4 @@
-﻿# Native CMake target for MeshUtil.
-a51_add_project( MeshUtil STATIC
+﻿a51_add_project( MeshUtil STATIC
     SOURCE_ROOT "${CMAKE_CURRENT_LIST_DIR}"
     DEPENDENCIES
         Parsing

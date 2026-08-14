@@ -1,5 +1,4 @@
-﻿# Native CMake target for EDRscDesc.
-a51_add_project( EDRscDesc STATIC
+﻿a51_add_project( EDRscDesc STATIC
     SOURCE_ROOT "${CMAKE_CURRENT_LIST_DIR}"
     SOURCES
         "${CMAKE_CURRENT_LIST_DIR}/CompErrorDisplayCtrl.cpp"

@@ -10,8 +10,8 @@
 
 #include "x_target.hpp"
 
-#if !defined( TARGET_LINUX )
-    #error This file should only be compiled for Linux platform. Please check your exclusions on your project spec.
+#ifndef TARGET_LINUX
+#error This file should only be compiled for Linux platform. Please check your exclusions on your project spec.
 #endif
 
 //==============================================================================

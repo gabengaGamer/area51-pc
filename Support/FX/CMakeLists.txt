@@ -1,5 +1,4 @@
-﻿# Native CMake target for FX.
-a51_add_project( FX STATIC
+﻿a51_add_project( FX STATIC
     SOURCE_ROOT "${CMAKE_CURRENT_LIST_DIR}"
     SOURCES
         "${CMAKE_CURRENT_LIST_DIR}/fx_Ctrl.cpp"

@@ -1,5 +1,4 @@
-﻿# Native CMake target for x_files.
-if( WIN32 )
+﻿if( WIN32 )
     set( X_FILES_PLATFORM_SOURCES
         "${CMAKE_CURRENT_LIST_DIR}/Implementation/x_atomic_pc.cpp"
         "${CMAKE_CURRENT_LIST_DIR}/Implementation/x_threads_pc.cpp"
@@ -13,7 +12,7 @@ elseif( CMAKE_SYSTEM_NAME STREQUAL "Linux" )
     )
     set( X_FILES_PLATFORM_DEPENDENCIES Threads::Threads )
 
-    # 64-bit atomics on some 32-bit Linux toolchains are provided by libatomic.
+    # The libatomic library is required for 64-bit atomics on 32-bit Linux.
     find_library( A51_ATOMIC_LIBRARY NAMES atomic )
     if( A51_ATOMIC_LIBRARY )
         list( APPEND X_FILES_PLATFORM_DEPENDENCIES "${A51_ATOMIC_LIBRARY}" )

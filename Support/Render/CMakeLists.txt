@@ -1,5 +1,4 @@
-﻿# Native CMake target for Render.
-a51_add_project( Render STATIC
+﻿a51_add_project( Render STATIC
     SOURCE_ROOT "${CMAKE_CURRENT_LIST_DIR}"
     SOURCES
         "${CMAKE_CURRENT_LIST_DIR}/CollisionVolume.cpp"
@@ -32,8 +31,8 @@ a51_add_project( Render STATIC
         "${CMAKE_CURRENT_LIST_DIR}/PC/PostMgr/PostMgr_Fog.cpp"
         "${CMAKE_CURRENT_LIST_DIR}/PC/PostMgr/PostMgr_Filters.cpp"
         "${CMAKE_CURRENT_LIST_DIR}/PC/PostMgr/PostMgr_Glow.cpp"
-        "${CMAKE_CURRENT_LIST_DIR}/Pc/SoftVertexMgr.cpp"
-        "${CMAKE_CURRENT_LIST_DIR}/Pc/VertexMgr.cpp"
+        "${CMAKE_CURRENT_LIST_DIR}/PC/SoftVertexMgr.cpp"
+        "${CMAKE_CURRENT_LIST_DIR}/PC/VertexMgr.cpp"
         "${CMAKE_CURRENT_LIST_DIR}/ProjTextureMgr.cpp"
         "${CMAKE_CURRENT_LIST_DIR}/PrimitiveBatch.cpp"
         "${CMAKE_CURRENT_LIST_DIR}/PrimitiveDebug.cpp"
@@ -69,8 +68,8 @@ a51_add_project( Render STATIC
         "${CMAKE_CURRENT_LIST_DIR}/PrimitiveBatch.hpp"
         "${CMAKE_CURRENT_LIST_DIR}/PrimitiveDebug.hpp"
         "${CMAKE_CURRENT_LIST_DIR}/PC/PostMgr/PostMgr.hpp"
-        "${CMAKE_CURRENT_LIST_DIR}/Pc/SoftVertexMgr.hpp"
-        "${CMAKE_CURRENT_LIST_DIR}/Pc/VertexMgr.hpp"
+        "${CMAKE_CURRENT_LIST_DIR}/PC/SoftVertexMgr.hpp"
+        "${CMAKE_CURRENT_LIST_DIR}/PC/VertexMgr.hpp"
         "${CMAKE_CURRENT_LIST_DIR}/platform_Render.hpp"
         "${CMAKE_CURRENT_LIST_DIR}/ProjTextureMgr.hpp"
         "${CMAKE_CURRENT_LIST_DIR}/ShadowMapMgr.hpp"
@@ -80,7 +79,7 @@ a51_add_project( Render STATIC
         "${CMAKE_CURRENT_LIST_DIR}/RigidGeom.hpp"
         "${CMAKE_CURRENT_LIST_DIR}/SkinGeom.hpp"
         "${CMAKE_CURRENT_LIST_DIR}/Texture.hpp"
-        "${CMAKE_CURRENT_LIST_DIR}/Pc/pc_platform.inl"
+        "${CMAKE_CURRENT_LIST_DIR}/PC/pc_platform.inl"
     PRIVATE_INCLUDE_DIRECTORIES
         "${CMAKE_SOURCE_DIR}/xCore"
         "${CMAKE_SOURCE_DIR}/xCore/x_files"

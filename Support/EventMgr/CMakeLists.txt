@@ -1,5 +1,4 @@
-﻿# Native CMake target for EventMgr.
-a51_add_project( EventMgr STATIC
+﻿a51_add_project( EventMgr STATIC
     SOURCE_ROOT "${CMAKE_CURRENT_LIST_DIR}"
     SOURCES
         "${CMAKE_CURRENT_LIST_DIR}/EventMgr.cpp"

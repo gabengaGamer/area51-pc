@@ -1,5 +1,4 @@
-﻿# Native CMake target for DecalCompiler.
-a51_add_project( DecalCompiler EXECUTABLE
+﻿a51_add_project( DecalCompiler EXECUTABLE
     SOURCE_ROOT "${CMAKE_CURRENT_LIST_DIR}"
     SOURCES
         "${CMAKE_CURRENT_LIST_DIR}/../../Decals/DecalDefinition.cpp"

@@ -1,5 +1,4 @@
-﻿# Native CMake target for Script_mgr.
-a51_add_project( Script_mgr STATIC
+﻿a51_add_project( Script_mgr STATIC
     SOURCE_ROOT "${CMAKE_CURRENT_LIST_DIR}"
     SOURCES
         "${CMAKE_CURRENT_LIST_DIR}/../../MiscUtils/SimpleUtils.hpp"

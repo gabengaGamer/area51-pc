@@ -1,5 +1,4 @@
-﻿# Native CMake target for AudioMgr.
-a51_add_project( AudioMgr STATIC
+﻿a51_add_project( AudioMgr STATIC
     SOURCE_ROOT "${CMAKE_CURRENT_LIST_DIR}"
     SOURCES
         "${CMAKE_CURRENT_LIST_DIR}/AudioMgr.cpp"

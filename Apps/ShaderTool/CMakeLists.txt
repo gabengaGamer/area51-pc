@@ -1,5 +1,4 @@
-﻿# Native CMake target for ShaderTool.
-a51_add_project( ShaderTool EXECUTABLE
+﻿a51_add_project( ShaderTool EXECUTABLE
     SOURCE_ROOT "${CMAKE_CURRENT_LIST_DIR}"
     SOURCES
         "${CMAKE_CURRENT_LIST_DIR}/DxcCompiler.cpp"

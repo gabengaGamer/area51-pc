@@ -1,4 +1,3 @@
-# Native bundled LAME static library target.
 set( _a51_lame_sources
     bitstream.c
     encoder.c

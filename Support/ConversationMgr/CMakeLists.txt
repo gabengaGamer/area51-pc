@@ -1,5 +1,4 @@
-﻿# Native CMake target for ConversationMgr.
-a51_add_project( ConversationMgr STATIC
+﻿a51_add_project( ConversationMgr STATIC
     SOURCE_ROOT "${CMAKE_CURRENT_LIST_DIR}"
     SOURCES
         "${CMAKE_CURRENT_LIST_DIR}/ConversationMgr.cpp"

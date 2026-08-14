@@ -1,5 +1,4 @@
-﻿# Native CMake target for stringTool.
-a51_add_project( stringTool EXECUTABLE
+﻿a51_add_project( stringTool EXECUTABLE
     SOURCE_ROOT "${CMAKE_CURRENT_LIST_DIR}"
     SOURCES
         "${CMAKE_CURRENT_LIST_DIR}/stringTool.cpp"

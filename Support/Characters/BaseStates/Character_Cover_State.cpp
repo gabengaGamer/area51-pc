@@ -1,7 +1,7 @@
 #include "Render/PrimitiveDebug.hpp"
 #include "Character_Cover_State.hpp"
 #include "../Character.hpp"
-#include "Navigation/CoverNode.hpp"
+#include "navigation/CoverNode.hpp"
 #include "Objects/NewWeapon.hpp"
 #include "AudioMgr/AudioMgr.hpp"
 #include "Objects/Player/Player.hpp"

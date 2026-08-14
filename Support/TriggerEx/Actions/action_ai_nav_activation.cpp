@@ -15,7 +15,7 @@
 #include "Entropy.hpp"
 #include "Obj_mgr/obj_mgr.hpp"
 #include "Obj_mgr/obj_mgr.hpp"
-#include "Navigation/Nav_Map.hpp"
+#include "navigation/Nav_Map.hpp"
 
 #ifdef X_EDITOR
 #include "../../Apps/WorldEditor/nav_connection2_editor.hpp"

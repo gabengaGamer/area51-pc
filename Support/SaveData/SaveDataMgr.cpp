@@ -71,16 +71,16 @@ xbool ParseProfileID( const char* pName, s32& ProfileID )
 
 //==============================================================================
 
-save_data_status DecodeProfileStatus( const xarray<u8>& Bytes,
+SaveDataStatus DecodeProfileStatus( const xarray<u8>& Bytes,
                                       player_profile&   Profile )
 {
     xstring Error;
     if( !save_data_codec::DecodeProfile( Bytes, Profile, Error ) )
     {
         LOG_WARNING( "save_data_mgr", "Rejected profile: %s", (const char*)Error );
-        return save_data_status::Corrupt;
+        return SaveDataStatus::Corrupt;
     }
-    return save_data_status::Success;
+    return SaveDataStatus::Success;
 }
 
 } // namespace
@@ -141,12 +141,12 @@ save_data_mgr g_SaveDataMgr;
 //==============================================================================
 
 static 
-save_data_status ScanProfiles( save_data_backend& Backend,
+SaveDataStatus ScanProfiles( save_data_backend& Backend,
                                xarray<profile_info>& Profiles )
 {
     xarray<save_data_file_info> Files;
-    const save_data_status ListStatus = Backend.List( Files );
-    if( ListStatus != save_data_status::Success )
+    const SaveDataStatus ListStatus = Backend.List( Files );
+    if( ListStatus != SaveDataStatus::Success )
     {
         return ListStatus;
     }
@@ -167,12 +167,12 @@ save_data_status ScanProfiles( save_data_backend& Backend,
 
         xarray<u8> Bytes;
         player_profile Profile;
-        const save_data_status ReadStatus = Backend.Read( Files[i].Name, Bytes );
-        const save_data_status DecodeStatus = ReadStatus == save_data_status::Success
+        const SaveDataStatus ReadStatus = Backend.Read( Files[i].Name, Bytes );
+        const SaveDataStatus DecodeStatus = ReadStatus == SaveDataStatus::Success
             ? DecodeProfileStatus( Bytes, Profile )
             : ReadStatus;
 
-        if( DecodeStatus == save_data_status::Success )
+        if( DecodeStatus == SaveDataStatus::Success )
         {
             Info.bDamaged = FALSE;
             Info.Name     = xwstring( Profile.GetProfileName() );
@@ -199,7 +199,7 @@ save_data_status ScanProfiles( save_data_backend& Backend,
     {
         Profiles.Append() = Info;
     }
-    return save_data_status::Success;
+    return SaveDataStatus::Success;
 }
 
 //==============================================================================
@@ -232,103 +232,111 @@ void save_data_mgr::impl::ProcessRequest( void* pData )
 {
     save_data_mgr::impl::request& Request = *(save_data_mgr::impl::request*)pData;
     save_data_backend Backend;
-    Request.Result.Status = save_data_status::IoError;
+    Request.Result.Status = SaveDataStatus::IoError;
 
-    if( Backend.Init() != save_data_status::Success )
+    if( Backend.Init() != SaveDataStatus::Success )
     {
         return;
     }
 
     switch( Request.Result.Operation )
     {
-    case save_data_operation::RefreshProfiles:
-        Request.Result.Status = ScanProfiles( Backend, Request.Profiles );
-        break;
-
-    case save_data_operation::CreateProfile:
-        Request.Result.Status = ScanProfiles( Backend, Request.Profiles );
-        if( Request.Result.Status == save_data_status::Success )
-        {
-            const s32 ProfileID = FindFreeProfileID( Request.Profiles );
-            if( ProfileID < 0 )
-            {
-                Request.Result.Status = save_data_status::NoSpace;
-                break;
-            }
-
-            xarray<u8> Bytes;
-            xstring Error;
-            if( !save_data_codec::EncodeProfile( Request.Profile, Bytes, Error ) )
-            {
-                Request.Result.Status = save_data_status::IoError;
-                break;
-            }
-            Request.Result.ProfileID = ProfileID;
-            Request.ProfileInfo.ProfileID = ProfileID;
-            Request.Result.Status = Backend.WriteAtomic( GetProfileFileName( ProfileID ), Bytes );
-            if( Request.Result.Status == save_data_status::Success )
-            {
-                Request.Result.Status = ScanProfiles( Backend, Request.Profiles );
-            }
+        case SaveDataOperation::RefreshProfiles:
+	    {
+            Request.Result.Status = ScanProfiles( Backend, Request.Profiles );
         }
         break;
-
-    case save_data_operation::LoadProfile:
+	    
+        case SaveDataOperation::CreateProfile:
+		{
+            Request.Result.Status = ScanProfiles( Backend, Request.Profiles );
+            if( Request.Result.Status == SaveDataStatus::Success )
+            {
+                const s32 ProfileID = FindFreeProfileID( Request.Profiles );
+                if( ProfileID < 0 )
+                {
+                    Request.Result.Status = SaveDataStatus::NoSpace;
+                    break;
+                }
+	    
+                xarray<u8> Bytes;
+                xstring Error;
+                if( !save_data_codec::EncodeProfile( Request.Profile, Bytes, Error ) )
+                {
+                    Request.Result.Status = SaveDataStatus::IoError;
+                    break;
+                }
+                Request.Result.ProfileID = ProfileID;
+                Request.ProfileInfo.ProfileID = ProfileID;
+                Request.Result.Status = Backend.WriteAtomic( GetProfileFileName( ProfileID ), Bytes );
+                if( Request.Result.Status == SaveDataStatus::Success )
+                {
+                    Request.Result.Status = ScanProfiles( Backend, Request.Profiles );
+                }
+            }
+		}
+        break;
+	    
+        case SaveDataOperation::LoadProfile:
         {
             xarray<u8> Bytes;
             Request.Result.Status = Backend.Read(
                 GetProfileFileName( Request.ProfileInfo.ProfileID ), Bytes );
-            if( Request.Result.Status == save_data_status::Success )
+            if( Request.Result.Status == SaveDataStatus::Success )
             {
                 Request.Result.Status = DecodeProfileStatus(
                     Bytes, Request.Profile );
             }
         }
         break;
-
-    case save_data_operation::SaveProfile:
+	    
+        case SaveDataOperation::SaveProfile:
         {
             xarray<u8> Bytes;
             xstring Error;
             if( !save_data_codec::EncodeProfile( Request.Profile, Bytes, Error ) )
             {
-                Request.Result.Status = save_data_status::IoError;
+                Request.Result.Status = SaveDataStatus::IoError;
                 break;
             }
             Request.Result.Status = Backend.WriteAtomic(
                 GetProfileFileName( Request.ProfileInfo.ProfileID ), Bytes );
-            if( Request.Result.Status == save_data_status::Success )
+            if( Request.Result.Status == SaveDataStatus::Success )
             {
                 Request.Result.Status = ScanProfiles( Backend, Request.Profiles );
             }
         }
         break;
-
-    case save_data_operation::DeleteProfile:
-        Request.Result.Status = Backend.Delete(
-            GetProfileFileName( Request.ProfileInfo.ProfileID ) );
-        if( Request.Result.Status == save_data_status::Success )
-        {
-            Request.Result.Status = ScanProfiles( Backend, Request.Profiles );
-        }
+	    
+        case SaveDataOperation::DeleteProfile:
+		{
+            Request.Result.Status = Backend.Delete(
+                GetProfileFileName( Request.ProfileInfo.ProfileID ) );
+            if( Request.Result.Status == SaveDataStatus::Success )
+            {
+                Request.Result.Status = ScanProfiles( Backend, Request.Profiles );
+            }
+		}
         break;
-
-    case save_data_operation::SaveSettings:
+	    
+        case SaveDataOperation::SaveSettings:
         {
             xarray<u8> Bytes;
             xstring Error;
             if( !save_data_codec::EncodeSettings( Request.Settings, Bytes, Error ) )
             {
-                Request.Result.Status = save_data_status::IoError;
+                Request.Result.Status = SaveDataStatus::IoError;
                 break;
             }
             Request.Result.Status = Backend.WriteAtomic( SETTINGS_FILE_NAME, Bytes );
         }
         break;
-
-    default:
-        Request.Result.Status = save_data_status::IoError;
-        break;
+	    
+        default:
+		{
+            Request.Result.Status = SaveDataStatus::IoError;
+        }
+		break;
     }
 }
 
@@ -360,7 +368,7 @@ void save_data_mgr::Init( void )
         return;
     }
     m_pImpl->Initialized =
-        (m_pImpl->Backend.Init() == save_data_status::Success);
+        (m_pImpl->Backend.Init() == SaveDataStatus::Success);
     m_pImpl->Job = xhandle( HNULL );
 }
 
@@ -390,8 +398,8 @@ xbool save_data_mgr::LoadStartupSettings( void )
 {
     ASSERT( m_pImpl && m_pImpl->Initialized );
     xarray<u8> Bytes;
-    const save_data_status ReadStatus = m_pImpl->Backend.Read( SETTINGS_FILE_NAME, Bytes );
-    if( ReadStatus != save_data_status::Success )
+    const SaveDataStatus ReadStatus = m_pImpl->Backend.Read( SETTINGS_FILE_NAME, Bytes );
+    if( ReadStatus != SaveDataStatus::Success )
     {
         return FALSE;
     }
@@ -424,7 +432,7 @@ void save_data_mgr::impl::StartNext( impl& Impl )
                             "SaveData",
                             Impl.Job ) )
     {
-        Request.Result.Status = save_data_status::Busy;
+        Request.Result.Status = SaveDataStatus::Busy;
         Impl.CompletionPending = TRUE;
     }
 }
@@ -458,28 +466,33 @@ void save_data_mgr::Update( f32 DeltaTime )
     impl::request& Request = m_pImpl->Requests.front();
     m_pImpl->LastResult = Request.Result;
 
-    if( Request.Result.Status == save_data_status::Success )
+    if( Request.Result.Status == SaveDataStatus::Success )
     {
         switch( Request.Result.Operation )
         {
-        case save_data_operation::RefreshProfiles:
-        case save_data_operation::CreateProfile:
-        case save_data_operation::SaveProfile:
-        case save_data_operation::DeleteProfile:
-            m_pImpl->Profiles = Request.Profiles;
-            break;
-        default:
+            case SaveDataOperation::RefreshProfiles:
+            case SaveDataOperation::CreateProfile:
+            case SaveDataOperation::SaveProfile:
+            case SaveDataOperation::DeleteProfile:
+			{
+                m_pImpl->Profiles = Request.Profiles;
+            }
+			break;
+			
+            default:
+			{
+			}
             break;
         }
 
-        if( (Request.Result.Operation == save_data_operation::LoadProfile) &&
+        if( (Request.Result.Operation == SaveDataOperation::LoadProfile) &&
             (Request.PlayerID >= 0) &&
             (Request.PlayerID < SM_PROFILE_COUNT) )
         {
             g_StateMgr.GetPendingProfile() = Request.Profile;
             m_pImpl->SelectedProfiles[Request.PlayerID] = Request.ProfileInfo;
         }
-        else if( (Request.Result.Operation == save_data_operation::CreateProfile) &&
+        else if( (Request.Result.Operation == SaveDataOperation::CreateProfile) &&
                  (Request.PlayerID >= 0) &&
                  (Request.PlayerID < SM_PROFILE_COUNT) )
         {
@@ -492,7 +505,7 @@ void save_data_mgr::Update( f32 DeltaTime )
                 }
             }
         }
-        else if( (Request.Result.Operation == save_data_operation::SaveProfile) &&
+        else if( (Request.Result.Operation == SaveDataOperation::SaveProfile) &&
                  (Request.PlayerID >= 0) &&
                  (Request.PlayerID < SM_PROFILE_COUNT) )
         {
@@ -505,7 +518,7 @@ void save_data_mgr::Update( f32 DeltaTime )
                 }
             }
         }
-        else if( Request.Result.Operation == save_data_operation::DeleteProfile )
+        else if( Request.Result.Operation == SaveDataOperation::DeleteProfile )
         {
             for( s32 i = 0; i < SM_PROFILE_COUNT; i++ )
             {
@@ -520,7 +533,7 @@ void save_data_mgr::Update( f32 DeltaTime )
                 }
             }
         }
-        else if( Request.Result.Operation == save_data_operation::SaveSettings )
+        else if( Request.Result.Operation == SaveDataOperation::SaveSettings )
         {
             g_StateMgr.GetPendingSettings().Checksum();
             g_StateMgr.GetActiveSettings().Checksum();
@@ -544,7 +557,7 @@ void save_data_mgr::impl::Add( impl& Impl, request& Request )
     if( (s32)Impl.Requests.size() >= SAVE_DATA_MAX_PENDING_REQUESTS )
     {
         Impl.LastResult.Operation = Request.Result.Operation;
-        Impl.LastResult.Status    = save_data_status::Busy;
+        Impl.LastResult.Status    = SaveDataStatus::Busy;
         Impl.LastResult.ProfileID = Request.Result.ProfileID;
         if( Request.Callback )
         {
@@ -565,7 +578,7 @@ void save_data_mgr::QueueRefreshProfiles( void* pOwner,
     impl::request Request;
     Request.Owner            = pOwner;
     Request.Callback         = Callback;
-    Request.Result.Operation = save_data_operation::RefreshProfiles;
+    Request.Result.Operation = SaveDataOperation::RefreshProfiles;
     impl::Add( *m_pImpl, Request );
 }
 
@@ -588,14 +601,14 @@ void save_data_mgr::QueueCreateProfile( s32 PlayerID,
     Request.Callback         = Callback;
     Request.PlayerID         = PlayerID;
     Request.Profile          = g_StateMgr.GetPendingProfile();
-    Request.Result.Operation = save_data_operation::CreateProfile;
+    Request.Result.Operation = SaveDataOperation::CreateProfile;
     impl::Add( *m_pImpl, Request );
 }
 
 //==============================================================================
 
 void save_data_mgr::QueueProfileOperation(
-    save_data_operation Operation,
+    SaveDataOperation Operation,
     const profile_info& Info,
     s32 PlayerID,
     void* pOwner,
@@ -608,7 +621,7 @@ void save_data_mgr::QueueProfileOperation(
     Request.ProfileInfo      = Info;
     Request.Result.Operation = Operation;
     Request.Result.ProfileID = Info.ProfileID;
-    if( Operation == save_data_operation::SaveProfile )
+    if( Operation == SaveDataOperation::SaveProfile )
     {
         Request.Profile = g_StateMgr.GetPendingProfile();
     }
@@ -624,7 +637,7 @@ void save_data_mgr::QueueSaveSettings( void* pOwner,
     Request.Owner            = pOwner;
     Request.Callback         = Callback;
     Request.Settings         = g_StateMgr.GetPendingSettings();
-    Request.Result.Operation = save_data_operation::SaveSettings;
+    Request.Result.Operation = SaveDataOperation::SaveSettings;
     impl::Add( *m_pImpl, Request );
 }
 

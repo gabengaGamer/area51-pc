@@ -1,7 +1,7 @@
 #ifndef __AI_MGR_HPP__
 #define __AI_MGR_HPP__
 
-#include "../Navigation/Nav_Map.hpp"
+#include "../navigation/Nav_Map.hpp"
 #include "Obj_mgr/obj_mgr.hpp"
 
 

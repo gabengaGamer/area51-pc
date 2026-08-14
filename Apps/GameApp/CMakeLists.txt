@@ -1,4 +1,3 @@
-# Native GameApp target.
 
 set( A51_GAME_APP_PLATFORM_SOURCES
     "${CMAKE_CURRENT_LIST_DIR}/GameAppPlatform.hpp"

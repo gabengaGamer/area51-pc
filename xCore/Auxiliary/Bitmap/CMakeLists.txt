@@ -1,5 +1,4 @@
-﻿# Native CMake target for aux_Bitmap.
-a51_add_project( aux_Bitmap STATIC
+﻿a51_add_project( aux_Bitmap STATIC
     SOURCE_ROOT "${CMAKE_CURRENT_LIST_DIR}"
     SOURCES
         "${CMAKE_CURRENT_LIST_DIR}/aux_Bitmap.cpp"

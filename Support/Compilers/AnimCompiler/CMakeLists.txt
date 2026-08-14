@@ -1,5 +1,4 @@
-﻿# Native CMake target for AnimCompiler.
-a51_add_project( AnimCompiler EXECUTABLE
+﻿a51_add_project( AnimCompiler EXECUTABLE
     SOURCE_ROOT "${CMAKE_CURRENT_LIST_DIR}"
     SOURCES
         "${CMAKE_CURRENT_LIST_DIR}/../../Animation/AnimData.hpp"

@@ -1,5 +1,4 @@
-﻿# Native CMake target for Entropy.
-if( WIN32 )
+﻿if( WIN32 )
     set( A51_ENTROPY_INPUT_BACKEND
         "${CMAKE_CURRENT_LIST_DIR}/Input/backend/dinput/input_dinput.cpp"
     )

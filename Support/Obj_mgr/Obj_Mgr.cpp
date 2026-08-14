@@ -32,7 +32,7 @@
 #include "Objects/NewWeapon.hpp"
 #include "Objects/Pip.hpp"
 #include "ZoneMgr/ZoneMgr.hpp"
-#include "Navigation/Nav_Map.hpp"
+#include "navigation/Nav_Map.hpp"
 #include "PhysicsMgr/PhysicsMgr.hpp"
 #include "OccluderMgr/OccluderMgr.hpp"
 

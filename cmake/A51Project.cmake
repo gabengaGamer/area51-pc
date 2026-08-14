@@ -2,9 +2,6 @@
 #
 #  A51Project.cmake
 #
-#  Shared target policy for the native CMake project descriptions.
-#  Legacy project files are not read here.
-#
 #==========================================================================
 
 include_guard( GLOBAL )
@@ -95,7 +92,7 @@ function( a51_add_project TargetName ProjectType )
     target_compile_features( ${TargetName} PRIVATE cxx_std_17 )
     set_property( TARGET ${TargetName} PROPERTY C_STANDARD 11 )
 
-    # Target macro contract:
+    # Platform target definitions:
     #   TARGET_PC      Windows desktop only.
     #   TARGET_LINUX   Linux desktop only.
     #   TARGET_DESKTOP Common desktop code for both platforms.

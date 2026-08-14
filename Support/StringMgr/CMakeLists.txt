@@ -1,5 +1,4 @@
-﻿# Native CMake target for StringMgr.
-a51_add_project( StringMgr STATIC
+﻿a51_add_project( StringMgr STATIC
     SOURCE_ROOT "${CMAKE_CURRENT_LIST_DIR}"
     SOURCES
         "${CMAKE_CURRENT_LIST_DIR}/StringMgr.cpp"

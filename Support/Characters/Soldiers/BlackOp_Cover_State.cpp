@@ -1,6 +1,6 @@
 #include "BlackOp_Cover_State.hpp"
 #include "../Character.hpp"
-#include "Navigation/CoverNode.hpp"
+#include "navigation/CoverNode.hpp"
 #include "Objects/NewWeapon.hpp"
 #include "AudioMgr/AudioMgr.hpp"
 #include "Soldier.hpp"
@@ -1204,4 +1204,3 @@ const char*blackOp_cover_state::GetPhaseName ( s32 thePhase )
     }
     return character_state::GetPhaseName(thePhase);
 }
-

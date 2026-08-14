@@ -1,6 +1,6 @@
 #include "Character_Flee_State.hpp"
 #include "../Character.hpp"
-#include "Navigation/CoverNode.hpp"
+#include "navigation/CoverNode.hpp"
 
 //=========================================================================
 // constants

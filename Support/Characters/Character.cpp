@@ -16,8 +16,8 @@
 #endif
 
 #include "Character.hpp"
-#include "Navigation/CoverNode.hpp"
-#include "Navigation/AlarmNode.hpp"
+#include "navigation/CoverNode.hpp"
+#include "navigation/AlarmNode.hpp"
 #include "../MiscUtils/TrajectoryGenerator.hpp"
 #include "Objects/GrenadeProjectile.hpp"
 #include "Objects/GravChargeProjectile.hpp"

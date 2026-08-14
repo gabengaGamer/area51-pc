@@ -1,5 +1,4 @@
-﻿# Native CMake target for Art2Code.
-a51_add_project( Art2Code EXECUTABLE
+﻿a51_add_project( Art2Code EXECUTABLE
     SOURCE_ROOT "${CMAKE_CURRENT_LIST_DIR}"
     SOURCES
         "${CMAKE_CURRENT_LIST_DIR}/main.cpp"

@@ -2,8 +2,8 @@
 #include "Character_Cover_State.hpp"
 #include "Characters/Character.hpp"
 #include "Characters/God.hpp"
-#include "Navigation/CoverNode.hpp"
-#include "Navigation/AlarmNode.hpp"
+#include "navigation/CoverNode.hpp"
+#include "navigation/AlarmNode.hpp"
 
 //=========================================================================
 // CONSTs

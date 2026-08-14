@@ -53,7 +53,7 @@ public:
                       TYPE* pObject,
                       void (TYPE::*pMethod)(void) )
     {
-        QueueProfileOperation( save_data_operation::LoadProfile,
+        QueueProfileOperation( SaveDataOperation::LoadProfile,
                                Info, PlayerID, pObject,
                                Bind( pObject, pMethod ) );
     }
@@ -64,7 +64,7 @@ public:
                       TYPE* pObject,
                       void (TYPE::*pMethod)(void) )
     {
-        QueueProfileOperation( save_data_operation::SaveProfile,
+        QueueProfileOperation( SaveDataOperation::SaveProfile,
                                Info, PlayerID, pObject,
                                Bind( pObject, pMethod ) );
     }
@@ -83,7 +83,7 @@ public:
                         TYPE* pObject,
                         void (TYPE::*pMethod)(void) )
     {
-        QueueProfileOperation( save_data_operation::DeleteProfile,
+        QueueProfileOperation( SaveDataOperation::DeleteProfile,
                                Info, -1, pObject,
                                Bind( pObject, pMethod ) );
     }
@@ -121,7 +121,7 @@ private:
     void QueueCreateProfile    ( s32 PlayerID,
                                  void* pOwner,
                                  completion_callback Callback );
-    void QueueProfileOperation ( save_data_operation Operation,
+    void QueueProfileOperation ( SaveDataOperation Operation,
                                  const profile_info& Info,
                                  s32 PlayerID,
                                  void* pOwner,

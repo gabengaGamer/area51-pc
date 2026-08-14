@@ -1,5 +1,4 @@
-﻿# Native CMake target for Music_mgr.
-a51_add_project( Music_mgr STATIC
+﻿a51_add_project( Music_mgr STATIC
     SOURCE_ROOT "${CMAKE_CURRENT_LIST_DIR}"
     SOURCES
         "${CMAKE_CURRENT_LIST_DIR}/music_mgr.cpp"

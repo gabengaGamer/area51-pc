@@ -1,5 +1,4 @@
-﻿# Native CMake target for Parsing.
-a51_add_project( Parsing STATIC
+﻿a51_add_project( Parsing STATIC
     SOURCE_ROOT "${CMAKE_CURRENT_LIST_DIR}"
     DEPENDENCIES
         x_files

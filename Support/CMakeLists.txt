@@ -1,4 +1,3 @@
-# Support libraries and tools.
 
 add_subdirectory( AudioMgr )
 add_subdirectory( ConversationMgr )

@@ -1,5 +1,4 @@
-﻿# Native CMake target for Gamelib.
-if( WIN32 )
+﻿if( WIN32 )
     set( A51_SAVE_DATA_BACKEND_SOURCES
         "${CMAKE_CURRENT_LIST_DIR}/../SaveData/Backend/SaveDataBackend_Windows.cpp"
     )
@@ -142,7 +141,7 @@ a51_add_project( Gamelib STATIC
         "${CMAKE_CURRENT_LIST_DIR}/../MusicStateMgr/MusicStateMgr.cpp"
         "${CMAKE_CURRENT_LIST_DIR}/../navigation/AlarmNode.cpp"
         "${CMAKE_CURRENT_LIST_DIR}/../navigation/CoverNode.cpp"
-        "${CMAKE_CURRENT_LIST_DIR}/../Navigation/nav_map.cpp"
+        "${CMAKE_CURRENT_LIST_DIR}/../navigation/nav_map.cpp"
         "${CMAKE_CURRENT_LIST_DIR}/../navigation/ng_connection2.cpp"
         "${CMAKE_CURRENT_LIST_DIR}/../navigation/ng_node2.cpp"
         "${CMAKE_CURRENT_LIST_DIR}/../Objects/Actor/Actor.cpp"
@@ -524,7 +523,7 @@ a51_add_project( Gamelib STATIC
         "${CMAKE_CURRENT_LIST_DIR}/../Menu/DebugMenuPageAdvCheckpoints.hpp"
         "${CMAKE_CURRENT_LIST_DIR}/../Menu/DebugMenuPageAimAssist.hpp"
         "${CMAKE_CURRENT_LIST_DIR}/../Menu/DebugMenuPageAIScript.hpp"
-        "${CMAKE_CURRENT_LIST_DIR}/../Menu/DebugMenuPageFx.hpp"
+        "${CMAKE_CURRENT_LIST_DIR}/../Menu/DebugMenuPageFX.hpp"
         "${CMAKE_CURRENT_LIST_DIR}/../Menu/DebugMenuPageGameplay.hpp"
         "${CMAKE_CURRENT_LIST_DIR}/../Menu/DebugMenuPageGeneral.hpp"
         "${CMAKE_CURRENT_LIST_DIR}/../Menu/DebugMenuPageLocalization.hpp"
@@ -540,7 +539,7 @@ a51_add_project( Gamelib STATIC
         "${CMAKE_CURRENT_LIST_DIR}/../navigation/AlarmNode.hpp"
         "${CMAKE_CURRENT_LIST_DIR}/../navigation/ConnectionZoneMgr.hpp"
         "${CMAKE_CURRENT_LIST_DIR}/../navigation/CoverNode.hpp"
-        "${CMAKE_CURRENT_LIST_DIR}/../Navigation/Nav_Map.hpp"
+        "${CMAKE_CURRENT_LIST_DIR}/../navigation/Nav_Map.hpp"
         "${CMAKE_CURRENT_LIST_DIR}/../navigation/ng_connection2.hpp"
         "${CMAKE_CURRENT_LIST_DIR}/../navigation/ng_node2.hpp"
         "${CMAKE_CURRENT_LIST_DIR}/../Objects/Actor/Actor.hpp"

@@ -1,4 +1,3 @@
-# Native SoundPackager target.
 add_subdirectory( libmp3lame )
 a51_add_project( SoundPackager EXECUTABLE
     SOURCE_ROOT "${CMAKE_CURRENT_LIST_DIR}"
@@ -65,8 +64,7 @@ if( _a51_soundpackager_is_x86 AND EXISTS "${CMAKE_CURRENT_LIST_DIR}/ENCVAG.DLL" 
 endif()
 
 if( NOT _a51_soundpackager_is_x86 )
-    # ENCVAG is a 32-bit PS2 codec binary. Keep the SoundPackager target
-    # usable on x64 while retaining the legacy PS2 source for 32-bit builds.
+    # ENCVAG is available only in the 32-bit PS2 build.
     get_target_property( _a51_soundpackager_sources SoundPackager SOURCES )
     list( FILTER _a51_soundpackager_sources EXCLUDE REGEX "Compress_PS2\\.cpp$" )
     set_property( TARGET SoundPackager PROPERTY SOURCES "${_a51_soundpackager_sources}" )

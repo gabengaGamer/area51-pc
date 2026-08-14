@@ -1,49 +1,47 @@
-# Native Qt bitmap viewer target.
+set( _a51_xbmp_viewer_source_root "${CMAKE_CURRENT_LIST_DIR}/../XBMPViewer" )
 a51_add_project( XBMPViewer EXECUTABLE
     WIN32
-    SOURCE_ROOT "${CMAKE_CURRENT_LIST_DIR}"
+    SOURCE_ROOT "${_a51_xbmp_viewer_source_root}"
     SOURCES
-        "${CMAKE_CURRENT_LIST_DIR}/XBMPViewer.qrc"
-        "${CMAKE_CURRENT_LIST_DIR}/XBMPViewer.ui"
-        "${CMAKE_CURRENT_LIST_DIR}/XBMPViewer.h"
-        "${CMAKE_CURRENT_LIST_DIR}/AboutDialog.cpp"
-        "${CMAKE_CURRENT_LIST_DIR}/BitmapConvertService.cpp"
-        "${CMAKE_CURRENT_LIST_DIR}/BitmapPreviewWidget.cpp"
-        "${CMAKE_CURRENT_LIST_DIR}/ConfigManager.cpp"
-        "${CMAKE_CURRENT_LIST_DIR}/ConvertSettingsDialog.cpp"
-        "${CMAKE_CURRENT_LIST_DIR}/ConvertUtils.cpp"
-        "${CMAKE_CURRENT_LIST_DIR}/ExplorerPanel.cpp"
-        "${CMAKE_CURRENT_LIST_DIR}/FileListModel.cpp"
-        "${CMAKE_CURRENT_LIST_DIR}/FileListView.cpp"
-        "${CMAKE_CURRENT_LIST_DIR}/FullscreenPreviewDialog.cpp"
-        "${CMAKE_CURRENT_LIST_DIR}/PreviewPanel.cpp"
-        "${CMAKE_CURRENT_LIST_DIR}/SettingsDialog.cpp"
-        "${CMAKE_CURRENT_LIST_DIR}/ThemeManager.cpp"
-        "${CMAKE_CURRENT_LIST_DIR}/XBMPViewer.cpp"
-        "${CMAKE_CURRENT_LIST_DIR}/main.cpp"
-        "${CMAKE_CURRENT_LIST_DIR}/FileListModel.h"
-        "${CMAKE_CURRENT_LIST_DIR}/PreviewPanel.h"
-        "${CMAKE_CURRENT_LIST_DIR}/BitmapPreviewWidget.h"
-        "${CMAKE_CURRENT_LIST_DIR}/ExplorerPanel.h"
-        "${CMAKE_CURRENT_LIST_DIR}/SettingsDialog.h"
-        "${CMAKE_CURRENT_LIST_DIR}/ConvertSettingsDialog.h"
-        "${CMAKE_CURRENT_LIST_DIR}/AboutDialog.h"
-        "${CMAKE_CURRENT_LIST_DIR}/BitmapConvertService.h"
-        "${CMAKE_CURRENT_LIST_DIR}/ConfigManager.h"
-        "${CMAKE_CURRENT_LIST_DIR}/FullscreenPreviewDialog.h"
-        "${CMAKE_CURRENT_LIST_DIR}/ConvertUtils.h"
-        "${CMAKE_CURRENT_LIST_DIR}/FileListView.h"
-        "${CMAKE_CURRENT_LIST_DIR}/ThemeManager.h"
-        "${CMAKE_CURRENT_LIST_DIR}/XBMPViewerConfig.h"
+        "${_a51_xbmp_viewer_source_root}/XBMPViewer.qrc"
+        "${_a51_xbmp_viewer_source_root}/XBMPViewer.ui"
+        "${_a51_xbmp_viewer_source_root}/XBMPViewer.h"
+        "${_a51_xbmp_viewer_source_root}/AboutDialog.cpp"
+        "${_a51_xbmp_viewer_source_root}/BitmapConvertService.cpp"
+        "${_a51_xbmp_viewer_source_root}/BitmapPreviewWidget.cpp"
+        "${_a51_xbmp_viewer_source_root}/ConfigManager.cpp"
+        "${_a51_xbmp_viewer_source_root}/ConvertSettingsDialog.cpp"
+        "${_a51_xbmp_viewer_source_root}/ConvertUtils.cpp"
+        "${_a51_xbmp_viewer_source_root}/ExplorerPanel.cpp"
+        "${_a51_xbmp_viewer_source_root}/FileListModel.cpp"
+        "${_a51_xbmp_viewer_source_root}/FileListView.cpp"
+        "${_a51_xbmp_viewer_source_root}/FullscreenPreviewDialog.cpp"
+        "${_a51_xbmp_viewer_source_root}/PreviewPanel.cpp"
+        "${_a51_xbmp_viewer_source_root}/SettingsDialog.cpp"
+        "${_a51_xbmp_viewer_source_root}/ThemeManager.cpp"
+        "${_a51_xbmp_viewer_source_root}/XBMPViewer.cpp"
+        "${_a51_xbmp_viewer_source_root}/main.cpp"
+        "${_a51_xbmp_viewer_source_root}/FileListModel.h"
+        "${_a51_xbmp_viewer_source_root}/PreviewPanel.h"
+        "${_a51_xbmp_viewer_source_root}/BitmapPreviewWidget.h"
+        "${_a51_xbmp_viewer_source_root}/ExplorerPanel.h"
+        "${_a51_xbmp_viewer_source_root}/SettingsDialog.h"
+        "${_a51_xbmp_viewer_source_root}/ConvertSettingsDialog.h"
+        "${_a51_xbmp_viewer_source_root}/AboutDialog.h"
+        "${_a51_xbmp_viewer_source_root}/BitmapConvertService.h"
+        "${_a51_xbmp_viewer_source_root}/ConfigManager.h"
+        "${_a51_xbmp_viewer_source_root}/FullscreenPreviewDialog.h"
+        "${_a51_xbmp_viewer_source_root}/ConvertUtils.h"
+        "${_a51_xbmp_viewer_source_root}/FileListView.h"
+        "${_a51_xbmp_viewer_source_root}/ThemeManager.h"
+        "${_a51_xbmp_viewer_source_root}/XBMPViewerConfig.h"
     DEPENDENCIES
         aux_Bitmap
         x_files
 )
 
 if( A51_ENABLE_QT AND Qt6_FOUND )
-    # Qt AUTOGEN currently emits `$<CONFIG:EDITOR-Debug>`, which is rejected
-    # by the active CMake generator. Keep the configuration name and invoke
-    # the Qt tools explicitly instead.
+    # Qt AUTOGEN does not support EDITOR-Debug.
     set( _a51_qt_moc_headers
         XBMPViewer.h
         FileListModel.h
@@ -62,11 +60,11 @@ if( A51_ENABLE_QT AND Qt6_FOUND )
         set( _moc_source "${CMAKE_CURRENT_BINARY_DIR}/moc_${_header_name}.cpp" )
         add_custom_command( OUTPUT "${_moc_source}"
             COMMAND Qt6::moc
-                -I"${CMAKE_CURRENT_LIST_DIR}"
+                -I"${_a51_xbmp_viewer_source_root}"
                 -I"${CMAKE_SOURCE_DIR}"
-                "${CMAKE_CURRENT_LIST_DIR}/${_header}"
+                "${_a51_xbmp_viewer_source_root}/${_header}"
                 -o "${_moc_source}"
-            DEPENDS "${CMAKE_CURRENT_LIST_DIR}/${_header}"
+            DEPENDS "${_a51_xbmp_viewer_source_root}/${_header}"
             VERBATIM
         )
         list( APPEND _a51_qt_moc_sources "${_moc_source}" )
@@ -75,13 +73,15 @@ if( A51_ENABLE_QT AND Qt6_FOUND )
     set( _a51_qt_ui_header "${CMAKE_CURRENT_BINARY_DIR}/ui_XBMPViewer.h" )
     add_custom_command( OUTPUT "${_a51_qt_ui_header}"
         COMMAND Qt6::uic
-            "${CMAKE_CURRENT_LIST_DIR}/XBMPViewer.ui"
+            "${_a51_xbmp_viewer_source_root}/XBMPViewer.ui"
             -o "${_a51_qt_ui_header}"
-        DEPENDS "${CMAKE_CURRENT_LIST_DIR}/XBMPViewer.ui"
+        DEPENDS "${_a51_xbmp_viewer_source_root}/XBMPViewer.ui"
         VERBATIM
     )
 
-    qt_add_resources( _a51_qt_resources XBMPViewer.qrc )
+    qt_add_resources( _a51_qt_resources
+        "${_a51_xbmp_viewer_source_root}/XBMPViewer.qrc"
+    )
 
     target_sources( XBMPViewer PRIVATE
         ${_a51_qt_moc_sources}

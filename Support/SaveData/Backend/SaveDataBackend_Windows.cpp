@@ -36,32 +36,32 @@ xstring MakeTempPath( const char* pName )
 
 //==============================================================================
 
-save_data_status MapError( DWORD Error )
+SaveDataStatus MapError( DWORD Error )
 {
     switch( Error )
     {
     case ERROR_FILE_NOT_FOUND:
     case ERROR_PATH_NOT_FOUND:
-        return save_data_status::NotFound;
+        return SaveDataStatus::NotFound;
     case ERROR_DISK_FULL:
     case ERROR_HANDLE_DISK_FULL:
-        return save_data_status::NoSpace;
+        return SaveDataStatus::NoSpace;
     case ERROR_ACCESS_DENIED:
     case ERROR_SHARING_VIOLATION:
     case ERROR_LOCK_VIOLATION:
-        return save_data_status::AccessDenied;
+        return SaveDataStatus::AccessDenied;
     default:
-        return save_data_status::IoError;
+        return SaveDataStatus::IoError;
     }
 }
 
 //==============================================================================
 
-save_data_status CheckAvailableSpace( s32 RequiredBytes )
+SaveDataStatus CheckAvailableSpace( s32 RequiredBytes )
 {
     if( RequiredBytes <= 0 )
     {
-        return save_data_status::Success;
+        return SaveDataStatus::Success;
     }
 
     ULARGE_INTEGER Available;
@@ -71,8 +71,8 @@ save_data_status CheckAvailableSpace( s32 RequiredBytes )
     }
 
     return Available.QuadPart < static_cast<u64>( RequiredBytes )
-        ? save_data_status::NoSpace
-        : save_data_status::Success;
+        ? SaveDataStatus::NoSpace
+        : SaveDataStatus::Success;
 }
 
 //==============================================================================
@@ -125,11 +125,11 @@ xbool IsValidFileName( const char* pName )
 
 //==============================================================================
 
-save_data_status EnsureDirectory( const char* pPath )
+SaveDataStatus EnsureDirectory( const char* pPath )
 {
     if( CreateDirectoryA( pPath, NULL ) )
     {
-        return save_data_status::Success;
+        return SaveDataStatus::Success;
     }
 
     const DWORD Error = GetLastError();
@@ -141,8 +141,8 @@ save_data_status EnsureDirectory( const char* pPath )
     const DWORD Attributes = GetFileAttributesA( pPath );
     return (Attributes != INVALID_FILE_ATTRIBUTES) &&
            (Attributes & FILE_ATTRIBUTE_DIRECTORY)
-        ? save_data_status::Success
-        : save_data_status::IoError;
+        ? SaveDataStatus::Success
+        : SaveDataStatus::IoError;
 }
 
 //==============================================================================
@@ -178,22 +178,22 @@ void RecoverInterruptedWrites( void )
 //  IMPLEMENTATION
 //==============================================================================
 
-save_data_status save_data_backend::Init( void )
+SaveDataStatus save_data_backend::Init( void )
 {
-    save_data_status Status = EnsureDirectory( SAVE_DATA_ROOT );
-    if( Status != save_data_status::Success )
+    SaveDataStatus Status = EnsureDirectory( SAVE_DATA_ROOT );
+    if( Status != SaveDataStatus::Success )
     {
         return Status;
     }
 
     Status = EnsureDirectory( SAVE_DATA_TEMP_ROOT );
-    if( Status != save_data_status::Success )
+    if( Status != SaveDataStatus::Success )
     {
         return Status;
     }
 
     RecoverInterruptedWrites();
-    return save_data_status::Success;
+    return SaveDataStatus::Success;
 }
 
 //==============================================================================
@@ -204,7 +204,7 @@ void save_data_backend::Kill( void )
 
 //==============================================================================
 
-save_data_status save_data_backend::List( xarray<save_data_file_info>& Files )
+SaveDataStatus save_data_backend::List( xarray<save_data_file_info>& Files )
 {
     Files.Clear();
 
@@ -214,7 +214,7 @@ save_data_status save_data_backend::List( xarray<save_data_file_info>& Files )
     {
         const DWORD Error = GetLastError();
         return Error == ERROR_FILE_NOT_FOUND
-            ? save_data_status::Success
+            ? SaveDataStatus::Success
             : MapError( Error );
     }
 
@@ -232,7 +232,7 @@ save_data_status save_data_backend::List( xarray<save_data_file_info>& Files )
         if( Size.QuadPart > 0x7fffffff )
         {
             FindClose( Find );
-            return save_data_status::IoError;
+            return SaveDataStatus::IoError;
         }
         save_data_file_info& Info = Files.Append();        
 
@@ -252,18 +252,18 @@ save_data_status save_data_backend::List( xarray<save_data_file_info>& Files )
         return MapError( Error );
     }
 
-    return save_data_status::Success;
+    return SaveDataStatus::Success;
 }
 
 //==============================================================================
 
-save_data_status save_data_backend::Read( const char* pName, xarray<u8>& Bytes )
+SaveDataStatus save_data_backend::Read( const char* pName, xarray<u8>& Bytes )
 {
     Bytes.Clear();
 
     if( !IsValidFileName( pName ) )
     {
-        return save_data_status::IoError;
+        return SaveDataStatus::IoError;
     }
 
     const xstring Path = MakePath( pName );
@@ -289,7 +289,7 @@ save_data_status save_data_backend::Read( const char* pName, xarray<u8>& Bytes )
     if( (Size.QuadPart < 0) || (Size.QuadPart > 0x7fffffff) )
     {
         CloseHandle( File );
-        return save_data_status::IoError;
+        return SaveDataStatus::IoError;
     }
 
     Bytes.SetCount( (s32)Size.QuadPart );
@@ -304,33 +304,33 @@ save_data_status save_data_backend::Read( const char* pName, xarray<u8>& Bytes )
         Bytes.Clear();
         return MapError( Error );
     }
-    return save_data_status::Success;
+    return SaveDataStatus::Success;
 }
 
 //==============================================================================
 
-save_data_status save_data_backend::WriteAtomic( const char* pName,
+SaveDataStatus save_data_backend::WriteAtomic( const char* pName,
                                                  const xarray<u8>& Bytes )
 {
     if( !IsValidFileName( pName ) )
     {
-        return save_data_status::IoError;
+        return SaveDataStatus::IoError;
     }
 
-    const save_data_status DirectoryStatus = EnsureDirectory( SAVE_DATA_ROOT );
-    if( DirectoryStatus != save_data_status::Success )
+    const SaveDataStatus DirectoryStatus = EnsureDirectory( SAVE_DATA_ROOT );
+    if( DirectoryStatus != SaveDataStatus::Success )
     {
         return DirectoryStatus;
     }
 
-    const save_data_status TempDirectoryStatus = EnsureDirectory( SAVE_DATA_TEMP_ROOT );
-    if( TempDirectoryStatus != save_data_status::Success )
+    const SaveDataStatus TempDirectoryStatus = EnsureDirectory( SAVE_DATA_TEMP_ROOT );
+    if( TempDirectoryStatus != SaveDataStatus::Success )
     {
         return TempDirectoryStatus;
     }
 
-    const save_data_status SpaceStatus = CheckAvailableSpace( Bytes.GetCount() );
-    if( SpaceStatus != save_data_status::Success )
+    const SaveDataStatus SpaceStatus = CheckAvailableSpace( Bytes.GetCount() );
+    if( SpaceStatus != SaveDataStatus::Success )
     {
         return SpaceStatus;
     }
@@ -372,21 +372,21 @@ save_data_status save_data_backend::WriteAtomic( const char* pName,
     {
         return MapError( GetLastError() );
     }
-    return save_data_status::Success;
+    return SaveDataStatus::Success;
 }
 
 //==============================================================================
 
-save_data_status save_data_backend::Delete( const char* pName )
+SaveDataStatus save_data_backend::Delete( const char* pName )
 {
     if( !IsValidFileName( pName ) )
     {
-        return save_data_status::IoError;
+        return SaveDataStatus::IoError;
     }
 
     if( DeleteFileA( (const char*)MakePath( pName ) ) )
     {
-        return save_data_status::Success;
+        return SaveDataStatus::Success;
     }
     return MapError( GetLastError() );
 }

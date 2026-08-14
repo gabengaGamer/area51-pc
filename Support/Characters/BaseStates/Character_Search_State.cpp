@@ -1,6 +1,6 @@
 #include "Character_Search_State.hpp"
 #include "../Character.hpp"
-#include "Navigation/ng_node2.hpp"
+#include "navigation/ng_node2.hpp"
 //=========================================================================
 // constants
 //=========================================================================

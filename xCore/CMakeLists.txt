@@ -1,4 +1,3 @@
-# xCore libraries.
 
 add_subdirectory( x_files )
 add_subdirectory( Entropy )

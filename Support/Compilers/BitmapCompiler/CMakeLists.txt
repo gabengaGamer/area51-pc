@@ -1,5 +1,4 @@
-﻿# Native CMake target for BitmapCompiler.
-a51_add_project( BitmapCompiler EXECUTABLE
+﻿a51_add_project( BitmapCompiler EXECUTABLE
     SOURCE_ROOT "${CMAKE_CURRENT_LIST_DIR}"
     SOURCES
         "${CMAKE_CURRENT_LIST_DIR}/main.cpp"

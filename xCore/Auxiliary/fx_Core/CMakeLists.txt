@@ -1,5 +1,4 @@
-﻿# Native CMake target for fx_Core.
-a51_add_project( fx_Core STATIC
+﻿a51_add_project( fx_Core STATIC
     SOURCE_ROOT "${CMAKE_CURRENT_LIST_DIR}"
     SOURCES
         "${CMAKE_CURRENT_LIST_DIR}/base.cpp"

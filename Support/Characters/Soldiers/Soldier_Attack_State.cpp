@@ -1,7 +1,7 @@
 #include "Soldier_Attack_State.hpp"
 #include "Characters/Character.hpp"
 #include "Characters/God.hpp"
-#include "Navigation/CoverNode.hpp"
+#include "navigation/CoverNode.hpp"
 
 //=========================================================================
 // CONSTs

@@ -2,14 +2,11 @@
 #
 #  CMakeLists.txt
 #
-#  Area 51 modern CMake build graph.
-#
 #==========================================================================
 
 cmake_minimum_required( VERSION 3.23 )
 
-# Use the target property model for MSVC runtime selection. This policy must
-# be set before project() enables the MSVC language.
+# Set CMP0091 before project().
 cmake_policy( SET CMP0091 NEW )
 
 project( Area51 LANGUAGES C CXX )
@@ -30,6 +27,18 @@ elseif( NOT DEFINED CMAKE_BUILD_TYPE OR CMAKE_BUILD_TYPE STREQUAL "" )
         "Default Area 51 configuration for single-config generators" FORCE )
 endif()
 
+foreach( _a51_configuration IN LISTS A51_CONFIGURATION_TYPES )
+    string( TOUPPER "${_a51_configuration}" _a51_configuration_upper )
+    foreach( _a51_linker_kind EXE SHARED MODULE )
+        set( _a51_linker_flags_variable
+            "CMAKE_${_a51_linker_kind}_LINKER_FLAGS_${_a51_configuration_upper}" )
+        if( NOT DEFINED "${_a51_linker_flags_variable}" )
+            set( "${_a51_linker_flags_variable}" ""
+                CACHE STRING "${_a51_configuration} ${_a51_linker_kind} linker flags" )
+        endif()
+    endforeach()
+endforeach()
+
 option( A51_BUILD_SELECTED_APPS "Build the selected application targets" ON )
 option( A51_ENABLE_QT "Enable Qt integration for XBMPViewer when Qt6 is available" ON )
 option( A51_EXPORT_COMPILE_COMMANDS "Generate compile_commands.json for tooling" ON )
@@ -46,7 +55,8 @@ if( A51_EXPORT_COMPILE_COMMANDS )
 endif()
 
 if( MSVC AND NOT DEFINED CMAKE_MSVC_RUNTIME_LIBRARY )
-    set( CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>"
+    set( CMAKE_MSVC_RUNTIME_LIBRARY
+        "MultiThreaded$<$<OR:$<STREQUAL:$<CONFIG>,Debug>,$<STREQUAL:$<CONFIG>,EDITOR-Debug>>:Debug>"
         CACHE STRING "MSVC runtime library selection" )
 endif()
 
@@ -62,8 +72,28 @@ target_compile_definitions( a51_build_options INTERFACE
 )
 
 if( MSVC )
-    # Allow parallel cl.exe invocations to share the program database safely.
+    # Allow parallel cl.exe invocations.
     target_compile_options( a51_build_options INTERFACE /FS )
+
+    target_compile_options( a51_build_options INTERFACE
+        "$<$<CONFIG:Debug>:/Od>"
+        "$<$<STREQUAL:$<CONFIG>,EDITOR-Debug>:/Od>"
+        "$<$<CONFIG:OptDebug>:/O2>"
+        "$<$<CONFIG:QA>:/O2>"
+        "$<$<CONFIG:Release>:/O2>"
+        "$<$<CONFIG:Debug>:/Zi>"
+        "$<$<STREQUAL:$<CONFIG>,EDITOR-Debug>:/Zi>"
+        "$<$<CONFIG:OptDebug>:/Zi>"
+        "$<$<CONFIG:QA>:/Zi>"
+        "$<$<CONFIG:Release>:/Zi>"
+    )
+    target_link_options( a51_build_options INTERFACE
+        "$<$<CONFIG:Debug>:/DEBUG>"
+        "$<$<STREQUAL:$<CONFIG>,EDITOR-Debug>:/DEBUG>"
+        "$<$<CONFIG:OptDebug>:/DEBUG>"
+        "$<$<CONFIG:QA>:/DEBUG>"
+        "$<$<CONFIG:Release>:/DEBUG>"
+    )
 endif()
 
 if( WIN32 )
@@ -93,8 +123,6 @@ endif()
 #  PROJECT GRAPH
 #==========================================================================
 
-# Each product area has an aggregate CMakeLists.txt, while each selected
-# solution/project directory owns its target definition.
 add_subdirectory( xCore )
 add_subdirectory( Support )
 add_subdirectory( Apps )

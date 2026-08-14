@@ -1,5 +1,4 @@
-﻿# Native CMake target for GeomCompiler.
-a51_add_project( GeomCompiler EXECUTABLE
+﻿a51_add_project( GeomCompiler EXECUTABLE
     SOURCE_ROOT "${CMAKE_CURRENT_LIST_DIR}"
     SOURCES
         "${CMAKE_CURRENT_LIST_DIR}/../../../Apps/MeshViewer/GeomDesc.cpp"

@@ -38,21 +38,21 @@ const char* SAVE_DATA_TEMP_ROOT = "SAVES/.tmp";
 
 //==============================================================================
 
-save_data_status MapError( const std::error_code& Error )
+SaveDataStatus MapError( const std::error_code& Error )
 {
     if( Error == std::errc::no_such_file_or_directory )
-        return save_data_status::NotFound;
+        return SaveDataStatus::NotFound;
 
     if( Error == std::errc::no_space_on_device )
-        return save_data_status::NoSpace;
+        return SaveDataStatus::NoSpace;
 
     if( (Error == std::errc::permission_denied) ||
         (Error == std::errc::read_only_file_system) )
     {
-        return save_data_status::AccessDenied;
+        return SaveDataStatus::AccessDenied;
     }
 
-    return save_data_status::IoError;
+    return SaveDataStatus::IoError;
 }
 
 //==============================================================================
@@ -146,7 +146,7 @@ void DiscardInterruptedWrites( void )
 
 //==============================================================================
 
-save_data_status EnsureRootDirectory( void )
+SaveDataStatus EnsureRootDirectory( void )
 {
     std::error_code Error;
     fs::create_directories( SAVE_DATA_ROOT, Error );
@@ -155,15 +155,15 @@ save_data_status EnsureRootDirectory( void )
 
     Error.clear();
     fs::create_directories( SAVE_DATA_TEMP_ROOT, Error );
-    return Error ? MapError( Error ) : save_data_status::Success;
+    return Error ? MapError( Error ) : SaveDataStatus::Success;
 }
 
 //==============================================================================
 
-save_data_status CheckAvailableSpace( s32 RequiredBytes )
+SaveDataStatus CheckAvailableSpace( s32 RequiredBytes )
 {
     if( RequiredBytes <= 0 )
-        return save_data_status::Success;
+        return SaveDataStatus::Success;
 
     struct statvfs Info;
     if( statvfs( SAVE_DATA_ROOT, &Info ) != 0 )
@@ -174,8 +174,8 @@ save_data_status CheckAvailableSpace( s32 RequiredBytes )
     const std::uintmax_t Available =
         static_cast<std::uintmax_t>( Info.f_bavail ) * Info.f_frsize;
     return Available < static_cast<std::uintmax_t>( RequiredBytes )
-        ? save_data_status::NoSpace
-        : save_data_status::Success;
+        ? SaveDataStatus::NoSpace
+        : SaveDataStatus::Success;
 }
 
 //==============================================================================
@@ -210,14 +210,14 @@ xbool SyncDirectory( const fs::path& Path )
 //  IMPLEMENTATION
 //==============================================================================
 
-save_data_status save_data_backend::Init( void )
+SaveDataStatus save_data_backend::Init( void )
 {
-    const save_data_status Status = EnsureRootDirectory();
-    if( Status != save_data_status::Success )
+    const SaveDataStatus Status = EnsureRootDirectory();
+    if( Status != SaveDataStatus::Success )
         return Status;
 
     DiscardInterruptedWrites();
-    return save_data_status::Success;
+    return SaveDataStatus::Success;
 }
 
 //==============================================================================
@@ -228,14 +228,14 @@ void save_data_backend::Kill( void )
 
 //==============================================================================
 
-save_data_status save_data_backend::List( xarray<save_data_file_info>& Files )
+SaveDataStatus save_data_backend::List( xarray<save_data_file_info>& Files )
 {
     Files.Clear();
 
     std::error_code Error;
     fs::directory_iterator It( SAVE_DATA_ROOT, Error );
     if( Error == std::errc::no_such_file_or_directory )
-        return save_data_status::Success;
+        return SaveDataStatus::Success;
     if( Error )
         return MapError( Error );
 
@@ -260,7 +260,7 @@ save_data_status save_data_backend::List( xarray<save_data_file_info>& Files )
         if( Error )
             return MapError( Error );
         if( Size > static_cast<std::uintmax_t>( std::numeric_limits<s32>::max() ) )
-            return save_data_status::IoError;
+            return SaveDataStatus::IoError;
 
         const u64 ModifiedTime = GetFileTime( Entry.path(), Error );
         if( Error )
@@ -273,16 +273,16 @@ save_data_status save_data_backend::List( xarray<save_data_file_info>& Files )
         Info.ModifiedDate = ModifiedTime;
     }
 
-    return save_data_status::Success;
+    return SaveDataStatus::Success;
 }
 
 //==============================================================================
 
-save_data_status save_data_backend::Read( const char* pName, xarray<u8>& Bytes )
+SaveDataStatus save_data_backend::Read( const char* pName, xarray<u8>& Bytes )
 {
     Bytes.Clear();
     if( !IsValidFileName( pName ) )
-        return save_data_status::IoError;
+        return SaveDataStatus::IoError;
 
     const fs::path Path = MakePath( pName );
     std::error_code Error;
@@ -290,11 +290,11 @@ save_data_status save_data_backend::Read( const char* pName, xarray<u8>& Bytes )
     if( Error )
         return MapError( Error );
     if( Size > static_cast<std::uintmax_t>( std::numeric_limits<s32>::max() ) )
-        return save_data_status::IoError;
+        return SaveDataStatus::IoError;
 
     std::ifstream File( Path, std::ios::binary );
     if( !File )
-        return save_data_status::IoError;
+        return SaveDataStatus::IoError;
 
     Bytes.SetCount( static_cast<s32>( Size ) );
     if( Size > 0 )
@@ -303,27 +303,27 @@ save_data_status save_data_backend::Read( const char* pName, xarray<u8>& Bytes )
         if( File.gcount() != static_cast<std::streamsize>( Size ) )
         {
             Bytes.Clear();
-            return save_data_status::IoError;
+            return SaveDataStatus::IoError;
         }
     }
 
-    return save_data_status::Success;
+    return SaveDataStatus::Success;
 }
 
 //==============================================================================
 
-save_data_status save_data_backend::WriteAtomic( const char* pName,
+SaveDataStatus save_data_backend::WriteAtomic( const char* pName,
                                                  const xarray<u8>& Bytes )
 {
     if( !IsValidFileName( pName ) )
-        return save_data_status::IoError;
+        return SaveDataStatus::IoError;
 
-    const save_data_status RootStatus = EnsureRootDirectory();
-    if( RootStatus != save_data_status::Success )
+    const SaveDataStatus RootStatus = EnsureRootDirectory();
+    if( RootStatus != SaveDataStatus::Success )
         return RootStatus;
 
-    const save_data_status SpaceStatus = CheckAvailableSpace( Bytes.GetCount() );
-    if( SpaceStatus != save_data_status::Success )
+    const SaveDataStatus SpaceStatus = CheckAvailableSpace( Bytes.GetCount() );
+    if( SpaceStatus != SaveDataStatus::Success )
         return SpaceStatus;
 
     const fs::path TargetPath = MakePath( pName );
@@ -331,7 +331,7 @@ save_data_status save_data_backend::WriteAtomic( const char* pName,
 
     std::ofstream File( TempPath, std::ios::binary | std::ios::trunc );
     if( !File )
-        return save_data_status::IoError;
+        return SaveDataStatus::IoError;
 
     if( Bytes.GetCount() > 0 )
     {
@@ -345,14 +345,14 @@ save_data_status save_data_backend::WriteAtomic( const char* pName,
     {
         std::error_code Error;
         fs::remove( TempPath, Error );
-        return save_data_status::IoError;
+        return SaveDataStatus::IoError;
     }
 
     if( !SyncFile( TempPath ) )
     {
         std::error_code Error;
         fs::remove( TempPath, Error );
-        return save_data_status::IoError;
+        return SaveDataStatus::IoError;
     }
 
     if( std::rename( TempPath.c_str(), TargetPath.c_str() ) != 0 )
@@ -365,26 +365,26 @@ save_data_status save_data_backend::WriteAtomic( const char* pName,
 
     if( !SyncDirectory( SAVE_DATA_ROOT ) )
     {
-        return save_data_status::IoError;
+        return SaveDataStatus::IoError;
     }
 
-    return save_data_status::Success;
+    return SaveDataStatus::Success;
 }
 
 //==============================================================================
 
-save_data_status save_data_backend::Delete( const char* pName )
+SaveDataStatus save_data_backend::Delete( const char* pName )
 {
     if( !IsValidFileName( pName ) )
-        return save_data_status::IoError;
+        return SaveDataStatus::IoError;
 
     std::error_code Error;
     if( !fs::remove( MakePath( pName ), Error ) )
     {
-        return Error ? MapError( Error ) : save_data_status::NotFound;
+        return Error ? MapError( Error ) : SaveDataStatus::NotFound;
     }
 
-    return save_data_status::Success;
+    return SaveDataStatus::Success;
 }
 
 //==============================================================================

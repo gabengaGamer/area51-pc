@@ -1,4 +1,3 @@
-# Common Linux target policy shared by the architecture-specific toolchains.
 
 set( CMAKE_SYSTEM_NAME Linux )
 set( A51_BUILD_WINDOWS_TARGETS OFF CACHE BOOL "Disable Windows-only Area 51 targets" FORCE )
@@ -12,16 +11,18 @@ if( A51_LINUX_SYSROOT )
         "Linux target root paths" FORCE )
 endif()
 
-# Compiler programs are resolved on the host. Libraries, headers and packages
-# belong to the Linux target and must come from the selected sysroot.
 set( CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER )
-set( CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY )
-set( CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY )
-set( CMAKE_FIND_ROOT_PATH_MODE_PACKAGE ONLY )
+if( A51_LINUX_SYSROOT OR NOT CMAKE_SYSTEM_PROCESSOR STREQUAL "x86_64" )
+    set( CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY )
+    set( CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY )
+    set( CMAKE_FIND_ROOT_PATH_MODE_PACKAGE ONLY )
+else()
+    set( CMAKE_FIND_ROOT_PATH_MODE_LIBRARY BOTH )
+    set( CMAKE_FIND_ROOT_PATH_MODE_INCLUDE BOTH )
+    set( CMAKE_FIND_ROOT_PATH_MODE_PACKAGE BOTH )
+endif()
 
-# Select the GNU compiler pair for the architecture-specific toolchain. A
-# command-line CMAKE_*_COMPILER value remains authoritative, which allows a
-# sysroot wrapper or a custom compiler to be supplied by the caller.
+# Use caller-provided compilers when set.
 function( a51_select_linux_gnu_compilers CompilerPrefix )
     if( NOT CMAKE_C_COMPILER )
         find_program( _a51_c_compiler NAMES "${CompilerPrefix}gcc" )

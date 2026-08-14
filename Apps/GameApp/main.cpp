@@ -90,9 +90,9 @@
 #include "../Support/TriggerEx/TriggerEx_Manager.hpp"
 #include "../Support/Tracers/TracerMgr.hpp"
 #include "../Support/Render/LightMgr.hpp"
-#include "Navigation/Nav_Map.hpp"
-#include "Navigation/ng_connection2.hpp"
-#include "Navigation/ng_node2.hpp"
+#include "navigation/Nav_Map.hpp"
+#include "navigation/ng_connection2.hpp"
+#include "navigation/ng_node2.hpp"
 
 //==============================================================================
 //  UI AND TEXT INCLUDES
