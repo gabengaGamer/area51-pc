@@ -16,12 +16,10 @@ jobs:
       - name: Configure
         run: cmake --preset windows-vs2022-x64
 
-      - name: Build portable tools
-        run: >-
-          cmake --build --preset windows-vs2022-x64-debug
-          --target Entropy AudioMgr Render xbmptool dfsTool Art2Code --parallel 4
+      - name: Build full Debug graph
+        run: cmake --build --preset windows-vs2022-x64-debug --parallel 4
 
-      - name: Smoke test custom configurations
+      - name: Build custom configurations
         shell: pwsh
         run: |
           cmake --build --preset windows-vs2022-x64-optdebug --target dfsTool --parallel 4
@@ -39,7 +37,5 @@ jobs:
       - name: Configure
         run: cmake --preset linux-gcc-x64
 
-      - name: Validate generated Linux graph
-        run: >-
-          cmake --build --preset linux-gcc-x64-debug
-          --target Entropy AudioMgr Render --parallel 4
+      - name: Build full Debug graph
+        run: cmake --build --preset linux-gcc-x64-debug --parallel 4
