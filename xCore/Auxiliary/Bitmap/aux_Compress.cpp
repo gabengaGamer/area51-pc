@@ -18,7 +18,7 @@
 #       include<xtl.h>
 #       include<XGraphics.h>
 #   endif
-#   include<..\3rdParty\DXTLibrary\ImageDXTC.h>
+#   include<../3rdParty/DXTLibrary/ImageDXTC.h>
 #   if _MSC_VER >= 1300
 #       define WIN32_LEAN_AND_MEAN
 #       ifdef TARGET_PC

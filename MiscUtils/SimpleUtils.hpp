@@ -8,9 +8,9 @@
 #include "Auxiliary/MiscUtils/Guid.hpp"
 #include "Objects/object.hpp"
 #include "Obj_mgr/obj_mgr.hpp"
-#include "../auxiliary/miscutils/property.hpp"
-#include "../auxiliary/miscutils/PropertyEnum.hpp"
-#include "../support/Characters/AlertPackage.hpp"
+#include "Auxiliary/MiscUtils/Property.hpp"
+#include "Auxiliary/MiscUtils/PropertyEnum.hpp"
+#include "Characters/AlertPackage.hpp"
 #include "FX/fx_Mgr.hpp"
 
 //Misc utils useful for the A51 project. There are project dependicies so this isn't a cross project
